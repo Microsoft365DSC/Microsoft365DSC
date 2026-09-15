@@ -1,0 +1,245 @@
+name: Deployment Tests - All Workloads
+on:
+  workflow_dispatch:
+    inputs:
+      auth_method:
+        description: 'Authentication method to test'
+        required: false
+        default: 'CertificateThumbprint'
+        type: choice
+        options:
+          - CertificateThumbprint
+          - ApplicationSecret
+          - Credential
+          - All
+      skip_known_issues:
+        description: 'Skip resources with known issues'
+        required: false
+        default: true
+        type: boolean
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  Deploy-Test-AAD:
+    runs-on: [self-hosted, windows, x64]
+    permissions: write-all
+    if: github.repository == 'microsoft/Microsoft365DSC' || github.event_name == 'workflow_dispatch'
+    env:
+      M365DSC_TEST_APPID: ${{ secrets.DEPLOYMENT_TEST_APPID }}
+      M365DSC_TEST_TENANTID: ${{ secrets.DEPLOYMENT_TEST_TENANTID }}
+      M365DSC_TEST_CERTTHUMBPRINT: ${{ secrets.DEPLOYMENT_TEST_CERTTHUMBPRINT }}
+      M365DSC_TEST_APPSECRET: ${{ secrets.DEPLOYMENT_TEST_APPSECRET }}
+      M365DSC_TEST_CREDENTIAL_USER: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_USER }}
+      M365DSC_TEST_CREDENTIAL_PASS: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        shell: powershell
+        run: |
+          winrm quickconfig -force
+          Copy-Item -Path "./Modules/Microsoft365DSC/" -Recurse -Destination "C:\Program Files\WindowsPowerShell\Modules" -Container -Force
+          Update-M365DSCDependencies
+          Set-ExecutionPolicy Unrestricted -Force
+          Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+          Set-M365DSCTelemetryOption -Enabled $false
+          Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+      - name: Test AAD Resources
+        shell: powershell
+        run: |
+          Import-Module './Tests/Integration/M365DSCDeploymentTestEngine.psm1'
+          $params = @{ Workload = 'AAD'; OutputReportPath = './Report_AAD.html'; SkipKnownIssues = $${{ github.event.inputs.skip_known_issues || 'true' }} }
+          $auth = '${{ github.event.inputs.auth_method }}'
+          if ($auth -ne 'All' -and $auth) { $params['AuthMethod'] = $auth }
+          Invoke-M365DSCDeploymentTest @params
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-aad
+          path: ./Report_AAD.html
+
+  Deploy-Test-EXO:
+    runs-on: [self-hosted, windows, x64]
+    permissions: write-all
+    if: github.repository == 'microsoft/Microsoft365DSC' || github.event_name == 'workflow_dispatch'
+    env:
+      M365DSC_TEST_APPID: ${{ secrets.DEPLOYMENT_TEST_APPID }}
+      M365DSC_TEST_TENANTID: ${{ secrets.DEPLOYMENT_TEST_TENANTID }}
+      M365DSC_TEST_CERTTHUMBPRINT: ${{ secrets.DEPLOYMENT_TEST_CERTTHUMBPRINT }}
+      M365DSC_TEST_APPSECRET: ${{ secrets.DEPLOYMENT_TEST_APPSECRET }}
+      M365DSC_TEST_CREDENTIAL_USER: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_USER }}
+      M365DSC_TEST_CREDENTIAL_PASS: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        shell: powershell
+        run: |
+          winrm quickconfig -force
+          Copy-Item -Path "./Modules/Microsoft365DSC/" -Recurse -Destination "C:\Program Files\WindowsPowerShell\Modules" -Container -Force
+          Update-M365DSCDependencies
+          Set-ExecutionPolicy Unrestricted -Force
+          Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+          Set-M365DSCTelemetryOption -Enabled $false
+          Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+      - name: Test EXO Resources
+        shell: powershell
+        run: |
+          Import-Module './Tests/Integration/M365DSCDeploymentTestEngine.psm1'
+          $params = @{ Workload = 'EXO'; OutputReportPath = './Report_EXO.html'; SkipKnownIssues = $${{ github.event.inputs.skip_known_issues || 'true' }} }
+          $auth = '${{ github.event.inputs.auth_method }}'
+          if ($auth -ne 'All' -and $auth) { $params['AuthMethod'] = $auth }
+          Invoke-M365DSCDeploymentTest @params
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-exo
+          path: ./Report_EXO.html
+
+  Deploy-Test-Intune:
+    runs-on: [self-hosted, windows, x64]
+    permissions: write-all
+    if: github.repository == 'microsoft/Microsoft365DSC' || github.event_name == 'workflow_dispatch'
+    env:
+      M365DSC_TEST_APPID: ${{ secrets.DEPLOYMENT_TEST_APPID }}
+      M365DSC_TEST_TENANTID: ${{ secrets.DEPLOYMENT_TEST_TENANTID }}
+      M365DSC_TEST_CERTTHUMBPRINT: ${{ secrets.DEPLOYMENT_TEST_CERTTHUMBPRINT }}
+      M365DSC_TEST_APPSECRET: ${{ secrets.DEPLOYMENT_TEST_APPSECRET }}
+      M365DSC_TEST_CREDENTIAL_USER: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_USER }}
+      M365DSC_TEST_CREDENTIAL_PASS: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        shell: powershell
+        run: |
+          winrm quickconfig -force
+          Copy-Item -Path "./Modules/Microsoft365DSC/" -Recurse -Destination "C:\Program Files\WindowsPowerShell\Modules" -Container -Force
+          Update-M365DSCDependencies
+          Set-ExecutionPolicy Unrestricted -Force
+          Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+          Set-M365DSCTelemetryOption -Enabled $false
+          Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+      - name: Test Intune Resources
+        shell: powershell
+        run: |
+          Import-Module './Tests/Integration/M365DSCDeploymentTestEngine.psm1'
+          $params = @{ Workload = 'Intune'; OutputReportPath = './Report_Intune.html'; SkipKnownIssues = $${{ github.event.inputs.skip_known_issues || 'true' }} }
+          $auth = '${{ github.event.inputs.auth_method }}'
+          if ($auth -ne 'All' -and $auth) { $params['AuthMethod'] = $auth }
+          Invoke-M365DSCDeploymentTest @params
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-intune
+          path: ./Report_Intune.html
+
+  Deploy-Test-Teams:
+    runs-on: [self-hosted, windows, x64]
+    permissions: write-all
+    if: github.repository == 'microsoft/Microsoft365DSC' || github.event_name == 'workflow_dispatch'
+    env:
+      M365DSC_TEST_APPID: ${{ secrets.DEPLOYMENT_TEST_APPID }}
+      M365DSC_TEST_TENANTID: ${{ secrets.DEPLOYMENT_TEST_TENANTID }}
+      M365DSC_TEST_CERTTHUMBPRINT: ${{ secrets.DEPLOYMENT_TEST_CERTTHUMBPRINT }}
+      M365DSC_TEST_APPSECRET: ${{ secrets.DEPLOYMENT_TEST_APPSECRET }}
+      M365DSC_TEST_CREDENTIAL_USER: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_USER }}
+      M365DSC_TEST_CREDENTIAL_PASS: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        shell: powershell
+        run: |
+          winrm quickconfig -force
+          Copy-Item -Path "./Modules/Microsoft365DSC/" -Recurse -Destination "C:\Program Files\WindowsPowerShell\Modules" -Container -Force
+          Update-M365DSCDependencies
+          Set-ExecutionPolicy Unrestricted -Force
+          Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+          Set-M365DSCTelemetryOption -Enabled $false
+          Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+      - name: Test Teams Resources
+        shell: powershell
+        run: |
+          Import-Module './Tests/Integration/M365DSCDeploymentTestEngine.psm1'
+          $params = @{ Workload = 'Teams'; OutputReportPath = './Report_Teams.html'; SkipKnownIssues = $${{ github.event.inputs.skip_known_issues || 'true' }} }
+          $auth = '${{ github.event.inputs.auth_method }}'
+          if ($auth -ne 'All' -and $auth) { $params['AuthMethod'] = $auth }
+          Invoke-M365DSCDeploymentTest @params
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-teams
+          path: ./Report_Teams.html
+
+  Deploy-Test-SPO:
+    runs-on: [self-hosted, windows, x64]
+    permissions: write-all
+    if: github.repository == 'microsoft/Microsoft365DSC' || github.event_name == 'workflow_dispatch'
+    env:
+      M365DSC_TEST_APPID: ${{ secrets.DEPLOYMENT_TEST_APPID }}
+      M365DSC_TEST_TENANTID: ${{ secrets.DEPLOYMENT_TEST_TENANTID }}
+      M365DSC_TEST_CERTTHUMBPRINT: ${{ secrets.DEPLOYMENT_TEST_CERTTHUMBPRINT }}
+      M365DSC_TEST_APPSECRET: ${{ secrets.DEPLOYMENT_TEST_APPSECRET }}
+      M365DSC_TEST_CREDENTIAL_USER: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_USER }}
+      M365DSC_TEST_CREDENTIAL_PASS: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        shell: powershell
+        run: |
+          winrm quickconfig -force
+          Copy-Item -Path "./Modules/Microsoft365DSC/" -Recurse -Destination "C:\Program Files\WindowsPowerShell\Modules" -Container -Force
+          Update-M365DSCDependencies
+          Set-ExecutionPolicy Unrestricted -Force
+          Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+          Set-M365DSCTelemetryOption -Enabled $false
+          Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+      - name: Test SPO Resources
+        shell: powershell
+        run: |
+          Import-Module './Tests/Integration/M365DSCDeploymentTestEngine.psm1'
+          $params = @{ Workload = 'SPO'; OutputReportPath = './Report_SPO.html'; SkipKnownIssues = $${{ github.event.inputs.skip_known_issues || 'true' }} }
+          $auth = '${{ github.event.inputs.auth_method }}'
+          if ($auth -ne 'All' -and $auth) { $params['AuthMethod'] = $auth }
+          Invoke-M365DSCDeploymentTest @params
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-spo
+          path: ./Report_SPO.html
+
+  Deploy-Test-SC:
+    runs-on: [self-hosted, windows, x64]
+    permissions: write-all
+    if: github.repository == 'microsoft/Microsoft365DSC' || github.event_name == 'workflow_dispatch'
+    env:
+      M365DSC_TEST_APPID: ${{ secrets.DEPLOYMENT_TEST_APPID }}
+      M365DSC_TEST_TENANTID: ${{ secrets.DEPLOYMENT_TEST_TENANTID }}
+      M365DSC_TEST_CERTTHUMBPRINT: ${{ secrets.DEPLOYMENT_TEST_CERTTHUMBPRINT }}
+      M365DSC_TEST_APPSECRET: ${{ secrets.DEPLOYMENT_TEST_APPSECRET }}
+      M365DSC_TEST_CREDENTIAL_USER: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_USER }}
+      M365DSC_TEST_CREDENTIAL_PASS: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        shell: powershell
+        run: |
+          winrm quickconfig -force
+          Copy-Item -Path "./Modules/Microsoft365DSC/" -Recurse -Destination "C:\Program Files\WindowsPowerShell\Modules" -Container -Force
+          Update-M365DSCDependencies
+          Set-ExecutionPolicy Unrestricted -Force
+          Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+          Set-M365DSCTelemetryOption -Enabled $false
+          Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+      - name: Test SC Resources
+        shell: powershell
+        run: |
+          Import-Module './Tests/Integration/M365DSCDeploymentTestEngine.psm1'
+          $params = @{ Workload = 'SC'; OutputReportPath = './Report_SC.html'; SkipKnownIssues = $${{ github.event.inputs.skip_known_issues || 'true' }} }
+          $auth = '${{ github.event.inputs.auth_method }}'
+          if ($auth -ne 'All' -and $auth) { $params['AuthMethod'] = $auth }
+          Invoke-M365DSCDeploymentTest @params
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-sc
+          path: ./Report_SC.html
