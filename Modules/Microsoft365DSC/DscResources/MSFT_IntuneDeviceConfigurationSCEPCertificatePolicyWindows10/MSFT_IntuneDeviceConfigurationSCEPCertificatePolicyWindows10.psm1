@@ -517,9 +517,13 @@ function Set-TargetResource
         $CreateParameters.Remove('Id') | Out-Null
         $CreateParameters['keyUsage'] = $CreateParameters['keyUsage'] -join ','
 
-        $RootCertificate = Get-MgBetaDeviceManagementDeviceConfiguration `
-            -DeviceConfigurationId $RootCertificateId `
-            -ErrorAction SilentlyContinue
+        $RootCertificate = $null
+        if (-not [System.String]::IsNullOrEmpty($RootCertificateId))
+        {
+            $RootCertificate = Get-MgBetaDeviceManagementDeviceConfiguration `
+                -DeviceConfigurationId $RootCertificateId `
+                -ErrorAction SilentlyContinue
+        }
 
         if ($null -eq $RootCertificate)
         {

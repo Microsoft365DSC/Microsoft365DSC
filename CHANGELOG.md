@@ -1,5 +1,8 @@
 # Change log for Microsoft365DSC
 
+* IntuneDeviceConfigurationSCEPCertificatePolicyWindows10
+  * Fixed an issue when paramete RootCertificateId is empty the falback on RootCertificateDisplayName not work
+
 # 1.26.909.1
 
 * MISC
