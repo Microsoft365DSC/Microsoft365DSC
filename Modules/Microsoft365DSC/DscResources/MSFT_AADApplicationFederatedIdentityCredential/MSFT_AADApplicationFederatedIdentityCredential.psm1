@@ -90,7 +90,6 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
 
         Write-Verbose -Message "Getting federated identity credential {$($this.Name)} for application {$($this.ApplicationDisplayName)}"
 
-        $errorLogged = $false
         try
         {
             if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.Name -or $this.ExportedInstance.ApplicationDisplayName -ne $this.ApplicationDisplayName)
@@ -183,8 +182,6 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
                         }
                         else
                         {
-                            $this.LogError($_, 'Error retrieving data:')
-                            $errorLogged = $true
                             throw
                         }
                     }
@@ -232,10 +229,7 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
         }
         catch
         {
-            if (-not $errorLogged)
-            {
-                $this.LogError($_, 'Error retrieving data:')
-            }
+            $this.LogError($_, 'Error retrieving data:')
 
             throw
         }
