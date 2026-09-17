@@ -65,7 +65,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgApplicationFederatedIdentityCredential -MockWith {
             }
 
-            Mock -CommandName New-M365DSCLogEntry -MockWith {
+            Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
             }
 
             Mock -CommandName Write-M365DSCHost -MockWith {
@@ -128,12 +128,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return absent from the get method without logging an error' {
                 ((New-M365DSCResourceInstance -ResourceName 'AADApplicationFederatedIdentityCredential' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 0 -Exactly -Scope It
+                Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Times 0 -Exactly -Scope It
             }
 
             It 'Should return true from the test method without logging an error' {
                 (New-M365DSCResourceInstance -ResourceName 'AADApplicationFederatedIdentityCredential' -Property $testParams).Test() | Should -Be $true
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 0 -Exactly -Scope It
+                Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Times 0 -Exactly -Scope It
             }
         }
 
@@ -157,6 +157,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should throw from the get method' {
                 { (New-M365DSCResourceInstance -ResourceName 'AADApplicationFederatedIdentityCredential' -Property $testParams).Get() } | Should -Throw
+                Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Times 1 -Exactly -Scope It
             }
         }
 
