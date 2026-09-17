@@ -122,7 +122,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Get-MgApplicationFederatedIdentityCredential -MockWith {
-                    throw "Request_ResourceNotFound: Resource '$($testParams.Name)' does not exist."
+                    throw "Request_ResourceNotFound: Resource 'github-main' does not exist."
                 }
             }
 
