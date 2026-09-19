@@ -2786,6 +2786,10 @@
     supported anymore.
 * IntuneWifiConfigurationPolicyAndroidForWork
   * [BREAKING CHANGE] Removed resource because it's not supported anymore.
+    Instead, use the `IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile` resource.
+* IntuneWifiEnterpriseConfigurationPolicyWindows10
+  * Added new resource for enterprise wifi profiles
+  * Fixes #5839
     Instead, use the `IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile`
     resource.
 * O365AdminAuditLogConfig
