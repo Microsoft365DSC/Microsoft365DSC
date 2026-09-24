@@ -1,0 +1,106 @@
+name: Deployment Tests - AAD
+on:
+  workflow_dispatch:
+    inputs:
+      auth_method:
+        description: 'Authentication method to test'
+        required: false
+        default: 'CertificateThumbprint'
+        type: choice
+        options:
+          - CertificateThumbprint
+          - ApplicationSecret
+          - Credential
+          - All
+      skip_known_issues:
+        description: 'Skip resources with known issues'
+        required: false
+        default: false
+        type: boolean
+      resource_name:
+        description: 'Specific resource to test (leave empty for all AAD)'
+        required: false
+        type: string
+
+jobs:
+  Deploy-Test-AAD:
+    runs-on: [self-hosted, windows, x64]
+    permissions: write-all
+
+    # Only when run from the main repo or allowed forks
+    if: github.repository == 'microsoft/Microsoft365DSC' || github.event_name == 'workflow_dispatch'
+
+    env:
+      M365DSC_TEST_APPID: ${{ secrets.DEPLOYMENT_TEST_APPID }}
+      M365DSC_TEST_TENANTID: ${{ secrets.DEPLOYMENT_TEST_TENANTID }}
+      M365DSC_TEST_CERTTHUMBPRINT: ${{ secrets.DEPLOYMENT_TEST_CERTTHUMBPRINT }}
+      M365DSC_TEST_APPSECRET: ${{ secrets.DEPLOYMENT_TEST_APPSECRET }}
+      M365DSC_TEST_CREDENTIAL_USER: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_USER }}
+      M365DSC_TEST_CREDENTIAL_PASS: ${{ secrets.DEPLOYMENT_TEST_CREDENTIAL_PASS }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Microsoft365DSC Module
+        shell: powershell
+        run: |
+          winrm quickconfig -force
+          $source = "./Modules/Microsoft365DSC/"
+          $destination = "C:\Program Files\WindowsPowerShell\Modules"
+          Copy-Item -Path $source -Recurse -Destination $destination -Container -Force
+          Update-M365DSCDependencies
+
+      - name: Configure Environment
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy Unrestricted -Force
+          Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+          Set-M365DSCTelemetryOption -Enabled $false
+          Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+
+      - name: Run Deployment Tests
+        shell: powershell
+        run: |
+          Import-Module './Tests/Integration/M365DSCDeploymentTestEngine.psm1'
+
+          $params = @{
+            Workload         = 'AAD'
+            OutputReportPath = './DeploymentTestReport_AAD.html'
+            ReportFormat     = 'HTML'
+          }
+
+          $authInput = '${{ github.event.inputs.auth_method }}'
+          if ($authInput -ne 'All' -and -not [string]::IsNullOrEmpty($authInput))
+          {
+            $params['AuthMethod'] = $authInput
+          }
+
+          $resourceInput = '${{ github.event.inputs.resource_name }}'
+          if (-not [string]::IsNullOrEmpty($resourceInput))
+          {
+            $params.Remove('Workload')
+            $params['ResourceName'] = $resourceInput
+          }
+
+          if ('${{ github.event.inputs.skip_known_issues }}' -eq 'true')
+          {
+            $params['SkipKnownIssues'] = $true
+          }
+
+          $results = Invoke-M365DSCDeploymentTest @params
+
+          # Fail the workflow if any tests failed
+          $failed = ($results | Where-Object { $_.Status -eq 'Failed' }).Count
+          if ($failed -gt 0)
+          {
+            Write-Error "$failed deployment test(s) failed. See report for details."
+            exit 1
+          }
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-test-report-aad
+          path: ./DeploymentTestReport_AAD.html
+          retention-days: 30

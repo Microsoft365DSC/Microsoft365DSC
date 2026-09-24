@@ -1,0 +1,12 @@
+{
+    "_comment": "Resources with known deployment issues. These are flagged in reports but not skipped by default.",
+    "KnownIssues": [
+        {
+            "ResourceName": "IntuneApplicationControlPolicyWindows10",
+            "Issue": "Deployment fails due to upstream API issue",
+            "Reference": "https://github.com/microsoft/Microsoft365DSC/pull/3437",
+            "DateReported": "2024-01-15",
+            "Status": "Open"
+        }
+    ]
+}

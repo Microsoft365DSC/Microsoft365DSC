@@ -1,0 +1,36 @@
+{
+    "_comment": "Test tenant configuration for Microsoft365DSC deployment testing.",
+    "_note": "All secrets must be provided via environment variables. Never commit secrets to this file.",
+    "Tenants": [
+        {
+            "Name": "Primary",
+            "Description": "Primary test tenant for deployment & drift testing",
+            "TenantId": "${M365DSC_TEST_TENANTID}",
+            "ApplicationId": "${M365DSC_TEST_APPID}",
+            "CertificateThumbprint": "${M365DSC_TEST_CERTTHUMBPRINT}",
+            "ApplicationSecret": "${M365DSC_TEST_APPSECRET}",
+            "CredentialUser": "${M365DSC_TEST_CREDENTIAL_USER}",
+            "CredentialPass": "${M365DSC_TEST_CREDENTIAL_PASS}",
+            "AssignedWorkloads": ["AAD", "EXO", "Intune", "Teams", "SPO", "SC", "O365", "OD", "PP", "Planner", "Fabric"]
+        },
+        {
+            "Name": "Secondary",
+            "Description": "Optional secondary tenant for parallel testing",
+            "TenantId": "${M365DSC_TEST2_TENANTID}",
+            "ApplicationId": "${M365DSC_TEST2_APPID}",
+            "CertificateThumbprint": "${M365DSC_TEST2_CERTTHUMBPRINT}",
+            "ApplicationSecret": "${M365DSC_TEST2_APPSECRET}",
+            "CredentialUser": "${M365DSC_TEST2_CREDENTIAL_USER}",
+            "CredentialPass": "${M365DSC_TEST2_CREDENTIAL_PASS}",
+            "AssignedWorkloads": ["Sentinel", "Defender", "Azure", "ADO", "Commerce"]
+        }
+    ],
+    "Settings": {
+        "MaxParallelTests": 3,
+        "TestTimeoutMinutes": 30,
+        "CleanupAfterEachResource": true,
+        "GenerateBlueprint": true,
+        "ReportFormat": "HTML",
+        "SkipKnownIssuesByDefault": false
+    }
+}
