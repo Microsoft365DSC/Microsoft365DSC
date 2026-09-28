@@ -91,7 +91,7 @@ if (-not $ReportPath)
 
 #region Schema
 
-# Schema comes from SchemaDefinition.json: CIMType, Description, Name and Option (Key/Required/Write).
+# Schema comes from SchemaDefinition.json: CIMType, Description, Name, and Option (Key/Required/Write).
 # Validation attributes are not in there - [ValidateRange] and friends are read from the param block.
 $script:Schema = @{}
 foreach ($entry in (Get-Content -Path $script:SchemaPath -Raw | ConvertFrom-Json))
@@ -106,7 +106,7 @@ foreach ($entry in (Get-Content -Path $script:SchemaPath -Raw | ConvertFrom-Json
     OMI_BaseResource is skipped; resource classes derive from M365DSCResourceBase instead.
 #>
 $script:SuperClass = @{}
-foreach ($mofFile in (Get-ChildItem -Path $script:SourceRoot -Filter '*.schema.mof' -Recurse -File))
+foreach ($mofFile in (Get-ChildItem -Path $script: SourceRoot -Filter '*.schema.mof' -Recurse -File))
 {
     $mofText = Get-Content -Path $mofFile.FullName -Raw
     foreach ($match in [regex]::Matches($mofText, '(?m)^\s*class\s+(?<Name>[A-Za-z0-9_]+)\s*:\s*(?<Base>[A-Za-z0-9_]+)'))
@@ -121,7 +121,7 @@ foreach ($mofFile in (Get-ChildItem -Path $script:SourceRoot -Filter '*.schema.m
 
         if ($script:SuperClass.ContainsKey($derived) -and $script:SuperClass[$derived] -ne $base)
         {
-            Write-Warning "Class '$derived' is declared with two different base classes: '$($script:SuperClass[$derived])' and '$base'. Keeping the first."
+            Write-Warning "Class '$derived' is declared with two different base classes: '$($script: SuperClass[$derived])' and '$base'. Keeping the first."
             continue
         }
 
@@ -186,7 +186,7 @@ function ConvertTo-ClassType
 
     <#
         Scalar value types become Nullable[T]. DSC leaves unset properties at their CLR defaults,
-        so a plain [Boolean] cannot distinguish "omitted" from "specified as $false" and
+        so a plain [Boolean] cannot distinguish "omitted" from "specified as $false," and
         GetBoundParameters() would either drop a deliberate $false or invent values that were never
         configured. The nullability does not leak into the reported schema.
     #>
@@ -290,7 +290,7 @@ function Get-ParameterValidationAttribute
             }
         }
 
-        if ($attributes.Count -gt 0)
+        if ($attributes. Count -gt 0)
         {
             $result[$name] = $attributes
         }
@@ -344,9 +344,9 @@ function Convert-EmbeddedPropertyReference
             continue
         }
 
-        # Directly inside an expandable string a bare $this.X would expand the object and then
+        # Directly inside an expandable string, a bare $this. X would expand the object and then
         # append the literal '.X', so a subexpression is required there.
-        $replacementText = if ($nested.Parent -is [ExpandableStringExpressionAst])
+        $replacementText = if ($nested. Parent -is [ExpandableStringExpressionAst])
         {
             "`$(`$this.$name)"
         }
@@ -718,7 +718,7 @@ if (`$this.RequiresPowerShellCore())
 
             if ($null -ne $splatName)
             {
-                if ($overrides.Count -gt 0)
+                if ($overrides. Count -gt 0)
                 {
                     $notes.Add(("Get-TargetResource at line {0} splats `${1} AND passes {2}; the " +
                             'overrides were not merged - review.') -f
@@ -729,7 +729,7 @@ if (`$this.RequiresPowerShellCore())
                             -Text "`$this.GetForExport(`$$splatName)" `
                             -Reason 'Get-TargetResource with a per-item splat'))
             }
-            elseif ($overrides.Count -gt 0)
+            elseif ($overrides. Count -gt 0)
             {
                 # GetForExport applies the hashtable onto $this before calling Get(), so only the
                 # overrides need passing.
@@ -752,7 +752,7 @@ if (`$this.RequiresPowerShellCore())
                 -CurrentValues is mandatory, and has to go at the END of the command. PowerShell
                 evaluates arguments left to right and Get() writes the retrieved state onto $this,
                 so a -CurrentValues placed ahead of -DesiredValues makes GetBoundParameters() read
-                the state Get() just wrote and every comparison comes back "in the desired state".
+                the state Get() just wrote, and every comparison comes back "in the desired state".
             #>
             $append = [ConversionEdit]::new()
             $append.Offset = $command.Extent.EndOffset
@@ -764,7 +764,7 @@ if (`$this.RequiresPowerShellCore())
         elseif ($name -eq 'Get-CompareParameters')
         {
             # Emitted as the GetCompareParameters() override on the class, so the call has to become
-            # a method call. Left as a command it parses fine and dies at runtime on the first Test().
+            # a method call. Left as a command, it parses fine and dies at runtime on the first Test().
             $edits.Add((New-Edit -Extent $command.Extent `
                         -Text '$this.GetCompareParameters()' `
                         -Reason 'Get-CompareParameters call'))
@@ -811,7 +811,7 @@ if (`$this.RequiresPowerShellCore())
 
         <#
             $ResourceName is assigned inside the telemetry block, which is collapsed away, but
-            Export reads it again afterwards. Left alone it becomes an unassigned variable, which is
+            Export reads it again afterwards. Left alone, it becomes an unassigned variable, which is
             a parse error in a class method. Only occurrences outside the collapsed span are
             rewritten; the ones inside go with the block.
         #>
@@ -855,7 +855,7 @@ if (`$this.RequiresPowerShellCore())
             # Inside an expandable string, "$this.DisplayName" expands the object and appends the
             # literal '.DisplayName'. It parses, so nothing catches it. A subexpression is required;
             # variables already inside "$( ... )" are fine as-is.
-            $replacement = if ($variable.Parent -is [ExpandableStringExpressionAst])
+            $replacement = if ($variable. Parent -is [ExpandableStringExpressionAst])
             {
                 "`$(`$this.$userPath)"
             }
@@ -880,17 +880,17 @@ if (`$this.RequiresPowerShellCore())
     # --- 6. return statements -------------------------------------------------------------------
     foreach ($statement in $body.FindAll({ $args[0] -is [ReturnStatementAst] }, $true))
     {
-        # A bare `return` is legal in a function but not in a method with a declared return type -
-        # "Not all code path returns value within method".
+        # A bare `return` is legal in a function but not in a method with a declared return type.
+        # "Not all code paths return a value within the method".
         if ($null -eq $statement.Pipeline)
         {
             if ($Method -eq 'Export')
             {
-                $edits.Add((New-Edit -Extent $statement.Extent -Text "return ''" -Reason 'bare return in a [string] method'))
+                $edits.Add((New-Edit -Extent $statement. Extent -Text "return ''" -Reason 'bare return in a [string] method'))
             }
             elseif ($Method -eq 'Test')
             {
-                $edits.Add((New-Edit -Extent $statement.Extent -Text 'return $false' -Reason 'bare return in a [bool] method'))
+                $edits.Add((New-Edit -Extent $statement. Extent -Text 'return $false' -Reason 'bare return in a [bool] method'))
             }
 
             continue
@@ -899,7 +899,7 @@ if (`$this.RequiresPowerShellCore())
         # A [void] method may not return a value.
         if ($Method -eq 'Set')
         {
-            $edits.Add((New-Edit -Extent $statement.Extent -Text 'return' -Reason 'value returned from a [void] method'))
+            $edits.Add((New-Edit -Extent $statement. Extent -Text 'return' -Reason 'value returned from a [void] method'))
             continue
         }
 
@@ -923,7 +923,7 @@ if (`$this.RequiresPowerShellCore())
     }
 
     # --- apply ----------------------------------------------------------------------------------
-    # The overlap rule: an edit fully inside another is dropped and the outer one wins. This is what
+    # The overlap rule: an edit fully inside another is dropped, and the outer one wins. This is what
     # makes the telemetry-block collapse safe.
     $ordered = @($edits | Sort-Object Offset, @{ Expression = { $_.Length }; Descending = $true })
     $kept = [System.Collections.Generic.List[ConversionEdit]]::new()
@@ -1033,7 +1033,7 @@ function Add-MethodBodyIndent
         }
 
         if ($token.Kind -notin @([TokenKind]::StringLiteral, [TokenKind]::StringExpandable,
-                [TokenKind]::HereStringLiteral, [TokenKind]::HereStringExpandable))
+                [TokenKind]:: HereStringLiteral, [TokenKind]:: HereStringExpandable))
         {
             continue
         }
@@ -1096,7 +1096,7 @@ function Repair-MissingReturn
         $ast = [Parser]::ParseInput($Text, [ref] $null, [ref] $errors)
         $flagged = @($errors | Where-Object { $_.ErrorId -eq 'MethodHasCodePathNotReturn' })
 
-        if ($flagged.Count -eq 0)
+        if ($flagged. Count -eq 0)
         {
             break
         }
@@ -1301,7 +1301,7 @@ function Repair-DefiniteAssignment
         $ast = [Parser]::ParseInput($Text, [ref] $null, [ref] $errors)
         $flagged = @($errors | Where-Object { $_.ErrorId -eq 'VariableNotLocal' })
 
-        if ($flagged.Count -eq 0)
+        if ($flagged. Count -eq 0)
         {
             break
         }
@@ -1330,7 +1330,7 @@ function Repair-DefiniteAssignment
             <#
                 Never declare a local that shadows a schema property. Doing so turns one parse error
                 into another - "Cannot assign property, use '$this.X'" - and hides the real problem,
-                which is a $X the property rewrite failed to reach. Record it instead.
+                which is that the property rewrite failed to reach. Record it instead.
             #>
             if ($null -ne $PropertyName -and $PropertyName.Contains($name))
             {
@@ -1409,7 +1409,7 @@ function Convert-Resource
 
     $errors = $null
     $ast = [Parser]::ParseInput($fileText, [ref] $null, [ref] $errors)
-    if ($errors.Count -gt 0)
+    if ($errors. Count -gt 0)
     {
         throw "Cannot parse '$Path': $($errors[0].Message)"
     }
@@ -1498,7 +1498,7 @@ function Convert-Resource
         come from the parser rather than from PSScriptAnalyzer.
 
         It never reaches the shipped module. Build-Microsoft365DSC.ps1 emits only the class extent
-        plus the helper-function extents, and a using statement is file-level - it is never inside
+        plus the helper-function extents, and a using statement is file-level; it is never inside
         a TypeDefinitionAst extent. The build asserts this rather than relying on it silently.
     #>
     [void] $builder.AppendLine('# Editor-only: lets this file resolve [M365DSCResourceBase] when parsed on its own.')
@@ -1607,7 +1607,7 @@ function Convert-Resource
         [void] $builder.AppendLine('')
     }
 
-    # Get-CompareParameters becomes the override the base class already declares.
+    # Get-CompareParameters becomes the override of the base class already declared.
     if ($functions.ContainsKey('Get-CompareParameters'))
     {
         $converted = Convert-FunctionBody -Function $functions['Get-CompareParameters'] `
@@ -1675,7 +1675,7 @@ function Convert-Resource
         }
     }
 
-    while ($pending.Count -gt 0)
+    while ($pending. Count -gt 0)
     {
         $typeName = $pending.Dequeue()
         if (-not $emitted.Add($typeName))
@@ -1785,7 +1785,7 @@ function Convert-Resource
         [void] $builder.Append($typeText[$name])
     }
 
-    if ($emitted.Count -gt 0)
+    if ($emitted. Count -gt 0)
     {
         $notes.Add("Emitted $($emitted.Count) complex type(s): $(($emitted | Sort-Object) -join ', ').")
     }
@@ -1842,8 +1842,8 @@ function Convert-Resource
 
 #region Main
 
-# -WhatIf:$false on purpose. Under -WhatIf the converted resource files are deliberately not
-# written, but the run is still expected to produce its report - that is report-only mode - and the
+# -WhatIf:$false on purpose. Under -WhatIf, the converted resource files are deliberately not
+# written, but the run is still expected to produce its report - that is, report-only mode - and the
 # report needs somewhere to go.
 $null = New-Item -Path $OutputPath -ItemType Directory -Force -WhatIf:$false
 
@@ -1851,7 +1851,7 @@ $null = New-Item -Path $OutputPath -ItemType Directory -Force -WhatIf:$false
 $baseSource = Join-Path -Path $script:SourceRoot -ChildPath '_Base'
 $baseTarget = Join-Path -Path $OutputPath -ChildPath '_Base'
 
-# GetFullPath rather than Resolve-Path: under -WhatIf the output directory was never created, and
+# GetFullPath rather than Resolve-Path: under -WhatIf, the output directory was never created, and
 # Resolve-Path throws on a path that does not exist.
 $outputFull = [System.IO.Path]::GetFullPath($OutputPath).TrimEnd('\', '/')
 $sourceFull = [System.IO.Path]::GetFullPath($script:SourceRoot).TrimEnd('\', '/')
@@ -1895,7 +1895,7 @@ $succeeded = 0
     A handful of resources build their complex values with
     New-CimInstance -ClassName MSFT_X -Property @{ ... } -Namespace root/Microsoft/Windows/DesiredStateConfiguration.
     That is the MOF representation; the property those values are assigned to is now declared as
-    the class, and a CimInstance does not convert to it - the assignment fails outright.
+    the class, and a CimInstance does not convert to it; the assignment fails outright.
 
     Expressed as two edits per call, the prefix up to the -Property hashtable and the suffix after
     it, so nested calls inside that hashtable keep their own spans and the descending-offset
@@ -1972,12 +1972,12 @@ function Convert-CimInstanceLiteral
 
     <#
         .CimInstanceProperties has no counterpart on a class instance, so the whole expression
-        evaluates to $null and the .GetEnumerator() after it throws "You cannot call a method on a
+        evaluates to $null and the GetEnumerator () after it throws "You cannot call a method on a
         null-valued expression". PSObject.Properties is the equivalent enumeration and yields
-        members with .Name and .Value.
+        members with . Name and .Value.
 
         Note this deliberately does not "fix" the call sites that read .Key off the enumerated item:
-        a CimProperty exposes Name and Value, never Key, so those comparisons were already silently
+        A CimProperty exposes Name and Value, never Key, so those comparisons were already silently
         matching nothing before the conversion. Preserving that keeps the rewrite behaviour-neutral;
         turning a latent no-op into a live check is a separate decision for whoever owns the
         resource.
