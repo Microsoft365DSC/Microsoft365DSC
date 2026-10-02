@@ -21,6 +21,9 @@
     `NativeAuthenticationApisEnabled`, `Notes`, `SamlMetadataUrl`, `Tags` and
     `TokenEncryptionKeyId` properties.
   * Updated `Owners` to use `DisplayName` for Service Principal objects.
+* AADApplicationFederatedIdentityCredential
+  * Fixed an issue where a missing federated identity credential could log a
+    Microsoft Graph not-found error when `Ensure` was set to `Absent`.
 * AADAuthenticationMethodPolicyVoice
   * Added support for the `CallerIdNumber` property.
 * AADAuthenticationMethodPolicyX509

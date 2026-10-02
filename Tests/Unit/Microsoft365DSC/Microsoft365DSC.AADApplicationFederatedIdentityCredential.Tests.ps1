@@ -65,6 +65,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgApplicationFederatedIdentityCredential -MockWith {
             }
 
+            Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
+            }
+
             Mock -CommandName Write-M365DSCHost -MockWith {
             }
 
@@ -102,6 +105,59 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should create the federated identity credential from the set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADApplicationFederatedIdentityCredential' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-MgApplicationFederatedIdentityCredential' -Exactly 1
+            }
+        }
+
+        Context -Name 'The federated identity credential should be absent and the filtered lookup returns not found' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    ApplicationDisplayName = 'App1'
+                    Name                   = 'github-main'
+                    Issuer                 = 'https://token.actions.githubusercontent.com'
+                    Subject                = 'repo:contoso/app:ref:refs/heads/main'
+                    Audiences              = @('api://AzureADTokenExchange')
+                    Description            = 'GitHub Actions main branch'
+                    Ensure                 = 'Absent'
+                    Credential             = $Credential
+                }
+
+                Mock -CommandName Get-MgApplicationFederatedIdentityCredential -MockWith {
+                    throw "Request_ResourceNotFound: Resource 'github-main' does not exist."
+                }
+            }
+
+            It 'Should return absent from the get method without logging an error' {
+                ((New-M365DSCResourceInstance -ResourceName 'AADApplicationFederatedIdentityCredential' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
+                Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Times 0 -Exactly -Scope It
+            }
+
+            It 'Should return true from the test method without logging an error' {
+                (New-M365DSCResourceInstance -ResourceName 'AADApplicationFederatedIdentityCredential' -Property $testParams).Test() | Should -Be $true
+                Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Times 0 -Exactly -Scope It
+            }
+        }
+
+        Context -Name 'The filtered lookup returns a non not found error' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    ApplicationDisplayName = 'App1'
+                    Name                   = 'github-main'
+                    Issuer                 = 'https://token.actions.githubusercontent.com'
+                    Subject                = 'repo:contoso/app:ref:refs/heads/main'
+                    Audiences              = @('api://AzureADTokenExchange')
+                    Description            = 'GitHub Actions main branch'
+                    Ensure                 = 'Absent'
+                    Credential             = $Credential
+                }
+
+                Mock -CommandName Get-MgApplicationFederatedIdentityCredential -MockWith {
+                    throw 'Access denied.'
+                }
+            }
+
+            It 'Should throw from the get method' {
+                { (New-M365DSCResourceInstance -ResourceName 'AADApplicationFederatedIdentityCredential' -Property $testParams).Get() } | Should -Throw
+                Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Times 1 -Exactly -Scope It
             }
         }
 
@@ -230,4 +286,3 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 }
 
 Invoke-Command -ScriptBlock $Global:DscHelper.CleanupScript -NoNewScope
-

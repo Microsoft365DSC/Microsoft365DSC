@@ -176,7 +176,14 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
                     }
                     catch
                     {
-                        $this.LogError($_, 'Error retrieving data:')
+                        if (Test-M365DSCNotFoundError -ErrorRecord $_)
+                        {
+                            Write-Verbose -Message "Could not retrieve federated identity credential by name {$($this.Name)}"
+                        }
+                        else
+                        {
+                            throw
+                        }
                     }
                 }
 
