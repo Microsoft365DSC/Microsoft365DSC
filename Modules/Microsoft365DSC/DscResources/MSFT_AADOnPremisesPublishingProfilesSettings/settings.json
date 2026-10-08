@@ -1,5 +1,27 @@
 {
   "resourceName": "AADOnPremisesPublishingProfilesSettings",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "onPremisesPublishingProfile",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaOnPremisePublishingProfile",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "HybridAgentUpdaterConfiguration",
+      "reason": "Deferred",
+      "note": "Absent from the documented update body of the publishing profile."
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    }
+  ],
   "description": "Configures the settings for the on-premises publishing profiles in Entra Id.",
   "roles": {
     "read": [],

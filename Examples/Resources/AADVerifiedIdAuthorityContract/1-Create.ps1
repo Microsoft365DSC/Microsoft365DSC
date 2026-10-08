@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,67 +19,68 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADVerifiedIdAuthorityContract 'AADVerifiedIdAuthorityContract-Sample Custom Verified Credentials'
+        AADVerifiedIdAuthorityContract 'AADVerifiedIdAuthorityContract-Example'
         {
-            displays             = @(
+            displays              = @(
                 MSFT_AADVerifiedIdAuthorityContractDisplayModel{
                     consent = MSFT_AADVerifiedIdAuthorityContractDisplayConsent{
                         instructions = 'Sign in with your account to get your card.'
-                        title = 'Do you want to get your Verified Credential?'
+                        title        = 'Do you want to get your Verified Credential?'
                     }
-                    card = MSFT_AADVerifiedIdAuthorityContractDisplayCard{
-                        description = 'Use your verified credential to prove to anyone that you know all about verifiable credentials.'
-                        issuedBy = 'Microsoft'
+                    card    = MSFT_AADVerifiedIdAuthorityContractDisplayCard{
+                        description     = 'Use your verified credential to prove to anyone that you know all about verifiable credentials.'
+                        issuedBy        = 'Microsoft'
                         backgroundColor = '#000000'
-                        textColor = '#ffffff'
-                        logo = MSFT_AADVerifiedIdAuthorityContractDisplayCredentialLogo{
-                            uri = 'https://didcustomerplayground.z13.web.core.windows.net/VerifiedCredentialExpert_icon.png'
+                        textColor       = '#ffffff'
+                        logo            = MSFT_AADVerifiedIdAuthorityContractDisplayCredentialLogo{
+                            uri         = 'https://didcustomerplayground.z13.web.core.windows.net/VerifiedCredentialExpert_icon.png'
                             description = 'Verified Credential Expert Logo'
                         }
-                        title = 'Verified Credential Expert'
+                        title           = 'Verified Credential Expert'
                     }
-                    locale = 'en-US'
-                    claims = @(
+                    locale  = 'en-US'
+                    claims  = @(
                         MSFT_AADVerifiedIdAuthorityContractDisplayClaims{
                             label = 'First name'
                             claim = 'vc.credentialSubject.firstName'
-                            type = 'String'
+                            type  = 'String'
                         }
                         MSFT_AADVerifiedIdAuthorityContractDisplayClaims{
                             label = 'Last name'
                             claim = 'vc.credentialSubject.lastName'
-                            type = 'String'
+                            type  = 'String'
                         }
                     )
                 }
             );
-            Ensure               = "Present";
-            linkedDomainUrl      = "https://$OrganizationName/";
-            name                 = "Sample Custom Verified Credentials";
-            rules                = MSFT_AADVerifiedIdAuthorityContractRulesModel{
+            Ensure                = "Present";
+            linkedDomainUrl       = "https://$TenantId/";
+            name                  = "Verified Credential Expert Card";
+            rules                 = MSFT_AADVerifiedIdAuthorityContractRulesModel{
                 validityInterval = 2592000
-                vc = MSFT_AADVerifiedIdAuthorityContractVcType{
+                vc               = MSFT_AADVerifiedIdAuthorityContractVcType{
                     type = @('VerifiedCredentialExpert')
                 }
-                attestations = MSFT_AADVerifiedIdAuthorityContractAttestations{
+                attestations     = MSFT_AADVerifiedIdAuthorityContractAttestations{
                     idTokenHints = @(
                         MSFT_AADVerifiedIdAuthorityContractAttestationValues{
-                            mapping = @(
+                            mapping  = @(
                                 MSFT_AADVerifiedIdAuthorityContractClaimMapping{
-                                    inputClaim = '$.given_name'
-                                    indexed = $False
+                                    inputClaim  = '$.given_name'
+                                    indexed     = $False
                                     outputClaim = 'firstName'
-                                    required = $True
+                                    required    = $True
                                 }
                                 MSFT_AADVerifiedIdAuthorityContractClaimMapping{
-                                    inputClaim = '$.family_name'
-                                    indexed = $True
+                                    inputClaim  = '$.family_name'
+                                    indexed     = $True
                                     outputClaim = 'lastName'
-                                    required = $True
+                                    required    = $True
                                 }
                             )
                             required = $False

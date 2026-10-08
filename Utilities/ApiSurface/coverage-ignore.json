@@ -1,0 +1,188 @@
+{
+  "modules": [
+    {
+      "module": "Reports",
+      "reason": "Usage and activity reports are read-only telemetry. There is nothing to configure."
+    },
+    {
+      "module": "DeviceManagement.Functions",
+      "reason": "Query and report helpers over device management, not configurable surface."
+    },
+    {
+      "module": "Financials",
+      "reason": "Dynamics business data. Microsoft365DSC configures tenants, not business records."
+    },
+    {
+      "module": "Search",
+      "reason": "Search query surface, not configuration."
+    }
+  ],
+  "odataSubtypes": [
+    {
+      "odataSubtype": "androidCompliancePolicy",
+      "reason": "Android device administrator compliance policy. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidCustomConfiguration",
+      "reason": "Android device administrator custom profile. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidEasEmailProfileConfiguration",
+      "reason": "Android device administrator email profile. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidEnterpriseWiFiConfiguration",
+      "reason": "Android device administrator enterprise Wi-Fi profile. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidGeneralDeviceConfiguration",
+      "reason": "Android device administrator device restrictions. Google deprecated device administrator in 2020 and Intune ended support on GMS devices in August 2024."
+    },
+    {
+      "odataSubtype": "androidImportedPFXCertificateProfile",
+      "reason": "Android device administrator imported PFX certificate. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidOmaCpConfiguration",
+      "reason": "Android device administrator OMA-CP profile. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidPkcsCertificateProfile",
+      "reason": "Android device administrator PKCS certificate. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidScepCertificateProfile",
+      "reason": "Android device administrator SCEP certificate. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidTrustedRootCertificate",
+      "reason": "Android device administrator trusted root certificate. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidVpnConfiguration",
+      "reason": "Android device administrator VPN profile. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "androidWiFiConfiguration",
+      "reason": "Android device administrator Wi-Fi profile. Device administrator management is deprecated."
+    },
+    {
+      "odataSubtype": "macOSEndpointProtectionConfiguration",
+      "reason": "Deprecated by Intune. Endpoint security policies carry macOS disk encryption and firewall instead."
+    },
+    {
+      "odataSubtype": "macOSExtensionsConfiguration",
+      "reason": "Deprecated by Intune. The settings catalog carries macOS extensions instead."
+    },
+    {
+      "odataSubtype": "macOSSoftwareUpdateConfiguration",
+      "reason": "Deprecated by Intune. The settings catalog carries macOS software updates instead."
+    },
+    {
+      "odataSubtype": "microsoftStoreForBusinessApp",
+      "reason": "Microsoft Store for Business app. Graph states the type supports no create, update or delete."
+    },
+    {
+      "odataSubtype": "windows10MobileCompliancePolicy",
+      "reason": "Windows 10 Mobile compliance policy. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windows81CompliancePolicy",
+      "reason": "Windows 8.1 compliance policy. Intune ended support for Windows 8.1 on 22 October 2022."
+    },
+    {
+      "odataSubtype": "windows81GeneralConfiguration",
+      "reason": "Windows 8.1 device restrictions. Intune ended support for Windows 8.1 on 22 October 2022."
+    },
+    {
+      "odataSubtype": "windows81VpnConfiguration",
+      "reason": "Windows 8.1 VPN profile. Intune ended support for Windows 8.1 on 22 October 2022."
+    },
+    {
+      "odataSubtype": "windows81WifiImportConfiguration",
+      "reason": "Windows 8.1 imported Wi-Fi profile. Intune ended support for Windows 8.1 on 22 October 2022."
+    },
+    {
+      "odataSubtype": "windowsPhone81AppX",
+      "reason": "Windows Phone 8.1 line of business app. Graph states it is deprecated since February 2023."
+    },
+    {
+      "odataSubtype": "windowsPhone81AppXBundle",
+      "reason": "Windows Phone 8.1 line of business app bundle. Graph states it is deprecated since February 2023."
+    },
+    {
+      "odataSubtype": "windowsPhone81CompliancePolicy",
+      "reason": "Windows Phone 8.1 compliance policy. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhone81CustomConfiguration",
+      "reason": "Windows Phone 8.1 custom profile. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhone81GeneralConfiguration",
+      "reason": "Windows Phone 8.1 device restrictions. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhone81ImportedPFXCertificateProfile",
+      "reason": "Windows Phone 8.1 imported PFX certificate. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhone81SCEPCertificateProfile",
+      "reason": "Windows Phone 8.1 SCEP certificate. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhone81StoreApp",
+      "reason": "Windows Phone 8.1 store app. Graph states it is deprecated since February 2023."
+    },
+    {
+      "odataSubtype": "windowsPhone81TrustedRootCertificate",
+      "reason": "Windows Phone 8.1 trusted root certificate. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhone81VpnConfiguration",
+      "reason": "Windows Phone 8.1 VPN profile. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhoneEASEmailProfileConfiguration",
+      "reason": "Windows Phone email profile. The platform is out of support."
+    },
+    {
+      "odataSubtype": "windowsPhoneXAP",
+      "reason": "Windows Phone XAP line of business app. The platform is out of support."
+    }
+  ],
+  "uriRoots": [
+    {
+      "uriRoot": "/print/printers",
+      "reason": "Per printer runtime state and job queues, not tenant configuration."
+    },
+    {
+      "uriRoot": "/communications",
+      "reason": "Live call and meeting state. Nothing here survives a configuration run."
+    },
+    {
+      "uriRoot": "/bookingBusinesses/{bookingBusiness-id}/appointments",
+      "reason": "Booked appointments are customer records rather than tenant configuration."
+    },
+    {
+      "uriRoot": "/bookingBusinesses/{bookingBusiness-id}/calendarView",
+      "reason": "A calendar view is a projection of the appointments."
+    },
+    {
+      "uriRoot": "/bookingBusinesses/{bookingBusiness-id}/customers",
+      "reason": "Booking customers are customer records rather than tenant configuration."
+    },
+    {
+      "uriRoot": "/solutions/virtualEvents",
+      "reason": "Webinars, town halls and their attendance records are events rather than tenant configuration."
+    },
+    {
+      "uriRoot": "/chats",
+      "reason": "Chat threads, their members and their messages are conversation data rather than tenant configuration."
+    },
+    {
+      "uriRoot": "/me/",
+      "reason": "The signed-in user's own mailbox and drive, which a tenant configuration never sets."
+    }
+  ]
+}

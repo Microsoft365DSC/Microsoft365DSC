@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
@@ -40,7 +40,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MgGroup -MockWith {
             }
 
-            Mock -CommandName Get-MgGroupMember -MockWith {
+            Mock -CommandName Get-MgBetaGroupMember -MockWith {
             }
 
             Mock -CommandName Get-MgBetaGroup -MockWith {
@@ -52,22 +52,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MgBetaDirectoryDeletedItemAsGroup -MockWith {
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
             }
 
-            Mock -CommandName Update-MgGroup -MockWith {
+            Mock -CommandName Update-MgBetaGroup -MockWith {
             }
 
-            Mock -CommandName Remove-MgGroup -MockWith {
+            Mock -CommandName Remove-MgBetaGroup -MockWith {
             }
 
-            Mock -CommandName New-MgGroup -MockWith {
+            Mock -CommandName New-MgBetaGroup -MockWith {
             }
 
             Mock -CommandName New-MgGroupOwnerByRef -MockWith {
             }
 
-            Mock -CommandName New-MgGroupMemberByRef -MockWith {
+            Mock -CommandName New-MgBetaGroupMemberByRef -MockWith {
             }
 
             Mock -CommandName New-MgBetaGroupOwnerByRef -MockWith {
@@ -85,10 +85,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgGroupOwnerDirectoryObjectByRef -MockWith {
             }
 
-            Mock -CommandName Remove-MgGroupMemberDirectoryObjectByRef -MockWith {
+            Mock -CommandName Remove-MgBetaGroupMemberDirectoryObjectByRef -MockWith {
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
             }
 
             Mock -CommandName Set-MgGroupLicense -MockWith {
@@ -123,206 +123,273 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The Group should exist but it DOES NOT' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName     = 'DSCGroup'
-                    Description     = 'Microsoft DSC Group'
-                    SecurityEnabled = $True
-                    MailEnabled     = $True
-                    MailNickname    = 'M365DSC'
-                    GroupTypes      = @('Unified')
-                    Visibility      = 'Private'
-                    Ensure          = 'Present'
-                    Credential      = $Credential
+                    DisplayName            = 'DSCGroup'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $True
+                    MailNickname           = 'M365DSC'
+                    GroupTypes             = @('Unified')
+                    Visibility             = 'Private'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    GroupLifecyclePolicySelectedEnabled = $false
+                    Owners                 = @('john.smith@contoso.com')
+                    Members                = @('john.smith@contoso.com', 'jane.doe@contoso.com')
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return $null
                 }
+
+                Mock -CommandName Get-MgUser -MockWith {
+                    return @{
+                        Id = "id-$UserId"
+                    }
+                }
+
+                Mock -CommandName Get-MgBetaGroupLifecyclePolicy -MockWith {
+                    return @{
+                        Id                = '12345-12345-12345-12345-12345'
+                        ManagedGroupTypes = 'Selected'
+                    }
+                }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName 'New-MgGroup' -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
+                Should -Invoke -CommandName 'New-MgBetaGroup' -Exactly 1 -ParameterFilter {
+                    -not $BodyParameter.ContainsKey('GroupLifecyclePolicySelectedEnabled') -and
+                    $BodyParameter.'owners@odata.bind'.Count -eq 1 -and $BodyParameter.'owners@odata.bind'[0] -like '*/directoryObjects/id-john.smith@contoso.com' -and
+                    $BodyParameter.'members@odata.bind'.Count -eq 2 -and $BodyParameter.'members@odata.bind'[1] -like '*/directoryObjects/id-jane.doe@contoso.com'
+                }
+                Should -Invoke -CommandName 'New-MgGroupOwnerByRef' -Exactly 0
+                Should -Invoke -CommandName 'New-MgBetaGroupMemberByRef' -Exactly 0
             }
         }
 
         Context -Name 'The Group exists but it SHOULD NOT' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName     = 'DSCGroup'
-                    Description     = 'Microsoft DSC Group'
-                    SecurityEnabled = $True
-                    MailEnabled     = $True
-                    MailNickname    = 'M365DSC'
-                    GroupTypes      = @('Unified')
-                    Visibility      = 'Private'
-                    Ensure          = 'Absent'
-                    Credential      = $Credential
+                    DisplayName            = 'DSCGroup'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $True
+                    MailNickname           = 'M365DSC'
+                    GroupTypes             = @('Unified')
+                    Visibility             = 'Private'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Absent'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName = 'DSCGroup'
-                        ID          = '12345-12345-12345-12345-12345'
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName 'Remove-MgGroup' -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
+                Should -Invoke -CommandName 'Remove-MgBetaGroup' -Exactly 1
             }
         }
 
         Context -Name 'The Group Exists and Values are already in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName     = 'DSCGroup'
-                    ID              = '12345-12345-12345-12345-12345'
-                    Description     = 'Microsoft DSC Group'
-                    SecurityEnabled = $True
-                    MailEnabled     = $True
-                    MailNickname    = 'M365DSC'
-                    GroupTypes      = @('Unified')
-                    Visibility      = 'Private'
-                    Ensure          = 'Present'
-                    Credential      = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $True
+                    MailNickname           = 'M365DSC'
+                    GroupTypes             = @('Unified')
+                    Visibility             = 'Private'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName     = 'DSCGroup'
-                        ID              = '12345-12345-12345-12345-12345'
-                        Description     = 'Microsoft DSC Group'
-                        SecurityEnabled = $True
-                        MailEnabled     = $True
-                        MailNickname    = 'M365DSC'
-                        GroupTypes      = @('Unified')
-                        Visibility      = 'Private'
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $True
+                        MailNickname           = 'M365DSC'
+                        GroupTypes             = @('Unified')
+                        Visibility             = 'Private'
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'The Group Exists with empty desired members' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName     = 'DSCGroup'
-                    ID              = '12345-12345-12345-12345-12345'
-                    Description     = 'Microsoft DSC Group'
-                    SecurityEnabled = $True
-                    MailEnabled     = $True
-                    MailNickname    = 'M365DSC'
-                    GroupTypes      = @('Unified')
-                    Members         = @()
-                    GroupAsMembers  = @()
-                    Visibility      = 'Private'
-                    Ensure          = 'Present'
-                    Credential      = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $True
+                    MailNickname           = 'M365DSC'
+                    GroupTypes             = @('Unified')
+                    Members                = @()
+                    GroupAsMembers         = @()
+                    Visibility             = 'Private'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName     = 'DSCGroup'
-                        ID              = '12345-12345-12345-12345-12345'
-                        Description     = 'Microsoft DSC Group'
-                        SecurityEnabled = $True
-                        MailEnabled     = $True
-                        MailNickname    = 'M365DSC'
-                        GroupTypes      = @('Unified')
-                        Visibility      = 'Private'
-                        Members         = 1..20 | ForEach-Object {
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $True
+                        MailNickname           = 'M365DSC'
+                        GroupTypes             = @('Unified')
+                        Visibility             = 'Private'
+                        Members                = 1..20 | ForEach-Object {
                             @{
                                 '@odata.type'      = '#microsoft.graph.user'
                                 userPrincipalName = "user$_.contoso.com"
                             }
+                        }
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
                         }
                     }
                 }
             }
 
             It 'Should not retrieve all group members from the Get method' {
-                Get-TargetResource @testParams
-                Should -Invoke -CommandName 'Get-MgGroupMember' -Exactly 0
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
+                Should -Invoke -CommandName 'Get-MgBetaGroupMember' -Exactly 0
             }
 
             It 'Should return existing group members so empty desired members can detect drift' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
 
                 $result.Members | Should -Contain 'user1.contoso.com'
-                Should -Invoke -CommandName 'Get-MgGroupMember' -Exactly 0
+                Should -Invoke -CommandName 'Get-MgBetaGroupMember' -Exactly 0
             }
         }
 
         Context -Name 'The Group Exists and is a member of another group. Values are already in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName     = 'DSCGroup'
-                    ID              = '12345-12345-12345-12345-12345'
-                    Description     = 'Microsoft DSC Group'
-                    SecurityEnabled = $True
-                    MailEnabled     = $True
-                    GroupTypes      = @()
-                    MailNickname    = 'M365DSC'
-                    MemberOf        = 'DSCMemberOfGroup'
-                    Ensure          = 'Present'
-                    Credential      = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $True
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    MemberOf               = 'DSCMemberOfGroup'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
-                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $Id -eq '12345-12345-12345-12345-12345' -or $Filter -eq "DisplayName eq 'DSCGroup'" } -MockWith {
+                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $GroupId -eq '12345-12345-12345-12345-12345' -or $Filter -eq "DisplayName eq 'DSCGroup'" } -MockWith {
                     return @{
-                        DisplayName     = 'DSCGroup'
-                        ID              = '12345-12345-12345-12345-12345'
-                        Description     = 'Microsoft DSC Group'
-                        SecurityEnabled = $True
-                        MailEnabled     = $true
-                        MailNickname    = 'M365DSC'
-                        GroupTypes      = @()
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $true
+                        MailNickname           = 'M365DSC'
+                        GroupTypes             = @()
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
                 Mock -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
@@ -338,7 +405,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         }
                     )
                 }
-                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $Id -eq '67890-67890-67890-67890' -or $Filter -eq "DisplayName -eq 'DSCMemberOfGroup'" } -MockWith {
+                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $GroupId -eq '67890-67890-67890-67890' -or $Filter -eq "DisplayName eq 'DSCMemberOfGroup'" } -MockWith {
                     $returnData = @{
                         DisplayName     = 'DSCMemberOfGroup'
                         ID              = '67890-67890-67890-67890'
@@ -353,47 +420,57 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Invoke-M365DSCGraphBatchRequest' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'The Group Exists and is assigned to the correct role. Values are already in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $True
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    IsAssignableToRole = $true
-                    AssignedToRole     = 'AADRole'
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $True
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    IsAssignableToRole     = $true
+                    AssignedToRole         = 'AADRole'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroup'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $true
-                        GroupTypes         = @()
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $true
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $true
+                        GroupTypes             = @()
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $true
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
 
@@ -413,95 +490,115 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Invoke-M365DSCGraphBatchRequest' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'The Group exists and values are NOT in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName     = 'DSCGroup'
-                    Description     = 'Microsoft DSC Group'
-                    SecurityEnabled = $True
-                    MailEnabled     = $True
-                    MailNickname    = 'M365DSC'
-                    GroupTypes      = @('Unified')
-                    Visibility      = 'Private'
-                    Ensure          = 'Present'
-                    Credential      = $Credential
+                    DisplayName            = 'DSCGroup'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $True
+                    MailNickname           = 'M365DSC'
+                    GroupTypes             = @('Unified')
+                    Visibility             = 'Private'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName     = 'DSCGroup'
-                        Description     = 'Microsoft DSC' #Drift
-                        SecurityEnabled = $True
-                        GroupTypes      = @('Unified')
-                        MailEnabled     = $True
-                        MailNickname    = 'M365DSC'
-                        Visibility      = 'Private'
-                        Id              = '12345-12345-12345-12345-12345'
+                        DisplayName            = 'DSCGroup'
+                        Description            = 'Microsoft DSC' #Drift
+                        SecurityEnabled        = $True
+                        GroupTypes             = @('Unified')
+                        MailEnabled            = $True
+                        MailNickname           = 'M365DSC'
+                        Visibility             = 'Private'
+                        Id                     = '12345-12345-12345-12345-12345'
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName 'Update-MgGroup' -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
+                Should -Invoke -CommandName 'Update-MgBetaGroup' -Exactly 1
             }
         }
 
         Context -Name 'The Group Exists but is not a member of another group. Values are NOT in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName     = 'DSCGroup'
-                    ID              = '12345-12345-12345-12345-12345'
-                    Description     = 'Microsoft DSC Group'
-                    SecurityEnabled = $True
-                    MailEnabled     = $true
-                    GroupTypes      = @()
-                    MailNickname    = 'M365DSC'
-                    MemberOf        = 'DSCMemberOfGroup'
-                    Ensure          = 'Present'
-                    Credential      = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $true
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    MemberOf               = 'DSCMemberOfGroup'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
-                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $Id -eq '12345-12345-12345-12345-12345' -or $Filter -eq "DisplayName eq 'DSCGroup'" } -MockWith {
+                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $GroupId -eq '12345-12345-12345-12345-12345' -or $Filter -eq "DisplayName eq 'DSCGroup'" } -MockWith {
                     $returnData = @{
-                        DisplayName     = 'DSCGroup'
-                        ID              = '12345-12345-12345-12345-12345'
-                        Description     = 'Microsoft DSC Group'
-                        SecurityEnabled = $True
-                        MailEnabled = $true
-                        MailNickname    = 'M365DSC'
-                        GroupTypes      = @()
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $true
+                        MailNickname           = 'M365DSC'
+                        GroupTypes             = @()
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                     return $returnData
                 }
-                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $Id -eq '67890-67890-67890-67890' -or $Filter -eq "DisplayName -eq 'DSCMemberOfGroup'" } -MockWith {
+                Mock -CommandName Get-MgBetaGroup -ParameterFilter { $GroupId -eq '67890-67890-67890-67890' -or $Filter -eq "DisplayName eq 'DSCMemberOfGroup'" } -MockWith {
                     $returnData = @{
                         DisplayName     = 'DSCMemberOfGroup'
                         ID              = '67890-67890-67890-67890'
@@ -516,16 +613,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 2
             }
         }
@@ -533,35 +630,45 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The Group Exists but group is not assigned as member. Values are NOT in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $true
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    IsAssignableToRole = $true
-                    GroupAsMembers     = @('DSCGroupMember')
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $true
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    IsAssignableToRole     = $true
+                    GroupAsMembers         = @('DSCGroupMember')
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroupMember'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $true
-                        GroupTypes         = @()
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $true
-                        AssignedToRole     = @()
-                        Ensure             = 'Present'
+                        DisplayName            = 'DSCGroupMember'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $true
+                        GroupTypes             = @()
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $true
+                        AssignedToRole         = @()
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
+                        Ensure                 = 'Present'
                     }
                 }
 
@@ -570,16 +677,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 2
                 Should -Invoke -CommandName 'New-MgBetaGroupMemberByRef' -Exactly 1
             }
@@ -588,34 +695,44 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The Group Exists and is assigned to a role but it shouldn't be. Values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $true
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    IsAssignableToRole = $true
-                    AssignedToRole     = @()
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $true
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    IsAssignableToRole     = $true
+                    AssignedToRole         = @()
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroup'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $true
-                        GroupTypes         = @()
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $true
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $true
+                        GroupTypes             = @()
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $true
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
                 Mock -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
@@ -634,17 +751,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Invoke-M365DSCGraphBatchRequest' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Get-MgBetaRoleManagementDirectoryRoleDefinition' -Exactly 2
                 Should -Invoke -CommandName 'Remove-MgBetaRoleManagementDirectoryRoleAssignment' -Exactly 1
@@ -654,24 +771,29 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The Group does not exist and must be created and assigned a license. Values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $false
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    AssignedLicenses   = @(
-                        (New-CimInstance -ClassName MSFT_AADGroupLicense -Property @{
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $false
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    AssignedLicenses       = @(
+                        ([MSFT_AADGroupLicense] @{
                             DisabledPlans  = [string[]]@()
                             SkuId          = 'AAD_PREMIUM_P2'
-                        } -ClientOnly)
+                        })
                     )
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
@@ -693,17 +815,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName 'New-MgGroup' -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
+                Should -Invoke -CommandName 'New-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Set-MgGroupLicense' -Exactly 1
             }
         }
@@ -711,52 +833,58 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The Group exists and has been assigned the correct license. Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $false
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    AssignedLicenses   = @(
-                        (New-CimInstance -ClassName MSFT_AADGroupLicense -Property @{
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $false
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    AssignedLicenses       = @(
+                        ([MSFT_AADGroupLicense] @{
                             DisabledPlans  = [string[]]@()
                             SkuId          = 'AAD_PREMIUM_P2'
-                        } -ClientOnly)
+                        })
                     )
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroup'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $false
-                        GroupTypes         = @()
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $false
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $false
+                        GroupTypes             = @()
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $false
+                        AssignedLicenses       = @(
+                            @{
+                                DisabledPlans = @()
+                                SkuId         = '12345-12345-12345'
+                            }
+                        )
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
 
                 Mock -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
-                    return @(
-                        @{
-                            id   = 'Licenses'
-                            body = @{
-                                value = @{
-                                    DisabledPlans = @()
-                                    SkuId         = '12345-12345-12345'
-                                }
-                            }
-                        }
-                    )
+                    return @()
                 }
 
                 Mock -CommandName Get-MgBetaSubscribedSku -MockWith {
@@ -774,50 +902,60 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Invoke-M365DSCGraphBatchRequest' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The Group exists and is not assigned a license but it should be. Values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $false
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    AssignedLicenses   = @(
-                        (New-CimInstance -ClassName MSFT_AADGroupLicense -Property @{
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $false
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    AssignedLicenses       = @(
+                        ([MSFT_AADGroupLicense] @{
                             DisabledPlans  = [string[]]@()
                             SkuId          = 'AAD_PREMIUM_P2'
-                        } -ClientOnly)
+                        })
                     )
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroup'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $false
-                        GroupTypes         = @()
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $false
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $false
+                        GroupTypes             = @()
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $false
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
 
@@ -836,16 +974,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Set-MgGroupLicense' -Exactly 1
             }
@@ -853,47 +991,53 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The Group exists and is assigned a license but it shouldn't be. Values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $false
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    AssignedLicenses   = @()
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $false
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    AssignedLicenses       = @()
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroup'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $false
-                        GroupTypes         = @()
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $false
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $false
+                        GroupTypes             = @()
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $false
+                        AssignedLicenses       = @(
+                            @{
+                                DisabledPlans = @()
+                                SkuId         = '12345-12345-12345'
+                            }
+                        )
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
 
                 Mock -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
-                    return @(
-                        @{
-                            id   = 'Licenses'
-                            body = @{
-                                value = @{
-                                    DisabledPlans = @()
-                                    SkuId         = '12345-12345-12345'
-                                }
-                            }
-                        }
-                    )
+                    return @()
                 }
 
                 Mock -CommandName Get-MgBetaSubscribedSku -MockWith {
@@ -911,17 +1055,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Invoke-M365DSCGraphBatchRequest' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
                 Should -Invoke -CommandName 'Set-MgGroupLicense' -Exactly 1
             }
@@ -930,31 +1074,41 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The Group exists and is assigned a license. Tested values are in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName        = 'DSCGroup'
-                    ID                 = '12345-12345-12345-12345-12345'
-                    Description        = 'Microsoft DSC Group'
-                    SecurityEnabled    = $True
-                    MailEnabled        = $false
-                    GroupTypes         = @()
-                    MailNickname       = 'M365DSC'
-                    Ensure             = 'Present'
-                    Credential         = $Credential
+                    DisplayName            = 'DSCGroup'
+                    ID                     = '12345-12345-12345-12345-12345'
+                    Description            = 'Microsoft DSC Group'
+                    SecurityEnabled        = $True
+                    MailEnabled            = $false
+                    GroupTypes             = @()
+                    MailNickname           = 'M365DSC'
+                    Theme                  = 'Blue'
+                    WritebackConfiguration = ([MSFT_MicrosoftGraphGroupWritebackConfiguration] @{
+                        IsEnabled           = $true
+                        OnPremisesGroupType = 'universalDistributionGroup'
+                    })
+                    Ensure                 = 'Present'
+                    Credential             = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroup'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $false
-                        GroupTypes         = @()
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $false
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $false
+                        GroupTypes             = @()
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $false
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
                     }
                 }
 
@@ -973,12 +1127,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaGroup' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -990,26 +1144,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
                 Mock -CommandName Get-MgBetaGroup -MockWith {
                     return @{
-                        DisplayName        = 'DSCGroup'
-                        ID                 = '12345-12345-12345-12345-12345'
-                        Description        = 'Microsoft DSC Group'
-                        SecurityEnabled    = $True
-                        MailEnabled        = $False
-                        GroupTypes         = @("Unified")
-                        MailNickname       = 'M365DSC'
-                        IsAssignableToRole = $true
-                        Ensure             = 'Present'
+                        DisplayName            = 'DSCGroup'
+                        ID                     = '12345-12345-12345-12345-12345'
+                        Description            = 'Microsoft DSC Group'
+                        SecurityEnabled        = $True
+                        MailEnabled            = $False
+                        GroupTypes             = @("Unified")
+                        MailNickname           = 'M365DSC'
+                        IsAssignableToRole     = $true
+                        Theme                  = 'Blue'
+                        WritebackConfiguration = @{
+                            isEnabled           = $true
+                            onPremisesGroupType = 'universalDistributionGroup'
+                        }
+                        Ensure                 = 'Present'
                     }
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADGroup' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,25 +5,37 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsAppPermissionPolicy "TeamsAppPermissionPolicy-Test-Policy"
+        TeamsAppPermissionPolicy "TeamsAppPermissionPolicy-Example"
         {
-            Credential             = $Credscredential;
-            DefaultCatalogApps     = "com.microsoft.teamspace.tab.web"; # Updated property
+            DefaultCatalogApps     = "com.microsoft.teamspace.tab.web"; # Updated Property
             DefaultCatalogAppsType = "AllowedAppList";
-            Description            = "This is a test policy";
+            Description            = "Restricts apps for the sales department";
             Ensure                 = "Present";
             GlobalCatalogAppsType  = "BlockedAppList";
-            Identity               = "TestPolicy";
+            Identity               = "SalesAppPermissions";
             PrivateCatalogAppsType = "BlockedAppList";
+            ApplicationId          = $ApplicationId;
+            TenantId               = $TenantId;
+            CertificateThumbprint  = $CertificateThumbprint;
         }
     }
 }

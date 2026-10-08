@@ -1,434 +1,291 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SCCaseHoldRule'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SCCaseHoldRule : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Name parameter specifies a unique name for the case hold rule.')]
+    [System.String] $Name
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Policy,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Policy parameter specifies the case hold policy that contains the rule. You can use any value that uniquely identifies the policy.')]
+    [System.String] $Policy
 
-        [Parameter()]
-        [System.String]
-        $Comment,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Comment parameter specifies an optional comment.')]
+    [System.String] $Comment
 
-        [Parameter()]
-        [System.String]
-        $ContentMatchQuery,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ContentMatchQuery parameter specifies a content search filter. Use this parameter to create a query-based hold so only the content that matches the specified search query is placed on hold. This parameter uses a text search string or a query that''s formatted by using the Keyword Query Language (KQL).')]
+    [System.String] $ContentMatchQuery
 
-        [Parameter()]
-        [System.Boolean]
-        $Disabled = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Disabled parameter specifies whether the case hold rule is enabled or disabled.')]
+    [System.Nullable[System.Boolean]] $Disabled
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the rule exists, absent ensures it is removed')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Global Admin Account')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of SCCaseHoldRule for $Name"
-
-    try
+    [SCCaseHoldRule] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Name -ne $Name)
+        if ($this.RequiresPowerShellCore())
         {
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+            $remote = [SCCaseHoldRule]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            $null = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-                -InboundParameters $PSBoundParameters
+        Write-Verbose -Message "Getting configuration of SCCaseHoldRule for $($this.Name)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-            $Rules = Invoke-M365DSCCommand -ScriptBlock { Get-CaseHoldRule -Policy $Policy -ErrorAction Stop } -SuppressNotFoundError
-            $Rule = $Rules | Where-Object { $_.Name -eq $Name }
-
-            if ($null -eq $Rule)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.Name)
             {
-                Write-Verbose -Message "SCCaseHoldRule $($Name) does not exist."
-                return $nullReturn
+                Confirm-M365DSCDependencies
+
+                $null = $this.Connect('SecurityComplianceCenter')
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+                $Rules = Invoke-M365DSCCommand -ScriptBlock { Get-CaseHoldRule -Policy $this.Policy -ErrorAction Stop } -SuppressNotFoundError
+                $Rule = $Rules | Where-Object -FilterScript { $_.Name -eq $this.Name -and "$($_.Mode)" -ne 'PendingDeletion' }
+
+                if ($null -eq $Rule)
+                {
+                    Write-Verbose -Message "SCCaseHoldRule $($this.Name) does not exist."
+                    return $this.AsResult($nullReturn)
+                }
+            }
+            else
+            {
+                $Rule = $this.ExportedInstance
+            }
+
+            Write-Verbose "Found existing SCCaseHoldRule $($this.Name)"
+
+            $result = @{
+                Name                  = $Rule.Name
+                Policy                = $this.Policy
+                Comment               = $Rule.Comment
+                Disabled              = $Rule.Disabled
+                ContentMatchQuery     = $Rule.ContentMatchQuery
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of SCCaseHoldRule for $($this.Name)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentRule = $this.Get().ToHashtable()
+
+        if ($this.Ensure -eq 'Present' -and $CurrentRule.Ensure -eq 'Absent')
+        {
+            $CreationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+            Write-Verbose "Creating new Case Hold Rule $($this.Name) calling the New-CaseHoldRule cmdlet."
+            try
+            {
+                New-CaseHoldRule @CreationParams -ErrorAction Stop
+            }
+            catch
+            {
+                [SCCaseHoldRule]::ThrowUnlessDeploymentFailure($_)
             }
         }
-        else
+        # Compliance Case exists and it should. Update it.
+        elseif ($this.Ensure -eq 'Present' -and $CurrentRule.Ensure -eq 'Present')
         {
-            $Rule = $Script:exportedInstance
+            $UpdateParams = @{
+                Identity          = $this.Name
+                Comment           = $this.Comment
+                Disabled          = $this.Disabled
+                ContentMatchQuery = $this.ContentMatchQuery
+            }
+            Write-Verbose "Updating Case Hold Rule $($this.Name) by calling the Set-CaseHoldRule cmdlet."
+            try
+            {
+                Set-CaseHoldRule @UpdateParams -ErrorAction Stop
+            }
+            catch
+            {
+                [SCCaseHoldRule]::ThrowUnlessDeploymentFailure($_)
+            }
+        }
+        # Compliance Case exists but it shouldn't. Remove it.
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentRule.Ensure -eq 'Present')
+        {
+            try
+            {
+                Remove-CaseHoldRule -Identity $this.Name -Confirm:$false -ErrorAction Stop
+            }
+            catch
+            {
+                [SCCaseHoldRule]::ThrowUnlessDeploymentFailure($_)
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        Write-Verbose "Found existing SCCaseHoldRule $($Name)"
+        $ConnectionMode = $this.Connect('SecurityComplianceCenter')
 
-        $result = @{
-            Name                  = $Rule.Name
-            Policy                = $Policy
-            Comment               = $Rule.Comment
-            Disabled              = $Rule.Disabled
-            ContentMatchQuery     = $Rule.ContentMatchQuery
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$Rules = Get-CaseHoldRule -ErrorAction Stop
+
+            $dscContent = [System.Text.StringBuilder]::new()
+            $i = 1
+            if ($Rules.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($Rule in $Rules)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($Rules.Count)] $($Rule.Name)" -DeferWrite
+                try
+                {
+                    $policyObject = Get-CaseHoldPolicy -Identity $Rule.Policy -ErrorAction Stop
+
+                    $this.ExportedInstance = $Rule
+                    $Results = $this.GetForExport(@{ Name = $Rule.Name; Policy = $policyObject.Name })
+                    $rawResults = $Results.Clone()
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential `
+                        -RawResults $rawResults
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+                }
+                catch
+                {
+                    Write-Verbose -Message "You are not authorized to access Case Hold Policy {$($Rule.Policy)}"
+                }
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden static [void] ThrowUnlessDeploymentFailure([System.Management.Automation.ErrorRecord] $ErrorRecord)
+    {
+        if ($ErrorRecord.Exception.Message -notlike '*failed to be deployed*')
+        {
+            throw $ErrorRecord
+        }
+        Write-Warning -Message ($ErrorRecord.Exception.Message -split "`r?`n")[0]
+    }
+
+    hidden [SCCaseHoldRule] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SCCaseHoldRule])
+        {
+            return $Values
+        }
+
+        $result = [SCCaseHoldRule]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Policy,
-
-        [Parameter()]
-        [System.String]
-        $Comment,
-
-        [Parameter()]
-        [System.String]
-        $ContentMatchQuery,
-
-        [Parameter()]
-        [System.Boolean]
-        $Disabled = $false,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of SCCaseHoldRule for $Name"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentRule = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $CurrentRule.Ensure -eq 'Absent')
-    {
-        $CreationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-        Write-Verbose "Creating new Case Hold Rule $Name calling the New-CaseHoldRule cmdlet."
-        New-CaseHoldRule @CreationParams
-    }
-    # Compliance Case exists and it should. Update it.
-    elseif ($Ensure -eq 'Present' -and $CurrentRule.Ensure -eq 'Present')
-    {
-        $UpdateParams = @{
-            Identity          = $Name
-            Comment           = $Comment
-            Disabled          = $Disabled
-            ContentMatchQuery = $ContentMatchQuery
-        }
-        Write-Verbose "Updating Case Hold Rule $Name by calling the Set-CaseHoldRule cmdlet."
-        Set-CaseHoldRule @UpdateParams
-    }
-    # Compliance Case exists but it shouldn't. Remove it.
-    elseif ($Ensure -eq 'Absent' -and $CurrentRule.Ensure -eq 'Present')
-    {
-        Remove-CaseHoldRule -Identity $Name -Confirm:$false
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Policy,
-
-        [Parameter()]
-        [System.String]
-        $Comment,
-
-        [Parameter()]
-        [System.String]
-        $ContentMatchQuery,
-
-        [Parameter()]
-        [System.Boolean]
-        $Disabled = $false,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$Rules = Get-CaseHoldRule -ErrorAction Stop
-
-        $dscContent = [System.Text.StringBuilder]::new()
-        $i = 1
-        if ($Rules.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($Rule in $Rules)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            Write-M365DSCHost -Message "    |---[$i/$($Rules.Count)] $($Rule.Name)" -DeferWrite
-            try
-            {
-                $policy = Get-CaseHoldPolicy -Identity $Rule.Policy -ErrorAction Stop
-
-                $Script:exportedInstance = $Rule
-                $Results = Get-TargetResource @PSBoundParameters `
-                    -Name $Rule.Name `
-                    -Policy $policy.Name
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-            }
-            catch
-            {
-                Write-Verbose -Message "You are not authorized to access Case Hold Policy {$($Rule.Policy)}"
-            }
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

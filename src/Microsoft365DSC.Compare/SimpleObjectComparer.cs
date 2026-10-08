@@ -1,16 +1,19 @@
-﻿using Microsoft.Management.Infrastructure;
+using Microsoft.Management.Infrastructure;
 using Microsoft365DSC.Converter;
+using Microsoft365DSC.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
-using System.Reflection;
 
 namespace Microsoft365DSC.Compare
 {
     public static class SimpleObjectComparer
     {
+        private static readonly HashSet<string> BaseExcludedProperties =
+            new(Utilities.Utilities.AuthenticationPropertyNames, StringComparer.Ordinal) { "Verbose" };
+
         public static Dictionary<string, object> Compare(
             Hashtable currentValues,
             object desiredValues,
@@ -20,17 +23,15 @@ namespace Microsoft365DSC.Compare
             bool noDriftReset = false,
             List<string>? excludedProperties = null)
         {
-            // Contains the strings to write to the event log
             Hashtable driftedParameters = [];
-            // Contains the drift
+            List<Hashtable> driftInfo = [];
             Hashtable driftObject = new()
             {
-                { "DriftInfo", new List<Hashtable>() },
+                { "DriftInfo", driftInfo },
                 { "CurrentValues", new Hashtable() },
                 { "DesiredValues", new Hashtable() }
             };
 
-            // The final return value for the method
             bool returnValue = true;
 
             if (includedDrifts is not null && includedDrifts.Keys.Count > 0)
@@ -47,11 +48,10 @@ namespace Microsoft365DSC.Compare
                         .Replace("<DesiredValue>", "")
                         .Replace("</DesiredValue>", "");
 
-                    AddDriftInfo(driftObject, propertyName, currentValue, desiredValue);
+                    driftInfo.Add(DriftRecord.Create(propertyName, currentValue, desiredValue));
                 }
             }
 
-            // Match for Hashtable, CimInstance and PSBoundParametersDictionary, which inherits from Dictionary<string, object>
             if (desiredValues is not Hashtable and not CimInstance and not Dictionary<string, object>)
             {
                 throw new ArgumentException($"Property 'DesiredValues' must be either a Hashtable or CimInstance. Type detected was {desiredValues.GetType().FullName}");
@@ -63,9 +63,8 @@ namespace Microsoft365DSC.Compare
             }
 
             List<string> keyList = valuesToCheck.Cast<string>().ToList();
-            Hashtable desiredValuesHashtable = ComplexObjectConverter.ToHashtable(desiredValues);
+            Hashtable desiredValuesHashtable = ComplexObjectConverter.ToHashtable(desiredValues)!;
 
-            // Add default Ensure value if it is not present in the DesiredValues but present in the CurrentValues
             if (!keyList.Contains("Ensure") && !keyList.Contains("IsSingleInstance") && currentValues.ContainsKey("Ensure"))
             {
                 keyList.Add("Ensure");
@@ -75,126 +74,111 @@ namespace Microsoft365DSC.Compare
                 }
             }
 
-            List<string> propertiesToExclude = ["Verbose", "Credential", "ApplicationId", "CertificateThumbprint", "CertificatePath", "CertificatePassword", "TenantId", "ApplicationSecret", "ManagedIdentity", "AccessTokens"];
-            if (excludedProperties is not null)
-            {
-                propertiesToExclude.AddRange(excludedProperties);
-                propertiesToExclude = propertiesToExclude.Distinct().ToList();
-            }
-
             foreach (string key in keyList)
             {
-                if (propertiesToExclude.Contains(key))
+                if (BaseExcludedProperties.Contains(key) || (excludedProperties is not null && excludedProperties.Contains(key)))
                 {
                     continue;
                 }
 
-                if (desiredValuesHashtable[key] is null && currentValues.ContainsKey(key) && currentValues[key] is null)
+                bool currentHasKey = currentValues.ContainsKey(key);
+                object? currentValue = currentHasKey ? currentValues[key] : null;
+                bool desiredHasKey = desiredValuesHashtable.ContainsKey(key);
+                object? desiredValue = desiredHasKey ? desiredValuesHashtable[key] : null;
+
+                if (desiredValue is null && currentHasKey && currentValue is null)
                 {
-                    // Do nothing - Both are null
                     continue;
                 }
 
-                if (!currentValues.ContainsKey(key) ||
-                    !(currentValues[key]?.ToString().Equals(desiredValuesHashtable[key]?.ToString(), StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (desiredValuesHashtable.ContainsKey(key) &&
-                            desiredValuesHashtable[key] is not null && desiredValuesHashtable[key] is Array))
+                bool valuesDiffer =
+                    !currentHasKey ||
+                    !(currentValue?.ToString().Equals(desiredValue?.ToString(), StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (desiredHasKey && desiredValue is Array);
+
+                if (!valuesDiffer || !desiredHasKey)
                 {
-                    if (desiredValuesHashtable.ContainsKey(key))
+                    continue;
+                }
+
+                Type desiredType = desiredValue is null
+                    ? currentValue?.GetType() ?? typeof(object)
+                    : desiredValue.GetType();
+
+                if (desiredType.IsArray)
+                {
+                    if (!currentHasKey || currentValue is null)
                     {
-                        object? desiredValue = desiredValuesHashtable[key];
-                        Type desiredType;
-                        if (desiredValue is null)
+                        driftInfo.Add(DriftRecord.Create(key, null, desiredValue));
+                        AddDriftedParameter(driftedParameters, key, "null", "[Array]");
+                        returnValue = false;
+                        continue;
+                    }
+
+                    if (desiredType.Name.Equals("CimInstance[]"))
+                    {
+                        throw new NotSupportedException($"Comparing CimInstances with {typeof(SimpleObjectComparer).Name} is not supported.");
+                    }
+
+                    Array desiredValuesArray = desiredValue is null
+                        ? Array.CreateInstance(desiredType, 0)
+                        : (Array)desiredValue;
+                    Array currentValuesArray = EnsureArray(currentValue, desiredType.GetElementType());
+                    List<CompareObjectModel> arrayDifferences = ArrayComparer.CompareArrays(currentValuesArray, desiredValuesArray);
+                    if (arrayDifferences.Count > 0)
+                    {
+                        string currentValuesString = ArrayComparer.FormatValues(currentValuesArray);
+                        string desiredValuesString = ArrayComparer.FormatValues(desiredValuesArray);
+                        string deltaString = ArrayComparer.FormatDelta(arrayDifferences);
+                        driftInfo.Add(DriftRecord.Create(key, currentValuesString, desiredValuesString, deltaString));
+                        AddDriftedParameter(driftedParameters, key, currentValuesString, desiredValuesString, deltaString);
+                        returnValue = false;
+                    }
+                    continue;
+                }
+
+                switch (desiredValue)
+                {
+                    case null:
+                        driftInfo.Add(DriftRecord.Create(key, currentValue as string ?? string.Empty, "$null"));
+                        AddDriftedParameter(driftedParameters, key, currentValue as string ?? string.Empty, "$null");
+                        returnValue = false;
+                        break;
+
+                    case string desiredValueString:
+                        string? currentValueString = currentValue as string;
+                        if (!string.IsNullOrEmpty(currentValueString))
                         {
-                            desiredType = currentValues[key]?.GetType() ?? typeof(object);
+                            currentValueString = Utilities.Utilities.NormalizeLineEndings(currentValueString!);
                         }
-                        else
+                        desiredValueString = Utilities.Utilities.NormalizeLineEndings(desiredValueString);
+
+                        if (string.IsNullOrEmpty(currentValueString) && string.IsNullOrEmpty(desiredValueString))
                         {
-                            desiredType = desiredValue.GetType();
-                        }
-
-                        if (desiredType.IsArray)
-                        {
-                            if (!currentValues.ContainsKey(key) || currentValues[key] is null)
-                            {
-                                AddDriftInfo(driftObject, key, null, desiredValue);
-                                AddDriftedParameter(driftedParameters, key, "null", "[Array]");
-                                returnValue = false;
-                                continue;
-                            }
-
-                            if (desiredType.Name.Equals("CimInstance[]"))
-                            {
-                                // Do nothing because it's already handled previously through Compare-M365DSCComplexObject -> ComplexObjectComparer
-                                // Complex properties are removed and thus not handled by this function
-                                // However, since we might miss something during developing, throw an error
-                                throw new NotSupportedException($"Comparing CimInstances with {typeof(SimpleObjectComparer).Name} is not supported.");
-                            }
-
-                            Array desiredValuesArray = desiredValue is null
-                                ? Array.CreateInstance(desiredType, 0)
-                                : (Array)desiredValue;
-                            Array currentValuesArray = EnsureArray(currentValues[key], desiredType.GetElementType());
-                            var arrayDifferences = ArrayComparer.CompareArrays(currentValuesArray, desiredValuesArray);
-                            if (arrayDifferences.Count > 0)
-                            {
-                                string currentValuesString = string.Join(", ", Utilities.Utilities.UnwrapArrayToStrings(currentValuesArray));
-                                string desiredValuesString = string.Join(", ", Utilities.Utilities.UnwrapArrayToStrings(desiredValuesArray));
-                                string deltaString = string.Join("; ", arrayDifferences.Select(d => $"{d.SideIndicator} {d.InputObject}"));
-                                AddDriftInfoWithDelta(driftObject, key, currentValuesString, desiredValuesString, deltaString);
-                                AddDriftedParameterWithDelta(driftedParameters, key, currentValuesString, desiredValuesString, deltaString);
-                                returnValue = false;
-                            }
                             continue;
                         }
 
-                        switch (desiredValue)
+                        if (!string.IsNullOrEmpty(currentValueString) && !string.IsNullOrEmpty(desiredValueString)
+                            && string.Equals(desiredValueString, currentValueString, StringComparison.OrdinalIgnoreCase))
                         {
-                            case null:
-                                AddDriftInfo(driftObject, key, currentValues[key] as string ?? string.Empty, "$null");
-                                AddDriftedParameter(driftedParameters, key, currentValues[key] as string ?? string.Empty, "$null");
-                                returnValue = false;
-                                break;
-
-                            case string desiredValueString:
-                                string currentValueString = currentValues[key] as string;
-                                if (!string.IsNullOrEmpty(currentValueString))
-                                {
-                                    currentValueString = ReplaceLineBreaks(currentValueString);
-                                }
-                                desiredValueString = ReplaceLineBreaks(desiredValueString);
-
-                                if (string.IsNullOrEmpty(currentValueString) && string.IsNullOrEmpty(desiredValueString))
-                                {
-                                    // Do nothing - Strings are equally empty
-                                    continue;
-                                }
-
-                                if (!string.IsNullOrEmpty(currentValueString) && !string.IsNullOrEmpty(desiredValueString)
-                                    && string.Equals(desiredValueString, currentValueString, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    // Do nothing - Strings are the same
-                                    continue;
-                                }
-
-                                AddDriftInfo(driftObject, key, currentValueString, desiredValueString);
-                                AddDriftedParameter(driftedParameters, key, currentValueString, desiredValueString);
-                                returnValue = false;
-                                break;
-
-                            default:
-                                // Handle all value types (numeric types and bool)
-                                if (!desiredValue.GetType().IsValueType)
-                                {
-                                    throw new NotSupportedException($"Comparing {desiredType.FullName} with {typeof(SimpleObjectComparer).Name} is not supported.");
-                                }
-
-                                AddDriftInfo(driftObject, key, currentValues[key]?.ToString() ?? string.Empty, desiredValue.ToString());
-                                AddDriftedParameter(driftedParameters, key, currentValues[key]?.ToString() ?? string.Empty, desiredValue.ToString());
-                                returnValue = false;
-                                break;
+                            continue;
                         }
-                    }
+
+                        driftInfo.Add(DriftRecord.Create(key, currentValueString, desiredValueString));
+                        AddDriftedParameter(driftedParameters, key, currentValueString, desiredValueString);
+                        returnValue = false;
+                        break;
+
+                    default:
+                        if (!desiredValue.GetType().IsValueType)
+                        {
+                            throw new NotSupportedException($"Comparing {desiredType.FullName} with {typeof(SimpleObjectComparer).Name} is not supported.");
+                        }
+
+                        driftInfo.Add(DriftRecord.Create(key, currentValue?.ToString() ?? string.Empty, desiredValue.ToString()));
+                        AddDriftedParameter(driftedParameters, key, currentValue?.ToString() ?? string.Empty, desiredValue.ToString());
+                        returnValue = false;
+                        break;
                 }
             }
 
@@ -206,7 +190,7 @@ namespace Microsoft365DSC.Compare
             };
         }
 
-        private static Array EnsureArray(object value, Type? elementType = null)
+        private static Array EnsureArray(object? value, Type? elementType = null)
         {
             if (value is null)
             {
@@ -215,7 +199,9 @@ namespace Microsoft365DSC.Compare
             }
 
             if (value is PSObject psObject)
+            {
                 value = psObject.BaseObject;
+            }
 
             if (value is Array array)
             {
@@ -239,52 +225,21 @@ namespace Microsoft365DSC.Compare
                 return newArray;
             }
 
-            // Single value (ValueType or String) - create array with that value
             elementType = elementType ?? value.GetType();
             Array result = Array.CreateInstance(elementType, 1);
             result.SetValue(value, 0);
             return result;
         }
 
-        private static void AddDriftInfo(Hashtable driftObject, string propertyName, object currentValue, object desiredValue)
+        private static void AddDriftedParameter(Hashtable driftedParameters, string propertyName, string? currentValue, string? desiredValue, string? deltaValue = null)
         {
-            ((List<Hashtable>)driftObject["DriftInfo"]).Add(new Hashtable()
+            string eventValue = $"<CurrentValue>{currentValue}</CurrentValue><DesiredValue>{desiredValue}</DesiredValue>";
+            if (deltaValue is not null)
             {
-                { "PropertyName", propertyName },
-                { "CurrentValue", currentValue },
-                { "DesiredValue", desiredValue }
-            });
-        }
+                eventValue += $"<DeltaValue>{deltaValue}</DeltaValue>";
+            }
 
-        private static void AddDriftInfoWithDelta(Hashtable driftObject, string propertyName, object currentValue, object desiredValue, string delta)
-        {
-            ((List<Hashtable>)driftObject["DriftInfo"]).Add(new Hashtable()
-            {
-                { "PropertyName", propertyName },
-                { "CurrentValue", currentValue },
-                { "DesiredValue", desiredValue },
-                { "DeltaValue", delta }
-            });
-        }
-
-        private static void AddDriftedParameter(Hashtable driftedParameters, string propertyName, string currentValue, string desiredValue)
-        {
-            string eventValue = $"<CurrentValue>{currentValue}</CurrentValue>";
-            eventValue += $"<DesiredValue>{desiredValue}</DesiredValue>";
             driftedParameters.Add(propertyName, eventValue);
-        }
-
-        private static void AddDriftedParameterWithDelta(Hashtable driftedParameters, string propertyName, string currentValue, string desiredValue, string deltaValue)
-        {
-            string eventValue = $"<CurrentValue>{currentValue}</CurrentValue>";
-            eventValue += $"<DesiredValue>{desiredValue}</DesiredValue>";
-            eventValue += $"<DeltaValue>{deltaValue}</DeltaValue>";
-            driftedParameters.Add(propertyName, eventValue);
-        }
-
-        private static string ReplaceLineBreaks(string text)
-        {
-            return text.Replace("\r\n", "\n");
         }
     }
 }

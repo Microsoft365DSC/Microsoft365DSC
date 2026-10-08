@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        IntuneAntivirusPolicyWindows10ConfigMgr "IntuneAntivirusPolicyWindows10ConfigMgr-Windows ConfigMgr - Microsoft Defender Antivirus"
+        IntuneAntivirusPolicyWindows10ConfigMgr "IntuneAntivirusPolicyWindows10ConfigMgr-Example"
         {
             AllowArchiveScanning                = "1";
             AllowBehaviorMonitoring             = "1";
@@ -36,11 +38,9 @@ Configuration Example
             AllowRealtimeMonitoring             = "1";
             AllowScanningNetworkFiles           = "1";
             AllowScriptScanning                 = "1";
-            AllowUserUIAccess                   = "0"; # Updated property
-            ApplicationId                       = $ApplicationId;
+            AllowUserUIAccess                   = "0"; # Updated Property
             Assignments                         = @();
             AvgCPULoadFactor                    = 50;
-            CertificateThumbprint               = $CertificateThumbprint;
             CheckForSignaturesBeforeRunningScan = "1";
             CloudBlockLevel                     = "2";
             CloudExtendedTimeout                = 30;
@@ -73,7 +73,9 @@ Configuration Example
             SignatureUpdateFileSharesSources    = @("asdf");
             SignatureUpdateInterval             = 8;
             SubmitSamplesConsent                = "1";
+            ApplicationId                       = $ApplicationId;
             TenantId                            = $TenantId;
+            CertificateThumbprint               = $CertificateThumbprint;
         }
     }
 }

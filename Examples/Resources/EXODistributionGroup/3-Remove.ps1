@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,16 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXODistributionGroup 'DemoDG'
+        EXODistributionGroup 'EXODistributionGroup-Example'
         {
-            DisplayName                        = "My Demo DG";
-            Ensure                             = "Absent";
-            Identity                           = "DemoDG";
-            Name                               = "DemoDG";
+            Ensure                = "Absent";
+            Identity              = "FieldOperations";
+            Name                  = "FieldOperations";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

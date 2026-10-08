@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,47 +19,50 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneMobileAppsLobAppAndroid "IntuneMobileAppsLobAppAndroid-Apk App"
+        IntuneMobileAppsLobAppAndroid "IntuneMobileAppsLobAppAndroid-Example"
         {
-            ApplicationId                   = $ApplicationId;
-            Assignments          = @(
+            Assignments                     = @(
                 MSFT_DeviceManagementMobileAppAssignment{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.groupAssignmentTarget'
-                    groupId = '57b5e81c-85bb-4644-a4fd-33b03e451c89'
-                    intent = 'required'
+                    dataType                                   = '#microsoft.graph.groupAssignmentTarget'
+                    groupDisplayName                           = 'Intune Pilot Devices'
+                    intent                                     = 'required'
                 }
             );
             Categories                      = @(
                 MSFT_DeviceManagementMobileAppCategory{
-                    Id = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
-                    DisplayName = "App Category 1"
+                    DisplayName = "Business"
                 }
             );
-            CertificateThumbprint           = $CertificateThumbprint;
-            Description                     = "App.Example.apk";
-            Developer                       = "";
+            Description                     = "Contoso field service application for Android devices";
+            Developer                       = "Contoso Application Development";
             DisplayName                     = "Apk App";
             MinimumSupportedOperatingSystem = MSFT_MicrosoftGraphAndroidMinimumOperatingSystem{
-                V10_0 = $True
+                V10_0 = $true
             };
-            PackageId                       = "com.app.example";
+            PackageId                       = "com.contoso.lineofbusiness";
             TargetedPlatforms               = "androidDeviceAdministrator";
-            InformationUrl                  = "";
-            PrivacyInformationUrl           = "";
+            InformationUrl                  = "https://intranet.contoso.com/apps/field-service";
+            PrivacyInformationUrl           = "https://www.contoso.com/privacy";
             Ensure                          = "Present";
-            FileName                        = "App.Example.apk";
-            Id                              = "63271b78-0fa4-46b8-9ac0-d4b777555dde";
-            IsFeatured                      = $False;
-            Notes                           = "";
-            Owner                           = "";
-            Publisher                       = "Microsoft";
+            FileName                        = "ContosoLineOfBusiness.apk";
+            IsFeatured                      = $true;
+            LargeIcon                       = MSFT_DeviceManagementMimeContent{
+                Type  = "image/png"
+                Value = "<base64-encoded-app-icon>"
+            };
+            Notes                           = "Reviewed annually by the mobility team";
+            Owner                           = "Field Operations";
+            Publisher                       = "Contoso";
             RoleScopeTagIds                 = @("0");
+            ApplicationId                   = $ApplicationId;
             TenantId                        = $TenantId;
+            CertificateThumbprint           = $CertificateThumbprint;
         }
     }
 }

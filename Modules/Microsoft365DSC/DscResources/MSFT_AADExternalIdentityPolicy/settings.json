@@ -1,5 +1,32 @@
 {
   "resourceName": "AADExternalIdentityPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "externalIdentitiesPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyExternalIdentityPolicy",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "Absent from the documented update body and the resource property table."
+    },
+    {
+      "name": "DisplayName",
+      "reason": "ReadOnly",
+      "note": "Graph refuses the write even when the value is unchanged."
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    }
+  ],
   "description": "Represents the tenant-wide policy that controls whether external users can leave the guest Microsoft Entra tenant via self-service controls.",
   "roles": {
     "read": [],

@@ -1,5 +1,16 @@
 {
   "resourceName": "AADAttributeSet",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "attributeSet",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDirectoryAttributeSet",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Represents a group of related custom security attribute definitions.",
   "roles": {
     "read": [

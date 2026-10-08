@@ -1,5 +1,16 @@
 {
   "resourceName": "SCComplianceTag",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "ComplianceTag",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Compliance Tag in Purview.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "purview": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "Tag Reader"
         ],
@@ -33,7 +44,7 @@
           "Tag Manager"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Security Reader"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-ComplianceTag",
+        "New-ComplianceTag",
+        "Remove-ComplianceTag",
+        "Set-ComplianceTag"
+      ]
+    }
+  ]
 }

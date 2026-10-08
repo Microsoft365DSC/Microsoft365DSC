@@ -1,2695 +1,1250 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_FabricAdminTenantSettings'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class FabricAdminTenantSettings : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AADSSOForGateway,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminApisIncludeDetailedMetadata,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminApisIncludeExpressions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminCustomDisclaimer,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AISkillArtifactTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowAccessOverPrivateLinks,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVAuthenticationTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVLocalStorageV2Tenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVToExportDataToFileTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowEndorsementMasterDataSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowExternalDataSharingReceiverSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowExternalDataSharingSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowFreeTrial,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGetOneLakeUDK,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGuestLookup,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGuestUserToAccessSharedContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowMountDfCreation,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowOneLakeUDK,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowPowerBIASDQOnTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowSendAOAIDataToOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowSendNLToDaxDataToOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsCreateAndUseProfiles,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsUseReadAdminAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AppPush,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Specifies the resource is a single instance, the value must be ''Yes''.')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Microsoft Entra single sign-on for data gateway')]
+    [MSFT_FabricTenantSetting] $AADSSOForGateway
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Enhance admin APIs responses with detailed metadata')]
+    [MSFT_FabricTenantSetting] $AdminApisIncludeDetailedMetadata
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Enhance admin APIs responses with DAX and mashup expressions')]
+    [MSFT_FabricTenantSetting] $AdminApisIncludeExpressions
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Show a custom message before publishing reports')]
+    [MSFT_FabricTenantSetting] $AdminCustomDisclaimer
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create and share AI skill item types (preview)')]
+    [MSFT_FabricTenantSetting] $AISkillArtifactTenantSwitch
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Azure Private Link')]
+    [MSFT_FabricTenantSetting] $AllowAccessOverPrivateLinks
+
+    [DscProperty()]
+    [System.ComponentModel.Description('AppSource Custom Visuals SSO')]
+    [MSFT_FabricTenantSetting] $AllowCVAuthenticationTenant
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow access to the browser''s local storage')]
+    [MSFT_FabricTenantSetting] $AllowCVLocalStorageV2Tenant
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow downloads from custom visuals')]
+    [MSFT_FabricTenantSetting] $AllowCVToExportDataToFileTenant
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Endorse master data (preview)')]
+    [MSFT_FabricTenantSetting] $AllowEndorsementMasterDataSwitch
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can accept external data shares (preview)')]
+    [MSFT_FabricTenantSetting] $AllowExternalDataSharingReceiverSwitch
+
+    [DscProperty()]
+    [System.ComponentModel.Description('External data sharing (preview)')]
+    [MSFT_FabricTenantSetting] $AllowExternalDataSharingSwitch
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Use short-lived user-delegated SAS tokens (preview).')]
+    [MSFT_FabricTenantSetting] $AllowGetOneLakeUDK
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can try Microsoft Fabric paid features')]
+    [MSFT_FabricTenantSetting] $AllowFreeTrial
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can see guest users in lists of suggested people')]
+    [MSFT_FabricTenantSetting] $AllowGuestLookup
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Guest users can access Microsoft Fabric')]
+    [MSFT_FabricTenantSetting] $AllowGuestUserToAccessSharedContent
+
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $AllowMountDfCreation
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Authenticate with OneLake user-delegated SAS tokens (preview).')]
+    [MSFT_FabricTenantSetting] $AllowOneLakeUDK
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow DirectQuery connections to Power BI semantic models')]
+    [MSFT_FabricTenantSetting] $AllowPowerBIASDQOnTenant
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Data sent to Azure OpenAI can be processed outside your capacity''s geographic region, compliance boundary, or national cloud instance')]
+    [MSFT_FabricTenantSetting] $AllowSendAOAIDataToOtherRegions
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow user data to leave their geography')]
+    [MSFT_FabricTenantSetting] $AllowSendNLToDaxDataToOtherRegions
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow service principals to create and use profiles')]
+    [MSFT_FabricTenantSetting] $AllowServicePrincipalsCreateAndUseProfiles
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Service principals can access read-only admin APIs')]
+    [MSFT_FabricTenantSetting] $AllowServicePrincipalsUseReadAdminAPIs
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Push apps to end users')]
+    [MSFT_FabricTenantSetting] $AppPush
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can discover and create org apps (preview).')]
+    [MSFT_FabricTenantSetting] $ArtifactOrgAppPreview
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactOrgAppPreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('Use global search for Power BI')]
+    [MSFT_FabricTenantSetting] $ArtifactSearchTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactSearchTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Microsoft can store query text to aid in support investigations')]
+    [MSFT_FabricTenantSetting] $ASCollectQueryTextTelemetryTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASCollectQueryTextTelemetryTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enable granular access control for all data connections')]
+    [MSFT_FabricTenantSetting] $ASShareableCloudConnectionBindingSecurityModeTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASShareableCloudConnectionBindingSecurityModeTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Semantic models can export data to OneLake (preview)')]
+    [MSFT_FabricTenantSetting] $ASWritethruContinuousExportTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASWritethruContinuousExportTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can store semantic model tables in OneLake (preview)')]
+    [MSFT_FabricTenantSetting] $ASWritethruTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASWritethruTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Install Power BI app for Microsoft Teams automatically')]
+    [MSFT_FabricTenantSetting] $AutoInstallPowerBIAppInTeamsTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutoInstallPowerBIAppInTeamsTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Show entry points for insights (preview)')]
+    [MSFT_FabricTenantSetting] $AutomatedInsightsEntryPoints
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomatedInsightsEntryPoints,
+    [DscProperty()]
+    [System.ComponentModel.Description('Receive notifications for top insights (preview)')]
+    [MSFT_FabricTenantSetting] $AutomatedInsightsTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomatedInsightsTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $AzureMap
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMap,
+    [DscProperty()]
+    [System.ComponentModel.Description('Map and filled map visuals')]
+    [MSFT_FabricTenantSetting] $BingMap
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BingMap,
+    [DscProperty()]
+    [System.ComponentModel.Description('Block Public Internet Access')]
+    [MSFT_FabricTenantSetting] $BlockAccessFromPublicNetworks
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockAccessFromPublicNetworks,
+    [DscProperty()]
+    [System.ComponentModel.Description('Block republish and disable package refresh')]
+    [MSFT_FabricTenantSetting] $BlockAutoDiscoverAndPackageRefresh
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockAutoDiscoverAndPackageRefresh,
+    [DscProperty()]
+    [System.ComponentModel.Description('Restrict content with protected labels from being shared via link with everyone in your organization')]
+    [MSFT_FabricTenantSetting] $BlockProtectedLabelSharingToEntireOrg
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockProtectedLabelSharingToEntireOrg,
+    [DscProperty()]
+    [System.ComponentModel.Description('Block ResourceKey Authentication')]
+    [MSFT_FabricTenantSetting] $BlockResourceKeyAuthentication
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockResourceKeyAuthentication,
+    [DscProperty()]
+    [System.ComponentModel.Description('Create and use Gen1 dataflows')]
+    [MSFT_FabricTenantSetting] $CDSAManagement
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CDSAManagement,
+    [DscProperty()]
+    [System.ComponentModel.Description('Add and use certified visuals only (block uncertified)')]
+    [MSFT_FabricTenantSetting] $CertifiedCustomVisualsTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CertifiedCustomVisualsTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Certification')]
+    [MSFT_FabricTenantSetting] $CertifyDatasets
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CertifyDatasets,
+    [DscProperty()]
+    [System.ComponentModel.Description('Define workspace retention period')]
+    [MSFT_FabricTenantSetting] $ConfigureFolderRetentionPeriod
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ConfigureFolderRetentionPeriod,
+    [DscProperty()]
+    [System.ComponentModel.Description('Create workspaces')]
+    [MSFT_FabricTenantSetting] $CreateAppWorkspaces
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CreateAppWorkspaces,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow visuals created using the Power BI SDK')]
+    [MSFT_FabricTenantSetting] $CustomVisualsTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CustomVisualsTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Create Datamarts (preview)')]
+    [MSFT_FabricTenantSetting] $DatamartTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DatamartTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Semantic Model Execute Queries REST API')]
+    [MSFT_FabricTenantSetting] $DatasetExecuteQueries
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DatasetExecuteQueries,
+    [DscProperty()]
+    [System.ComponentModel.Description('Publish template apps')]
+    [MSFT_FabricTenantSetting] $DevelopServiceApps
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DevelopServiceApps,
+    [DscProperty()]
+    [System.ComponentModel.Description('Discover content')]
+    [MSFT_FabricTenantSetting] $DiscoverDatasetsConsumption
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsConsumption,
+    [DscProperty()]
+    [System.ComponentModel.Description('Make certified content discoverable ')]
+    [MSFT_FabricTenantSetting] $DiscoverDatasetsSettingsCertified
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsSettingsCertified,
+    [DscProperty()]
+    [System.ComponentModel.Description('Make promoted content discoverable')]
+    [MSFT_FabricTenantSetting] $DiscoverDatasetsSettingsPromoted
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsSettingsPromoted,
+    [DscProperty()]
+    [System.ComponentModel.Description('Dremio SSO')]
+    [MSFT_FabricTenantSetting] $DremioSSO
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DremioSSO,
+    [DscProperty()]
+    [System.ComponentModel.Description('Apply sensitivity labels from data sources to their data in Power BI')]
+    [MSFT_FabricTenantSetting] $EimInformationProtectionDataSourceInheritanceSetting
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDataSourceInheritanceSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Automatically apply sensitivity labels to downstream content')]
+    [MSFT_FabricTenantSetting] $EimInformationProtectionDownstreamInheritanceSetting
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDownstreamInheritanceSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow users to apply sensitivity labels for content')]
+    [MSFT_FabricTenantSetting] $EimInformationProtectionEdit
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionEdit,
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $EimInformationProtectionLessElevated
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionLessElevated,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow workspace admins to override automatically applied sensitivity labels')]
+    [MSFT_FabricTenantSetting] $EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Guest users can browse and access Fabric content')]
+    [MSFT_FabricTenantSetting] $ElevatedGuestsTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ElevatedGuestsTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Receive email notifications for service outages or incidents')]
+    [MSFT_FabricTenantSetting] $EmailSecurityGroupsOnOutage
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSecurityGroupsOnOutage,
+    [DscProperty()]
+    [System.ComponentModel.Description('Guest users can set up and subscribe to email subscriptions')]
+    [MSFT_FabricTenantSetting] $EmailSubscriptionsToB2BUsers
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionsToB2BUsers,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can send email subscriptions to guest users')]
+    [MSFT_FabricTenantSetting] $EmailSubscriptionsToExternalUsers
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionsToExternalUsers,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can set up email subscriptions')]
+    [MSFT_FabricTenantSetting] $EmailSubscriptionTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Embed content in apps')]
+    [MSFT_FabricTenantSetting] $Embedding
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Embedding,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can use Copilot and other features powered by Azure OpenAI')]
+    [MSFT_FabricTenantSetting] $EnableAOAI
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableAOAI,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow specific users to turn on external data sharing')]
+    [MSFT_FabricTenantSetting] $EnableDatasetInPlaceSharing
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableDatasetInPlaceSharing,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow connections to featured tables')]
+    [MSFT_FabricTenantSetting] $EnableExcelYellowIntegration
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableExcelYellowIntegration,
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $EnableFabricAirflow
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableFabricAirflow,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow quick measure suggestions (preview)')]
+    [MSFT_FabricTenantSetting] $EnableNLToDax
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableNLToDax,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow tenant and domain admins to override workspace assignments (preview)')]
+    [MSFT_FabricTenantSetting] $EnableReassignDataDomainSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableReassignDataDomainSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Use ArcGIS Maps for Power BI')]
+    [MSFT_FabricTenantSetting] $EsriVisual
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EsriVisual,
+    [DscProperty()]
+    [System.ComponentModel.Description('Help Power BI optimize your experience')]
+    [MSFT_FabricTenantSetting] $ExpFlightingTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExpFlightingTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Download reports')]
+    [MSFT_FabricTenantSetting] $ExportReport
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportReport,
+    [DscProperty()]
+    [System.ComponentModel.Description('Export to .csv')]
+    [MSFT_FabricTenantSetting] $ExportToCsv
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToCsv,
+    [DscProperty()]
+    [System.ComponentModel.Description('Export to Excel')]
+    [MSFT_FabricTenantSetting] $ExportToExcelSetting
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToExcelSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Export reports as image files')]
+    [MSFT_FabricTenantSetting] $ExportToImage
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToImage,
+    [DscProperty()]
+    [System.ComponentModel.Description('Export reports as MHTML documents')]
+    [MSFT_FabricTenantSetting] $ExportToMHTML
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToMHTML,
+    [DscProperty()]
+    [System.ComponentModel.Description('Export reports as PowerPoint presentations or PDF documents')]
+    [MSFT_FabricTenantSetting] $ExportToPowerPoint
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToPowerPoint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Export reports as Word documents')]
+    [MSFT_FabricTenantSetting] $ExportToWord
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToWord,
+    [DscProperty()]
+    [System.ComponentModel.Description('Export reports as XML documents')]
+    [MSFT_FabricTenantSetting] $ExportToXML
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToXML,
+    [DscProperty()]
+    [System.ComponentModel.Description('Copy and paste visuals')]
+    [MSFT_FabricTenantSetting] $ExportVisualImageTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportVisualImageTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Guest users can work with shared semantic models in their own tenants')]
+    [MSFT_FabricTenantSetting] $ExternalDatasetSharingTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExternalDatasetSharingTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can invite guest users to collaborate through item sharing and permissions')]
+    [MSFT_FabricTenantSetting] $ExternalSharingV2
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExternalSharingV2,
+    [DscProperty()]
+    [System.ComponentModel.Description('Capacity admins and contributors can add and remove additional workloads')]
+    [MSFT_FabricTenantSetting] $FabricAddPartnerWorkload
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricAddPartnerWorkload,
+    [DscProperty()]
+    [System.ComponentModel.Description('Product Feedback')]
+    [MSFT_FabricTenantSetting] $FabricFeedbackTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricFeedbackTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create Fabric items')]
+    [MSFT_FabricTenantSetting] $FabricGAWorkloads
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricGAWorkloads,
+    [DscProperty()]
+    [System.ComponentModel.Description('Capacity admins can develop additional workloads')]
+    [MSFT_FabricTenantSetting] $FabricThirdPartyWorkloads
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricThirdPartyWorkloads,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can sync workspace items with GitHub repositories ')]
+    [MSFT_FabricTenantSetting] $GitHubTenantSettings
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitHubTenantSettings,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can export items to Git repositories in other geographical locations (preview)')]
+    [MSFT_FabricTenantSetting] $GitIntegrationCrossGeoTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationCrossGeoTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can export workspace items with applied sensitivity labels to Git repositories (preview)')]
+    [MSFT_FabricTenantSetting] $GitIntegrationSensitivityLabelsTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationSensitivityLabelsTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can synchronize workspace items with their Git repositories (preview)')]
+    [MSFT_FabricTenantSetting] $GitIntegrationTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Google BigQuery SSO')]
+    [MSFT_FabricTenantSetting] $GoogleBigQuerySSO
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GoogleBigQuerySSO,
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $GraphQLTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GraphQLTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Healthcare data solutions (preview)')]
+    [MSFT_FabricTenantSetting] $HealthcareSolutionsTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $HealthcareSolutionsTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Install template apps not listed in AppSource')]
+    [MSFT_FabricTenantSetting] $InstallNonvalidatedTemplateApps
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $InstallNonvalidatedTemplateApps,
+    [DscProperty()]
+    [System.ComponentModel.Description('Install template apps')]
+    [MSFT_FabricTenantSetting] $InstallServiceApps
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $InstallServiceApps,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create Real-Time Dashboards (preview)')]
+    [MSFT_FabricTenantSetting] $KustoDashboardTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $KustoDashboardTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can work with semantic models in Excel using a live connection')]
+    [MSFT_FabricTenantSetting] $LiveConnection
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $LiveConnection,
+    [DscProperty()]
+    [System.ComponentModel.Description('Azure Log Analytics connections for workspace administrators')]
+    [MSFT_FabricTenantSetting] $LogAnalyticsAttachForWorkspaceAdmins
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $LogAnalyticsAttachForWorkspaceAdmins,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can see Microsoft Fabric metadata in Microsoft 365')]
+    [MSFT_FabricTenantSetting] $M365DataSharing
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $M365DataSharing,
+    [DscProperty()]
+    [System.ComponentModel.Description('Database Mirroring (preview)')]
+    [MSFT_FabricTenantSetting] $Mirroring
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Mirroring,
+    [DscProperty()]
+    [System.ComponentModel.Description('Semantic model owners can choose to automatically update semantic models from files imported from OneDrive or SharePoint')]
+    [MSFT_FabricTenantSetting] $ODSPRefreshEnforcementTenantAllowAutomaticUpdate
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ODSPRefreshEnforcementTenantAllowAutomaticUpdate,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can share links to Power BI files stored in OneDrive and SharePoint through Power BI Desktop (preview)')]
+    [MSFT_FabricTenantSetting] $OneDriveSharePointAllowSharingTenantSetting
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneDriveSharePointAllowSharingTenantSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can view Power BI files saved in OneDrive and SharePoint (preview)')]
+    [MSFT_FabricTenantSetting] $OneDriveSharePointViewerIntegrationTenantSettingV2
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneDriveSharePointViewerIntegrationTenantSettingV2,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can sync data in OneLake with the OneLake File Explorer app')]
+    [MSFT_FabricTenantSetting] $OneLakeFileExplorer
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeFileExplorer,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can access data stored in OneLake with apps external to Fabric')]
+    [MSFT_FabricTenantSetting] $OneLakeForThirdParty
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeForThirdParty,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow XMLA endpoints and Analyze in Excel with on-premises semantic models')]
+    [MSFT_FabricTenantSetting] $OnPremAnalyzeInExcel
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OnPremAnalyzeInExcel,
+    [DscProperty()]
+    [System.ComponentModel.Description('Create and use Metrics')]
+    [MSFT_FabricTenantSetting] $PowerBIGoalsTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerBIGoalsTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $PowerPlatformSolutionsIntegrationTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerPlatformSolutionsIntegrationTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Print dashboards and reports')]
+    [MSFT_FabricTenantSetting] $Printing
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Printing,
+    [DscProperty()]
+    [System.ComponentModel.Description('Featured content')]
+    [MSFT_FabricTenantSetting] $PromoteContent
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PromoteContent,
+    [DscProperty()]
+    [System.ComponentModel.Description('Publish apps to the entire organization')]
+    [MSFT_FabricTenantSetting] $PublishContentPack
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PublishContentPack,
+    [DscProperty()]
+    [System.ComponentModel.Description('Publish to web')]
+    [MSFT_FabricTenantSetting] $PublishToWeb
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PublishToWeb,
+    [DscProperty()]
+    [System.ComponentModel.Description('Review questions')]
+    [MSFT_FabricTenantSetting] $QnaFeedbackLoop
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QnaFeedbackLoop,
+    [DscProperty()]
+    [System.ComponentModel.Description('Synonym sharing')]
+    [MSFT_FabricTenantSetting] $QnaLsdlSharing
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QnaLsdlSharing,
+    [DscProperty()]
+    [System.ComponentModel.Description('Scale out queries for large semantic models')]
+    [MSFT_FabricTenantSetting] $QueryScaleOutTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QueryScaleOutTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Redshift SSO')]
+    [MSFT_FabricTenantSetting] $RedshiftSSO
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RedshiftSSO,
+    [DscProperty()]
+    [System.ComponentModel.Description('Block users from reassigning personal workspaces (My Workspace)')]
+    [MSFT_FabricTenantSetting] $RestrictMyFolderCapacity
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RestrictMyFolderCapacity,
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $RetailSolutionsTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RetailSolutionsTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Interact with and share R and Python visuals')]
+    [MSFT_FabricTenantSetting] $RScriptVisual
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RScriptVisual,
+    [DscProperty()]
+    [System.ComponentModel.Description('DEPRECATED')]
+    [MSFT_FabricTenantSetting] $ServicePrincipalAccess
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow shareable links to grant access to everyone in your organization')]
+    [MSFT_FabricTenantSetting] $ShareLinkToEntireOrg
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShareLinkToEntireOrg,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enable Microsoft Teams integration')]
+    [MSFT_FabricTenantSetting] $ShareToTeamsTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShareToTeamsTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Snowflake SSO')]
+    [MSFT_FabricTenantSetting] $SnowflakeSSO
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $SnowflakeSSO,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enable Power BI add-in for PowerPoint')]
+    [MSFT_FabricTenantSetting] $StorytellingTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $StorytellingTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Sustainability solutions (preview)')]
+    [MSFT_FabricTenantSetting] $SustainabilitySolutionsTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $SustainabilitySolutionsTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Create template organizational apps')]
+    [MSFT_FabricTenantSetting] $TemplatePublish
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TemplatePublish,
+    [DscProperty()]
+    [System.ComponentModel.Description('Publish Get Help information')]
+    [MSFT_FabricTenantSetting] $TenantSettingPublishGetHelpInfo
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TenantSettingPublishGetHelpInfo,
+    [DscProperty()]
+    [System.ComponentModel.Description('Data Activator (preview)')]
+    [MSFT_FabricTenantSetting] $TridentPrivatePreview
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TridentPrivatePreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('Usage metrics for content creators')]
+    [MSFT_FabricTenantSetting] $UsageMetrics
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UsageMetrics,
+    [DscProperty()]
+    [System.ComponentModel.Description('Per-user data in usage metrics for content creators')]
+    [MSFT_FabricTenantSetting] $UsageMetricsTrackUserLevelInfo
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UsageMetricsTrackUserLevelInfo,
+    [DscProperty()]
+    [System.ComponentModel.Description('Use semantic models across workspaces')]
+    [MSFT_FabricTenantSetting] $UseDatasetsAcrossWorkspaces
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UseDatasetsAcrossWorkspaces,
+    [DscProperty()]
+    [System.ComponentModel.Description('Integration with SharePoint and Microsoft Lists')]
+    [MSFT_FabricTenantSetting] $VisualizeListInPowerBI
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $VisualizeListInPowerBI,
+    [DscProperty()]
+    [System.ComponentModel.Description('Web content on dashboard tiles')]
+    [MSFT_FabricTenantSetting] $WebContentTilesTenant
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WebContentTilesTenant,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can edit data models in the Power BI service (preview)')]
+    [MSFT_FabricTenantSetting] $WebModelingTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WebModelingTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users with view permission can launch Explore')]
+    [MSFT_FabricTenantSetting] $AdminDataExploreViewPermission
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminDataExploreViewPermission,
+    [DscProperty()]
+    [System.ComponentModel.Description('Show user data in the Fabric Capacity Metrics app and reports')]
+    [MSFT_FabricTenantSetting] $AllowCapacityMetricsReportUserMask
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCapacityMetricsReportUserMask,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow non-Entra ID auth in Eventstream')]
+    [MSFT_FabricTenantSetting] $AllowNonEntraADAuthInEventStream
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowNonEntraADAuthInEventStream,
+    [DscProperty()]
+    [System.ComponentModel.Description('Service principals can access admin APIs used for updates')]
+    [MSFT_FabricTenantSetting] $AllowServicePrincipalsUseWriteAdminAPIs
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsUseWriteAdminAPIs,
+    [DscProperty()]
+    [System.ComponentModel.Description('Data sent to Azure OpenAI can be stored outside your capacity''s geographic region, compliance boundary, or national cloud instance')]
+    [MSFT_FabricTenantSetting] $AllowStoreAOAIDataInOtherRegions
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowStoreAOAIDataInOtherRegions,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create dbt job items (preview)')]
+    [MSFT_FabricTenantSetting] $ArtifactDBTItemTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactDBTItemTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('User can create Graph (preview)')]
+    [MSFT_FabricTenantSetting] $ArtifactGraphPreview
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactGraphPreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create Maps (preview)')]
+    [MSFT_FabricTenantSetting] $ArtifactMapTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactMapTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('TBD')]
+    [MSFT_FabricTenantSetting] $ArtifactSnowflakeDatabasePreview
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactSnowflakeDatabasePreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('Automatically convert and store reports using Power BI enhanced metadata format (PBIR) (preview)')]
+    [MSFT_FabricTenantSetting] $AutomaticallyUsePBIR
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomaticallyUsePBIR,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can use the Azure Maps visual')]
+    [MSFT_FabricTenantSetting] $AzureMaps
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMaps,
+    [DscProperty()]
+    [System.ComponentModel.Description('Data sent to Azure Maps can be processed outside your tenant''s geographic region, compliance boundary, or national cloud instance')]
+    [MSFT_FabricTenantSetting] $AzureMapsCrossRegionDataProcessing
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsCrossRegionDataProcessing,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can use Azure Maps services')]
+    [MSFT_FabricTenantSetting] $AzureMapsInFabric
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsInFabric,
+    [DscProperty()]
+    [System.ComponentModel.Description('Data sent to Azure Maps can be processed outside your capacity''s geographic region, compliance boundary or national cloud instance')]
+    [MSFT_FabricTenantSetting] $AzureMapsInFabricCrossRegionDataProcessing
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsInFabricCrossRegionDataProcessing,
+    [DscProperty()]
+    [System.ComponentModel.Description('Data sent to Azure Maps can be processed by Microsoft Online Services Subprocessors')]
+    [MSFT_FabricTenantSetting] $AzureMapsThirdPartyDataProcessing
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsThirdPartyDataProcessing,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can use Azure Maps Weather Services (Preview)')]
+    [MSFT_FabricTenantSetting] $AzureMapsWeatherServices
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsWeatherServices,
+    [DscProperty()]
+    [System.ComponentModel.Description('Configure workspace IP firewall rules (preview)')]
+    [MSFT_FabricTenantSetting] $ConfigureWorkspaceLevelIPFirewallRules
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ConfigureWorkspaceLevelIPFirewallRules,
+    [DscProperty()]
+    [System.ComponentModel.Description('Capacities can be designated as Fabric Copilot capacities')]
+    [MSFT_FabricTenantSetting] $CopilotCapacitySetupPermissionSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CopilotCapacitySetupPermissionSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Microsoft Purview to secure AI interactions')]
+    [MSFT_FabricTenantSetting] $DataSecurityForAIInteractions
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DataSecurityForAIInteractions,
+    [DscProperty()]
+    [System.ComponentModel.Description('TBD')]
+    [MSFT_FabricTenantSetting] $DeltaToIcebergTableVirtualization
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DeltaToIcebergTableVirtualization,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create Digital Twin Builder (preview) items')]
+    [MSFT_FabricTenantSetting] $DigitalOperationsPreview
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DigitalOperationsPreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create Direct Lake on OneLake semantic models (preview)')]
+    [MSFT_FabricTenantSetting] $DirectLakeOnOneLakeSemanticModelCreation
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DirectLakeOnOneLakeSemanticModelCreation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Domain admins can set default sensitivity labels for their domains (preview)')]
+    [MSFT_FabricTenantSetting] $EimInformationProtectionDefaultLabelDomainSetting
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDefaultLabelDomainSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('ArcGIS GeoAnalytics for Fabric Runtime')]
+    [MSFT_FabricTenantSetting] $EnableEsriLibraries
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableEsriLibraries,
+    [DscProperty()]
+    [System.ComponentModel.Description('Workspace admins can add and remove additional workloads (preview)')]
+    [MSFT_FabricTenantSetting] $FabricAddWorkloadToWorkspace
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricAddWorkloadToWorkspace,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can be informed of upcoming conferences featuring Microsoft Fabric when they are logged in to Fabric')]
+    [MSFT_FabricTenantSetting] $FabricPromotionTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricPromotionTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can access a standalone, cross-item Power BI Copilot experience (preview)')]
+    [MSFT_FabricTenantSetting] $ImmersiveTenantAdminSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ImmersiveTenantAdminSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('ML models can serve real-time predictions from API endpoints (preview)')]
+    [MSFT_FabricTenantSetting] $MLModelEndpointsTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $MLModelEndpointsTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Include end-user identifiers in OneLake diagnostic logs')]
+    [MSFT_FabricTenantSetting] $OneLakeDiagnosticLogsEUII
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeDiagnosticLogsEUII,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can create Ontology (preview) items')]
+    [MSFT_FabricTenantSetting] $OntologyPreview
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OntologyPreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('Workspace admins can turn on monitoring for their workspaces (preview)')]
+    [MSFT_FabricTenantSetting] $PlatformMonitoringTenantSetting
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PlatformMonitoringTenantSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can use the Power BI Model Context Protocol server endpoint (preview)')]
+    [MSFT_FabricTenantSetting] $PowerBIMCP
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerBIMCP,
+    [DscProperty()]
+    [System.ComponentModel.Description('Only show approved items in the standalone Copilot in Power BI experience (preview)')]
+    [MSFT_FabricTenantSetting] $PreppedForCopilotContentDiscovery
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PreppedForCopilotContentDiscovery,
+    [DscProperty()]
+    [System.ComponentModel.Description('Detect anomalies in Real-Time Intelligence (Preview)')]
+    [MSFT_FabricTenantSetting] $RTHAnomalyDetectionTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RTHAnomalyDetectionTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enable Operations Agents (Preview)')]
+    [MSFT_FabricTenantSetting] $RTHOperationalAgentsTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RTHOperationalAgentsTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Service principals can create workspaces, connections, and deployment pipelines')]
+    [MSFT_FabricTenantSetting] $ServicePrincipalAccessGlobalAPIs
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccessGlobalAPIs,
+    [DscProperty()]
+    [System.ComponentModel.Description('Service principals can call Fabric public APIs')]
+    [MSFT_FabricTenantSetting] $ServicePrincipalAccessPermissionAPIs
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccessPermissionAPIs,
+    [DscProperty()]
+    [System.ComponentModel.Description('All Power BI users can see Set alert button to create Fabric Activator alerts')]
+    [MSFT_FabricTenantSetting] $ShowActivatorEntryPointsTenantSwitch
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShowActivatorEntryPointsTenantSwitch,
+    [DscProperty()]
+    [System.ComponentModel.Description('Users can see and work with additional workloads not validated by Microsoft')]
+    [MSFT_FabricTenantSetting] $ThirdPartyPrivateWorkloads
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ThirdPartyPrivateWorkloads,
+    [DscProperty()]
+    [System.ComponentModel.Description('Configure workspace-level inbound network rules')]
+    [MSFT_FabricTenantSetting] $WorkspaceBlockInboundAccess
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceBlockInboundAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('Configure workspace-level outbound network rules')]
+    [MSFT_FabricTenantSetting] $WorkspaceBlockOutboundAccess
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceBlockOutboundAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('Apply customer-managed keys')]
+    [MSFT_FabricTenantSetting] $WorkspaceCmk
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceCmk,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message 'Getting configuration of Fabric Admin Tenant Settings'
-
-    try
+    [FabricAdminTenantSettings] Get()
     {
-        $null = New-M365DSCConnection -Workload 'Fabric' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [FabricAdminTenantSettings]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message 'Getting configuration of Fabric Admin Tenant Settings'
+
+        try
+        {
+            $null = $this.Connect('Fabric')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+
+            if ($null -ne $this.ResourceCache['exportedInstances'] -and $this.ResourceCache['ExportMode'])
+            {
+                $instance = $this.ResourceCache['exportedInstances']
+            }
+            else
+            {
+                $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Fabric').HostUrl + '/v1/admin/tenantsettings'
+                $instance = Invoke-M365DSCFabricWebRequest -Uri $uri -Method 'GET'
+            }
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            $results = @{
+                IsSingleInstance                                                      = 'Yes'
+                AADSSOForGateway                                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AADSSOForGateway' }))
+                AdminApisIncludeDetailedMetadata                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminApisIncludeDetailedMetadata' }))
+                AdminApisIncludeExpressions                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminApisIncludeExpressions' }))
+                AdminCustomDisclaimer                                                 = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminCustomDisclaimer' }))
+                AISkillArtifactTenantSwitch                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AISkillArtifactTenantSwitch' }))
+                AllowAccessOverPrivateLinks                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowAccessOverPrivateLinks' }))
+                AllowCVAuthenticationTenant                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCVAuthenticationTenant' }))
+                AllowCVLocalStorageV2Tenant                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCVLocalStorageV2Tenant' }))
+                AllowCVToExportDataToFileTenant                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCVToExportDataToFileTenant' }))
+                AllowEndorsementMasterDataSwitch                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowEndorsementMasterDataSwitch' }))
+                AllowExternalDataSharingReceiverSwitch                                = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowExternalDataSharingReceiverSwitch' }))
+                AllowExternalDataSharingSwitch                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowExternalDataSharingSwitch' }))
+                AllowFreeTrial                                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowFreeTrial' }))
+                AllowGetOneLakeUDK                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowGetOneLakeUDK' }))
+                AllowGuestLookup                                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowGuestLookup' }))
+                AllowGuestUserToAccessSharedContent                                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowGuestUserToAccessSharedContent' }))
+                # DEPRECATED
+                #AllowMountDfCreation                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowMountDfCreation' })
+                AllowOneLakeUDK                                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowOneLakeUDK' }))
+                AllowPowerBIASDQOnTenant                                              = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowPowerBIASDQOnTenant' }))
+                AllowSendAOAIDataToOtherRegions                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowSendAOAIDataToOtherRegions' }))
+                AllowSendNLToDaxDataToOtherRegions                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowSendNLToDaxDataToOtherRegions' }))
+                AllowServicePrincipalsCreateAndUseProfiles                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowServicePrincipalsCreateAndUseProfiles' }))
+                AllowServicePrincipalsUseReadAdminAPIs                                = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowServicePrincipalsUseReadAdminAPIs' }))
+                AppPush                                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AppPush' }))
+                ArtifactOrgAppPreview                                                 = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactOrgAppPreview' }))
+                ArtifactSearchTenant                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactSearchTenant' }))
+                ASCollectQueryTextTelemetryTenantSwitch                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASCollectQueryTextTelemetryTenantSwitch' }))
+                ASShareableCloudConnectionBindingSecurityModeTenant                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASShareableCloudConnectionBindingSecurityModeTenant' }))
+                ASWritethruContinuousExportTenantSwitch                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASWritethruContinuousExportTenantSwitch' }))
+                ASWritethruTenantSwitch                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASWritethruTenantSwitch' }))
+                AutoInstallPowerBIAppInTeamsTenant                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutoInstallPowerBIAppInTeamsTenant' }))
+                AutomatedInsightsEntryPoints                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutomatedInsightsEntryPoints' }))
+                AutomatedInsightsTenant                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutomatedInsightsTenant' }))
+                # DEPRECATED
+                #AzureMap                                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMap' })
+                BingMap                                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BingMap' }))
+                BlockAccessFromPublicNetworks                                         = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockAccessFromPublicNetworks' }))
+                BlockAutoDiscoverAndPackageRefresh                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockAutoDiscoverAndPackageRefresh' }))
+                BlockProtectedLabelSharingToEntireOrg                                 = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockProtectedLabelSharingToEntireOrg' }))
+                BlockResourceKeyAuthentication                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockResourceKeyAuthentication' }))
+                CDSAManagement                                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CDSAManagement' }))
+                CertifiedCustomVisualsTenant                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CertifiedCustomVisualsTenant' }))
+                CertifyDatasets                                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CertifyDatasets' }))
+                ConfigureFolderRetentionPeriod                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ConfigureFolderRetentionPeriod' }))
+                CreateAppWorkspaces                                                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CreateAppWorkspaces' }))
+                CustomVisualsTenant                                                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CustomVisualsTenant' }))
+                DatamartTenant                                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DatamartTenant' }))
+                DatasetExecuteQueries                                                 = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DatasetExecuteQueries' }))
+                DevelopServiceApps                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DevelopServiceApps' }))
+                DiscoverDatasetsConsumption                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DiscoverDatasetsConsumption' }))
+                DiscoverDatasetsSettingsCertified                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DiscoverDatasetsSettingsCertified' }))
+                DiscoverDatasetsSettingsPromoted                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DiscoverDatasetsSettingsPromoted' }))
+                DremioSSO                                                             = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DremioSSO' }))
+                EimInformationProtectionDataSourceInheritanceSetting                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionDataSourceInheritanceSetting' }))
+                EimInformationProtectionDownstreamInheritanceSetting                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionDownstreamInheritanceSetting' }))
+                EimInformationProtectionEdit                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionEdit' }))
+                # DEPRECATED
+                #EimInformationProtectionLessElevated                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionLessElevated' })
+                EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting' }))
+                ElevatedGuestsTenant                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ElevatedGuestsTenant' }))
+                EmailSecurityGroupsOnOutage                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSecurityGroupsOnOutage' }))
+                EmailSubscriptionsToB2BUsers                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSubscriptionsToB2BUsers' }))
+                EmailSubscriptionsToExternalUsers                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSubscriptionsToExternalUsers' }))
+                EmailSubscriptionTenant                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSubscriptionTenant' }))
+                Embedding                                                             = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'Embedding' }))
+                EnableAOAI                                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableAOAI' }))
+                EnableDatasetInPlaceSharing                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableDatasetInPlaceSharing' }))
+                EnableExcelYellowIntegration                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableExcelYellowIntegration' }))
+                # DEPRECATED
+                #EnableFabricAirflow                                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableFabricAirflow' })
+                EnableNLToDax                                                         = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableNLToDax' }))
+                EnableReassignDataDomainSwitch                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableReassignDataDomainSwitch' }))
+                EsriVisual                                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EsriVisual' }))
+                ExpFlightingTenant                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExpFlightingTenant' }))
+                ExportReport                                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportReport' }))
+                ExportToCsv                                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToCsv' }))
+                ExportToExcelSetting                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToExcelSetting' }))
+                ExportToImage                                                         = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToImage' }))
+                ExportToMHTML                                                         = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToMHTML' }))
+                ExportToPowerPoint                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToPowerPoint' }))
+                ExportToWord                                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToWord' }))
+                ExportToXML                                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToXML' }))
+                ExportVisualImageTenant                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportVisualImageTenant' }))
+                ExternalDatasetSharingTenant                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExternalDatasetSharingTenant' }))
+                ExternalSharingV2                                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExternalSharingV2' }))
+                FabricAddPartnerWorkload                                              = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricAddPartnerWorkload' }))
+                FabricFeedbackTenantSwitch                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricFeedbackTenantSwitch' }))
+                FabricGAWorkloads                                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricGAWorkloads' }))
+                FabricThirdPartyWorkloads                                             = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricThirdPartyWorkloads' }))
+                GitHubTenantSettings                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitHubTenantSettings' }))
+                GitIntegrationCrossGeoTenantSwitch                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitIntegrationCrossGeoTenantSwitch' }))
+                GitIntegrationSensitivityLabelsTenantSwitch                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitIntegrationSensitivityLabelsTenantSwitch' }))
+                GitIntegrationTenantSwitch                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitIntegrationTenantSwitch' }))
+                GoogleBigQuerySSO                                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GoogleBigQuerySSO' }))
+                # DEPRECATED
+                #GraphQLTenant                                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GraphQLTenant' })
+                HealthcareSolutionsTenantSwitch                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'HealthcareSolutionsTenantSwitch' }))
+                InstallNonvalidatedTemplateApps                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'InstallNonvalidatedTemplateApps' }))
+                InstallServiceApps                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'InstallServiceApps' }))
+                KustoDashboardTenantSwitch                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'KustoDashboardTenantSwitch' }))
+                LiveConnection                                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'LiveConnection' }))
+                LogAnalyticsAttachForWorkspaceAdmins                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'LogAnalyticsAttachForWorkspaceAdmins' }))
+                M365DataSharing                                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'M365DataSharing' }))
+                Mirroring                                                             = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'Mirroring' }))
+                ODSPRefreshEnforcementTenantAllowAutomaticUpdate                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ODSPRefreshEnforcementTenantAllowAutomaticUpdate' }))
+                OneDriveSharePointAllowSharingTenantSetting                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneDriveSharePointAllowSharingTenantSetting' }))
+                OneDriveSharePointViewerIntegrationTenantSettingV2                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneDriveSharePointViewerIntegrationTenantSettingV2' }))
+                OneLakeFileExplorer                                                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneLakeFileExplorer' }))
+                OneLakeForThirdParty                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneLakeForThirdParty' }))
+                OnPremAnalyzeInExcel                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OnPremAnalyzeInExcel' }))
+                PowerBIGoalsTenant                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PowerBIGoalsTenant' }))
+                # DEPRECATED
+                #PowerPlatformSolutionsIntegrationTenant                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PowerPlatformSolutionsIntegrationTenant' })
+                Printing                                                              = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'Printing' }))
+                PromoteContent                                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PromoteContent' }))
+                PublishContentPack                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PublishContentPack' }))
+                PublishToWeb                                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PublishToWeb' }))
+                QnaFeedbackLoop                                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'QnaFeedbackLoop' }))
+                QnaLsdlSharing                                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'QnaLsdlSharing' }))
+                QueryScaleOutTenant                                                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'QueryScaleOutTenant' }))
+                RedshiftSSO                                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RedshiftSSO' }))
+                RestrictMyFolderCapacity                                              = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RestrictMyFolderCapacity' }))
+                # DEPRECATED
+                #RetailSolutionsTenantSwitch                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RetailSolutionsTenantSwitch' })
+                RScriptVisual                                                         = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RScriptVisual' }))
+                # DEPRECATED
+                #ServicePrincipalAccess                                                = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ServicePrincipalAccess' })
+                ShareLinkToEntireOrg                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ShareLinkToEntireOrg' }))
+                ShareToTeamsTenant                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ShareToTeamsTenant' }))
+                SnowflakeSSO                                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'SnowflakeSSO' }))
+                StorytellingTenant                                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'StorytellingTenant' }))
+                SustainabilitySolutionsTenantSwitch                                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'SustainabilitySolutionsTenantSwitch' }))
+                TemplatePublish                                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'TemplatePublish' }))
+                TenantSettingPublishGetHelpInfo                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'TenantSettingPublishGetHelpInfo' }))
+                TridentPrivatePreview                                                 = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'TridentPrivatePreview' }))
+                UsageMetrics                                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'UsageMetrics' }))
+                UsageMetricsTrackUserLevelInfo                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'UsageMetricsTrackUserLevelInfo' }))
+                UseDatasetsAcrossWorkspaces                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'UseDatasetsAcrossWorkspaces' }))
+                VisualizeListInPowerBI                                                = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'VisualizeListInPowerBI' }))
+                WebContentTilesTenant                                                 = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WebContentTilesTenant' }))
+                WebModelingTenantSwitch                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WebModelingTenantSwitch' }))
+                AdminDataExploreViewPermission                                        = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminDataExploreViewPermission' }))
+                AllowCapacityMetricsReportUserMask                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCapacityMetricsReportUserMask' }))
+                AllowNonEntraADAuthInEventStream                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowNonEntraADAuthInEventStream' }))
+                AllowServicePrincipalsUseWriteAdminAPIs                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowServicePrincipalsUseWriteAdminAPIs' }))
+                AllowStoreAOAIDataInOtherRegions                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowStoreAOAIDataInOtherRegions' }))
+                ArtifactDBTItemTenantSwitch                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactDBTItemTenantSwitch' }))
+                ArtifactGraphPreview                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactGraphPreview' }))
+                ArtifactMapTenantSwitch                                               = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactMapTenantSwitch' }))
+                ArtifactSnowflakeDatabasePreview                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactSnowflakeDatabasePreview' }))
+                AutomaticallyUsePBIR                                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutomaticallyUsePBIR' }))
+                AzureMaps                                                             = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMaps' }))
+                AzureMapsCrossRegionDataProcessing                                    = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsCrossRegionDataProcessing' }))
+                AzureMapsInFabric                                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsInFabric' }))
+                AzureMapsInFabricCrossRegionDataProcessing                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsInFabricCrossRegionDataProcessing' }))
+                AzureMapsThirdPartyDataProcessing                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsThirdPartyDataProcessing' }))
+                AzureMapsWeatherServices                                              = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsWeatherServices' }))
+                ConfigureWorkspaceLevelIPFirewallRules                                = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ConfigureWorkspaceLevelIPFirewallRules' }))
+                CopilotCapacitySetupPermissionSwitch                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CopilotCapacitySetupPermissionSwitch' }))
+                DataSecurityForAIInteractions                                         = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DataSecurityForAIInteractions' }))
+                DeltaToIcebergTableVirtualization                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DeltaToIcebergTableVirtualization' }))
+                DigitalOperationsPreview                                              = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DigitalOperationsPreview' }))
+                DirectLakeOnOneLakeSemanticModelCreation                              = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DirectLakeOnOneLakeSemanticModelCreation' }))
+                EimInformationProtectionDefaultLabelDomainSetting                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionDefaultLabelDomainSetting' }))
+                EnableEsriLibraries                                                   = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableEsriLibraries' }))
+                FabricAddWorkloadToWorkspace                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricAddWorkloadToWorkspace' }))
+                FabricPromotionTenantSwitch                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricPromotionTenantSwitch' }))
+                ImmersiveTenantAdminSwitch                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ImmersiveTenantAdminSwitch' }))
+                MLModelEndpointsTenantSwitch                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'MLModelEndpointsTenantSwitch' }))
+                OneLakeDiagnosticLogsEUII                                             = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneLakeDiagnosticLogsEUII' }))
+                OntologyPreview                                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OntologyPreview' }))
+                PlatformMonitoringTenantSetting                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PlatformMonitoringTenantSetting' }))
+                PowerBIMCP                                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PowerBIMCP' }))
+                PreppedForCopilotContentDiscovery                                     = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PreppedForCopilotContentDiscovery' }))
+                RTHAnomalyDetectionTenantSwitch                                       = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RTHAnomalyDetectionTenantSwitch' }))
+                RTHOperationalAgentsTenantSwitch                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RTHOperationalAgentsTenantSwitch' }))
+                ServicePrincipalAccessGlobalAPIs                                      = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ServicePrincipalAccessGlobalAPIs' }))
+                ServicePrincipalAccessPermissionAPIs                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ServicePrincipalAccessPermissionAPIs' }))
+                ShowActivatorEntryPointsTenantSwitch                                  = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ShowActivatorEntryPointsTenantSwitch' }))
+                ThirdPartyPrivateWorkloads                                            = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ThirdPartyPrivateWorkloads' }))
+                WorkspaceBlockInboundAccess                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceBlockInboundAccess' }))
+                WorkspaceBlockOutboundAccess                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceBlockOutboundAccess' }))
+                WorkspaceCmk                                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceCmk' }))
+                ApplicationId                                                         = $this.ApplicationId
+                TenantId                                                              = $this.TenantId
+                ApplicationSecret                                                     = $this.ApplicationSecret
+                CertificateThumbprint                                                 = $this.CertificateThumbprint
+                CertificatePath                                                       = $this.CertificatePath
+                CertificatePassword                                                   = $this.CertificatePassword
+                ManagedIdentity                                                       = $this.ManagedIdentity
+                AccessTokens                                                          = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Warning -Message 'This resource is read-only and does not support changing the settings. It is used for monitoring purposes only.'
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        $Credential = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('Fabric')
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Export')
 
-        $nullResult = $PSBoundParameters
-
-        if ($null -ne $Script:exportedInstances -and $Script:ExportMode)
+        try
         {
-            $instance = $Script:exportedInstances
-        }
-        else
-        {
+            $this.ResourceCache['ExportMode'] = $true
             $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Fabric').HostUrl + '/v1/admin/tenantsettings'
-            $instance = Invoke-M365DSCFabricWebRequest -Uri $uri -Method 'GET'
-        }
-        if ($null -eq $instance)
-        {
-            return $nullResult
-        }
+            [array] $this.ResourceCache['exportedInstances'] = Invoke-M365DSCFabricWebRequest -Uri $uri -Method 'GET'
 
-        $results = @{
-            IsSingleInstance                                                      = 'Yes'
-            AADSSOForGateway                                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AADSSOForGateway' })
-            AdminApisIncludeDetailedMetadata                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminApisIncludeDetailedMetadata' })
-            AdminApisIncludeExpressions                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminApisIncludeExpressions' })
-            AdminCustomDisclaimer                                                 = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminCustomDisclaimer' })
-            AISkillArtifactTenantSwitch                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AISkillArtifactTenantSwitch' })
-            AllowAccessOverPrivateLinks                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowAccessOverPrivateLinks' })
-            AllowCVAuthenticationTenant                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCVAuthenticationTenant' })
-            AllowCVLocalStorageV2Tenant                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCVLocalStorageV2Tenant' })
-            AllowCVToExportDataToFileTenant                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCVToExportDataToFileTenant' })
-            AllowEndorsementMasterDataSwitch                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowEndorsementMasterDataSwitch' })
-            AllowExternalDataSharingReceiverSwitch                                = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowExternalDataSharingReceiverSwitch' })
-            AllowExternalDataSharingSwitch                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowExternalDataSharingSwitch' })
-            AllowFreeTrial                                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowFreeTrial' })
-            AllowGetOneLakeUDK                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowGetOneLakeUDK' })
-            AllowGuestLookup                                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowGuestLookup' })
-            AllowGuestUserToAccessSharedContent                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowGuestUserToAccessSharedContent' })
-            # DEPRECATED
-            #AllowMountDfCreation                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowMountDfCreation' })
-            AllowOneLakeUDK                                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowOneLakeUDK' })
-            AllowPowerBIASDQOnTenant                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowPowerBIASDQOnTenant' })
-            AllowSendAOAIDataToOtherRegions                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowSendAOAIDataToOtherRegions' })
-            AllowSendNLToDaxDataToOtherRegions                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowSendNLToDaxDataToOtherRegions' })
-            AllowServicePrincipalsCreateAndUseProfiles                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowServicePrincipalsCreateAndUseProfiles' })
-            AllowServicePrincipalsUseReadAdminAPIs                                = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowServicePrincipalsUseReadAdminAPIs' })
-            AppPush                                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AppPush' })
-            ArtifactOrgAppPreview                                                 = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactOrgAppPreview' })
-            ArtifactSearchTenant                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactSearchTenant' })
-            ASCollectQueryTextTelemetryTenantSwitch                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASCollectQueryTextTelemetryTenantSwitch' })
-            ASShareableCloudConnectionBindingSecurityModeTenant                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASShareableCloudConnectionBindingSecurityModeTenant' })
-            ASWritethruContinuousExportTenantSwitch                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASWritethruContinuousExportTenantSwitch' })
-            ASWritethruTenantSwitch                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ASWritethruTenantSwitch' })
-            AutoInstallPowerBIAppInTeamsTenant                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutoInstallPowerBIAppInTeamsTenant' })
-            AutomatedInsightsEntryPoints                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutomatedInsightsEntryPoints' })
-            AutomatedInsightsTenant                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutomatedInsightsTenant' })
-            # DEPRECATED
-            #AzureMap                                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMap' })
-            BingMap                                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BingMap' })
-            BlockAccessFromPublicNetworks                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockAccessFromPublicNetworks' })
-            BlockAutoDiscoverAndPackageRefresh                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockAutoDiscoverAndPackageRefresh' })
-            BlockProtectedLabelSharingToEntireOrg                                 = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockProtectedLabelSharingToEntireOrg' })
-            BlockResourceKeyAuthentication                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'BlockResourceKeyAuthentication' })
-            CDSAManagement                                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CDSAManagement' })
-            CertifiedCustomVisualsTenant                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CertifiedCustomVisualsTenant' })
-            CertifyDatasets                                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CertifyDatasets' })
-            ConfigureFolderRetentionPeriod                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ConfigureFolderRetentionPeriod' })
-            CreateAppWorkspaces                                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CreateAppWorkspaces' })
-            CustomVisualsTenant                                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CustomVisualsTenant' })
-            DatamartTenant                                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DatamartTenant' })
-            DatasetExecuteQueries                                                 = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DatasetExecuteQueries' })
-            DevelopServiceApps                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DevelopServiceApps' })
-            DiscoverDatasetsConsumption                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DiscoverDatasetsConsumption' })
-            DiscoverDatasetsSettingsCertified                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DiscoverDatasetsSettingsCertified' })
-            DiscoverDatasetsSettingsPromoted                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DiscoverDatasetsSettingsPromoted' })
-            DremioSSO                                                             = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DremioSSO' })
-            EimInformationProtectionDataSourceInheritanceSetting                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionDataSourceInheritanceSetting' })
-            EimInformationProtectionDownstreamInheritanceSetting                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionDownstreamInheritanceSetting' })
-            EimInformationProtectionEdit                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionEdit' })
-            # DEPRECATED
-            #EimInformationProtectionLessElevated                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionLessElevated' })
-            EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting' })
-            ElevatedGuestsTenant                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ElevatedGuestsTenant' })
-            EmailSecurityGroupsOnOutage                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSecurityGroupsOnOutage' })
-            EmailSubscriptionsToB2BUsers                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSubscriptionsToB2BUsers' })
-            EmailSubscriptionsToExternalUsers                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSubscriptionsToExternalUsers' })
-            EmailSubscriptionTenant                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EmailSubscriptionTenant' })
-            Embedding                                                             = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'Embedding' })
-            EnableAOAI                                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableAOAI' })
-            EnableDatasetInPlaceSharing                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableDatasetInPlaceSharing' })
-            EnableExcelYellowIntegration                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableExcelYellowIntegration' })
-            # DEPRECATED
-            #EnableFabricAirflow                                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableFabricAirflow' })
-            EnableNLToDax                                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableNLToDax' })
-            EnableReassignDataDomainSwitch                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableReassignDataDomainSwitch' })
-            EsriVisual                                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EsriVisual' })
-            ExpFlightingTenant                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExpFlightingTenant' })
-            ExportReport                                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportReport' })
-            ExportToCsv                                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToCsv' })
-            ExportToExcelSetting                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToExcelSetting' })
-            ExportToImage                                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToImage' })
-            ExportToMHTML                                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToMHTML' })
-            ExportToPowerPoint                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToPowerPoint' })
-            ExportToWord                                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToWord' })
-            ExportToXML                                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportToXML' })
-            ExportVisualImageTenant                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExportVisualImageTenant' })
-            ExternalDatasetSharingTenant                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExternalDatasetSharingTenant' })
-            ExternalSharingV2                                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ExternalSharingV2' })
-            FabricAddPartnerWorkload                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricAddPartnerWorkload' })
-            FabricFeedbackTenantSwitch                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricFeedbackTenantSwitch' })
-            FabricGAWorkloads                                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricGAWorkloads' })
-            FabricThirdPartyWorkloads                                             = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricThirdPartyWorkloads' })
-            GitHubTenantSettings                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitHubTenantSettings' })
-            GitIntegrationCrossGeoTenantSwitch                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitIntegrationCrossGeoTenantSwitch' })
-            GitIntegrationSensitivityLabelsTenantSwitch                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitIntegrationSensitivityLabelsTenantSwitch' })
-            GitIntegrationTenantSwitch                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GitIntegrationTenantSwitch' })
-            GoogleBigQuerySSO                                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GoogleBigQuerySSO' })
-            # DEPRECATED
-            #GraphQLTenant                                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'GraphQLTenant' })
-            HealthcareSolutionsTenantSwitch                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'HealthcareSolutionsTenantSwitch' })
-            InstallNonvalidatedTemplateApps                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'InstallNonvalidatedTemplateApps' })
-            InstallServiceApps                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'InstallServiceApps' })
-            KustoDashboardTenantSwitch                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'KustoDashboardTenantSwitch' })
-            LiveConnection                                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'LiveConnection' })
-            LogAnalyticsAttachForWorkspaceAdmins                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'LogAnalyticsAttachForWorkspaceAdmins' })
-            M365DataSharing                                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'M365DataSharing' })
-            Mirroring                                                             = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'Mirroring' })
-            ODSPRefreshEnforcementTenantAllowAutomaticUpdate                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ODSPRefreshEnforcementTenantAllowAutomaticUpdate' })
-            OneDriveSharePointAllowSharingTenantSetting                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneDriveSharePointAllowSharingTenantSetting' })
-            OneDriveSharePointViewerIntegrationTenantSettingV2                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneDriveSharePointViewerIntegrationTenantSettingV2' })
-            OneLakeFileExplorer                                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneLakeFileExplorer' })
-            OneLakeForThirdParty                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneLakeForThirdParty' })
-            OnPremAnalyzeInExcel                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OnPremAnalyzeInExcel' })
-            PowerBIGoalsTenant                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PowerBIGoalsTenant' })
-            # DEPRECATED
-            #PowerPlatformSolutionsIntegrationTenant                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PowerPlatformSolutionsIntegrationTenant' })
-            Printing                                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'Printing' })
-            PromoteContent                                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PromoteContent' })
-            PublishContentPack                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PublishContentPack' })
-            PublishToWeb                                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PublishToWeb' })
-            QnaFeedbackLoop                                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'QnaFeedbackLoop' })
-            QnaLsdlSharing                                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'QnaLsdlSharing' })
-            QueryScaleOutTenant                                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'QueryScaleOutTenant' })
-            RedshiftSSO                                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RedshiftSSO' })
-            RestrictMyFolderCapacity                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RestrictMyFolderCapacity' })
-            # DEPRECATED
-            #RetailSolutionsTenantSwitch                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RetailSolutionsTenantSwitch' })
-            RScriptVisual                                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RScriptVisual' })
-            # DEPRECATED
-            #ServicePrincipalAccess                                                = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ServicePrincipalAccess' })
-            ShareLinkToEntireOrg                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ShareLinkToEntireOrg' })
-            ShareToTeamsTenant                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ShareToTeamsTenant' })
-            SnowflakeSSO                                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'SnowflakeSSO' })
-            StorytellingTenant                                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'StorytellingTenant' })
-            SustainabilitySolutionsTenantSwitch                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'SustainabilitySolutionsTenantSwitch' })
-            TemplatePublish                                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'TemplatePublish' })
-            TenantSettingPublishGetHelpInfo                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'TenantSettingPublishGetHelpInfo' })
-            TridentPrivatePreview                                                 = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'TridentPrivatePreview' })
-            UsageMetrics                                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'UsageMetrics' })
-            UsageMetricsTrackUserLevelInfo                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'UsageMetricsTrackUserLevelInfo' })
-            UseDatasetsAcrossWorkspaces                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'UseDatasetsAcrossWorkspaces' })
-            VisualizeListInPowerBI                                                = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'VisualizeListInPowerBI' })
-            WebContentTilesTenant                                                 = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WebContentTilesTenant' })
-            WebModelingTenantSwitch                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WebModelingTenantSwitch' })
-            AdminDataExploreViewPermission                                        = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AdminDataExploreViewPermission' })
-            AllowCapacityMetricsReportUserMask                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowCapacityMetricsReportUserMask' })
-            AllowNonEntraADAuthInEventStream                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowNonEntraADAuthInEventStream' })
-            AllowServicePrincipalsUseWriteAdminAPIs                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowServicePrincipalsUseWriteAdminAPIs' })
-            AllowStoreAOAIDataInOtherRegions                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AllowStoreAOAIDataInOtherRegions' })
-            ArtifactDBTItemTenantSwitch                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactDBTItemTenantSwitch' })
-            ArtifactGraphPreview                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactGraphPreview' })
-            ArtifactMapTenantSwitch                                               = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactMapTenantSwitch' })
-            ArtifactSnowflakeDatabasePreview                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ArtifactSnowflakeDatabasePreview' })
-            AutomaticallyUsePBIR                                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AutomaticallyUsePBIR' })
-            AzureMaps                                                             = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMaps' })
-            AzureMapsCrossRegionDataProcessing                                    = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsCrossRegionDataProcessing' })
-            AzureMapsInFabric                                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsInFabric' })
-            AzureMapsInFabricCrossRegionDataProcessing                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsInFabricCrossRegionDataProcessing' })
-            AzureMapsThirdPartyDataProcessing                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsThirdPartyDataProcessing' })
-            AzureMapsWeatherServices                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'AzureMapsWeatherServices' })
-            ConfigureWorkspaceLevelIPFirewallRules                                = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ConfigureWorkspaceLevelIPFirewallRules' })
-            CopilotCapacitySetupPermissionSwitch                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'CopilotCapacitySetupPermissionSwitch' })
-            DataSecurityForAIInteractions                                         = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DataSecurityForAIInteractions' })
-            DeltaToIcebergTableVirtualization                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DeltaToIcebergTableVirtualization' })
-            DigitalOperationsPreview                                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DigitalOperationsPreview' })
-            DirectLakeOnOneLakeSemanticModelCreation                              = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'DirectLakeOnOneLakeSemanticModelCreation' })
-            EimInformationProtectionDefaultLabelDomainSetting                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EimInformationProtectionDefaultLabelDomainSetting' })
-            EnableEsriLibraries                                                   = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'EnableEsriLibraries' })
-            FabricAddWorkloadToWorkspace                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricAddWorkloadToWorkspace' })
-            FabricPromotionTenantSwitch                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'FabricPromotionTenantSwitch' })
-            ImmersiveTenantAdminSwitch                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ImmersiveTenantAdminSwitch' })
-            MLModelEndpointsTenantSwitch                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'MLModelEndpointsTenantSwitch' })
-            OneLakeDiagnosticLogsEUII                                             = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OneLakeDiagnosticLogsEUII' })
-            OntologyPreview                                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'OntologyPreview' })
-            PlatformMonitoringTenantSetting                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PlatformMonitoringTenantSetting' })
-            PowerBIMCP                                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PowerBIMCP' })
-            PreppedForCopilotContentDiscovery                                     = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'PreppedForCopilotContentDiscovery' })
-            RTHAnomalyDetectionTenantSwitch                                       = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RTHAnomalyDetectionTenantSwitch' })
-            RTHOperationalAgentsTenantSwitch                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'RTHOperationalAgentsTenantSwitch' })
-            ServicePrincipalAccessGlobalAPIs                                      = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ServicePrincipalAccessGlobalAPIs' })
-            ServicePrincipalAccessPermissionAPIs                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ServicePrincipalAccessPermissionAPIs' })
-            ShowActivatorEntryPointsTenantSwitch                                  = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ShowActivatorEntryPointsTenantSwitch' })
-            ThirdPartyPrivateWorkloads                                            = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'ThirdPartyPrivateWorkloads' })
-            WorkspaceBlockInboundAccess                                           = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceBlockInboundAccess' })
-            WorkspaceBlockOutboundAccess                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceBlockOutboundAccess' })
-            WorkspaceCmk                                                          = Get-M365DSCFabricTenantSettingObject -Setting ($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceCmk' })
-            ApplicationId                                                         = $ApplicationId
-            TenantId                                                              = $TenantId
-            ApplicationSecret                                                     = $ApplicationSecret
-            CertificateThumbprint                                                 = $CertificateThumbprint
-            CertificatePath                                                       = $CertificatePath
-            CertificatePassword                                                   = $CertificatePassword
-            AccessTokens                                                          = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AADSSOForGateway,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminApisIncludeDetailedMetadata,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminApisIncludeExpressions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminCustomDisclaimer,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AISkillArtifactTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowAccessOverPrivateLinks,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVAuthenticationTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVLocalStorageV2Tenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVToExportDataToFileTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowEndorsementMasterDataSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowExternalDataSharingReceiverSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowExternalDataSharingSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowFreeTrial,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGetOneLakeUDK,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGuestLookup,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGuestUserToAccessSharedContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowMountDfCreation,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowOneLakeUDK,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowPowerBIASDQOnTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowSendAOAIDataToOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowSendNLToDaxDataToOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsCreateAndUseProfiles,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsUseReadAdminAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AppPush,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactOrgAppPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactSearchTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASCollectQueryTextTelemetryTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASShareableCloudConnectionBindingSecurityModeTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASWritethruContinuousExportTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASWritethruTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutoInstallPowerBIAppInTeamsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomatedInsightsEntryPoints,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomatedInsightsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMap,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BingMap,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockAccessFromPublicNetworks,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockAutoDiscoverAndPackageRefresh,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockProtectedLabelSharingToEntireOrg,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockResourceKeyAuthentication,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CDSAManagement,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CertifiedCustomVisualsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CertifyDatasets,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ConfigureFolderRetentionPeriod,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CreateAppWorkspaces,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CustomVisualsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DatamartTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DatasetExecuteQueries,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DevelopServiceApps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsConsumption,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsSettingsCertified,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsSettingsPromoted,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DremioSSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDataSourceInheritanceSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDownstreamInheritanceSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionEdit,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionLessElevated,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ElevatedGuestsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSecurityGroupsOnOutage,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionsToB2BUsers,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionsToExternalUsers,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Embedding,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableAOAI,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableDatasetInPlaceSharing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableExcelYellowIntegration,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableFabricAirflow,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableNLToDax,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableReassignDataDomainSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EsriVisual,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExpFlightingTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportReport,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToCsv,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToExcelSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToImage,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToMHTML,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToPowerPoint,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToWord,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToXML,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportVisualImageTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExternalDatasetSharingTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExternalSharingV2,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricAddPartnerWorkload,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricFeedbackTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricGAWorkloads,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricThirdPartyWorkloads,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitHubTenantSettings,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationCrossGeoTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationSensitivityLabelsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GoogleBigQuerySSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GraphQLTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $HealthcareSolutionsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $InstallNonvalidatedTemplateApps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $InstallServiceApps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $KustoDashboardTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $LiveConnection,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $LogAnalyticsAttachForWorkspaceAdmins,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $M365DataSharing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Mirroring,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ODSPRefreshEnforcementTenantAllowAutomaticUpdate,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneDriveSharePointAllowSharingTenantSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneDriveSharePointViewerIntegrationTenantSettingV2,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeFileExplorer,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeForThirdParty,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OnPremAnalyzeInExcel,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerBIGoalsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerPlatformSolutionsIntegrationTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Printing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PromoteContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PublishContentPack,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PublishToWeb,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QnaFeedbackLoop,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QnaLsdlSharing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QueryScaleOutTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RedshiftSSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RestrictMyFolderCapacity,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RetailSolutionsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RScriptVisual,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccess,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShareLinkToEntireOrg,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShareToTeamsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $SnowflakeSSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $StorytellingTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $SustainabilitySolutionsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TemplatePublish,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TenantSettingPublishGetHelpInfo,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TridentPrivatePreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UsageMetrics,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UsageMetricsTrackUserLevelInfo,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UseDatasetsAcrossWorkspaces,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $VisualizeListInPowerBI,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WebContentTilesTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WebModelingTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminDataExploreViewPermission,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCapacityMetricsReportUserMask,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowNonEntraADAuthInEventStream,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsUseWriteAdminAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowStoreAOAIDataInOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactDBTItemTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactGraphPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactMapTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactSnowflakeDatabasePreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomaticallyUsePBIR,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMaps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsCrossRegionDataProcessing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsInFabric,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsInFabricCrossRegionDataProcessing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsThirdPartyDataProcessing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsWeatherServices,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ConfigureWorkspaceLevelIPFirewallRules,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CopilotCapacitySetupPermissionSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DataSecurityForAIInteractions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DeltaToIcebergTableVirtualization,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DigitalOperationsPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DirectLakeOnOneLakeSemanticModelCreation,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDefaultLabelDomainSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableEsriLibraries,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricAddWorkloadToWorkspace,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricPromotionTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ImmersiveTenantAdminSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $MLModelEndpointsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeDiagnosticLogsEUII,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OntologyPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PlatformMonitoringTenantSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerBIMCP,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PreppedForCopilotContentDiscovery,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RTHAnomalyDetectionTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RTHOperationalAgentsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccessGlobalAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccessPermissionAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShowActivatorEntryPointsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ThirdPartyPrivateWorkloads,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceBlockInboundAccess,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceBlockOutboundAccess,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceCmk,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Warning -Message 'This resource is read-only and does not support changing the settings. It is used for monitoring purposes only.'
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AADSSOForGateway,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminApisIncludeDetailedMetadata,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminApisIncludeExpressions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminCustomDisclaimer,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AISkillArtifactTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowAccessOverPrivateLinks,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVAuthenticationTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVLocalStorageV2Tenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCVToExportDataToFileTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowEndorsementMasterDataSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowExternalDataSharingReceiverSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowExternalDataSharingSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowFreeTrial,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGetOneLakeUDK,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGuestLookup,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowGuestUserToAccessSharedContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowMountDfCreation,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowOneLakeUDK,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowPowerBIASDQOnTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowSendAOAIDataToOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowSendNLToDaxDataToOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsCreateAndUseProfiles,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsUseReadAdminAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AppPush,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactOrgAppPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactSearchTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASCollectQueryTextTelemetryTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASShareableCloudConnectionBindingSecurityModeTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASWritethruContinuousExportTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ASWritethruTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutoInstallPowerBIAppInTeamsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomatedInsightsEntryPoints,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomatedInsightsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMap,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BingMap,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockAccessFromPublicNetworks,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockAutoDiscoverAndPackageRefresh,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockProtectedLabelSharingToEntireOrg,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BlockResourceKeyAuthentication,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CDSAManagement,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CertifiedCustomVisualsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CertifyDatasets,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ConfigureFolderRetentionPeriod,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CreateAppWorkspaces,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CustomVisualsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DatamartTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DatasetExecuteQueries,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DevelopServiceApps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsConsumption,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsSettingsCertified,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DiscoverDatasetsSettingsPromoted,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DremioSSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDataSourceInheritanceSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDownstreamInheritanceSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionEdit,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionLessElevated,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ElevatedGuestsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSecurityGroupsOnOutage,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionsToB2BUsers,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionsToExternalUsers,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EmailSubscriptionTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Embedding,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableAOAI,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableDatasetInPlaceSharing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableExcelYellowIntegration,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableFabricAirflow,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableNLToDax,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableReassignDataDomainSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EsriVisual,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExpFlightingTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportReport,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToCsv,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToExcelSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToImage,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToMHTML,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToPowerPoint,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToWord,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportToXML,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExportVisualImageTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExternalDatasetSharingTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExternalSharingV2,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricAddPartnerWorkload,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricFeedbackTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricGAWorkloads,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricThirdPartyWorkloads,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitHubTenantSettings,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationCrossGeoTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationSensitivityLabelsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GitIntegrationTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GoogleBigQuerySSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GraphQLTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $HealthcareSolutionsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $InstallNonvalidatedTemplateApps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $InstallServiceApps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $KustoDashboardTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $LiveConnection,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $LogAnalyticsAttachForWorkspaceAdmins,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $M365DataSharing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Mirroring,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ODSPRefreshEnforcementTenantAllowAutomaticUpdate,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneDriveSharePointAllowSharingTenantSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneDriveSharePointViewerIntegrationTenantSettingV2,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeFileExplorer,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeForThirdParty,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OnPremAnalyzeInExcel,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerBIGoalsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerPlatformSolutionsIntegrationTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $Printing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PromoteContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PublishContentPack,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PublishToWeb,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QnaFeedbackLoop,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QnaLsdlSharing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $QueryScaleOutTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RedshiftSSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RestrictMyFolderCapacity,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RetailSolutionsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RScriptVisual,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccess,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShareLinkToEntireOrg,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShareToTeamsTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $SnowflakeSSO,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $StorytellingTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $SustainabilitySolutionsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TemplatePublish,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TenantSettingPublishGetHelpInfo,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TridentPrivatePreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UsageMetrics,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UsageMetricsTrackUserLevelInfo,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $UseDatasetsAcrossWorkspaces,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $VisualizeListInPowerBI,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WebContentTilesTenant,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WebModelingTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AdminDataExploreViewPermission,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowCapacityMetricsReportUserMask,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowNonEntraADAuthInEventStream,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowServicePrincipalsUseWriteAdminAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AllowStoreAOAIDataInOtherRegions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactDBTItemTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactGraphPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactMapTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ArtifactSnowflakeDatabasePreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AutomaticallyUsePBIR,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMaps,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsCrossRegionDataProcessing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsInFabric,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsInFabricCrossRegionDataProcessing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsThirdPartyDataProcessing,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $AzureMapsWeatherServices,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ConfigureWorkspaceLevelIPFirewallRules,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $CopilotCapacitySetupPermissionSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DataSecurityForAIInteractions,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DeltaToIcebergTableVirtualization,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DigitalOperationsPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $DirectLakeOnOneLakeSemanticModelCreation,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EimInformationProtectionDefaultLabelDomainSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnableEsriLibraries,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricAddWorkloadToWorkspace,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $FabricPromotionTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ImmersiveTenantAdminSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $MLModelEndpointsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OneLakeDiagnosticLogsEUII,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $OntologyPreview,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PlatformMonitoringTenantSetting,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PowerBIMCP,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $PreppedForCopilotContentDiscovery,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RTHAnomalyDetectionTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $RTHOperationalAgentsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccessGlobalAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ServicePrincipalAccessPermissionAPIs,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ShowActivatorEntryPointsTenantSwitch,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ThirdPartyPrivateWorkloads,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceBlockInboundAccess,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceBlockOutboundAccess,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $WorkspaceCmk,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'Fabric' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $Script:ExportMode = $true
-        $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Fabric').HostUrl + '/v1/admin/tenantsettings'
-        [array] $Script:exportedInstances = Invoke-M365DSCFabricWebRequest -Uri $uri -Method 'GET'
-
-        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-        {
-            $Global:M365DSCExportResourceInstancesCount++
-        }
-        $dscContent = [System.Text.StringBuilder]::new()
-        $params = @{
-            IsSingleInstance      = 'Yes'
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            AccessTokens          = $AccessTokens
-        }
-
-        $Results = Get-TargetResource @Params
-
-        $newResults = ([Hashtable]$Results).Clone()
-        $noEscape = @()
-        foreach ($key in @($Results.Keys))
-        {
-            if ($null -ne $Results.$key -and $key -notin $params.Keys)
+            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
             {
-                $complexTypeMapping = @(
-                    @{
-                        Name            = $key
-                        CIMInstanceName = 'FabricTenantSetting'
-                    },
-                    @{
-                        Name            = 'properties'
-                        CIMInstanceName = 'FabricTenantSettingProperty'
-                        IsArray         = $true
+                $Global:M365DSCExportResourceInstancesCount++
+            }
+            $dscContent = [System.Text.StringBuilder]::new()
+            $params = @{
+                IsSingleInstance      = 'Yes'
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+
+            $Results = $this.GetForExport($Params)
+
+            $newResults = ([Hashtable]$Results).Clone()
+            $noEscape = @()
+            foreach ($key in @($Results.Keys))
+            {
+                if ($null -ne $Results.$key -and $key -notin $params.Keys)
+                {
+                    $complexTypeMapping = @(
+                        @{
+                            Name            = $key
+                            CIMInstanceName = 'FabricTenantSetting'
+                        },
+                        @{
+                            Name            = 'properties'
+                            CIMInstanceName = 'FabricTenantSettingProperty'
+                            IsArray         = $true
+                        }
+                    )
+
+                    if ($null -ne $Results.$key.enabledSecurityGroups)
+                    {
+                        $Results.$key.enabledSecurityGroups = $Results.$key.enabledSecurityGroups -join ','
                     }
-                )
 
-                if ($null -ne $Results.$key.enabledSecurityGroups)
-                {
-                    $Results.$key.enabledSecurityGroups = $Results.$key.enabledSecurityGroups -join ','
-                }
+                    if ($null -ne $Results.$key.excludedSecurityGroups)
+                    {
+                        $Results.$key.excludedSecurityGroups = $Results.$key.excludedSecurityGroups -join ','
+                    }
 
-                if ($null -ne $Results.$key.excludedSecurityGroups)
-                {
-                    $Results.$key.excludedSecurityGroups = $Results.$key.excludedSecurityGroups -join ','
-                }
-
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.$key `
-                    -CIMInstanceName 'FabricTenantSetting' `
-                    -ComplexTypeMapping $complexTypeMapping
-                if (-not [String]::IsNullOrEmpty($complexTypeStringResult))
-                {
-                    $newResults.$key = $complexTypeStringResult
-                    $noEscape += $key
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.$key `
+                        -CIMInstanceName 'FabricTenantSetting' `
+                        -ComplexTypeMapping $complexTypeMapping
+                    if (-not [String]::IsNullOrEmpty($complexTypeStringResult))
+                    {
+                        $newResults.$key = $complexTypeStringResult
+                        $noEscape += $key
+                    }
                 }
             }
+
+            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                -ConnectionMode $ConnectionMode `
+                -ModulePath $this.GetModulePath() `
+                -Results $newResults `
+                -Credential $Credential `
+                -NoEscape $noEscape
+
+            [void]$dscContent.Append($currentDSCBlock)
+            Save-M365DSCPartialExport -Content $currentDSCBlock `
+                -FileName $Global:PartialExportFileName
+            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $dscContent.ToString()
         }
-
-        $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-            -ConnectionMode $ConnectionMode `
-            -ModulePath $PSScriptRoot `
-            -Results $newResults `
-            -Credential $Credential `
-            -NoEscape $noEscape
-
-        [void]$dscContent.Append($currentDSCBlock)
-        Save-M365DSCPartialExport -Content $currentDSCBlock `
-            -FileName $Global:PartialExportFileName
-        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Get-M365DSCFabricTenantSettingObject
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param(
-        [Parameter()]
-        $Setting
-    )
-
-    if ($null -eq $Setting)
-    {
-        return $null
-    }
-
-    Write-Verbose -Message "Retrieving values for setting {$($Setting.settingName)}"
-
-    $values = @{
-        settingName = $Setting.settingName
-        enabled     = [Boolean]$Setting.enabled
-        title       = ($Setting.title -creplace '\P{IsBasicLatin}').Replace("`"", "```"")
-    }
-    if (-not [System.String]::IsNullOrEmpty($Setting.canSpecifySecurityGroups))
-    {
-        $values.Add('canSpecifySecurityGroups', [Boolean]$Setting.canSpecifySecurityGroups)
-    }
-    if (-not [System.String]::IsNullOrEmpty($Setting.delegateToWorkspace))
-    {
-        $values.Add('delegateToWorkspace', $Setting.delegateToWorkspace)
-    }
-    if (-not [System.String]::IsNullOrEmpty($Setting.delegatedFrom))
-    {
-        $values.Add('delegatedFrom', $Setting.delegatedFrom)
-    }
-    if (-not [System.String]::IsNullOrEmpty($Setting.tenantSettingGroup))
-    {
-        $values.Add('tenantSettingGroup', ($Setting.tenantSettingGroup -creplace '\P{IsBasicLatin}'))
-    }
-    if ($null -ne $Setting.properties -and $Setting.properties.Length -gt 0)
-    {
-        $propertiesValue = @()
-        foreach ($property in $Setting.Properties)
+        catch
         {
-            $curProperty = @{
-                name  = $property.name
-                value = $property.value
-                type  = $property.type
-            }
-            $propertiesValue += $curProperty
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [System.Collections.Hashtable] GetFabricTenantSettingObject([System.Object] $Setting)
+    {
+        if ($null -eq $Setting)
+        {
+            return $null
         }
 
-        $values.Add('properties', $propertiesValue)
+        Write-Verbose -Message "Retrieving values for setting {$($Setting.settingName)}"
+
+        $values = @{
+            settingName = $Setting.settingName
+            enabled     = [Boolean]$Setting.enabled
+            title       = ($Setting.title -creplace '\P{IsBasicLatin}').Replace("`"", "```"")
+        }
+        if (-not [System.String]::IsNullOrEmpty($Setting.canSpecifySecurityGroups))
+        {
+            $values.Add('canSpecifySecurityGroups', [Boolean]$Setting.canSpecifySecurityGroups)
+        }
+        if (-not [System.String]::IsNullOrEmpty($Setting.delegateToWorkspace))
+        {
+            $values.Add('delegateToWorkspace', $Setting.delegateToWorkspace)
+        }
+        if (-not [System.String]::IsNullOrEmpty($Setting.delegatedFrom))
+        {
+            $values.Add('delegatedFrom', $Setting.delegatedFrom)
+        }
+        if (-not [System.String]::IsNullOrEmpty($Setting.tenantSettingGroup))
+        {
+            $values.Add('tenantSettingGroup', ($Setting.tenantSettingGroup -creplace '\P{IsBasicLatin}'))
+        }
+        if ($null -ne $Setting.properties -and $Setting.properties.Length -gt 0)
+        {
+            $propertiesValue = @()
+            foreach ($property in $Setting.Properties)
+            {
+                $curProperty = @{
+                    name  = $property.name
+                    value = $property.value
+                    type  = $property.type
+                }
+                $propertiesValue += $curProperty
+            }
+
+            $values.Add('properties', $propertiesValue)
+        }
+        if ($null -ne $Setting.excludedSecurityGroups -and $Setting.excludedSecurityGroups.Length -gt 0)
+        {
+            $values.Add('excludedSecurityGroups', [Array]$Setting.excludedSecurityGroups.name)
+        }
+        if ($null -ne $Setting.enabledSecurityGroups -and $Setting.enabledSecurityGroups.Length -gt 0)
+        {
+            $values.Add('enabledSecurityGroups', [Array]$Setting.enabledSecurityGroups.name)
+        }
+        return $values
     }
-    if ($null -ne $Setting.excludedSecurityGroups -and $Setting.excludedSecurityGroups.Length -gt 0)
+
+    hidden [FabricAdminTenantSettings] AsResult([System.Object] $Values)
     {
-        $values.Add('excludedSecurityGroups', [Array]$Setting.excludedSecurityGroups.name)
+        if ($Values -is [FabricAdminTenantSettings])
+        {
+            return $Values
+        }
+
+        $result = [FabricAdminTenantSettings]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
-    if ($null -ne $Setting.enabledSecurityGroups -and $Setting.enabledSecurityGroups.Length -gt 0)
-    {
-        $values.Add('enabledSecurityGroups', [Array]$Setting.enabledSecurityGroups.name)
-    }
-    return $values
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_FabricTenantSetting
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates if the tenant setting is enabled for a security group. 0 - The tenant setting is enabled for the entire organization.')]
+    [System.Nullable[System.Boolean]] $canSpecifySecurityGroups
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether the tenant setting can be delegated to a workspace admin. False - Workspace admin cannot override the tenant setting.')]
+    [System.Nullable[System.Boolean]] $delegateToWorkspace
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Tenant setting delegated from tenant, capacity or domain.')]
+    [MSFT_FabricDelegatedFrom] $delegatedFrom
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the tenant setting.')]
+    [System.String] $settingName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The status of the tenant setting.')]
+    [System.Nullable[System.Boolean]] $enabled
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Tenant setting group name.')]
+    [System.String] $tenantSettingGroup
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The title of the tenant setting.')]
+    [System.String] $title
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Tenant setting properties.')]
+    [MSFT_FabricTenantSettingProperty[]] $properties
+
+    [DscProperty()]
+    [System.ComponentModel.Description('A list of excluded security groups.')]
+    [System.String[]] $excludedSecurityGroups
+
+    [DscProperty()]
+    [System.ComponentModel.Description('A list of enabled security groups.')]
+    [System.String[]] $enabledSecurityGroups
+}
+
+class MSFT_FabricDelegatedFrom
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The setting is delegated from a capacity.')]
+    [System.String] $Capacity
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The setting is delegated from a domain.')]
+    [System.String] $Domain
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The setting is delegated from a tenant.')]
+    [System.String] $Tenant
+}
+
+class MSFT_FabricTenantSettingProperty
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the property.')]
+    [System.String] $name
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of the property.')]
+    [System.String] $type
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The value of the property.')]
+    [System.String] $value
+}

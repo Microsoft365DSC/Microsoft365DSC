@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOAntiPhishPolicy",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "AntiPhishPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "roles": {
     "read": [
       "Security Reader"
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Configuration"
         ],
@@ -33,7 +44,7 @@
           "Transport Hygiene"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "View-Only Organization Management"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-AntiPhishPolicy",
+        "New-AntiPhishPolicy",
+        "Remove-AntiPhishPolicy",
+        "Set-AntiphishPolicy"
+      ]
+    }
+  ]
 }

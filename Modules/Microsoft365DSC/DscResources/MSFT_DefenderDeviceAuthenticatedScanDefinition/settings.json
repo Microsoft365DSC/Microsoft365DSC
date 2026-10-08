@@ -1,5 +1,16 @@
 {
   "resourceName": "DefenderDeviceAuthenticatedScanDefinition",
+  "generatedFrom": {
+    "workload": "DefenderForEndpoint",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures device authenticated scan definitions in Defender.",
   "roles": {
     "read": [],
@@ -9,22 +20,31 @@
     "WindowsDefenderATP": {
       "delegated": {
         "read": [
-          "Machine.Read.All"
+          {
+            "name": "Machine.Read.All"
+          }
         ],
         "update": [
-          "Machine.ReadWrite.All"
+          {
+            "name": "Machine.ReadWrite.All"
+          }
         ]
       },
       "application": {
         "read": [
-          "Machine.Read.All"
+          {
+            "name": "Machine.Read.All"
+          }
         ],
         "update": [
-          "Machine.ReadWrite.All"
+          {
+            "name": "Machine.ReadWrite.All"
+          }
         ]
       }
     }
   },
   "requiredModules": [],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": []
 }

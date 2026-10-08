@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,36 +22,36 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDiskEncryptionFileVaultPolicyMacOS "IntuneDiskEncryptionFileVaultPolicyMacOS-IntuneDiskEncryptionFileVaultPolicyMacOS_1"
+        IntuneDiskEncryptionFileVaultPolicyMacOS "IntuneDiskEncryptionFileVaultPolicyMacOS-Example"
         {
-            ApplicationId                          = $ApplicationId;
             Assignments                            = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = "none"
-                    groupDisplayName = "Exclude"
-                    dataType = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName                           = "Intune Excluded Devices"
+                    dataType                                   = "#microsoft.graph.exclusionGroupAssignmentTarget"
                 }
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = "none"
-                    groupDisplayName = "Include"
-                    dataType = "#microsoft.graph.groupAssignmentTarget"
+                    groupDisplayName                           = "Intune Pilot Devices"
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
                 }
             );
-            CertificateThumbprint                  = $CertificateThumbprint;
             Defer                                  = "true";
             DeferDontAskAtUserLogout               = "false";
             DeferForceAtUserLoginMaxBypassAttempts = 5;
             Description                            = "";
             Enable                                 = "On";
             Ensure                                 = "Present";
-            Location                               = "Sample Location";
+            Location                               = "Contoso IT Service Desk";
             DisplayName                            = "IntuneDiskEncryptionFileVaultPolicyMacOS_1";
             RecoveryKeyRotationInMonths            = 1;
             RoleScopeTagIds                        = @("0");
-            TenantId                               = $TenantId;
             UseRecoveryKey                         = "true";
+            ApplicationId                          = $ApplicationId;
+            TenantId                               = $TenantId;
+            CertificateThumbprint                  = $CertificateThumbprint;
         }
     }
 }

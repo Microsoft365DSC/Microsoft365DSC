@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        SCInsiderRiskPolicy "SCInsiderRiskPolicy-IRM_Tenant_Setting"
+        SCInsiderRiskPolicy "SCInsiderRiskPolicy-Example"
         {
-            ApplicationId                                 = $ApplicationId;
-            CertificateThumbprint                         = $CertificateThumbprint;
-            Ensure                                        = "Absent";
-            InsiderRiskScenario                           = "TenantSetting";
-            Name                                          = "IRM_Tenant_Setting";
-            TenantId                                      = $TenantId;
+            Name                  = "Customer Data Leak Detection";
+            InsiderRiskScenario   = "LeakOfInformation";
+            Ensure                = "Absent";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

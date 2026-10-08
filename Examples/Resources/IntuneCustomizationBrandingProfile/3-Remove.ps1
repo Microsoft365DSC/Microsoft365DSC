@@ -5,23 +5,33 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneCustomizationBrandingProfile "IntuneCustomizationBrandingProfile-Company"
+        IntuneCustomizationBrandingProfile "IntuneCustomizationBrandingProfile-Example"
         {
-            ApplicationId                  = $ApplicationId;
-            CertificateThumbprint          = $CertificateThumbprint;
-            DisplayName                    = "Company";
-            ProfileName                    = "IntuneCustomizationBrandingProfile_1";
-            Ensure                         = "Absent";
-            TenantId                       = $TenantId;
+            DisplayName           = "Contoso";
+            ProfileName           = "Contoso Company Portal";
+            Ensure                = "Absent";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

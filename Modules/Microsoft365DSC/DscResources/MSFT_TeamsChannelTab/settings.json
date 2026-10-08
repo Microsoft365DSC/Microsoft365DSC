@@ -1,5 +1,57 @@
 {
   "resourceName": "TeamsChannelTab",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "teamsTab",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaTeamChannelTab",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ChannelName",
+      "reason": "OwnedByOtherResource",
+      "note": "Display name of the parent channel that holds the tab"
+    },
+    {
+      "name": "Configuration",
+      "reason": "Accepted",
+      "note": "Flattened into ContentUrl, EntityId, RemoveUrl and WebSiteUrl and rebuilt on set"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "The service assigns the tab id. The resource locates the tab by display name."
+    },
+    {
+      "name": "MessageId",
+      "reason": "ReadOnly",
+      "note": "The service assigns messageId and no request accepts it"
+    },
+    {
+      "name": "TeamId",
+      "reason": "OwnedByOtherResource",
+      "note": "Team id of the parent team that holds the tab"
+    },
+    {
+      "name": "TeamName",
+      "reason": "OwnedByOtherResource",
+      "note": "Display name of the parent team that holds the tab"
+    },
+    {
+      "name": "TeamsAppId",
+      "reason": "Deprecated",
+      "note": "Deprecated in favor of expanding teamsApp, which the resource binds through teamsApp@odata.bind"
+    },
+    {
+      "name": "WebUrl",
+      "reason": "ReadOnly",
+      "note": "Teams generates this deep link as read only. WebSiteUrl is a different value."
+    }
+  ],
   "description": "",
   "roles": {
     "read": [],
@@ -13,7 +65,7 @@
             "name": "ChannelSettings.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -28,6 +80,9 @@
           },
           {
             "name": "TeamsTab.ReadWrite.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
           }
         ]
       },
@@ -37,7 +92,7 @@
             "name": "ChannelSettings.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -52,6 +107,9 @@
           },
           {
             "name": "TeamsTab.ReadWrite.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
           }
         ]
       }

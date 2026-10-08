@@ -3,6 +3,14 @@
     "Microsoft.Graph.Applications": [
         "Get-MgServicePrincipal"
     ],
+    "Microsoft.Graph.Authentication": [
+        "Add-MgEnvironment",
+        "Connect-MgGraph",
+        "Disconnect-MgGraph",
+        "Get-MgContext",
+        "Get-MgEnvironment",
+        "Invoke-MgGraphRequest"
+    ],
     "Microsoft.Graph.Beta.Identity.Governance": [
       "Get-MgBetaRoleManagementDirectoryRoleAssignment",
       "Get-MgBetaRoleManagementDirectoryRoleDefinition"

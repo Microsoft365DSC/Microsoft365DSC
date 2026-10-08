@@ -123,8 +123,11 @@ function Compare-M365DSCResourceState
         }
     }
 
-    Write-Verbose -Message "Current Values: $(Convert-M365DscHashtableToString -Hashtable $CurrentValues)"
-    Write-Verbose -Message "Target Values: $(Convert-M365DscHashtableToString -Hashtable $DesiredValues)"
+    if ($VerbosePreference -ne 'SilentlyContinue')
+    {
+        Write-Verbose -Message "Current Values: $(Convert-M365DscHashtableToString -Hashtable $CurrentValues)"
+        Write-Verbose -Message "Target Values: $(Convert-M365DscHashtableToString -Hashtable $DesiredValues)"
+    }
 
     # Delegate the entire comparison to C#.
     # ResourceComparer handles: schema lookup, key/credential exclusion, Ensure handling,

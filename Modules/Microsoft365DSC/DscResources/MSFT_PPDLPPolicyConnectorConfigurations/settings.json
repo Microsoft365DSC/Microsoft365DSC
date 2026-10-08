@@ -1,5 +1,16 @@
 {
   "resourceName": "PPDLPPolicyConnectorConfigurations",
+  "generatedFrom": {
+    "workload": "PowerPlatforms",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures connectors Data Loss Prevention policies in Power Platforms.",
   "roles": {
     "read": [],
@@ -33,9 +44,14 @@
       }
     },
     "powerPlatform": {
-      "requiredRoles": [
-        "System Administrator"
-      ]
+      "requiredRoles": {
+        "read": [
+          "System Administrator"
+        ],
+        "update": [
+          "System Administrator"
+        ]
+      }
     }
   },
   "requiredModules": [

@@ -22,9 +22,9 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        <ResourceName> 'Example'
+        <ResourceName> '<ResourceName>-Example'
         {<FakeValues>
         }
     }

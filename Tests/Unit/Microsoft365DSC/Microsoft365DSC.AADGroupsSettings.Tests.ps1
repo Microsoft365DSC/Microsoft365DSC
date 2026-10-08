@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -131,18 +131,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
                 Should -Invoke -CommandName 'Get-MgBetaDirectorySetting' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
                 $Script:calledOnceAlready = $false
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create and set the settings the Set method' {
                 $Script:calledOnceAlready = $false
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-MgBetaDirectorySetting' -Exactly 1
                 Should -Invoke -CommandName 'Update-MgBetaDirectorySetting' -Exactly 1
             }
@@ -159,18 +159,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return Values from the Get method' {
                 $Script:calledOnceAlready = $true
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
                 Should -Invoke -CommandName 'Get-MgBetaDirectorySetting' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
                 $Script:calledOnceAlready = $true
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Prevent Remove the Policy from the Set method' {
                 $Script:calledOnceAlready = $true
-                { Set-TargetResource @testParams } | Should -Throw 'The AADGroupsSettings resource cannot delete existing Directory Setting entries. Please specify Present.'
+                { (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Set() } | Should -Throw 'The AADGroupsSettings resource cannot delete existing Directory Setting entries. Please specify Present.'
             }
         }
         Context -Name 'The Policy Exists and Values are already in the desired state' -Fixture {
@@ -198,12 +198,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaDirectorySetting' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -226,18 +226,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return Values from the Get method' {
                 $Script:calledOnceAlready = $true
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaDirectorySetting' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
                 $Script:calledOnceAlready = $true
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
                 $Script:calledOnceAlready = $true
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupsSettings' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Update-MgBetaDirectorySetting' -Exactly 1
             }
         }
@@ -253,7 +253,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should Reverse Engineer resource from the Export method' {
                 $Script:calledOnceAlready = $true
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADGroupsSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

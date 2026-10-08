@@ -5,24 +5,37 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsUnassignedNumberTreatment 'Example'
+        TeamsUnassignedNumberTreatment 'TeamsUnassignedNumberTreatment-Example'
         {
-            Credential           = $Credscredential;
-            Ensure               = "Present";
-            Identity             = "TR2";
-            Pattern              = "^\+15552224444$";
-            Target               = "ae274f0a-9c9c-496a-8dd3-8a57640d93aa";
-            TargetType           = "User";
-            TreatmentPriority    = 3;
+            Description           = "Routes calls to the retired reception number to the front desk";
+            Ensure                = "Present";
+            Identity              = "Former Reception Number";
+            Pattern               = "^\+15552224444$";
+            Target                = "<user-object-id>";
+            TargetType            = "User";
+            TreatmentPriority     = 3;
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

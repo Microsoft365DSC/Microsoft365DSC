@@ -1,5 +1,22 @@
 {
   "resourceName": "AADSocialIdentityProvider",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "identityProviderBase",
+    "odataSubtype": "socialIdentityProvider",
+    "cmdletNoun": "MgBetaIdentityProvider",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Id",
+      "reason": "Accepted",
+      "note": "The key property ClientId carries the vendor id"
+    }
+  ],
   "description": "Represents a group of related custom security attribute definitions.",
   "roles": {
     "read": [

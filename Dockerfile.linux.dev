@@ -2,34 +2,14 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0-resolute
 
 WORKDIR /DSC
 
+COPY . .
+
 SHELL ["bash", "-c"]
-
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    zlib1g-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev \
-    llvm \
-    libncurses5-dev \
-    libncursesw5-dev \
-    xz-utils \
-    tk-dev \
-    libffi-dev \
-    liblzma-dev \
-    python3-openssl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python3.11
-RUN curl https://pyenv.run | bash
-ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-RUN pyenv install "3.11.9"
 
 RUN wget -q https://github.com/microsoft/omi/releases/download/v1.9.1-0/omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
     dpkg -i ./omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
     rm ./omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
-    cp /opt/omi/lib/libmi.so /usr/share/powershell/.store/powershell.linux.x64/7.6.4/powershell.linux.x64/7.6.4/tools/net10.0/any/runtimes/linux-x64/native/
+    cp /opt/omi/lib/libmi.so /usr/share/powershell/.store/powershell.linux.x64/7.6.6/powershell.linux.x64/7.6.6/tools/net10.0/any/runtimes/linux-x64/native/
 
 RUN wget -q https://github.com/microsoft/PowerShell-DSC-for-Linux/releases/download/v1.2.4-0/dsc-1.2.4-0.ssl_110.x64.deb && \
     dpkg -i ./dsc-1.2.4-0.ssl_110.x64.deb && \
@@ -42,12 +22,14 @@ RUN wget https://archive.ubuntu.com/ubuntu/pool/main/n/nano/nano_9.2-1_amd64.deb
 RUN mv /etc/opt/omi/conf/dsc/configuration/baseregistration /etc/opt/omi/conf/dsc/configuration/BaseRegistration && \
     mv /etc/opt/omi/conf/dsc/configuration/BaseRegistration/baseresource.schema.mof /etc/opt/omi/conf/dsc/configuration/BaseRegistration/BaseResource.schema.mof
 
-COPY . .
+RUN pwsh -Command 'Install-Module -Name "Microsoft.PowerShell.PSResourceGet" -Repository "PSGallery" -Scope "AllUsers" -Force -SkipPublisherCheck'
+RUN pwsh -Command 'Install-PSResource -Name "Pester" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
+RUN pwsh -Command 'Install-PSResource -Name "DSCParser" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
+RUN pwsh -Command 'Install-PSResource -Name "M365DSC.PSDesiredStateConfiguration" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
 
-RUN pwsh -Command '$null = Install-Module -Name "Microsoft.PowerShell.PSResourceGet" -Repository "PSGallery" -Scope "AllUsers" -Force -SkipPublisherCheck'
-RUN pwsh -Command '$null = Install-PSResource -Name "Pester" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
-RUN pwsh -Command '$null = Install-PSResource -Name "M365DSC.PSDesiredStateConfiguration" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
-
+RUN pwsh -Command ./Utilities/Install-PowerShell.ps1 -IsSDK
+RUN pwsh -Command ./Utilities/Build-Microsoft365DSC.ps1
+RUN pwsh -Command ./Utilities/Build-DllFiles.ps1 -Configuration Release
 RUN pwsh -Command ./Utilities/Install-M365DSCAndDependencies.ps1 -IsSDK
 
 ENTRYPOINT ["pwsh", "-NoLogo"]

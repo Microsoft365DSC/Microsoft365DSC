@@ -1,5 +1,65 @@
 {
   "resourceName": "IntuneMobileAppsBuiltInStoreApp",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "mobileApp",
+    "odataSubtype": [
+      "managedAndroidStoreApp",
+      "managedIOSStoreApp"
+    ],
+    "cmdletNoun": "MgBetaDeviceAppManagementMobileApp",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AppAvailability",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "DependentAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "IsAssigned",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "PublishingState",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "Relationships",
+      "reason": "NotConfigurable",
+      "note": "Can only be configured for IntuneMobileAppsWin32AppWindows10."
+    },
+    {
+      "name": "SupersededAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "SupersedingAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "TargetPlatform",
+      "reason": "Accepted",
+      "note": "Selects the Android or iOS store app type."
+    },
+    {
+      "name": "UploadState",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    }
+  ],
   "description": "This resource configures an Intune Mobile Apps Built In Store App for Android and iOS.",
   "permissions": {
     "graph": {
@@ -9,7 +69,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -17,7 +80,10 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -27,7 +93,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -35,14 +104,16 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.DeviceManagement",
     "Microsoft.Graph.Beta.Devices.CorporateManagement",
     "Microsoft.Graph.Groups"
@@ -53,12 +124,6 @@
   ],
   "mode": "Data",
   "commands": [
-    {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
     {
       "module": "Microsoft.Graph.Beta.DeviceManagement",
       "cmdlets": [
@@ -72,7 +137,9 @@
         "Get-MgBetaDeviceAppManagementMobileApp",
         "Get-MgBetaDeviceAppManagementMobileAppAssignment",
         "Get-MgBetaDeviceAppManagementMobileAppCategory",
-        "Remove-MgBetaDeviceAppManagementMobileApp"
+        "New-MgBetaDeviceAppManagementMobileApp",
+        "Remove-MgBetaDeviceAppManagementMobileApp",
+        "Update-MgBetaDeviceAppManagementMobileApp"
       ]
     },
     {

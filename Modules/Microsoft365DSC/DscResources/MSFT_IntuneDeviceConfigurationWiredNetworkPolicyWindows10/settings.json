@@ -1,41 +1,115 @@
 {
   "resourceName": "IntuneDeviceConfigurationWiredNetworkPolicyWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceConfiguration",
+    "odataSubtype": "windowsWiredNetworkConfiguration",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "IdentityCertificateForClientAuthenticationDisplayName",
+      "reason": "Accepted",
+      "note": "A display name lookup for the client authentication certificate profile owned by IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 or IntuneDeviceConfigurationPkcsCertificatePolicyWindows10."
+    },
+    {
+      "name": "IdentityCertificateForClientAuthenticationId",
+      "reason": "Accepted",
+      "note": "Binds to the client authentication certificate profile from IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 or IntuneDeviceConfigurationPkcsCertificatePolicyWindows10."
+    },
+    {
+      "name": "RootCertificateForClientValidationDisplayName",
+      "reason": "Accepted",
+      "note": "Fallback for RootCertificateForClientValidationId."
+    },
+    {
+      "name": "RootCertificateForClientValidationId",
+      "reason": "Accepted",
+      "note": "Binds to the trusted root certificate from IntuneDeviceConfigurationTrustedCertificatePolicyWindows10."
+    },
+    {
+      "name": "RootCertificatesForServerValidationDisplayNames",
+      "reason": "Accepted",
+      "note": "Fallback for RootCertificatesForServerValidationIds."
+    },
+    {
+      "name": "RootCertificatesForServerValidationIds",
+      "reason": "Accepted",
+      "note": "Binds to the trusted root certificates from IntuneDeviceConfigurationTrustedCertificatePolicyWindows10."
+    },
+    {
+      "name": "SecondaryIdentityCertificateForClientAuthenticationDisplayName",
+      "reason": "Accepted",
+      "note": "Fallback for SecondaryIdentityCertificateForClientAuthenticationId."
+    },
+    {
+      "name": "SecondaryIdentityCertificateForClientAuthenticationId",
+      "reason": "Accepted",
+      "note": "Binds to the secondary client authentication certificate profile from IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 or IntuneDeviceConfigurationPkcsCertificatePolicyWindows10."
+    },
+    {
+      "name": "SecondaryRootCertificateForClientValidationDisplayName",
+      "reason": "Accepted",
+      "note": "Fallback for SecondaryRootCertificateForClientValidationId."
+    },
+    {
+      "name": "SecondaryRootCertificateForClientValidationId",
+      "reason": "Accepted",
+      "note": "Binds to the secondary trusted root certificate from IntuneDeviceConfigurationTrustedCertificatePolicyWindows10."
+    }
+  ],
   "description": "This resource configures an Intune Device Configuration Wired Network Policy for Windows10.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

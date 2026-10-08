@@ -1,0 +1,47 @@
+{
+  "resourceName": "TeamsOnlineSchedule",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsOnlineSchedule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "createOnlyProperties": [],
+    "textPayloadProperties": [],
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "This resource configures a Teams schedule that auto attendants use for business hours, after hours and holidays.",
+  "roles": {
+    "read": [
+      "Teams Reader"
+    ],
+    "update": [
+      "Teams Administrator"
+    ]
+  },
+  "permissions": {},
+  "requiredModules": [
+    "MicrosoftTeams"
+  ],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "MicrosoftTeams",
+      "cmdlets": [
+        "Get-CsOnlineSchedule",
+        "New-CsOnlineDateTimeRange",
+        "New-CsOnlineSchedule",
+        "New-CsOnlineTimeRange",
+        "Remove-CsOnlineSchedule",
+        "Set-CsOnlineSchedule"
+      ]
+    }
+  ]
+}

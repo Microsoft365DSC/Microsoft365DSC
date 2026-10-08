@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADIdentityAPIConnector 'AADIdentityAPIConnector-TestConnector'
+        AADIdentityAPIConnector 'AADIdentityAPIConnector-Example'
         {
             DisplayName           = "NewTestConnector";
             Id                    = "RestApi_NewTestConnector";
-            Username              = "anexas";
-            Password              = New-Object System.Management.Automation.PSCredential('Password', (ConvertTo-SecureString "anexas" -AsPlainText -Force));
-            TargetUrl             = "https://graph.microsoft.com";
             Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

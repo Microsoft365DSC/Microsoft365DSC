@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -32,7 +32,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -78,20 +78,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Get-TeamUser -MockWith {
-                    return $null
+                    return @{
+                        GroupID = '12345-12345-12345-12345-12345'
+                        Role    = 'Member'
+                        User    = 'AdeleV@contoso.onmicrosoft.com'
+                    }
                 }
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Adds user to MS Team in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Set()
+                Should -Invoke -CommandName Add-TeamUser -Exactly 1
             }
         }
 
@@ -100,42 +105,32 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     TeamName   = 'TestTeam'
                     User       = 'JohnSmith@contoso.onmicrosoft.com'
-                    Role       = 'Owner'
+                    Role       = 'Member'
                     Ensure     = 'Present'
                     Credential = $Credential
+                }
+
+                Mock -CommandName Get-TeamUser -MockWith {
+                    return @{
+                        GroupID = '12345-12345-12345-12345-12345'
+                        Role    = 'Owner'
+                        User    = 'JohnSmith@contoso.onmicrosoft.com'
+                    }
                 }
             }
 
             It 'Should return present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
-            }
-            It 'Should set role to owner in set method' {
-                Set-TargetResource @testParams
-            }
-            It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
-            }
-        }
-
-        Context -Name 'The user already exists' -Fixture {
-            BeforeAll {
-                $testParams = @{
-                    TeamName   = 'TestTeam'
-                    User       = 'JohnSmith@contoso.onmicrosoft.com'
-                    Role       = 'Owner'
-                    Ensure     = 'Present'
-                    Credential = $Credential
-                }
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
-            It 'Should return present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
-            }
-            It 'Should set role to owner in set method' {
-                Set-TargetResource @testParams
-            }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Test() | Should -Be $false
+            }
+
+            It 'Should remove the owner role in set method' {
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Set()
+                Should -Invoke -CommandName Remove-TeamUser -Exactly 1 -ParameterFilter { $Role -eq 'Owner' }
+                Should -Invoke -CommandName Add-TeamUser -Exactly 0
             }
         }
 
@@ -155,11 +150,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -172,14 +167,24 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure     = 'Absent'
                     Credential = $Credential
                 }
+
+                Mock -CommandName Get-TeamUser -MockWith {
+                    return @{
+                        GroupID = '12345-12345-12345-12345-12345'
+                        Role    = 'Owner'
+                        User    = 'JohnSmith@contoso.onmicrosoft.com'
+                    }
+                }
             }
 
             It 'Should return present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should remove user from Team in set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUser' -Property $testParams).Set()
+                Should -Invoke -CommandName Remove-TeamUser -Exactly 1 -ParameterFilter { $null -eq $Role }
+                Should -Invoke -CommandName Remove-TeamUser -Exactly 0 -ParameterFilter { $Role -eq 'Owner' }
             }
         }
 
@@ -202,7 +207,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsUser' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,39 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationIdentityProtectionPolicyWindows10 'Example'
+        IntuneDeviceConfigurationIdentityProtectionPolicyWindows10 'IntuneDeviceConfigurationIdentityProtectionPolicyWindows10-Example'
         {
             Assignments                                  = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allLicensedUsersAssignmentTarget'
+                    dataType                                   = '#microsoft.graph.allLicensedUsersAssignmentTarget'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Users'
                 }
             );
+            DeviceManagementApplicabilityRuleDeviceMode  = MSFT_DeviceManagementApplicabilityRuleDeviceMode{
+                Name       = "Standard configuration devices only"
+                DeviceMode = "standardConfiguration"
+                RuleType   = "include"
+            };
+            DeviceManagementApplicabilityRuleOsEdition   = MSFT_DeviceManagementApplicabilityRuleOsEdition{
+                Name           = "Enterprise and Education editions only"
+                OsEditionTypes = @("windows10Enterprise", "windows10Education")
+                RuleType       = "include"
+            };
+            DeviceManagementApplicabilityRuleOsVersion   = MSFT_DeviceManagementApplicabilityRuleOsVersion{
+                Name         = "Windows 10 22H2 or later"
+                MinOSVersion = "10.0.19045.0"
+                MaxOSVersion = "10.0.26100.9999"
+                RuleType     = "include"
+            };
             DisplayName                                  = "identity protection";
             EnhancedAntiSpoofingForFacialFeaturesEnabled = $True;
             Ensure                                       = "Present";
@@ -46,9 +68,9 @@ Configuration Example
             UseCertificatesForOnPremisesAuthEnabled      = $True;
             UseSecurityKeyForSignin                      = $True;
             WindowsHelloForBusinessBlocked               = $False;
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                                = $ApplicationId;
+            TenantId                                     = $TenantId;
+            CertificateThumbprint                        = $CertificateThumbprint;
         }
     }
 }

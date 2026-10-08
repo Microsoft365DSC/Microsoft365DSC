@@ -1,5 +1,22 @@
 {
   "resourceName": "IntuneDeviceComplianceNotificationMessageTemplate",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "notificationMessageTemplate",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementNotificationMessageTemplate",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DefaultLocale",
+      "reason": "Accepted",
+      "note": "LocalizedNotificationMessages carries Locale and IsDefault"
+    }
+  ],
   "description": "This resource configures an Intune Device Compliance Notification Message Template.",
   "permissions": {
     "graph": {
@@ -9,7 +26,10 @@
             "name": "DeviceManagementServiceConfig.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
@@ -17,7 +37,10 @@
             "name": "DeviceManagementServiceConfig.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -27,7 +50,10 @@
             "name": "DeviceManagementServiceConfig.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
@@ -35,7 +61,10 @@
             "name": "DeviceManagementServiceConfig.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

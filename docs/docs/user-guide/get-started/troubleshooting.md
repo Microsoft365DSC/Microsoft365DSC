@@ -128,3 +128,30 @@ WARNING: The code page of the current session is not set to UTF-8. This may caus
          * Using PowerShell: Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage" -Name "ACP" -Value 65001
          After that, you need to restart the PowerShell session.
 ```
+
+## Error "WSManPluginReceiveResult error 14 / OutOfMemoryException" when running Start, Test, or Get-DscConfiguration
+
+### ISSUE
+
+When running a Local Configuration Manager (LCM) related cmdlet, Start, Test, or Get-DscConfiguration e.g. `Test-DscConfiguration -ReferenceConfiguration <path>\localhost.mof -Verbose`, especially inside a container, you might receive the following errors and the DSC Operational log shows an `OutOfMemoryException`:
+
+```powershell
+OperationStopped: Processing data for a remote command failed with the following error message: Error with error code 14 occurred while calling method WSManPluginReceiveResult. For more information, see the about_Remote_Troubleshooting Help topic.
+OperationStopped: Starting a command on the remote server failed with the following error message : The I/O operation has been aborted because of either a thread exit or an application request. For more information, see the about_Remote_Troubleshooting Help topic.
+OperationStopped: Index was out of range. Must be non-negative and less than the size of the collection.
+Parameter name: index
+InvalidOperation: The PowerShell DSC resource '[AADUser]AADUser...' with SourceInfo '...AADUser.ps1::16::9::AADUser' threw one or more non-terminating errors while running the Test functionality. These errors are logged to the ETW channel called Microsoft-Windows-DSC/Operational. Refer to this channel for more details.
+```
+
+### CAUSE
+
+The `wsmprovhost.exe` process hosting the DSC resource runs out of memory while loading the Microsoft365DSC module and its Graph dependencies. The default WSMan per-shell memory quota combined with a small container (the default is 1GB of RAM) is not enough, so the host terminates mid-Test. The aborted I/O channel then surfaces as the follow-on `Index was out of range` style errors.
+
+### RESOLUTION
+
+Raise the WSMan per-shell memory quota:
+
+```powershell
+Set-Item -Path WSMan:\localhost\Plugin\PowerShell.7\Quotas\MaxMemoryPerShellMB -Value 2048
+Restart-Service WinRM
+```

@@ -1,5 +1,16 @@
 {
   "resourceName": "M365DSCRuleEvaluation",
+  "generatedFrom": {
+    "workload": null,
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the Azure AD Tenant Details.",
   "roles": {
     "read": [],

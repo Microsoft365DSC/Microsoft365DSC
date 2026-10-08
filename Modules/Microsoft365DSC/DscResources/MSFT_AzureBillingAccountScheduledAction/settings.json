@@ -1,5 +1,16 @@
 {
   "resourceName": "AzureBillingAccountScheduledAction",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Manages scheduled actions for Azure billing accounts.",
   "roles": {
     "read": [],

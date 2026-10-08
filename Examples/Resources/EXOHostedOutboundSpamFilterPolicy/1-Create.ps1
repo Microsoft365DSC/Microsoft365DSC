@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,11 +22,11 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOHostedOutboundSpamFilterPolicy 'HostedOutboundSpamFilterPolicy'
+        EXOHostedOutboundSpamFilterPolicy 'EXOHostedOutboundSpamFilterPolicy-Example'
         {
-            Identity                                  = "Integration SFP"
+            Identity                                  = "Outbound Spam Limits"
             ActionWhenThresholdReached                = "BlockUserForToday"
             AdminDisplayName                          = ""
             AutoForwardingMode                        = "Automatic"
@@ -33,13 +34,13 @@ Configuration Example
             BccSuspiciousOutboundMail                 = $False
             NotifyOutboundSpam                        = $False
             NotifyOutboundSpamRecipients              = @()
-            #RecipientLimitExternalPerHour             = 0
-            #RecipientLimitInternalPerHour             = 0
-            #RecipientLimitPerDay                      = 0
+            RecipientLimitExternalPerHour             = 500
+            RecipientLimitInternalPerHour             = 1000
+            RecipientLimitPerDay                      = 1000
             Ensure                                    = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                             = $ApplicationId
+            TenantId                                  = $TenantId
+            CertificateThumbprint                     = $CertificateThumbprint
         }
     }
 }

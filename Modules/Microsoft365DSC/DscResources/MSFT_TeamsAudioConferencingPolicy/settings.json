@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsAudioConferencingPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTeamsAudioConferencingPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Teams Audio Conferencing Policy.",
   "roles": {
     "read": [

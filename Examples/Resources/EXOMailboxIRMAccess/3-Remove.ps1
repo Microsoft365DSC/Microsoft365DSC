@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOMailboxIRMAccess "EXOMailboxIRMAccess-qwe@testorg.onmicrosoft.com"
+        EXOMailboxIRMAccess "EXOMailboxIRMAccess-Example"
         {
-            AccessLevel            = "Block";
-            ApplicationId          = $ApplicationId
-            TenantId               = $TenantId
-            CertificateThumbprint  = $CertificateThumbprint
-            Ensure                 = "Absent";
-            Identity               = "qwe@$OrganizationName";
-            User                   = "admin@$OrganizationName";
+            Ensure                = "Absent";
+            Identity              = "AdeleV@$TenantId";
+            User                  = "MeganB@$TenantId";
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

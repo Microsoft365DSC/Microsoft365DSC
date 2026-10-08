@@ -1,0 +1,34 @@
+{
+  "resourceName": "AADPreResolved",
+  "description": "Fixture for AADPreResolved.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "preexisting",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDirectoryAttributeSet",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+      "cmdlets": [
+        "Get-MgBetaDirectoryAttributeSet",
+        "New-MgBetaDirectoryAttributeSet"
+      ]
+    }
+  ]
+}

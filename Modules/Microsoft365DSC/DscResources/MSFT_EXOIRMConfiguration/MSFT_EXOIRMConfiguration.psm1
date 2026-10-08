@@ -1,600 +1,294 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOIRMConfiguration'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOIRMConfiguration : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Only valid value is ''Yes''.')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter()]
-        [System.Boolean]
-        $AutomaticServiceUpdateEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AutomaticServiceUpdateEnabled parameter specifies whether to allow the automatic addition of new features within Azure Information Protection for your cloud-based organization.')]
+    [System.Nullable[System.Boolean]] $AutomaticServiceUpdateEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $AzureRMSLicensingEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AzureRMSLicensingEnabled parameter specifies whether the Exchange Online organization can to connect directly to Azure Rights Management.')]
+    [System.Nullable[System.Boolean]] $AzureRMSLicensingEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $DecryptAttachmentForEncryptOnly,
+    [DscProperty()]
+    [System.ComponentModel.Description('The DecryptAttachmentForEncryptOnly parameter specifies whether mail recipients have unrestricted rights on the attachment or not for Encrypt-only mails sent using Microsoft Purview Message Encryption.')]
+    [System.Nullable[System.Boolean]] $DecryptAttachmentForEncryptOnly
 
-        [Parameter()]
-        [System.Boolean]
-        $EDiscoverySuperUserEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EDiscoverySuperUserEnabled parameter specifies whether members of the Discovery Management role group can access IRM-protected messages in a discovery mailbox that were returned by a discovery search.')]
+    [System.Nullable[System.Boolean]] $EDiscoverySuperUserEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $EnablePdfEncryption,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EnablePdfEncryption parameter specifies whether to enable the encryption of PDF attachments using Microsoft Purview Message Encryption. ')]
+    [System.Nullable[System.Boolean]] $EnablePdfEncryption
 
-        [Parameter()]
-        [System.Boolean]
-        $EnablePortalTrackingLogs,
+    [DscProperty()]
+    [System.ComponentModel.Description('The InternalLicensingEnabled parameter specifies whether to enable IRM features for messages that are sent to internal and external recipients.')]
+    [System.Nullable[System.Boolean]] $InternalLicensingEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $InternalLicensingEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The JournalReportDecryptionEnabled parameter specifies whether to enable journal report decryption.')]
+    [System.Nullable[System.Boolean]] $JournalReportDecryptionEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $JournalReportDecryptionEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The LicensingLocation parameter specifies the RMS licensing URLs. You can specify multiple URL values separated by commas.')]
+    [System.String[]] $LicensingLocation
 
-        [Parameter()]
-        [System.String[]]
-        $LicensingLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('This parameter is available only in the cloud-based service.')]
+    [System.Nullable[System.Boolean]] $RejectIfRecipientHasNoRights
 
-        [Parameter()]
-        [System.Boolean]
-        $RejectIfRecipientHasNoRights,
+    [DscProperty()]
+    [System.ComponentModel.Description('The RMSOnlineKeySharingLocation parameter specifies the Azure Rights Management URL that''s used to get the trusted publishing domain (TPD) for the Exchange Online organization.')]
+    [System.String] $RMSOnlineKeySharingLocation
 
-        [Parameter()]
-        [System.String]
-        $RMSOnlineKeySharingLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SearchEnabled parameter specifies whether to enable searching of IRM-encrypted messages in Outlook on the web (formerly known as Outlook Web App).')]
+    [System.Nullable[System.Boolean]] $SearchEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $SearchEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SimplifiedClientAccessDoNotForwardDisabled parameter specifies whether to disable Do not forward in Outlook on the web.')]
+    [System.Nullable[System.Boolean]] $SimplifiedClientAccessDoNotForwardDisabled
 
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessDoNotForwardDisabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SimplifiedClientAccessEnabled parameter specifies whether to enable the Protect button in Outlook on the web.')]
+    [System.Nullable[System.Boolean]] $SimplifiedClientAccessEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SimplifiedClientAccessEncryptOnlyDisabled parameter specifies whether to disable Encrypt only in Outlook on the web. ')]
+    [System.Nullable[System.Boolean]] $SimplifiedClientAccessEncryptOnlyDisabled
 
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessEncryptOnlyDisabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The TransportDecryptionSetting parameter specifies the transport decryption configuration.')]
+    [ValidateSet('Disabled', 'Mandatory', 'Optional')]
+    [System.String] $TransportDecryptionSetting
 
-        [Parameter()]
-        [ValidateSet('Disabled', 'Mandatory', 'Optional')]
-        [System.String]
-        $TransportDecryptionSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Getting IRM Configuration'
-
-    # TODO: Remove property 'EnablePortalTrackingLogs' in next breaking change
-    if ($PSBoundParameters.ContainsKey('EnablePortalTrackingLogs'))
+    [EXOIRMConfiguration] Get()
     {
-        $PSBoundParameters.Remove('EnablePortalTrackingLogs') | Out-Null
-        Write-Warning "Property 'EnablePortalTrackingLogs' is deprecated and will be removed"
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [EXOIRMConfiguration]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
+
+        Write-Verbose -Message 'Getting IRM Configuration'
+
+        try
+        {
+            if (-not $this.ExportedInstance)
+            {
+                $null = $this.Connect('ExchangeOnline')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $IRMConfiguration = Get-IRMConfiguration -ErrorAction Stop
+            }
+            else
+            {
+                $IRMConfiguration = $this.ExportedInstance
+            }
+
+            Write-Verbose -Message 'Found IRM configuration '
+
+            $RMSOnlineKeySharingLocationValue = $null
+            if ($IRMConfiguration.RMSOnlineKeySharingLocation)
+            {
+                $RMSOnlineKeySharingLocationValue = $IRMConfiguration.RMSOnlineKeySharingLocation.ToString()
+            }
+
+            $LicensingLocationValue = $null
+            if ($IRMConfiguration.LicensingLocation)
+            {
+                $LicensingLocationValue = [System.String[]]$IRMConfiguration.LicensingLocation.OriginalString
+            }
+
+            $result = @{
+                IsSingleInstance                           = 'Yes'
+                AutomaticServiceUpdateEnabled              = $IRMConfiguration.AutomaticServiceUpdateEnabled
+                AzureRMSLicensingEnabled                   = $IRMConfiguration.AzureRMSLicensingEnabled
+                DecryptAttachmentForEncryptOnly            = $IRMConfiguration.DecryptAttachmentForEncryptOnly
+                EDiscoverySuperUserEnabled                 = $IRMConfiguration.EDiscoverySuperUserEnabled
+                EnablePdfEncryption                        = $IRMConfiguration.EnablePdfEncryption
+                InternalLicensingEnabled                   = $IRMConfiguration.InternalLicensingEnabled
+                JournalReportDecryptionEnabled             = $IRMConfiguration.JournalReportDecryptionEnabled
+                LicensingLocation                          = $LicensingLocationValue
+                RejectIfRecipientHasNoRights               = $IRMConfiguration.RejectIfRecipientHasNoRights
+                RMSOnlineKeySharingLocation                = $RMSOnlineKeySharingLocationValue
+                SearchEnabled                              = $IRMConfiguration.SearchEnabled
+                SimplifiedClientAccessDoNotForwardDisabled = $IRMConfiguration.SimplifiedClientAccessDoNotForwardDisabled
+                SimplifiedClientAccessEnabled              = $IRMConfiguration.SimplifiedClientAccessEnabled
+                SimplifiedClientAccessEncryptOnlyDisabled  = $IRMConfiguration.SimplifiedClientAccessEncryptOnlyDisabled
+                TransportDecryptionSetting                 = $IRMConfiguration.TransportDecryptionSetting
+                Credential                                 = $this.Credential
+                ApplicationId                              = $this.ApplicationId
+                CertificateThumbprint                      = $this.CertificateThumbprint
+                CertificatePath                            = $this.CertificatePath
+                CertificatePassword                        = $this.CertificatePassword
+                ManagedIdentity                            = $this.ManagedIdentity
+                TenantId                                   = $this.TenantId
+                AccessTokens                               = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
     }
 
-    try
+    [void] Set()
     {
-        if (-not $Script:exportedInstance)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Confirm-M365DSCDependencies
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
+        $this.AddTelemetry('Set')
+
+        Write-Verbose -Message 'Setting configuration of Resource Configuration'
+
+        $boundParameters = $this.GetBoundParameters()
+
+        $null = $this.Connect('ExchangeOnline')
+
+        $IRMConfigurationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $boundParameters
+        $IRMConfigurationParams.Remove('IsSingleInstance') | Out-Null
+
+        if ($null -ne $IRMConfigurationParams)
+        {
+            Write-Verbose -Message "Setting IRM Configuration with values: $(Convert-M365DscHashtableToString -Hashtable $IRMConfigurationParams)"
+            Set-IRMConfiguration @IRMConfigurationParams -Confirm:$false
+
+            Write-Verbose -Message 'IRM Configuration updated successfully'
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        #Ensure the proper dependencies are installed in the current environment.
+        Confirm-M365DSCDependencies
+
+        #region Telemetry
+        $this.AddTelemetry('Export')
+
+        #endregion
+        try
+        {
+            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            {
+                $Global:M365DSCExportResourceInstancesCount++
+            }
 
             $IRMConfiguration = Get-IRMConfiguration -ErrorAction Stop
+            $dscContent = [System.Text.StringBuilder]::new()
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            Write-M365DSCHost -Message "    |---[1/1] $($IRMConfiguration.Identity)" -DeferWrite
+
+            $Params = @{
+                IsSingleInstance      = 'Yes'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                CertificatePath       = $this.CertificatePath
+                AccessTokens          = $this.AccessTokens
+            }
+            $this.ExportedInstance = $IRMConfiguration
+            $Results = $this.GetForExport($Params)
+            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                -ConnectionMode $ConnectionMode `
+                -ModulePath $this.GetModulePath() `
+                -Results $Results `
+                -Credential $this.Credential
+            [void]$dscContent.Append($currentDSCBlock)
+            Save-M365DSCPartialExport -Content $currentDSCBlock `
+                -FileName $Global:PartialExportFileName
+            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $dscContent.ToString()
         }
-        else
+        catch
         {
-            $IRMConfiguration = $Script:exportedInstance
+            $this.LogError($_, 'Error during Export:')
+
+            throw
         }
+    }
 
-        Write-Verbose -Message 'Found IRM configuration '
-
-        $RMSOnlineKeySharingLocationValue = $null
-        if ($IRMConfiguration.RMSOnlineKeySharingLocation)
+    hidden [EXOIRMConfiguration] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOIRMConfiguration])
         {
-            $RMSOnlineKeySharingLocationValue = $IRMConfiguration.RMSOnlineKeySharingLocation.ToString()
+            return $Values
         }
 
-        $LicensingLocationValue = $null
-        if ($IRMConfiguration.LicensingLocation)
+        $result = [EXOIRMConfiguration]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
         {
-            $LicensingLocationValue = [System.String[]]$IRMConfiguration.LicensingLocation.OriginalString
-        }
-
-        $result = @{
-            IsSingleInstance                           = 'Yes'
-            AutomaticServiceUpdateEnabled              = $IRMConfiguration.AutomaticServiceUpdateEnabled
-            AzureRMSLicensingEnabled                   = $IRMConfiguration.AzureRMSLicensingEnabled
-            DecryptAttachmentForEncryptOnly            = $IRMConfiguration.DecryptAttachmentForEncryptOnly
-            EDiscoverySuperUserEnabled                 = $IRMConfiguration.EDiscoverySuperUserEnabled
-            EnablePdfEncryption                        = $IRMConfiguration.EnablePdfEncryption
-            EnablePortalTrackingLogs                   = $IRMConfiguration.EnablePortalTrackingLogs
-            InternalLicensingEnabled                   = $IRMConfiguration.InternalLicensingEnabled
-            JournalReportDecryptionEnabled             = $IRMConfiguration.JournalReportDecryptionEnabled
-            LicensingLocation                          = $LicensingLocationValue
-            RejectIfRecipientHasNoRights               = $IRMConfiguration.RejectIfRecipientHasNoRights
-            RMSOnlineKeySharingLocation                = $RMSOnlineKeySharingLocationValue
-            SearchEnabled                              = $IRMConfiguration.SearchEnabled
-            SimplifiedClientAccessDoNotForwardDisabled = $IRMConfiguration.SimplifiedClientAccessDoNotForwardDisabled
-            SimplifiedClientAccessEnabled              = $IRMConfiguration.SimplifiedClientAccessEnabled
-            SimplifiedClientAccessEncryptOnlyDisabled  = $IRMConfiguration.SimplifiedClientAccessEncryptOnlyDisabled
-            TransportDecryptionSetting                 = $IRMConfiguration.TransportDecryptionSetting
-            Credential                                 = $Credential
-            Ensure                                     = 'Present'
-            ApplicationId                              = $ApplicationId
-            CertificateThumbprint                      = $CertificateThumbprint
-            CertificatePath                            = $CertificatePath
-            CertificatePassword                        = $CertificatePassword
-            ManagedIdentity                            = $ManagedIdentity.IsPresent
-            TenantId                                   = $TenantId
-            AccessTokens                               = $AccessTokens
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $AutomaticServiceUpdateEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $AzureRMSLicensingEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $DecryptAttachmentForEncryptOnly,
-
-        [Parameter()]
-        [System.Boolean]
-        $EDiscoverySuperUserEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnablePdfEncryption,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnablePortalTrackingLogs,
-
-        [Parameter()]
-        [System.Boolean]
-        $InternalLicensingEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $JournalReportDecryptionEnabled,
-
-        [Parameter()]
-        [System.String[]]
-        $LicensingLocation,
-
-        [Parameter()]
-        [System.Boolean]
-        $RejectIfRecipientHasNoRights,
-
-        [Parameter()]
-        [System.String]
-        $RMSOnlineKeySharingLocation,
-
-        [Parameter()]
-        [System.Boolean]
-        $SearchEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessDoNotForwardDisabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessEncryptOnlyDisabled,
-
-        [Parameter()]
-        [ValidateSet('Disabled', 'Mandatory', 'Optional')]
-        [System.String]
-        $TransportDecryptionSetting,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    Write-Verbose -Message 'Setting configuration of Resource Configuration'
-
-    # TODO: Remove property 'EnablePortalTrackingLogs' in next breaking change
-    if ($PSBoundParameters.ContainsKey('EnablePortalTrackingLogs'))
-    {
-        $PSBoundParameters.Remove('EnablePortalTrackingLogs') | Out-Null
-        Write-Warning "Property 'EnablePortalTrackingLogs' is deprecated and will be removed"
-    }
-
-    $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    $IRMConfigurationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $IRMConfigurationParams.Remove('IsSingleInstance') | Out-Null
-
-    if ($Ensure -eq 'Present' -and $null -ne $IRMConfigurationParams)
-    {
-        Write-Verbose -Message "Setting IRM Configuration with values: $(Convert-M365DscHashtableToString -Hashtable $IRMConfigurationParams)"
-        Set-IRMConfiguration @IRMConfigurationParams -Confirm:$false
-
-        Write-Verbose -Message 'IRM Configuration updated successfully'
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $AutomaticServiceUpdateEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $AzureRMSLicensingEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $DecryptAttachmentForEncryptOnly,
-
-        [Parameter()]
-        [System.Boolean]
-        $EDiscoverySuperUserEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnablePdfEncryption,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnablePortalTrackingLogs,
-
-        [Parameter()]
-        [System.Boolean]
-        $InternalLicensingEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $JournalReportDecryptionEnabled,
-
-        [Parameter()]
-        [System.String[]]
-        $LicensingLocation,
-
-        [Parameter()]
-        [System.Boolean]
-        $RejectIfRecipientHasNoRights,
-
-        [Parameter()]
-        [System.String]
-        $RMSOnlineKeySharingLocation,
-
-        [Parameter()]
-        [System.Boolean]
-        $SearchEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessDoNotForwardDisabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SimplifiedClientAccessEncryptOnlyDisabled,
-
-        [Parameter()]
-        [ValidateSet('Disabled', 'Mandatory', 'Optional')]
-        [System.String]
-        $TransportDecryptionSetting,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-
-    #endregion
-    try
-    {
-        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-        {
-            $Global:M365DSCExportResourceInstancesCount++
-        }
-
-        $IRMConfiguration = Get-IRMConfiguration -ErrorAction Stop
-        $dscContent = [System.Text.StringBuilder]::new()
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        Write-M365DSCHost -Message "    |---[1/1] $($IRMConfiguration.Identity)" -DeferWrite
-
-        $Params = @{
-            IsSingleInstance      = 'Yes'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            CertificatePath       = $CertificatePath
-            AccessTokens          = $AccessTokens
-        }
-        $Script:exportedInstance = $IRMConfiguration
-        $Results = Get-TargetResource @Params
-        $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-            -ConnectionMode $ConnectionMode `
-            -ModulePath $PSScriptRoot `
-            -Results $Results `
-            -Credential $Credential
-        [void]$dscContent.Append($currentDSCBlock)
-        Save-M365DSCPartialExport -Content $currentDSCBlock `
-            -FileName $Global:PartialExportFileName
-        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('EnablePortalTrackingLogs')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

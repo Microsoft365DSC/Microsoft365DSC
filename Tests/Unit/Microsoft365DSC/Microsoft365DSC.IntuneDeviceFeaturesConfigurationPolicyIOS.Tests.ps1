@@ -21,12 +21,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -39,6 +39,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -MockWith {
             }
 
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                 return @{
                     DisplayName                             = 'FakeStringValue'
@@ -140,21 +143,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName                                  = 'FakeStringValue'
                     Id                                           = 'FakeStringValue'
                     RoleScopeTagIds = @('Tag1', 'Tag2')
-                    AirPrintDestinations = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_AirPrintDestination `
-                        -Property @{
+                    AirPrintDestinations = @(
+                        ([MSFT_airPrintDestination] @{
                             port = 0
                             resourcePath = 'printers/xerox_Phase'
                             forceTls = $False
                             ipAddress = '1.0.0.1'
-                        } -ClientOnly)
+                        })
                     )
                     AssetTagTemplate                             = 'FakeStringValue'
-                    ContentFilterSettings  = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosWebContentFilterSpecificWebsitesAccess `
-                        -Property @{
+                    ContentFilterSettings  = @(
+                        ([MSFT_iosWebContentFilterSpecificWebsitesAccess] @{
                             dataType = '#microsoft.graph.iosWebContentFilterAutoFilter'
                             allowedUrls = @(
                                 'https://www.fakeallowed.com'
@@ -162,39 +161,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             blockedUrls = @(
                                 'https://www.fakeblocked.com'
                             )
-                        } -ClientOnly)
+                        })
                     )
                     LockScreenFootnote                           = 'FakeStringValue'
-                    HomeScreenDockIcons    = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosHomeScreenApp `
-                        -Property @{
+                    HomeScreenDockIcons    = @(
+                        ([MSFT_iosHomeScreenApp] @{
                             bundleID = 'com.apple.store.Jolly'
                             displayName = 'Apple Store'
                             isWebClip = $False
-                        } -ClientOnly)
+                        })
                     )
                     HomeScreenGridWidth                          = 5
                     HomeScreenGridHeight                         = 6
-                    HomeScreenPages = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosHomeScreenItem `
-                        -Property @{
-                            icons = [CimInstance[]]@(
-                                (New-CimInstance `
-                                -ClassName MSFT_iosHomeScreenApp `
-                                -Property @{
+                    HomeScreenPages = @(
+                        ([MSFT_iosHomeScreenItem] @{
+                            icons = @(
+                                ([MSFT_iosHomeScreenApp] @{
                                     bundleID = 'com.apple.AppStore'
                                     displayName = 'App Store'
                                     isWebClip = $False
-                                } -ClientOnly)
+                                })
                             )
-                        } -ClientOnly)
+                        })
                     )
-                    NotificationSettings = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosNotificationSettings `
-                        -Property @{
+                    NotificationSettings = @(
+                        ([MSFT_iosNotificationSettings] @{
                             alertType = 'banner'
                             enabled = $True
                             showOnLockScreen = $True
@@ -205,63 +196,51 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             showInNotificationCenter = $True
                             previewVisibility = 'hideWhenLocked'
                             appName = 'fakeapp'
-                        } -ClientOnly)
+                        })
                     )
-                    SingleSignOnSettings = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosSingleSignOnSettings `
-                        -Property @{
-                            allowedAppsList = [CimInstance[]]@(
-                                (New-CimInstance `
-                                -ClassName MSFT_appListItem `
-                                -Property @{
+                    SingleSignOnSettings = @(
+                        ([MSFT_iosSingleSignOnSettings] @{
+                            allowedAppsList = @(
+                                ([MSFT_appListItem] @{
                                     appId = 'com.microsoft.companyportal'
                                     name = 'Intune Company Portal'
-                                } -ClientOnly)
+                                })
                             )
                             allowedUrls = @('https://www.fakeurl.com')
                             kerberosRealm = 'fakerealm.com'
                             displayName = 'iOS-DeviceFeatures-ContentSettingsSpecificSites'
                             kerberosPrincipalName = 'userPrincipalName'
-                        } -ClientOnly)
+                        })
                     )
                     WallpaperDisplayLocation                     = 'notConfigured'
                     WallpaperImage                               = @()
-                    IosSingleSignOnExtension                     = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosSingleSignOnExtension `
-                        -Property @{
+                    IosSingleSignOnExtension                     = @(
+                        ([MSFT_iosSingleSignOnExtension] @{
                             dataType = '#microsoft.graph.iosCredentialSingleSignOnExtension'
                             extensionIdentifier = 'com.example.sso.credential'
                             domains = @('fakedomain.com')
-                            configurations = [CimInstance[]]@(
-                                (New-CimInstance `
-                                -ClassName MSFT_keyTypedValuePair `
-                                -Property @{
+                            configurations = @(
+                                ([MSFT_keyTypedValuePair] @{
                                     key = 'myString'
                                     dataType = '#microsoft.graph.keyStringValuePair'
                                     value = 'myvalue'
-                                } -ClientOnly)
+                                })
 
-                                (New-CimInstance `
-                                -ClassName MSFT_keyTypedValuePair `
-                                -Property @{
+                                ([MSFT_keyTypedValuePair] @{
                                     key = 'mybool'
                                     dataType = '#microsoft.graph.keyBooleanValuePair'
                                     value = $True
-                                } -ClientOnly)
+                                })
 
-                                (New-CimInstance `
-                                -ClassName MSFT_keyTypedValuePair `
-                                -Property @{
+                                ([MSFT_keyTypedValuePair] @{
                                     key = 'myInt'
                                     dataType = '#microsoft.graph.keyIntegerValuePair'
                                     value = 4
-                                } -ClientOnly)
+                                })
                             )
                             teamIdentifier                     = '4HMSJJRMAD'
                             realm                              = 'EXAMPLE.COM'
-                        } -ClientOnly)
+                        })
                     )
                     Assignments                                = @()
                     Ensure                                     = 'Present'
@@ -274,15 +253,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                    (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                    ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the IntuneDeviceFeaturesConfigurationPolicyIOS from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-MgBetaDeviceManagementDeviceConfiguration' -Exactly 1
             }
         }
@@ -296,20 +275,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id                       = 'ab915bca-1234-4b11-8acb-719a771139bc'
                     TenantId                 = $OrganizationName;
                     WallpaperDisplayLocation = 'notConfigured';
-                    AirPrintDestinations = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_AirPrintDestination `
-                        -Property @{
+                    AirPrintDestinations = @(
+                        ([MSFT_airPrintDestination] @{
                             port = 0
                             resourcePath = 'printers/xerox_Phase'
                             forceTls = $False
                             ipAddress = '1.0.0.1'
-                        } -ClientOnly)
+                        })
                     )
-                   ContentFilterSettings = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosWebContentFilterSpecificWebsitesAccess `
-                        -Property @{
+                   ContentFilterSettings = @(
+                        ([MSFT_iosWebContentFilterSpecificWebsitesAccess] @{
                             dataType = '#microsoft.graph.iosWebContentFilterAutoFilter'
                             allowedUrls = @(
                                 'https://www.fakeallowed.com'
@@ -317,36 +292,28 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             blockedUrls = @(
                                 'https://www.fakeblocked.com'
                             )
-                        } -ClientOnly)
+                        })
                     )
-                    HomeScreenDockIcons = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosHomeScreenApp `
-                        -Property @{
+                    HomeScreenDockIcons = @(
+                        ([MSFT_iosHomeScreenApp] @{
                             bundleID = 'com.apple.store.Jolly'
                             displayName = 'Apple Store'
                             isWebClip = $False
-                        } -ClientOnly)
+                        })
                     )
-                    HomeScreenPages = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosHomeScreenItem `
-                        -Property @{
-                            icons = [CimInstance[]]@(
-                                (New-CimInstance `
-                                -ClassName MSFT_iosHomeScreenApp `
-                                -Property @{
+                    HomeScreenPages = @(
+                        ([MSFT_iosHomeScreenItem] @{
+                            icons = @(
+                                ([MSFT_iosHomeScreenApp] @{
                                     bundleID = 'com.apple.AppStore'
                                     displayName = 'App Store'
                                     isWebClip = $False
-                                } -ClientOnly)
+                                })
                             )
-                        } -ClientOnly)
+                        })
                     )
-                    NotificationSettings = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosNotificationSettings `
-                        -Property @{
+                    NotificationSettings = @(
+                        ([MSFT_iosNotificationSettings] @{
                             alertType = 'banner'
                             enabled = $True
                             showOnLockScreen = $False # Updated property
@@ -357,36 +324,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             showInNotificationCenter = $True
                             previewVisibility = 'hideWhenLocked'
                             appName = 'fakeapp'
-                        } -ClientOnly)
+                        })
                     )
-                    SingleSignOnSettings = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosSingleSignOnSettings `
-                        -Property @{
-                            allowedAppsList = [CimInstance[]]@(
-                                (New-CimInstance `
-                                -ClassName MSFT_appListItem `
-                                -Property @{
+                    SingleSignOnSettings = @(
+                        ([MSFT_iosSingleSignOnSettings] @{
+                            allowedAppsList = @(
+                                ([MSFT_appListItem] @{
                                     appId = 'com.microsoft.companyportal'
                                     name = 'Intune Company Portal'
-                                } -ClientOnly)
+                                })
                             )
                             allowedUrls = @('https://www.fakeurl.com')
                             kerberosRealm = 'fakerealm.com'
                             displayName = 'iOS-DeviceFeatures-ContentSettingsSpecificSites'
                             kerberosPrincipalName = 'userPrincipalName'
-                        } -ClientOnly)
+                        })
                     )
-                    IosSingleSignOnExtension = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosCredentialSingleSignOnExtension `
-                        -Property @{
+                    IosSingleSignOnExtension = @(
+                        ([MSFT_iosSingleSignOnExtension] @{
                             dataType           = '#microsoft.graph.iosCredentialSingleSignOnExtension'
                             extensionIdentifier = 'com.example.sso.credential'
                             teamIdentifier      = '4HMSJJRMAD'
                             realm              = 'EXAMPLE.COM'
                             domains            = @('example.com')
-                        } -ClientOnly)
+                        })
                     )
                     Ensure                                       = 'Present'
                     Credential                                   = $Credential
@@ -394,15 +355,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the IntuneDeviceFeaturesConfigurationPolicyIOS from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -416,20 +377,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id                       = 'ab915bca-1234-4b11-8acb-719a771139bc'
                     TenantId                 = $OrganizationName;
                     WallpaperDisplayLocation = 'notConfigured';
-                    AirPrintDestinations = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_AirPrintDestination `
-                        -Property @{
+                    AirPrintDestinations = @(
+                        ([MSFT_airPrintDestination] @{
                             port = 0
                             resourcePath = 'printers/xerox_Phase'
                             forceTls = $False
                             ipAddress = '1.0.0.1'
-                        } -ClientOnly)
+                        })
                     )
-                   ContentFilterSettings  = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosWebContentFilterSpecificWebsitesAccess `
-                        -Property @{
+                   ContentFilterSettings  = @(
+                        ([MSFT_iosWebContentFilterSpecificWebsitesAccess] @{
                             dataType = '#microsoft.graph.iosWebContentFilterAutoFilter'
                             allowedUrls = @(
                                 'https://www.fakeallowed.com'
@@ -437,36 +394,28 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             blockedUrls = @(
                                 'https://www.fakeblocked.com'
                             )
-                        } -ClientOnly)
+                        })
                     )
-                    HomeScreenDockIcons    = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosHomeScreenApp `
-                        -Property @{
+                    HomeScreenDockIcons    = @(
+                        ([MSFT_iosHomeScreenApp] @{
                             bundleID = 'com.apple.store.Jolly'
                             displayName = 'Apple Store'
                             isWebClip = $False
-                        } -ClientOnly)
+                        })
                     )
-                    HomeScreenPages        = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosHomeScreenItem `
-                        -Property @{
-                            icons = [CimInstance[]]@(
-                                (New-CimInstance `
-                                -ClassName MSFT_iosHomeScreenApp `
-                                -Property @{
+                    HomeScreenPages        = @(
+                        ([MSFT_iosHomeScreenItem] @{
+                            icons = @(
+                                ([MSFT_iosHomeScreenApp] @{
                                     bundleID = 'com.apple.AppStore'
                                     displayName = 'App Store'
                                     isWebClip = $False
-                                } -ClientOnly)
+                                })
                             )
-                        } -ClientOnly)
+                        })
                     )
-                    NotificationSettings   = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosNotificationSettings `
-                        -Property @{
+                    NotificationSettings   = @(
+                        ([MSFT_iosNotificationSettings] @{
                             alertType = 'banner'
                             enabled = $True
                             showOnLockScreen = $True
@@ -477,36 +426,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             showInNotificationCenter = $True
                             previewVisibility = 'hideWhenLocked'
                             appName = 'fakeapp'
-                        } -ClientOnly)
+                        })
                     )
-                    SingleSignOnSettings   = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosSingleSignOnSettings `
-                        -Property @{
-                            allowedAppsList = [CimInstance[]]@(
-                                (New-CimInstance `
-                                -ClassName MSFT_appListItem `
-                                -Property @{
+                    SingleSignOnSettings   = @(
+                        ([MSFT_iosSingleSignOnSettings] @{
+                            allowedAppsList = @(
+                                ([MSFT_appListItem] @{
                                     appId = 'com.microsoft.companyportal'
                                     name = 'Intune Company Portal'
-                                } -ClientOnly)
+                                })
                             )
                             allowedUrls = @('https://www.fakeurl.com')
                             kerberosRealm = 'fakerealm.com'
                             displayName = 'iOS-DeviceFeatures-ContentSettingsSpecificSites'
                             kerberosPrincipalName = 'userPrincipalName'
-                        } -ClientOnly)
+                        })
                     )
-                    IosSingleSignOnExtension = [CimInstance[]]@(
-                        (New-CimInstance `
-                        -ClassName MSFT_iosCredentialSingleSignOnExtension `
-                        -Property @{
+                    IosSingleSignOnExtension = @(
+                        ([MSFT_iosSingleSignOnExtension] @{
                             dataType           = '#microsoft.graph.iosCredentialSingleSignOnExtension'
                             extensionIdentifier = 'com.example.sso.credential'
                             teamIdentifier      = '4HMSJJRMAD'
                             realm              = 'EXAMPLE.COM'
                             domains            = @('example.com')
-                        } -ClientOnly)
+                        })
                     )
                     Ensure                                       = 'Present'
                     Credential                                   = $Credential
@@ -514,7 +457,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -533,15 +476,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                    (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                    ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the IntuneDeviceFeaturesConfigurationPolicyIOS from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -556,7 +499,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceFeaturesConfigurationPolicyIOS' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

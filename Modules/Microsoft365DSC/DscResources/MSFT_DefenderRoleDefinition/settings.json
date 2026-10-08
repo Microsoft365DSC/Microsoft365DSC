@@ -1,5 +1,47 @@
 {
   "resourceName": "DefenderRoleDefinition",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleDefinition",
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AllowedPrincipalTypes",
+      "reason": "ReadOnly",
+      "note": "Reports which principal types the role definition accepts."
+    },
+    {
+      "name": "IsBuiltIn",
+      "reason": "ReadOnly",
+      "note": "Graph flags built-in role definitions and exposes the flag as read only"
+    },
+    {
+      "name": "IsEnabled",
+      "reason": "ReadOnly",
+      "note": "Computed as true once the role definition exists."
+    },
+    {
+      "name": "IsPrivileged",
+      "reason": "ReadOnly",
+      "note": "Graph derives the privileged flag from the granted permissions"
+    },
+    {
+      "name": "ResourceScopes",
+      "reason": "Deprecated",
+      "note": "Graph marks it for deprecation. Scope attaches to the role assignment instead."
+    },
+    {
+      "name": "TemplateId",
+      "reason": "ReadOnly",
+      "note": "Service assigned identifier of the built in role template."
+    }
+  ],
   "description": "Manages custom roles in Defender.",
   "roles": {
     "read": [],

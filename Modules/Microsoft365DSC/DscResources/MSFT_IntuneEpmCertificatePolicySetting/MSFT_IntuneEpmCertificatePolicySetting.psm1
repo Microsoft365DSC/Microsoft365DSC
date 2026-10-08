@@ -1,549 +1,354 @@
+using module ..\_Base\M365DSCResourceBase.psm1
 
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneEpmCertificatePolicySetting'
-$Script:PropertiesToRetrieve = @('id', 'displayName', 'description', 'settingDefinitionId', 'settingInstance')
-
-function Get-TargetResource
+[DscResource()]
+class IntuneEpmCertificatePolicySetting : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of the setting.')]
+    [System.String] $Description
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Display Name of the setting.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $CertificateFile,
-        #endregion
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The base64 encoded certificate file content.')]
+    [System.String] $CertificateFile
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for the Intune Epm Certificate Policy Setting with Id {$Id} and Name {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    IntuneEpmCertificatePolicySetting() : base()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        $this.ResourceCache['PropertiesToRetrieve'] =  @('id', 'displayName', 'description', 'settingDefinitionId', 'settingInstance')
+    }
+
+    [IntuneEpmCertificatePolicySetting] Get()
+    {
+        $reusableSettings = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneEpmCertificatePolicySetting]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for the Intune Epm Certificate Policy Setting with Id {$($this.Id)} and Name {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-            #region resource generator code
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                $getValue = Invoke-MgGraphRequest `
-                    -Uri "/beta/deviceManagement/reusablePolicySettings/$($Id)?`$select=$($Script:PropertiesToRetrieve -join ',')" `
-                    -Method GET `
-                    -SkipHttpErrorCheck `
-                    -ErrorAction SilentlyContinue
-                if ($getValue -is [hashtable] -and $getValue.ContainsKey('error'))
-                {
-                    # Policy does not exist, set it to $null
-                    $getValue = $null
-                }
-            }
+                $null = $this.Connect('MicrosoftGraph')
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Epm Certificate Policy Setting with Id {$Id}"
+                Confirm-M365DSCDependencies
 
-                if (-not [System.String]::IsNullOrEmpty($DisplayName))
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+                #region resource generator code
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    $getValue = (Invoke-MgGraphRequest -Uri "/beta/deviceManagement/reusablePolicySettings?`$filter=DisplayName eq '$($DisplayName -replace "'", "''")' and settingDefinitionId eq 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile'&select=$($Script:PropertiesToRetrieve -join ',')" `
+                    $getValue = Invoke-M365DSCGraphRequest `
+                        -Uri "/beta/deviceManagement/reusablePolicySettings/$($this.Id)?`$select=$($this.ResourceCache['PropertiesToRetrieve'] -join ',')" `
                         -Method GET `
                         -SkipHttpErrorCheck `
-                        -ErrorAction SilentlyContinue).value
-                    if ($getValue -is [array] -and $getValue.Count -eq 0)
+                        -ErrorAction SilentlyContinue
+                    if ($getValue -is [hashtable] -and $getValue.ContainsKey('error'))
                     {
+                        # Policy does not exist, set it to $null
                         $getValue = $null
                     }
                 }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Epm Certificate Policy Setting with Id {$($this.Id)}"
+
+                    if (-not [System.String]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        $getValue = (Invoke-M365DSCGraphRequest -Uri "/beta/deviceManagement/reusablePolicySettings?`$filter=DisplayName eq '$($this.DisplayName -replace "'", "''")' and settingDefinitionId eq 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile'&select=$($this.ResourceCache['PropertiesToRetrieve'] -join ',')" `
+                            -Method GET `
+                            -SkipHttpErrorCheck `
+                            -ErrorAction SilentlyContinue).value
+                        if ($getValue -is [array] -and $getValue.Count -eq 0)
+                        {
+                            $getValue = $null
+                        }
+                    }
+                }
+                #endregion
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Epm Certificate Policy Setting with Name {$($this.DisplayName)}."
+                    return $this.AsResult($nullResult)
+                }
             }
-            #endregion
-            if ($null -eq $getValue)
+            else
             {
-                Write-Verbose -Message "Could not find an Intune Epm Certificate Policy Setting with Name {$DisplayName}."
-                return $nullResult
+                $getValue = $this.ExportedInstance
             }
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Epm Certificate Policy Setting with Id {$Id} and Name {$DisplayName} was found"
+            $resolvedId = $getValue.Id
+            Write-Verbose -Message "An Intune Epm Certificate Policy Setting with Id {$($resolvedId)} and Name {$($this.DisplayName)} was found"
 
-        $results = @{
-            #region resource generator code
-            CertificateFile       = $getValue.settingInstance.simpleSettingValue.value
-            Description           = $getValue.description
-            DisplayName           = $getValue.displayName
-            Id                    = $getValue.id
-            PolicySettings        = $reusableSettings
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            #endregion
-        }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $CertificateFile,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of the Intune Epm Certificate Policy Setting with Id {$Id} and Name {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $boundParameters = @{
-        '@odata.type'       = '#microsoft.graph.deviceManagementReusablePolicySetting'
-        description         = "$Description"
-        displayName         = "$DisplayName"
-        id                  = $currentInstance.Id
-        settingDefinitionId = 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile'
-        settingInstance     = @{
-            '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-            settingDefinitionId = 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile'
-            simpleSettingValue  = @{
-                '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                value         = $CertificateFile
+            $results = @{
+                #region resource generator code
+                CertificateFile       = $getValue.settingInstance.simpleSettingValue.value
+                Description           = $getValue.description
+                DisplayName           = $getValue.displayName
+                Id                    = $getValue.id
+                PolicySettings        = $reusableSettings
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                #endregion
             }
-        }
-    }
 
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Epm Certificate Policy Setting with Name {$DisplayName}"
-
-        $createParameters = ([Hashtable]$boundParameters).Clone()
-        $createParameters.Remove('Id') | Out-Null
-
-        #region resource generator code
-        $null = Invoke-MgGraphRequest -Uri '/beta/deviceManagement/reusablePolicySettings' -Method POST -Body $($createParameters | ConvertTo-Json -Depth 10)
-        #endregion
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Intune Epm Certificate Policy Setting with Id {$($currentInstance.Id)}"
-
-        $updateParameters = ([Hashtable]$boundParameters).Clone()
-        $updateParameters.Remove('Id') | Out-Null
-
-        #region resource generator code
-        Invoke-MgGraphRequest -Uri "/beta/deviceManagement/reusablePolicySettings/$($currentInstance.Id)" -Method PUT -Body $($updateParameters | ConvertTo-Json -Depth 10)
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Intune Epm Certificate Policy Setting with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        try
-        {
-            Invoke-MgGraphRequest -Uri "/beta/deviceManagement/reusablePolicySettings/$($currentInstance.Id)" -Method DELETE
+            return $this.AsResult($results)
         }
         catch
         {
-            $errorMessage = "Failed to remove the Intune Epm Certificate Policy Setting with Id {$($currentInstance.Id)} and Name {$($currentInstance.DisplayName)}."
-            $errorMessage += ' Please make sure it is not referenced by a Firewall policy.'
-            throw $errorMessage
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
         }
-        #endregion
     }
-}
 
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $CertificateFile,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
+    [void] Set()
     {
-        #region resource generator code
-        $baseFilter = "settingDefinitionId eq 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile'"
-        if (-not [System.String]::IsNullOrEmpty($Filter))
+        if ($this.RequiresPowerShellCore())
         {
-            $Filter = "($Filter) and ($baseFilter)"
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
-        else
-        {
-            $Filter = $baseFilter
-        }
-        [array]$getValue = (Invoke-MgGraphRequest -Uri "/beta/deviceManagement/reusablePolicySettings?`$select=$($Script:PropertiesToRetrieve -join ',')&`$filter=$Filter" `
-            -Method GET `
-            -SkipHttpErrorCheck `
-            -ErrorAction Stop).value
-        #endregion
 
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+        Write-Verbose -Message "Setting configuration of the Intune Epm Certificate Policy Setting with Id {$($this.Id)} and Name {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = @{
+            '@odata.type'       = '#microsoft.graph.deviceManagementReusablePolicySetting'
+            description         = "$($this.Description)"
+            displayName         = "$($this.DisplayName)"
+            id                  = $currentInstance.Id
+            settingDefinitionId = 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile'
+            settingInstance     = @{
+                '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                settingDefinitionId = 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile'
+                simpleSettingValue  = @{
+                    '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                    value         = $this.CertificateFile
+                }
+            }
         }
-        else
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            Write-Verbose -Message "Creating an Intune Epm Certificate Policy Setting with Name {$($this.DisplayName)}"
+
+            $createParameters = ([Hashtable]$boundParameters).Clone()
+            $createParameters.Remove('Id') | Out-Null
+
+            #region resource generator code
+            $null = Invoke-M365DSCGraphRequest -Uri '/beta/deviceManagement/reusablePolicySettings' -Method POST -Body $($createParameters | ConvertTo-Json -Depth 10)
+            #endregion
         }
-        foreach ($config in $getValue)
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
+            Write-Verbose -Message "Updating the Intune Epm Certificate Policy Setting with Id {$($currentInstance.Id)}"
+
+            $updateParameters = ([Hashtable]$boundParameters).Clone()
+            $updateParameters.Remove('Id') | Out-Null
+
+            #region resource generator code
+            Invoke-M365DSCGraphRequest -Uri "/beta/deviceManagement/reusablePolicySettings/$($currentInstance.Id)" -Method PUT -Body $($updateParameters | ConvertTo-Json -Depth 10)
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Intune Epm Certificate Policy Setting with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            try
             {
-                $displayedKey = $config.displayName
+                Invoke-M365DSCGraphRequest -Uri "/beta/deviceManagement/reusablePolicySettings/$($currentInstance.Id)" -Method DELETE
             }
-            elseif (-not [string]::IsNullOrEmpty($config.name))
+            catch
             {
-                $displayedKey = $config.name
+                $errorMessage = "Failed to remove the Intune Epm Certificate Policy Setting with Id {$($currentInstance.Id)} and Name {$($currentInstance.DisplayName)}."
+                $errorMessage += ' Please make sure it is not referenced by a Firewall policy.'
+                throw $errorMessage
             }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                CertificateFile       = $config.settingInstance.simpleSettingValue.value
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            #endregion
         }
-        return $dscContent.ToString()
     }
-    catch
+
+    [bool] Test()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        return ([M365DSCResourceBase] $this).Test()
+    }
 
-        throw
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            #region resource generator code
+            [array]$getValue = Get-M365DSCExportCachedCollection -Collection 'reusablePolicySettings' `
+                -PropertyName 'settingDefinitionId' `
+                -PropertyValue 'device_vendor_msft_policy_privilegemanagement_reusablesettings_certificatefile' `
+                -Filter $this.Filter
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
+                {
+                    $displayedKey = $config.displayName
+                }
+                elseif (-not [string]::IsNullOrEmpty($config.name))
+                {
+                    $displayedKey = $config.name
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.DisplayName
+                    CertificateFile       = $config.settingInstance.simpleSettingValue.value
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            IncludedProperties = @('CertificateFile')
+        }
+    }
+
+    hidden [IntuneEpmCertificatePolicySetting] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneEpmCertificatePolicySetting])
+        {
+            return $Values
+        }
+
+        $result = [IntuneEpmCertificatePolicySetting]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        IncludedProperties = @('CertificateFile')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

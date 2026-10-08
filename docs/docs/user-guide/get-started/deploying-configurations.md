@@ -35,6 +35,8 @@ The first step in trying to deploy a DSC configuration is to compile the configu
 
 **Attention: If your configuration contains empty arrays, then it must be compiled in Windows PowerShell (5.1). Otherwise, the affected properties might be omitted in the result file.**
 
+Compiling a configuration and applying it with `Start-DscConfiguration` (or testing using `Test-DscConfiguration`) are the only Microsoft365DSC scenarios that involve Windows PowerShell because the Local Configuration Manager does not work with PowerShell > 5.1. The resources themselves still execute on PowerShell 7: the LCM relays every resource call into a PowerShell 7 session on the same machine. PowerShell 7.6 or higher therefore has to be installed, and the `PowerShell.7` remoting endpoint has to be registered. See [PowerShell 7+ Support](powershell7-support.md) for the details.
+
 <figure markdown>
   ![Running a configuration compilation](../../Images/CompileConfiguration.png)
   <figcaption>Running a configuration compilation</figcaption>

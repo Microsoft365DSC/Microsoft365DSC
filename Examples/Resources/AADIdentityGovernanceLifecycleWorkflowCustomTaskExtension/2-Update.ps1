@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,31 +19,33 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension "AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension-My Custom"
+        AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension "AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
             CallbackConfiguration = MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration{
                 TimeoutDuration = 'PT34M'
-                AuthorizedApps = @('M365DSC')
+                AuthorizedApps  = @('Lifecycle Workflow Connector')
             };
             ClientConfiguration   = MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration{
-                MaximumRetries = 1
+                MaximumRetries        = 1
                 TimeoutInMilliseconds = 1000
             };
-            Description           = "My Drifted Description"; # Drift
+            Description           = "My Drifted Description"; # Updated Property
             DisplayName           = "My Custom Extension";
             EndpointConfiguration = MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration{
-                SubscriptionId =       '63e62ab2-fd92-46ce-a393-2cb338039cc7'
-                logicAppWorkflowName = 'MyTestApp'
-                resourceGroupName =    'TestRG'
-                url = 'https://prod-35.eastus.logic.azure.com:443/workflows/xxxxxxxxxxx/triggers/manual/paths/invoke?api-version=2016-10-01'
+                SubscriptionId       = '<subscription-id>'
+                logicAppWorkflowName = 'OnboardingNotification'
+                resourceGroupName    =    'rg-identity-prod'
+                url                  = 'https://prod-35.eastus.logic.azure.com:443/workflows/xxxxxxxxxxx/triggers/manual/paths/invoke?api-version=2016-10-01'
             };
             Ensure                = "Present";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

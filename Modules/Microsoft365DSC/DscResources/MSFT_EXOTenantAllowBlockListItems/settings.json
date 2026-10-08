@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOTenantAllowBlockListItems",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "TenantAllowBlockListItems",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the tenant allow/block list (TABL) entries",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Configuration"
         ],
@@ -33,7 +44,7 @@
           "Tenant AllowBlockList Manager"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "View-Only Organization Management"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-TenantAllowBlockListItems",
+        "New-TenantAllowBlockListItems",
+        "Remove-TenantAllowBlockListItems",
+        "Set-TenantAllowBlockListItems"
+      ]
+    }
+  ]
 }

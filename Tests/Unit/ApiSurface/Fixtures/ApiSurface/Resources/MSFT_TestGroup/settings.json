@@ -1,0 +1,33 @@
+{
+  "resourceName": "TestGroup",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "v1.0",
+    "entityType": "testGroup",
+    "odataSubtype": null,
+    "cmdletNoun": "MgTestGroup",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Fixture for MSFT_TestGroup.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Test",
+      "cmdlets": [
+        "Get-MgTestGroup"
+      ]
+    }
+  ]
+}

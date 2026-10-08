@@ -5,22 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsUser 'ConfigureTeamsUser'
+        TeamsUser 'TeamsUser-Example'
         {
-            TeamName   = "SuperSecretTeam"
-            User       = "jdoe@contoso.com"
-            Role       = "Member"
-            Ensure     = "Present"
-            Credential = $Credscredential
+            TeamName              = "Mark 8 Project Team"
+            User                  = "PattiF@$TenantId"
+            Role                  = "Member"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,27 +19,39 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAccountProtectionLocalUserGroupMembershipPolicy "My Account Protection Local User Group Membership Policy"
+        IntuneAccountProtectionLocalUserGroupMembershipPolicy "IntuneAccountProtectionLocalUserGroupMembershipPolicy-Example"
         {
-            DisplayName              = "Account Protection LUGM Policy";
-            Description              = "My revised description";
-            Ensure                   = "Present";
-            Assignments              = @(
+            DisplayName           = "Account Protection LUGM Policy";
+            Description           = "Grants the helpdesk local administrator rights on corporate workstations";
+            Ensure                = "Present";
+            RoleScopeTagIds       = @("0");
+            Assignments           = @(
                 MSFT_IntuneAccountProtectionLocalUserGroupMembershipPolicyAssignments{
-                    deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allLicensedUsersAssignmentTarget'
+                    dataType                                   = "#microsoft.graph.allDevicesAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                }
+                MSFT_IntuneAccountProtectionLocalUserGroupMembershipPolicyAssignments{
+                    dataType         = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName = "Intune Excluded Devices"
                 }
             );
-            AccessGroup = @(
+            AccessGroup           = @(
                 MSFT_MicrosoftGraphIntuneSettingsCatalogAccessGroup{
-                    desc = @('administrators', 'users')
-                    member = @('S-1-12-1-1167842105-1150511762-402702254-1917434032')
-                    action = 'AddUpdate'
-                    userselectiontype = 'users'
+                    action            = "AddUpdate"
+                    desc              = @("administrators")
+                    member            = @("S-1-12-1-1167842105-1150511762-402702254-1917434032")
+                    userselectiontype = "users"
+                }
+                MSFT_MicrosoftGraphIntuneSettingsCatalogAccessGroup{
+                    action            = "RemoveUpdate"
+                    desc              = @("remotedesktopusers")
+                    member            = @("AzureAD\field.technician@contoso.com")
+                    userselectiontype = "manual"
                 }
             );
             ApplicationId         = $ApplicationId;

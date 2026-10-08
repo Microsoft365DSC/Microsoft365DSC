@@ -4,7 +4,8 @@ This example deletes a new App Configuration Device Policy.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,16 +18,16 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
         IntuneAppConfigurationDevicePolicy "IntuneAppConfigurationDevicePolicy-Example"
         {
-            Description = "";
-            DisplayName = "Example";
-            Ensure      = "Present";
-            Id          = "0000000-0000-0000-0000-000000000000";
+            DisplayName           = "Outlook for Android - Managed Configuration";
+            Ensure                = "Present";
+            Id                    = "0000000-0000-0000-0000-000000000000";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

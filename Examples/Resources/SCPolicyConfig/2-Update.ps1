@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,13 +19,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        SCPolicyConfig "SCPolicyConfig"
+        SCPolicyConfig "SCPolicyConfig-Example"
         {
             AdvancedClassificationEnabled           = $True;
-            ApplicationId                           = $ApplicationId;
             AuditFileActivity                       = $False;
             BandwidthLimitEnabled                   = $False;
             BusinessJustificationList               = @(
@@ -59,7 +61,6 @@ Configuration Example
                     justificationText = 'default:Take It'
                 }
             );
-            CertificateThumbprint                   = $CertificateThumbprint;
             CloudAppMode                            = "Block";
             CloudAppRestrictionList                 = @("contoso.net","contoso.com");
             CustomBusinessJustificationNotification = 3;
@@ -70,12 +71,12 @@ Configuration Example
                     Name        = 'Maracas'
                     Id          = '5c124091-bb75-4d20-9c09-b00d584c6270'
                     Description = 'Lacucaracha'
-                    Apps = @(
+                    Apps        = @(
                         MSFT_PolicyConfigDLPApp
                         {
-                            ExecutableName    = 'toc.exe'
-                            Name              = 'toctoctoc'
-                            Quarantine        = $False
+                            ExecutableName = 'toc.exe'
+                            Name           = 'toctoctoc'
+                            Quarantine     = $False
                         }
                     )
                 }
@@ -90,9 +91,9 @@ Configuration Example
             DLPPrinterGroups                        = @(
                 MSFT_PolicyConfigDLPPrinterGroups
                 {
-                    groupName    = 'MyGroup'
-                    groupId      = '928f8844-80af-4740-b563-232b33b29f5d'
-                    printers = @(
+                    groupName = 'MyGroup'
+                    groupId   = '928f8844-80af-4740-b563-232b33b29f5d'
+                    printers  = @(
                         MSFT_PolicyConfigPrinter
                         {
                             universalPrinter = $False
@@ -116,8 +117,8 @@ Configuration Example
             DLPRemovableMediaGroups                 = @(
                 MSFT_PolicyConfigDLPRemovableMediaGroups
                 {
-                    groupName = 'My Removable USB device group'
-                    removablemedia    = @(
+                    groupName      = 'My Removable USB device group'
+                    removablemedia = @(
                         MSFT_PolicyConfigRemovableMedia
                         {
                             deviceId          = 'Nik'
@@ -184,56 +185,58 @@ Configuration Example
                     )
                 }
             );
-            TenantId                                = $TenantId;
             UnallowedApp                            = @(
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'Caramel'
-                    Executable   = 'cara.exe'
+                    Value      = 'Caramel'
+                    Executable = 'cara.exe'
                 }
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'Fudge'
-                    Executable   = 'chocolate.exe'
+                    Value      = 'Fudge'
+                    Executable = 'chocolate.exe'
                 }
             );
             UnallowedBluetoothApp                   = @(
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'bluetooth'
-                    Executable   = 'micase.exe'
+                    Value      = 'bluetooth'
+                    Executable = 'micase.exe'
                 }
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'marmelade'
-                    Executable   = 'julia.exe'
+                    Value      = 'marmelade'
+                    Executable = 'julia.exe'
                 }
             );
             UnallowedBrowser                        = @(
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'UC Browser'
-                    Executable   = 'ucbrowser.exe'
+                    Value      = 'UC Browser'
+                    Executable = 'ucbrowser.exe'
                 }
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'CapitainOS'
-                    Executable   = 'captn.exe'
+                    Value      = 'CapitainOS'
+                    Executable = 'captn.exe'
                 }
             );
             UnallowedCloudSyncApp                   = @(
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'ikochou'
-                    Executable   = 'gillex.msi'
+                    Value      = 'ikochou'
+                    Executable = 'gillex.msi'
                 }
                 MSFT_PolicyConfigApp
                 {
-                    Value        = 'johny'
-                    Executable   = 'boo.msi'
+                    Value      = 'johny'
+                    Executable = 'boo.msi'
                 }
             );
             VPNSettings                             = @("MyVPNAddress","MySecondVPNAddress");
+            ApplicationId                           = $ApplicationId;
+            TenantId                                = $TenantId;
+            CertificateThumbprint                   = $CertificateThumbprint;
         }
     }
 }

@@ -5,21 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsCortanaPolicy 'Example'
+        TeamsCortanaPolicy 'TeamsCortanaPolicy-Example'
         {
-            CortanaVoiceInvocationMode       = "WakeWordPushToTalkUserOverride";
-            Credential                       = $Credscredential;
-            Ensure                           = "Present";
-            Identity                         = "Global";
+            Identity                   = "Frontline Workers Cortana Policy"
+            CortanaVoiceInvocationMode = "WakeWordPushToTalkUserOverride"
+            Description                = "Lets shop floor staff call Cortana hands-free on shared devices"
+            Ensure                     = "Present"
+            ApplicationId              = $ApplicationId
+            TenantId                   = $TenantId
+            CertificateThumbprint      = $CertificateThumbprint
         }
     }
 }

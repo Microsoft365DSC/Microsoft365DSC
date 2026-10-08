@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-GUID).ToString() -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -42,7 +42,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementConfigurationPolicy -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -121,6 +121,98 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 SettingDefinitionId  = 'groupSettingDefinitionId'
                             }
                         }
+                        @{
+                            SettingInstance = @{
+                                '@odata.type'                = '#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance'
+                                simpleSettingCollectionValue = @(
+                                    @{
+                                        value   = 'firstValue'
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                    }
+                                    @{
+                                        value   = 'secondValue'
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                    }
+                                )
+                                SettingDefinitionId  = 'simpleCollectionSettingDefinitionId'
+                            }
+                        }
+                        @{
+                            SettingInstance = @{
+                                '@odata.type'                = '#microsoft.graph.deviceManagementConfigurationChoiceSettingCollectionInstance'
+                                choiceSettingCollectionValue = @(
+                                    @{
+                                        value    = 'firstChoice'
+                                        children = @()
+                                    }
+                                    @{
+                                        value    = 'secondChoice'
+                                        children = @()
+                                    }
+                                )
+                                SettingDefinitionId  = 'choiceCollectionSettingDefinitionId'
+                            }
+                        }
+                        @{
+                            SettingInstance = @{
+                                '@odata.type'               = '#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance'
+                                groupSettingCollectionValue = @(
+                                    @{
+                                        children = @(
+                                            @{
+                                                simpleSettingValue  = @{
+                                                    value   = 'collectionChildValue'
+                                                    '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                }
+                                                SettingDefinitionId = 'stringSettingDefinitionId'
+                                                '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                                            }
+                                            @{
+                                                simpleSettingCollectionValue = @(
+                                                    @{
+                                                        value   = 'childCollectionValue'
+                                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                    }
+                                                )
+                                                SettingDefinitionId = 'simpleCollectionSettingDefinitionId'
+                                                '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance'
+                                            }
+                                        )
+                                    }
+                                )
+                                SettingDefinitionId  = 'groupCollectionSettingDefinitionId'
+                            }
+                        }
+                        @{
+                            SettingInstance = @{
+                                '@odata.type'                    = '#microsoft.graph.deviceManagementConfigurationGroupSettingInstance'
+                                SettingDefinitionId              = 'templateRefSettingDefinitionId'
+                                settingInstanceTemplateReference = @{
+                                    settingInstanceTemplateId = 'instanceTemplateId'
+                                }
+                                groupSettingValue = @{
+                                    settingValueTemplateReference = @{
+                                        settingValueTemplateId = 'valueTemplateId'
+                                    }
+                                    children = @(
+                                        @{
+                                            SettingDefinitionId              = 'stringSettingDefinitionId'
+                                            '@odata.type'                    = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                                            settingInstanceTemplateReference = @{
+                                                settingInstanceTemplateId = 'childInstanceTemplateId'
+                                            }
+                                            simpleSettingValue = @{
+                                                value   = 'templatedValue'
+                                                '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                settingValueTemplateReference = @{
+                                                    settingValueTemplateId = 'childValueTemplateId'
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     )
                     Technologies = 'mdm'
                     TemplateReference = @{
@@ -150,74 +242,74 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id           = 'FakeStringValue'
                     Name         = 'FakeStringValue'
                     Platforms    = 'Windows10'
-                    Settings     = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                    Settings     = @(
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             valueState  = 'invalid'
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             IntValue  = 25
                                             odataType = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    choiceSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationChoiceSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    choiceSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
                                             value    = 'choiceSettingValue'
-                                            children = [CimInstance[]]@()
-                                        } -ClientOnly)
+                                            children = @()
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    groupSettingValue = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationGroupSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    groupSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
                                             odataType = '#microsoft.graph.deviceManagementConfigurationGroupSettingValue'
-                                            children  = [CimInstance[]]@(
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                            children  = @(
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             StringValue = 'fakeValue'
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                                })
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             valueState  = 'invalid'
                                                             StringValue = 'fakeValue'
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
+                                                })
                                             )
-                                        } -ClientOnly)
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                        })
+                                })
+                        })
                     )
                     Technologies = 'mdm'
                     Ensure       = 'Present'
@@ -229,13 +321,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementConfigurationPolicy -Exactly 1
             }
         }
@@ -247,74 +339,74 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id           = 'FakeStringValue'
                     Name         = 'FakeStringValue'
                     Platforms    = 'windows10'
-                    Settings     = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                    Settings     = @(
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             valueState  = 'invalid'
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             IntValue  = 25
                                             odataType = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    choiceSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationChoiceSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    choiceSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
                                             value    = 'choiceSettingValue'
-                                            children = [CimInstance[]]@()
-                                        } -ClientOnly)
+                                            children = @()
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    groupSettingValue = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationGroupSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    groupSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
                                             odataType = '#microsoft.graph.deviceManagementConfigurationGroupSettingValue'
-                                            children  = [CimInstance[]]@(
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                            children  = @(
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             StringValue = 'fakeValue'
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                                })
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             valueState  = 'invalid'
                                                             StringValue = 'fakeValue'
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
+                                                })
                                             )
-                                        } -ClientOnly)
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                        })
+                                })
+                        })
                     )
                     Technologies = 'mdm'
                     Ensure       = 'Absent'
@@ -323,15 +415,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementConfigurationPolicy -Exactly 1
             }
         }
@@ -343,77 +435,170 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id           = 'FakeStringValue'
                     Name         = 'FakeStringValue'
                     Platforms    = 'windows10'
-                    Settings     = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                    Settings     = @(
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             valueState  = 'invalid'
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'secretSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             IntValue  = 25
                                             odataType = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'integerSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    choiceSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationChoiceSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    choiceSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
                                             value    = 'choiceSettingValue'
-                                            children = [CimInstance[]]@()
-                                        } -ClientOnly)
+                                            children = @()
+                                        })
                                     SettingDefinitionId = 'choiceSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
                                     odataType = '#microsoft.graph.deviceManagementConfigurationGroupSettingInstance'
                                     SettingDefinitionId = 'groupSettingDefinitionId'
-                                    groupSettingValue = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationGroupSettingValue -Property @{
+                                    groupSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
                                             #odataType = '#microsoft.graph.deviceManagementConfigurationGroupSettingValue'
-                                            children  = [CimInstance[]]@(
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                            children  = @(
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             StringValue = 'fakeValue'
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                                })
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             valueState  = 'invalid'
                                                             StringValue = 'fakeValue'
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'secretSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
+                                                })
                                             )
-                                        } -ClientOnly)
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                        })
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                    = '#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance'
+                                    SettingDefinitionId          = 'simpleCollectionSettingDefinitionId'
+                                    simpleSettingCollectionValue = @(
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                StringValue = 'firstValue'
+                                                odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                            })
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                StringValue = 'secondValue'
+                                                odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                            })
+                                    )
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                    = '#microsoft.graph.deviceManagementConfigurationChoiceSettingCollectionInstance'
+                                    SettingDefinitionId          = 'choiceCollectionSettingDefinitionId'
+                                    choiceSettingCollectionValue = @(
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
+                                                value = 'firstChoice'
+                                            })
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
+                                                value = 'secondChoice'
+                                            })
+                                    )
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                   = '#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance'
+                                    SettingDefinitionId         = 'groupCollectionSettingDefinitionId'
+                                    groupSettingCollectionValue = @(
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
+                                                children = @(
+                                                    ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                        simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                                StringValue = 'collectionChildValue'
+                                                                odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                            })
+                                                        SettingDefinitionId = 'stringSettingDefinitionId'
+                                                        odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                                                    })
+                                                    ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                        simpleSettingCollectionValue = @(
+                                                            ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                                    StringValue = 'childCollectionValue'
+                                                                    odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                                })
+                                                        )
+                                                        SettingDefinitionId = 'simpleCollectionSettingDefinitionId'
+                                                        odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance'
+                                                    })
+                                                )
+                                            })
+                                    )
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                        = '#microsoft.graph.deviceManagementConfigurationGroupSettingInstance'
+                                    SettingDefinitionId              = 'templateRefSettingDefinitionId'
+                                    SettingInstanceTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstanceTemplateReference] @{
+                                            SettingInstanceTemplateId = 'instanceTemplateId'
+                                        })
+                                    groupSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
+                                            SettingValueTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingValueTemplateReference] @{
+                                                    settingValueTemplateId = 'valueTemplateId'
+                                                })
+                                            children = @(
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    SettingDefinitionId              = 'stringSettingDefinitionId'
+                                                    odataType                        = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                                                    SettingInstanceTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstanceTemplateReference] @{
+                                                            SettingInstanceTemplateId = 'childInstanceTemplateId'
+                                                        })
+                                                    simpleSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                            StringValue = 'templatedValue'
+                                                            odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                            SettingValueTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingValueTemplateReference] @{
+                                                                    settingValueTemplateId = 'childValueTemplateId'
+                                                                })
+                                                        })
+                                                })
+                                            )
+                                        })
+                                })
+                        })
                     )
+                    TemplateReference = [MSFT_MicrosoftGraphdeviceManagementConfigurationPolicyTemplateReference] @{
+                        TemplateFamily = 'none'
+                    }
                     Technologies = 'mdm'
                     Ensure       = 'Present'
                     Credential   = $Credential
@@ -421,7 +606,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -432,77 +617,170 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id           = 'FakeStringValue'
                     Name         = 'FakeStringValue'
                     Platforms    = 'windows10'
-                    Settings     = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                    Settings     = @(
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             valueState  = 'invalid'
                                             StringValue = 'fakeValue'
                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'secretSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                             IntValue  = 25
                                             odataType = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
-                                        } -ClientOnly)
+                                        })
                                     SettingDefinitionId = 'integerSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                    choiceSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationChoiceSettingValue -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    choiceSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
                                             value    = 'choiceSettingValue'
-                                            children = [CimInstance[]]@()
-                                        } -ClientOnly)
+                                            children = @()
+                                        })
                                     SettingDefinitionId = 'choiceSettingDefinitionId'
                                     odataType           = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                                } -ClientOnly)
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSetting -Property @{
-                            SettingInstance = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
                                     odataType = '#microsoft.graph.deviceManagementConfigurationGroupSettingInstance'
                                     SettingDefinitionId = 'groupSettingDefinitionId'
-                                    groupSettingValue = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationGroupSettingValue -Property @{
+                                    groupSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
                                             odataType = '#microsoft.graph.deviceManagementConfigurationGroupSettingValue'
-                                            children  = [CimInstance[]]@(
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                            children  = @(
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             StringValue = 'fakeValue'
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'stringSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
-                                                (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSettingInstance -Property @{
-                                                    simpleSettingValue  = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementConfigurationSimpleSettingValue -Property @{
+                                                })
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
                                                             valueState  = 'invalid'
                                                             StringValue = 'updatedValue' # Updated property
                                                             odataType   = '#microsoft.graph.deviceManagementConfigurationSecretSettingValue'
-                                                        } -ClientOnly)
+                                                        })
                                                     SettingDefinitionId = 'secretSettingDefinitionId'
                                                     odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                                } -ClientOnly)
+                                                })
                                             )
-                                        } -ClientOnly)
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                        })
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                    = '#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance'
+                                    SettingDefinitionId          = 'simpleCollectionSettingDefinitionId'
+                                    simpleSettingCollectionValue = @(
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                StringValue = 'firstValue'
+                                                odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                            })
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                StringValue = 'secondValue'
+                                                odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                            })
+                                    )
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                    = '#microsoft.graph.deviceManagementConfigurationChoiceSettingCollectionInstance'
+                                    SettingDefinitionId          = 'choiceCollectionSettingDefinitionId'
+                                    choiceSettingCollectionValue = @(
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
+                                                value = 'firstChoice'
+                                            })
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue] @{
+                                                value = 'secondChoice'
+                                            })
+                                    )
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                   = '#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance'
+                                    SettingDefinitionId         = 'groupCollectionSettingDefinitionId'
+                                    groupSettingCollectionValue = @(
+                                        ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
+                                                children = @(
+                                                    ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                        simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                                StringValue = 'collectionChildValue'
+                                                                odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                            })
+                                                        SettingDefinitionId = 'stringSettingDefinitionId'
+                                                        odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                                                    })
+                                                    ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                        simpleSettingCollectionValue = @(
+                                                            ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                                    StringValue = 'childCollectionValue'
+                                                                    odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                                })
+                                                        )
+                                                        SettingDefinitionId = 'simpleCollectionSettingDefinitionId'
+                                                        odataType           = '#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance'
+                                                    })
+                                                )
+                                            })
+                                    )
+                                })
+                        })
+                        ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
+                            SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                    odataType                        = '#microsoft.graph.deviceManagementConfigurationGroupSettingInstance'
+                                    SettingDefinitionId              = 'templateRefSettingDefinitionId'
+                                    SettingInstanceTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstanceTemplateReference] @{
+                                            SettingInstanceTemplateId = 'instanceTemplateId'
+                                        })
+                                    groupSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationGroupSettingValue] @{
+                                            SettingValueTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingValueTemplateReference] @{
+                                                    settingValueTemplateId = 'valueTemplateId'
+                                                })
+                                            children = @(
+                                                ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
+                                                    SettingDefinitionId              = 'stringSettingDefinitionId'
+                                                    odataType                        = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                                                    SettingInstanceTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstanceTemplateReference] @{
+                                                            SettingInstanceTemplateId = 'childInstanceTemplateId'
+                                                        })
+                                                    simpleSettingValue = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
+                                                            StringValue = 'templatedValue'
+                                                            odataType   = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                                                            SettingValueTemplateReference = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingValueTemplateReference] @{
+                                                                    settingValueTemplateId = 'childValueTemplateId'
+                                                                })
+                                                        })
+                                                })
+                                            )
+                                        })
+                                })
+                        })
                     )
+                    TemplateReference = [MSFT_MicrosoftGraphdeviceManagementConfigurationPolicyTemplateReference] @{
+                        TemplateFamily = 'none'
+                    }
                     Technologies = 'mdm'
                     Ensure       = 'Present'
                     Credential   = $Credential
@@ -510,16 +788,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Update-IntuneDeviceConfigurationPolicy -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-IntuneDeviceConfigurationPolicy -Exactly 1 -ParameterFilter {
+                    [System.String]::IsNullOrEmpty($TemplateReferenceId)
+                }
             }
         }
 
@@ -533,7 +813,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

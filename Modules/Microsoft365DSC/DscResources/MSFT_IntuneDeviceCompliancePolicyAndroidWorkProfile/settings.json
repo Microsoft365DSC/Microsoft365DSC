@@ -1,51 +1,98 @@
 {
   "resourceName": "IntuneDeviceCompliancePolicyAndroidWorkProfile",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceCompliancePolicy",
+    "odataSubtype": "androidWorkProfileCompliancePolicy",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceCompliancePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeviceSettingStateSummaries",
+      "reason": "ReadOnly",
+      "note": "Intune computes per-setting compliance rollups from device check-ins"
+    },
+    {
+      "name": "DeviceStatuses",
+      "reason": "ReadOnly",
+      "note": "Intune records one entry per device as devices report compliance"
+    },
+    {
+      "name": "DeviceStatusOverview",
+      "reason": "ReadOnly",
+      "note": "Intune calculates the device compliance count rollup"
+    },
+    {
+      "name": "UserStatuses",
+      "reason": "ReadOnly",
+      "note": "Intune records one entry per user as devices report compliance"
+    },
+    {
+      "name": "UserStatusOverview",
+      "reason": "ReadOnly",
+      "note": "Intune calculates the user compliance count rollup"
+    }
+  ],
   "description": "This resource configures the settings of Android Work Profile device compliance policies in your cloud-based organization.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.DeviceManagement",
-    "Microsoft.Graph.Groups",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Groups"
   ],
   "supportedEnvironments": [
     "Global",
@@ -54,18 +101,13 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.DeviceManagement",
       "cmdlets": [
         "Get-MgBetaDeviceManagementAssignmentFilter",
         "Get-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Get-MgBetaDeviceManagementDeviceCompliancePolicyAssignment",
         "Get-MgBetaDeviceManagementNotificationMessageTemplate",
+        "Invoke-MgBetaScheduleDeviceManagementDeviceCompliancePolicyActionForRule",
         "New-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Remove-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Update-MgBetaDeviceManagementDeviceCompliancePolicy"
@@ -75,12 +117,6 @@
       "module": "Microsoft.Graph.Groups",
       "cmdlets": [
         "Get-MgGroup"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

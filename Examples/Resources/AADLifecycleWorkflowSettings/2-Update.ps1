@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,33 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADLifecycleWorkflowSettings "AADLifecycleWorkflowSettings"
+        AADLifecycleWorkflowSettings "AADLifecycleWorkflowSettings-Example"
         {
-            ApplicationId                   = $ApplicationId;
-            CertificateThumbprint           = $CertificateThumbprint;
             IsSingleInstance                = "Yes";
+            QuarantineConfiguration         = MSFT_MicrosoftGraphquarantineConfiguration{
+                MatchMode  = "any"
+                Conditions = @(
+                    MSFT_MicrosoftGraphquarantineCondition{
+                        odataType = "#microsoft.graph.identityGovernance.countBasedQuarantineCondition"
+                        Threshold = 500
+                    }
+                    MSFT_MicrosoftGraphquarantineCondition{
+                        odataType  = "#microsoft.graph.identityGovernance.percentageBasedQuarantineCondition"
+                        Percentage = 25
+                    }
+                )
+            };
             SenderDomain                    = "microsoft.com";
-            TenantId                        = $TenantId;
             UseCompanyBranding              = $True;
             WorkflowScheduleIntervalInHours = 10;
+            ApplicationId                   = $ApplicationId;
+            TenantId                        = $TenantId;
+            CertificateThumbprint           = $CertificateThumbprint;
         }
     }
 }

@@ -1,5 +1,16 @@
 {
   "resourceName": "AzureSubscription",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource controls the properties of an Azure subscription.",
   "roles": {
     "read": [],

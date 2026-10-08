@@ -1,22 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <AssemblyName>Microsoft365DSC.Converter</AssemblyName>
     <RootNamespace>Microsoft365DSC.Converter</RootNamespace>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Authors>Microsoft365DSC Team</Authors>
-    <Company>Microsoft365DSC</Company>
+    <IsPackable>true</IsPackable>
     <Product>Microsoft365DSC Converter</Product>
     <Description>Performance-optimized C# converter for Microsoft365DSC configuration operations</Description>
-    <Copyright>Copyright © Microsoft365DSC</Copyright>
-    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
   </ItemGroup>
 
   <ItemGroup>

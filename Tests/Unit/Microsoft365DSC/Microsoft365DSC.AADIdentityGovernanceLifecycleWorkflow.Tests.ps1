@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -49,12 +49,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Get-MgBetaIdentityGovernanceLifecycleWorkflow -MockWith {
                 return @{
-                    Id                   = "random guid"
-                    Category             = "joiner";
-                    Description          = "Description the onboard of prehire employee";
-                    DisplayName          = "Onboard pre-hire employee updated version";
-                    IsEnabled            = $True;
-                    IsSchedulingEnabled  = $False;
+                    Id                         = "random guid"
+                    AdministrationScopeTargets = @(
+                        @{
+                            Id = "4f9dc456-0574-4122-9e55-8b4cc494b27d"
+                        }
+                    );
+                    Category                   = "joiner";
+                    Description                = "Description the onboard of prehire employee";
+                    DisplayName                = "Onboard pre-hire employee updated version";
+                    IsEnabled                  = $True;
+                    IsSchedulingEnabled        = $False;
                 }
             }
 
@@ -72,13 +77,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Category             = "joiner";
-                    Description          = "Description the onboard of prehire employee";
-                    DisplayName          = "Onboard pre-hire employee updated version";
-                    IsEnabled            = $True;
-                    IsSchedulingEnabled  = $False;
-                    Ensure              = 'Present'
-                    Credential          = $Credential;
+                    AdministrationScopeTargets = @("4f9dc456-0574-4122-9e55-8b4cc494b27d");
+                    Category                   = "joiner";
+                    Description                = "Description the onboard of prehire employee";
+                    DisplayName                = "Onboard pre-hire employee updated version";
+                    IsEnabled                  = $True;
+                    IsSchedulingEnabled        = $False;
+                    Ensure                     = 'Present'
+                    Credential                 = $Credential;
                 }
 
                 Mock -CommandName Get-MgBetaIdentityGovernanceLifecycleWorkflow -MockWith {
@@ -86,14 +92,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create a new instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaIdentityGovernanceLifecycleWorkflow -Exactly 1
             }
         }
@@ -101,24 +107,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Category             = "joiner";
-                    Description          = "Description the onboard of prehire employee";
-                    DisplayName          = "Onboard pre-hire employee updated version";
-                    IsEnabled            = $True;
-                    IsSchedulingEnabled  = $False;
-                    Ensure              = 'Absent'
-                    Credential          = $Credential;
+                    AdministrationScopeTargets = @("4f9dc456-0574-4122-9e55-8b4cc494b27d");
+                    Category                   = "joiner";
+                    Description                = "Description the onboard of prehire employee";
+                    DisplayName                = "Onboard pre-hire employee updated version";
+                    IsEnabled                  = $True;
+                    IsSchedulingEnabled        = $False;
+                    Ensure                     = 'Absent'
+                    Credential                 = $Credential;
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaIdentityGovernanceLifecycleWorkflow -Exactly 1
             }
         }
@@ -126,47 +133,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance exists and values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Category             = "joiner";
-                    Description          = "Description the onboard of prehire employee";
-                    DisplayName          = "Onboard pre-hire employee updated version";
-                    IsEnabled            = $True;
-                    IsSchedulingEnabled  = $False;
-                    Tasks                = $null
-                    ExecutionConditions  = (New-CimInstance -ClassName MSFT_IdentityGovernanceWorkflowExecutionConditions -Property @{
-                    } -ClientOnly)
-                    Ensure              = 'Present'
-                    Credential          = $Credential;
+                    AdministrationScopeTargets = @("4f9dc456-0574-4122-9e55-8b4cc494b27d");
+                    Category                   = "joiner";
+                    Description                = "Description the onboard of prehire employee";
+                    DisplayName                = "Onboard pre-hire employee updated version";
+                    IsEnabled                  = $True;
+                    IsSchedulingEnabled        = $False;
+                    Tasks                      = $null
+                    ExecutionConditions        = ([MSFT_IdentityGovernanceWorkflowExecutionConditions] @{
+                    })
+                    Ensure                     = 'Present'
+                    Credential                 = $Credential;
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The instance exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Category             = "joiner";
-                    Description          = "Drifted Description the onboard of prehire employee"; # Drift
-                    DisplayName          = "Onboard pre-hire employee updated version";
-                    IsEnabled            = $True;
-                    IsSchedulingEnabled  = $False;
-                    Ensure              = 'Present'
-                    Credential          = $Credential;
+                    AdministrationScopeTargets = @("8a0e2e6c-1e4f-4a26-9a71-6c1e5f2b3d47"); # Drift
+                    Category                   = "joiner";
+                    Description                = "Drifted Description the onboard of prehire employee"; # Drift
+                    DisplayName                = "Onboard pre-hire employee updated version";
+                    IsEnabled                  = $True;
+                    IsSchedulingEnabled        = $False;
+                    Ensure                     = 'Present'
+                    Credential                 = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaIdentityGovernanceLifecycleWorkflowNewVersion -Exactly 1
             }
         }
@@ -180,7 +189,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADIdentityGovernanceLifecycleWorkflow' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -69,6 +69,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             Name = 'tags_item_value'
                             OffsetUri = 'tags/[{0}]/value'
                             '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSimpleSettingDefinition'
+                            dependentOn = @(
+                                @{
+                                    dependentOn = "linux_mdatp_managed_edr_tags"
+                                    parentSettingId = "linux_mdatp_managed_edr_tags"
+                                }
+                            )
                         },
                         @{
                             Id = 'linux_mdatp_managed_edr_tags_item_key'
@@ -77,6 +83,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition'
                             options = @(
                                 @{
+                                    dependentOn = @(
+                                        @{
+                                            dependentOn = "linux_mdatp_managed_edr_tags"
+                                            parentSettingId = "linux_mdatp_managed_edr_tags"
+                                        }
+                                    )
                                     itemId = 'linux_mdatp_managed_edr_tags_item_key_0'
                                     name   = 'GROUP'
                                     optionValue = @{
@@ -138,7 +150,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return Get-MgBetaDeviceManagementConfigurationPolicy
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -175,18 +187,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneEndpointDetectionAndResponsePolicyLinux should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             DataType     = '#microsoft.graph.exclusionGroupAssignmentTarget'
                             groupId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
+                        })
                     )
                     Description = 'My Test Description'
                     Id = '619bd4a4-3b3b-4441-bd6f-3f4c0c444870'
                     DisplayName = 'My Test'
                     tags_item_key = 'GROUP'
                     tags_item_value = 'tag'
-                    RoleScopeTagIds = @("FakeStringValue")
                     Ensure = "Present"
                     Credential = $Credential;
                 }
@@ -196,25 +207,28 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
+                Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ParameterFilter { $Filter -like "* and templateReference/TemplateId eq '3514388a-d4d1-4aa8-bd64-c317776008f5_1'" }
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName New-MgBetaDeviceManagementConfigurationPolicy -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaDeviceManagementConfigurationPolicy -Exactly 1 -ParameterFilter {
+                    $null -ne $BodyParameter.roleScopeTagIds
+                }
             }
         }
 
         Context -Name "The IntuneEndpointDetectionAndResponsePolicyLinux exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             DataType     = '#microsoft.graph.exclusionGroupAssignmentTarget'
                             groupId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
+                        })
                     )
                     Description = 'My Test Description'
                     Id = '619bd4a4-3b3b-4441-bd6f-3f4c0c444870'
@@ -228,26 +242,26 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementConfigurationPolicy -Exactly 1
             }
         }
         Context -Name "The IntuneEndpointDetectionAndResponsePolicyLinux Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             DataType     = '#microsoft.graph.exclusionGroupAssignmentTarget'
                             groupId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
+                        })
                     )
                     Description = 'My Test Description'
                     Id = '619bd4a4-3b3b-4441-bd6f-3f4c0c444870'
@@ -261,94 +275,40 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The IntuneEndpointDetectionAndResponsePolicyLinux exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             DataType     = '#microsoft.graph.exclusionGroupAssignmentTarget'
                             groupId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
+                        })
                     )
                     Description = 'My Test Description'
                     Id = '619bd4a4-3b3b-4441-bd6f-3f4c0c444870'
                     DisplayName = 'My Test'
                     tags_item_key = 'GROUP'
-                    tags_item_value = 'tag'
+                    tags_item_value = 'Updated Tag' # Drift
                     RoleScopeTagIds = @("FakeStringValue")
                     Ensure = 'Present'
                     Credential = $Credential;
                 }
-
-                Mock -CommandName Get-MgBetaDeviceManagementConfigurationPolicySetting -MockWith {
-                    return @{
-                        Id                   = 0
-                        SettingDefinitions   = @(
-                            @{
-                                Id = 'linux_mdatp_managed_edr_tags'
-                                Name = 'tags'
-                                '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSettingGroupCollectionDefinition'
-                            },
-                            @{
-                                Id = 'linux_mdatp_managed_edr_tags_item_value'
-                                Name = 'tags_item_value'
-                                '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSimpleSettingDefinition'
-                            },
-                            @{
-                                Id = 'linux_mdatp_managed_edr_tags_item_key'
-                                Name = 'tags_item_key'
-                                '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSimpleSettingDefinition'
-                            }
-                        )
-                        SettingInstance      = @{
-                            SettingDefinitionId              = 'linux_mdatp_managed_edr_tags'
-                            SettingInstanceTemplateReference = @{
-                                SettingInstanceTemplateId = 'd0eb0a92-3807-4d9d-8432-6edd1aa108ce'
-                            }
-                            '@odata.type'      = '#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance'
-                            groupSettingCollectionValue = @(
-                                @{
-                                    settingValueTemplateReference = $null
-                                    children                   = @(
-                                        @{
-                                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                                            choiceSettingValue = @{
-                                                '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSettingInstance'
-                                                children = @()
-                                                value = 'linux_mdatp_managed_edr_tags_item_key_0'
-                                            }
-                                            settingDefinitionId = 'linux_mdatp_managed_edr_tags_item_key'
-                                        },
-                                        @{
-                                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                                            simpleSettingValue = @{
-                                                '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                                                value = 'tag1234' #drift
-                                            }
-                                            settingDefinitionId = 'linux_mdatp_managed_edr_tags_item_value'
-                                        }
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-IntuneDeviceConfigurationPolicy -Exactly 1
             }
         }
@@ -363,7 +323,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneEndpointDetectionAndResponsePolicyLinux' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

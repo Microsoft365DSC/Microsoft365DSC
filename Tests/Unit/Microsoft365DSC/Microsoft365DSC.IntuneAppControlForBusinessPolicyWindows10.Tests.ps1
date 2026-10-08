@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -58,7 +58,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Name        = 'My Test'
                     RoleScopeTagIds = @('FakeStringValue')
                     TemplateReference = @{
-                        TemplateId = '4321b946-b76b-4450-8afd-769c08b16ffc_1'
+                        TemplateId = 'd3849ba8-bf95-467c-9640-aa2334eae9e3_1'
                     }
                 }
             }
@@ -66,6 +66,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-M365DSCExportCachedConfigurationPolicies -MockWith {
                 return Get-MgBetaDeviceManagementConfigurationPolicy
             }
+
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
+                return "Credentials"
+            }
+
+            # Mock Write-M365DSCHost to hide output during the tests
+            Mock -CommandName Write-M365DSCHost -MockWith {
+            }
+            $Script:exportedInstance = $null
+            $Script:ExportMode = $false
 
             Mock -CommandName Update-IntuneDeviceConfigurationPolicy -MockWith {
             }
@@ -78,132 +88,200 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id                   = 0
                     SettingDefinitions   = @(
                         @{
-                            Id = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_trust_apps'
-                            Name = 'ConfigureApplicationControlSelectAdditionalRulesForTrustingApps'
-                            OffsetUri = '/{0}/Policy'
-                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingCollectionDefinition'
-                            maximumCount = 100
-                            minimumCount = 0
-                            options = @(
-                                @{
-                                    dependentOn = @(
-                                        @{
-                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls'
-                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls'
-                                        }
-                                    )
-                                    itemId = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_trust_apps_0'
-                                    name = 'Trust apps with good reputation'
-                                    optionValue = @{
-                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
-                                        value = 1
-                                    }
-                                }
-                            )
-                        },
-                        @{
-                            Id = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls'
-                            Name = 'ConfigureApplicationControlBuiltInControls'
-                            OffsetUri = '/{0}/Policy'
-                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSettingGroupCollectionDefinition'
-                            'childIds' = @(
-                                'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_enable_app_control'
-                                'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_trust_apps'
-                            )
-                            minimumCount = 0
-                            maximumCount = 1
-                        },
-                        @{
-                            Id = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_enable_app_control'
-                            Name = 'ConfigureApplicationControlEnableAppControlPolicy'
-                            OffsetUri = '/{0}/Policy'
+                            Id = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                            Name = 'ConfigureApplicationControlOptions'
+                            OffsetUri = '/Policies/{PolicyGuid}/Policy/{0}'
                             '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition'
                             options = @(
                                 @{
-                                    dependentOn = @(
-                                        @{
-                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls'
-                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls'
-                                        }
-                                    )
-                                    itemId = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_enable_app_control_0'
-                                    name = 'Enforce'
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_upload_xml_selected'
+                                    name = 'XML upload'
                                     optionValue = @{
                                         '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
                                         value = 0
                                     }
                                 }
-                            )
-                        },
-                        @{
-                            Id = 'device_vendor_msft_policy_config_applicationcontrol_policies_{policyguid}_policiesoptions'
-                            Name = 'ConfigureApplicationControlOptions'
-                            OffsetUri = '/{0}/Policy'
-                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition'
-                            options = @(
                                 @{
-                                    itemId = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_selected'
-                                    name = 'Use built-in controls'
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
+                                    name = 'Built-in controls'
                                     optionValue = @{
                                         '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
                                         value = 1
                                     }
                                 }
                             )
+                        },
+                        @{
+                            Id = 'device_vendor_msft_policy_config_applicationcontrolv2_auditmode'
+                            Name = 'ConfigureApplicationControlsAuditMode'
+                            OffsetUri = '/Policies/{PolicyGuid}/Policy/{0}'
+                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition'
+                            options = @(
+                                @{
+                                    dependentOn = @(
+                                        @{
+                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
+                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                                        }
+                                    )
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_auditmode_disabled'
+                                    name = 'Disabled'
+                                    optionValue = @{
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
+                                        value = 0
+                                    }
+                                }
+                                @{
+                                    dependentOn = @(
+                                        @{
+                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
+                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                                        }
+                                    )
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_auditmode_enabled'
+                                    name = 'Enabled'
+                                    optionValue = @{
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
+                                        value = 1
+                                    }
+                                }
+                            )
+                        },
+                        @{
+                            Id = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller'
+                            Name = 'ConfigureApplicationControlsTrustAppsFromManagedInstaller'
+                            OffsetUri = '/Policies/{PolicyGuid}/Policy/{0}'
+                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition'
+                            options = @(
+                                @{
+                                    dependentOn = @(
+                                        @{
+                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
+                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                                        }
+                                    )
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller_disabled'
+                                    name = 'Disabled'
+                                    optionValue = @{
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
+                                        value = 0
+                                    }
+                                },
+                                @{
+                                    dependentOn = @(
+                                        @{
+                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
+                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                                        }
+                                    )
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller_enabled'
+                                    name = 'Enabled'
+                                    optionValue = @{
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
+                                        value = 1
+                                    }
+                                }
+                            )
+                        },
+                        @{
+                            Id = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappswithgoodreputation'
+                            Name = 'ConfigureApplicationControlsTrustAppsWithGoodReputation'
+                            OffsetUri = '/Policies/{PolicyGuid}/Policy/{0}'
+                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition'
+                            options = @(
+                                @{
+                                    dependentOn = @(
+                                        @{
+                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
+                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                                        }
+                                    )
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappswithgoodreputation_disabled'
+                                    name = 'Disabled'
+                                    optionValue = @{
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
+                                        value = 0
+                                    }
+                                },
+                                @{
+                                    dependentOn = @(
+                                        @{
+                                            dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
+                                            parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                                        }
+                                    )
+                                    itemId = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappswithgoodreputation_enabled'
+                                    name = 'Enabled'
+                                    optionValue = @{
+                                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationIntegerSettingValue'
+                                        value = 1
+                                    }
+                                }
+                            )
+                        },
+                        @{
+                            Id = 'device_vendor_msft_policy_config_applicationcontrolv2_xmlupload'
+                            Name = 'ConfigureApplicationControlsXMLUpload'
+                            OffsetUri = '/Policies/{PolicyGuid}/Policy/{0}'
+                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSimpleSettingDefinition'
+                            dependentOn = @(
+                                @{
+                                    dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_upload_xml_selected'
+                                    parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
+                                }
+                            )
+                        },
+                        @{
+                            Id = 'device_vendor_msft_policy_config_applicationcontrolv2_supplementalpolicy_buildoptions_{ruleid}_type_filehashdetails'
+                            Name = 'ApplicationControlV2_SupplementalPolicy_Rule_FileHash'
+                            OffsetUri = '/Policies/{PolicyGuid}/Policy/{0}'
+                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSimpleSettingDefinition'
+                            dependentOn = @(
+                                @{
+                                    dependentOn = 'device_vendor_msft_policy_config_applicationcontrolv2_supplementalpolicy_buildoptions_{ruleid}_type_filehash'
+                                    parentSettingId = 'device_vendor_msft_policy_config_applicationcontrolv2_supplementalpolicy_buildoptions_{ruleid}_type'
+                                }
+                            )
                         }
                     )
                     SettingInstance      = @{
-                        SettingDefinitionId              = 'device_vendor_msft_policy_config_applicationcontrol_policies_{policyguid}_policiesoptions'
+                        SettingDefinitionId              = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions'
                         SettingInstanceTemplateReference = @{
-                            SettingInstanceTemplateId = '1de98212-6949-42dc-a89c-e0ff6e5da04b'
+                            SettingInstanceTemplateId = 'abc5b8cd-63a0-4a1c-a34d-da84d9a93f62'
                         }
                         '@odata.type'      = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
                         choiceSettingValue = @{
                             children = @(
                                 @{
-                                    "@odata.type" = "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance"
-                                    "settingDefinitionId" = "device_vendor_msft_policy_config_applicationcontrol_built_in_controls"
-                                    "groupSettingCollectionValue" = @(
-                                        @{
-                                            children = @(
-                                                @{
-                                                    '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingCollectionInstance'
-                                                    choiceSettingCollectionValue = @(
-                                                        @{
-                                                            children = @()
-                                                            value = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_trust_apps_0'
-                                                        }
-                                                    )
-                                                    settingDefinitionId = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_trust_apps'
-                                                }
-                                                @{
-                                                    '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                                                    settingDefinitionId = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_enable_app_control'
-                                                    choiceSettingValue = @{
-                                                        children = @()
-                                                        value = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_enable_app_control_0'
-                                                    }
-                                                }
-                                            )
-                                        }
-                                    )
+                                    '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                                    choiceSettingValue = @{
+                                        children = @()
+                                        value = 'device_vendor_msft_policy_config_applicationcontrolv2_auditmode_enabled'
+                                    }
+                                    settingDefinitionId = 'device_vendor_msft_policy_config_applicationcontrolv2_auditmode'
+                                }
+                                @{
+                                    '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                                    settingDefinitionId = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller'
+                                    choiceSettingValue = @{
+                                        children = @()
+                                        value = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller_enabled'
+                                    }
+                                }
+                                @{
+                                    '@odata.type' = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                                    settingDefinitionId = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappswithgoodreputation'
+                                    choiceSettingValue = @{
+                                        children = @()
+                                        value = 'device_vendor_msft_policy_config_applicationcontrolv2_trustappswithgoodreputation_enabled'
+                                    }
                                 }
                             )
-                            value = 'device_vendor_msft_policy_config_applicationcontrol_built_in_controls_selected'
+                            value = 'device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected'
                         }
                     }
                 }
             }
-
-            Mock -CommandName New-M365DSCConnection -MockWith {
-                return "Credentials"
-            }
-
-            # Mock Write-M365DSCHost to hide output during the tests
-            Mock -CommandName Write-M365DSCHost -MockWith {
-            }
-            $Script:exportedInstance = $null
-            $Script:ExportMode = $false
 
             Mock -CommandName Get-MgBetaDeviceManagementConfigurationPolicyAssignment -MockWith {
                 return @(@{
@@ -223,18 +301,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneAppControlForBusinessPolicyWindows10 should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = @(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
-                            DataType     = '#microsoft.graph.configurationManagerCollectionAssignmentTarget'
-                            CollectionId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
-                    )
-                    ConfigureApplicationControlEnableAppControlPolicy               = 0;
-                    ConfigureApplicationControlOptions                              = 1;
-                    ConfigureApplicationControlSelectAdditionalRulesForTrustingApps = @(1);
                     Description = "My Test Description"
                     Id = "FakeStringValue"
                     DisplayName = "My Test"
+                    ConfigureApplicationControlOptions = "1"
+                    ConfigureApplicationControlsAuditMode = "1"
+                    ConfigureApplicationControlsTrustAppsFromManagedInstaller = "1"
+                    ConfigureApplicationControlsTrustAppsWithGoodReputation = "1"
                     RoleScopeTagIds = @("FakeStringValue")
                     Ensure = "Present"
                     Credential = $Credential;
@@ -245,13 +318,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementConfigurationPolicy -Exactly 1
             }
         }
@@ -259,34 +332,29 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneAppControlForBusinessPolicyWindows10 exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = @(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
-                            DataType     = '#microsoft.graph.configurationManagerCollectionAssignmentTarget'
-                            CollectionId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
-                    )
-                    ConfigureApplicationControlEnableAppControlPolicy               = 0;
-                    ConfigureApplicationControlOptions                              = 1;
-                    ConfigureApplicationControlSelectAdditionalRulesForTrustingApps = @(1);
                     Description = "My Test Description"
                     Id = "FakeStringValue"
                     DisplayName = "My Test"
+                    ConfigureApplicationControlOptions = "1"
+                    ConfigureApplicationControlsAuditMode = "1"
+                    ConfigureApplicationControlsTrustAppsFromManagedInstaller = "1"
+                    ConfigureApplicationControlsTrustAppsWithGoodReputation = "1"
                     RoleScopeTagIds = @("FakeStringValue")
-                    Ensure = 'Absent'
+                    Ensure = "Absent"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementConfigurationPolicy -Exactly 1
             }
         }
@@ -294,60 +362,50 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneAppControlForBusinessPolicyWindows10 Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = @(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
-                            DataType     = '#microsoft.graph.configurationManagerCollectionAssignmentTarget'
-                            CollectionId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
-                    )
-                    ConfigureApplicationControlEnableAppControlPolicy               = 0;
-                    ConfigureApplicationControlOptions                              = 1;
-                    ConfigureApplicationControlSelectAdditionalRulesForTrustingApps = @(1);
                     Description = "My Test Description"
                     Id = "FakeStringValue"
                     DisplayName = "My Test"
+                    ConfigureApplicationControlOptions = "1"
+                    ConfigureApplicationControlsAuditMode = "1"
+                    ConfigureApplicationControlsTrustAppsFromManagedInstaller = "1"
+                    ConfigureApplicationControlsTrustAppsWithGoodReputation = "1"
                     RoleScopeTagIds = @("FakeStringValue")
-                    Ensure = 'Present'
+                    Ensure = "Present"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The IntuneAppControlForBusinessPolicyWindows10 exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = @(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
-                            DataType     = '#microsoft.graph.configurationManagerCollectionAssignmentTarget'
-                            CollectionId = '26d60dd1-fab6-47bf-8656-358194c1a49d'
-                        } -ClientOnly)
-                    )
-                    ConfigureApplicationControlEnableAppControlPolicy               = 1; # Drift
-                    ConfigureApplicationControlOptions                              = 1;
-                    ConfigureApplicationControlSelectAdditionalRulesForTrustingApps = @(1);
                     Description = "My Test Description"
                     Id = "FakeStringValue"
                     DisplayName = "My Test"
+                    ConfigureApplicationControlOptions = "1"
+                    ConfigureApplicationControlsAuditMode = "1"
+                    ConfigureApplicationControlsTrustAppsFromManagedInstaller = "1"
+                    ConfigureApplicationControlsTrustAppsWithGoodReputation = "0" # Drift
                     RoleScopeTagIds = @("FakeStringValue")
-                    Ensure = 'Present'
+                    Ensure = "Present"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-IntuneDeviceConfigurationPolicy -Exactly 1
             }
         }
@@ -362,7 +420,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneAppControlForBusinessPolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

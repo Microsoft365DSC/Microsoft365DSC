@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,31 +19,41 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWifiConfigurationPolicyIOS 'myWifiConfigIOSPolicy'
+        IntuneWifiConfigurationPolicyIOS 'IntuneWifiConfigurationPolicyIOS-Example'
         {
             DisplayName                    = 'ios wifi'
+            Description                    = 'Corporate Wi-Fi for company-owned iPhones and iPads'
             Assignments                    = @(
-                MSFT_DeviceManagementConfigurationPolicyAssignments {
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
                     dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
                 }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
+                }
             )
-            ConnectAutomatically           = $True
-            ConnectWhenNetworkNameIsHidden = $True
-            DisableMacAddressRandomization = $True
-            NetworkName                    = 'Updated Network' # Updated Property
-            ProxyAutomaticConfigurationUrl = 'THSCP.local'
-            ProxySettings                  = 'automatic'
-            Ssid                           = 'aaaaa'
+            ConnectAutomatically           = $true
+            ConnectWhenNetworkNameIsHidden = $true
+            DisableMacAddressRandomization = $true
+            ForcePreSharedKeyUpdate        = $false
+            NetworkName                    = 'Head Office Wi-Fi - 5 GHz' # Updated Property
+            PreSharedKey                   = '<wifi-pre-shared-key>'
+            ProxyManualAddress             = 'proxy.contoso.com'
+            ProxyManualPort                = 8080
+            ProxySettings                  = 'manual'
+            RoleScopeTagIds                = @('0')
+            Ssid                           = 'Contoso-Mobile'
             WiFiSecurityType               = 'wpaPersonal'
             Ensure                         = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                  = $ApplicationId;
+            TenantId                       = $TenantId;
+            CertificateThumbprint          = $CertificateThumbprint;
         }
     }
 }

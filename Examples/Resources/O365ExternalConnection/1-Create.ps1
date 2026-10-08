@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,19 +19,34 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        O365ExternalConnection "O365ExternalConnection-Contoso HR"
+        O365ExternalConnection "O365ExternalConnection-Example"
         {
-            ApplicationId         = $ApplicationId;
-            AuthorizedAppIds      = @("MyApp");
-            CertificateThumbprint = $CertificateThumbprint;
-            Description           = "Connection to index Contoso HR system";
+            ActivitySettings      = MSFT_MicrosoftGraphActivitySettings{
+                UrlToItemResolvers = @(
+                    MSFT_MicrosoftGraphUrlToItemResolverBase{
+                        ItemId       = "{employeeId}"
+                        Priority     = 1
+                        UrlMatchInfo = MSFT_MicrosoftGraphUrlMatchInfo{
+                            BaseUrls   = @("https://hr.contoso.com")
+                            UrlPattern = "/employees/(?<employeeId>[0-9]+)"
+                        }
+                    }
+                )
+            };
+            AuthorizedAppIds      = @("Contoso HR Connector");
+            ContentCategory       = "knowledgeBase";
+            Description           = "Indexes employee handbooks and policies from the Contoso HR system";
             Ensure                = "Present";
             Id                    = "contosohr";
-            Name                  = "Contoso HR Nik";
+            Name                  = "Contoso HR";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,30 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        AADCrossTenantAccessPolicyConfigurationDefault "AADCrossTenantAccessPolicyConfigurationDefault"
+        AADCrossTenantAccessPolicyConfigurationDefault "AADCrossTenantAccessPolicyConfigurationDefault-Example"
         {
-            B2BCollaborationInbound  = MSFT_AADCrossTenantAccessPolicyB2BSetting {
+            AppServiceConnectInbound           = MSFT_AADCrossTenantAccessPolicyAppServiceConnectSetting {
                 Applications = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
+                    AccessType = 'blocked'
+                    Targets    = @(
+                        MSFT_AADCrossTenantAccessPolicyTarget{
+                            Target     = 'AllApplications'
+                            TargetType = 'application'
+                        }
+                    )
+                }
+            }
+            AutomaticUserConsentSettings       = MSFT_AADCrossTenantAccessPolicyAutomaticUserConsentSettings {
+                InboundAllowed  = $True
+                OutboundAllowed = $True
+            }
+            B2BCollaborationInbound            = MSFT_AADCrossTenantAccessPolicyB2BSetting {
+                Applications   = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
                     AccessType = 'allowed'
                     Targets    = @(
                         MSFT_AADCrossTenantAccessPolicyTarget{
@@ -44,8 +61,8 @@ Configuration Example
                     )
                 }
             }
-            B2BCollaborationOutbound = MSFT_AADCrossTenantAccessPolicyB2BSetting {
-                Applications = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
+            B2BCollaborationOutbound           = MSFT_AADCrossTenantAccessPolicyB2BSetting {
+                Applications   = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
                     AccessType = 'allowed'
                     Targets    = @(
                         MSFT_AADCrossTenantAccessPolicyTarget{
@@ -64,8 +81,8 @@ Configuration Example
                     )
                 }
             }
-            B2BDirectConnectInbound  = MSFT_AADCrossTenantAccessPolicyB2BSetting {
-                Applications = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
+            B2BDirectConnectInbound            = MSFT_AADCrossTenantAccessPolicyB2BSetting {
+                Applications   = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
                     AccessType = 'blocked'
                     Targets    = @(
                         MSFT_AADCrossTenantAccessPolicyTarget{
@@ -84,8 +101,8 @@ Configuration Example
                     )
                 }
             }
-            B2BDirectConnectOutbound = MSFT_AADCrossTenantAccessPolicyB2BSetting {
-                Applications = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
+            B2BDirectConnectOutbound           = MSFT_AADCrossTenantAccessPolicyB2BSetting {
+                Applications   = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
                     AccessType = 'blocked'
                     Targets    = @(
                         MSFT_AADCrossTenantAccessPolicyTarget{
@@ -104,16 +121,39 @@ Configuration Example
                     )
                 }
             }
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            Ensure                   = "Present";
-            InboundTrust             = MSFT_AADCrossTenantAccessPolicyInboundTrust {
+            BlockServiceProviderOutboundAccess = $False;
+            Ensure                             = "Present";
+            InboundTrust                       = MSFT_AADCrossTenantAccessPolicyInboundTrust {
                 IsCompliantDeviceAccepted           = $False
                 IsHybridAzureADJoinedDeviceAccepted = $False
                 IsMfaAccepted                       = $False
             }
-            IsSingleInstance                        = "Yes";
+            IsSingleInstance                   = "Yes";
+            M365CollaborationInbound           = MSFT_AADCrossTenantAccessPolicyM365CollaborationInboundSetting {
+                Users = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
+                    AccessType = 'allowed'
+                    Targets    = @(
+                        MSFT_AADCrossTenantAccessPolicyTarget{
+                            Target     = 'AllUsers'
+                            TargetType = 'user'
+                        }
+                    )
+                }
+            }
+            M365CollaborationOutbound          = MSFT_AADCrossTenantAccessPolicyM365CollaborationOutboundSetting {
+                UsersAndGroups = MSFT_AADCrossTenantAccessPolicyTargetConfiguration{
+                    AccessType = 'allowed'
+                    Targets    = @(
+                        MSFT_AADCrossTenantAccessPolicyTarget{
+                            Target     = 'AllUsers'
+                            TargetType = 'user'
+                        }
+                    )
+                }
+            }
+            ApplicationId                      = $ApplicationId
+            TenantId                           = $TenantId
+            CertificateThumbprint              = $CertificateThumbprint
         }
     }
 }

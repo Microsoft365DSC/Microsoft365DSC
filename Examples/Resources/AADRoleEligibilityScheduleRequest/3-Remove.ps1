@@ -7,32 +7,32 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADRoleEligibilityScheduleRequest "MyRequest"
+        AADRoleEligibilityScheduleRequest "AADRoleEligibilityScheduleRequest-Example"
         {
+            DirectoryScopeId      = "/";
+            Ensure                = "Absent";
+            Principal             = "AdeleV@$TenantId";
+            RoleDefinition        = "Teams Communications Administrator";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            DirectoryScopeId     = "/";
-            Ensure               = "Absent";
-            Principal            = "AdeleV@$TenantId";
-            RoleDefinition       = "Teams Communications Administrator";
-            ScheduleInfo         = MSFT_AADRoleEligibilityScheduleRequestSchedule {
-                startDateTime             = '2023-09-01T02:40:44Z'
-                expiration                = MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration
-                    {
-                        endDateTime = '2025-10-31T02:40:09Z'
-                        type        = 'afterDateTime'
-                    }
-            };
         }
     }
 }

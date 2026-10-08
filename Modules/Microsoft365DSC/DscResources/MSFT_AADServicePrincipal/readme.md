@@ -10,3 +10,5 @@ This resource configures an Azure Active Directory ServicePrincipal.
 - A unique identifier that is not the name of the service principal or it's AppId
 
 The unique identifier is used to configure `IdentifierUris` on the App Registration object.
+
+**Please note:** `TokenEncryptionKeyId` names the `keyId` of an entry in the `KeyCredentials` collection of the service principal. This resource does not write key credentials. The certificate must already be present on the service principal before a configuration can reference it.

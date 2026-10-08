@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOFocusedInbox "EXOFocusedInbox-Test"
+        EXOFocusedInbox "EXOFocusedInbox-Example"
         {
-            Ensure                       = "Present";
-            FocusedInboxOn               = $False; # Updated Property
-            Identity                     = "admin@$TenantId";
-            ApplicationId                = $ApplicationId;
-            TenantId                     = $TenantId;
-            CertificateThumbprint        = $CertificateThumbprint;
+            Ensure                = "Present";
+            FocusedInboxOn        = $False; # Updated Property
+            Identity              = "MeganB@$TenantId";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
 
     }

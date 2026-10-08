@@ -1,485 +1,305 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SPOApp'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SPOApp : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The name of the App.')]
+    [System.String] $Identity
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Path,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The path the the app package on disk.')]
+    [System.String] $Path
 
-        [Parameter()]
-        [System.Boolean]
-        $Publish = $true,
+    [DscProperty()]
+    [System.ComponentModel.Description('This will deploy/trust an app into the app catalog.')]
+    [System.Nullable[System.Boolean]] $Publish
 
-        [Parameter()]
-        [System.Boolean]
-        $Overwrite = $true,
+    [DscProperty()]
+    [System.ComponentModel.Description('Overwrites the existing app package if it already exists.')]
+    [System.Nullable[System.Boolean]] $Overwrite
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the site collection exists, absent ensures it is removed')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the account to authenticate with.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for app $Identity"
-
-    try
+    [SPOApp] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Title -ne $Identity)
+        $nullReturn = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'PnP' `
-                -InboundParameters $PSBoundParameters
+            $remote = [SPOApp]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
+
+        Write-Verbose -Message "Getting configuration for app $($this.Identity)"
+
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Title -ne $this.Identity)
+            {
+                $null = $this.Connect('PnP')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $app = Get-PnPApp -Identity $this.Identity -ErrorAction SilentlyContinue
+            }
+            else
+            {
+                $app = $this.ExportedInstance
+            }
+
+            if ($null -eq $app)
+            {
+                Write-Verbose -Message "The specified app wasn't found."
+                return $this.AsResult($nullReturn)
+            }
+
+            return $this.AsResult(@{
+                Identity              = $app.Title
+                Path                  = $this.Path
+                Publish               = $app.Deployed
+                Overwrite             = $this.Overwrite
+                Ensure                = 'Present'
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                Credential            = $this.Credential
+                AccessTokens          = $this.AccessTokens
+            })
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for app $($this.Identity)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentApp = $this.Get().ToHashtable()
+
+        if ($this.Ensure -eq 'Present' -and $currentApp.Ensure -eq 'Present' -and $this.Overwrite -eq $false)
+        {
+            throw "The app already exists in the Catalog. To overwrite it, please make sure you set the Overwrite property to 'true'."
+        }
+        elseif ($this.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Adding app instance $($this.Identity)"
+            Add-PnPApp -Path $this.Path -Overwrite:$true -Force
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentApp.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing app instance $($this.Identity)"
+            Remove-PnPApp -Identity $this.Identity -Force
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        $dscContent = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        try
+        {
+            $ConnectionMode = $this.Connect('PnP')
 
             #Ensure the proper dependencies are installed in the current environment.
             Confirm-M365DSCDependencies
 
             #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
+            $this.AddTelemetry('Export')
             #endregion
 
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
+            $tenantAppCatalogUrl = Get-PnPTenantAppCatalogUrl -ErrorAction Stop
 
-            $app = Get-PnPApp -Identity $Identity -ErrorAction SilentlyContinue
-        }
-        else
-        {
-            $app = $Script:exportedInstance
-        }
-
-        if ($null -eq $app)
-        {
-            Write-Verbose -Message "The specified app wasn't found."
-            return $nullReturn
-        }
-
-        return @{
-            Identity              = $app.Title
-            Path                  = $Path
-            Publish               = $app.Deployed
-            Overwrite             = $Overwrite
-            Ensure                = 'Present'
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            Credential            = $Credential
-            AccessTokens          = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Path,
-
-        [Parameter()]
-        [System.Boolean]
-        $Publish = $true,
-
-        [Parameter()]
-        [System.Boolean]
-        $Overwrite = $true,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for app $Identity"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentApp = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentApp.Ensure -eq 'Present' -and $Overwrite -eq $false)
-    {
-        throw "The app already exists in the Catalog. To overwrite it, please make sure you set the Overwrite property to 'true'."
-    }
-    elseif ($Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Adding app instance $Identity"
-        Add-PnPApp -Path $Path -Overwrite:$true
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentApp.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing app instance $Identity"
-        Remove-PnPApp -Identity $Identity
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Path,
-
-        [Parameter()]
-        [System.Boolean]
-        $Publish = $true,
-
-        [Parameter()]
-        [System.Boolean]
-        $Overwrite = $true,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    try
-    {
-        $ConnectionMode = New-M365DSCConnection -Workload 'PnP' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $tenantAppCatalogUrl = Get-PnPTenantAppCatalogUrl -ErrorAction Stop
-
-        if (-not [string]::IsNullOrEmpty($tenantAppCatalogUrl))
-        {
-            $ConnectionMode = New-M365DSCConnection -Workload 'PnP' `
-                -InboundParameters $PSBoundParameters `
-                -Url $tenantAppCatalogUrl
-
-            if ($ConnectionMode -eq 'Credentials')
+            if (-not [string]::IsNullOrEmpty($tenantAppCatalogUrl))
             {
-                [array]$filesToDownload = Get-AllSPOPackages -Credential $Credential
-            }
-            else
-            {
-                # mlh
-                [array]$filesToDownload = Get-AllSPOPackages -ApplicationId $ApplicationId -CertificateThumbprint $CertificateThumbprint `
-                    -CertificatePassword $CertificatePassword -TenantId $TenantId -CertificatePath $CertificatePath -ManagedIdentity:$ManagedIdentity.IsPresent
-            }
-            $tenantAppCatalogPath = $tenantAppCatalogUrl.Replace('https://', '')
-            $tenantAppCatalogPath = $tenantAppCatalogPath.Replace($tenantAppCatalogPath.Split('/')[0], '')
+                $ConnectionMode = $this.Connect('PnP', $tenantAppCatalogUrl)
 
-            $dscContent = [System.Text.StringBuilder]::new()
-            $i = 1
-
-            if ($filesToDownload.Count -eq 0)
-            {
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            }
-            else
-            {
-                Write-M365DSCHost -Message "`r`n" -DeferWrite
-            }
-            foreach ($file in $filesToDownload)
-            {
-                Write-M365DSCHost -Message "    |---[$i/$($filesToDownload.Count)] $($file.Name)" -DeferWrite
-
-                $identity = $file.Name.ToLower().Replace('.app', '').Replace('.sppkg', '')
-                $app = Get-PnPApp -Identity $identity -ErrorAction SilentlyContinue
-
-                if ($null -eq $app)
+                if ($ConnectionMode -eq 'Credentials')
                 {
-                    $identity = $file.Title
-                    $app = Get-PnPApp -Identity $file.Title -ErrorAction SilentlyContinue
+                    [array]$filesToDownload = Get-AllSPOPackages -Credential $this.Credential
                 }
-                if ($null -ne $app)
+                else
                 {
-                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                    # mlh
+                    [array]$filesToDownload = Get-AllSPOPackages -ApplicationId $this.ApplicationId -CertificateThumbprint $this.CertificateThumbprint `
+                        -CertificatePassword $this.CertificatePassword -TenantId $this.TenantId -CertificatePath $this.CertificatePath -ManagedIdentity:$this.ManagedIdentity
+                }
+                $tenantAppCatalogPath = $tenantAppCatalogUrl.Replace('https://', '')
+                $tenantAppCatalogPath = $tenantAppCatalogPath.Replace($tenantAppCatalogPath.Split('/')[0], '')
+
+                $dscContent = [System.Text.StringBuilder]::new()
+                $i = 1
+
+                if ($filesToDownload.Count -eq 0)
+                {
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                }
+                else
+                {
+                    Write-M365DSCHost -Message "`r`n" -DeferWrite
+                }
+                foreach ($file in $filesToDownload)
+                {
+                    Write-M365DSCHost -Message "    |---[$i/$($filesToDownload.Count)] $($file.Name)" -DeferWrite
+
+                    $identityValue = $file.Name.ToLower().Replace('.app', '').Replace('.sppkg', '')
+                    $app = Get-PnPApp -Identity $identityValue -ErrorAction SilentlyContinue
+
+                    if ($null -eq $app)
                     {
-                        $Global:M365DSCExportResourceInstancesCount++
+                        $identityValue = $file.Title
+                        $app = Get-PnPApp -Identity $file.Title -ErrorAction SilentlyContinue
                     }
+                    if ($null -ne $app)
+                    {
+                        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                        {
+                            $Global:M365DSCExportResourceInstancesCount++
+                        }
 
-                    $Params = @{
-                        Identity              = $identity
-                        Path                  = ("`$PSScriptRoot\" + $file.Name)
-                        ApplicationId         = $ApplicationId
-                        TenantId              = $TenantId
-                        ApplicationSecret     = $ApplicationSecret
-                        CertificatePassword   = $CertificatePassword
-                        CertificatePath       = $CertificatePath
-                        CertificateThumbprint = $CertificateThumbprint
-                        ManagedIdentity       = $ManagedIdentity.IsPresent
-                        Credential            = $Credential
-                        AccessTokens          = $AccessTokens
+                        $Params = @{
+                            Identity              = $identityValue
+                            Path                  = ("`$PSScriptRoot\" + $file.Name)
+                            ApplicationId         = $this.ApplicationId
+                            TenantId              = $this.TenantId
+                            ApplicationSecret     = $this.ApplicationSecret
+                            CertificatePassword   = $this.CertificatePassword
+                            CertificatePath       = $this.CertificatePath
+                            CertificateThumbprint = $this.CertificateThumbprint
+                            ManagedIdentity       = $this.ManagedIdentity
+                            Credential            = $this.Credential
+                            AccessTokens          = $this.AccessTokens
+                        }
+
+                        $this.ExportedInstance = $app
+                        $Results = $this.GetForExport($Params)
+                        $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                            -ConnectionMode $ConnectionMode `
+                            -ModulePath $this.GetModulePath() `
+                            -Results $Results `
+                            -Credential $this.Credential
+                        [void]$dscContent.Append($currentDSCBlock)
+                        Save-M365DSCPartialExport -Content $currentDSCBlock `
+                            -FileName $Global:PartialExportFileName
                     }
-
-                    $Script:exportedInstance = $app
-                    $Results = Get-TargetResource @Params
-                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                        -ConnectionMode $ConnectionMode `
-                        -ModulePath $PSScriptRoot `
-                        -Results $Results `
-                        -Credential $Credential
-                    [void]$dscContent.Append($currentDSCBlock)
-                    Save-M365DSCPartialExport -Content $currentDSCBlock `
-                        -FileName $Global:PartialExportFileName
+                    $i++
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 }
-                $i++
+
+                foreach ($file in $filesToDownload)
+                {
+                    $appInstanceUrl = $tenantAppCatalogPath + '/AppCatalog/' + $file.Name
+                    $appFileName = $appInstanceUrl.Split('/')[$appInstanceUrl.Split('/').Length - 1]
+                    Get-PnPFile -Url $appInstanceUrl -Path $env:TEMP -Filename $appFileName -AsFile -Force | Out-Null
+                }
+            }
+            else
+            {
+                Write-Verbose -Message '    * App Catalog is not configured on tenant. Cannot extract information about SharePoint apps.'
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-
-            foreach ($file in $filesToDownload)
-            {
-                $appInstanceUrl = $tenantAppCatalogPath + '/AppCatalog/' + $file.Name
-                $appFileName = $appInstanceUrl.Split('/')[$appInstanceUrl.Split('/').Length - 1]
-                Get-PnPFile -Url $appInstanceUrl -Path $env:TEMP -Filename $appFileName -AsFile -Force | Out-Null
-            }
+            return $dscContent.ToString()
         }
-        else
+        catch
         {
-            Write-Verbose -Message '    * App Catalog is not configured on tenant. Cannot extract information about SharePoint apps.'
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            $this.LogError($_, 'Error during Export:')
+
+            throw
         }
-        return $dscContent.ToString()
     }
-    catch
+
+    [System.Collections.Hashtable] GetCompareParameters()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        return @{
+            ExcludedProperties = @('Path', 'Publish', 'Overwrite')
+        }
+    }
 
-        throw
+    hidden [SPOApp] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SPOApp])
+        {
+            return $Values
+        }
+
+        $result = [SPOApp]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('Path', 'Publish', 'Overwrite')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

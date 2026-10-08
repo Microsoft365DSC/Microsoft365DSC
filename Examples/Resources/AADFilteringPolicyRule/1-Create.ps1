@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,38 +19,25 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADFilteringPolicyRule "AADFilteringPolicyRule-FQDN"
+        AADFilteringPolicyRule "AADFilteringPolicyRule-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
             Destinations          = @(
                 MSFT_AADFilteringPolicyRuleDestination{
-                    value = 'Microsoft365DSC.com'
+                    value = 'fabrikam.com'
                 }
             );
             Ensure                = "Present";
             Name                  = "MyFQDN";
             Policy                = "MyPolicy";
             RuleType              = "fqdn";
-            TenantId              = $TenantId;
-        }
-        AADFilteringPolicyRule "AADFilteringPolicyRule-Web"
-        {
             ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            Destinations          = @(
-                MSFT_AADFilteringPolicyRuleDestination{
-                    name = 'ChildAbuseImages'
-                }
-            );
-            Ensure                = "Present";
-            Name                  = "MyWebContentRule";
-            Policy                = "MyPolicy";
-            RuleType              = "webCategory";
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWifiConfigurationPolicyWindows10 'myWifiConfigWindows10Policy'
+        IntuneWifiConfigurationPolicyWindows10 'IntuneWifiConfigurationPolicyWindows10-Example'
         {
-            DisplayName                    = 'win10 wifi - revised'
-            Ensure                         = 'Absent'
+            DisplayName           = 'win10 wifi - revised'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

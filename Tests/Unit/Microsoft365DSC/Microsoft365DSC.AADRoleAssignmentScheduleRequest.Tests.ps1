@@ -23,16 +23,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
             $Global:CurrentModeIsExport = $false
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
             $Script:exportedInstances = $null
             $Script:ExportMode = $null
-            Mock -CommandName Add-M365DSCTelemetryEvent -MockWith {
+            Mock -CommandName Add-M365DSCTelemetryEvent -ModuleName '_Shared' -MockWith {
             }
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -95,13 +95,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Principal            = "John.Smith@contoso.com";
                     PrincipalType        = "User"
                     RoleDefinition       = "Teams Communications Administrator";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
                         startDateTime   = '2023-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
                             endDateTime = '2025-10-31T02:40:09Z'
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     Credential  = $Credential
                 }
 
@@ -110,13 +110,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -Exactly 1
             }
         }
@@ -126,30 +126,29 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     DirectoryScopeId     = "/";
                     Ensure               = "Absent";
-                    PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Teams Communications Administrator";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
                         startDateTime   = '2023-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
                             endDateTime = '2025-10-31T02:40:09Z'
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     Credential  = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -Exactly 1
             }
         }
@@ -161,22 +160,39 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Teams Communications Administrator";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestSchedule -Property @{
-                        startDateTime   = '2023-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration -Property @{
-                            type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                    ScheduleInfo         = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
+                        expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
+                            duration    = 'P180D'
+                            type        = 'afterDuration'
+                        }
+                    }
                     Credential  = $Credential
+                }
+
+                Mock -CommandName Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -MockWith {
+                    $start = [System.DateTime]::new(2026, 1, 1, 8, 0, 0, [System.DateTimeKind]::Utc)
+                    return @{
+                        Id               = '12345-12345-12345-12345-12345'
+                        DirectoryScopeId = '/'
+                        PrincipalId      = '123456'
+                        RoleDefinitionId = '12345'
+                        ScheduleInfo     = @{
+                            startDateTime = $start
+                            expiration    = @{
+                                endDateTime = $start.AddDays(180)
+                                type        = 'afterDateTime'
+                            }
+                        }
+                    }
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Test() | Should -Be $true
             }
         }
         Context -Name 'The instance Exists and specified Values are NOT in the desired state' -Fixture {
@@ -187,27 +203,27 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Teams Communications Administrator";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
                         startDateTime   = '2025-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
                             endDateTime = (Get-Date).AddYears(1).ToString("yyyy-MM-ddTHH:mm:ssZ") # Drift
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     Credential  = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set to Update the instance' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -Exactly 1
             }
         }
@@ -221,7 +237,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADRoleAssignmentScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOMailboxPermission "TestPermission"
+        EXOMailboxPermission "EXOMailboxPermission-Example"
         {
-            AccessRights         = @("FullAccess","ReadPermission");
-            Deny                 = $True; # Updated Property
-            Ensure               = "Present";
-            Identity             = "AlexW@$TenantId";
-            InheritanceType      = "All";
-            User                 = "NT AUTHORITY\SELF";
+            AccessRights          = @("FullAccess","ReadPermission");
+            Deny                  = $True; # Updated Property
+            Ensure                = "Present";
+            Identity              = "AlexW@$TenantId";
+            InheritanceType       = "All";
+            User                  = "NT AUTHORITY\SELF";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

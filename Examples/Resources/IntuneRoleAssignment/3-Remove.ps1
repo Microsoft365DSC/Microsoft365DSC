@@ -4,7 +4,8 @@ This example creates a new Intune Role Assigment.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,14 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        IntuneRoleAssignment 'IntuneRoleAssignment'
+        IntuneRoleAssignment 'IntuneRoleAssignment-Example'
         {
-            DisplayName                = 'test2'
-            Ensure                     = 'Absent'
+            DisplayName           = 'Amsterdam Helpdesk Operators'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

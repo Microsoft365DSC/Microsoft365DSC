@@ -18,8 +18,8 @@ Get-DscResourceSchemaPropertyContent is used to generate the parameter content
 for the wiki page.
 
 .Parameter Property
-A hash table with properties that is returned by Get-MofSchemaObject in
-the property Attributes.
+The parameter definitions of a class, as returned in the Parameters property of
+an entry in SchemaDefinition.json.
 
 .Parameter UseMarkdown
 If certain text should be output as markdown, for example values of the
@@ -27,14 +27,12 @@ hashtable property ValueMap.
 
 .Example
 $content = Get-DscResourceSchemaPropertyContent -Property @(
-        @{
-            Name             = 'StringProperty'
-            DataType         = 'String'
-            IsArray          = $false
-            State            = 'Key'
-            Description      = 'Any description'
-            EmbeddedInstance = $null
-            ValueMap         = $null
+        [PSCustomObject] @{
+            Name        = 'StringProperty'
+            CIMType     = 'String'
+            Option      = 'Key'
+            Description = 'Any description'
+            ValueMap    = $null
         }
     )
 
@@ -50,7 +48,7 @@ function Get-DscResourceSchemaPropertyContent
     param
     (
         [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable[]]
+        [System.Object[]]
         $Property,
 
         [Parameter()]
@@ -65,27 +63,10 @@ function Get-DscResourceSchemaPropertyContent
 
     foreach ($currentProperty in $Property)
     {
-        if ($currentProperty.EmbeddedInstance -eq 'MSFT_Credential')
-        {
-            $dataType = 'PSCredential'
-        }
-        elseif (-not [System.String]::IsNullOrEmpty($currentProperty.EmbeddedInstance))
-        {
-            $dataType = $currentProperty.EmbeddedInstance
-        }
-        else
-        {
-            $dataType = $currentProperty.DataType
-        }
-
-        # If the attribute is an array, add [] to the DataType string.
-        if ($currentProperty.IsArray)
-        {
-            $dataType = $dataType.ToString() + '[]'
-        }
+        $dataType = $currentProperty.CIMType -replace 'MSFT_Credential', 'PSCredential'
 
         $propertyLine = "| **$($currentProperty.Name)** " + `
-            "| $($currentProperty.State) " + `
+            "| $($currentProperty.Option) " + `
             "| $dataType |"
 
         if (-not [System.String]::IsNullOrEmpty($currentProperty.Description))
@@ -267,23 +248,22 @@ function Get-DscResourceWikiExampleContent
 
 <#
 .Description
-The Get-MofSchemaObject method is used to read the text content of the
-.schema.mof file that all MOF based DSC resources have. The object that
-is returned contains all of the data in the schema so it can be processed
-in other scripts.
+Get-M365DSCSchemaDefinition reads SchemaDefinition.json and returns a hashtable
+that maps the name of every resource and complex type to its schema entry.
 
-.Parameter FileName
-The full path to the .schema.mof file to process.
+.Parameter SourcePath
+The path to the root of the DSC resource module, where SchemaDefinition.json is
+located.
 
 .Example
-$mof = Get-MofSchemaObject -FileName C:\repos\SharePointDsc\DSCRescoures\MSFT_SPSite\MSFT_SPSite.schema.mof
+$schema = Get-M365DSCSchemaDefinition -SourcePath C:\repos\Microsoft365DSC\Modules\Microsoft365DSC
 
-This example parses a MOF schema file.
+This example reads the schema of every class in the module.
 
 .Functionality
 Internal,Hidden
 #>
-function Get-MofSchemaObject
+function Get-M365DSCSchemaDefinition
 {
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
@@ -291,104 +271,117 @@ function Get-MofSchemaObject
     (
         [Parameter(Mandatory = $true)]
         [System.String]
-        $FileName
+        $SourcePath
     )
 
-    $temporaryPath = $env:TEMP
+    $schemaPath = Join-Path -Path $SourcePath -ChildPath 'SchemaDefinition.json'
 
-    #region Workaround for OMI_BaseResource inheritance not resolving.
-
-    $filePath = (Resolve-Path -Path $FileName).Path
-    $tempFilePath = Join-Path -Path $temporaryPath -ChildPath "DscMofHelper_$((New-Guid).Guid).tmp"
-    $rawContent = (Get-Content -Path $filePath -Raw) -replace '\s*:\s*OMI_BaseResource'
-
-    Set-Content -LiteralPath $tempFilePath -Value $rawContent -ErrorAction 'Stop'
-
-    # .NET methods don't like PowerShell drives
-    $tempFilePath = Convert-Path -Path $tempFilePath
-
-    #endregion
-
-    try
+    if ((Test-Path -Path $schemaPath) -eq $false)
     {
-        $exceptionCollection = [System.Collections.ObjectModel.Collection[System.Exception]]::new()
-        $moduleInfo = [System.Tuple]::Create('Module', [System.Version] '1.0.0')
-
-        $class = [Microsoft.PowerShell.DesiredStateConfiguration.Internal.DscClassCache]::ImportClasses(
-            $tempFilePath, $moduleInfo, $exceptionCollection
-        )
-    }
-    catch
-    {
-        throw "Failed to import classes from file $FileName. Error $_"
-    }
-    finally
-    {
-        Remove-Item -LiteralPath $tempFilePath -Force
+        throw "Schema definition '$schemaPath' not found. Build the module before generating the documentation."
     }
 
-    foreach ($currentCimClass in $class)
+    $schema = @{}
+
+    foreach ($class in (Get-Content -Path $schemaPath -Raw | ConvertFrom-Json))
     {
-        $attributes = foreach ($property in $currentCimClass.CimClassProperties)
-        {
-            $state = switch ($property.flags)
-            {
-                { $_ -band [Microsoft.Management.Infrastructure.CimFlags]::Key }
-                {
-                    'Key'
-                }
-                { $_ -band [Microsoft.Management.Infrastructure.CimFlags]::Required }
-                {
-                    'Required'
-                }
-                { $_ -band [Microsoft.Management.Infrastructure.CimFlags]::ReadOnly }
-                {
-                    'Read'
-                }
-                default
-                {
-                    'Write'
-                }
-            }
-
-            @{
-                Name             = $property.Name
-                State            = $state
-                DataType         = $property.CimType
-                ValueMap         = $property.Qualifiers.Where( { $_.Name -eq 'ValueMap' }).Value
-                IsArray          = $property.CimType -gt 16
-                Description      = $property.Qualifiers.Where( { $_.Name -eq 'Description' }).Value
-                EmbeddedInstance = $property.Qualifiers.Where( { $_.Name -eq 'EmbeddedInstance' }).Value
-            }
-        }
-
-        @{
-            ClassName    = $currentCimClass.CimClassName
-            Attributes   = $attributes
-            ClassVersion = $currentCimClass.CimClassQualifiers.Where( { $_.Name -eq 'ClassVersion' }).Value
-            FriendlyName = $currentCimClass.CimClassQualifiers.Where( { $_.Name -eq 'FriendlyName' }).Value
-        }
+        $schema[$class.ClassName] = $class
     }
+
+    return $schema
 }
 
 <#
-.Description
-Get-ResourceExampleAsMarkdown gathers all examples for a resource and returns
-them as string build object in markdown format.
+.DESCRIPTION
+    Get-DscResourceEmbeddedClass returns the schema of every complex type a class
+    embeds, including the ones that are only reachable through another complex type.
 
-.Parameter Path
-The path to the source folder, the path will be recursively searched for *.ps1
-files. All found files will be assumed that they are examples and that
-documentation should be generated for them.
+.PARAMETER ClassName
+    The name of the class whose embedded complex types should be returned.
 
-.Example
-$examplesMarkdown = Get-ResourceExampleAsMarkdown -Path 'c:\MyProject\source\Examples\Resources\MyResourceName'
+.PARAMETER Schema
+    The hashtable of class schemas returned by Get-M365DSCSchemaDefinition.
 
-This example fetches all examples from the folder 'c:\MyProject\source\Examples\Resources\MyResourceName'
-and returns them as a single string in markdown format.
+.EXAMPLE
+    PS> $embeddedClasses = Get-DscResourceEmbeddedClass -ClassName 'MSFT_AADGroup' -Schema $schema
 
-.Functionality
-Internal,Hidden
+This example returns the complex types embedded in the AADGroup resource.
+
+.FUNCTIONALITY
+    Internal,Hidden
+#>
+function Get-DscResourceEmbeddedClass
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ClassName,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Schema
+    )
+
+    $embeddedClasses = [System.Collections.Generic.List[Object]]::new()
+    $visited = [System.Collections.Generic.HashSet[String]]::new()
+    $pending = [System.Collections.Generic.Queue[String]]::new()
+
+    $null = $visited.Add($ClassName)
+    $pending.Enqueue($ClassName)
+
+    while ($pending.Count -gt 0)
+    {
+        $currentClassName = $pending.Dequeue()
+
+        foreach ($parameter in $Schema[$currentClassName].Parameters)
+        {
+            $embeddedName = $parameter.CIMType -replace '\[\]$'
+
+            if ($embeddedName -notlike 'MSFT_*' -or $embeddedName -eq 'MSFT_Credential')
+            {
+                continue
+            }
+
+            if ($visited.Add($embeddedName) -eq $false)
+            {
+                continue
+            }
+
+            if ($Schema.ContainsKey($embeddedName) -eq $false)
+            {
+                Write-Warning -Message ("Complex type '{0}' of class '{1}' is missing from the schema definition." -f $embeddedName, $currentClassName)
+                continue
+            }
+
+            $embeddedClasses.Add($Schema[$embeddedName])
+            $pending.Enqueue($embeddedName)
+        }
+    }
+
+    return $embeddedClasses.ToArray()
+}
+
+<#
+.DESCRIPTION
+    Get-ResourceExampleAsMarkdown gathers all examples for a resource and returns
+    them as string build object in markdown format.
+
+.PARAMETER Path
+    The path to the source folder, the path will be recursively searched for *.ps1
+    files. All found files will be assumed that they are examples and that
+    documentation should be generated for them.
+
+.EXAMPLE
+    PS> $examplesMarkdown = Get-ResourceExampleAsMarkdown -Path 'c:\MyProject\source\Examples\Resources\MyResourceName'
+
+    This example fetches all examples from the folder 'c:\MyProject\source\Examples\Resources\MyResourceName'
+    and returns them as a single string in markdown format.
+
+.FUNCTIONALITY
+    Internal,Hidden
 #>
 function Get-ResourceExampleAsMarkdown
 {
@@ -434,33 +427,33 @@ function Get-ResourceExampleAsMarkdown
 }
 
 <#
-.Description
-The New-DscMofResourceWikiPage cmdlet will review all of the MOF-based and
-in a specified module directory and will output the Markdown files to the
-specified directory. These help files include details on the property types
-for each resource, as well as a text description and examples where they exist.
+.DESCRIPTION
+    The New-DscClassResourceWikiPage cmdlet will review all of the class-based
+    resources in a specified module directory and will output the Markdown files to
+    the specified directory. These help files include details on the property types
+    for each resource, as well as a text description and examples where they exist.
 
-.Parameter OutputPath
-Where should the files be saved to.
+.PARAMETER OutputPath
+    Where should the files be saved to.
 
-.Parameter SourcePath
-The path to the root of the DSC resource module (where the PSD1 file is found,
-not the folder for and individual DSC resource).
+.PARAMETER SourcePath
+    The path to the root of the DSC resource module (where the PSD1 file is found,
+    not the folder for and individual DSC resource).
 
-.Parameter Force
-Overwrites any existing file when outputting the generated content.
+.PARAMETER Force
+    Overwrites any existing file when outputting the generated content.
 
-.Example
-New-DscMofResourceWikiPage `
-    -SourcePath C:\repos\MyResource\source `
-    -OutputPath C:\repos\MyResource\output\WikiContent
+.EXAMPLE
+    PS> New-DscClassResourceWikiPage `
+        -SourcePath C:\repos\MyResource\source `
+        -OutputPath C:\repos\MyResource\output\WikiContent
 
-This example shows how to generate wiki documentation for a specific module.
+    This example shows how to generate wiki documentation for a specific module.
 
-.Functionality
-Internal,Hidden
+.FUNCTIONALITY
+    Internal,Hidden
 #>
-function New-DscMofResourceWikiPage
+function New-DscClassResourceWikiPage
 {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
@@ -480,58 +473,50 @@ function New-DscMofResourceWikiPage
         $Force
     )
 
-    $mofSearchPath = Join-Path -Path $SourcePath -ChildPath '/**/*.schema.mof'
-    $mofSchemaFiles = @(Get-ChildItem -Path $mofSearchPath -Recurse)
+    $schema = Get-M365DSCSchemaDefinition -SourcePath $SourcePath
 
-    Write-Verbose -Message ("Found {0} MOF files in path '{1}'." -f $mofSchemaFiles.Count, $SourcePath)
+    $resourcesPath = Join-Path -Path $SourcePath -ChildPath 'DscResources'
+    $resourceFolders = @(Get-ChildItem -Path $resourcesPath -Directory -Filter 'MSFT_*')
 
-    # Loop through all the Schema files found in the modules folder
-    foreach ($mofSchemaFile in $mofSchemaFiles)
+    Write-Verbose -Message ("Found {0} resources in path '{1}'." -f $resourceFolders.Count, $resourcesPath)
+
+    foreach ($resourceFolder in $resourceFolders)
     {
-        $mofSchemas = Get-MofSchemaObject -FileName $mofSchemaFile.FullName
+        $dscResourceName = $resourceFolder.Name
+        $resourceName = $dscResourceName -replace '^MSFT_'
 
-        $dscResourceName = $mofSchemaFile.Name.Replace('.schema.mof', '')
+        if ($schema.ContainsKey($dscResourceName) -eq $false)
+        {
+            Write-Warning -Message ("No schema definition found for '{0}', skipping." -f $resourceName)
+            continue
+        }
 
-        <#
-            In a resource with one or more embedded instances (CIM classes) this
-            will get the main resource CIM class.
-        #>
-        $resourceSchema = $mofSchemas |
-            Where-Object -FilterScript {
-                ($_.ClassName -eq $dscResourceName) -and ($null -ne $_.FriendlyName)
-            }
+        $resourceSchema = $schema[$dscResourceName]
 
-        [System.Array] $readmeFile = Get-ChildItem -Path $mofSchemaFile.DirectoryName |
+        [System.Array] $readmeFile = Get-ChildItem -Path $resourceFolder.FullName |
             Where-Object -FilterScript {
                 $_.Name -like 'readme.md'
             }
 
         if ($readmeFile.Count -eq 1)
         {
-            Write-Verbose -Message ("Generating wiki page for '{0}'." -f $resourceSchema.FriendlyName)
+            Write-Verbose -Message ("Generating wiki page for '{0}'." -f $resourceName)
 
             $output = New-Object -TypeName System.Text.StringBuilder
 
-            $null = $output.AppendLine("# $($resourceSchema.FriendlyName)")
+            $null = $output.AppendLine("# $resourceName")
             $null = $output.AppendLine('')
             $null = $output.AppendLine('## Parameters')
             $null = $output.AppendLine('')
 
-            $propertyContent = Get-DscResourceSchemaPropertyContent -Property $resourceSchema.Attributes -UseMarkdown
+            $propertyContent = Get-DscResourceSchemaPropertyContent -Property $resourceSchema.Parameters -UseMarkdown
 
             foreach ($line in $propertyContent)
             {
                 $null = $output.AppendLine($line)
             }
 
-            <#
-                In a resource with one or more embedded instances (CIM classes) this
-                will get the embedded instances (CIM classes).
-            #>
-            $embeddedSchemas = $mofSchemas |
-                Where-Object -FilterScript {
-                    ($_.ClassName -ne $dscResourceName)
-                }
+            $embeddedSchemas = @(Get-DscResourceEmbeddedClass -ClassName $dscResourceName -Schema $schema)
 
             if ($embeddedSchemas.Count -gt 0)
             {
@@ -547,7 +532,7 @@ function New-DscMofResourceWikiPage
                 $null = $output.AppendLine('#### Parameters')
                 $null = $output.AppendLine('')
 
-                $propertyContent = Get-DscResourceSchemaPropertyContent -Property $embeddedSchema.Attributes -UseMarkdown
+                $propertyContent = Get-DscResourceSchemaPropertyContent -Property $embeddedSchema.Parameters -UseMarkdown
 
                 foreach ($line in $propertyContent)
                 {
@@ -563,15 +548,13 @@ function New-DscMofResourceWikiPage
             $null = $output.AppendLine($descriptionContent)
 
             # Add required permissions information
-            $settingsFile = Join-Path -Path $mofSchemaFile.DirectoryName -ChildPath 'settings.json'
+            $settingsJson = Get-M365DSCResourceSetting -ResourceName $resourceName
 
             $permissionsContent = New-Object -TypeName System.Text.StringBuilder
 
-            if (Test-Path -Path $settingsFile)
+            if ($null -ne $settingsJson)
             {
                 $null = $permissionsContent.AppendLine('## Permissions')
-                $settingsContent = Get-Content -Path $settingsFile -Raw
-                $settingsJson = ConvertFrom-Json -InputObject $settingsContent
 
                 $workloads = @('exchange', 'purview')
                 foreach ($workload in $workloads)
@@ -693,7 +676,7 @@ function New-DscMofResourceWikiPage
             $null = $output.AppendLine($permissionsContent)
 
             # Adding examples
-            $examplesPath = Join-Path -Path $SourcePath -ChildPath ('../../Examples/Resources/{0}' -f $resourceSchema.FriendlyName)
+            $examplesPath = Join-Path -Path $SourcePath -ChildPath ('../../Examples/Resources/{0}' -f $resourceName)
 
             $examplesOutput = Get-ResourceExampleAsMarkdown -Path $examplesPath
 
@@ -702,7 +685,7 @@ function New-DscMofResourceWikiPage
                 $null = $output.Append($examplesOutput)
             }
 
-            $outputFileName = "$($resourceSchema.FriendlyName).md"
+            $outputFileName = "$resourceName.md"
             $savePath = Join-Path -Path $OutputPath -ChildPath $outputFileName
 
             Write-Verbose -Message ("Outputting wiki page to '{0}'." -f $savePath)
@@ -716,38 +699,38 @@ function New-DscMofResourceWikiPage
         }
         elseif ($readmeFile.Count -gt 1)
         {
-            Write-Warning -Message ("{1} README.md description files found for '{0}', skipping." -f $resourceSchema.FriendlyName, $readmeFile.Count)
+            Write-Warning -Message ("{1} README.md description files found for '{0}', skipping." -f $resourceName, $readmeFile.Count)
         }
         else
         {
-            Write-Warning -Message ("No README.md description file found for '{0}', skipping." -f $resourceSchema.FriendlyName)
+            Write-Warning -Message ("No README.md description file found for '{0}', skipping." -f $resourceName)
         }
     }
 }
 
 <#
-.Description
-The Update-M365DSCResourceDocumentationPage cmdlet will review all of the MOF-based,
-class-based and composite resources in a specified module directory and will
-output the Markdown files to the specified directory. These help files include
-details on the property types for each resource, as well as a text description
-and examples where they exist.
+.DESCRIPTION
+    The Update-M365DSCResourceDocumentationPage cmdlet will review all of the
+    class-based resources in a specified module directory and will output the
+    Markdown files to the specified directory. These help files include details on
+    the property types for each resource, as well as a text description and examples
+    where they exist.
 
-.Parameter SourcePath
-The path to the root of the DSC resource module (where the PSD1 file is found,
-not the folder for an individual DSC resource).
+.PARAMETER SourcePath
+    The path to the root of the DSC resource module (where the PSD1 file is found,
+    not the folder for an individual DSC resource).
 
-.Parameter Force
-Overwrites any existing file when outputting the generated content.
+.PARAMETER Force
+    Overwrites any existing file when outputting the generated content.
 
-.Example
-Update-M365DSCResourceDocumentationPage `
-    -SourcePath C:\repos\MyResource\source
+.EXAMPLE
+    PS> Update-M365DSCResourceDocumentationPage `
+        -SourcePath C:\repos\MyResource\source
 
-This example shows how to generate wiki documentation for a specific module.
+    This example shows how to generate wiki documentation for a specific module.
 
-.Functionality
-Internal
+.FUNCTIONALITY
+    Internal
 #>
 function Update-M365DSCResourceDocumentationPage
 {
@@ -773,13 +756,13 @@ function Update-M365DSCResourceDocumentationPage
         $null = New-Item -Path $tempPath -ItemType 'Directory'
     }
 
-    $newDscMofResourceWikiPageParameters = @{
+    $newDscClassResourceWikiPageParameters = @{
         OutputPath = $tempPath
         SourcePath = $SourcePath
         Force      = $Force
     }
 
-    New-DscMofResourceWikiPage @newDscMofResourceWikiPageParameters
+    New-DscClassResourceWikiPage @newDscClassResourceWikiPageParameters
 
     $resourceDocsRoot = Join-Path -Path $PSScriptRoot -ChildPath '../../../docs/docs/resources'
 

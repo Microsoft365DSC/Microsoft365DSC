@@ -9,6 +9,7 @@ nav:
   - Blog:
       - 'Blog Posts': 'blog/index.md'
       - Major Updates:
+          - 'October 2026': 'blog/october-2026-major-release.md'
           - 'October 2025': 'blog/october-2025-major-release.md'
           - 'April 2025': 'blog/april-2025-major-release.md'
           - 'October 2024': 'blog/october-2024-major-release.md'
@@ -20,6 +21,9 @@ nav:
           - 'DSC Error Flow': 'blog/2024/dsc-error-flow/dsc-error-flow.md'
           - 'Intune Settings Catalog': 'blog/2026/intune-settings-catalog/intune-settings-catalog.md'
           - 'Microsoft365DSC Docker Images: How to Use Them': 'blog/2026/docker-images/docker-images.md'
+          - 'Class-Based Resources, Part 1: The Conversion': 'blog/2026/class-based-resources/class-based-resources.md'
+          - 'Class-Based Resources, Part 2: Making It Fast Again': 'blog/2026/class-based-resources/class-based-resources-part-2.md'
+          - 'Class-Based Resources, Part 3: Compiling Configurations and DSCv3': 'blog/2026/class-based-resources/class-based-resources-part-3.md'
           - 'Moving from Microsoft365DSC to Tenant Configuration Management APIs': 'blog/2026/utcm-transition/utcm-transition.md'
           - 'Performance Improvements in Microsoft365DSC': 'blog/2026/performance-improvements/performance-improvements.md'
   - User Guide:
@@ -57,6 +61,7 @@ nav:
           - 'Get-M365DSCTelemetryOption': 'user-guide/cmdlets/Get-M365DSCTelemetryOption.md'
           - 'Get-M365DSCResourcesByExportMode': 'user-guide/cmdlets/Get-M365DSCResourcesByExportMode.md'
           - 'Install-M365DSCDevBranch': 'user-guide/cmdlets/Install-M365DSCDevBranch.md'
+          - 'Invoke-M365DSCConfigurationBuild': 'user-guide/cmdlets/Invoke-M365DSCConfigurationBuild.md'
           - 'Join-M365DSCConfiguration': 'user-guide/cmdlets/Join-M365DSCConfiguration.md'
           - 'New-M365DSCDeltaReport': 'user-guide/cmdlets/New-M365DSCDeltaReport.md'
           - 'New-M365DSCNotificationEndpointRegistration': 'user-guide/cmdlets/New-M365DSCNotificationEndpointRegistration.md'

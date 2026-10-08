@@ -10,13 +10,32 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - name: Generate SchemaDefinition.json
+      - name: Install Modules
         shell: pwsh
         run: |
-          Import-Module './Modules/Microsoft365DSC/Modules/M365DSCSchemaHandler.psm1'
-          New-M365DSCSchemaDefinition
+          $ErrorActionPreference = 'Stop'
+          $dependencies = (Import-PowerShellDataFile ./Modules/Microsoft365DSC/Dependencies/Manifest.psd1).Dependencies
+
+          foreach ($name in @('M365DSC.PSDesiredStateConfiguration', 'DSCParser'))
+          {
+            $dependency = $dependencies | Where-Object ModuleName -EQ $name
+            if ($null -eq $dependency) {
+                throw "$name is missing from Dependencies/Manifest.psd1."
+            }
+            Install-PSResource -Name $dependency.ModuleName -Version $dependency.RequiredVersion -Scope AllUsers -TrustRepository
+          }
+
+      - name: Build Class Modules
+        shell: pwsh
+        run: |
+          & ./Utilities/Build-Microsoft365DSC.ps1 -SkipSchemaCache
+
+      - name: Build Dll Files
+        shell: pwsh
+        run: |
+          & ./Utilities/Build-DllFiles.ps1 -Configuration Release
 
       - name: Import Module & Generate Documentation
         shell: pwsh
@@ -26,7 +45,7 @@ jobs:
           New-M365DSCCmdletDocumentation
 
       - name: Upload documentation for mdl check
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: generated-docs
           path: ./docs
@@ -36,10 +55,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download generated docs
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: generated-docs
           path: ./docs

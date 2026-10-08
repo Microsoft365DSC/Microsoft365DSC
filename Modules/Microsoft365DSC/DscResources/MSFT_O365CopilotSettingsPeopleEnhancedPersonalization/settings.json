@@ -1,5 +1,16 @@
 {
   "resourceName": "O365CopilotSettingsPeopleEnhancedPersonalization",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Represents a setting that controls whether Microsoft 365 Copilot can use features that enhance its personalization capabilities.",
   "roles": {
     "read": [],

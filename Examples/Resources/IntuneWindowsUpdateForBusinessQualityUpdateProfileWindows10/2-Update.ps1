@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,31 +19,31 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10 'Example'
+        IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10 'IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10-Example'
         {
             Assignments             = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    groupDisplayName = 'Exclude'
-                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
-                    groupId          = '258a1749-8408-4dd0-8028-fab6208a28d7'
+                    groupDisplayName                           = 'Intune Excluded Devices'
+                    dataType                                   = '#microsoft.graph.exclusionGroupAssignmentTarget'
                 }
             );
-            DisplayName              = 'Windows Quality Update'
-            Description              = ''
+            DisplayName             = 'Windows Quality Update'
+            Description             = 'Expedites the June 2024 security update to corporate Windows devices'
             ExpeditedUpdateSettings = MSFT_MicrosoftGraphexpeditedWindowsQualityUpdateSettings{
                 QualityUpdateRelease  = '2024-06-11T00:00:00Z'
-                DaysUntilForcedReboot = 1 # Updated property
+                DaysUntilForcedReboot = 1 # Updated Property
             }
-            RoleScopeTagIds           = @("0")
-            Ensure                    = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            RoleScopeTagIds         = @("0")
+            Ensure                  = 'Present'
+            ApplicationId           = $ApplicationId;
+            TenantId                = $TenantId;
+            CertificateThumbprint   = $CertificateThumbprint;
         }
     }
 }

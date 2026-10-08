@@ -1,5 +1,16 @@
 {
   "resourceName": "SPOSiteDesign",
+  "generatedFrom": {
+    "workload": "PnP",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "PnPSiteDesign",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "permissions": {
     "graph": {

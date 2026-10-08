@@ -1,5 +1,32 @@
 {
   "resourceName": "VivaEngagementRoleMember",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "engagementRole",
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DisplayName",
+      "reason": "Accepted",
+      "note": "Declared as Role and populated from the vendor displayName"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "The service assigns the role identifier. The resource looks the role up by display name."
+    },
+    {
+      "name": "Role",
+      "reason": "Accepted",
+      "note": "Names the parent engagement role"
+    }
+  ],
   "description": "Manage a Viva Engage role assigned to a user.",
   "roles": {
     "read": [],

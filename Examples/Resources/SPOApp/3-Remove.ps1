@@ -5,22 +5,33 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SPOApp 'ConfigureDemoApp'
+        SPOApp 'SPOApp-Example'
         {
-            Identity   = "DemoApp"
-            Path       = "C:\Demo\DemoApp.sppkg"
-            Publish    = $true
-            Ensure     = "Absent"
-            Credential = $Credscredential
+            Identity              = "ContosoIntranet.sppkg"
+            Path                  = "C:\Packages\ContosoIntranet.sppkg"
+            Ensure                = "Absent"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

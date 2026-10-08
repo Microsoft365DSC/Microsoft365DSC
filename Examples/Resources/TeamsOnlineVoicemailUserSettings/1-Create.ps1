@@ -4,19 +4,30 @@ This example adds a new Teams Channels Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $credsCredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsOnlineVoicemailUserSettings 'AssignOnlineVoicemailUserSettings'
+        TeamsOnlineVoicemailUserSettings 'TeamsOnlineVoicemailUserSettings-Example'
         {
             CallAnswerRule                           = "RegularVoicemail";
-            Credential                               = $credsCredential;
+            CallToActionDetectionEnabled             = $true;
+            CategoryDetectionEnabled                 = $true;
             DefaultGreetingPromptOverwrite           = "Hellow World!";
             Ensure                                   = "Present";
             Identity                                 = "John.Smith@contoso.com";
@@ -24,7 +35,12 @@ Configuration Example
             OofGreetingFollowAutomaticRepliesEnabled = $False;
             PromptLanguage                           = "en-US";
             ShareData                                = $False;
+            UrgencyDetectionEnabled                  = $true;
             VoicemailEnabled                         = $True;
+            VoiceToTextSummaryEnabled                = $true;
+            ApplicationId                            = $ApplicationId;
+            TenantId                                 = $TenantId;
+            CertificateThumbprint                    = $CertificateThumbprint;
         }
     }
 }

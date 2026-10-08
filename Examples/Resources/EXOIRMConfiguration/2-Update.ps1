@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,9 +22,9 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOIRMConfiguration 'ConfigureIRMConfiguration'
+        EXOIRMConfiguration 'EXOIRMConfiguration-Example'
         {
             IsSingleInstance                           = 'Yes'
             AutomaticServiceUpdateEnabled              = $True
@@ -39,10 +40,9 @@ Configuration Example
             SimplifiedClientAccessEnabled              = $True
             SimplifiedClientAccessEncryptOnlyDisabled  = $True
             TransportDecryptionSetting                 = 'Mandatory'
-            Ensure                                     = 'Present'
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                              = $ApplicationId
+            TenantId                                   = $TenantId
+            CertificateThumbprint                      = $CertificateThumbprint
         }
     }
 }

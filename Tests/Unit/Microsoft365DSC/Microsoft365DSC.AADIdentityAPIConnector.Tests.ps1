@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -60,7 +60,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -77,22 +77,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = 'FakeStringValue'
                     TargetUrl = 'FakeStringValue'
                     Id = 'FakeStringValue'
-                    Username = 'FakeStringValue'
-                    Password = $Credential
-                    Certificates = @(
-                         New-CimInstance -ClassName 'MSFT_AADIdentityAPIConnectionCertificate' -Property @{
-                             Thumbprint = 'FakeStringValue'
-                             Pkcs12Value = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             Password = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             IsActive = $true
-                         } -ClientOnly
-                    )
+                    AuthenticationConfiguration = @{
+                        dataType = '#microsoft.graph.basicAuthentication'
+                        Username = 'FakeStringValue'
+                        Password = $Credential
+                        CertificateList = @(
+                             [MSFT_AADIdentityAPIConnectionCertificate] @{
+                                 Thumbprint = 'FakeStringValue'
+                                 Pkcs12Value = New-Object -TypeName System.Management.Automation.PSCredential('Pkcs12Value',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 Password = New-Object -TypeName System.Management.Automation.PSCredential('Password',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 IsActive = $true
+                             }
+                        )
+                    }
                     Credential = $Credential
                 }
 
@@ -101,13 +100,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaIdentityAPIConnector -Exactly 1
             }
         }
@@ -118,37 +117,36 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = 'FakeStringValue'
                     TargetUrl = 'FakeStringValue'
                     Id = 'FakeStringValue'
-                    Username = 'FakeStringValue'
-                    Password = $Credential
-                    Certificates = @(
-                         New-CimInstance -ClassName 'MSFT_AADIdentityAPIConnectionCertificate' -Property @{
-                             Thumbprint = 'FakeStringValue'
-                             Pkcs12Value = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             Password = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             IsActive = $true
-                         } -ClientOnly
-                    )
+                    AuthenticationConfiguration = @{
+                        dataType = '#microsoft.graph.basicAuthentication'
+                        Username = 'FakeStringValue'
+                        Password = $Credential
+                        CertificateList = @(
+                             [MSFT_AADIdentityAPIConnectionCertificate] @{
+                                 Thumbprint = 'FakeStringValue'
+                                 Pkcs12Value = New-Object -TypeName System.Management.Automation.PSCredential('Pkcs12Value',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 Password = New-Object -TypeName System.Management.Automation.PSCredential('Password',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 IsActive = $true
+                             }
+                        )
+                    }
                     Credential = $Credential
                     Ensure = 'Absent'
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaIdentityAPIConnector -Exactly 1
             }
         }
@@ -159,36 +157,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = 'FakeStringValue'
                     TargetUrl = 'FakeStringValue2' # Drift
                     Id = 'FakeStringValue'
-                    Username = 'FakeStringValue'
-                    Password = $Credential
-                    Certificates = @(
-                         New-CimInstance -ClassName 'MSFT_AADIdentityAPIConnectionCertificate' -Property @{
-                             Thumbprint = 'FakeStringValue'
-                             Pkcs12Value = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             Password = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             IsActive = $true
-                         } -ClientOnly
-                    )
+                    AuthenticationConfiguration = @{
+                        dataType = '#microsoft.graph.basicAuthentication'
+                        Username = 'FakeStringValue'
+                        Password = $Credential
+                        CertificateList = @(
+                             [MSFT_AADIdentityAPIConnectionCertificate] @{
+                                 Thumbprint = 'FakeStringValue'
+                                 Pkcs12Value = New-Object -TypeName System.Management.Automation.PSCredential('Pkcs12Value',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 Password = New-Object -TypeName System.Management.Automation.PSCredential('Password',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 IsActive = $true
+                             }
+                        )
+                    }
                     Credential = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaIdentityApiConnector -Exactly 1
                 Should -Invoke -CommandName New-MgBetaIdentityApiConnector -Exactly 1
             }
@@ -200,31 +197,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = 'FakeStringValue'
                     TargetUrl = 'FakeStringValue'
                     Id = 'FakeStringValue'
-                    Certificates = @(
-                         New-CimInstance -ClassName 'MSFT_AADIdentityAPIConnectionCertificate' -Property @{
-                             Thumbprint = 'FakeStringValue'
-                             Pkcs12Value = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             Password = (New-CimInstance -ClassName 'MSFT_Credential' -Property @{
-                                 Username = 'FakeStringValue'
-                                 Password = 'FakeStringValue'
-                             } -ClientOnly)
-                             IsActive = $true
-                         } -ClientOnly
-                    )
+                    AuthenticationConfiguration = @{
+                        dataType = '#microsoft.graph.pkcs12Certificate'
+                        CertificateList = @(
+                             [MSFT_AADIdentityAPIConnectionCertificate] @{
+                                 Thumbprint = 'FakeStringValue'
+                                 Pkcs12Value = New-Object -TypeName System.Management.Automation.PSCredential('Pkcs12Value',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 Password = New-Object -TypeName System.Management.Automation.PSCredential('Password',
+                                    (ConvertTo-SecureString -String "FakeStringValue" -AsPlainText -Force))
+                                 IsActive = $true
+                             }
+                        )
+                    }
                     Credential = $Credential
                     Ensure = 'Present'
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityAPIConnector' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -237,7 +233,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADIdentityAPIConnector' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

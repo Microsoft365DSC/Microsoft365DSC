@@ -1,499 +1,315 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AzureBillingAccountPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AzureBillingAccountPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $BillingAccount,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Unique identifier of the associated billing account.')]
+    [System.String] $BillingAccount
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnterpriseAgreementPolicies,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the policy.')]
+    [System.String] $Name
 
-        [Parameter()]
-        [System.String]
-        $MarketplacePurchases,
+    [DscProperty()]
+    [System.ComponentModel.Description('The policies for Enterprise Agreement enrollments.')]
+    [MSFT_AzureBillingAccountPolicyEnterpriseAgreementPolicy] $EnterpriseAgreementPolicies
 
-        [Parameter()]
-        [System.String]
-        $ReservationPurchases,
+    [DscProperty()]
+    [System.ComponentModel.Description('The policy that controls whether Azure marketplace purchases are allowed.')]
+    [System.String] $MarketplacePurchases
 
-        [Parameter()]
-        [System.String]
-        $SavingsPlanPurchases,
+    [DscProperty()]
+    [System.ComponentModel.Description('The policy that controls whether Azure reservation purchases are allowed.')]
+    [System.String] $ReservationPurchases
 
-        [Parameter()]
-        [System.String]
-        $Name,
+    [DscProperty()]
+    [System.ComponentModel.Description('The policy that controls whether users with Azure savings plan purchase are allowed.')]
+    [System.String] $SavingsPlanPurchases
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Absent', 'Present')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Azure subscription to connect to if the access is restricted on subscription level.')]
+    [System.String] $SubscriptionId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of Azure Billing Account Policy for Billing Account $BillingAccount"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [AzureBillingAccountPolicy] Get()
     {
-        $null = New-M365DSCConnection -Workload 'Azure' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [AzureBillingAccountPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration of Azure Billing Account Policy for Billing Account $($this.BillingAccount)"
+
+        try
+        {
+            $null = $this.Connect('Azure')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($this.BillingAccount)/policies/default?api-version=2024-04-01"
+            $response = Invoke-AzRestMethod -Uri $uri -Method GET
+            $instance = (ConvertFrom-Json ($response.Content)).value
+
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            $EnterpriseAgreementPoliciesValue = $null
+            if ($null -ne $this.EnterpriseAgreementPolicies)
+            {
+                $EnterpriseAgreementPoliciesValue = @{
+                    accountOwnerViewCharges    = $instance.properties.enterpriseAgreementPolicies.accountOwnerViewCharges
+                    authenticationType         = $instance.properties.enterpriseAgreementPolicies.authenticationType
+                    departmentAdminViewCharges = $instance.properties.enterpriseAgreementPolicies.departmentAdminViewCharges
+                }
+            }
+
+            $results = @{
+                BillingAccount              = $this.BillingAccount
+                Name                        = $instance.name
+                EnterpriseAgreementPolicies = $EnterpriseAgreementPoliciesValue
+                MarketplacePurchases        = $instance.properties.marketplacePurchases
+                ReservationPurchases        = $instance.properties.reservationPurchases
+                SavingsPlanPurchases        = $instance.properties.savingsPlanPurchases
+                Ensure                      = 'Present'
+                SubscriptionId              = $this.SubscriptionId
+                Credential                  = $this.Credential
+                ApplicationId               = $this.ApplicationId
+                TenantId                    = $this.TenantId
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                AccessTokens                = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of Azure Billing Account Policy for Billing Account $($this.BillingAccount)"
+
+        $null = $this.Connect('Azure')
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
-
-        $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccount)/policies/default?api-version=2024-04-01"
-        $response = Invoke-AzRestMethod -Uri $uri -Method GET
-        $instance = (ConvertFrom-Json ($response.Content)).value
-
-        if ($null -eq $instance)
-        {
-            return $nullResult
-        }
-
-        $EnterpriseAgreementPoliciesValue = $null
-        if ($null -ne $EnterpriseAgreementPolicies)
-        {
-            $EnterpriseAgreementPoliciesValue = @{
-                accountOwnerViewCharges    = $instance.properties.enterpriseAgreementPolicies.accountOwnerViewCharges
-                authenticationType         = $instance.properties.enterpriseAgreementPolicies.authenticationType
-                departmentAdminViewCharges = $instance.properties.enterpriseAgreementPolicies.departmentAdminViewCharges
-            }
-        }
-
-        $results = @{
-            BillingAccount              = $BillingAccount
-            Name                        = $instance.name
-            EnterpriseAgreementPolicies = $EnterpriseAgreementPoliciesValue
-            MarketplacePurchases        = $instance.properties.marketplacePurchases
-            ReservationPurchases        = $instance.properties.reservationPurchases
-            SavingsPlanPurchases        = $instance.properties.savingsPlanPurchases
-            Ensure                      = 'Present'
-            SubscriptionId              = $SubscriptionId
-            Credential                  = $Credential
-            ApplicationId               = $ApplicationId
-            TenantId                    = $TenantId
-            CertificateThumbprint       = $CertificateThumbprint
-            CertificatePath             = $CertificatePath
-            CertificatePassword         = $CertificatePassword
-            ManagedIdentity             = $ManagedIdentity.IsPresent
-            AccessTokens                = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $BillingAccount,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnterpriseAgreementPolicies,
-
-        [Parameter()]
-        [System.String]
-        $MarketplacePurchases,
-
-        [Parameter()]
-        [System.String]
-        $ReservationPurchases,
-
-        [Parameter()]
-        [System.String]
-        $SavingsPlanPurchases,
-
-        [Parameter()]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Azure Billing Account Policy for Billing Account $BillingAccount"
-
-    $null = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $instanceParams = @{
-        properties = @{
-            enterpriseAgreementPolicies = @{
-                accountOwnerViewCharges    = $EnterpriseAgreementPolicies.accountOwnerViewCharges
-                authenticationType         = $EnterpriseAgreementPolicies.authenticationType
-                departmentAdminViewCharges = $EnterpriseAgreementPolicies.departmentAdminViewCharges
-            }
-            marketplacePurchases        = $MarketplacePurchases
-            reservationPurchases        = $ReservationPurchases
-            savingsPlanPurchases        = $SavingsPlanPurchases
-        }
-    }
-    $payload = ConvertTo-Json $instanceParams -Depth 5 -Compress
-    Write-Verbose -Message "Updating billing account policy for {$BillingAccount} with payload:`r`n$($payload)"
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccount)/policies/default?api-version=2024-04-01"
-    $response = Invoke-AzRestMethod -Uri $uri -Method 'PUT' -Payload $payload
-    if (-not [System.String]::IsNullOrEmpty($response.Error))
-    {
-        throw "Error: $($response.Error)"
-    }
-    Write-Verbose -Message "Response:`r`n$($response.Content)"
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $BillingAccount,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $EnterpriseAgreementPolicies,
-
-        [Parameter()]
-        [System.String]
-        $MarketplacePurchases,
-
-        [Parameter()]
-        [System.String]
-        $ReservationPurchases,
-
-        [Parameter()]
-        [System.String]
-        $SavingsPlanPurchases,
-
-        [Parameter()]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        # Get all billing account
-        $accounts = Get-M365DSCAzureBillingAccount
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($accounts.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($account in $accounts.value)
-        {
-            $displayedKey = $account.properties.displayName
-            Write-M365DSCHost -Message "    |---[$i/$($accounts.value.Length)] $displayedKey" -DeferWrite
-
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-            $params = @{
-                BillingAccount        = $account.name
-                SubscriptionId        = $SubscriptionId
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Results = Get-TargetResource @Params
-
-            if ($Results.EnterpriseAgreementPolicies)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.EnterpriseAgreementPolicies -CIMInstanceName AzureBillingAccountPolicyEnterpriseAgreementPolicy
-                if ($complexTypeStringResult)
-                {
-                    $Results.EnterpriseAgreementPolicies = $complexTypeStringResult
+        $this.AddTelemetry('Set')
+
+        $instanceParams = @{
+            properties = @{
+                enterpriseAgreementPolicies = @{
+                    accountOwnerViewCharges    = $this.EnterpriseAgreementPolicies.accountOwnerViewCharges
+                    authenticationType         = $this.EnterpriseAgreementPolicies.authenticationType
+                    departmentAdminViewCharges = $this.EnterpriseAgreementPolicies.departmentAdminViewCharges
                 }
-                else
-                {
-                    $Results.Remove('EnterpriseAgreementPolicies') | Out-Null
-                }
+                marketplacePurchases        = $this.MarketplacePurchases
+                reservationPurchases        = $this.ReservationPurchases
+                savingsPlanPurchases        = $this.SavingsPlanPurchases
             }
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('EnterpriseAgreementPolicies')
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
         }
-        return $dscContent.ToString()
+        $payload = ConvertTo-Json $instanceParams -Depth 5 -Compress
+        Write-Verbose -Message "Updating billing account policy for {$($this.BillingAccount)} with payload:`r`n$($payload)"
+        $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($this.BillingAccount)/policies/default?api-version=2024-04-01"
+        $response = Invoke-AzRestMethod -Uri $uri -Method 'PUT' -Payload $payload
+        if (-not [System.String]::IsNullOrEmpty($response.Error))
+        {
+            throw "Error: $($response.Error)"
+        }
+        Write-Verbose -Message "Response:`r`n$($response.Content)"
     }
-    catch
+
+    [bool] Test()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        return ([M365DSCResourceBase] $this).Test()
+    }
 
-        throw
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('Azure')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            # Get all billing account
+            $accounts = Get-M365DSCAzureBillingAccount
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($accounts.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($account in $accounts.value)
+            {
+                $displayedKey = $account.properties.displayName
+                Write-M365DSCHost -Message "    |---[$i/$($accounts.value.Length)] $displayedKey" -DeferWrite
+
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+                $params = @{
+                    BillingAccount        = $account.name
+                    SubscriptionId        = $this.SubscriptionId
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $Results = $this.GetForExport($Params)
+
+                if ($Results.EnterpriseAgreementPolicies)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.EnterpriseAgreementPolicies -CIMInstanceName AzureBillingAccountPolicyEnterpriseAgreementPolicy
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.EnterpriseAgreementPolicies = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('EnterpriseAgreementPolicies') | Out-Null
+                    }
+                }
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('EnterpriseAgreementPolicies')
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            ExcludedProperties = @('SubscriptionId')
+        }
+    }
+
+    hidden [AzureBillingAccountPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AzureBillingAccountPolicy])
+        {
+            return $Values
+        }
+
+        $result = [AzureBillingAccountPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-function Get-CompareParameters
+class MSFT_AzureBillingAccountPolicyEnterpriseAgreementPolicy
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
+    [DscProperty()]
+    [System.ComponentModel.Description('The policy that controls whether account owner can view charges.')]
+    [System.String] $accountOwnerViewCharges
 
-    return @{
-        ExcludedProperties = @('SubscriptionId')
-    }
+    [DscProperty()]
+    [System.ComponentModel.Description('The state showing the enrollment auth level.')]
+    [System.String] $authenticationType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The policy that controls whether department admin can view charges.')]
+    [System.String] $departmentAdminViewCharges
 }
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

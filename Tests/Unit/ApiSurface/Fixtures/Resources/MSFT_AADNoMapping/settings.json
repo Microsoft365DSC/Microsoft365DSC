@@ -1,0 +1,24 @@
+{
+  "resourceName": "AADNoMapping",
+  "description": "Fixture for AADNoMapping.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Identity.SignIns",
+      "cmdlets": [
+        "Get-MgBetaBogusThing",
+        "New-MgBetaBogusThing"
+      ]
+    }
+  ]
+}

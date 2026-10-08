@@ -1,41 +1,85 @@
 {
   "resourceName": "IntuneWifiConfigurationPolicyMacOS",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceConfiguration",
+    "odataSubtype": "macOSWiFiConfiguration",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeviceManagementApplicabilityRuleDeviceMode",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "DeviceManagementApplicabilityRuleOsEdition",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "DeviceManagementApplicabilityRuleOsVersion",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "ForcePreSharedKeyUpdate",
+      "reason": "NotConfigurable",
+      "note": "Forces the pre shared key to be sent again. Never read back."
+    }
+  ],
   "description": "This resource configures an Intune Wifi Configuration Policy for MacOS with Basic Wi-Fi type.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

@@ -1,5 +1,52 @@
 {
   "resourceName": "IntuneCloudProvisioningPolicyWindows365",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "cloudPcProvisioningPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementVirtualEndpointProvisioningPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AlternateResourceUrl",
+      "reason": "ReadOnly",
+      "note": "The service generates the alternate resource link"
+    },
+    {
+      "name": "CloudPcGroupDisplayName",
+      "reason": "ReadOnly",
+      "note": "The service derives it from the hosting Cloud PC group"
+    },
+    {
+      "name": "GracePeriodInHours",
+      "reason": "ReadOnly",
+      "note": "The service fixes the grace period before reprovisioning or deprovisioning"
+    },
+    {
+      "name": "ManagedBy",
+      "reason": "Accepted",
+      "note": "Pinned to Windows365 on every update"
+    },
+    {
+      "name": "MicrosoftManagedDesktop",
+      "reason": "Accepted",
+      "note": "Derived from the Autopatch configuration on create and update"
+    },
+    {
+      "name": "SnapshotResetMode",
+      "reason": "NotConfigurable",
+      "note": "The service accepts the value and ignores it on create and update."
+    },
+    {
+      "name": "UserSettingsPersistenceConfiguration",
+      "reason": "NotConfigurable",
+      "note": "The service accepts the value and ignores it on create and update."
+    }
+  ],
   "description": "This resource configures an Intune Cloud Provisioning Policy for Windows365.",
   "permissions": {
     "graph": {
@@ -9,7 +56,7 @@
             "name": "CloudPC.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "read": [
@@ -17,7 +64,7 @@
             "name": "CloudPC.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       },
@@ -27,7 +74,7 @@
             "name": "CloudPC.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "read": [
@@ -35,7 +82,7 @@
             "name": "CloudPC.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       }

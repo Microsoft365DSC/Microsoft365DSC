@@ -1,5 +1,16 @@
 {
   "resourceName": "DefenderSubscriptionPlan",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Enables or disables Microsoft Defender plans for a subscription in Microsoft Defender for Cloud.",
   "roles": {
     "read": [],
@@ -25,10 +36,14 @@
       }
     },
     "azure": {
-      "requiredRoles": [
-        "Security Reader",
-        "Security Admin"
-      ]
+      "requiredRoles": {
+        "read": [
+          "Security Reader"
+        ],
+        "update": [
+          "Security Admin"
+        ]
+      }
     }
   },
   "requiredModules": [

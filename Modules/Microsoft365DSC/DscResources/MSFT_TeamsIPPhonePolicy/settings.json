@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsIPPhonePolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTeamsIPPhonePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an New-CsTeamsIPPhonePolicy allows you to create a policy to manage features related to Teams phone experiences. Teams phone policies determine the features that are available to users.",
   "roles": {
     "read": [

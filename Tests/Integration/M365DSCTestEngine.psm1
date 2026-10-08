@@ -111,16 +111,32 @@ function New-M365DSCIntegrationTest
         )
     }
 
-    # Compile and deploy configuration
+    if ($Global:M365DSCIntegrationCompiling)
+    {
+        return
+    }
+
+    $outputPath = Join-Path -Path $PSScriptRoot -ChildPath 'Master'
+
     try
     {
-        Master -ConfigurationData $ConfigurationData -ApplicationId $ApplicationId -TenantId $TenantId -CertificateThumbprint $CertificateThumbprint
-        Start-DscConfiguration Master -Wait -Force -Verbose -ErrorAction Stop
+        $Global:M365DSCIntegrationCompiling = $true
+        $null = Invoke-M365DSCConfigurationBuild -Path $PSCommandPath `
+            -ConfigurationName 'Master' `
+            -ConfigurationData $ConfigurationData `
+            -OutputPath $outputPath `
+            -Parameters @{
+                ApplicationId         = $ApplicationId
+                TenantId              = $TenantId
+                CertificateThumbprint = $CertificateThumbprint
+            } -ErrorAction Stop
     }
-    catch
+    finally
     {
-        throw $_
+        $Global:M365DSCIntegrationCompiling = $false
     }
+
+    Start-DscConfiguration -Path $outputPath -Wait -Force -Verbose -ErrorAction Stop
 '@
 
     # Saving Master Integration configuration to file

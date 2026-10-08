@@ -1,0 +1,22 @@
+{
+  "Get-MgBetaDirectoryDeletedItemAsGroup": {
+    "Reason": "Find-MgGraphCommand reports /directory/deletedItems/group, but the collection is only reachable through the OData cast segment /directory/deletedItems/microsoft.graph.group.",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/directory/deletedItems/microsoft.graph.group",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaDeviceManagementConfigurationPolicyEnrollmentTimeDeviceMembershipTarget": {
+    "Reason": "The beta endpoint answers GET and rejects POST with 400, while the SDK metadata declares the action as POST.",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}/retrieveEnrollmentTimeDeviceMembershipTarget",
+        "ApiVersion": "beta"
+      }
+    ]
+  }
+}

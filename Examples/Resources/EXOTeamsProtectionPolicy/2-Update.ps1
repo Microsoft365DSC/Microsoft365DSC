@@ -22,9 +22,9 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOTeamsProtectionPolicy 'EXOTeamsProtectionPolicy'
+        EXOTeamsProtectionPolicy 'EXOTeamsProtectionPolicy-Example'
         {
             IsSingleInstance                 = 'Yes'
             AdminDisplayName                 = 'Contoso Administrator'

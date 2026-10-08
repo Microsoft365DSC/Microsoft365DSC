@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,15 +22,15 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOAvailabilityAddressSpace 'ConfigureAvailabilityAddressSpace'
+        EXOAvailabilityAddressSpace 'EXOAvailabilityAddressSpace-Example'
         {
-            Identity              = 'Contoso.com'
+            Identity              = 'freebusy.contoso.com'
             AccessMethod          = 'OrgWideFBToken'
-            ForestName            = 'example.contoso.com'
+            ForestName            = 'freebusy.contoso.com'
             TargetServiceEpr      = 'https://contoso.com/autodiscover/autodiscover.xml'
-            TargetTenantId        = 'o365dsc.onmicrosoft.com'
+            TargetTenantId        = 'fabrikam.onmicrosoft.com'
             Ensure                = 'Present'
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

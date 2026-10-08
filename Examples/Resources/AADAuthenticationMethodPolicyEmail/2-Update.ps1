@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,35 +19,36 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        AADAuthenticationMethodPolicyEmail "AADAuthenticationMethodPolicyEmail-Email"
+        AADAuthenticationMethodPolicyEmail "AADAuthenticationMethodPolicyEmail-Example"
         {
             AllowExternalIdToUseEmailOtp = "enabled";
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
             Ensure                       = "Present";
             ExcludeTargets               = @(
                 MSFT_AADAuthenticationMethodPolicyEmailExcludeTarget{
-                    Id = 'Paralegals'
+                    Id         = 'Paralegals'
                     TargetType = 'group'
                 }
             );
             Id                           = "Email";
             IncludeTargets               = @(
                 MSFT_AADAuthenticationMethodPolicyEmailIncludeTarget{
-                    Id = 'Finance Team'
+                    Id         = 'Finance Team'
                     TargetType = 'group'
                 }
                 MSFT_AADAuthenticationMethodPolicyEmailIncludeTarget{
-                    Id = 'Legal Team'
+                    Id         = 'Legal Team'
                     TargetType = 'group'
                 }
             );
             State                        = "enabled"; # Updated Property
+            ApplicationId                = $ApplicationId
+            TenantId                     = $TenantId
+            CertificateThumbprint        = $CertificateThumbprint
         }
     }
 }

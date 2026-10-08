@@ -4,16 +4,26 @@ This example adds a new Teams Meeting Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsMeetingBroadcastConfiguration 'MeetingBroadcastConfiguration'
+        TeamsMeetingBroadcastConfiguration 'TeamsMeetingBroadcastConfiguration-Example'
         {
             IsSingleInstance                    = 'Yes'
             AllowSdnProviderForBroadcastMeeting = $True
@@ -21,7 +31,9 @@ Configuration Example
             SdnProviderName                     = "hive"
             SdnLicenseId                        = "5c12d0-d52950-e03e66-92b587"
             SdnApiTemplateUrl                   = "https://api.hivestreaming.com/v1/eventadmin?partner_token={0}"
-            Credential                          = $Credscredential
+            ApplicationId                       = $ApplicationId
+            TenantId                            = $TenantId
+            CertificateThumbprint               = $CertificateThumbprint
         }
     }
 }

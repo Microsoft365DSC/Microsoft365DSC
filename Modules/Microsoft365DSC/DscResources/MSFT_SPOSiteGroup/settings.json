@@ -1,5 +1,16 @@
 {
   "resourceName": "SPOSiteGroup",
+  "generatedFrom": {
+    "workload": "PnP",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "PnPGroup",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "permissions": {
     "graph": {

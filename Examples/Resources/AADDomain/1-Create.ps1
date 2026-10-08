@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,23 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADDomain "AADDomain-Mail"
+        AADDomain "AADDomain-Example"
         {
-            ApplicationId                    = $ApplicationId;
             AuthenticationType               = "Managed";
-            CertificateThumbprint            = $CertificateThumbprint;
             Ensure                           = "Present";
-            Id                               = "M365x73318397.mail.onmicrosoft.com";
+            Id                               = "fabrikam.com";
             IsAdminManaged                   = $True;
-            IsDefault                        = $True;
-            IsRoot                           = $True;
-            IsVerified                       = $True;
-            PasswordNotificationWindowInDays = 14;
-            PasswordValidityPeriodInDays     = 2147483647;
+            IsDefault                        = $False;
+            IsRoot                           = $False;
+            IsVerified                       = $False;
+            ApplicationId                    = $ApplicationId;
             TenantId                         = $TenantId;
+            CertificateThumbprint            = $CertificateThumbprint;
         }
     }
 }

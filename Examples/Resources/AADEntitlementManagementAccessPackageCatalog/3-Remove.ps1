@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADEntitlementManagementAccessPackageCatalog 'myAccessPackageCatalog'
+        AADEntitlementManagementAccessPackageCatalog 'AADEntitlementManagementAccessPackageCatalog-Example'
         {
-            DisplayName         = 'My Catalog'
-            Ensure              = 'Absent'
+            DisplayName           = 'My Catalog'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

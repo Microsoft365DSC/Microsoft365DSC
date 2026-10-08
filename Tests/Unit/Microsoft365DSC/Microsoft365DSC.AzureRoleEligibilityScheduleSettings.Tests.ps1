@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -253,7 +253,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -272,11 +272,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -294,7 +294,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -312,11 +312,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -332,7 +332,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method without error when only AdditionalRecipient is specified' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -380,7 +380,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should serialize a single notificationRecipients email as a JSON array in the PATCH payload' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set()
                 $Script:capturedPayload | Should -Not -BeNullOrEmpty
                 # Verify the email is serialized as a JSON array ["foo@test.com"], not a plain string
                 $Script:capturedPayload | Should -Match '"notificationRecipients":\s*\[\s*"foo@test\.com"\s*\]'
@@ -399,7 +399,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method without error when only DefaultRecipient is specified' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -415,7 +415,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method without error when only OnlyCritical is specified' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -433,7 +433,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -450,7 +450,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -467,7 +467,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -484,7 +484,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -501,11 +501,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -522,7 +522,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method without error when MFA is not specified' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -538,7 +538,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method without error when MFA is not specified' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -554,7 +554,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method without error when Justification is not specified' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
         }
 
@@ -653,11 +653,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return the user approver UPN from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Get().ToHashtable()
                 $result.ActivateApprover | Should -Contain "approver@contoso.com"
             }
         }
@@ -778,15 +778,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should call the Set method without error' {
-                { Set-TargetResource @testParams } | Should -Not -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Set() } | Should -Not -Throw
             }
 
             It 'Should return all approvers with correct names from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleSettings' -Property $testParams).Get().ToHashtable()
                 $result.ActivateApprover | Should -HaveCount 2
                 $result.ActivateApprover | Should -Contain "approver@contoso.com"
                 $result.ActivateApprover | Should -Contain "PIM Approvers"
@@ -884,7 +884,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }
@@ -967,7 +967,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return empty string when ModifiedOnly filter is set and all policies are unmodified Azure defaults' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -BeNullOrEmpty
             }
         }
@@ -1060,7 +1060,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should export unmodified policies when no filter is specified' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

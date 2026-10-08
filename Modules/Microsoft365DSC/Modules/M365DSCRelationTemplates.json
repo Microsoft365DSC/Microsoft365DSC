@@ -33,7 +33,6 @@
         "IntuneAppConfigurationDevicePolicy",
         "IntuneAppConfigurationPolicy",
         "IntuneAppControlForBusinessPolicyWindows10",
-        "IntuneAppControlForBusinessPolicyWindows10V2",
         "IntuneApplicationControlPolicyWindows10",
         "IntuneAppProtectionPolicyAndroid",
         "IntuneAppProtectionPolicyiOS",
@@ -52,7 +51,6 @@
         "IntuneDeviceConfigurationCustomPolicyWindows10",
         "IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10",
         "IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10",
-        "IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10V2",
         "IntuneDeviceConfigurationDomainJoinPolicyWindows10",
         "IntuneDeviceConfigurationEmailProfilePolicyWindows10",
         "IntuneDeviceConfigurationEndpointProtectionPolicyWindows10",
@@ -178,6 +176,1626 @@
       ],
       "resources": [
         "IntuneDeviceConfigurationSCEPCertificatePolicyWindows10"
+      ]
+    },
+    "IntuneMobileAppCategories": {
+      "relations": [
+        {
+          "property": "Categories",
+          "childProperty": "DisplayName",
+          "targetResource": "IntuneAppCategory",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "IntuneMobileAppsBuiltInStoreApp",
+        "IntuneMobileAppsBundleMacOS",
+        "IntuneMobileAppsDefenderForEndpointMacOS",
+        "IntuneMobileAppsLobAppAndroid",
+        "IntuneMobileAppsLobAppiOS",
+        "IntuneMobileAppsLobAppMsiWindows10",
+        "IntuneMobileAppsLobAppWindows10",
+        "IntuneMobileAppsMacOSLobApp",
+        "IntuneMobileAppsMicrosoft365SuiteMacOS",
+        "IntuneMobileAppsMicrosoftEdge",
+        "IntuneMobileAppsMicrosoftStoreAppWindows10",
+        "IntuneMobileAppsStoreApp",
+        "IntuneMobileAppsWebLink",
+        "IntuneMobileAppsWin32AppWindows10",
+        "IntuneMobileAppsWindowsOfficeSuiteApp"
+      ]
+    },
+    "IntuneDeviceComplianceNotifications": {
+      "relations": [
+        {
+          "property": "ScheduledActionsForRule",
+          "childProperty": "NotificationTemplate",
+          "targetResource": "IntuneDeviceComplianceNotificationMessageTemplate",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "IntuneDeviceCompliancePolicyWindows10"
+      ]
+    },
+    "IntuneRoleAssignmentRelations": {
+      "relations": [
+        {
+          "property": "RoleDefinitionDisplayName",
+          "targetResource": "IntuneRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "MembersDisplayNames",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "ResourceScopesDisplayNames",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "IntuneRoleAssignment"
+      ]
+    },
+    // TODO: Add exclude if `DirectoryScopes` is `All Users`
+    "IntuneRoleAssignmentWindows365Relations": {
+      "relations": [
+        {
+          "property": "RoleDefinition",
+          "targetResource": "IntuneRoleDefinitionWindows365",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "Principals",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "DirectoryScopes",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "IntuneRoleAssignmentWindows365"
+      ]
+    },
+    "IntuneRoleScopeTagIds": {
+      "relations": [
+        {
+          "property": "RoleScopeTagIds",
+          "targetResource": "IntuneRoleScopeTag",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "IntuneAccountProtectionLocalAdministratorPasswordSolutionPolicy",
+        "IntuneAccountProtectionLocalUserGroupMembershipPolicy",
+        "IntuneAccountProtectionPolicyWindows10",
+        "IntuneAntivirusExclusionsPolicyLinux",
+        "IntuneAntivirusExclusionsPolicyMacOS",
+        "IntuneAntivirusPolicyLinux",
+        "IntuneAntivirusPolicyMacOS",
+        "IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr",
+        "IntuneAntivirusPolicyWindows10ConfigMgr",
+        "IntuneAntivirusPolicyWindows10SettingCatalog",
+        "IntuneAppAndBrowserIsolationPolicyWindows10",
+        "IntuneAppAndBrowserIsolationPolicyWindows10ConfigMgr",
+        "IntuneAppConfigurationDevicePolicy",
+        "IntuneAppConfigurationPolicy",
+        "IntuneAppControlForBusinessPolicyWindows10",
+        "IntuneAppProtectionPolicyAndroid",
+        "IntuneAppProtectionPolicyWindows10",
+        "IntuneAppProtectionPolicyiOS",
+        "IntuneApplicationControlPolicyWindows10",
+        "IntuneAttackSurfaceReductionRulesPolicyWindows10ConfigManager",
+        "IntuneAzureNetworkConnectionWindows365",
+        "IntuneCloudProvisioningPolicyWindows365",
+        "IntuneCustomizationBrandingProfile",
+        "IntuneDefenderGlobalExclusionsPolicyLinux",
+        "IntuneDeviceComplianceNotificationMessageTemplate",
+        "IntuneDeviceCompliancePolicyAndroidDeviceOwner",
+        "IntuneDeviceCompliancePolicyAndroidWorkProfile",
+        "IntuneDeviceCompliancePolicyMacOS",
+        "IntuneDeviceCompliancePolicyWindows10",
+        "IntuneDeviceCompliancePolicyiOs",
+        "IntuneDeviceComplianceScriptWindows10",
+        "IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10",
+        "IntuneDeviceConfigurationCustomPolicyWindows10",
+        "IntuneDeviceConfigurationCustomPolicyiOS",
+        "IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10",
+        "IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10",
+        "IntuneDeviceConfigurationDomainJoinPolicyWindows10",
+        "IntuneDeviceConfigurationEmailProfilePolicyWindows10",
+        "IntuneDeviceConfigurationEndpointProtectionPolicyWindows10",
+        "IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10",
+        "IntuneDeviceConfigurationHealthMonitoringPolicyWindows10",
+        "IntuneDeviceConfigurationIdentityProtectionPolicyWindows10",
+        "IntuneDeviceConfigurationImportedPfxCertificatePolicyWindows10",
+        "IntuneDeviceConfigurationKioskPolicyWindows10",
+        "IntuneDeviceConfigurationNetworkBoundaryPolicyWindows10",
+        "IntuneDeviceConfigurationPkcsCertificatePolicyWindows10",
+        "IntuneDeviceConfigurationPlatformScriptLinux",
+        "IntuneDeviceConfigurationPlatformScriptMacOS",
+        "IntuneDeviceConfigurationPlatformScriptWindows",
+        "IntuneDeviceConfigurationPolicyAndroidDeviceOwner",
+        "IntuneDeviceConfigurationPolicyAndroidOpenSourceProject",
+        "IntuneDeviceConfigurationPolicyAndroidWorkProfile",
+        "IntuneDeviceConfigurationPolicyMacOS",
+        "IntuneDeviceConfigurationPolicyWindows10",
+        "IntuneDeviceConfigurationPolicyiOS",
+        "IntuneDeviceConfigurationSCEPCertificatePolicyWindows10",
+        "IntuneDeviceConfigurationSecureAssessmentPolicyWindows10",
+        "IntuneDeviceConfigurationSharedMultiDevicePolicyWindows10",
+        "IntuneDeviceConfigurationTrustedCertificatePolicyWindows10",
+        "IntuneDeviceConfigurationVpnPolicyWindows10",
+        "IntuneDeviceConfigurationWindowsTeamPolicyWindows10",
+        "IntuneDeviceConfigurationWiredNetworkPolicyWindows10",
+        "IntuneDeviceControlPolicyWindows10",
+        "IntuneDeviceEnrollmentLimitRestriction",
+        "IntuneDeviceEnrollmentPlatformRestriction",
+        "IntuneDeviceEnrollmentStatusPageWindows10",
+        "IntuneDeviceFeaturesConfigurationPolicyIOS",
+        "IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile",
+        "IntuneDeviceRemediation",
+        "IntuneDiskEncryptionFileVaultPolicyMacOS",
+        "IntuneDiskEncryptionMacOS",
+        "IntuneDiskEncryptionPDEPolicyWindows10",
+        "IntuneDiskEncryptionWindows10",
+        "IntuneEndpointDetectionAndResponsePolicyLinux",
+        "IntuneEndpointDetectionAndResponsePolicyMacOS",
+        "IntuneEndpointDetectionAndResponsePolicyWindows10",
+        "IntuneEpmElevationRulesPolicyWindows10",
+        "IntuneEpmElevationSettingsPolicyWindows10",
+        "IntuneExploitProtectionPolicyWindows10SettingCatalog",
+        "IntuneFirewallPolicyWindows10",
+        "IntuneFirewallRulesHyperVPolicyWindows10",
+        "IntuneFirewallRulesPolicyWindows10",
+        "IntuneFirewallRulesPolicyWindows10ConfigMgr",
+        "IntuneManagedInstallerPolicyWindows10",
+        "IntuneMobileAppsBuiltInStoreApp",
+        "IntuneMobileAppsBundleMacOS",
+        "IntuneMobileAppsDefenderForEndpointMacOS",
+        "IntuneMobileAppsLobAppAndroid",
+        "IntuneMobileAppsLobAppMsiWindows10",
+        "IntuneMobileAppsLobAppWindows10",
+        "IntuneMobileAppsLobAppiOS",
+        "IntuneMobileAppsMacOSLobApp",
+        "IntuneMobileAppsManagedGooglePlayApp",
+        "IntuneMobileAppsMicrosoft365SuiteMacOS",
+        "IntuneMobileAppsMicrosoftEdge",
+        "IntuneMobileAppsMicrosoftStoreAppWindows10",
+        "IntuneMobileAppsStoreApp",
+        "IntuneMobileAppsSystemAppAndroid",
+        "IntuneMobileAppsWebLink",
+        "IntuneMobileAppsWin32AppWindows10",
+        "IntuneMobileAppsWindowsOfficeSuiteApp",
+        "IntuneRoleDefinition",
+        "IntuneSecurityBaselineDefenderForEndpoint",
+        "IntuneSecurityBaselineHoloLens2Advanced",
+        "IntuneSecurityBaselineHoloLens2Standard",
+        "IntuneSecurityBaselineMicrosoft365AppsForEnterprise",
+        "IntuneSecurityBaselineMicrosoftEdge",
+        "IntuneSecurityBaselineWindows10",
+        "IntuneSecurityBaselineWindows365",
+        "IntuneSettingCatalogASRRulesPolicyWindows10",
+        "IntuneSettingCatalogCustomPolicyWindows10",
+        "IntuneTermsAndConditions",
+        "IntuneTrustedRootCertificateAndroidDeviceOwner",
+        "IntuneTrustedRootCertificateAndroidWork",
+        "IntuneTrustedRootCertificateIOS",
+        "IntuneVPNConfigurationPolicyAndroidDeviceOwner",
+        "IntuneVPNConfigurationPolicyAndroidWork",
+        "IntuneVPNConfigurationPolicyIOS",
+        "IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner",
+        "IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile",
+        "IntuneWifiConfigurationPolicyAndroidForWork",
+        "IntuneWifiConfigurationPolicyAndroidOpenSourceProject",
+        "IntuneWifiConfigurationPolicyIOS",
+        "IntuneWifiConfigurationPolicyMacOS",
+        "IntuneWifiConfigurationPolicyWindows10",
+        "IntuneWindowsAutopilotDeploymentProfileAzureADHybridJoined",
+        "IntuneWindowsAutopilotDeploymentProfileAzureADJoined",
+        "IntuneWindowsAutopilotDevicePreparationAutomaticPolicy",
+        "IntuneWindowsAutopilotDevicePreparationUserDrivenPolicy",
+        "IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled",
+        "IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10",
+        "IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10",
+        "IntuneWindowsUpdateForBusinessHotpatchProfileWindows10",
+        "IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10",
+        "IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10"
+      ]
+    },
+    "IntunePolicySetsRoleScopeTags": {
+      "relations": [
+        {
+          "property": "RoleScopeTags",
+          "targetResource": "IntuneRoleScopeTag",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "IntunePolicySets"
+      ]
+    },
+    "AADGroupMembership": {
+      "relations": [
+        {
+          "property": "Owners",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName",
+          "condition": "$_ like '*@*'"
+        },
+        {
+          "property": "Owners",
+          "targetResource": "AADServicePrincipal",
+          "targetKeyProperty": "AppId",
+          "condition": "$_ notlike '*@*'"
+        },
+        {
+          "property": "Members",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName",
+          "condition": "$_ like '*@*'"
+        },
+        {
+          "property": "GroupAsMembers",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "MemberOf",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "AssignedToRole",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADGroup"
+      ]
+    },
+    "AADUserMembership": {
+      "relations": [
+        {
+          "property": "MemberOf",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "Roles",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADUser"
+      ]
+    },
+    "AADConditionalAccessPolicyRelations": {
+      "relations": [
+        {
+          "property": "IncludeUsers",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName",
+          "condition": "$_ like '*@*'"
+        },
+        {
+          "property": "ExcludeUsers",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName",
+          "condition": "$_ like '*@*'"
+        },
+        {
+          "property": "IncludeGroups",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "ExcludeGroups",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "IncludeRoles",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "ExcludeRoles",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "IncludeLocations",
+          "targetResource": "AADNamedLocationPolicy",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "ExcludeLocations",
+          "targetResource": "AADNamedLocationPolicy",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "IncludeServicePrincipals",
+          "targetResource": "AADServicePrincipal",
+          "targetKeyProperty": "AppId"
+        },
+        {
+          "property": "ExcludeServicePrincipals",
+          "targetResource": "AADServicePrincipal",
+          "targetKeyProperty": "AppId"
+        },
+        {
+          "property": "TermsOfUse",
+          "targetResource": "AADAgreement",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "AuthenticationStrength",
+          "targetResource": "AADAuthenticationStrengthPolicy",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADConditionalAccessPolicy"
+      ]
+    },
+    "AADDirectoryObjectOwners": {
+      "relations": [
+        {
+          "property": "Owners",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName",
+          "condition": "$_ like '*@*'"
+        },
+        {
+          "property": "Owners",
+          "targetResource": "AADServicePrincipal",
+          "targetKeyProperty": "AppId",
+          "condition": "$_ notlike '*@*'"
+        }
+      ],
+      "resources": [
+        "AADApplication",
+        "AADServicePrincipal"
+      ]
+    },
+    "AADAdministrativeUnitRelations": {
+      "relations": [
+        {
+          "property": "Members",
+          "childProperty": "Identity",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName",
+          "condition":"type eq 'User'"
+        },
+        {
+          "property": "Members",
+          "childProperty": "Identity",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName",
+          "condition": "type eq 'Group'"
+        },
+        /*
+        {
+          "property": "Members",
+          "childProperty": "Identity",
+          "targetResource": "AADDevice",
+          "targetKeyProperty": "DisplayName"
+        },
+        */
+        {
+          "property": "ScopedRoleMembers",
+          "childProperty": "RoleName",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "ScopedRoleMembers.RoleMemberInfo",
+          "childProperty": "Identity",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName",
+          "condition":"type eq 'Group'"
+        },
+        {
+          "property": "ScopedRoleMembers.RoleMemberInfo",
+          "childProperty": "Identity",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName",
+          "condition":"type eq 'User'"
+        },
+        {
+          "property": "ScopedRoleMembers.RoleMemberInfo",
+          "childProperty": "Identity",
+          "targetResource": "AADServicePrincipal",
+          "targetKeyProperty": "DisplayName",
+          "condition":"type eq 'ServicePrincipal'"
+        }
+      ],
+      "resources": [
+        "AADAdministrativeUnit"
+      ]
+    },
+    "AADDeviceRegistrationPolicyRelations": {
+      "relations": [
+        {
+          "property": "AzureADAllowedToJoinUsers",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        },
+        {
+          "property": "AzureADAllowedToJoinGroups",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "AzureAdJoinLocalAdminsRegisteringUsers",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        },
+        {
+          "property": "AzureAdJoinLocalAdminsRegisteringGroups",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADDeviceRegistrationPolicy"
+      ]
+    },
+    "AADFeatureRolloutPolicyRelations": {
+      "relations": [
+        {
+          "property": "AppliesTo",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADFeatureRolloutPolicy"
+      ]
+    },
+    "AADPIMGroupSettingRelations": {
+      "relations": [
+        {
+          "property": "DisplayName",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADPIMGroupSetting"
+      ]
+    },
+    "AADGroupsSettingsRelations": {
+      "relations": [
+        {
+          "property": "GroupCreationAllowedGroupName",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADGroupsSettings"
+      ]
+    },
+    "AADEntitlementManagementCatalogRelations": {
+      "relations": [
+        {
+          "property": "CatalogId",
+          "targetResource": "AADEntitlementManagementAccessPackageCatalog",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADEntitlementManagementAccessPackage",
+        "AADEntitlementManagementAccessPackageCatalogResource"
+      ]
+    },
+    "AADEntitlementManagementAccessPackageRelations": {
+      "relations": [
+        {
+          "property": "AccessPackageId",
+          "targetResource": "AADEntitlementManagementAccessPackage",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADEntitlementManagementAccessPackageAssignmentPolicy"
+      ]
+    },
+    // TODO: Add distinction between AADUser and AADGroup
+    /*
+    "AADEntitlementManagementConnectedOrganizationRelations": {
+      "relations": [
+        {
+          "property": "InternalSponsors",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        },
+        {
+          "property": "ExternalSponsors",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "AADEntitlementManagementConnectedOrganization"
+      ]
+    },
+    */
+    "AADRoleSettingRelations": {
+      "relations": [
+        {
+          "property": "DisplayName",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADRoleSetting"
+      ]
+    },
+    "AADRoleManagementPolicyRuleRelations": {
+      "relations": [
+        {
+          "property": "RoleDisplayName",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADRoleManagementPolicyRule"
+      ]
+    },
+    // TODO: Add distinction between AADUser, AADGroup and AADServicePrincipal
+    /*
+    "AADRoleScheduleRequestRelations": {
+      "relations": [
+        {
+          "property": "RoleDefinition",
+          "targetResource": "AADRoleDefinition",
+          "targetKeyProperty": "DisplayName"
+        },
+        {
+          "property": "Principal",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "AADRoleAssignmentScheduleRequest",
+        "AADRoleEligibilityScheduleRequest"
+      ]
+    },
+    */
+    "AADGroupEligibilityRelations": {
+      "relations": [
+        {
+          "property": "GroupDisplayName",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "AADGroupEligibilitySchedule",
+        "AADGroupEligibilityScheduleSettings"
+      ]
+    },
+    "AADGroupEligibilityScheduleRelations": {
+      "relations": [
+        {
+          "property": "Principal",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "AADGroupEligibilitySchedule"
+      ]
+    },
+    "AADFilteringPolicyRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "AADFilteringPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "AADFilteringPolicyRule"
+      ]
+    },
+    "AADFilteringProfileRelations": {
+      "relations": [
+        {
+          "property": "Policies",
+          "childProperty": "PolicyName",
+          "targetResource": "AADFilteringPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "AADFilteringProfile"
+      ]
+    },
+    "AADNetworkAccessForwardingProfileRelations": {
+      "relations": [
+        {
+          "property": "Policies",
+          "childProperty": "Name",
+          "targetResource": "AADNetworkAccessForwardingPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "AADNetworkAccessForwardingProfile"
+      ]
+    },
+    "AADRemoteNetworkRelations": {
+      "relations": [
+        {
+          "property": "ForwardingProfiles",
+          "targetResource": "AADNetworkAccessForwardingProfile",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "AADRemoteNetwork"
+      ]
+    },
+    "AADCustomSecurityAttributeDefinitionRelations": {
+      "relations": [
+        {
+          "property": "AttributeSet",
+          "targetResource": "AADAttributeSet",
+          "targetKeyProperty": "Id"
+        }
+      ],
+      "resources": [
+        "AADCustomSecurityAttributeDefinition"
+      ]
+    },
+
+    "EXOAntiPhishRuleRelations": {
+      "relations": [
+        {
+          "property": "AntiPhishPolicy",
+          "targetResource": "EXOAntiPhishPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOAntiPhishRule"
+      ]
+    },
+    "EXOHostedContentFilterRuleRelations": {
+      "relations": [
+        {
+          "property": "HostedContentFilterPolicy",
+          "targetResource": "EXOHostedContentFilterPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOHostedContentFilterRule"
+      ]
+    },
+    "EXOHostedOutboundSpamFilterRuleRelations": {
+      "relations": [
+        {
+          "property": "HostedOutboundSpamFilterPolicy",
+          "targetResource": "EXOHostedOutboundSpamFilterPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOHostedOutboundSpamFilterRule"
+      ]
+    },
+    "EXOMalwareFilterRuleRelations": {
+      "relations": [
+        {
+          "property": "MalwareFilterPolicy",
+          "targetResource": "EXOMalwareFilterPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOMalwareFilterRule"
+      ]
+    },
+    "EXOSafeAttachmentRuleRelations": {
+      "relations": [
+        {
+          "property": "SafeAttachmentPolicy",
+          "targetResource": "EXOSafeAttachmentPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOSafeAttachmentRule",
+        "EXOAtpProtectionPolicyRule"
+      ]
+    },
+    "EXOSafeLinksRuleRelations": {
+      "relations": [
+        {
+          "property": "SafeLinksPolicy",
+          "targetResource": "EXOSafeLinksPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOSafeLinksRule",
+        "EXOAtpProtectionPolicyRule"
+      ]
+    },
+    "EXOQuarantineTagRelations": {
+      "relations": [
+        {
+          "property": "QuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOMalwareFilterPolicy",
+        "EXOSafeAttachmentPolicy"
+      ]
+    },
+    "EXOHostedContentFilterPolicyQuarantineTags": {
+      "relations": [
+        {
+          "property": "BulkQuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "HighConfidencePhishQuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "HighConfidenceSpamQuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "PhishQuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "SpamQuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOHostedContentFilterPolicy"
+      ]
+    },
+    "EXOTeamsProtectionPolicyRelations": {
+      "relations": [
+        {
+          "property": "HighConfidencePhishQuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "MalwareQuarantineTag",
+          "targetResource": "EXOQuarantinePolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOTeamsProtectionPolicy"
+      ]
+    },
+    "EXOMailboxSettingsRelations": {
+      "relations": [
+        {
+          "property": "RetentionPolicy",
+          "targetResource": "EXORetentionPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "AddressBookPolicy",
+          "targetResource": "EXOAddressBookPolicy",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "RoleAssignmentPolicy",
+          "targetResource": "EXORoleAssignmentPolicy",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "SharingPolicy",
+          "targetResource": "EXOSharingPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXOMailboxSettings"
+      ]
+    },
+    "EXOMailboxPlanRelations": {
+      "relations": [
+        {
+          "property": "RetentionPolicy",
+          "targetResource": "EXORetentionPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "RoleAssignmentPolicy",
+          "targetResource": "EXORoleAssignmentPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXOMailboxPlan"
+      ]
+    },
+    "EXOCASMailboxRelations": {
+      "relations": [
+        {
+          "property": "OwaMailboxPolicy",
+          "targetResource": "EXOOwaMailboxPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXOCASMailboxPlan",
+        "EXOCASMailboxSettings"
+      ]
+    },
+    "EXOCASMailboxSettingsRelations": {
+      "relations": [
+        {
+          "property": "ActiveSyncMailboxPolicy",
+          "targetResource": "EXOActiveSyncMailboxPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOCASMailboxSettings"
+      ]
+    },
+    "EXOAddressBookPolicyRelations": {
+      "relations": [
+        {
+          "property": "AddressLists",
+          "targetResource": "EXOAddressList",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "GlobalAddressList",
+          "targetResource": "EXOGlobalAddressList",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "OfflineAddressBook",
+          "targetResource": "EXOOfflineAddressBook",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXOAddressBookPolicy"
+      ]
+    },
+    "EXOOfflineAddressBookRelations": {
+      "relations": [
+        {
+          "property": "AddressLists",
+          "targetResource": "EXOAddressList",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXOOfflineAddressBook"
+      ]
+    },
+    "EXORetentionPolicyRelations": {
+      "relations": [
+        {
+          "property": "RetentionPolicyTagLinks",
+          "targetResource": "EXORetentionPolicyTag",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXORetentionPolicy"
+      ]
+    },
+    "EXOManagementRoleLinks": {
+      "relations": [
+        {
+          "property": "Roles",
+          "targetResource": "EXOManagementRole",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXORoleAssignmentPolicy",
+        "EXORoleGroup"
+      ]
+    },
+    "EXOManagementRoleParent": {
+      "relations": [
+        {
+          "property": "Parent",
+          "targetResource": "EXOManagementRole",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXOManagementRole"
+      ]
+    },
+    "EXOManagementRoleAssignmentRelations": {
+      "relations": [
+        {
+          "property": "Role",
+          "targetResource": "EXOManagementRole",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "Policy",
+          "targetResource": "EXORoleAssignmentPolicy",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "SecurityGroup",
+          "targetResource": "EXORoleGroup",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "CustomRecipientWriteScope",
+          "targetResource": "EXOManagementScope",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "CustomResourceScope",
+          "targetResource": "EXOManagementScope",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "ExclusiveRecipientWriteScope",
+          "targetResource": "EXOManagementScope",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOManagementRoleAssignment"
+      ]
+    },
+    "EXOOnPremisesOrganizationRelations": {
+      "relations": [
+        {
+          "property": "InboundConnector",
+          "targetResource": "EXOInboundConnector",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "OutboundConnector",
+          "targetResource": "EXOOutboundConnector",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "OrganizationRelationship",
+          "targetResource": "EXOOrganizationRelationship",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "EXOOnPremisesOrganization"
+      ]
+    },
+    "EXOInboundConnectorRelations": {
+      "relations": [
+        {
+          "property": "AssociatedAcceptedDomains",
+          "targetResource": "EXOAcceptedDomain",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOInboundConnector"
+      ]
+    },
+    "EXOGroupSettingsRelations": {
+      "relations": [
+        {
+          "property": "DataEncryptionPolicy",
+          "targetResource": "EXODataEncryptionPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOGroupSettings"
+      ]
+    },
+    "EXODataAtRestEncryptionPolicyAssignmentRelations": {
+      "relations": [
+        {
+          "property": "DataEncryptionPolicy",
+          "targetResource": "EXODataAtRestEncryptionPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXODataAtRestEncryptionPolicyAssignment"
+      ]
+    },
+    "EXOAuthenticationPolicyAssignmentRelations": {
+      "relations": [
+        {
+          "property": "AuthenticationPolicyName",
+          "targetResource": "EXOAuthenticationPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "UserName",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "EXOAuthenticationPolicyAssignment"
+      ]
+    },
+    "EXOMigrationRelations": {
+      "relations": [
+        {
+          "property": "SourceEndpoint",
+          "targetResource": "EXOMigrationEndpoint",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "EXOMigration"
+      ]
+    },
+
+    "SCAutoSensitivityLabelRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "SCAutoSensitivityLabelPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCAutoSensitivityLabelRule"
+      ]
+    },
+    "SCCaseHoldRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "SCCaseHoldPolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCCaseHoldRule"
+      ]
+    },
+    "SCDLPComplianceRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "SCDLPCompliancePolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCDLPComplianceRule"
+      ]
+    },
+    "SCAdaptiveScopeLocationRelations": {
+      "relations": [
+        {
+          "property": "AdaptiveScopeLocation",
+          "targetResource": "SCAdaptiveScope",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCAppRetentionCompliancePolicy",
+        "SCRetentionCompliancePolicy"
+      ]
+    },
+    "SCAppRetentionComplianceRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "SCAppRetentionCompliancePolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCAppRetentionComplianceRule"
+      ]
+    },
+    "SCRetentionComplianceRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "SCRetentionCompliancePolicy",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCRetentionComplianceRule"
+      ]
+    },
+    "SCDeviceConditionalAccessRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "SCDeviceConditionalAccessPolicy",
+          "targetKeyProperty": "Name"
+        },
+        // Potentially not resolving correctly if `DisplayName` is incorrect
+        {
+          "property": "TargetGroups",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "SCDeviceConditionalAccessRule"
+      ]
+    },
+    "SCDeviceConfigurationRuleRelations": {
+      "relations": [
+        {
+          "property": "Policy",
+          "targetResource": "SCDeviceConfigurationPolicy",
+          "targetKeyProperty": "Name"
+        },
+        {
+          "property": "TargetGroups",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "SCDeviceConfigurationRule"
+      ]
+    },
+    "SCComplianceCaseRelations": {
+      "relations": [
+        {
+          "property": "Case",
+          "targetResource": "SCComplianceCase",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCCaseHoldPolicy",
+        "SCComplianceSearch"
+      ]
+    },
+    "SCComplianceSearchActionRelations": {
+      "relations": [
+        {
+          "property": "SearchName",
+          "targetResource": "SCComplianceSearch",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCComplianceSearchAction"
+      ]
+    },
+    "SCComplianceTagRelations": {
+      "relations": [
+        {
+          "property": "EventType",
+          "targetResource": "SCRetentionEventType",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCComplianceTag"
+      ]
+    },
+    "SCFilePlanPropertySubCategoryRelations": {
+      "relations": [
+        {
+          "property": "Category",
+          "targetResource": "SCFilePlanPropertyCategory",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCFilePlanPropertySubCategory"
+      ]
+    },
+    "SCSensitivityLabelRelations": {
+      "relations": [
+        {
+          "property": "ParentId",
+          "targetResource": "SCSensitivityLabel",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCSensitivityLabel"
+      ]
+    },
+    "SCLabelPolicyRelations": {
+      "relations": [
+        {
+          "property": "Labels",
+          "targetResource": "SCSensitivityLabel",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCLabelPolicy"
+      ]
+    },
+    "SCRoleGroupMemberRelations": {
+      "relations": [
+        {
+          "property": "Name",
+          "targetResource": "SCRoleGroup",
+          "targetKeyProperty": "Name"
+        }
+      ],
+      "resources": [
+        "SCRoleGroupMember"
+      ]
+    },
+    "SCSecurityFilterRelations": {
+      "relations": [
+        {
+          "property": "Users",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "SCSecurityFilter"
+      ]
+    },
+
+    "TeamsTeamRelations": {
+      "relations": [
+        {
+          "property": "Owner",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "TeamsTeam"
+      ]
+    },
+    "TeamsTeamMembership": {
+      "relations": [
+        {
+          "property": "TeamName",
+          "targetResource": "TeamsTeam",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "TeamsChannel",
+        "TeamsChannelTab",
+        "TeamsUser"
+      ]
+    },
+    "TeamsChannelTabRelations": {
+      "relations": [
+        {
+          "property": "ChannelName",
+          "targetResource": "TeamsChannel",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "TeamsChannelTab"
+      ]
+    },
+    "TeamsUserRelations": {
+      "relations": [
+        {
+          "property": "User",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "TeamsUser",
+        "TeamsUserPolicyAssignment"
+      ]
+    },
+    "TeamsUserPolicyAssignmentPolicies": {
+      "relations": [
+        {
+          "property": "OnlineVoicemailPolicy",
+          "targetResource": "TeamsOnlineVoicemailPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "OnlineVoiceRoutingPolicy",
+          "targetResource": "TeamsVoiceRoutingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsAppPermissionPolicy",
+          "targetResource": "TeamsAppPermissionPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsAppSetupPolicy",
+          "targetResource": "TeamsAppSetupPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsAudioConferencingPolicy",
+          "targetResource": "TeamsAudioConferencingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsCallHoldPolicy",
+          "targetResource": "TeamsCallHoldPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsCallingPolicy",
+          "targetResource": "TeamsCallingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsCallParkPolicy",
+          "targetResource": "TeamsCallParkPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsChannelsPolicy",
+          "targetResource": "TeamsChannelsPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsEmergencyCallingPolicy",
+          "targetResource": "TeamsEmergencyCallingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsEmergencyCallRoutingPolicy",
+          "targetResource": "TeamsEmergencyCallRoutingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsEnhancedEncryptionPolicy",
+          "targetResource": "TeamsEnhancedEncryptionPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsEventsPolicy",
+          "targetResource": "TeamsEventsPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsMeetingBroadcastPolicy",
+          "targetResource": "TeamsMeetingBroadcastPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsMeetingPolicy",
+          "targetResource": "TeamsMeetingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsMessagingPolicy",
+          "targetResource": "TeamsMessagingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsMobilityPolicy",
+          "targetResource": "TeamsMobilityPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsUpdateManagementPolicy",
+          "targetResource": "TeamsUpdateManagementPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TeamsUpgradePolicy",
+          "targetResource": "TeamsUpgradePolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "TenantDialPlan",
+          "targetResource": "TeamsTenantDialPlan",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "TeamsUserPolicyAssignment"
+      ]
+    },
+    "TeamsGroupPolicyAssignmentRelations": {
+      "relations": [
+        {
+          "property": "GroupDisplayName",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "TeamsGroupPolicyAssignment"
+      ]
+    },
+    "TeamsM365AppRelations": {
+      "relations": [
+        {
+          "property": "Users",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        },
+        {
+          "property": "Groups",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "TeamsM365App"
+      ]
+    },
+    "TeamsCallQueueRelations": {
+      "relations": [
+        {
+          "property": "Users",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        },
+        {
+          "property": "AuthorizedUsers",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        },
+        {
+          "property": "HideAuthorizedUsers",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "TeamsCallQueue"
+      ]
+    },
+    "TeamsNetworkSiteRelations": {
+      "relations": [
+        {
+          "property": "NetworkRegionID",
+          "targetResource": "TeamsTenantNetworkRegion",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "EmergencyCallingPolicy",
+          "targetResource": "TeamsEmergencyCallingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "EmergencyCallRoutingPolicy",
+          "targetResource": "TeamsEmergencyCallRoutingPolicy",
+          "targetKeyProperty": "Identity"
+        },
+        {
+          "property": "NetworkRoamingPolicy",
+          "targetResource": "TeamsNetworkRoamingPolicy",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "TeamsTenantNetworkSite"
+      ]
+    },
+    "TeamsNetworkSubnetRelations": {
+      "relations": [
+        {
+          "property": "NetworkSiteID",
+          "targetResource": "TeamsTenantNetworkSite",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "TeamsTenantNetworkSubnet"
+      ]
+    },
+    "TeamsNetworkRegionRelations": {
+      "relations": [
+        {
+          "property": "CentralSite",
+          "targetResource": "TeamsTenantNetworkSite",
+          "targetKeyProperty": "Identity"
+        }
+      ],
+      "resources": [
+        "TeamsTenantNetworkRegion"
+      ]
+    },
+    "TeamsPstnUsageRelations": {
+      "relations": [
+        {
+          "property": "OnlinePstnUsages",
+          "targetResource": "TeamsPstnUsage",
+          "targetKeyProperty": "Usage"
+        }
+      ],
+      "resources": [
+        "TeamsVoiceRoute",
+        "TeamsVoiceRoutingPolicy"
+      ]
+    },
+    "PlannerPlanRelations": {
+      "relations": [
+        {
+          "property": "OwnerGroup",
+          "targetResource": "AADGroup",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "PlannerPlan"
+      ]
+    },
+    "PPAdminDLPPolicyRelations": {
+      "relations": [
+        {
+          "property": "PolicyName",
+          "targetResource": "PPAdminDLPPolicy",
+          "targetKeyProperty": "DisplayName"
+        }
+      ],
+      "resources": [
+        "PPDLPPolicyConnectorConfigurations",
+        "PPPowerAppPolicyUrlPatterns"
+      ]
+    },
+    "VivaEngagementRoleMemberRelations": {
+      "relations": [
+        {
+          "property": "Members",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "VivaEngagementRoleMember"
+      ]
+    },
+    "O365GroupRelations": {
+      "relations": [
+        {
+          "property": "ManagedBy",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        },
+        {
+          "property": "Members",
+          "targetResource": "AADUser",
+          "targetKeyProperty": "UserPrincipalName"
+        }
+      ],
+      "resources": [
+        "O365Group"
       ]
     }
   }

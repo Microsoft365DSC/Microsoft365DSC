@@ -1,5 +1,37 @@
 {
   "resourceName": "IntuneFirewallPolicySetting",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceManagementReusablePolicySetting",
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "PolicySettings",
+      "reason": "Accepted",
+      "note": "Flattened from the settingInstance property"
+    },
+    {
+      "name": "ReferencingConfigurationPolicyCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "SettingDefinitionId",
+      "reason": "Accepted",
+      "note": "Set writes the fixed dynamic keywords addresses definition id on create and update."
+    },
+    {
+      "name": "SettingInstance",
+      "reason": "Accepted",
+      "note": "Set builds the envelope wholesale, taking three values from PolicySettings."
+    }
+  ],
   "description": "This resource configures an Intune Firewall Policy Setting.",
   "permissions": {
     "graph": {

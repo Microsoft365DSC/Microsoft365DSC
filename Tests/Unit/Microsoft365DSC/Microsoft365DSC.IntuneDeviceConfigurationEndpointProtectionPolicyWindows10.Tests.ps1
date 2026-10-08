@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ("tenantadmin@mydomain.com", $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ("tenantadmin@onmicrosoft.com", $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -42,10 +42,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                 return @{
                     localSecurityOptionsClearVirtualMemoryPageFile = $True
@@ -277,6 +280,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     localSecurityOptionsInformationShownOnLockScreen = "notConfigured"
                     defenderOfficeAppsLaunchChildProcessType = "userDefined"
                     deviceGuardSecureBootWithDMA = "notConfigured"
+                    deviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "FakeStringValue"
+                        MaxOSVersion = "FakeStringValue"
+                        RuleType = "include"
+                    }
                     applicationGuardAllowPrintToPDF = $True
                     userRightsCreateToken = @{
                         State = "notConfigured"
@@ -710,8 +729,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     BitLockerDisableWarningForOtherDiskEncryption = $True
                     BitLockerEnableStorageCardEncryptionOnMobile = $True
                     BitLockerEncryptDevice = $True
-                    bitLockerFixedDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerFixedDrivePolicy -Property @{
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                    bitLockerFixedDrivePolicy = ([MSFT_MicrosoftGraphbitLockerFixedDrivePolicy] @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -719,17 +738,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         RequireEncryptionForWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
+                    })
                     bitLockerRecoveryPasswordRotation = "notConfigured"
-                    bitLockerRemovableDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy -Property @{
+                    bitLockerRemovableDrivePolicy = ([MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy] @{
                         requireEncryptionForWriteAccess = $True
                         blockCrossOrganizationWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
-                    bitLockerSystemDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerSystemDrivePolicy -Property @{
+                    })
+                    bitLockerSystemDrivePolicy = ([MSFT_MicrosoftGraphbitLockerSystemDrivePolicy] @{
                         prebootRecoveryEnableMessageAndUrl = $True
                         StartupAuthenticationTpmPinUsage = "blocked"
                         encryptionMethod = "aesCbc128"
@@ -737,7 +756,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         prebootRecoveryMessage = "FakeStringValue"
                         StartupAuthenticationTpmPinAndKeyUsage = "blocked"
                         StartupAuthenticationRequired = $True
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -745,12 +764,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         prebootRecoveryUrl = "FakeStringValue"
                         StartupAuthenticationTpmUsage = "blocked"
                         StartupAuthenticationTpmKeyUsage = "blocked"
                         StartupAuthenticationBlockWithoutTpmChip = $True
-                    } -ClientOnly)
+                    })
                     defenderAdditionalGuardedFolders = @("FakeStringValue")
                     defenderAdobeReaderLaunchChildProcess = "userDefined"
                     defenderAdvancedRansomewareProtectionType = "userDefined"
@@ -772,12 +791,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderCloudBlockLevel = "notConfigured"
                     defenderCloudExtendedTimeoutInSeconds = 25
                     defenderDaysBeforeDeletingQuarantinedMalware = 25
-                    defenderDetectedMalwareActions = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions -Property @{
+                    defenderDetectedMalwareActions = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                         lowSeverity = "deviceDefault"
                         severeSeverity = "deviceDefault"
                         moderateSeverity = "deviceDefault"
                         highSeverity = "deviceDefault"
-                    } -ClientOnly)
+                    })
                     defenderDisableBehaviorMonitoring = $True
                     defenderDisableCatchupFullScan = $True
                     defenderDisableCatchupQuickScan = $True
@@ -858,6 +877,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     deviceGuardLaunchSystemGuard = "notConfigured"
                     deviceGuardLocalSystemAuthorityCredentialGuardSettings = "notConfigured"
                     deviceGuardSecureBootWithDMA = "notConfigured"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "FakeStringValue"
+                        MaxOSVersion = "FakeStringValue"
+                        RuleType = "include"
+                    })
                     displayName = "FakeStringValue"
                     dmaGuardDeviceEnumerationPolicy = "deviceDefault"
                     firewallBlockStatefulFTP = $True
@@ -871,7 +906,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     firewallMergeKeyingModuleSettings = $True
                     firewallPacketQueueingMethod = "deviceDefault"
                     firewallPreSharedKeyEncodingMethod = "deviceDefault"
-                    firewallProfileDomain = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    firewallProfileDomain = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -895,8 +930,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePrivate = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePrivate = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -920,8 +955,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePublic = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePublic = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -945,9 +980,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallRule -Property @{
+                    })
+                    firewallRules = @(
+                        ([MSFT_MicrosoftGraphwindowsFirewallRule] @{
                             localAddressRanges = @("FakeStringValue")
                             action = "notConfigured"
                             description = "FakeStringValue"
@@ -964,7 +999,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             localPortRanges = @("FakeStringValue")
                             profileTypes = "notConfigured"
                             edgeTraversal = "notConfigured"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     lanManagerAuthenticationLevel = "lmAndNltm"
@@ -1017,296 +1052,296 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     localSecurityOptionsVirtualizeFileAndRegistryWriteFailuresToPerUserLocations = $True
                     smartScreenBlockOverrideForFiles = $True
                     smartScreenEnableInShell = $True
-                    userRightsAccessCredentialManagerAsTrustedCaller = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    userRightsAccessCredentialManagerAsTrustedCaller = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsActAsPartOfTheOperatingSystem = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsActAsPartOfTheOperatingSystem = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsAllowAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsAllowAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBackupData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBackupData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBlockAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBlockAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsChangeSystemTime = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsChangeSystemTime = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateGlobalObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateGlobalObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePageFile = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePageFile = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePermanentSharedObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePermanentSharedObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateSymbolicLinks = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateSymbolicLinks = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateToken = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateToken = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDebugPrograms = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDebugPrograms = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDelegation = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDelegation = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDenyLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDenyLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsGenerateSecurityAudits = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsGenerateSecurityAudits = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsImpersonateClient = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsImpersonateClient = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsIncreaseSchedulingPriority = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsIncreaseSchedulingPriority = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLoadUnloadDrivers = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLoadUnloadDrivers = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLockMemory = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLockMemory = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageAuditingAndSecurityLogs = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageAuditingAndSecurityLogs = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageVolumes = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageVolumes = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyFirmwareEnvironment = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyFirmwareEnvironment = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyObjectLabels = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyObjectLabels = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsProfileSingleProcess = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsProfileSingleProcess = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteDesktopServicesLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteDesktopServicesLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteShutdown = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteShutdown = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRestoreData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRestoreData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsTakeOwnership = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsTakeOwnership = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
+                    })
                     windowsDefenderTamperProtection = "notConfigured"
                     xboxServicesAccessoryManagementServiceStartupMode = "manual"
                     xboxServicesEnableXboxGameSaveTask = $True
@@ -1322,13 +1357,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It "Should return Values from the Get method" {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -1356,8 +1391,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     BitLockerDisableWarningForOtherDiskEncryption = $True
                     BitLockerEnableStorageCardEncryptionOnMobile = $True
                     BitLockerEncryptDevice = $True
-                    bitLockerFixedDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerFixedDrivePolicy -Property @{
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                    bitLockerFixedDrivePolicy = ([MSFT_MicrosoftGraphbitLockerFixedDrivePolicy] @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -1365,17 +1400,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         RequireEncryptionForWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
+                    })
                     bitLockerRecoveryPasswordRotation = "notConfigured"
-                    bitLockerRemovableDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy -Property @{
+                    bitLockerRemovableDrivePolicy = ([MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy] @{
                         requireEncryptionForWriteAccess = $True
                         blockCrossOrganizationWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
-                    bitLockerSystemDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerSystemDrivePolicy -Property @{
+                    })
+                    bitLockerSystemDrivePolicy = ([MSFT_MicrosoftGraphbitLockerSystemDrivePolicy] @{
                         prebootRecoveryEnableMessageAndUrl = $True
                         StartupAuthenticationTpmPinUsage = "blocked"
                         encryptionMethod = "aesCbc128"
@@ -1383,7 +1418,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         prebootRecoveryMessage = "FakeStringValue"
                         StartupAuthenticationTpmPinAndKeyUsage = "blocked"
                         StartupAuthenticationRequired = $True
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -1391,12 +1426,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         prebootRecoveryUrl = "FakeStringValue"
                         StartupAuthenticationTpmUsage = "blocked"
                         StartupAuthenticationTpmKeyUsage = "blocked"
                         StartupAuthenticationBlockWithoutTpmChip = $True
-                    } -ClientOnly)
+                    })
                     defenderAdditionalGuardedFolders = @("FakeStringValue")
                     defenderAdobeReaderLaunchChildProcess = "userDefined"
                     defenderAdvancedRansomewareProtectionType = "userDefined"
@@ -1418,12 +1453,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderCloudBlockLevel = "notConfigured"
                     defenderCloudExtendedTimeoutInSeconds = 25
                     defenderDaysBeforeDeletingQuarantinedMalware = 25
-                    defenderDetectedMalwareActions = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions -Property @{
+                    defenderDetectedMalwareActions = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                         lowSeverity = "deviceDefault"
                         severeSeverity = "deviceDefault"
                         moderateSeverity = "deviceDefault"
                         highSeverity = "deviceDefault"
-                    } -ClientOnly)
+                    })
                     defenderDisableBehaviorMonitoring = $True
                     defenderDisableCatchupFullScan = $True
                     defenderDisableCatchupQuickScan = $True
@@ -1504,6 +1539,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     deviceGuardLaunchSystemGuard = "notConfigured"
                     deviceGuardLocalSystemAuthorityCredentialGuardSettings = "notConfigured"
                     deviceGuardSecureBootWithDMA = "notConfigured"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "FakeStringValue"
+                        MaxOSVersion = "FakeStringValue"
+                        RuleType = "include"
+                    })
                     displayName = "FakeStringValue"
                     dmaGuardDeviceEnumerationPolicy = "deviceDefault"
                     firewallBlockStatefulFTP = $True
@@ -1517,7 +1568,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     firewallMergeKeyingModuleSettings = $True
                     firewallPacketQueueingMethod = "deviceDefault"
                     firewallPreSharedKeyEncodingMethod = "deviceDefault"
-                    firewallProfileDomain = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    firewallProfileDomain = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -1541,8 +1592,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePrivate = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePrivate = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -1566,8 +1617,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePublic = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePublic = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -1591,9 +1642,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallRule -Property @{
+                    })
+                    firewallRules = @(
+                        ([MSFT_MicrosoftGraphwindowsFirewallRule] @{
                             localAddressRanges = @("FakeStringValue")
                             action = "notConfigured"
                             description = "FakeStringValue"
@@ -1610,7 +1661,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             localPortRanges = @("FakeStringValue")
                             profileTypes = "notConfigured"
                             edgeTraversal = "notConfigured"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     lanManagerAuthenticationLevel = "lmAndNltm"
@@ -1663,296 +1714,296 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     localSecurityOptionsVirtualizeFileAndRegistryWriteFailuresToPerUserLocations = $True
                     smartScreenBlockOverrideForFiles = $True
                     smartScreenEnableInShell = $True
-                    userRightsAccessCredentialManagerAsTrustedCaller = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    userRightsAccessCredentialManagerAsTrustedCaller = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsActAsPartOfTheOperatingSystem = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsActAsPartOfTheOperatingSystem = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsAllowAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsAllowAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBackupData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBackupData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBlockAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBlockAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsChangeSystemTime = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsChangeSystemTime = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateGlobalObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateGlobalObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePageFile = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePageFile = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePermanentSharedObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePermanentSharedObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateSymbolicLinks = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateSymbolicLinks = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateToken = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateToken = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDebugPrograms = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDebugPrograms = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDelegation = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDelegation = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDenyLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDenyLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsGenerateSecurityAudits = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsGenerateSecurityAudits = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsImpersonateClient = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsImpersonateClient = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsIncreaseSchedulingPriority = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsIncreaseSchedulingPriority = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLoadUnloadDrivers = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLoadUnloadDrivers = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLockMemory = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLockMemory = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageAuditingAndSecurityLogs = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageAuditingAndSecurityLogs = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageVolumes = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageVolumes = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyFirmwareEnvironment = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyFirmwareEnvironment = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyObjectLabels = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyObjectLabels = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsProfileSingleProcess = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsProfileSingleProcess = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteDesktopServicesLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteDesktopServicesLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteShutdown = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteShutdown = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRestoreData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRestoreData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsTakeOwnership = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsTakeOwnership = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
+                    })
                     windowsDefenderTamperProtection = "notConfigured"
                     xboxServicesAccessoryManagementServiceStartupMode = "manual"
                     xboxServicesEnableXboxGameSaveTask = $True
@@ -1965,15 +2016,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should return Values from the Get method" {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -2000,8 +2051,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     BitLockerDisableWarningForOtherDiskEncryption = $True
                     BitLockerEnableStorageCardEncryptionOnMobile = $True
                     BitLockerEncryptDevice = $True
-                    bitLockerFixedDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerFixedDrivePolicy -Property @{
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                    bitLockerFixedDrivePolicy = ([MSFT_MicrosoftGraphbitLockerFixedDrivePolicy] @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -2009,17 +2060,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         RequireEncryptionForWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
+                    })
                     bitLockerRecoveryPasswordRotation = "notConfigured"
-                    bitLockerRemovableDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy -Property @{
+                    bitLockerRemovableDrivePolicy = ([MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy] @{
                         requireEncryptionForWriteAccess = $True
                         blockCrossOrganizationWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
-                    bitLockerSystemDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerSystemDrivePolicy -Property @{
+                    })
+                    bitLockerSystemDrivePolicy = ([MSFT_MicrosoftGraphbitLockerSystemDrivePolicy] @{
                         prebootRecoveryEnableMessageAndUrl = $True
                         StartupAuthenticationTpmPinUsage = "blocked"
                         encryptionMethod = "aesCbc128"
@@ -2027,7 +2078,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         prebootRecoveryMessage = "FakeStringValue"
                         StartupAuthenticationTpmPinAndKeyUsage = "blocked"
                         StartupAuthenticationRequired = $True
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -2035,12 +2086,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         prebootRecoveryUrl = "FakeStringValue"
                         StartupAuthenticationTpmUsage = "blocked"
                         StartupAuthenticationTpmKeyUsage = "blocked"
                         StartupAuthenticationBlockWithoutTpmChip = $True
-                    } -ClientOnly)
+                    })
                     defenderAdditionalGuardedFolders = @("FakeStringValue")
                     defenderAdobeReaderLaunchChildProcess = "userDefined"
                     defenderAdvancedRansomewareProtectionType = "userDefined"
@@ -2062,12 +2113,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderCloudBlockLevel = "notConfigured"
                     defenderCloudExtendedTimeoutInSeconds = 25
                     defenderDaysBeforeDeletingQuarantinedMalware = 25
-                    defenderDetectedMalwareActions = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions -Property @{
+                    defenderDetectedMalwareActions = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                         lowSeverity = "deviceDefault"
                         severeSeverity = "deviceDefault"
                         moderateSeverity = "deviceDefault"
                         highSeverity = "deviceDefault"
-                    } -ClientOnly)
+                    })
                     defenderDisableBehaviorMonitoring = $True
                     defenderDisableCatchupFullScan = $True
                     defenderDisableCatchupQuickScan = $True
@@ -2148,6 +2199,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     deviceGuardLaunchSystemGuard = "notConfigured"
                     deviceGuardLocalSystemAuthorityCredentialGuardSettings = "notConfigured"
                     deviceGuardSecureBootWithDMA = "notConfigured"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "FakeStringValue"
+                        MaxOSVersion = "FakeStringValue"
+                        RuleType = "include"
+                    })
                     displayName = "FakeStringValue"
                     dmaGuardDeviceEnumerationPolicy = "deviceDefault"
                     firewallBlockStatefulFTP = $True
@@ -2161,7 +2228,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     firewallMergeKeyingModuleSettings = $True
                     firewallPacketQueueingMethod = "deviceDefault"
                     firewallPreSharedKeyEncodingMethod = "deviceDefault"
-                    firewallProfileDomain = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    firewallProfileDomain = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -2185,8 +2252,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePrivate = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePrivate = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -2210,8 +2277,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePublic = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePublic = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -2235,9 +2302,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallRule -Property @{
+                    })
+                    firewallRules = @(
+                        ([MSFT_MicrosoftGraphwindowsFirewallRule] @{
                             localAddressRanges = @("FakeStringValue")
                             action = "notConfigured"
                             description = "FakeStringValue"
@@ -2254,7 +2321,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             localPortRanges = @("FakeStringValue")
                             profileTypes = "notConfigured"
                             edgeTraversal = "notConfigured"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     lanManagerAuthenticationLevel = "lmAndNltm"
@@ -2307,296 +2374,296 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     localSecurityOptionsVirtualizeFileAndRegistryWriteFailuresToPerUserLocations = $True
                     smartScreenBlockOverrideForFiles = $True
                     smartScreenEnableInShell = $True
-                    userRightsAccessCredentialManagerAsTrustedCaller = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    userRightsAccessCredentialManagerAsTrustedCaller = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsActAsPartOfTheOperatingSystem = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsActAsPartOfTheOperatingSystem = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsAllowAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsAllowAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBackupData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBackupData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBlockAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBlockAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsChangeSystemTime = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsChangeSystemTime = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateGlobalObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateGlobalObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePageFile = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePageFile = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePermanentSharedObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePermanentSharedObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateSymbolicLinks = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateSymbolicLinks = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateToken = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateToken = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDebugPrograms = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDebugPrograms = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDelegation = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDelegation = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDenyLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDenyLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsGenerateSecurityAudits = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsGenerateSecurityAudits = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsImpersonateClient = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsImpersonateClient = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsIncreaseSchedulingPriority = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsIncreaseSchedulingPriority = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLoadUnloadDrivers = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLoadUnloadDrivers = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLockMemory = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLockMemory = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageAuditingAndSecurityLogs = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageAuditingAndSecurityLogs = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageVolumes = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageVolumes = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyFirmwareEnvironment = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyFirmwareEnvironment = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyObjectLabels = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyObjectLabels = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsProfileSingleProcess = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsProfileSingleProcess = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteDesktopServicesLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteDesktopServicesLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteShutdown = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteShutdown = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRestoreData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRestoreData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsTakeOwnership = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsTakeOwnership = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
+                    })
                     windowsDefenderTamperProtection = "notConfigured"
                     xboxServicesAccessoryManagementServiceStartupMode = "manual"
                     xboxServicesEnableXboxGameSaveTask = $True
@@ -2609,7 +2676,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -2636,8 +2703,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     BitLockerDisableWarningForOtherDiskEncryption = $True
                     BitLockerEnableStorageCardEncryptionOnMobile = $True
                     BitLockerEncryptDevice = $True
-                    bitLockerFixedDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerFixedDrivePolicy -Property @{
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                    bitLockerFixedDrivePolicy = ([MSFT_MicrosoftGraphbitLockerFixedDrivePolicy] @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -2645,17 +2712,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         RequireEncryptionForWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
+                    })
                     bitLockerRecoveryPasswordRotation = "notConfigured"
-                    bitLockerRemovableDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy -Property @{
+                    bitLockerRemovableDrivePolicy = ([MSFT_MicrosoftGraphbitLockerRemovableDrivePolicy] @{
                         requireEncryptionForWriteAccess = $True
                         blockCrossOrganizationWriteAccess = $True
                         encryptionMethod = "aesCbc128"
-                    } -ClientOnly)
-                    bitLockerSystemDrivePolicy = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerSystemDrivePolicy -Property @{
+                    })
+                    bitLockerSystemDrivePolicy = ([MSFT_MicrosoftGraphbitLockerSystemDrivePolicy] @{
                         prebootRecoveryEnableMessageAndUrl = $True
                         StartupAuthenticationTpmPinUsage = "blocked"
                         encryptionMethod = "aesCbc128"
@@ -2663,7 +2730,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         prebootRecoveryMessage = "FakeStringValue"
                         StartupAuthenticationTpmPinAndKeyUsage = "blocked"
                         StartupAuthenticationRequired = $True
-                        RecoveryOptions = (New-CimInstance -ClassName MSFT_MicrosoftGraphbitLockerRecoveryOptions -Property @{
+                        RecoveryOptions = ([MSFT_MicrosoftGraphBitLockerRecoveryOptions] @{
                             RecoveryInformationToStore = "passwordAndKey"
                             HideRecoveryOptions = $True
                             BlockDataRecoveryAgent = $True
@@ -2671,12 +2738,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             EnableBitLockerAfterRecoveryInformationToStore = $True
                             EnableRecoveryInformationSaveToStore = $True
                             RecoveryPasswordUsage = "blocked"
-                        } -ClientOnly)
+                        })
                         prebootRecoveryUrl = "FakeStringValue"
                         StartupAuthenticationTpmUsage = "blocked"
                         StartupAuthenticationTpmKeyUsage = "blocked"
                         StartupAuthenticationBlockWithoutTpmChip = $True
-                    } -ClientOnly)
+                    })
                     defenderAdditionalGuardedFolders = @("FakeStringValue")
                     defenderAdobeReaderLaunchChildProcess = "userDefined"
                     defenderAdvancedRansomewareProtectionType = "userDefined"
@@ -2698,12 +2765,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderCloudBlockLevel = "notConfigured"
                     defenderCloudExtendedTimeoutInSeconds = 25
                     defenderDaysBeforeDeletingQuarantinedMalware = 25
-                    defenderDetectedMalwareActions = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions -Property @{
+                    defenderDetectedMalwareActions = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                         lowSeverity = "deviceDefault"
                         severeSeverity = "deviceDefault"
                         moderateSeverity = "deviceDefault"
                         highSeverity = "deviceDefault"
-                    } -ClientOnly)
+                    })
                     defenderDisableBehaviorMonitoring = $True
                     defenderDisableCatchupFullScan = $True
                     defenderDisableCatchupQuickScan = $True
@@ -2784,6 +2851,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     deviceGuardLaunchSystemGuard = "notConfigured"
                     deviceGuardLocalSystemAuthorityCredentialGuardSettings = "notConfigured"
                     deviceGuardSecureBootWithDMA = "notConfigured"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        Name = "DifferentValue"
+                        DeviceMode = "sModeConfiguration"
+                        RuleType = "exclude"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        Name = "DifferentValue"
+                        OsEditionTypes = @("windows10Education")
+                        RuleType = "exclude"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        Name = "DifferentValue"
+                        MinOSVersion = "DifferentValue"
+                        MaxOSVersion = "DifferentValue"
+                        RuleType = "exclude"
+                    })
                     displayName = "FakeStringValue"
                     dmaGuardDeviceEnumerationPolicy = "deviceDefault"
                     firewallBlockStatefulFTP = $True
@@ -2797,7 +2880,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     firewallMergeKeyingModuleSettings = $True
                     firewallPacketQueueingMethod = "deviceDefault"
                     firewallPreSharedKeyEncodingMethod = "deviceDefault"
-                    firewallProfileDomain = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    firewallProfileDomain = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -2821,8 +2904,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePrivate = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePrivate = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -2846,8 +2929,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallProfilePublic = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallNetworkProfile -Property @{
+                    })
+                    firewallProfilePublic = ([MSFT_MicrosoftGraphwindowsFirewallNetworkProfile] @{
                         policyRulesFromGroupPolicyNotMerged = $True
                         inboundConnectionsRequired = $True
                         securedPacketExemptionAllowed = $True
@@ -2871,9 +2954,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         inboundNotificationsBlocked = $True
                         connectionSecurityRulesFromGroupPolicyMerged = $True
                         authorizedApplicationRulesFromGroupPolicyNotMerged = $True
-                    } -ClientOnly)
-                    firewallRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsFirewallRule -Property @{
+                    })
+                    firewallRules = @(
+                        ([MSFT_MicrosoftGraphwindowsFirewallRule] @{
                             localAddressRanges = @("FakeStringValue")
                             action = "notConfigured"
                             description = "FakeStringValue"
@@ -2890,7 +2973,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             localPortRanges = @("FakeStringValue")
                             profileTypes = "notConfigured"
                             edgeTraversal = "notConfigured"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     lanManagerAuthenticationLevel = "lmAndNltm"
@@ -2943,296 +3026,296 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     localSecurityOptionsVirtualizeFileAndRegistryWriteFailuresToPerUserLocations = $True
                     smartScreenBlockOverrideForFiles = $True
                     smartScreenEnableInShell = $True
-                    userRightsAccessCredentialManagerAsTrustedCaller = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    userRightsAccessCredentialManagerAsTrustedCaller = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsActAsPartOfTheOperatingSystem = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsActAsPartOfTheOperatingSystem = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsAllowAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsAllowAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBackupData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBackupData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsBlockAccessFromNetwork = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsBlockAccessFromNetwork = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsChangeSystemTime = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsChangeSystemTime = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateGlobalObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateGlobalObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePageFile = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePageFile = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreatePermanentSharedObjects = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreatePermanentSharedObjects = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateSymbolicLinks = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateSymbolicLinks = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsCreateToken = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsCreateToken = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDebugPrograms = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDebugPrograms = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDelegation = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDelegation = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsDenyLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsDenyLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsGenerateSecurityAudits = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsGenerateSecurityAudits = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsImpersonateClient = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsImpersonateClient = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsIncreaseSchedulingPriority = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsIncreaseSchedulingPriority = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLoadUnloadDrivers = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLoadUnloadDrivers = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLocalLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLocalLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsLockMemory = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsLockMemory = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageAuditingAndSecurityLogs = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageAuditingAndSecurityLogs = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsManageVolumes = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsManageVolumes = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyFirmwareEnvironment = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyFirmwareEnvironment = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsModifyObjectLabels = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsModifyObjectLabels = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsProfileSingleProcess = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsProfileSingleProcess = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteDesktopServicesLogOn = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteDesktopServicesLogOn = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRemoteShutdown = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRemoteShutdown = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsRestoreData = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsRestoreData = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
-                    userRightsTakeOwnership = (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsSetting -Property @{
+                    })
+                    userRightsTakeOwnership = ([MSFT_MicrosoftGraphdeviceManagementUserRightsSetting] @{
                         State = "notConfigured"
-                        LocalUsersOrGroups = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceManagementUserRightsLocalUserOrGroup -Property @{
+                        LocalUsersOrGroups = @(
+                            ([MSFT_MicrosoftGraphDeviceManagementUserRightsLocalUserOrGroup] @{
                                 Description = "FakeStringValue"
                                 Name = "FakeStringValue"
                                 SecurityIdentifier = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
+                    })
                     windowsDefenderTamperProtection = "notConfigured"
                     xboxServicesAccessoryManagementServiceStartupMode = "manual"
                     xboxServicesEnableXboxGameSaveTask = $True
@@ -3245,15 +3328,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should return Values from the Get method" {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It "Should call the Set method" {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -3268,7 +3351,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should Reverse Engineer resource from the Export method" {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

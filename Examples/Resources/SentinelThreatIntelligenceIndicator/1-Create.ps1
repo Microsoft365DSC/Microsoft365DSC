@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,26 +19,33 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        SentinelThreatIntelligenceIndicator "SentinelThreatIntelligenceIndicator-ipv6-addr Indicator"
+        SentinelThreatIntelligenceIndicator "SentinelThreatIntelligenceIndicator-Example"
         {
-            ApplicationId          = $ApplicationId;
-            CertificateThumbprint  = $CertificateThumbprint;
-            DisplayName            = "MyIndicator";
+            Confidence             = 80;
+            Description            = "Command-and-control host observed in a credential phishing campaign against the finance department";
+            DisplayName            = "Known phishing domain";
             Ensure                 = "Present";
-            Labels                 = @("Tag1", "Tag2");
+            KillChainPhases        = @("Command and Control");
+            Labels                 = @("Phishing", "Command and Control");
             Pattern                = "[ipv6-addr:value = '2607:fa49:d340:f600:c8d5:6961:247f:a238']";
             PatternType            = "ipv6-addr";
-            ResourceGroupName      = "MyResourceGroup";
+            ResourceGroupName      = "<resource-group-name>";
+            Revoked                = "false";
             Source                 = "Microsoft Sentinel";
-            SubscriptionId         = "12345-12345-12345-12345-12345";
+            SubscriptionId         = "<subscription-id>";
+            ThreatIntelligenceTags = @("Finance Phishing Campaign", "Reviewed By SOC");
+            ThreatTypes            = @("malicious-activity");
+            ValidFrom              = "2026-01-01T00:00:00.0000000Z";
+            ValidUntil             = "2026-12-31T00:00:00.0000000Z";
+            WorkspaceName          = "<log-analytics-workspace-name>";
+            ApplicationId          = $ApplicationId;
             TenantId               = $TenantId;
-            ThreatIntelligenceTags = @();
-            ValidFrom              = "2024-10-21T19:03:57.24Z";
-            ValidUntil             = "2024-10-21T19:03:57.24Z";
-            WorkspaceName          = "SentinelWorkspace";
+            CertificateThumbprint  = $CertificateThumbprint;
         }
     }
 }

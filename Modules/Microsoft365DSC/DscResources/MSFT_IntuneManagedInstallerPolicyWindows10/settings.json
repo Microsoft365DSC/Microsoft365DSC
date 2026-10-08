@@ -1,48 +1,131 @@
 {
   "resourceName": "IntuneManagedInstallerPolicyWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceHealthScript",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementDeviceHealthScript",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DetectionScriptContent",
+      "reason": "Accepted",
+      "note": "Set writes a fixed base64 placeholder on create and null on update."
+    },
+    {
+      "name": "DetectionScriptParameters",
+      "reason": "Accepted",
+      "note": "Set always writes the single Enabled parameter, defaulted from IsIntuneManagedInstaller."
+    },
+    {
+      "name": "DeviceHealthScriptType",
+      "reason": "Accepted",
+      "note": "Set always writes managedInstallerScript, and the resource filters reads and exports on it."
+    },
+    {
+      "name": "EnforceSignatureCheck",
+      "reason": "Accepted",
+      "note": "Set always writes true on both paths."
+    },
+    {
+      "name": "HighestAvailableVersion",
+      "reason": "ReadOnly",
+      "note": "Only populated for Microsoft proprietary scripts, which this resource never creates."
+    },
+    {
+      "name": "IsGlobalScript",
+      "reason": "Accepted",
+      "note": "Set writes false because created policies are never Microsoft provided global scripts."
+    },
+    {
+      "name": "IsIntuneManagedInstaller",
+      "reason": "Accepted",
+      "note": "Indicates whether the Intune managed installer is enabled"
+    },
+    {
+      "name": "Publisher",
+      "reason": "Accepted",
+      "note": "Not used in the Intune managed installer."
+    },
+    {
+      "name": "RemediationScriptContent",
+      "reason": "Accepted",
+      "note": "Set writes a fixed placeholder on create and null on update"
+    },
+    {
+      "name": "RemediationScriptParameters",
+      "reason": "Accepted",
+      "note": "Not used in the Intune managed installer."
+    },
+    {
+      "name": "RunAs32Bit",
+      "reason": "Accepted",
+      "note": "Not used in the Intune managed installer."
+    },
+    {
+      "name": "RunAsAccount",
+      "reason": "Accepted",
+      "note": "Not used in the Intune managed installer."
+    }
+  ],
   "description": "This resource configures an Intune Managed Installer Policy for Windows 10.",
   "permissions": {
     "graph": {
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementScripts.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementScripts.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.DeviceManagement",
     "Microsoft.Graph.Groups"
   ],
@@ -53,17 +136,12 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.DeviceManagement",
       "cmdlets": [
         "Get-MgBetaDeviceManagementAssignmentFilter",
         "Get-MgBetaDeviceManagementDeviceHealthScript",
         "Get-MgBetaDeviceManagementDeviceHealthScriptAssignment",
+        "New-MgBetaDeviceManagementDeviceHealthScript",
         "Remove-MgBetaDeviceManagementDeviceHealthScript",
         "Update-MgBetaDeviceManagementDeviceHealthScript"
       ]

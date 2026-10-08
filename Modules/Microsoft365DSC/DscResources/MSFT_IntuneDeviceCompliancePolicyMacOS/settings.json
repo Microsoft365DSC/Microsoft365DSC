@@ -1,41 +1,102 @@
 {
   "resourceName": "IntuneDeviceCompliancePolicyMacOS",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceCompliancePolicy",
+    "odataSubtype": "macOSCompliancePolicy",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceCompliancePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeviceSettingStateSummaries",
+      "reason": "ReadOnly",
+      "note": "Per-setting compliance report the service computes from device counts"
+    },
+    {
+      "name": "DeviceStatuses",
+      "reason": "ReadOnly",
+      "note": "One entry per evaluated device, populated as devices check in"
+    },
+    {
+      "name": "DeviceStatusOverview",
+      "reason": "ReadOnly",
+      "note": "Aggregate rollup of device compliance counts the service computes"
+    },
+    {
+      "name": "UserStatuses",
+      "reason": "ReadOnly",
+      "note": "One entry per evaluated user, populated from device check-ins"
+    },
+    {
+      "name": "UserStatusOverview",
+      "reason": "ReadOnly",
+      "note": "Aggregate rollup of user compliance counts the service computes"
+    }
+  ],
   "description": "This resource configures the settings of MacOS compliance policies in your cloud-based organization.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
@@ -44,8 +105,7 @@
   "requiredModules": [
     "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.DeviceManagement",
-    "Microsoft.Graph.Groups",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Groups"
   ],
   "supportedEnvironments": [
     "Global",
@@ -66,6 +126,7 @@
         "Get-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Get-MgBetaDeviceManagementDeviceCompliancePolicyAssignment",
         "Get-MgBetaDeviceManagementNotificationMessageTemplate",
+        "Invoke-MgBetaScheduleDeviceManagementDeviceCompliancePolicyActionForRule",
         "New-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Remove-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Update-MgBetaDeviceManagementDeviceCompliancePolicy"
@@ -75,12 +136,6 @@
       "module": "Microsoft.Graph.Groups",
       "cmdlets": [
         "Get-MgGroup"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

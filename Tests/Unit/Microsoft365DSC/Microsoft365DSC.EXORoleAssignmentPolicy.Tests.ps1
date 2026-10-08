@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -44,6 +44,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             Mock -CommandName Remove-RoleAssignmentPolicy -MockWith {
+            }
+
+            Mock -CommandName Get-ManagementRoleAssignment -MockWith {
+                return @(
+                    @{ Name = 'MyPersonalInformation-Contoso Role Assignment Policy' },
+                    @{ Name = 'MyDistributionGroupMembership-Contoso Role Assignment Policy' }
+                )
+            }
+
+            Mock -CommandName Remove-ManagementRoleAssignment -MockWith {
             }
 
             Mock -CommandName Get-RoleAssignmentPolicy -MockWith {
@@ -80,16 +90,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName New-RoleAssignmentPolicy -Exactly 1
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
         }
 
@@ -106,11 +116,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -127,12 +137,32 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-RoleAssignmentPolicy -Exactly 1
+            }
+        }
+
+        Context -Name 'Role Assignment Policy should not exist. Role Assignment Policy exists. Test should fail.' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Name       = 'Contoso Role Assignment Policy'
+                    Ensure     = 'Absent'
+                    Credential = $Credential
+                }
+            }
+
+            It 'Should return false from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Test() | Should -Be $false
+            }
+
+            It 'Should remove the role assignments and then the policy from the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'EXORoleAssignmentPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Remove-ManagementRoleAssignment -Exactly 2
+                Should -Invoke -CommandName Remove-RoleAssignmentPolicy -Exactly 1 -ParameterFilter { $Identity -eq 'Contoso Role Assignment Policy' }
             }
         }
 
@@ -146,7 +176,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method when single' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXORoleAssignmentPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

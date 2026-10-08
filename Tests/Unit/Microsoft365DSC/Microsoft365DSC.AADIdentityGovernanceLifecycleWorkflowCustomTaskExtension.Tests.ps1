@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -91,22 +91,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CallbackConfiguration = (New-CIMInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration -Property @{
+                    CallbackConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration] @{
                         TimeoutDuration = 'PT34M'
                         AuthorizedApps = @('M365DSC')
-                    } -ClientOnly)
-                    ClientConfiguration   = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration -Property @{
+                    })
+                    ClientConfiguration   = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration] @{
                         MaximumRetries = 1
                         TimeoutInMilliseconds = 1000
-                    } -ClientOnly)
+                    })
                     Description           = "My Description";
                     DisplayName           = "My Custom Extension";
-                    EndpointConfiguration = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration -Property @{
+                    EndpointConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration] @{
                         SubscriptionId =       '63e62ab2-fd92-46ce-a393-2cb338039cc7'
                         logicAppWorkflowName = 'MyTestApp'
                         resourceGroupName =    'TestRG'
                         url = 'https://prod-35.eastus.logic.azure.com:443/workflows/xxxxxxxxxxx/triggers/manual/paths/invoke?api-version=2016-10-01'
-                    } -ClientOnly)
+                    })
                     Ensure                = "Present";
                     Credential          = $Credential;
                 }
@@ -116,14 +116,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create a new instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaIdentityGovernanceLifecycleWorkflowCustomTaskExtension -Exactly 1
             }
         }
@@ -131,35 +131,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CallbackConfiguration = (New-CIMInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration -Property @{
+                    CallbackConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration] @{
                         TimeoutDuration = 'PT34M'
                         AuthorizedApps = @('M365DSC')
-                    } -ClientOnly)
-                    ClientConfiguration   = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration -Property @{
+                    })
+                    ClientConfiguration   = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration] @{
                         MaximumRetries = 1
                         TimeoutInMilliseconds = 1000
-                    } -ClientOnly)
+                    })
                     Description           = "My Description";
                     DisplayName           = "My Custom Extension";
-                    EndpointConfiguration = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration -Property @{
+                    EndpointConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration] @{
                         SubscriptionId =       '63e62ab2-fd92-46ce-a393-2cb338039cc7'
                         logicAppWorkflowName = 'MyTestApp'
                         resourceGroupName =    'TestRG'
                         url = 'https://prod-35.eastus.logic.azure.com:443/workflows/xxxxxxxxxxx/triggers/manual/paths/invoke?api-version=2016-10-01'
-                    } -ClientOnly)
+                    })
                     Ensure                = "Absent";
                     Credential          = $Credential;
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaIdentityGovernanceLifecycleWorkflowCustomTaskExtension -Exactly 1
             }
         }
@@ -167,22 +167,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance exists and values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CallbackConfiguration = (New-CIMInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration -Property @{
+                    CallbackConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration] @{
                         TimeoutDuration = 'PT34M'
                         AuthorizedApps = @('M365DSC')
-                    } -ClientOnly)
-                    ClientConfiguration   = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration -Property @{
+                    })
+                    ClientConfiguration   = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration] @{
                         MaximumRetries = 1
                         TimeoutInMilliseconds = 1000
-                    } -ClientOnly)
+                    })
                     Description           = "My Description";
                     DisplayName           = "My Custom Extension";
-                    EndpointConfiguration = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration -Property @{
+                    EndpointConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration] @{
                         SubscriptionId =       '63e62ab2-fd92-46ce-a393-2cb338039cc7'
                         logicAppWorkflowName = 'MyTestApp'
                         resourceGroupName =    'TestRG'
                         url = 'https://prod-35.eastus.logic.azure.com:443/workflows/xxxxxxxxxxx/triggers/manual/paths/invoke?api-version=2016-10-01'
-                    } -ClientOnly)
+                    })
                     Ensure                = "Present";
                     Credential          = $Credential;
                 }
@@ -222,44 +222,44 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The instance exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CallbackConfiguration = (New-CIMInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration -Property @{
+                    CallbackConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionCallbackConfiguration] @{
                         TimeoutDuration = 'PT34M'
                         AuthorizedApps = @('M365DSC')
-                    } -ClientOnly)
-                    ClientConfiguration   = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration -Property @{
+                    })
+                    ClientConfiguration   = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionClientConfiguration] @{
                         MaximumRetries = 2 # Drift
                         TimeoutInMilliseconds = 1000
-                    } -ClientOnly)
+                    })
                     Description           = "My Description";
                     DisplayName           = "My Custom Extension";
-                    EndpointConfiguration = (New-CimInstance -ClassName MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration -Property @{
+                    EndpointConfiguration = ([MSFT_AADIdentityGovernanceLifecycleWorkflowCustomTaskExtensionEndpointConfiguration] @{
                         SubscriptionId =       '63e62ab2-fd92-46ce-a393-2cb338039cc7'
                         logicAppWorkflowName = 'MyTestApp'
                         resourceGroupName =    'TestRG'
                         url = 'https://prod-35.eastus.logic.azure.com:443/workflows/xxxxxxxxxxx/triggers/manual/paths/invoke?api-version=2016-10-01'
-                    } -ClientOnly)
+                    })
                     Ensure                = "Present";
                     Credential          = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaIdentityGovernanceLifecycleWorkflowCustomTaskExtension -Exactly 1
             }
         }
@@ -273,7 +273,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

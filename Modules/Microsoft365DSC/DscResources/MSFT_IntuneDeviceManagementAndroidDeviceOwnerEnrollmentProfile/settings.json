@@ -1,5 +1,47 @@
 {
   "resourceName": "IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "androidDeviceOwnerEnrollmentProfile",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "EnrolledDeviceCount",
+      "reason": "ReadOnly",
+      "note": "Intune maintains this count of enrolled devices"
+    },
+    {
+      "name": "EnrollmentTokenUsageCount",
+      "reason": "ReadOnly",
+      "note": "Intune increments this count as devices enroll"
+    },
+    {
+      "name": "QrCodeContent",
+      "reason": "ReadOnly",
+      "note": "Generated from the enrollment token Intune returns for the profile"
+    },
+    {
+      "name": "QrCodeImage",
+      "reason": "ReadOnly",
+      "note": "Rendered form of QrCodeContent, produced by the service alongside the token"
+    },
+    {
+      "name": "TokenCreationDateTime",
+      "reason": "ReadOnly",
+      "note": "Intune stamps this timestamp when it creates the enrollment token"
+    },
+    {
+      "name": "TokenValue",
+      "reason": "ReadOnly",
+      "note": "Intune generates this enrollment token value for the profile"
+    }
+  ],
   "description": "Enrollment Profile used to enroll Android Enterprise devices using Google's Cloud Management.",
   "permissions": {
     "graph": {
@@ -7,11 +49,17 @@
         "read": [
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -19,11 +67,17 @@
         "read": [
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

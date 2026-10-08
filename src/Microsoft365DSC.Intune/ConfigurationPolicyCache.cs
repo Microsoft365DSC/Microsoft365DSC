@@ -9,11 +9,11 @@ namespace Microsoft365DSC.Intune
     /// </summary>
     public static class ConfigurationPolicyCache
     {
-        private static readonly ConcurrentDictionary<string, List<object>> _cache = new();
-        private static volatile bool _isPopulated;
+        private static readonly ConcurrentDictionary<string, object[]> _cache = new();
+        private static bool _isPopulated;
         private static readonly object _lock = new();
 
-        public static void Populate(IEnumerable<object> allPolicies, Func<object, string> templateIdSelector)
+        public static void Populate(IEnumerable<object>? allPolicies, Func<object, string> templateIdSelector)
         {
             lock (_lock)
             {
@@ -26,22 +26,31 @@ namespace Microsoft365DSC.Intune
                     return;
                 }
 
+                var grouped = new Dictionary<string, List<object>>(StringComparer.OrdinalIgnoreCase);
                 foreach (var policy in allPolicies)
                 {
                     string templateId = templateIdSelector(policy);
                     if (string.IsNullOrEmpty(templateId))
                         continue;
 
-                    _cache.AddOrUpdate(templateId,
-                        _ => [policy],
-                        (_, list) => {list.Add(policy); return list; });
+                    if (!grouped.TryGetValue(templateId, out var policies))
+                    {
+                        policies = [];
+                        grouped[templateId] = policies;
+                    }
+                    policies.Add(policy);
+                }
+
+                foreach (var entry in grouped)
+                {
+                    _cache[entry.Key] = entry.Value.ToArray();
                 }
                 _isPopulated = true;
             }
         }
 
-        public static List<object>? GetByTemplateId(string templateId) =>
-            _cache.TryGetValue(templateId, out var list) ? list : null;
+        public static object[]? GetByTemplateId(string templateId) =>
+            _cache.TryGetValue(templateId, out var policies) ? policies : null;
 
         public static void Reset()
         {

@@ -4,7 +4,8 @@ This example creates a new Device Enrollment Status Page.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,11 +18,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceEnrollmentStatusPageWindows10 '6b43c039-c1d0-4a9f-aab9-48c5531acbd6'
+        IntuneDeviceEnrollmentStatusPageWindows10 'IntuneDeviceEnrollmentStatusPageWindows10-Example'
         {
             AllowDeviceResetOnInstallFailure        = $True;
             AllowDeviceUseOnInstallFailure          = $False; # Updated Property
@@ -30,24 +32,25 @@ Configuration Example
             Assignments                             = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
+                    dataType                                   = '#microsoft.graph.groupAssignmentTarget'
+                    groupDisplayName                           = 'Intune Pilot Devices'
                 }
             );
             BlockDeviceSetupRetryByUser             = $False;
             CustomErrorMessage                      = "Setup could not be completed. Please try again or contact your support person for help.";
-            Description                             = "This is the default enrollment status screen configuration applied with the lowest priority to all users and all devices regardless of group membership.";
+            Description                             = "Tracks app and policy installation while Autopilot provisions corporate devices";
             DisableUserStatusTrackingAfterFirstUser = $True;
-            DisplayName                             = "All users and all devices";
+            DisplayName                             = "Autopilot Device Setup Status";
             Ensure                                  = "Present";
             InstallProgressTimeoutInMinutes         = 60;
             InstallQualityUpdates                   = $False;
-            Priority                                = 0;
+            RoleScopeTagIds                         = @("0");
             SelectedMobileAppIds                    = @();
             ShowInstallationProgress                = $True;
             TrackInstallProgressForAutopilotOnly    = $True;
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                           = $ApplicationId;
+            TenantId                                = $TenantId;
+            CertificateThumbprint                   = $CertificateThumbprint;
         }
     }
 }

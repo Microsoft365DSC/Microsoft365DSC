@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -80,11 +80,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    AllowedValues           = [CimInstance[]]@(
-                        New-CimInstance -ClassName 'MSFT_CustomSecurityAttributeAllowedValue' -Property @{
+                    AllowedValues           = @(
+                        [MSFT_CustomSecurityAttributeAllowedValue] @{
                             ValueId  = "Test"
                             IsActive = $True
-                        } -ClientOnly
+                        }
                     )
                     ApplicationId           = $ApplicationId;
                     AttributeSet            = "ContosoSet";
@@ -106,16 +106,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
+                Should -Invoke -CommandName Get-MgBetaDirectoryCustomSecurityAttributeDefinition -ParameterFilter {
+                    $Filter -eq "attributeSet eq 'ContosoSet' and name eq 'ShoeSize'"
+                } -Exactly 1
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create a new instance from the Set method' {
-                ##TODO - Replace the New-Cmdlet by the appropriate one
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName New-MgBetaDirectoryCustomSecurityAttributeDefinition -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaDirectoryCustomSecurityAttributeDefinition -ParameterFilter {
+                    $BodyParameter.AllowedValues[0].id -eq 'Test' -and $BodyParameter.AllowedValues[0].isActive -eq $true
+                } -Exactly 1
+                Should -Invoke -CommandName New-MgBetaDirectoryCustomSecurityAttributeDefinitionAllowedValue -Exactly 0
             }
         }
 
@@ -123,11 +128,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ApplicationId           = $ApplicationId;
-                    AllowedValues           = [CimInstance[]]@(
-                        New-CimInstance -ClassName 'MSFT_CustomSecurityAttributeAllowedValue' -Property @{
+                    AllowedValues           = @(
+                        [MSFT_CustomSecurityAttributeAllowedValue] @{
                             ValueId  = "Test"
                             IsActive = $True
-                        } -ClientOnly
+                        }
                     )
                     AttributeSet            = "ContosoSet";
                     CertificateThumbprint   = $CertificateThumbprint;
@@ -144,15 +149,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDirectoryCustomSecurityAttributeDefinition -Exactly 1
+            }
+
+            It 'Should return true from the Test method when the instance is deprecated' {
+                Mock -CommandName Get-MgBetaDirectoryCustomSecurityAttributeDefinition -MockWith {
+                    return @{
+                        AllowedValues = @()
+                        AttributeSet  = 'ContosoSet'
+                        Name          = 'ShoeSize'
+                        Status        = 'Deprecated'
+                        Type          = 'String'
+                        Id            = 'ContosoSet_ShoeSize'
+                    }
+                }
+
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -160,11 +180,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ApplicationId           = $ApplicationId;
-                    AllowedValues           = [CimInstance[]]@(
-                        New-CimInstance -ClassName 'MSFT_CustomSecurityAttributeAllowedValue' -Property @{
+                    AllowedValues           = @(
+                        [MSFT_CustomSecurityAttributeAllowedValue] @{
                             ValueId  = "Test"
                             IsActive = $True
-                        } -ClientOnly
+                        }
                     )
                     AttributeSet            = "ContosoSet";
                     CertificateThumbprint   = $CertificateThumbprint;
@@ -182,7 +202,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -190,11 +210,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ApplicationId           = $ApplicationId;
-                    AllowedValues           = [CimInstance[]]@(
-                        New-CimInstance -ClassName 'MSFT_CustomSecurityAttributeAllowedValue' -Property @{
+                    AllowedValues           = @(
+                        [MSFT_CustomSecurityAttributeAllowedValue] @{
+                            ValueId  = "Test"
+                            IsActive = $True
+                        }
+                        [MSFT_CustomSecurityAttributeAllowedValue] @{
                             ValueId  = "Missing"
                             IsActive = $True
-                        } -ClientOnly
+                        }
                     )
                     AttributeSet            = "ContosoSet";
                     CertificateThumbprint   = $CertificateThumbprint;
@@ -212,7 +236,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDirectoryCustomSecurityAttributeDefinition -MockWith {
                     return @{
-                        AllowedValues           = @()
+                        AllowedValues           = @(
+                            @{
+                                Id       = "Test"
+                                IsActive = $True
+                            }
+                        )
                         AttributeSet            = 'ContosoSet'
                         IsCollection            = $false
                         IsSearchable            = $true
@@ -227,17 +256,19 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should add the missing allowed value from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDirectoryCustomSecurityAttributeDefinition -Exactly 1
                 Should -Invoke -CommandName New-MgBetaDirectoryCustomSecurityAttributeDefinitionAllowedValue -ParameterFilter {
                     $CustomSecurityAttributeDefinitionId -eq 'ContosoSet_ShoeSize' -and
                     $Id -eq 'Missing' -and
                     $IsActive -eq $true
                 } -Exactly 1
+                Should -Invoke -CommandName New-MgBetaDirectoryCustomSecurityAttributeDefinitionAllowedValue -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaDirectoryCustomSecurityAttributeDefinitionAllowedValue -Exactly 0
             }
         }
 
@@ -245,11 +276,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ApplicationId           = $ApplicationId;
-                    AllowedValues           = [CimInstance[]]@(
-                        New-CimInstance -ClassName 'MSFT_CustomSecurityAttributeAllowedValue' -Property @{
+                    AllowedValues           = @(
+                        [MSFT_CustomSecurityAttributeAllowedValue] @{
                             ValueId  = "Test"
                             IsActive = $True
-                        } -ClientOnly
+                        }
                     )
                     AttributeSet            = "ContosoSet";
                     CertificateThumbprint   = $CertificateThumbprint;
@@ -267,15 +298,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADCustomSecurityAttributeDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDirectoryCustomSecurityAttributeDefinition -Exactly 1
             }
         }
@@ -289,7 +320,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADCustomSecurityAttributeDefinition' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -1,567 +1,475 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADAgreement'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADAgreement : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The display name of the agreement.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier of the agreement.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.Boolean]
-        $IsViewingBeforeAcceptanceRequired,
+    [DscProperty()]
+    [System.ComponentModel.Description('Whether the user is required to view the agreement document before accepting.')]
+    [System.Nullable[System.Boolean]] $IsViewingBeforeAcceptanceRequired
 
-        [Parameter()]
-        [System.Boolean]
-        $IsPerDeviceAcceptanceRequired,
+    [DscProperty()]
+    [System.ComponentModel.Description('Whether the agreement is per device or per user.')]
+    [System.Nullable[System.Boolean]] $IsPerDeviceAcceptanceRequired
 
-        [Parameter()]
-        [System.String]
-        $UserReacceptRequiredFrequency,
+    [DscProperty()]
+    [System.ComponentModel.Description('Duration after which the user must re-accept the terms of use. Must be in ISO 8601 duration format.')]
+    [System.String] $UserReacceptRequiredFrequency
 
-        [Parameter()]
-        [System.String]
-        $AcceptanceStatement,
+    [DscProperty()]
+    [System.ComponentModel.Description('The content of the agreement file, either a base64-encoded PDF or the text of a PDF starting with %PDF-. Other text is UTF-8 encoded and only accepted when the agreement is created.')]
+    [System.String] $FileData
 
-        [Parameter()]
-        [System.String]
-        $FileData,
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the agreement file for the language set in Language. Changing it publishes FileData as the new file of that language.')]
+    [System.String] $FileName
 
-        [Parameter()]
-        [System.String]
-        $FileName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The language of the agreement file, such as en-US.')]
+    [System.String] $Language
 
-        [Parameter()]
-        [System.String]
-        $Language,
+    [DscProperty()]
+    [System.ComponentModel.Description('Expiration schedule and frequency of the agreement for all users.')]
+    [MSFT_TermsExpiration] $TermsExpiration
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if the agreement should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for the Azure AD Agreement with DisplayName {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [AADAgreement] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        $instance = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [AADAgreement]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for the Azure AD Agreement with DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = @{
-                DisplayName = $DisplayName
-                Ensure      = 'Absent'
-            }
-
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                $instance = Get-MgBetaAgreement -AgreementId $Id -ErrorAction SilentlyContinue
-            }
+                $null = $this.Connect('MicrosoftGraph')
 
-            if ($null -eq $instance)
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = @{
+                    DisplayName = $this.DisplayName
+                    Ensure      = 'Absent'
+                }
+
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
+                {
+                    $instance = Get-MgBetaAgreement -AgreementId $this.Id -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $instance)
+                {
+                    Write-Verbose -Message "Could not find Azure AD Agreement with ID {$($this.Id)}"
+                    $instance = Get-MgBetaAgreement -All -Filter "displayName eq '$($this.DisplayName.Replace("'", "''"))'" -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $instance)
+                {
+                    Write-Verbose -Message "Could not find Azure AD Agreement with DisplayName {$($this.DisplayName)}"
+                    return $this.AsResult($nullReturn)
+                }
+            }
+            else
             {
-                Write-Verbose -Message "Could not find Azure AD Agreement with ID {$Id}"
-                $instance = Get-MgBetaAgreement -All -Filter "displayName eq '$($DisplayName.Replace("'", "''"))'" -ErrorAction SilentlyContinue
+                $instance = $this.ExportedInstance
             }
 
-            if ($null -eq $instance)
+            $localizations = (Invoke-M365DSCGraphRequest -Method GET `
+                -Uri "/v1.0/identityGovernance/termsOfUse/agreements/$($instance.Id)/file/localizations" `
+                -ErrorAction SilentlyContinue).value
+
+            $file = $null
+            if (-not [System.String]::IsNullOrEmpty($this.Language))
             {
-                Write-Verbose -Message "Could not find Azure AD Agreement with DisplayName {$DisplayName}"
-                return $nullReturn
+                $file = $localizations | Where-Object -Property language -EQ $this.Language | Select-Object -First 1
+            }
+
+            if ($null -eq $file)
+            {
+                $file = $localizations | Where-Object -Property isDefault -EQ $true | Select-Object -First 1
+            }
+
+            $this.ResourceCache.AgreementFile = $file
+
+            $complexTermsExpiration = $null
+            if ($null -ne $instance.TermsExpiration)
+            {
+                $complexTermsExpiration = @{
+                    Frequency = $instance.TermsExpiration.Frequency
+                }
+
+                if ($null -ne $instance.TermsExpiration.StartDateTime)
+                {
+                    $complexTermsExpiration.StartDateTime = $instance.TermsExpiration.StartDateTime.ToString('yyyy-MM-ddTHH:mm:ssZ')
+                }
+            }
+
+            # TODO: Recheck or possibly regenerate the resource entirely to include all supported properties with the correct structure
+            $results = @{
+                DisplayName                       = $instance.DisplayName
+                Id                                = $instance.Id
+                IsViewingBeforeAcceptanceRequired = $instance.IsViewingBeforeAcceptanceRequired
+                IsPerDeviceAcceptanceRequired     = $instance.IsPerDeviceAcceptanceRequired
+                UserReacceptRequiredFrequency     = $instance.UserReacceptRequiredFrequency
+                FileName                          = $file.fileName
+                Language                          = $file.language
+                TermsExpiration                   = $complexTermsExpiration
+                Ensure                            = 'Present'
+                Credential                        = $this.Credential
+                ApplicationId                     = $this.ApplicationId
+                TenantId                          = $this.TenantId
+                ApplicationSecret                 = $this.ApplicationSecret
+                CertificateThumbprint             = $this.CertificateThumbprint
+                CertificatePath                   = $this.CertificatePath
+                CertificatePassword               = $this.CertificatePassword
+                ManagedIdentity                   = $this.ManagedIdentity
+                AccessTokens                      = $this.AccessTokens
+            }
+
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for the Azure AD Agreement with DisplayName {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        $termsExpirationValue = $null
+        if ($null -ne $this.TermsExpiration)
+        {
+            $termsExpirationValue = @{
+                frequency     = $this.TermsExpiration.Frequency
+                startDateTime = $this.TermsExpiration.StartDateTime
             }
         }
-        else
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
         {
-            $instance = $Script:exportedInstance
-        }
-
-        # Get the file data
-        $fileContent = $null
-        if ($null -ne $instance.File -and $null -ne $instance.File.Data)
-        {
-            $fileContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($instance.File.Data))
-        }
-
-        $results = @{
-            DisplayName                       = $instance.DisplayName
-            Id                                = $instance.Id
-            IsViewingBeforeAcceptanceRequired = $instance.IsViewingBeforeAcceptanceRequired
-            IsPerDeviceAcceptanceRequired     = $instance.IsPerDeviceAcceptanceRequired
-            UserReacceptRequiredFrequency     = $instance.UserReacceptRequiredFrequency
-            AcceptanceStatement               = $instance.AcceptanceStatement
-            FileData                          = $fileContent
-            FileName                          = $instance.File.Name
-            Language                          = $instance.File.Language
-            Ensure                            = 'Present'
-            Credential                        = $Credential
-            ApplicationId                     = $ApplicationId
-            TenantId                          = $TenantId
-            ApplicationSecret                 = $ApplicationSecret
-            CertificateThumbprint             = $CertificateThumbprint
-            CertificatePath                   = $CertificatePath
-            CertificatePassword               = $CertificatePassword
-            ManagedIdentity                   = $ManagedIdentity.IsPresent
-            AccessTokens                      = $AccessTokens
-        }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsViewingBeforeAcceptanceRequired,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsPerDeviceAcceptanceRequired,
-
-        [Parameter()]
-        [System.String]
-        $UserReacceptRequiredFrequency,
-
-        [Parameter()]
-        [System.String]
-        $AcceptanceStatement,
-
-        [Parameter()]
-        [System.String]
-        $FileData,
-
-        [Parameter()]
-        [System.String]
-        $FileName,
-
-        [Parameter()]
-        [System.String]
-        $Language,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for the Azure AD Agreement with DisplayName {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        # Prepare the file content
-        $fileContent = @()
-        $fileContent += @{
-            fileData  = @{
-                data = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($FileData))
-            }
-            fileName  = $FileName
-            language  = $Language
-            isDefault = $true
-        }
-
-        $CreateParameters = @{
-            displayName                       = $DisplayName
-            isViewingBeforeAcceptanceRequired = $IsViewingBeforeAcceptanceRequired
-            isPerDeviceAcceptanceRequired     = $IsPerDeviceAcceptanceRequired
-            userReacceptRequiredFrequency     = $UserReacceptRequiredFrequency
-            acceptanceStatement               = $AcceptanceStatement
-            files                             = $fileContent
-        }
-
-        $CreateParameters = Remove-NullEntriesFromHashtable -Hash $CreateParameters
-        Write-Verbose -Message "Creating Azure AD Agreement with DisplayName {$DisplayName} with:`r`n$(ConvertTo-Json $CreateParameters -Depth 5)"
-
-        Invoke-MgGraphRequest -Uri '/beta/agreements' -Method POST -Body ($CreateParameters | ConvertTo-Json -Depth 5) | Out-Null
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        # Prepare the file content if provided
-        $fileContent = $null
-        if (-not [System.String]::IsNullOrEmpty($FileData))
-        {
+            # Prepare the file content
             $fileContent = @()
             $fileContent += @{
-                fileData = @{
-                    data = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($FileData))
+                fileData  = @{
+                    data = [AADAgreement]::ConvertToFileData($this.FileData)
                 }
-                fileName = $FileName
-                language = $Language
-            }
-        }
-
-        $UpdateParameters = @{
-            displayName                       = $DisplayName
-            isViewingBeforeAcceptanceRequired = $IsViewingBeforeAcceptanceRequired
-            isPerDeviceAcceptanceRequired     = $IsPerDeviceAcceptanceRequired
-            userReacceptRequiredFrequency     = $UserReacceptRequiredFrequency
-            acceptanceStatement               = $AcceptanceStatement
-        }
-
-        if ($null -ne $fileContent)
-        {
-            $UpdateParameters.files = $fileContent
-        }
-
-        $UpdateParameters = Remove-NullEntriesFromHashtable -Hash $UpdateParameters
-        Write-Verbose -Message "Updating Azure AD Agreement with ID {$($currentInstance.Id)} with:`r`n$(ConvertTo-Json $UpdateParameters -Depth 5)"
-        Invoke-MgGraphRequest -Method PATCH `
-            -Uri "/beta/agreements/$($currentInstance.Id)" `
-            -Body ($UpdateParameters | ConvertTo-Json -Depth 5) | Out-Null
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing Azure AD Agreement with DisplayName {$DisplayName} with ID {$($currentInstance.Id)}"
-        Remove-MgBetaAgreement -AgreementId $currentInstance.Id
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsViewingBeforeAcceptanceRequired,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsPerDeviceAcceptanceRequired,
-
-        [Parameter()]
-        [System.String]
-        $UserReacceptRequiredFrequency,
-
-        [Parameter()]
-        [System.String]
-        $AcceptanceStatement,
-
-        [Parameter()]
-        [System.String]
-        $FileData,
-
-        [Parameter()]
-        [System.String]
-        $FileName,
-
-        [Parameter()]
-        [System.String]
-        $Language,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array] $exportedInstances = Get-MgBetaAgreement -Filter $Filter -All
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($exportedInstances.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckmark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-
-        foreach ($config in $exportedInstances)
-        {
-            $displayedKey = $config.DisplayName
-            Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
-
-            $params = @{
-                DisplayName           = $config.DisplayName
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+                fileName  = $this.FileName
+                language  = $this.Language
+                isDefault = $true
             }
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
+            $createParameters = @{
+                displayName                       = $this.DisplayName
+                isViewingBeforeAcceptanceRequired = $this.IsViewingBeforeAcceptanceRequired
+                isPerDeviceAcceptanceRequired     = $this.IsPerDeviceAcceptanceRequired
+                userReacceptRequiredFrequency     = $this.UserReacceptRequiredFrequency
+                termsExpiration                   = $termsExpirationValue
+                files                             = $fileContent
+            }
 
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            $createParameters = Remove-NullEntriesFromHashtable -Hash $createParameters
+            Write-Verbose -Message "Creating Azure AD Agreement with DisplayName {$($this.DisplayName)} with:`r`n$(ConvertTo-Json $createParameters -Depth 5)"
+
+            New-MgBetaAgreement -BodyParameter $createParameters | Out-Null
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            $boundParameters = $this.GetBoundParameters()
+            foreach ($propertyName in @('IsPerDeviceAcceptanceRequired', 'UserReacceptRequiredFrequency'))
+            {
+                if ($boundParameters.ContainsKey($propertyName) -and $boundParameters[$propertyName] -ne $currentInstance[$propertyName])
+                {
+                    Write-Warning -Message "Property {$propertyName} of the Azure AD Agreement {$($this.DisplayName)} can only be set at creation. Remove and re-create the agreement to change it."
+                }
+            }
 
-        throw
+            if ($null -ne $termsExpirationValue -and $null -ne $currentInstance.TermsExpiration -and
+                ($termsExpirationValue.frequency -ne $currentInstance.TermsExpiration.Frequency -or
+                -not [M365DSCResourceBase]::IsSameDateTime($termsExpirationValue.startDateTime, $currentInstance.TermsExpiration.StartDateTime)))
+            {
+                Write-Warning -Message "Property {TermsExpiration} of the Azure AD Agreement {$($this.DisplayName)} can only be set at creation. Remove and re-create the agreement to change it."
+            }
+
+            $viewingRequired = $currentInstance.IsViewingBeforeAcceptanceRequired
+            if ($null -ne $this.IsViewingBeforeAcceptanceRequired)
+            {
+                $viewingRequired = $this.IsViewingBeforeAcceptanceRequired
+            }
+
+            $updateParameters = @{
+                displayName                       = $this.DisplayName
+                isViewingBeforeAcceptanceRequired = $viewingRequired
+            }
+
+            $updateParameters = Remove-NullEntriesFromHashtable -Hash $updateParameters
+            Write-Verbose -Message "Updating Azure AD Agreement with ID {$($currentInstance.Id)} with:`r`n$(ConvertTo-Json $updateParameters -Depth 5)"
+            Update-MgBetaAgreement -AgreementId $currentInstance.Id `
+                -BodyParameter $updateParameters | Out-Null
+
+            $targetFileName = $currentInstance.FileName
+            if (-not [System.String]::IsNullOrEmpty($this.FileName))
+            {
+                $targetFileName = $this.FileName
+            }
+
+            $targetLanguage = $currentInstance.Language
+            if (-not [System.String]::IsNullOrEmpty($this.Language))
+            {
+                $targetLanguage = $this.Language
+            }
+
+            if ($targetFileName -ne $currentInstance.FileName -or $targetLanguage -ne $currentInstance.Language)
+            {
+                $payload = [AADAgreement]::ConvertToFileData($this.FileData)
+                if ([System.String]::IsNullOrEmpty($payload) -or -not $payload.StartsWith('JVBERi', [System.StringComparison]::Ordinal))
+                {
+                    Write-Warning -Message "Property {FileData} of the Azure AD Agreement {$($this.DisplayName)} must be a PDF document to publish the file {$targetFileName} for language {$targetLanguage}."
+                }
+                else
+                {
+                    $currentFile = $this.ResourceCache.AgreementFile
+                    $fileParameters = @{
+                        fileName       = $targetFileName
+                        displayName    = $this.DisplayName
+                        language       = $targetLanguage
+                        isDefault      = ($null -ne $currentFile -and $currentFile.isDefault -eq $true -and $currentFile.language -eq $targetLanguage)
+                        isMajorVersion = $false
+                        fileData       = @{
+                            data = $payload
+                        }
+                    }
+
+                    Write-Verbose -Message "Publishing file {$targetFileName} for language {$targetLanguage} on Azure AD Agreement with ID {$($currentInstance.Id)}"
+                    Invoke-M365DSCGraphRequest -Method POST `
+                        -Uri "/v1.0/identityGovernance/termsOfUse/agreements/$($currentInstance.Id)/files" `
+                        -Body $fileParameters | Out-Null
+                }
+            }
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing Azure AD Agreement with DisplayName {$($this.DisplayName)} with ID {$($currentInstance.Id)}"
+            Remove-MgBetaAgreement -AgreementId $currentInstance.Id
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            ExcludedProperties = @('FileData')
+            PostProcessing     = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
+                if ($null -ne $DesiredValues.TermsExpiration -and $null -ne $CurrentValues.TermsExpiration -and
+                    [M365DSCResourceBase]::IsSameDateTime($DesiredValues.TermsExpiration.StartDateTime, $CurrentValues.TermsExpiration.StartDateTime))
+                {
+                    $DesiredValues.TermsExpiration.StartDateTime = $CurrentValues.TermsExpiration.StartDateTime
+                }
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+            }
+        }
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array] $exportedInstances = Get-MgBetaAgreement -Filter $this.Filter -All
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($exportedInstances.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckmark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+
+            foreach ($config in $exportedInstances)
+            {
+                $displayedKey = $config.DisplayName
+                Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
+
+                $params = @{
+                    DisplayName           = $config.DisplayName
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+
+                if ($null -ne $Results.TermsExpiration)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.TermsExpiration `
+                        -CIMInstanceName 'MSFT_TermsExpiration'
+
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.TermsExpiration = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('TermsExpiration') | Out-Null
+                    }
+                }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('TermsExpiration')
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden static [System.String] ConvertToFileData([System.String] $Value)
+    {
+        if ([System.String]::IsNullOrEmpty($Value) -or $Value.StartsWith('JVBERi', [System.StringComparison]::Ordinal))
+        {
+            return $Value
+        }
+
+        return [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Value))
+    }
+
+    hidden [AADAgreement] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADAgreement])
+        {
+            return $Values
+        }
+
+        $result = [AADAgreement]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_TermsExpiration
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The frequency at which the agreement expires for all users after the first expiration set in StartDateTime. Must be in ISO 8601 duration format.')]
+    [System.String] $Frequency
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The date and time on which the agreement first expires for all users.')]
+    [System.String] $StartDateTime
+}

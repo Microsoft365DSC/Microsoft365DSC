@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             function Get-DefaultTestParams
             {
@@ -31,16 +31,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     [string]$description
                 )
                 return @{
+                    AllowedAndroidDeviceManufacturers                 = 'Samsung;Google'
                     AllowedAndroidDeviceModels                        = @('Model1', 'Model2')
                     AllowedOutboundClipboardSharingExceptionLength    = 4
-                    Alloweddataingestionlocations                     = @('OneDrive', 'SharePoint')
+                    AllowedDataIngestionLocations                     = @('OneDrive', 'SharePoint')
+                    AppActionIfAccountIsClockedOut                    = 'warn'
                     AppActionIfAndroidDeviceManufacturerNotAllowed    = 'block'
                     AppActionIfAndroidDeviceModelNotAllowed           = 'block'
                     AppActionIfAndroidSafetyNetAppsVerificationFailed = 'warn'
                     AppActionIfAndroidSafetyNetDeviceAttestationFailed = 'block'
                     AppActionIfDeviceComplianceRequired               = 'block'
                     AppActionIfDeviceLockNotSet                       = 'block'
+                    AppActionIfDevicePasscodeComplexityLessThanHigh   = 'warn'
+                    AppActionIfDevicePasscodeComplexityLessThanLow    = 'block'
+                    AppActionIfDevicePasscodeComplexityLessThanMedium = 'warn'
                     AppActionIfMaximumPinRetriesExceeded              = 'wipe'
+                    AppActionIfSamsungKnoxAttestationRequired         = 'warn'
                     AppActionIfUnableToAuthenticateUser               = 'block'
                     ApprovedKeyboards                                 = @('fake|string')
                     BiometricAuthenticationBlocked                    = $True
@@ -53,15 +59,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DialerRestrictionLevel                            = 'managedApps'
                     ExemptedAppPackages                               = @('fake|string')
                     FingerprintAndBiometricEnabled                    = $True
+                    GracePeriodToBlockAppsDuringOffClockHours         = 'PT1H'
                     KeyboardsRestricted                               = $True
                     MaximumAllowedDeviceThreatLevel                   = 'medium'
+                    MaximumRequiredOsVersion                          = '15.0'
+                    MaximumWarningOsVersion                           = '15.0'
+                    MaximumWipeOsVersion                              = '16.0'
                     MessagingRedirectAppDisplayName                   = 'MessageApp'
                     MessagingRedirectAppPackageId                     = 'com.example.messageapp'
+                    MinimumWipeAppVersion                             = '1.0'
+                    MinimumWipeCompanyPortalVersion                   = '5.0.5333.0'
+                    MinimumWipeOsVersion                              = '1.1'
                     MinimumWipePatchVersion                           = '2023-01-01'
+                    MobileThreatDefensePartnerPriority                = 'defenderOverThirdPartyPartner'
                     MobileThreatDefenseRemediationAction              = 'block'
                     NotificationRestriction                           = 'block'
+                    PinRequiredInsteadOfBiometricTimeout              = 'PT30M'
                     PreviousPinBlockCount                             = 4
                     ProtectedMessagingRedirectAppType                 = 'specificApps'
+                    PurviewContentEvaluationRequired                  = 'requiredWhenOnline'
                     RequiredAndroidSafetyNetAppsVerificationType      = 'enabled'
                     RequiredAndroidSafetyNetDeviceAttestationType     = 'basicIntegrity'
                     RequiredAndroidSafetyNetEvaluationType            = 'hardwareBacked'
@@ -74,17 +90,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     AllowedOutboundDataTransferDestinations         = 'managedApps'
                     AppGroupType                                    = 'selectedPublicApps'
                     Apps                                            = @('com.cisco.im.intune', 'com.penlink.penpoint', 'com.slack.intune')
-                    Assignments                                     = [CimInstance[]]@(
-                        New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments                                     = @(
+                        [MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             groupId  = '6ee86c9f-2b3c-471d-ad38-ff4673ed723e'
                             dataType = '#microsoft.graph.groupAssignmentTarget'
                             deviceAndAppManagementAssignmentFilterType = 'none'
-                        } -ClientOnly
-                        New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                        }
+                        [MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             groupId  = '3eacc231-d77b-4efb-bb5f-310f68bd6198'
                             dataType = '#microsoft.graph.exclusionGroupAssignmentTarget'
                             deviceAndAppManagementAssignmentFilterType = 'none'
-                        } -ClientOnly
+                        }
                     )
                     ContactSyncBlocked                              = $False
                     DataBackupBlocked                               = $False
@@ -115,10 +131,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScreenCaptureBlocked                            = $False
                     ManagedBrowser                                  = 'microsoftEdge'
                     MinimumRequiredAppVersion                       = '1.2'
-                    MinimumRequiredOSVersion                        = '1.1'
+                    MinimumRequiredCompanyPortalVersion             = '5.0.5484.0'
+                    MinimumRequiredOsVersion                        = '1.1'
                     MinimumRequiredPatchVersion                     = '2020-07-13'
                     MinimumWarningAppVersion                        = '1.5'
-                    MinimumWarningOSVersion                         = '1.5'
+                    MinimumWarningCompanyPortalVersion              = '5.0.5545.0'
+                    MinimumWarningOsVersion                         = '1.5'
                     MinimumWarningPatchVersion                      = '2021-07-13'
                     CustomBrowserPackageId                          = ''
                     CustomBrowserDisplayName                        = ''
@@ -133,16 +151,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     [string]$description
                 )
                 return @{
+                    AllowedAndroidDeviceManufacturers                 = 'Samsung;Google'
                     AllowedAndroidDeviceModels                        = @('Model1', 'Model2')
                     AllowedOutboundClipboardSharingExceptionLength    = 4
-                    Alloweddataingestionlocations                     = @('OneDrive', 'SharePoint')
+                    AllowedDataIngestionLocations                     = @('OneDrive', 'SharePoint')
+                    AppActionIfAccountIsClockedOut                    = 'warn'
                     AppActionIfAndroidDeviceManufacturerNotAllowed    = 'block'
                     AppActionIfAndroidDeviceModelNotAllowed           = 'block'
                     AppActionIfAndroidSafetyNetAppsVerificationFailed = 'warn'
                     AppActionIfAndroidSafetyNetDeviceAttestationFailed = 'block'
                     AppActionIfDeviceComplianceRequired               = 'block'
                     AppActionIfDeviceLockNotSet                       = 'block'
+                    AppActionIfDevicePasscodeComplexityLessThanHigh   = 'warn'
+                    AppActionIfDevicePasscodeComplexityLessThanLow    = 'block'
+                    AppActionIfDevicePasscodeComplexityLessThanMedium = 'warn'
                     AppActionIfMaximumPinRetriesExceeded              = 'wipe'
+                    AppActionIfSamsungKnoxAttestationRequired         = 'warn'
                     AppActionIfUnableToAuthenticateUser               = 'block'
                     ApprovedKeyboards                                 = @(
                         [pscustomobject]@{
@@ -165,15 +189,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                     )
                     FingerprintAndBiometricEnabled                    = $True
+                    GracePeriodToBlockAppsDuringOffClockHours         = 'PT1H'
                     KeyboardsRestricted                               = $True
                     MaximumAllowedDeviceThreatLevel                   = 'medium'
+                    MaximumRequiredOsVersion                          = '15.0'
+                    MaximumWarningOsVersion                           = '15.0'
+                    MaximumWipeOsVersion                              = '16.0'
                     MessagingRedirectAppDisplayName                   = 'MessageApp'
                     MessagingRedirectAppPackageId                     = 'com.example.messageapp'
+                    MinimumWipeAppVersion                             = '1.0'
+                    MinimumWipeCompanyPortalVersion                   = '5.0.5333.0'
+                    MinimumWipeOsVersion                              = '1.1'
                     MinimumWipePatchVersion                           = '2023-01-01'
+                    MobileThreatDefensePartnerPriority                = 'defenderOverThirdPartyPartner'
                     MobileThreatDefenseRemediationAction              = 'block'
                     NotificationRestriction                           = 'block'
+                    PinRequiredInsteadOfBiometricTimeout              = 'PT30M'
                     PreviousPinBlockCount                             = 4
                     ProtectedMessagingRedirectAppType                 = 'specificApps'
+                    PurviewContentEvaluationRequired                  = 'requiredWhenOnline'
                     RequiredAndroidSafetyNetAppsVerificationType      = 'enabled'
                     RequiredAndroidSafetyNetDeviceAttestationType     = 'basicIntegrity'
                     RequiredAndroidSafetyNetEvaluationType            = 'hardwareBacked'
@@ -214,10 +248,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScreenCaptureBlocked                            = $False
                     ManagedBrowser                                  = 'microsoftEdge'
                     MinimumRequiredAppVersion                       = '1.2'
-                    MinimumRequiredOSVersion                        = '1.1'
+                    MinimumRequiredCompanyPortalVersion             = '5.0.5484.0'
+                    MinimumRequiredOsVersion                        = '1.1'
                     MinimumRequiredPatchVersion                     = '2020-07-13'
                     MinimumWarningAppVersion                        = '1.5'
-                    MinimumWarningOSVersion                         = '1.5'
+                    MinimumWarningCompanyPortalVersion              = '5.0.5545.0'
+                    MinimumWarningOsVersion                         = '1.5'
                     MinimumWarningPatchVersion                      = '2021-07-13'
                     IsAssigned                                      = $True
                     CustomBrowserPackageId                          = ''
@@ -312,7 +348,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -329,6 +365,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             Mock -CommandName Remove-MgBetaDeviceAppManagementAndroidManagedAppProtection -MockWith {
+            }
+
+            Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
@@ -360,17 +399,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
                 $Global:Count = 0
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the Policy from the Set method' {
                 $Global:Count = 0
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-MgBetaDeviceAppManagementAndroidManagedAppProtection' -Exactly 1
             }
         }
@@ -387,15 +426,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the App Configuration Policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceAppManagementAndroidManagedAppProtection -Exactly 1
             }
         }
@@ -410,7 +449,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -425,15 +464,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the App Configuration Policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAppProtectionPolicyAndroid' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceAppManagementAndroidManagedAppProtection -Exactly 1
             }
         }
@@ -452,7 +491,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneAppProtectionPolicyAndroid' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

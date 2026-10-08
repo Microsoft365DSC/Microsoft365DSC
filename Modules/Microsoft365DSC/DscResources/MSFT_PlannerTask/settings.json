@@ -1,5 +1,92 @@
 {
   "resourceName": "PlannerTask",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "v1.0",
+    "entityType": "plannerTask",
+    "odataSubtype": null,
+    "cmdletNoun": "MgPlannerTask",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ActiveChecklistItemCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count from the checklist items on the task details"
+    },
+    {
+      "name": "AppliedCategories",
+      "reason": "Accepted",
+      "note": "Declared as Categories and mapped to category1 through category25 flags on set"
+    },
+    {
+      "name": "AssignedToTaskBoardFormat",
+      "reason": "ReadOnly",
+      "note": "Renders the task in the board view grouped by assignee. Graph marks it read only."
+    },
+    {
+      "name": "AssigneePriority",
+      "reason": "NotConfigurable",
+      "note": "Order hint that Planner recalculates server side."
+    },
+    {
+      "name": "Attachments",
+      "reason": "Accepted",
+      "note": "Maps to the references collection on the task details."
+    },
+    {
+      "name": "BucketTaskBoardFormat",
+      "reason": "ReadOnly",
+      "note": "Renders the task in the board view grouped by bucket. Graph marks it read only."
+    },
+    {
+      "name": "Categories",
+      "reason": "Accepted",
+      "note": "Maps to appliedCategories, carrying the plan labels."
+    },
+    {
+      "name": "ChecklistItemCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count from the checklist items on the task details"
+    },
+    {
+      "name": "CompletedBy",
+      "reason": "ReadOnly",
+      "note": "The service records the completing identity when percent complete reaches 100"
+    },
+    {
+      "name": "CompletedDateTime",
+      "reason": "ReadOnly",
+      "note": "The service stamps this when the task reaches one hundred percent complete"
+    },
+    {
+      "name": "Details",
+      "reason": "Accepted",
+      "note": "Configured through the Description, Checklist and Attachments properties on the resource. Responsible for the extended task content."
+    },
+    {
+      "name": "HasDescription",
+      "reason": "ReadOnly",
+      "note": "The service derives this flag from the task details description"
+    },
+    {
+      "name": "OrderHint",
+      "reason": "NotConfigurable",
+      "note": "Order hint that Planner recalculates server side."
+    },
+    {
+      "name": "ProgressTaskBoardFormat",
+      "reason": "ReadOnly",
+      "note": "Renders the task in the board view grouped by progress. Graph marks it read only."
+    },
+    {
+      "name": "ReferenceCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count from the references on the task details"
+    }
+  ],
   "description": "",
   "permissions": {
     "graph": {
@@ -9,7 +96,7 @@
             "name": "Group.Read.All"
           },
           {
-            "name": "Tasks.Read.All"
+            "name": "Tasks.Read"
           },
           {
             "name": "User.Read.All"
@@ -20,7 +107,7 @@
             "name": "Group.Read.All"
           },
           {
-            "name": "Tasks.ReadWrite.All"
+            "name": "Tasks.ReadWrite"
           },
           {
             "name": "User.Read.All"
@@ -54,20 +141,12 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Groups",
     "Microsoft.Graph.Planner",
-    "Microsoft.Graph.Users",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Users"
   ],
   "mode": "Data",
   "commands": [
-    {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
     {
       "module": "Microsoft.Graph.Groups",
       "cmdlets": [
@@ -83,19 +162,15 @@
         "Get-MgPlannerTask",
         "Get-MgPlannerTaskDetail",
         "New-MgPlannerTask",
-        "Remove-MgPlannerTask"
+        "Remove-MgPlannerTask",
+        "Update-MgPlannerTask",
+        "Update-MgPlannerTaskDetail"
       ]
     },
     {
       "module": "Microsoft.Graph.Users",
       "cmdlets": [
         "Get-MgUser"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

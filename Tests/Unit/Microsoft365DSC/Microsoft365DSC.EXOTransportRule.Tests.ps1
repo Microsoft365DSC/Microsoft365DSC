@@ -21,7 +21,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -31,7 +31,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -69,7 +69,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOTransportRule' -Property $testParams).Test() | Should -Be $false
             }
 
             Mock -CommandName Set-TransportRule -MockWith {
@@ -86,11 +86,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOTransportRule' -Property $testParams).Set()
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOTransportRule' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
         }
 
@@ -98,9 +98,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     Name                         = 'Contoso Transport Rule'
+                    ActivationDate               = '2030-01-01T00:00:00.0000000Z'
                     BetweenMemberOf1             = 'Sales Department'
                     BetweenMemberOf2             = 'Brokerage Department'
                     ExceptIfSubjectContainsWords = 'Press Release'
+                    MessageSizeOver              = '10 mb'
                     RejectMessageReasonText      = 'Messages sent between the Sales and Brokerage departments are strictly prohibited.'
                     Credential                   = $Credential
                 }
@@ -108,20 +110,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Mock -CommandName Get-TransportRule -MockWith {
                     return @{
                         Name                         = 'Contoso Transport Rule'
+                        ActivationDate               = [System.DateTime]::new(2030, 1, 1, 0, 0, 0, [System.DateTimeKind]::Utc)
                         BetweenMemberOf1             = 'Sales Department'
                         BetweenMemberOf2             = 'Brokerage Department'
                         ExceptIfSubjectContainsWords = 'Press Release'
+                        MessageSizeOver              = '10 MB (10,485,760 bytes)'
                         RejectMessageReasonText      = 'Messages sent between the Sales and Brokerage departments are strictly prohibited.'
                     }
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXOTransportRule' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOTransportRule' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -149,7 +153,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOTransportRule' -Property $testParams).Test() | Should -Be $false
             }
 
             Mock -CommandName Set-TransportRule -MockWith {
@@ -165,7 +169,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOTransportRule' -Property $testParams).Set()
             }
         }
 
@@ -191,7 +195,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method when single' {
-                $exported = Export-TargetResource @testParams
+                $exported = Invoke-M365DSCResourceMethod -ResourceName 'EXOTransportRule' -MethodName 'Export' -Parameters $testParams
             }
         }
     }

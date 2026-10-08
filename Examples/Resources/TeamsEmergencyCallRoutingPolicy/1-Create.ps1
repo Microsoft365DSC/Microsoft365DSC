@@ -4,20 +4,30 @@ This example adds a new Teams Emergency Call Routing Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsEmergencyCallRoutingPolicy 'EmergencyCallRoutingPolicyExample'
+        TeamsEmergencyCallRoutingPolicy 'TeamsEmergencyCallRoutingPolicy-Example'
         {
-            Identity                       = "Unit Test"
+            Identity                       = "Amsterdam Office"
             AllowEnhancedEmergencyServices = $False
-            Description                    = "Description"
+            Description                    = "Routes emergency calls placed from the Amsterdam office"
             EmergencyNumbers               = @(
                 MSFT_TeamsEmergencyNumber
                 {
@@ -27,7 +37,9 @@ Configuration Example
                 }
             )
             Ensure                         = "Present"
-            Credential                     = $Credscredential
+            ApplicationId                  = $ApplicationId
+            TenantId                       = $TenantId
+            CertificateThumbprint          = $CertificateThumbprint
         }
     }
 }

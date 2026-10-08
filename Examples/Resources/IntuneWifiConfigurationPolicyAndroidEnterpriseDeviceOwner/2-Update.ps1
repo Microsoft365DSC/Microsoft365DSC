@@ -19,30 +19,47 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner 'myWifiConfigAndroidDeviceOwnerPolicy'
+        IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner 'IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner-Example'
         {
-            DisplayName                    = 'Wifi - androidForWork'
-            Assignments                    = @(
-                MSFT_DeviceManagementConfigurationPolicyAssignments
-                {
+            DisplayName                        = 'Wifi - androidForWork'
+            Description                        = 'Corporate Wi-Fi for company-owned Android devices'
+            Assignments                        = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
                     dataType                                   = '#microsoft.graph.allLicensedUsersAssignmentTarget'
                 }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Users'
+                }
             )
-            ConnectAutomatically           = $True # Updated Property
-            ConnectWhenNetworkNameIsHidden = $False
-            NetworkName                    = 'myNetwork'
-            PreSharedKeyIsSet              = $True
-            ProxySettings                  = 'none'
-            Ssid                           = 'MySSID - 3'
-            Ensure                         = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            AuthenticationMethod               = 'usernameAndPassword'
+            ConnectAutomatically               = $true # Updated Property
+            ConnectWhenNetworkNameIsHidden     = $false
+            EapType                            = 'peap'
+            InnerAuthenticationProtocolForPeap = 'microsoftChapVersionTwo'
+            MacAddressRandomizationMode        = 'automatic'
+            NetworkName                        = 'Contoso Corporate Wi-Fi'
+            OuterIdentityPrivacyTemporaryValue = 'anonymous'
+            PreSharedKey                       = '<wifi-pre-shared-key>'
+            PreSharedKeyIsSet                  = $true
+            ProxyExclusionList                 = 'intranet.contoso.com,*.contoso.local'
+            ProxyManualAddress                 = 'proxy.contoso.com'
+            ProxyManualPort                    = 8080
+            ProxySettings                      = 'manual'
+            RoleScopeTagIds                    = @('0')
+            Ssid                               = 'Contoso-Corp'
+            TrustedServerCertificateNames      = @('Contoso Root CA')
+            WiFiSecurityType                   = 'wpaPersonal'
+            Ensure                             = 'Present'
+            ApplicationId                      = $ApplicationId;
+            TenantId                           = $TenantId;
+            CertificateThumbprint              = $CertificateThumbprint;
         }
     }
 }

@@ -1,4 +1,5 @@
 [hashtable]$Script:M365DSCTelemetryConnectionToGraphParams = @{}
+[hashtable]$Script:M365DSCConnectionFailures = @{}
 
 <#
 .SYNOPSIS
@@ -12,9 +13,10 @@
     Specifies the authentication method to check for. Valid values are:
     'ApplicationWithSecret', 'CertificateThumbprint', 'CertificatePath', 'Credentials',
     'CredentialsWithTenantId', 'CredentialsWithApplicationId', 'ManagedIdentity', 'AccessTokens'.
+    If not specified, every authentication method is evaluated.
 
 .PARAMETER Resources
-    Specifies the resources to check. If not specified, all resources will be checked.
+    Specifies the resources to check. If not specified, all resources in the schema cache are checked.
 
 .FUNCTIONALITY
     Internal
@@ -36,13 +38,118 @@ function Get-M365DSCComponentsWithMostSecureAuthenticationType
     )
 
     Initialize-M365DSCDllLoader -ErrorAction Stop
+    Initialize-M365DSCSchemaCache -ErrorAction Stop
 
-    $dscResourcesPath = Join-Path -Path $PSScriptRoot -ChildPath '../DscResources'
+    $propertyNames = Get-M365DSCResourcePropertyNameMap -Resources $Resources
+    if ($propertyNames.Count -eq 0)
+    {
+        throw 'The schema cache does not contain any of the requested resources. Run Utilities/New-M365DSCDscSchemaCache.ps1 to regenerate SchemaDefinition.json.'
+    }
+
+    $requestedResources = $Resources
+    if ($null -eq $requestedResources -or $requestedResources.Count -eq 0)
+    {
+        $requestedResources = [System.String[]] $propertyNames.Keys
+    }
+
+    $requestedMethods = $AuthenticationMethod
+    if ($null -eq $requestedMethods -or $requestedMethods.Count -eq 0)
+    {
+        $requestedMethods = [System.String[]] $MyInvocation.MyCommand.Parameters['AuthenticationMethod'].Attributes.Where(
+            { $_ -is [System.Management.Automation.ValidateSetAttribute] }).ValidValues
+    }
+
     return [Microsoft365DSC.Connection.ConnectionHelper]::GetComponentsWithMostSecureAuthenticationType(
-        $dscResourcesPath,
-        $AuthenticationMethod,
+        [System.Collections.IDictionary]$propertyNames,
+        $requestedMethods,
+        $requestedResources
+    )
+}
+
+<#
+.SYNOPSIS
+    Gets the names of the resources exported by the Microsoft365DSC module manifest.
+
+.DESCRIPTION
+    Reads DscResourcesToExport from the module manifest once and caches the result for the
+    lifetime of the module.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.String[]
+#>
+function Get-M365DSCExportedResourceName
+{
+    [CmdletBinding()]
+    [OutputType([System.String[]])]
+    param()
+
+    if ($null -eq $Script:M365DSCExportedResourceNames)
+    {
+        $manifestPath = (Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath '../Microsoft365DSC.psd1')).Path
+        $Script:M365DSCExportedResourceNames = [System.String[]]@((Import-PowerShellDataFile -Path $manifestPath).DscResourcesToExport)
+    }
+
+    return $Script:M365DSCExportedResourceNames
+}
+
+<#
+.SYNOPSIS
+    Builds a map of resource name to DSC property names from the loaded schema cache.
+
+.DESCRIPTION
+    Reads the schema held by the Microsoft365DSC cache once and returns the property names of the
+    requested resources. Returns an empty map when the schema is not loaded.
+
+.PARAMETER Resources
+    Specifies the resource names without the MSFT_ prefix. When omitted, every class in the schema
+    cache is returned.
+
+.OUTPUTS
+    System.Collections.Hashtable
+#>
+function Get-M365DSCResourcePropertyNameMap
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param
+    (
+        [Parameter()]
+        [System.String[]]
         $Resources
     )
+
+    $map = [System.Collections.Hashtable]::new([System.StringComparer]::OrdinalIgnoreCase)
+    if (-not [Microsoft365DSC.Cache.CacheManager]::IsSchemaLoaded)
+    {
+        return $map
+    }
+
+    if ($null -eq $Resources -or $Resources.Count -eq 0)
+    {
+        $Resources = Get-M365DSCExportedResourceName
+    }
+
+    $classes = [System.Collections.Generic.Dictionary[System.String, System.Object]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($entry in [Microsoft365DSC.Cache.CacheManager]::Schema)
+    {
+        $classes[[System.String]$entry['ClassName']] = $entry
+    }
+
+    foreach ($resource in $Resources)
+    {
+        $definition = $null
+        if (-not $classes.TryGetValue("MSFT_$resource", [ref] $definition))
+        {
+            continue
+        }
+
+        $map[$resource] = [System.String[]]@(foreach ($parameter in $definition['Parameters']) { $parameter['Name'] })
+    }
+
+    return $map
 }
 
 <#
@@ -140,20 +247,8 @@ function New-M365DSCConnection
         Set-M365DSCRequiredModulesLoaded -Value $true
     }
 
-    if ($Workload -eq 'MicrosoftTeams')
-    {
-        try
-        {
-            $null = Get-Command 'Connect-MicrosoftTeams' -ErrorAction Stop
-        }
-        catch
-        {
-            Import-Module 'MicrosoftTeams' -Global -Force -Alias @() -Cmdlet @() -Variable @() -DisableNameChecking | Out-Null
-        }
-    }
-
     Write-Verbose -Message "Attempting connection to {$Workload} with:"
-    Write-Verbose -Message "$($InboundParameters | Out-String)"
+    Write-Verbose -Message "$(Set-M365DSCAuthenticationParameterMask -BoundParameters $InboundParameters.Clone() | Out-String)"
 
     #region Telemetry
     $data = [System.Collections.Generic.Dictionary[[System.String], [System.Object]]]::new()
@@ -216,6 +311,12 @@ function New-M365DSCConnection
         throw 'Could not determine authentication method'
     }
     Write-Verbose -Message "Connecting via $connectionMode"
+
+    $failureKey = "$Workload-$connectionMode"
+    if ($Global:M365DSCExportInProgress -and $Script:M365DSCConnectionFailures.ContainsKey($failureKey))
+    {
+        throw "Connection to $Workload failed earlier in this session: $($Script:M365DSCConnectionFailures[$failureKey]) Skipping."
+    }
 
     #region Build Connect-M365Tenant splat
     $connectParams = @{
@@ -281,7 +382,20 @@ function New-M365DSCConnection
     }
     #endregion
 
-    Connect-M365Tenant @connectParams
+    if ($Workload -eq 'PnP')
+    {
+        Register-M365DSCPnPIdentityClientResolver
+    }
+
+    try
+    {
+        Connect-M365Tenant @connectParams
+    }
+    catch
+    {
+        Register-M365DSCConnectionFailure -FailureKey $failureKey -Message $_.Exception.Message
+        throw
+    }
 
     #region Update telemetry cache
     $telemetryCacheKeys = switch ($connectionMode)
@@ -482,11 +596,61 @@ function Set-M365DSCTelemetryConnectionParameter
     $Script:M365DSCTelemetryConnectionToGraphParams = $Parameters.Clone()
 }
 
+<#
+.SYNOPSIS
+    Records a failed connection attempt for the running export.
+
+.DESCRIPTION
+    While an export is running, stores the failure message under the workload and connection mode key
+    so later attempts fail immediately.
+
+.PARAMETER FailureKey
+    Specifies the cache key in the form 'Workload-ConnectionMode'.
+
+.PARAMETER Message
+    Specifies the failure message.
+#>
+function Register-M365DSCConnectionFailure
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $FailureKey,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Message
+    )
+
+    if ($Global:M365DSCExportInProgress)
+    {
+        $Script:M365DSCConnectionFailures[$FailureKey] = $Message
+    }
+}
+
+<#
+.SYNOPSIS
+    Clears the connection failure cache.
+
+.DESCRIPTION
+    Removes every memoized connection failure so that the next export attempts each workload again.
+#>
+function Reset-M365DSCConnectionFailureCache
+{
+    [CmdletBinding()]
+    param ()
+
+    $Script:M365DSCConnectionFailures = @{}
+}
+
 Export-ModuleMember -Function @(
     'Get-M365DSCAuthenticationMode',
     'Get-M365DSCComponentsWithMostSecureAuthenticationType',
-    'Get-M365DSCFunctionParameterNamesByAST',
+    'Get-M365DSCResourcePropertyNameMap',
     'Get-M365DSCTelemetryConnectionParameter',
     'New-M365DSCConnection',
+    'Reset-M365DSCConnectionFailureCache',
     'Set-M365DSCTelemetryConnectionParameter'
 )

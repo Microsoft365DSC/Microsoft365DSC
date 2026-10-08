@@ -1,527 +1,291 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_TeamsUpdateManagementPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class TeamsUpdateManagementPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Identity of the Teams Update Management Policy.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('The description of the Teams Update Management Policy.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [ValidateSet('91382d07-8b89-444c-bbcb-cfe43133af33', 'edf2633e-9827-44de-b34c-8b8b9717e84c')]
-        [System.String[]]
-        $DisabledInProductMessages,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if managed updates should be allowed or not.')]
+    [System.Nullable[System.Boolean]] $AllowManagedUpdates
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowManagedUpdates,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if preview builds should be allowed or not.')]
+    [System.Nullable[System.Boolean]] $AllowPreview
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowPreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines the ring of public previews to subscribes to.')]
+    [ValidateSet('Disabled', 'Enabled', 'Forced', 'FollowOfficePreview')]
+    [System.String] $AllowPublicPreview
 
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Disabled', 'Enabled', 'Forced', 'FollowOfficePreview')]
-        $AllowPublicPreview,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting will force Teams clients to enforce session revocation for core Messaging and Calling/Meeting scenarios. If turned ON, session revocation will be enforced for calls, chats and meetings for opted-in users. If turned OFF, session revocation will not be enforced for calls, chats and meetings for opted-in users.')]
+    [System.Nullable[System.Boolean]] $BlockLegacyAuthorization
 
-        [Parameter()]
-        [System.Boolean]
-        $BlockLegacyAuthorization,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of IDs of the categories of the in-product messages that will be disabled. You can choose one of the categories from this table: 91382d07-8b89-444c-bbcb-cfe43133af33 = What''s New. edf2633e-9827-44de-b34c-8b8b9717e84c = Conferences')]
+    [ValidateSet('91382d07-8b89-444c-bbcb-cfe43133af33', 'edf2633e-9827-44de-b34c-8b8b9717e84c')]
+    [System.String[]] $DisabledInProductMessages
 
-        [Parameter()]
-        [System.UInt32]
-        [ValidateRange(0, 6)]
-        $UpdateDayOfWeek,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines the day of week to perform the updates. Value should be between 0 and 6.')]
+    [ValidateRange(0, 6)]
+    [System.Nullable[System.UInt32]] $UpdateDayOfWeek
 
-        [Parameter()]
-        [System.String]
-        $UpdateTime,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines the time of day to perform the updates. Must be a valid HH:MM format string with leading 0. For instance 08:30.')]
+    [System.String] $UpdateTime
 
-        [Parameter()]
-        [System.String]
-        $UpdateTimeOfDay,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines the time of day to perform the updates. Accepts a DateTime as string. Only the time will be considered.')]
+    [System.String] $UpdateTimeOfDay
 
-        [Parameter()]
-        [ValidateSet('UserChoice', 'MicrosoftChoice', 'AdminDisabled', 'NewTeamsAsDefault', 'NewTeamsOnly')]
-        [System.String]
-        $UseNewTeamsClient,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether or not users will use the new Teams client.')]
+    [ValidateSet('NewTeamsAsDefault', 'UserChoice', 'MicrosoftChoice', 'AdminDisabled', 'NewTeamsOnly')]
+    [System.String] $UseNewTeamsClient
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Teams Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for Teams Update Management Policy $Identity"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter = '*'
 
-    try
+    [TeamsUpdateManagementPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        $nullReturn = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            Write-Verbose -Message 'Checking the Teams Update Management Policies'
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $policy = Get-CsTeamsUpdateManagementPolicy -Identity $Identity `
-                -ErrorAction SilentlyContinue
-        }
-        else
-        {
-            $policy = $Script:exportedInstance
+            $remote = [TeamsUpdateManagementPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
 
-        if ($null -eq $policy)
+        Write-Verbose -Message "Getting configuration for Teams Update Management Policy $($this.Identity)"
+
+        try
         {
-            Write-Verbose "No Teams Update Management Policy with Identity {$Identity} was found"
-            return $nullReturn
-        }
-
-        Write-Verbose -Message "Found Teams Update Management Policy with Identity {$Identity}"
-        $results = @{
-            Identity                  = $policy.Identity
-            DisabledInProductMessages = $policy.DisabledInProductMessages
-            Description               = $policy.Description
-            AllowManagedUpdates       = $policy.AllowManagedUpdates
-            AllowPreview              = $policy.AllowPreview
-            AllowPublicPreview        = $policy.AllowPublicPreview
-            BlockLegacyAuthorization  = $policy.BlockLegacyAuthorization
-            UpdateDayOfWeek           = $policy.UpdateDayOfWeek
-            UpdateTime                = $policy.UpdateTime
-            UseNewTeamsClient         = $policy.UseNewTeamsClient
-            Ensure                    = 'Present'
-            Credential                = $Credential
-            ApplicationId             = $ApplicationId
-            TenantId                  = $TenantId
-            CertificateThumbprint     = $CertificateThumbprint
-            CertificatePath           = $CertificatePath
-            CertificatePassword       = $CertificatePassword
-            ManagedIdentity           = $ManagedIdentity.IsPresent
-            AccessTokens              = $AccessTokens
-        }
-        if (-not [System.String]::IsNullOrEmpty($policy.UpdateTimeOfDay))
-        {
-            $updateTimeOfDayValue = $policy.UpdateTimeOfDay.ToShortTimeString()
-            $results.Add('UpdateTimeOfDay', $updateTimeOfDayValue)
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('91382d07-8b89-444c-bbcb-cfe43133af33', 'edf2633e-9827-44de-b34c-8b8b9717e84c')]
-        [System.String[]]
-        $DisabledInProductMessages,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowManagedUpdates,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowPreview,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Disabled', 'Enabled', 'Forced', 'FollowOfficePreview')]
-        $AllowPublicPreview,
-
-        [Parameter()]
-        [System.Boolean]
-        $BlockLegacyAuthorization,
-
-        [Parameter()]
-        [System.UInt32]
-        [ValidateRange(0, 6)]
-        $UpdateDayOfWeek,
-
-        [Parameter()]
-        [System.String]
-        $UpdateTime,
-
-        [Parameter()]
-        [System.String]
-        $UpdateTimeOfDay,
-
-        [Parameter()]
-        [ValidateSet('UserChoice', 'MicrosoftChoice', 'AdminDisabled', 'NewTeamsAsDefault', 'NewTeamsOnly')]
-        [System.String]
-        $UseNewTeamsClient,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Teams Update Management Policy $Identity"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentValues = Get-TargetResource @PSBoundParameters
-    $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($CurrentValues.Ensure -eq 'Absent' -and $Ensure -eq 'Present')
-    {
-        Write-Verbose "Creating new Teams Update Management Policy {$Identity}"
-        New-CsTeamsUpdateManagementPolicy @boundParameters | Out-Null
-    }
-    elseif ($CurrentValues.Ensure -eq 'Present' -and $Ensure -eq 'Present')
-    {
-        Write-Verbose "Updating existing Teams Update Management Policy {$Identity}"
-        Set-CsTeamsUpdateManagementPolicy @boundParameters | Out-Null
-    }
-    elseif ($CurrentValues.Ensure -eq 'Present' -and $Ensure -eq 'Absent')
-    {
-        Write-Verbose "Removing existing Teams Update Management Policy {$Identity}"
-        Remove-CsTeamsUpdateManagementPolicy -Identity $Identity | Out-Null
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('91382d07-8b89-444c-bbcb-cfe43133af33', 'edf2633e-9827-44de-b34c-8b8b9717e84c')]
-        [System.String[]]
-        $DisabledInProductMessages,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowManagedUpdates,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowPreview,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Disabled', 'Enabled', 'Forced', 'FollowOfficePreview')]
-        $AllowPublicPreview,
-
-        [Parameter()]
-        [System.Boolean]
-        $BlockLegacyAuthorization,
-
-        [Parameter()]
-        [System.UInt32]
-        [ValidateRange(0, 6)]
-        $UpdateDayOfWeek,
-
-        [Parameter()]
-        [System.String]
-        $UpdateTime,
-
-        [Parameter()]
-        [System.String]
-        $UpdateTimeOfDay,
-
-        [Parameter()]
-        [ValidateSet('UserChoice', 'MicrosoftChoice', 'AdminDisabled', 'NewTeamsAsDefault', 'NewTeamsOnly')]
-        [System.String]
-        $UseNewTeamsClient,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    if ($PSBoundParameters.ContainsKey('UpdateTimeOfDay'))
-    {
-        Write-Verbose -Message "Converting UpdateTimeOfDay [$UpdateTimeOfDay] to the current culture format"
-        $dtUpdateTimeOfDay = [datetime]::Parse($PSBoundParameters.UpdateTimeOfDay)
-        $PSBoundParameters.UpdateTimeOfDay = $dtUpdateTimeOfDay.ToShortTimeString()
-        Write-Verbose -Message "Converted value [$($PSBoundParameters.UpdateTimeOfDay)]"
-    }
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter = "*",
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$policies = Get-CsTeamsUpdateManagementPolicy -Filter $Filter -ErrorAction Stop
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        foreach ($policy in $policies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity.Replace('Tag:', '') -ne $this.Identity)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $null = $this.Connect('MicrosoftTeams')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                Write-Verbose -Message 'Checking the Teams Update Management Policies'
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $policy = Get-CsTeamsUpdateManagementPolicy -Identity $this.Identity `
+                    -ErrorAction SilentlyContinue
+            }
+            else
+            {
+                $policy = $this.ExportedInstance
             }
 
-            Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity.Replace('Tag:', ''))" -DeferWrite
-            $params = @{
-                Identity              = $policy.Identity.Replace('Tag:', '')
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            if ($null -eq $policy)
+            {
+                Write-Verbose "No Teams Update Management Policy with Identity {$($this.Identity)} was found"
+                return $this.AsResult($nullReturn)
             }
 
-            $Script:exportedInstance = $policy
-            $result = Get-TargetResource @params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $result `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            Write-Verbose -Message "Found Teams Update Management Policy with Identity {$($this.Identity)}"
+            $results = @{
+                Identity                  = $policy.Identity
+                DisabledInProductMessages = $policy.DisabledInProductMessages
+                Description               = $policy.Description
+                AllowManagedUpdates       = $policy.AllowManagedUpdates
+                AllowPreview              = $policy.AllowPreview
+                AllowPublicPreview        = $policy.AllowPublicPreview
+                BlockLegacyAuthorization  = $policy.BlockLegacyAuthorization
+                UpdateDayOfWeek           = $policy.UpdateDayOfWeek
+                UpdateTime                = $policy.UpdateTime
+                UseNewTeamsClient         = $policy.UseNewTeamsClient
+                Ensure                    = 'Present'
+                Credential                = $this.Credential
+                ApplicationId             = $this.ApplicationId
+                TenantId                  = $this.TenantId
+                CertificateThumbprint     = $this.CertificateThumbprint
+                CertificatePath           = $this.CertificatePath
+                CertificatePassword       = $this.CertificatePassword
+                ManagedIdentity           = $this.ManagedIdentity
+                AccessTokens              = $this.AccessTokens
+            }
+            if (-not [System.String]::IsNullOrEmpty($policy.UpdateTimeOfDay))
+            {
+                $updateTimeOfDayValue = $policy.UpdateTimeOfDay.ToString('h:mm tt', [System.Globalization.CultureInfo]::InvariantCulture)
+                $results.Add('UpdateTimeOfDay', $updateTimeOfDayValue)
+            }
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
 
-        throw
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for Teams Update Management Policy $($this.Identity)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentValues = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($CurrentValues.Ensure -eq 'Absent' -and $this.Ensure -eq 'Present')
+        {
+            Write-Verbose "Creating new Teams Update Management Policy {$($this.Identity)}"
+            $createParameters = $boundParameters
+            New-CsTeamsUpdateManagementPolicy @createParameters | Out-Null
+        }
+        elseif ($CurrentValues.Ensure -eq 'Present' -and $this.Ensure -eq 'Present')
+        {
+            Write-Verbose "Updating existing Teams Update Management Policy {$($this.Identity)}"
+            $updateParameters = $boundParameters
+            Set-CsTeamsUpdateManagementPolicy @updateParameters | Out-Null
+        }
+        elseif ($CurrentValues.Ensure -eq 'Present' -and $this.Ensure -eq 'Absent')
+        {
+            Write-Verbose "Removing existing Teams Update Management Policy {$($this.Identity)}"
+            Remove-CsTeamsUpdateManagementPolicy -Identity $this.Identity | Out-Null
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftTeams')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$policies = Get-CsTeamsUpdateManagementPolicy -Filter $this.Filter -ErrorAction Stop
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            foreach ($policy in $policies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity.Replace('Tag:', ''))" -DeferWrite
+                $params = @{
+                    Identity              = $policy.Identity.Replace('Tag:', '')
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $policy
+                $result = $this.GetForExport($params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $result `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [TeamsUpdateManagementPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [TeamsUpdateManagementPolicy])
+        {
+            return $Values
+        }
+
+        $result = [TeamsUpdateManagementPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

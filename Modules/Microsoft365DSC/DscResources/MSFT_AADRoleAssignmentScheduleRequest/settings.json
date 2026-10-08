@@ -1,5 +1,92 @@
 {
   "resourceName": "AADRoleAssignmentScheduleRequest",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleAssignmentScheduleRequest",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Action",
+      "reason": "Accepted",
+      "note": "Set derives AdminAssign, AdminUpdate or AdminRemove from Ensure and current state"
+    },
+    {
+      "name": "ActivatedUsing",
+      "reason": "ReadOnly",
+      "note": "The service links it when an eligible assignment is activated"
+    },
+    {
+      "name": "ApprovalId",
+      "reason": "ReadOnly",
+      "note": "The service creates the approval object and stamps its identifier"
+    },
+    {
+      "name": "AppScope",
+      "reason": "ReadOnly",
+      "note": "Read-only expansion the service builds from appScopeId, which the resource declares"
+    },
+    {
+      "name": "CompletedDateTime",
+      "reason": "ReadOnly",
+      "note": "The service stamps it when processing finishes"
+    },
+    {
+      "name": "CustomData",
+      "reason": "NotConfigurable",
+      "note": "Microsoft Graph documents the property as not used."
+    },
+    {
+      "name": "DirectoryScope",
+      "reason": "ReadOnly",
+      "note": "Read-only expansion the service resolves from the key directoryScopeId"
+    },
+    {
+      "name": "IsValidationOnly",
+      "reason": "NotConfigurable",
+      "note": "Turns the request into a dry run that changes nothing."
+    },
+    {
+      "name": "PrincipalId",
+      "reason": "Accepted",
+      "note": "Set resolves the Principal key to this id"
+    },
+    {
+      "name": "PrincipalType",
+      "reason": "NotConfigurable",
+      "note": "Absent from the entity and used only to resolve the Principal name"
+    },
+    {
+      "name": "RoleDefinitionId",
+      "reason": "Accepted",
+      "note": "Set resolves the RoleDefinition key display name to this id"
+    },
+    {
+      "name": "Status",
+      "reason": "ReadOnly",
+      "note": "The service computes it while processing the request"
+    },
+    {
+      "name": "TargetSchedule",
+      "reason": "ReadOnly",
+      "note": "The service creates the resulting assignment schedule and links it"
+    },
+    {
+      "name": "TargetScheduleId",
+      "reason": "Accepted",
+      "note": "Configured through the Id property on the resource. Responsible for identifying the assignment schedule."
+    },
+    {
+      "name": "TicketInfo",
+      "reason": "Deferred",
+      "note": "Carried on the request, but the schedule the resource reads never returns it."
+    }
+  ],
   "description": "This resource configures an Azure Active Directory Privilege Identity Management assignment.",
   "roles": {
     "read": [

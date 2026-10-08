@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -59,7 +59,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -81,7 +81,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADB2BManagementPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -95,15 +95,20 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).IsSingleInstance | Should -Be 'Yes'
+                ((New-M365DSCResourceInstance -ResourceName 'AADB2BManagementPolicy' -Property $testParams).Get().ToHashtable()).IsSingleInstance | Should -Be 'Yes'
+
+                Mock -CommandName Get-MgBetaPolicyB2BManagementPolicy -MockWith {
+                    return $null
+                }
+                { (New-M365DSCResourceInstance -ResourceName 'AADB2BManagementPolicy' -Property $testParams).Get() } | Should -Throw '*Could not find the Azure AD B2B Management Policy.*'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADB2BManagementPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADB2BManagementPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaPolicyB2BManagementPolicy -Exactly 1
             }
         }
@@ -118,7 +123,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADB2BManagementPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

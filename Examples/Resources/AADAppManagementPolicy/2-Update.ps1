@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,44 +19,54 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADAppManagementPolicy "MyAppManagementPolicy"
+        AADAppManagementPolicy "AADAppManagementPolicy-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            Description           = "Cred policy";
-            DisplayName           = "AppManagementPolicy";
+            Description           = "Restricts client secrets and limits credential lifetimes to 90 days";
+            DisplayName           = "Application Credential Restrictions";
             Ensure                = "Present";
             IsEnabled             = $True;
             Restrictions          = MSFT_AADAppManagementPolicyRestrictions{
+                keyCredentials      = @(
+                    MSFT_AADAppManagementPolicyRestrictionsCredential{
+                        maxLifetime                         = "P90D"
+                        restrictForAppsCreatedAfterDateTime = "2026-01-01T00:00:00.0000000Z"
+                        restrictionType                     = "asymmetricKeyLifetime"
+                        state                               = "enabled"
+                    }
+                )
                 passwordCredentials = @(
                     MSFT_AADAppManagementPolicyRestrictionsCredential{
-                        restrictForAppsCreatedAfterDateTime = "01/01/0001 00:00:00"
-                        restrictionType = "passwordAddition"
-                        state = "disabled" # Drift
+                        restrictForAppsCreatedAfterDateTime = "2026-01-01T00:00:00.0000000Z"
+                        restrictionType                     = "passwordAddition"
+                        state                               = "disabled" # Updated Property
                     }
                     MSFT_AADAppManagementPolicyRestrictionsCredential{
-                        maxLifetime = "P90DT0H0M0S"
-                        restrictForAppsCreatedAfterDateTime = "01/01/0001 00:00:00"
-                        restrictionType = "passwordLifetime"
-                        state = "enabled"
+                        maxLifetime                         = "P90D"
+                        restrictForAppsCreatedAfterDateTime = "2026-01-01T00:00:00.0000000Z"
+                        restrictionType                     = "passwordLifetime"
+                        state                               = "enabled"
                     }
                     MSFT_AADAppManagementPolicyRestrictionsCredential{
-                        restrictForAppsCreatedAfterDateTime = "01/01/0001 00:00:00"
-                        restrictionType = "symmetricKeyAddition"
-                        state = "enabled"
+                        restrictForAppsCreatedAfterDateTime = "2026-01-01T00:00:00.0000000Z"
+                        restrictionType                     = "symmetricKeyAddition"
+                        state                               = "enabled"
                     }
                     MSFT_AADAppManagementPolicyRestrictionsCredential{
-                        maxLifetime = "P90DT0H0M0S"
-                        restrictForAppsCreatedAfterDateTime = "01/01/0001 00:00:00"
-                        restrictionType = "symmetricKeyLifetime"
-                        state = "enabled"
+                        maxLifetime                         = "P90D"
+                        restrictForAppsCreatedAfterDateTime = "2026-01-01T00:00:00.0000000Z"
+                        restrictionType                     = "symmetricKeyLifetime"
+                        state                               = "enabled"
                     }
                 )
             };
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

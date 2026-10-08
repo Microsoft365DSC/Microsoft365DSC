@@ -1,404 +1,247 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_CommerceSelfServicePurchase'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class CommerceSelfServicePurchase : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ProductId,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Unique ID of the product.')]
+    [System.String] $ProductId
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ProductName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the product')]
+    [System.String] $ProductName
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled', 'OnlyTrialsWithoutPaymentMethod')]
-        [System.String]
-        $PolicyValue,
+    [DscProperty()]
+    [System.ComponentModel.Description('Can be Enabled or Disabled.')]
+    [ValidateSet('Enabled', 'Disabled', 'OnlyTrialsWithoutPaymentMethod')]
+    [System.String] $PolicyValue
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Absent', 'Present')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for Self Service Purchase Policy for Product {$ProductName}"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [CommerceSelfServicePurchase] Get()
     {
-        $null = New-M365DSCConnection -Workload 'Licensing' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [CommerceSelfServicePurchase]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration for Self Service Purchase Policy for Product {$($this.ProductName)}"
+
+        try
+        {
+            $null = $this.Connect('Licensing')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            if ($null -ne $this.ResourceCache['exportedInstances'] -and $this.ResourceCache['ExportMode'])
+            {
+                $instance = $this.ResourceCache['exportedInstances'].items | Where-Object -FilterScript { $_.ProductId -eq $this.ProductId }
+            }
+            else
+            {
+                $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Licensing').HostUrl + "/v1/policies/AllowSelfServicePurchase/products/$($this.ProductId)"
+                $instance = Invoke-M365DSCLicensingWebRequest -Uri $uri -Method 'GET'
+            }
+
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            $results = @{
+                ProductId             = $instance.ProductId
+                ProductName           = $instance.ProductName
+                PolicyValue           = $instance.PolicyValue
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for Self Service Purchase Policy for Product {$($this.ProductName)}"
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
+        $null = $this.Get().ToHashtable()
 
-        if ($null -ne $Script:exportedInstances -and $Script:ExportMode)
+        if ($this.Ensure -eq 'Absent')
         {
-            $instance = $Script:exportedInstances.items | Where-Object -FilterScript { $_.ProductId -eq $ProductId }
-        }
-        else
-        {
-            $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Licensing').HostUrl + "/v1/policies/AllowSelfServicePurchase/products/$($ProductId)"
-            $instance = Invoke-M365DSCLicensingWebRequest -Uri $uri -Method 'GET'
+            throw 'Ensure cannot be absent. This resource can only update existing Self Service Purchase Policies.'
         }
 
-        if ($null -eq $instance)
-        {
-            return $nullResult
+        $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Licensing').HostUrl + "/v1/policies/AllowSelfServicePurchase/products/$($this.ProductId)"
+        $body = @{
+            policyValue = $this.PolicyValue
         }
-
-        $results = @{
-            ProductId             = $instance.ProductId
-            ProductName           = $instance.ProductName
-            PolicyValue           = $instance.PolicyValue
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-        return $results
+        Write-Verbose -Message "Updating Policy for {$($this.ProductName)} to value {$($this.PolicyValue)}"
+        Invoke-M365DSCLicensingWebRequest -Uri $uri -Method 'PUT' -Body $body | Out-Null
     }
-    catch
+
+    [bool] Test()
     {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
+        return ([M365DSCResourceBase] $this).Test()
     }
-}
 
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ProductId,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ProductName,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Enabled', 'Disabled', 'OnlyTrialsWithoutPaymentMethod')]
-        $PolicyValue,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Self Service Purchase Policy for Product {$ProductName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Absent')
+    [string] Export()
     {
-        throw 'Ensure cannot be absent. This resource can only update existing Self Service Purchase Policies.'
-    }
-
-    $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Licensing').HostUrl + "/v1/policies/AllowSelfServicePurchase/products/$($ProductId)"
-    $body = @{
-        policyValue = $PolicyValue
-    }
-    Write-Verbose -Message "Updating Policy for {$ProductName} to value {$PolicyValue}"
-    Invoke-M365DSCLicensingWebRequest -Uri $uri -Method 'PUT' -Body $body | Out-Null
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ProductId,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ProductName,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Enabled', 'Disabled', 'OnlyTrialsWithoutPaymentMethod')]
-        $PolicyValue,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'Licensing' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $Script:ExportMode = $true
-        $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Licensing').HostUrl + '/v1/policies/AllowSelfServicePurchase/products'
-        [array] $Script:exportedInstances = Invoke-M365DSCLicensingWebRequest -Uri $uri -Method 'GET'
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($Script:exportedInstances.Length -eq 0)
+        if ($this.RequiresPowerShellCore())
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        else
+
+        $ConnectionMode = $this.Connect('Licensing')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $Script:exportedInstances.items)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            $this.ResourceCache['ExportMode'] = $true
+            $uri = (Get-MSCloudLoginConnectionProfile -Workload 'Licensing').HostUrl + '/v1/policies/AllowSelfServicePurchase/products'
+            [array] $this.ResourceCache['exportedInstances'] = Invoke-M365DSCLicensingWebRequest -Uri $uri -Method 'GET'
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($this.ResourceCache['exportedInstances'].Length -eq 0)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-
-            $displayedKey = $config.ProductName
-            Write-M365DSCHost -Message "    |---[$i/$($Script:exportedInstances.items.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                ProductId             = $config.productId
-                ProductName           = $config.productName
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
+            foreach ($config in $this.ResourceCache['exportedInstances'].items)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
 
-            $Results = Get-TargetResource @Params
+                $displayedKey = $config.ProductName
+                Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].items.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    ProductId             = $config.productId
+                    ProductName           = $config.productName
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
 
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $Results = $this.GetForExport($Params)
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [CommerceSelfServicePurchase] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [CommerceSelfServicePurchase])
+        {
+            return $Values
+        }
+
+        $result = [CommerceSelfServicePurchase]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

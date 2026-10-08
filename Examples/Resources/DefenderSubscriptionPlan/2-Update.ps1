@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        DefenderSubscriptionPlan 'TestSubscription'
+        DefenderSubscriptionPlan 'DefenderSubscriptionPlan-Example'
         {
-            SubscriptionName      = 'MyTestSubscription'
+            SubscriptionName      = 'Contoso Production'
             PlanName              = 'VirtualMachines'
             SubPlanName           = 'P2'
             PricingTier           = 'Standard'
-            SubscriptionId        = 'd620d94d-916d-4dd9-9de5-179292873e20'
+            SubscriptionId        = '<subscription-id>'
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

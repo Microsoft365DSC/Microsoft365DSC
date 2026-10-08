@@ -1,5 +1,42 @@
 {
   "resourceName": "AADAgreement",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "agreement",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaAgreement",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Acceptances",
+      "reason": "ReadOnly",
+      "note": "Per-user and per-device acceptance records stamped by the service"
+    },
+    {
+      "name": "File",
+      "reason": "Accepted",
+      "note": "Configured through the FileData, FileName and Language properties on the resource."
+    },
+    {
+      "name": "FileIsDefault",
+      "reason": "NotConfigurable",
+      "note": "The resource expresses one localization and always sends it as the default."
+    },
+    {
+      "name": "FileIsMajorVersion",
+      "reason": "NotConfigurable",
+      "note": "A write time versioning action that invalidates existing acceptances."
+    },
+    {
+      "name": "Files",
+      "reason": "Accepted",
+      "note": "Built from FileData, FileName and Language. Only one localization is expressible."
+    }
+  ],
   "description": "This resource configures Azure AD Terms of Use Agreements in Entra ID.",
   "permissions": {
     "graph": {
@@ -36,21 +73,16 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.Identity.Governance",
       "cmdlets": [
         "Get-MgBetaAgreement",
-        "Remove-MgBetaAgreement"
+        "New-MgBetaAgreement",
+        "Remove-MgBetaAgreement",
+        "Update-MgBetaAgreement"
       ]
     }
   ],
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.Identity.Governance"
   ]
 }

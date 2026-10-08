@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,17 +22,17 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADAttributeSet "AADAttributeSetTest"
+        AADAttributeSet "AADAttributeSet-Example"
         {
+            Description           = "Attribute set with 420 attributes";
+            Ensure                = "Present";
+            Id                    = "Engineering";
+            MaxAttributesPerSet   = 300; # Updated Property
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            Description          = "Attribute set with 420 attributes";
-            Ensure               = "Present";
-            Id                   = "TestAttributeSet";
-            MaxAttributesPerSet  = 300; # Updated Property
         }
     }
 }

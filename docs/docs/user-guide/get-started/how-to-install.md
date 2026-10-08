@@ -13,11 +13,11 @@ Install-Module Microsoft365DSC -Force
 
 Executing this command can take a minute or two to complete, after which the base Microsoft365DSC module has been installed.
 
-> **NOTE:** Make sure you run the above command in an elevated PowerShell window. In a regular window the module will be installed in the Current User scope, which will not work!
+> **NOTE:** Make sure you run the above command in an elevated **Windows PowerShell 5.1** window. In a regular window the module will be installed in the Current User scope, which will not work!
 
 ## Dependencies
 
-However, Microsoft365DSC depends on several other modules to function properly. For example, it uses the [MSCloudLoginAssistant](https://www.powershellgallery.com/packages/MSCloudLoginAssistant/) module to delegate all authentication logic to the various workloads, it leverages a dozen [Microsoft Graph PowerShell modules](https://www.powershellgallery.com/packages?q=Microsoft.Graph) to interact with various configuration settings, etc. Current versions of Microsoft365DSC no longer download all the required prerequisites by default. When you install the Microsoft365DSC module, you only get the core component after which you have to download all prerequisite modules as well. It is our recommendation that you run the following command to update all dependencies on the system after installing the module:
+However, Microsoft365DSC depends on several other modules to function properly. For example, it uses the [MSCloudLoginAssistant](https://www.powershellgallery.com/packages/MSCloudLoginAssistant/) module to delegate all authentication logic to the various workloads and many more modules from the PowerShell Gallery. When you install the Microsoft365DSC module, you only get the core component after which you have to download all prerequisite modules as well. It is our recommendation that you run the following command to update all dependencies on the system after installing the module, in both Windows PowerShell and PowerShell 7:
 
 ```powershell
 Update-M365DSCDependencies

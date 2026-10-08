@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,29 +19,30 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOAuthenticationPolicy 'ConfigureAuthenticationPolicy'
+        EXOAuthenticationPolicy 'EXOAuthenticationPolicy-Example'
         {
-            Identity                            = "Block Basic Auth"
-            AllowBasicAuthActiveSync            = $False
-            AllowBasicAuthAutodiscover          = $False
-            AllowBasicAuthImap                  = $False
-            AllowBasicAuthMapi                  = $False
-            AllowBasicAuthOfflineAddressBook    = $False
-            AllowBasicAuthOutlookService        = $False
-            AllowBasicAuthPop                   = $False
-            AllowBasicAuthPowerShell            = $False
-            AllowBasicAuthReportingWebServices  = $False
-            AllowBasicAuthRpc                   = $False
-            AllowBasicAuthSmtp                  = $False
-            AllowBasicAuthWebServices           = $False
-            Ensure                              = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            Identity                           = "Block Basic Auth"
+            AllowBasicAuthActiveSync           = $False
+            AllowBasicAuthAutodiscover         = $False
+            AllowBasicAuthImap                 = $False
+            AllowBasicAuthMapi                 = $False
+            AllowBasicAuthOfflineAddressBook   = $False
+            AllowBasicAuthOutlookService       = $False
+            AllowBasicAuthPop                  = $False
+            AllowBasicAuthPowerShell           = $False
+            AllowBasicAuthReportingWebServices = $False
+            AllowBasicAuthRpc                  = $False
+            AllowBasicAuthSmtp                 = $False
+            AllowBasicAuthWebServices          = $False
+            Ensure                             = "Present"
+            ApplicationId                      = $ApplicationId
+            TenantId                           = $TenantId
+            CertificateThumbprint              = $CertificateThumbprint
         }
     }
 }

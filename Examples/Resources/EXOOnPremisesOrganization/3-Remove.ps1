@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,11 +22,12 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOOnPremisesOrganization 'ConfigureOnPremisesOrganization'
+        EXOOnPremisesOrganization 'EXOOnPremisesOrganization-Example'
         {
-            Identity          = 'Contoso'
+            Identity              = 'Contoso HQ'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

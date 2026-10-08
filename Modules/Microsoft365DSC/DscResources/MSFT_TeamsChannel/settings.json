@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsChannel",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "TeamChannel",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "roles": {
     "read": [
@@ -9,7 +20,58 @@
       "Teams Administrator"
     ]
   },
-  "permissions": {},
+  "permissions": {
+    "graph": {
+      "delegated": {
+        "read": [
+          {
+            "name": "ChannelSettings.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "Channel.Create"
+          },
+          {
+            "name": "ChannelSettings.ReadWrite.All"
+          },
+          {
+            "name": "Channel.Delete.All"
+          }
+        ]
+      },
+      "application": {
+        "read": [
+          {
+            "name": "ChannelSettings.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "Channel.Create"
+          },
+          {
+            "name": "ChannelSettings.ReadWrite.All"
+          },
+          {
+            "name": "Channel.Delete.All"
+          }
+        ]
+      }
+    }
+  },
   "requiredModules": [
     "MicrosoftTeams"
   ],

@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -67,9 +67,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                = 'Present'
                     SubscriptionId        = "00000000-0000-0000-0000-000000000000"
                     Credential            = $Credential
-                    ApplicationId         = "00000000-0000-0000-0000-000000000010"
-                    TenantId              = "00000000-0000-0000-0000-000000000020"
-                    CertificateThumbprint = "AABBCCDDEEFF00112233"
                 }
 
                 Mock -CommandName Get-AzRoleDefinition -MockWith {
@@ -78,16 +75,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call New-AzRoleDefinition from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName New-AzRoleDefinition -Exactly 1
+            }
+
+            It 'Should create a role without a description through the REST API' {
+                Mock -CommandName Invoke-AzRestMethod -MockWith {
+                    return @{ StatusCode = 201 }
+                }
+                $params = $testParams.Clone()
+                $params.Description = ''
+
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $params).Set()
+                Should -Invoke -CommandName New-AzRoleDefinition -Exactly 0
+                Should -Invoke -CommandName Invoke-AzRestMethod -Exactly 1 -ParameterFilter {
+                    $Method -eq 'PUT' -and $Path -like '/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.Authorization/roleDefinitions/*' -and
+                    ($Payload | ConvertFrom-Json).properties.roleName -eq 'My Custom Role'
+                }
             }
         }
 
@@ -104,9 +116,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                = 'Absent'
                     SubscriptionId        = "00000000-0000-0000-0000-000000000000"
                     Credential            = $Credential
-                    ApplicationId         = "00000000-0000-0000-0000-000000000010"
-                    TenantId              = "00000000-0000-0000-0000-000000000020"
-                    CertificateThumbprint = "AABBCCDDEEFF00112233"
                 }
 
                 Mock -CommandName Get-AzRoleDefinition -MockWith {
@@ -125,15 +134,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call Remove-AzRoleDefinition from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-AzRoleDefinition -Exactly 1
             }
         }
@@ -151,9 +160,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                = 'Present'
                     SubscriptionId        = "00000000-0000-0000-0000-000000000000"
                     Credential            = $Credential
-                    ApplicationId         = "00000000-0000-0000-0000-000000000010"
-                    TenantId              = "00000000-0000-0000-0000-000000000020"
-                    CertificateThumbprint = "AABBCCDDEEFF00112233"
                 }
 
                 Mock -CommandName Get-AzRoleDefinition -MockWith {
@@ -172,7 +178,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -189,9 +195,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                = 'Present'
                     SubscriptionId        = "00000000-0000-0000-0000-000000000000"
                     Credential            = $Credential
-                    ApplicationId         = "00000000-0000-0000-0000-000000000010"
-                    TenantId              = "00000000-0000-0000-0000-000000000020"
-                    CertificateThumbprint = "AABBCCDDEEFF00112233"
                 }
 
                 Mock -CommandName Get-AzRoleDefinition -MockWith {
@@ -210,11 +213,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call Set-AzRoleDefinition from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-AzRoleDefinition -Exactly 1
             }
         }
@@ -246,7 +249,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleDefinition' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

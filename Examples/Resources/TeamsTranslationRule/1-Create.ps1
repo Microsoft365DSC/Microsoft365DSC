@@ -5,22 +5,35 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsTranslationRule 'Example'
+        TeamsTranslationRule 'TeamsTranslationRule-Example'
         {
-            Credential           = $Credscredential;
-            Ensure               = "Present";
-            Identity             = "AddPlus1";
-            Pattern              = "^(\d{10})$";
-            Translation          = "+1$1";
+            Description           = "Adds the +1 country code to ten-digit numbers";
+            Ensure                = "Present";
+            Identity              = "AddPlus1";
+            Pattern               = "^(\d{10})$";
+            Translation           = "+1`$1";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

@@ -4,7 +4,8 @@ This example creates a new Intune Role Assigment.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,25 +18,25 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        IntuneRoleAssignment 'IntuneRoleAssignment'
+        IntuneRoleAssignment 'IntuneRoleAssignment-Example'
         {
-            DisplayName                = 'test2'
-            Description                = 'test Updated' # Updated Property
-            Members                    = @('')
-            MembersDisplayNames        = @('SecGroup2')
-            ResourceScopes             = @('6eb76881-f56f-470f-be0d-672145d3dcb1')
-            ResourceScopesDisplayNames = @('')
+            DisplayName                = 'Amsterdam Helpdesk Operators'
+            Description                = 'Grants the Amsterdam helpdesk access to the Amsterdam and Rotterdam device scopes' # Updated Property
+            MembersDisplayNames        = @('Intune Pilot Users')
+            ResourceScopesDisplayNames = @('Intune Pilot Devices')
             ScopeType                  = 'resourceScope'
-            RoleDefinition             = '2d00d0fd-45e9-4166-904f-b76ac5eed2c7'
-            RoleDefinitionDisplayName  = 'This is my role'
+            RoleDefinition             = '9e0cc482-82df-4ab2-a24c-0c23a3f52e1e'
+            RoleDefinitionDisplayName  = 'Help Desk Operator'
+            RoleScopeTagIds            = @('0')
             Ensure                     = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId              = $ApplicationId;
+            TenantId                   = $TenantId;
+            CertificateThumbprint      = $CertificateThumbprint;
         }
     }
 }

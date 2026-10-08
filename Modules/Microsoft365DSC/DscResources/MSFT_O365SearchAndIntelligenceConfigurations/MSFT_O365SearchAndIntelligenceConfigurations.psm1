@@ -1,488 +1,313 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_O365SearchAndIntelligenceConfigurations'
+﻿using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class O365SearchAndIntelligenceConfigurations : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Specifies the resource is a single instance, the value must be ''Yes''')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter()]
-        [System.Boolean]
-        $ItemInsightsIsEnabledInOrganization,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether or not Item Insights should be available for the organization.')]
+    [System.Nullable[System.Boolean]] $ItemInsightsIsEnabledInOrganization
 
-        [Parameter()]
-        [System.String]
-        $ItemInsightsDisabledForGroup,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a single Azure AD Group for which Item Insights needs to be disabled.')]
+    [System.String] $ItemInsightsDisabledForGroup
 
-        [Parameter()]
-        [System.Boolean]
-        $MeetingInsightsIsEnabledInOrganization,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether or not Meeting Insights should be available for the organization.')]
+    [System.Nullable[System.Boolean]] $MeetingInsightsIsEnabledInOrganization
 
-        [Parameter()]
-        [System.Boolean]
-        $PersonInsightsIsEnabledInOrganization,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether or not Person Insights should be available for the organization.')]
+    [System.Nullable[System.Boolean]] $PersonInsightsIsEnabledInOrganization
 
-        [Parameter()]
-        [System.String]
-        $PersonInsightsDisabledForGroup,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a single Azure AD Group for which Person Insights needs to be disabled.')]
+    [System.String] $PersonInsightsDisabledForGroup
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message 'Getting the O365 Search and Intelligence Configurations'
-
-    try
+    [O365SearchAndIntelligenceConfigurations] Get()
     {
-        $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-            -InboundParameters $PSBoundParameters
+        $PersonInsights = $null
+        $PersonInsightsDisabledForGroupValue = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [O365SearchAndIntelligenceConfigurations]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-            -InboundParameters $PSBoundParameters
+        Write-Verbose -Message 'Getting the O365 Search and Intelligence Configurations'
 
-        #Ensure the proper dependencies are installed in the current environment.
+        try
+        {
+            $ConnectionMode = $this.Connect('ExchangeOnline')
+
+            $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $tenantIdValue = $this.TenantId
+            if ($ConnectionMode -eq 'Credentials')
+            {
+                $tenantIdValue = $this.Credential.UserName.Split('@')[1]
+            }
+
+            $ItemInsights = Get-MgBetaOrganizationSettingItemInsight -OrganizationId $tenantIdValue
+            $itemInsightsDisabledForGroupValue = $null
+            if (-not [System.String]::IsNullOrEmpty($ItemInsights.DisabledForGroup))
+            {
+                $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($ItemInsights.DisabledForGroup) }
+                $itemInsightsDisabledForGroupValue = $group.DisplayName
+            }
+
+            try
+            {
+                $PersonInsights = Get-MgBetaOrganizationSettingPersonInsight -OrganizationId $tenantIdValue `
+                    -ErrorAction Stop
+                $PersonInsightsDisabledForGroupValue = $null
+                if (-not [System.String]::IsNullOrEmpty($PersonInsights.DisabledForGroup))
+                {
+                    $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($PersonInsights.DisabledForGroup) }
+                    $PersonInsightsDisabledForGroupValue = $group.DisplayName
+                }
+            }
+            catch
+            {
+                if ($_.Exception.Message -eq "[BadRequest] : Resource not found for the segment 'peopleInsights'.")
+                {
+                    Write-Warning -Message 'The peopleInsights segment is not available in the selected environment.'
+                }
+                else
+                {
+                    throw
+                }
+            }
+
+            $MeetingInsightsResponse = Invoke-M365DSCCommand -ScriptBlock { Get-MeetingInsightsSettings }
+            $MeetingInsightsValue = [Boolean]::Parse($MeetingInsightsResponse.Split(':')[1].Trim())
+
+            return $this.AsResult(@{
+                IsSingleInstance                       = 'Yes'
+                ItemInsightsIsEnabledInOrganization    = $ItemInsights.IsEnabledInOrganization
+                ItemInsightsDisabledForGroup           = $itemInsightsDisabledForGroupValue
+                MeetingInsightsIsEnabledInOrganization = $MeetingInsightsValue
+                PersonInsightsIsEnabledInOrganization  = $PersonInsights.IsEnabledInOrganization
+                PersonInsightsDisabledForGroup         = $PersonInsightsDisabledForGroupValue
+                Credential                             = $this.Credential
+                ApplicationId                          = $this.ApplicationId
+                TenantId                               = $tenantIdValue
+                CertificateThumbprint                  = $this.CertificateThumbprint
+                CertificatePath                        = $this.CertificatePath
+                CertificatePassword                    = $this.CertificatePassword
+                ManagedIdentity                        = $this.ManagedIdentity
+                AccessTokens                           = $this.AccessTokens
+            })
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Setting the O365 Search and Intelligence Configurations'
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        $organizationId = $this.TenantId
         if ($ConnectionMode -eq 'Credentials')
         {
-            $TenantId = $Credential.UserName.Split('@')[1]
+            $organizationId = $this.Credential.UserName.Split('@')[1]
         }
 
-        $ItemInsights = Get-MgBetaOrganizationSettingItemInsight -OrganizationId $TenantId
-        $itemInsightsDisabledForGroupValue = $null
-        if (-not [System.String]::IsNullOrEmpty($ItemInsights.DisabledForGroup))
-        {
-            $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($ItemInsights.DisabledForGroup) }
-            $itemInsightsDisabledForGroupValue = $group.DisplayName
+        #region Item Insights
+        $ItemInsightsUpdateParams = @{
+            IsEnabledInOrganization = $this.ItemInsightsIsEnabledInOrganization
         }
+        if ($this.GetBoundParameters().ContainsKey('ItemInsightsDisabledForGroup'))
+        {
+            $disabledForGroupValue = $null
+            try
+            {
+                $group = Get-MgGroup -Filter "DisplayName eq '$($this.ItemInsightsDisabledForGroup -replace "'", "''")'"
+                $disabledForGroupValue = $group.Id
+            }
+            catch
+            {
+                $this.LogError($_, 'Error retrieving data getting group')
 
-        try
-        {
-            $PersonInsights = Get-MgBetaOrganizationSettingPersonInsight -OrganizationId $TenantId `
-                -ErrorAction Stop
-            $PersonInsightsDisabledForGroupValue = $null
-            if (-not [System.String]::IsNullOrEmpty($PersonInsights.DisabledForGroup))
-            {
-                $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($PersonInsights.DisabledForGroup) }
-                $PersonInsightsDisabledForGroupValue = $group.DisplayName
-            }
-        }
-        catch
-        {
-            if ($_.Exception.Message -eq "[BadRequest] : Resource not found for the segment 'peopleInsights'.")
-            {
-                Write-Warning -Message 'The peopleInsights segment is not available in the selected environment.'
-            }
-            else
-            {
                 throw
             }
+            $ItemInsightsUpdateParams.Add('DisabledForGroup', $disabledForGroupValue)
+        }
+        Write-Verbose -Message 'Updating settings for Item Insights'
+        Update-MgBetaOrganizationSettingItemInsight -OrganizationId $organizationId -BodyParameter $ItemInsightsUpdateParams | Out-Null
+        #endregion
+
+        #region Person Insights
+        $PersonInsightsUpdateParams = @{
+            IsEnabledInOrganization = $this.PersonInsightsIsEnabledInOrganization
+        }
+        if ($this.GetBoundParameters().ContainsKey('PersonInsightsDisabledForGroup'))
+        {
+            $disabledForGroupValue = $null
+            try
+            {
+                $group = Get-MgGroup -Filter "DisplayName eq '$($this.PersonInsightsDisabledForGroup -replace "'", "''")'"
+                $disabledForGroupValue = $group.Id
+            }
+            catch
+            {
+                $this.LogError($_, 'Error retrieving data getting group')
+
+                throw
+            }
+            $PersonInsightsUpdateParams.Add('DisabledForGroup', $disabledForGroupValue)
         }
 
-        $MeetingInsightsResponse = Invoke-M365DSCCommand -ScriptBlock { Get-MeetingInsightsSettings }
-        $MeetingInsightsValue = [Boolean]::Parse($MeetingInsightsResponse.Split(':')[1].Trim())
+        Write-Verbose -Message 'Updating settings for Person Insights'
+        Update-MgBetaOrganizationSettingPersonInsight -OrganizationId $organizationId -BodyParameter $PersonInsightsUpdateParams | Out-Null
+        #endregion
 
-        return @{
-            IsSingleInstance                       = 'Yes'
-            ItemInsightsIsEnabledInOrganization    = $ItemInsights.IsEnabledInOrganization
-            ItemInsightsDisabledForGroup           = $itemInsightsDisabledForGroupValue
-            MeetingInsightsIsEnabledInOrganization = $MeetingInsightsValue
-            PersonInsightsIsEnabledInOrganization  = $PersonInsights.IsEnabledInOrganization
-            PersonInsightsDisabledForGroup         = $PersonInsightsDisabledForGroupValue
-            Credential                             = $Credential
-            ApplicationId                          = $ApplicationId
-            TenantId                               = $TenantId
-            CertificateThumbprint                  = $CertificateThumbprint
-            CertificatePath                        = $CertificatePath
-            CertificatePassword                    = $CertificatePassword
-            ManagedIdentity                        = $ManagedIdentity.IsPresent
-            AccessTokens                           = $AccessTokens
+        if ($null -ne $this.MeetingInsightsIsEnabledInOrganization)
+        {
+            Set-MeetingInsightsSettings -Enabled $this.MeetingInsightsIsEnabledInOrganization | Out-Null
         }
     }
-    catch
+
+    [bool] Test()
     {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $ItemInsightsIsEnabledInOrganization,
-
-        [Parameter()]
-        [System.String]
-        $ItemInsightsDisabledForGroup,
-
-        [Parameter()]
-        [System.Boolean]
-        $MeetingInsightsIsEnabledInOrganization,
-
-        [Parameter()]
-        [System.Boolean]
-        $PersonInsightsIsEnabledInOrganization,
-
-        [Parameter()]
-        [System.String]
-        $PersonInsightsDisabledForGroup,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting the O365 Search and Intelligence Configurations'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    if ($ConnectionMode -eq 'Credentials')
-    {
-        $TenantId = $Credential.UserName.Split('@')[1]
+        return ([M365DSCResourceBase] $this).Test()
     }
 
-    #region Item Insights
-    $ItemInsightsUpdateParams = @{
-        IsEnabledInOrganization = $ItemInsightsIsEnabledInOrganization
-    }
-    if ($PSBoundParameters.ContainsKey('ItemInsightsDisabledForGroup'))
+    [string] Export()
     {
-        $disabledForGroupValue = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
         try
         {
-            $group = Get-MgGroup -Filter "DisplayName eq '$($ItemInsightsDisabledForGroup -replace "'", "''")'"
-            $disabledForGroupValue = $group.Id
+            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            {
+                $Global:M365DSCExportResourceInstancesCount++
+            }
+
+            $Params = @{
+                IsSingleInstance      = 'Yes'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+
+            $Results = $this.GetForExport($Params)
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
+            {
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+            }
+            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+
+            return $dscContent.ToString()
         }
         catch
         {
-            New-M365DSCLogEntry -Message 'Error retrieving data getting group' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
-        }
-        $ItemInsightsUpdateParams.Add('DisabledForGroup', $disabledForGroupValue)
-    }
-    Write-Verbose -Message 'Updating settings for Item Insights'
-    Update-MgBetaOrganizationSettingItemInsight -OrganizationId $TenantId -BodyParameter $ItemInsightsUpdateParams | Out-Null
-    #endregion
+            $this.LogError($_, 'Error during Export:')
 
-    #region Person Insights
-    $PersonInsightsUpdateParams = @{
-        IsEnabledInOrganization = $PersonInsightsIsEnabledInOrganization
+            throw
+        }
     }
-    if ($PSBoundParameters.ContainsKey('PersonInsightsDisabledForGroup'))
+
+    hidden [O365SearchAndIntelligenceConfigurations] AsResult([System.Object] $Values)
     {
-        $disabledForGroupValue = $null
-        try
+        if ($Values -is [O365SearchAndIntelligenceConfigurations])
         {
-            $group = Get-MgGroup -Filter "DisplayName eq '$($PersonInsightsDisabledForGroup -replace "'", "''")'"
-            $disabledForGroupValue = $group.Id
+            return $Values
         }
-        catch
+
+        $result = [O365SearchAndIntelligenceConfigurations]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
         {
-            New-M365DSCLogEntry -Message 'Error retrieving data getting group' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $result.FromHashtable($Values)
         }
-        $PersonInsightsUpdateParams.Add('DisabledForGroup', $disabledForGroupValue)
-    }
 
-    Write-Verbose -Message 'Updating settings for Person Insights'
-    Update-MgBetaOrganizationSettingPersonInsight -OrganizationId $TenantId -BodyParameter $PersonInsightsUpdateParams | Out-Null
-    #endregion
-
-    if ($null -ne $MeetingInsightsIsEnabledInOrganization)
-    {
-        Set-MeetingInsightsSettings -Enabled $MeetingInsightsIsEnabledInOrganization | Out-Null
+        return $result
     }
 }
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $ItemInsightsIsEnabledInOrganization,
-
-        [Parameter()]
-        [System.String]
-        $ItemInsightsDisabledForGroup,
-
-        [Parameter()]
-        [System.Boolean]
-        $MeetingInsightsIsEnabledInOrganization,
-
-        [Parameter()]
-        [System.Boolean]
-        $PersonInsightsIsEnabledInOrganization,
-
-        [Parameter()]
-        [System.String]
-        $PersonInsightsDisabledForGroup,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-        {
-            $Global:M365DSCExportResourceInstancesCount++
-        }
-
-        $Params = @{
-            IsSingleInstance      = 'Yes'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-
-        $Results = Get-TargetResource @Params
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
-        {
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-        }
-        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

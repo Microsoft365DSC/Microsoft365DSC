@@ -1,408 +1,251 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_O365CopilotSettingsPeopleEnhancedPersonalization'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class O365CopilotSettingsPeopleEnhancedPersonalization : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Only valid value is ''Yes''.')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter()]
-        [System.Boolean]
-        $isEnabledInOrganization,
+    [DscProperty()]
+    [System.ComponentModel.Description('If true, enables the enhanced personalization control and therefore related features as defined in control enhanced personalization privacy Required.')]
+    [System.Nullable[System.Boolean]] $isEnabledInOrganization
 
-        [Parameter()]
-        [System.String]
-        $disabledForGroup,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ID of a Microsoft Entra group to which the value is used to disable the control for populated users. Optional.')]
+    [System.String] $disabledForGroup
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message 'Get the Copilot setting for personalization capabilities'
-
-    try
+    [O365CopilotSettingsPeopleEnhancedPersonalization] Get()
     {
-        $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-            -InboundParameters $PSBoundParameters
+        $currdisabledForGroup = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [O365CopilotSettingsPeopleEnhancedPersonalization]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message 'Get the Copilot setting for personalization capabilities'
+
+        try
+        {
+            $null = $this.Connect('MicrosoftGraph')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+
+            $uri = '/beta/copilot/settings/people/enhancedpersonalization'
+            $instance = Invoke-M365DSCGraphRequest -Uri $uri -Method Get
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            # Convert GroupId toDisplayName if needed
+            if ($null -ne $instance.disabledForGroup)
+            {
+                $currdisabledForGroup = Get-MgGroup -GroupId $instance.disabledForGroup -Property DisplayName
+            }
+
+            $results = @{
+                IsSingleInstance        = 'Yes'
+                isEnabledInOrganization = $instance.isEnabledInOrganization
+                disabledForGroup        = if ($null -ne $currdisabledForGroup)
+                {
+                    $currdisabledForGroup.displayName
+                }
+                else
+                {
+                    $null
+                }
+                Credential              = $this.Credential
+                ApplicationId           = $this.ApplicationId
+                TenantId                = $this.TenantId
+                ApplicationSecret       = $this.ApplicationSecret
+                CertificateThumbprint   = $this.CertificateThumbprint
+                CertificatePath         = $this.CertificatePath
+                CertificatePassword     = $this.CertificatePassword
+                ManagedIdentity         = $this.ManagedIdentity
+                AccessTokens            = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Set the Copilot setting for personalization capabilities'
+
+        $null = $this.Connect('MicrosoftGraph')
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $nullResult = $PSBoundParameters
-
-        $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'beta/copilot/settings/people/enhancedpersonalization'
-        $instance = Invoke-MgGraphRequest -Uri $uri -Method Get
-        if ($null -eq $instance)
+        # Check if $disabledForGroup is a guid or display name and convert to guid if needed
+        $disabledForGroupId = $this.disabledForGroup
+        if (-not [string]::IsNullOrEmpty($disabledForGroupId))
         {
-            return $nullResult
-        }
-
-        # Convert GroupId toDisplayName if needed
-        if ($null -ne $instance.disabledForGroup)
-        {
-            $currdisabledForGroup = Get-MgGroup -GroupId $instance.disabledForGroup -Property DisplayName
-        }
-
-        $results = @{
-            IsSingleInstance        = 'Yes'
-            isEnabledInOrganization = $instance.isEnabledInOrganization
-            disabledForGroup        = if ($null -ne $currdisabledForGroup)
+            if (-not ([System.Guid]::TryParse($disabledForGroupId, [ref][System.Guid]::Empty)))
             {
-                $currdisabledForGroup.displayName
+                $group = Get-MgGroup -Filter "displayName eq '$disabledForGroupId'" -Property Id -Top 1
+                if ($null -ne $group)
+                {
+                    $disabledForGroupId = $group.Id
+                }
+                else
+                {
+                    throw "Group with display name '$disabledForGroupId' not found."
+                }
             }
-            else
+        }
+
+        Write-Verbose -Message "Updating the isEnabledInOrganization setting to {$($this.isEnabledInOrganization.ToString())}"
+        $settings = @{
+            isEnabledInOrganization = $this.isEnabledInOrganization
+            disabledForGroup        = if ([string]::IsNullOrEmpty($disabledForGroupId))
             {
                 $null
             }
-            Credential              = $Credential
-            ApplicationId           = $ApplicationId
-            TenantId                = $TenantId
-            ApplicationSecret       = $ApplicationSecret
-            CertificateThumbprint   = $CertificateThumbprint
-            CertificatePath         = $CertificatePath
-            CertificatePassword     = $CertificatePassword
-            ManagedIdentity         = $ManagedIdentity.IsPresent
-            AccessTokens            = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $isEnabledInOrganization,
-
-        [Parameter()]
-        [System.String]
-        $disabledForGroup,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Set the Copilot setting for personalization capabilities'
-
-    $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    # Check if $disabledForGroup is a guid or display name and convert to guid if needed
-    if (-not [string]::IsNullOrEmpty($disabledForGroup))
-    {
-        if (-not ([System.Guid]::TryParse($disabledForGroup, [ref][System.Guid]::Empty)))
-        {
-            $group = Get-MgGroup -Filter "displayName eq '$disabledForGroup'" -Property Id -Top 1
-            if ($null -ne $group)
-            {
-                $disabledForGroup = $group.Id
-            }
             else
             {
-                throw "Group with display name '$disabledForGroup' not found."
+                $disabledForGroupId
             }
         }
+        $body = ConvertTo-Json $settings
+        $uri = '/beta/copilot/settings/people/enhancedpersonalization'
+        Invoke-M365DSCGraphRequest -Uri $uri -Method PATCH -Body $Body | Out-Null
     }
 
-    Write-Verbose -Message "Updating the isEnabledInOrganization setting to {$($isEnabledInOrganization.ToString())}"
-    $settings = @{
-        isEnabledInOrganization = $isEnabledInOrganization
-        disabledForGroup        = if ([string]::IsNullOrEmpty($disabledForGroup))
-        {
-            $null
-        }
-        else
-        {
-            $disabledForGroup
-        }
-    }
-    $body = ConvertTo-Json $settings
-    $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'beta/copilot/settings/people/enhancedpersonalization'
-    Invoke-MgGraphRequest -Uri $uri -Method PATCH -Body $Body | Out-Null
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $isEnabledInOrganization,
-
-        [Parameter()]
-        [System.String]
-        $disabledForGroup,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
+    [bool] Test()
     {
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-        {
-            $Global:M365DSCExportResourceInstancesCount++
-        }
-
-        $params = @{
-            ISSingleInstance      = 'Yes'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-
-        $Results = Get-TargetResource @Params
-
-        $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-            -ConnectionMode $ConnectionMode `
-            -ModulePath $PSScriptRoot `
-            -Results $Results `
-            -Credential $Credential
-        [void]$dscContent.Append($currentDSCBlock)
-        Save-M365DSCPartialExport -Content $currentDSCBlock `
-            -FileName $Global:PartialExportFileName
-        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        return $dscContent.ToString()
+        return ([M365DSCResourceBase] $this).Test()
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
 
-        throw
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            {
+                $Global:M365DSCExportResourceInstancesCount++
+            }
+
+            $params = @{
+                ISSingleInstance      = 'Yes'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+
+            $Results = $this.GetForExport($Params)
+
+            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                -ConnectionMode $ConnectionMode `
+                -ModulePath $this.GetModulePath() `
+                -Results $Results `
+                -Credential $this.Credential
+            [void]$dscContent.Append($currentDSCBlock)
+            Save-M365DSCPartialExport -Content $currentDSCBlock `
+                -FileName $Global:PartialExportFileName
+            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [O365CopilotSettingsPeopleEnhancedPersonalization] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [O365CopilotSettingsPeopleEnhancedPersonalization])
+        {
+            return $Values
+        }
+
+        $result = [O365CopilotSettingsPeopleEnhancedPersonalization]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

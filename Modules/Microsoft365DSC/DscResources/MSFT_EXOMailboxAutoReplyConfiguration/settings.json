@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOMailboxAutoReplyConfiguration",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "MailboxAutoReplyConfiguration",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "roles": {
     "read": [
       "Security Reader"
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Recipients"
         ],
@@ -33,7 +44,7 @@
           "Mail Recipients"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "View-Only Organization Management"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Data"
+  "mode": "Data",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-Mailbox",
+        "Get-MailboxAutoReplyConfiguration",
+        "Get-User",
+        "Set-MailboxAutoReplyConfiguration"
+      ]
+    }
+  ]
 }

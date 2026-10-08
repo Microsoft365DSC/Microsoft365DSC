@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,29 +22,33 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationPlatformScriptLinux 'IntuneDeviceConfigurationPlatformScriptLinux_1'
+        IntuneDeviceConfigurationPlatformScriptLinux 'IntuneDeviceConfigurationPlatformScriptLinux-Example'
         {
-            Assignments                 = @(
+            Assignments                    = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
                 }
             );
             CustomConfig_Script            = "#!/bin/sh
 
 echo true";
-            CustomConfigExecutionContext   = "root"; # Updated property
+            CustomConfigExecutionContext   = "root"; # Updated Property
             CustomConfigExecutionFrequency = 15;
             CustomConfigExecutionRetries   = 2;
-            DisplayName                 = "IntuneDeviceConfigurationPlatformScriptLinux_1";
-            Ensure                      = "Present";
-            Description                 = "";
-            RoleScopeTagIds             = @("0");
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            DisplayName                    = "IntuneDeviceConfigurationPlatformScriptLinux_1";
+            Ensure                         = "Present";
+            Description                    = "";
+            RoleScopeTagIds                = @("0");
+            ApplicationId                  = $ApplicationId;
+            TenantId                       = $TenantId;
+            CertificateThumbprint          = $CertificateThumbprint;
         }
     }
 }

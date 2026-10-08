@@ -23,9 +23,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
-            Mock -CommandName Add-M365DSCTelemetryEvent -MockWith {
+            Mock -CommandName Add-M365DSCTelemetryEvent -ModuleName '_Shared' -MockWith {
             }
 
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
@@ -40,7 +40,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-PSSession -MockWith {
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
+            }
+
+            Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
             }
 
             Mock -CommandName Get-MgUser -MockWith {
@@ -96,7 +99,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Remove-MgDirectoryAdministrativeUnitScopedRoleMember -MockWith {
             }
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -114,10 +117,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = 'FakeStringValue1'
                     Id          = 'FakeStringValue1'
                     Members     = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                        ([MSFT_MicrosoftGraphMember] @{
                             Type     = 'User'
                             Identity = 'john.smith@contoso.com'
-                        } -ClientOnly)
+                        })
                     )
                     Visibility  = 'Public'
                     Ensure      = 'Present'
@@ -146,13 +149,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the AU from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgDirectoryAdministrativeUnit -Exactly 1
             }
         }
@@ -164,10 +167,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = 'FakeStringValue2'
                     Id          = 'FakeStringValue2'
                     Members     = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                        ([MSFT_MicrosoftGraphMember] @{
                             Type     = 'User'
                             Identity = 'john.smith@contoso.com'
-                        } -ClientOnly)
+                        })
                     )
                     Ensure      = 'Absent'
                     Credential  = $Credential
@@ -183,15 +186,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the AU from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgDirectoryAdministrativeUnit -Exactly 1
             }
         }
@@ -214,14 +217,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $true
             }
         }
-        
+
         Context -Name 'Two identically-named AUs exists and ID is not specified. Should throw' -Fixture {
             BeforeAll {
                 $testParams = @{
@@ -247,7 +250,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should throw in the Get method' {
-                {Get-TargetResource @testParams} | Should -Throw -ExpectedMessage '*Multiple Azure AD Administrative Units with DisplayName {*} were found. Please specify the Id of the desired Administrative Unit*'
+                {(New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()} | Should -Throw -ExpectedMessage '*Multiple Azure AD Administrative Units with DisplayName {*} were found. Please specify the Id of the desired Administrative Unit*'
             }
         }
 
@@ -258,21 +261,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName                   = 'DSCAU'
                     Id                            = 'DSCAU'
                     Members                       = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                        ([MSFT_MicrosoftGraphMember] @{
                             Identity = 'John.Doe@mytenant.com'
                             Type     = 'User'
-                        } -ClientOnly)
+                        })
                     )
                     ScopedRoleMembers             = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphScopedRoleMembership -Property @{
+                        ([MSFT_MicrosoftGraphScopedRoleMembership] @{
                             RoleName       = 'User Administrator'
-                            RoleMemberInfo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            RoleMemberInfo = ([MSFT_MicrosoftGraphMember] @{
                                     Identity = 'John.Doe@mytenant.com'
                                     Type     = 'User'
-                                } -ClientOnly)
+                                })
                             #Identity = 'John.Doe@mytenant.com'
                             #Type     = 'User'
-                        } -ClientOnly)
+                        })
                     )
                     Visibility                    = 'Public'
                     MembershipType                = 'Assigned'
@@ -327,11 +330,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $true
             }
         }
         Context -Name 'The AU Exists and specified Values are NOT in the desired state (leaving Members and ScopedRoleMembers as-is)' -Fixture {
@@ -380,15 +383,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method without removing existing Members or ScopedRoleMembers' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Not -Invoke -CommandName Remove-MgDirectoryAdministrativeUnitMemberDirectoryObjectByRef
                 Should -Not -Invoke -CommandName Remove-MgDirectoryAdministrativeUnitScopedRoleMember
             }
@@ -401,10 +404,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName       = 'DSCAU'
                     Id                = 'DSCAU'
                     Members           = @(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            ([MSFT_MicrosoftGraphMember] @{
                             Identity = 'John.Doe@mytenant.com'
                             Type     = 'User'
-                        } -ClientOnly)
+                        })
                     )
                     Visibility        = 'Public'
                     Ensure            = 'Present'
@@ -417,15 +420,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgDirectoryAdministrativeUnitMemberByRef -Exactly 1
             }
         }
@@ -437,10 +440,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName       = 'DSCAU2'
                     Id                = 'DSCAU2'
                     Members           = @(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            ([MSFT_MicrosoftGraphMember] @{
                             Identity = 'DSCAUMemberGroup'
                             Type     = 'Group'
-                        } -ClientOnly)
+                        })
                     )
                     Visibility        = 'Public'
 
@@ -457,15 +460,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgDirectoryAdministrativeUnitMemberByRef -Exactly 1
             }
         }
@@ -477,10 +480,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName       = 'DSCAU'
                     Id                = 'DSCAU'
                     Members           = @(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            ([MSFT_MicrosoftGraphMember] @{
                             Identity = 'DSCAUMemberDevice'
                             Type     = 'Device'
-                        } -ClientOnly)
+                        })
                     )
                     Visibility        = 'Public'
                     Ensure            = 'Present'
@@ -496,15 +499,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgDirectoryAdministrativeUnitMemberByRef -Exactly 1
             }
         }
@@ -516,15 +519,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName       = 'DSCAU'
                     Id                = 'DSCAU'
                     ScopedRoleMembers = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphScopedRoleMembership -Property @{
+                        ([MSFT_MicrosoftGraphScopedRoleMembership] @{
                             RoleName       = 'User Administrator'
-                            RoleMemberInfo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            RoleMemberInfo = ([MSFT_MicrosoftGraphMember] @{
                                     Identity = 'John.Doe@mytenant.com'
                                     Type     = 'User'
-                                } -ClientOnly)
+                                })
                             #Identity = 'John.Doe@mytenant.com'
                             #Type     = 'User'
-                        } -ClientOnly)
+                        })
                     )
                     Visibility        = 'Public'
                     Ensure            = 'Present'
@@ -533,13 +536,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgDirectoryAdministrativeUnitScopedRoleMember -Exactly 1
             }
         }
@@ -551,13 +554,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName       = 'DSCAU'
                     Id                = 'DSCAU'
                     ScopedRoleMembers = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphScopedRoleMembership -Property @{
+                        ([MSFT_MicrosoftGraphScopedRoleMembership] @{
                             RoleName       = 'User Administrator'
-                            RoleMemberInfo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            RoleMemberInfo = ([MSFT_MicrosoftGraphMember] @{
                                     Identity = 'DSCScopedRoleUserAdmins'
                                     Type     = 'Group'
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     )
                     Visibility        = 'Public'
                     Ensure            = 'Present'
@@ -582,13 +585,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgDirectoryAdministrativeUnitScopedRoleMember -Exactly 1
             }
         }
@@ -600,13 +603,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName       = 'DSCAU'
                     Id                = 'DSCAU'
                     ScopedRoleMembers = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphScopedRoleMembership -Property @{
+                        ([MSFT_MicrosoftGraphScopedRoleMembership] @{
                             RoleName       = 'User Administrator'
-                            RoleMemberInfo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            RoleMemberInfo = ([MSFT_MicrosoftGraphMember] @{
                                     Identity = 'DSCNotARoleGroup'
                                     Type     = 'Group'
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     )
                     Ensure            = 'Present'
                     Credential        = $Credential
@@ -630,13 +633,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should call the Set method and throw' {
-                {Set-TargetResource @testParams} | Should -Throw -ExpectedMessage '*scoped role group*is not role-enabled*'
+                {(New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()} | Should -Throw -ExpectedMessage '*scoped role group*is not role-enabled*'
             }
         }
 
@@ -647,13 +650,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName       = 'DSCAU'
                     Id                = 'DSCAU'
                     ScopedRoleMembers = @(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphScopedRoleMembership -Property @{
+                        ([MSFT_MicrosoftGraphScopedRoleMembership] @{
                             RoleName       = 'User Administrator'
-                            RoleMemberInfo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMember -Property @{
+                            RoleMemberInfo = ([MSFT_MicrosoftGraphMember] @{
                                     Identity = 'DSCScopedRoleSPN'
                                     Type     = 'ServicePrincipal'
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     )
                     Visibility        = 'Public'
                     Ensure            = 'Present'
@@ -682,13 +685,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAdministrativeUnit' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgDirectoryAdministrativeUnitScopedRoleMember -Exactly 1
             }
         }
@@ -756,7 +759,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADAdministrativeUnit' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

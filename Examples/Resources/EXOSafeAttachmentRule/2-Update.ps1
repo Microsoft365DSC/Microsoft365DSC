@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,28 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOSafeAttachmentRule 'ConfigureSafeAttachmentRule'
+        EXOSafeAttachmentRule 'EXOSafeAttachmentRule-Example'
         {
             Identity                  = "Research Department Attachment Rule"
             Comments                  = "Applies to Research Department, except managers"
             Enabled                   = $False # Updated Property
+            Priority                  = 0
+            ExceptIfRecipientDomainIs = @("fabrikam.com")
+            ExceptIfSentTo            = @("AlexW@$TenantId")
             ExceptIfSentToMemberOf    = "Executives@$TenantId"
+            RecipientDomainIs         = @("contoso.com")
             SafeAttachmentPolicy      = "Marketing Block Attachments"
-            SentToMemberOf            = "LegalTeam@$TenantId"
+            SentTo                    = @("AdeleV@$TenantId")
+            SentToMemberOf            = "Retail@$TenantId"
             Ensure                    = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId             = $ApplicationId
+            TenantId                  = $TenantId
+            CertificateThumbprint     = $CertificateThumbprint
         }
     }
 }

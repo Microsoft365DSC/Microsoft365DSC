@@ -6,7 +6,6 @@ on:
 
 jobs:
   Integration-Global-EXO:
-    # The type of runner that the job will run on
     runs-on: windows-latest
 
     permissions: write-all
@@ -14,19 +13,38 @@ jobs:
     # Only when run from the main repo
     if: github.repository == 'Microsoft365DSC/Microsoft365DSC'
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v6
-      - name: Generate SchemaDefinition.json
+      - uses: actions/checkout@v7
+
+      - name: Install Modules
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Install-Module -Name "Microsoft.PowerShell.PSResourceGet" -Repository "PSGallery" -Scope "AllUsers" -Force -SkipPublisherCheck
+          $dependencies = (Import-PowerShellDataFile ./Modules/Microsoft365DSC/Dependencies/Manifest.psd1).Dependencies
+
+          foreach ($name in @('M365DSC.PSDesiredStateConfiguration', 'DSCParser'))
+          {
+            $dependency = $dependencies | Where-Object ModuleName -EQ $name
+            if ($null -eq $dependency) {
+                throw "$name is missing from Dependencies/Manifest.psd1."
+            }
+            Install-PSResource -Name $dependency.ModuleName -Version $dependency.RequiredVersion -Scope AllUsers -TrustRepository
+          }
+
+          Install-PSResource -Name ReverseDSC -Scope AllUsers -TrustRepository
+          [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine);
+
+      - name: Build Class Modules
         shell: pwsh
         run: |
-          Import-Module './Modules/Microsoft365DSC/Modules/M365DSCSchemaHandler.psm1'
-          New-M365DSCSchemaDefinition
+          & ./Utilities/Build-Microsoft365DSC.ps1
+
       - name: Build Dll Files
         shell: pwsh
         run: |
           & ./Utilities/Build-DllFiles.ps1 -Configuration Release
+
       - name: Copy Microsoft365DSC
         shell: powershell
         run: |
@@ -35,6 +53,7 @@ jobs:
           $destination = "C:\Program Files\WindowsPowerShell\Modules"
           Copy-Item -Path $source -Recurse -Destination $destination -Container -Force
           Update-M365DSCDependencies
+
       - name: Configure Environment
         shell: powershell
         run: |
@@ -42,21 +61,25 @@ jobs:
           Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
           Set-M365DSCTelemetryOption -Enabled $false
           Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1000000
+
       - name: Generate {Create} Integration Tests from Examples
         shell: powershell
         run: |
           Import-Module './Tests/Integration/M365DSCTestEngine.psm1'
           New-M365DSCIntegrationTest -Workload EXO -Step '1-Create'
+
       - name: Generate {Update} Integration Tests from Examples
         shell: powershell
         run: |
           Import-Module './Tests/Integration/M365DSCTestEngine.psm1'
           New-M365DSCIntegrationTest -Workload EXO -Step '2-Update'
+
       - name: Generate {Remove} Integration Tests from Examples
         shell: powershell
         run: |
           Import-Module './Tests/Integration/M365DSCTestEngine.psm1'
           New-M365DSCIntegrationTest -Workload EXO -Step '3-Remove'
+
       - name: Check Integration Test Certificate
         shell: powershell
         run: |
@@ -70,6 +93,7 @@ jobs:
           {
             'M365DSC_RUN_INTEGRATION_TESTS=true' | Out-File -FilePath $env:GITHUB_ENV -Append
           }
+
       - name: Execute {Create} Integration Tests
         if: env.M365DSC_RUN_INTEGRATION_TESTS == 'true'
         shell: powershell

@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,49 +33,65 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
             Mock -CommandName Get-CsTeamsMeetingPolicy -MockWith {
                 return @{
-                    Identity                                   = 'Test Policy'
-                    AllowAnonymousUsersToStartMeeting          = $False
-                    AllowChannelMeetingScheduling              = $True
-                    AllowCloudRecording                        = $True
-                    AllowExternalNonTrustedMeetingChat         = $True
-                    AllowExternalParticipantGiveRequestControl = $False
-                    AllowIPVideo                               = $True
-                    AllowMeetNow                               = $True
-                    AllowMultipleScreenshare                   = $True
-                    AllowOutlookAddIn                          = $True
-                    AllowParticipantGiveRequestControl         = $True
-                    AllowPowerPointSharing                     = $True
-                    AllowPrivateMeetingScheduling              = $True
-                    AllowSharedNotes                           = $True
-                    AllowTranscription                         = $False
-                    AllowWhiteboard                            = $True
-                    AttendeeIdentityMasking                    = 'DisabledUserOverride'
-                    AutoAdmittedUsers                          = 'Everyone'
-                    AutomaticallyStartCopilot                  = 'Disabled'
-                    AutoRecording                              = 'Enabled'
-                    BackroomChat                               = 'Disabled'
-                    ChannelRecordingDownload                   = 'Allow'
-                    ConnectToMeetingControls                   = 'Enabled'
-                    ContentSharingInExternalMeetings           = 'EnabledForAnyone'
-                    Copilot                                    = 'EnabledWithTranscript'
-                    CopyRestriction                            = $True
-                    DetectSensitiveContentDuringScreenSharing  = $True
-                    ExternalMeetingJoin                        = 'EnabledForAnyone'
-                    Description                                = $null
-                    MediaBitRateKb                             = 50000
-                    ParticipantNameChange                      = 'Enabled'
-                    PasscodeComplexity                         = 'NumericOnly'
-                    ScreenSharingMode                          = 'EntireScreen'
-                    SetRecordingAndTranscriptOwnership         = 'Disabled'
-                    VoiceIsolation                             = 'Disabled'
-                    WhoCanRegister                             = 'EveryoneInCompany'
-                    RoomAttributeUserOverride                  = 'OFF'
+                    Identity                                     = 'Test Policy'
+                    AllowAnonymousUsersToStartMeeting            = $False
+                    AllowChannelMeetingScheduling                = $True
+                    AllowCloudRecording                          = $True
+                    AllowExternalNonTrustedMeetingChat           = $True
+                    AllowExternalParticipantGiveRequestControl   = $False
+                    AllowIntelligentRecap                        = $True
+                    AllowIPVideo                                 = $True
+                    AllowMeetingKnowledgeGeneration              = $True
+                    AllowMeetNow                                 = $True
+                    AllowMultipleScreenshare                     = $True
+                    AllowOutlookAddIn                            = $True
+                    AllowParticipantGiveRequestControl           = $True
+                    AllowPowerPointSharing                       = $True
+                    AllowPrivateMeetingScheduling                = $True
+                    AllowSharedNotes                             = $True
+                    AllowTranscription                           = $False
+                    AllowWhiteboard                              = $True
+                    AttendeeIdentityMasking                      = 'DisabledUserOverride'
+                    AutoAdmittedUsers                            = 'Everyone'
+                    AutomaticallyStartCopilot                    = 'Disabled'
+                    AutoRecording                                = 'Enabled'
+                    BackroomChat                                 = 'Disabled'
+                    CaptchaVerificationForMeetingJoin            = 'NotRequired'
+                    ChannelRecordingDownload                     = 'Allow'
+                    ConditionalAccessAttendeeVerification        = $True
+                    ConnectToMeetingControls                     = 'Enabled'
+                    ContentSharingInExternalMeetings             = 'EnabledForAnyone'
+                    Copilot                                      = 'EnabledWithTranscript'
+                    CopyRestriction                              = $True
+                    DetectSensitiveContentDuringScreenSharing    = $True
+                    DisableAudioAnnouncementsForResourceAccounts = $False
+                    EnableExternalRecordingDetection             = $False
+                    EnablePreMeetingConsent                      = $False
+                    ExternalBotAccessMode                        = 'RequireApprovalWhenDetected'
+                    ExternalMeetingJoin                          = 'EnabledForAnyone'
+                    Description                                  = $null
+                    FilterProfanityInTranscript                  = 'Enabled'
+                    IntelligentRecapDocxFileExpirationDays       = 120
+                    MediaBitRateKb                               = 50000
+                    MeetingKnowledgeExpirationDays               = 365
+                    ParticipantNameChange                        = 'Enabled'
+                    PasscodeComplexity                           = 'NumericOnly'
+                    PreMeetingConsentContentIdentifier           = '6f1d2c3b-8a4e-4b7f-9c2d-1e5a7b3c9d04'
+                    PreventComplianceRecording                   = 'None'
+                    RecordingAndTranscriptionAudioNotification   = 'Disabled'
+                    ScreenSharingMode                            = 'EntireScreen'
+                    SetRecordingAndTranscriptOwnership           = 'Disabled'
+                    SyntheticMediaDetection                      = 'Enabled'
+                    SyntheticMediaDetectionAppId                 = 'b2d4f6a8-3c5e-4a7b-9d1f-2e4c6a8b0d13'
+                    VoiceIsolation                               = 'Disabled'
+                    WhoCanRegister                               = 'EveryoneInCompany'
+                    RoomAttributeUserOverride                    = 'OFF'
                 }
             }
 
@@ -99,31 +115,46 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "When Meeting Policy doesn't exist but should" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                                   = 'Test Policy'
-                    AllowAnonymousUsersToStartMeeting          = $False
-                    AllowChannelMeetingScheduling              = $True
-                    AllowCloudRecording                        = $True
-                    AllowExternalParticipantGiveRequestControl = $False
-                    AllowIPVideo                               = $True
-                    AllowMeetNow                               = $True
-                    AllowMultipleScreenshare                   = $True
-                    AllowOutlookAddIn                          = $True
-                    AllowParticipantGiveRequestControl         = $True
-                    AllowPowerPointSharing                     = $True
-                    AllowPrivateMeetingScheduling              = $True
-                    AllowSharedNotes                           = $True
-                    AllowTranscription                         = $False
-                    AllowWhiteboard                            = $True
-                    AutoAdmittedUsers                          = 'Everyone'
-                    BackroomChat                               = 'Disabled'
-                    Description                                = $null
-                    MediaBitRateKb                             = 50000
-                    PasscodeComplexity                         = 'NumericOnly'
-                    ScreenSharingMode                          = 'EntireScreen'
-                    SetRecordingAndTranscriptOwnership         = 'Disabled'
-                    WhoCanRegister                             = 'EveryoneInCompany'
-                    Ensure                                     = 'Present'
-                    Credential                                 = $Credential
+                    Identity                                     = 'Test Policy'
+                    AllowAnonymousUsersToStartMeeting            = $False
+                    AllowChannelMeetingScheduling                = $True
+                    AllowCloudRecording                          = $True
+                    AllowExternalParticipantGiveRequestControl   = $False
+                    AllowIntelligentRecap                        = $True
+                    AllowIPVideo                                 = $True
+                    AllowMeetingKnowledgeGeneration              = $True
+                    AllowMeetNow                                 = $True
+                    AllowMultipleScreenshare                     = $True
+                    AllowOutlookAddIn                            = $True
+                    AllowParticipantGiveRequestControl           = $True
+                    AllowPowerPointSharing                       = $True
+                    AllowPrivateMeetingScheduling                = $True
+                    AllowSharedNotes                             = $True
+                    AllowTranscription                           = $False
+                    AllowWhiteboard                              = $True
+                    AutoAdmittedUsers                            = 'Everyone'
+                    BackroomChat                                 = 'Disabled'
+                    ConditionalAccessAttendeeVerification        = $True
+                    Description                                  = $null
+                    DisableAudioAnnouncementsForResourceAccounts = $False
+                    EnableExternalRecordingDetection             = $False
+                    EnablePreMeetingConsent                      = $False
+                    ExternalBotAccessMode                        = 'RequireApprovalWhenDetected'
+                    FilterProfanityInTranscript                  = 'Enabled'
+                    IntelligentRecapDocxFileExpirationDays       = 120
+                    MediaBitRateKb                               = 50000
+                    MeetingKnowledgeExpirationDays               = 365
+                    PasscodeComplexity                           = 'NumericOnly'
+                    PreMeetingConsentContentIdentifier           = '6f1d2c3b-8a4e-4b7f-9c2d-1e5a7b3c9d04'
+                    PreventComplianceRecording                   = 'None'
+                    RecordingAndTranscriptionAudioNotification   = 'Disabled'
+                    ScreenSharingMode                            = 'EntireScreen'
+                    SetRecordingAndTranscriptOwnership           = 'Disabled'
+                    SyntheticMediaDetection                      = 'Enabled'
+                    SyntheticMediaDetectionAppId                 = 'b2d4f6a8-3c5e-4a7b-9d1f-2e4c6a8b0d13'
+                    WhoCanRegister                               = 'EveryoneInCompany'
+                    Ensure                                       = 'Present'
+                    Credential                                   = $Credential
                 }
 
                 Mock -CommandName Get-CsTeamsMeetingPolicy -MockWith {
@@ -132,15 +163,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the policy in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName New-CsTeamsMeetingPolicy -Exactly 1
             }
         }
@@ -148,144 +179,196 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'Policy exists but is not in the Desired State' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                                   = 'Test Policy'
-                    AllowAnonymousUsersToStartMeeting          = $False
-                    AllowChannelMeetingScheduling              = $True
-                    AllowCloudRecording                        = $True
-                    AllowExternalNonTrustedMeetingChat         = $True
-                    AllowExternalParticipantGiveRequestControl = $False
-                    AllowIPVideo                               = $True
-                    AllowMeetNow                               = $True
-                    AllowMultipleScreenshare                   = $True
-                    AllowOutlookAddIn                          = $True
-                    AllowParticipantGiveRequestControl         = $True
-                    AllowPowerPointSharing                     = $True
-                    AllowPrivateMeetingScheduling              = $True
-                    AllowSharedNotes                           = $True
-                    AllowTranscription                         = $False
-                    AllowWhiteboard                            = $False # Drift
-                    AttendeeIdentityMasking                    = 'DisabledUserOverride'
-                    AutoAdmittedUsers                          = 'Everyone'
-                    AutomaticallyStartCopilot                  = 'Disabled'
-                    AutoRecording                              = 'Enabled'
-                    BackroomChat                               = 'Disabled'
-                    ChannelRecordingDownload                   = 'Allow'
-                    ConnectToMeetingControls                   = 'Enabled'
-                    ContentSharingInExternalMeetings           = 'EnabledForAnyone'
-                    Copilot                                    = 'EnabledWithTranscript'
-                    CopyRestriction                            = $True
-                    DetectSensitiveContentDuringScreenSharing  = $True
-                    Description                                = $null
-                    ExternalMeetingJoin                        = 'EnabledForAnyone'
-                    MediaBitRateKb                             = 50000
-                    ParticipantNameChange                      = 'Disabled'
-                    PasscodeComplexity                         = 'NumericOnly'
-                    ScreenSharingMode                          = 'EntireScreen'
-                    SetRecordingAndTranscriptOwnership         = 'Disabled'
-                    VoiceIsolation                             = 'Enabled'
-                    WhoCanRegister                             = 'EveryoneInCompany'
-                    Ensure                                     = 'Present'
-                    Credential                                 = $Credential
+                    Identity                                     = 'Test Policy'
+                    AllowAnonymousUsersToStartMeeting            = $False
+                    AllowChannelMeetingScheduling                = $True
+                    AllowCloudRecording                          = $True
+                    AllowExternalNonTrustedMeetingChat           = $True
+                    AllowExternalParticipantGiveRequestControl   = $False
+                    AllowIntelligentRecap                        = $True
+                    AllowIPVideo                                 = $True
+                    AllowMeetingKnowledgeGeneration              = $True
+                    AllowMeetNow                                 = $True
+                    AllowMultipleScreenshare                     = $True
+                    AllowOutlookAddIn                            = $True
+                    AllowParticipantGiveRequestControl           = $True
+                    AllowPowerPointSharing                       = $True
+                    AllowPrivateMeetingScheduling                = $True
+                    AllowSharedNotes                             = $True
+                    AllowTranscription                           = $False
+                    AllowWhiteboard                              = $False # Drift
+                    AttendeeIdentityMasking                      = 'DisabledUserOverride'
+                    AutoAdmittedUsers                            = 'Everyone'
+                    AutomaticallyStartCopilot                    = 'Disabled'
+                    AutoRecording                                = 'Enabled'
+                    BackroomChat                                 = 'Disabled'
+                    CaptchaVerificationForMeetingJoin            = 'AnonymousUsersAndUntrustedOrganizations'
+                    ChannelRecordingDownload                     = 'Allow'
+                    ConditionalAccessAttendeeVerification        = $True
+                    ConnectToMeetingControls                     = 'Enabled'
+                    ContentSharingInExternalMeetings             = 'EnabledForAnyone'
+                    Copilot                                      = 'EnabledWithTranscript'
+                    CopyRestriction                              = $True
+                    DetectSensitiveContentDuringScreenSharing    = $True
+                    Description                                  = $null
+                    DisableAudioAnnouncementsForResourceAccounts = $False
+                    EnableExternalRecordingDetection             = $False
+                    EnablePreMeetingConsent                      = $False
+                    ExternalBotAccessMode                        = 'RequireApprovalWhenDetected'
+                    ExternalMeetingJoin                          = 'EnabledForAnyone'
+                    FilterProfanityInTranscript                  = 'Enabled'
+                    IntelligentRecapDocxFileExpirationDays       = 120
+                    MediaBitRateKb                               = 50000
+                    MeetingKnowledgeExpirationDays               = 365
+                    ParticipantNameChange                        = 'Disabled'
+                    PasscodeComplexity                           = 'NumericOnly'
+                    PreMeetingConsentContentIdentifier           = '6f1d2c3b-8a4e-4b7f-9c2d-1e5a7b3c9d04'
+                    PreventComplianceRecording                   = 'None'
+                    RecordingAndTranscriptionAudioNotification   = 'Disabled'
+                    ScreenSharingMode                            = 'EntireScreen'
+                    SetRecordingAndTranscriptOwnership           = 'Disabled'
+                    SyntheticMediaDetection                      = 'Enabled'
+                    SyntheticMediaDetectionAppId                 = 'b2d4f6a8-3c5e-4a7b-9d1f-2e4c6a8b0d13'
+                    VoiceIsolation                               = 'Enabled'
+                    WhoCanRegister                               = 'EveryoneInCompany'
+                    Ensure                                       = 'Present'
+                    Credential                                   = $Credential
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-CsTeamsMeetingPolicy -Exactly 1
                 Should -Invoke -CommandName New-CSTeamsMeetingPolicy -Exactly 0
+            }
+
+            It 'Should reject a CaptchaVerificationForMeetingJoin value the service does not accept' {
+                $invalidParams = $testParams.Clone()
+                $invalidParams.CaptchaVerificationForMeetingJoin = 'AnonymousUsersOnly'
+                { New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $invalidParams } | Should -Throw -ExpectedMessage "*not valid for property 'CaptchaVerificationForMeetingJoin'*"
             }
         }
 
         Context -Name 'Policy exists and is already in the Desired State' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                                   = 'Test Policy'
-                    AllowAnonymousUsersToStartMeeting          = $False
-                    AllowChannelMeetingScheduling              = $True
-                    AllowCloudRecording                        = $True
-                    AllowExternalParticipantGiveRequestControl = $False
-                    AllowIPVideo                               = $True
-                    AllowMeetNow                               = $True
-                    AllowMultipleScreenshare                   = $True
-                    AllowOutlookAddIn                          = $True
-                    AllowParticipantGiveRequestControl         = $True
-                    AllowPowerPointSharing                     = $True
-                    AllowPrivateMeetingScheduling              = $True
-                    AllowSharedNotes                           = $True
-                    AllowTranscription                         = $False
-                    AllowWhiteboard                            = $True
-                    AutoAdmittedUsers                          = 'Everyone'
-                    BackroomChat                               = 'Disabled'
-                    Description                                = $null
-                    MediaBitRateKb                             = 50000
-                    ScreenSharingMode                          = 'EntireScreen'
-                    SetRecordingAndTranscriptOwnership         = 'Disabled'
-                    WhoCanRegister                             = 'EveryoneInCompany'
-                    RoomAttributeUserOverride                  = 'OFF'
-                    PasscodeComplexity                         = 'NumericOnly'
-                    Ensure                                     = 'Present'
-                    Credential                                 = $Credential
+                    Identity                                     = 'Test Policy'
+                    AllowAnonymousUsersToStartMeeting            = $False
+                    AllowChannelMeetingScheduling                = $True
+                    AllowCloudRecording                          = $True
+                    AllowExternalParticipantGiveRequestControl   = $False
+                    AllowIntelligentRecap                        = $True
+                    AllowIPVideo                                 = $True
+                    AllowMeetingKnowledgeGeneration              = $True
+                    AllowMeetNow                                 = $True
+                    AllowMultipleScreenshare                     = $True
+                    AllowOutlookAddIn                            = $True
+                    AllowParticipantGiveRequestControl           = $True
+                    AllowPowerPointSharing                       = $True
+                    AllowPrivateMeetingScheduling                = $True
+                    AllowSharedNotes                             = $True
+                    AllowTranscription                           = $False
+                    AllowWhiteboard                              = $True
+                    AutoAdmittedUsers                            = 'Everyone'
+                    BackroomChat                                 = 'Disabled'
+                    ConditionalAccessAttendeeVerification        = $True
+                    Description                                  = $null
+                    DisableAudioAnnouncementsForResourceAccounts = $False
+                    EnableExternalRecordingDetection             = $False
+                    EnablePreMeetingConsent                      = $False
+                    ExternalBotAccessMode                        = 'RequireApprovalWhenDetected'
+                    FilterProfanityInTranscript                  = 'Enabled'
+                    IntelligentRecapDocxFileExpirationDays       = 120
+                    MediaBitRateKb                               = 50000
+                    MeetingKnowledgeExpirationDays               = 365
+                    PreMeetingConsentContentIdentifier           = '6f1d2c3b-8a4e-4b7f-9c2d-1e5a7b3c9d04'
+                    PreventComplianceRecording                   = 'None'
+                    RecordingAndTranscriptionAudioNotification   = 'Disabled'
+                    ScreenSharingMode                            = 'EntireScreen'
+                    SetRecordingAndTranscriptOwnership           = 'Disabled'
+                    SyntheticMediaDetection                      = 'Enabled'
+                    SyntheticMediaDetectionAppId                 = 'b2d4f6a8-3c5e-4a7b-9d1f-2e4c6a8b0d13'
+                    WhoCanRegister                               = 'EveryoneInCompany'
+                    RoomAttributeUserOverride                    = 'OFF'
+                    PasscodeComplexity                           = 'NumericOnly'
+                    Ensure                                       = 'Present'
+                    Credential                                   = $Credential
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'Policy exists but it should not' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                                   = 'Test Policy'
-                    AllowAnonymousUsersToStartMeeting          = $False
-                    AllowChannelMeetingScheduling              = $True
-                    AllowCloudRecording                        = $True
-                    AllowExternalParticipantGiveRequestControl = $False
-                    AllowIPVideo                               = $True
-                    AllowMeetNow                               = $True
-                    AllowMultipleScreenshare                   = $True
-                    AllowOutlookAddIn                          = $True
-                    AllowParticipantGiveRequestControl         = $True
-                    AllowPowerPointSharing                     = $True
-                    AllowPrivateMeetingScheduling              = $True
-                    AllowSharedNotes                           = $True
-                    AllowTranscription                         = $False
-                    AllowWhiteboard                            = $True
-                    AutoAdmittedUsers                          = 'Everyone'
-                    BackroomChat                               = 'Disabled'
-                    Description                                = $null
-                    MediaBitRateKb                             = 50000
-                    ScreenSharingMode                          = 'EntireScreen'
-                    SetRecordingAndTranscriptOwnership         = 'Disabled'
-                    WhoCanRegister                             = 'EveryoneInCompany'
-                    PasscodeComplexity                         = 'NumericOnly'
-                    Ensure                                     = 'Absent'
-                    Credential                                 = $Credential
+                    Identity                                     = 'Test Policy'
+                    AllowAnonymousUsersToStartMeeting            = $False
+                    AllowChannelMeetingScheduling                = $True
+                    AllowCloudRecording                          = $True
+                    AllowExternalParticipantGiveRequestControl   = $False
+                    AllowIntelligentRecap                        = $True
+                    AllowIPVideo                                 = $True
+                    AllowMeetingKnowledgeGeneration              = $True
+                    AllowMeetNow                                 = $True
+                    AllowMultipleScreenshare                     = $True
+                    AllowOutlookAddIn                            = $True
+                    AllowParticipantGiveRequestControl           = $True
+                    AllowPowerPointSharing                       = $True
+                    AllowPrivateMeetingScheduling                = $True
+                    AllowSharedNotes                             = $True
+                    AllowTranscription                           = $False
+                    AllowWhiteboard                              = $True
+                    AutoAdmittedUsers                            = 'Everyone'
+                    BackroomChat                                 = 'Disabled'
+                    ConditionalAccessAttendeeVerification        = $True
+                    Description                                  = $null
+                    DisableAudioAnnouncementsForResourceAccounts = $False
+                    EnableExternalRecordingDetection             = $False
+                    EnablePreMeetingConsent                      = $False
+                    ExternalBotAccessMode                        = 'RequireApprovalWhenDetected'
+                    FilterProfanityInTranscript                  = 'Enabled'
+                    IntelligentRecapDocxFileExpirationDays       = 120
+                    MediaBitRateKb                               = 50000
+                    MeetingKnowledgeExpirationDays               = 365
+                    PreMeetingConsentContentIdentifier           = '6f1d2c3b-8a4e-4b7f-9c2d-1e5a7b3c9d04'
+                    PreventComplianceRecording                   = 'None'
+                    RecordingAndTranscriptionAudioNotification   = 'Disabled'
+                    ScreenSharingMode                            = 'EntireScreen'
+                    SetRecordingAndTranscriptOwnership           = 'Disabled'
+                    SyntheticMediaDetection                      = 'Enabled'
+                    SyntheticMediaDetectionAppId                 = 'b2d4f6a8-3c5e-4a7b-9d1f-2e4c6a8b0d13'
+                    WhoCanRegister                               = 'EveryoneInCompany'
+                    PasscodeComplexity                           = 'NumericOnly'
+                    Ensure                                       = 'Absent'
+                    Credential                                   = $Credential
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-CsTeamsMeetingPolicy -Exactly 1
             }
         }
@@ -300,7 +383,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsMeetingPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,15 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOApplicationAccessPolicy 'ConfigureApplicationAccessPolicy'
+        EXOApplicationAccessPolicy 'EXOApplicationAccessPolicy-Example'
         {
-            Identity             = "Integration Policy"
-            AppID                = '3dbc2ae1-7198-45ed-9f9f-d86ba3ec35b5'
-            Ensure               = "Absent"
+            Identity              = "Reporting App Mailbox Access"
+            Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,27 +19,29 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        SentinelWatchlist "SentinelWatchlist-TestWatch"
+        SentinelWatchlist "SentinelWatchlist-Example"
         {
-            Alias                 = "MyAlias";
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
+            Alias                 = "HighValueAssets";
             DefaultDuration       = "P1DT3H";
-            Description           = "My description";
-            DisplayName           = "My Display Name";
+            Description           = "Servers and service accounts that require elevated monitoring";
+            DisplayName           = "High Value Assets";
             Ensure                = "Present";
-            ItemsSearchKey        = "Test";
-            Name                  = "MyWatchList";
+            ItemsSearchKey        = "IPAddress";
+            Name                  = "High Value Assets";
             NumberOfLinesToSkip   = 1;
-            RawContent            = 'MyContent'
-            ResourceGroupName     = "MyResourceGroup";
-            SourceType            = "Local";
-            SubscriptionId        = "20f41296-9edc-4374-b5e0-b1c1aa07e7d3";
+            RawContent            = "High value assets reviewed by the security operations team`nIPAddress,AssetName,Owner`n10.10.20.15,Finance database server,Finance Operations`n10.10.20.16,Payroll application server,Human Resources";
+            ResourceGroupName     = "<resource-group-name>";
+            SourceType            = "Local file";
+            SubscriptionId        = "<subscription-id>";
+            WorkspaceName         = "<log-analytics-workspace-name>";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
-            WorkspaceName         = "MyWorkspace";
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

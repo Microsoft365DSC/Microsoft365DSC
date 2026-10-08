@@ -5,35 +5,29 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
+    )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        param(
-            [Parameter()]
-            [System.String]
-            $ApplicationId,
-
-            [Parameter()]
-            [System.String]
-            $TenantId,
-
-            [Parameter()]
-            [System.String]
-            $CertificateThumbprint
-        )
-        AADAuthenticationMethodPolicyAuthenticator "AADAuthenticationMethodPolicyAuthenticator-MicrosoftAuthenticator"
+        AADAuthenticationMethodPolicyAuthenticator "AADAuthenticationMethodPolicyAuthenticator-Example"
         {
             Ensure                = "Absent";
             Id                    = "MicrosoftAuthenticator";
-            IncludeTargets        = @(
-                MSFT_AADAuthenticationMethodPolicyAuthenticatorIncludeTarget{
-                    Id = 'fakegroup6'
-                    TargetType = 'group'
-                }
-            );
-            IsSoftwareOathEnabled = $True; # Updated Property
-            State                 = "enabled";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

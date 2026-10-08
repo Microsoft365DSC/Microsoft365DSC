@@ -1,969 +1,817 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADRoleAssignmentScheduleRequest'
+﻿using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Principal,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('User Principal Name of the assignment request.')]
+    [System.String] $Principal
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $RoleDefinition,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Role associated with the assignment request.')]
+    [System.String] $RoleDefinition
 
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('agentUser', 'User', 'Group', 'ServicePrincipal')]
-        [System.String]
-        $PrincipalType,
+    [DscProperty()]
+    [System.ComponentModel.Description('Represented the type of principal to assign the request to. Accepted values are: Group and User.')]
+    [ValidateSet('agentUser', 'User', 'Group', 'ServicePrincipal')]
+    [System.String] $PrincipalType
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Identifier of the directory object representing the scope of the role assignment. The scope of an role assignment determines the set of resources for which the principal has been granted access. Directory scopes are shared scopes stored in the directory that are understood by multiple applications. Use / for tenant-wide scope. Use appScopeId to limit the scope to an application only. Either directoryScopeId or appScopeId is required.')]
+    [System.String] $DirectoryScopeId
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DirectoryScopeId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Identifier for the Role Assignment Schedule Request.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String]
-        $AppScopeId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Identifier of the app-specific scope when the role assignment is scoped to an app. The scope of a role assignment determines the set of resources for which the principal is eligible to access. App scopes are scopes that are defined and understood by this application only. Use / for tenant-wide app scopes. Use directoryScopeId to limit the scope to particular directory objects, for example, administrative units. Either directoryScopeId or appScopeId is required.')]
+    [System.String] $AppScopeId
 
-        [Parameter()]
-        [ValidateSet('adminAssign', 'adminUpdate', 'adminRemove', 'selfActivate', 'selfDeactivate', 'adminExtend', 'adminRenew', 'selfExtend', 'selfRenew', 'unknownFutureValue')]
-        [System.String]
-        $Action,
+    [DscProperty()]
+    [System.ComponentModel.Description('A message provided by users and administrators when create they create the unifiedRoileAssignmentScheduleRequest object. Optional when action is adminRemove. Whether this property is required or optional is also dependent on the settings for the Azure AD role.')]
+    [System.String] $Justification
 
-        [Parameter()]
-        [System.String]
-        $Justification,
+    [DscProperty()]
+    [System.ComponentModel.Description('The period of the role assignment. Optional when action is adminRemove. The period of assignment is dependent on the settings of the Azure AD role.')]
+    [MSFT_AADRoleAssignmentScheduleRequestSchedule] $ScheduleInfo
 
-        [Parameter()]
-        [System.Boolean]
-        $IsValidationOnly,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ScheduleInfo,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Intune Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TicketInfo,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Getting configuration of the AAD Role Assignment Schedule Request with Principal {$Principal}, RoleDefinition {$RoleDefinition}, PrincipalType {$PrincipalType} and DirectoryScopeId {$DirectoryScopeId}"
-
-    try
+    [AADRoleAssignmentScheduleRequest] Get()
     {
-        if (-not $Script:exportedInstance)
+        $nullResult = $null
+        $request = $null
+        $schedule = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [AADRoleAssignmentScheduleRequest]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of the AAD Role Assignment Schedule Request with Principal {$($this.Principal)}, RoleDefinition {$($this.RoleDefinition)}, PrincipalType {$($this.PrincipalType)} and DirectoryScopeId {$($this.DirectoryScopeId)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            if ($null -eq $Script:AllSchedules)
+        try
+        {
+            if (-not $this.ExportedInstance)
             {
-                Write-Verbose -Message 'Retrieving all role assignment schedules'
-                $Script:AllSchedules = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -All `
-                    -ErrorAction SilentlyContinue
-            }
-            if ($null -eq $Script:RoleDefinitions)
-            {
-                $Script:RoleDefinitions = [System.Collections.Generic.Dictionary[System.String, System.Object]]::new()
-                $allRoleDefinitions = Get-MgBetaRoleManagementDirectoryRoleDefinition -All -ErrorAction SilentlyContinue
-                foreach ($singleRoleDefinition in $allRoleDefinitions)
+                $null = $this.Connect('MicrosoftGraph')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                if ($null -eq $this.ResourceCache['AllSchedules'])
                 {
-                    $Script:RoleDefinitions.Add($singleRoleDefinition.Id, $singleRoleDefinition)
+                    Write-Verbose -Message 'Retrieving all role assignment schedules'
+                    $this.ResourceCache['AllSchedules'] = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -All `
+                        -ErrorAction SilentlyContinue
+                }
+                if ($null -eq $this.ResourceCache['RoleDefinitions'])
+                {
+                    $this.ResourceCache['RoleDefinitions'] = [System.Collections.Generic.Dictionary[System.String, System.Object]]::new()
+                    $allRoleDefinitions = Get-MgBetaRoleManagementDirectoryRoleDefinition -All -ErrorAction SilentlyContinue
+                    foreach ($singleRoleDefinition in $allRoleDefinitions)
+                    {
+                        $this.ResourceCache['RoleDefinitions'].Add($singleRoleDefinition.Id, $singleRoleDefinition)
+                    }
+                }
+
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
+                {
+                    Write-Verbose -Message "Getting Role Assignment by Id {$($this.Id)}"
+                    $schedule = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -UnifiedRoleAssignmentScheduleId $this.Id `
+                        -ErrorAction SilentlyContinue
                 }
             }
-
-            if (-not [System.String]::IsNullOrEmpty($Id))
+            else
             {
-                Write-Verbose -Message "Getting Role Assignment by Id {$Id}"
-                $schedule = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -UnifiedRoleAssignmentScheduleId $Id `
-                    -ErrorAction SilentlyContinue
+                $schedule = $this.ExportedInstance
+                $this.ResourceCache['AllSchedules'] = $this.ResourceCache['exportedInstances']
             }
-        }
-        else
-        {
-            $schedule = $Script:exportedInstance
-            $Script:AllSchedules = $Script:exportedInstances
-        }
 
-        Write-Verbose -Message 'Getting Role Assignment by PrincipalId and RoleDefinitionId'
-        $PrincipalValue = $null
-        if ($PrincipalType -eq 'User' -or $PrincipalType -eq 'agentUser')
-        {
-            Write-Verbose -Message "Retrieving Principal by UserPrincipalName {$Principal}"
-            $PrincipalInstance = Get-MgUser -Filter "UserPrincipalName eq '$($Principal -replace "'", "''")'" -ErrorAction SilentlyContinue
+            Write-Verbose -Message 'Getting Role Assignment by PrincipalId and RoleDefinitionId'
+            $PrincipalInstance = $this.FindPrincipal() | Select-Object -First 1
             $PrincipalValue = $PrincipalInstance.UserPrincipalName
-        }
-        elseif ($PrincipalType -eq 'Group')
-        {
-            Write-Verbose -Message "Retrieving Principal by DisplayName {$Principal}"
-            $PrincipalInstance = Get-MgGroup -Filter "DisplayName eq '$($Principal -replace "'", "''")'" -ErrorAction SilentlyContinue
-            $PrincipalValue = $PrincipalInstance.DisplayName
-        }
-        else
-        {
-            Write-Verbose -Message "Retrieving Principal by DisplayName {$Principal}"
-            $PrincipalInstance = Get-MgServicePrincipal -Filter "DisplayName eq '$($Principal -replace "'", "''")'" -ErrorAction SilentlyContinue
-            $PrincipalValue = $PrincipalInstance.DisplayName
-        }
-
-        if ([System.String]::IsNullOrEmpty($PrincipalValue))
-        {
-            return $nullResult
-        }
-
-        Write-Verbose -Message "Found Principal {$PrincipalValue}"
-        $roleDefinitionId = $Script:RoleDefinitions.GetEnumerator() | Where-Object { $_.Value.DisplayName -eq $RoleDefinition } | Select-Object -ExpandProperty Key
-        Write-Verbose -Message "Retrieved role definition {$RoleDefinition} with ID {$roleDefinitionId}"
-
-        if ($null -eq $schedule)
-        {
-            Write-Verbose -Message "Retrieving the request by PrincipalId {$($PrincipalInstance.Id)}, RoleDefinitionId {$($roleDefinitionId)} and DirectoryScopeId {$($DirectoryScopeId)}"
-            [array]$requests = $Script:AllSchedules | Where-Object -FilterScript {
-                $_.PrincipalId -eq $PrincipalInstance.Id -and
-                $_.RoleDefinitionId -eq $roleDefinitionId -and
-                $_.DirectoryScopeId -eq $DirectoryScopeId
+            if ([System.String]::IsNullOrEmpty($PrincipalValue))
+            {
+                $PrincipalValue = $PrincipalInstance.DisplayName
             }
 
-            if ($requests.Count -eq 0)
+            if ([System.String]::IsNullOrEmpty($PrincipalValue))
             {
-                # Lookup in Graph - can be the case if a role was created in this configuration run
-                Write-Verbose -Message "No cached schedules found, fetching with principalId, roleDefinitionId and directoryScopeId"
-                $requests = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$($PrincipalInstance.Id)' and roleDefinitionId eq '$($roleDefinitionId)' and directoryScopeId eq '$($DirectoryScopeId)'" -ErrorAction SilentlyContinue
+                return $this.AsResult($nullResult)
+            }
+
+            Write-Verbose -Message "Found Principal {$PrincipalValue}"
+            $roleDefinitionId = $this.ResourceCache['RoleDefinitions'].GetEnumerator() | Where-Object { $_.Value.DisplayName -eq $this.RoleDefinition } | Select-Object -ExpandProperty Key
+            Write-Verbose -Message "Retrieved role definition {$($this.RoleDefinition)} with ID {$roleDefinitionId}"
+
+            if ($null -eq $schedule)
+            {
+                Write-Verbose -Message "Retrieving the request by PrincipalId {$($PrincipalInstance.Id)}, RoleDefinitionId {$($roleDefinitionId)} and DirectoryScopeId {$($this.DirectoryScopeId)}"
+                [array]$requests = $this.ResourceCache['AllSchedules'] | Where-Object -FilterScript {
+                    $_.PrincipalId -eq $PrincipalInstance.Id -and
+                    $_.RoleDefinitionId -eq $roleDefinitionId -and
+                    $_.DirectoryScopeId -eq $this.DirectoryScopeId
+                }
+
                 if ($requests.Count -eq 0)
                 {
-                    # We need to make sure we're not ending up here because the role is a custom role (which has a different id).
-                    Write-Verbose -Message "No schedules found, testing for custom role definitions"
-                    $roleEntry = $Script:RoleDefinitions[$roleDefinitionId]
-                    if ($null -eq $roleEntry)
+                    # Lookup in Graph - can be the case if a role was created in this configuration run
+                    Write-Verbose -Message "No cached schedules found, fetching with principalId, roleDefinitionId and directoryScopeId"
+                    $requests = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$($PrincipalInstance.Id)' and roleDefinitionId eq '$($roleDefinitionId)' and directoryScopeId eq '$($this.DirectoryScopeId)'" -ErrorAction SilentlyContinue
+                    if ($requests.Count -eq 0)
                     {
-                        $roleEntry = Get-MgBetaRoleManagementDirectoryRoleDefinition -UnifiedRoleDefinitionId $roleDefinitionId
+                        # We need to make sure we're not ending up here because the role is a custom role (which has a different id).
+                        Write-Verbose -Message "No schedules found, testing for custom role definitions"
+                        $roleEntry = $this.ResourceCache['RoleDefinitions'][$roleDefinitionId]
+                        if ($null -eq $roleEntry)
+                        {
+                            $roleEntry = Get-MgBetaRoleManagementDirectoryRoleDefinition -UnifiedRoleDefinitionId $roleDefinitionId
+                        }
+                        if ($roleEntry.DisplayName -eq $this.RoleDefinition)
+                        {
+                            $roleDefinitionId = $roleEntry.Id
+                            if (-not $this.ResourceCache['RoleDefinitions'].ContainsKey($roleDefinitionId))
+                            {
+                                $this.ResourceCache['RoleDefinitions'].Add($roleDefinitionId, $roleEntry)
+                            }
+                            # The TemplateId is the id of the custom role definition
+                            Write-Verbose -Message "Fetching schedules for custom role definition with RoleDefinitionId {$roleDefinitionId}"
+                            $requests = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$($PrincipalInstance.Id)' and roleDefinition/TemplateId eq '$($roleDefinitionId)' and directoryScopeId eq '$($this.DirectoryScopeId)'" -ErrorAction SilentlyContinue
+                            if ($requests.Count -eq 0)
+                            {
+                                Write-Verbose -Message "No schedules found for custom role definition"
+                                return $this.AsResult($nullResult)
+                            }
+                        }
                     }
-                    if ($roleEntry.DisplayName -eq $RoleDefinition)
+                    else
                     {
-                        $roleDefinitionId = $roleEntry.Id
-                        if (-not $Script:RoleDefinitions.ContainsKey($roleDefinitionId))
-                        {
-                            $Script:RoleDefinitions.Add($roleDefinitionId, $roleEntry)
-                        }
-                        # The TemplateId is the id of the custom role definition
-                        Write-Verbose -Message "Fetching schedules for custom role definition with RoleDefinitionId {$roleDefinitionId}"
-                        $requests = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$($PrincipalInstance.Id)' and roleDefinition/TemplateId eq '$($roleDefinitionId)' and directoryScopeId eq '$($DirectoryScopeId)'" -ErrorAction SilentlyContinue
-                        if ($requests.Count -eq 0)
-                        {
-                            Write-Verbose -Message "No schedules found for custom role definition"
-                            return $nullResult
-                        }
+                        Write-Verbose -Message "Adding schedule to cache"
+                        $this.ResourceCache['AllSchedules'] += $requests[0]
                     }
                 }
-                else
+
+                if ($requests.Count -eq 0)
                 {
-                    Write-Verbose -Message "Adding schedule to cache"
-                    $Script:AllSchedules += $requests[0]
+                    return $this.AsResult($nullResult)
                 }
-            }
-            else
-            {
                 $schedule = $requests[0]
             }
-        }
 
-        $ScheduleInfoValue = @{}
-        if ($null -ne $schedule.ScheduleInfo.Expiration)
-        {
-            $expirationValue = [ordered]@{
-                type     = $schedule.ScheduleInfo.Expiration.Type
-            }
-            if ($null -ne $schedule.ScheduleInfo.Expiration.Duration)
+            $ScheduleInfoValue = @{}
+            if ($null -ne $schedule.ScheduleInfo.Expiration)
             {
-                $expirationValue.Add('duration', $schedule.ScheduleInfo.Expiration.Duration)
-            }
-            if ($null -ne $schedule.ScheduleInfo.Expiration.EndDateTime)
-            {
-                $expirationValue.Add('endDateTime', $schedule.ScheduleInfo.Expiration.EndDateTime.ToString('yyyy-MM-ddTHH:mm:ssZ'))
-            }
-            $ScheduleInfoValue.Add('expiration', $expirationValue)
-        }
-        if ($null -ne $schedule.ScheduleInfo.Recurrence)
-        {
-            if (Test-M365DSCRecurrenceIsConfigured -RecurrenceSettings $schedule.ScheduleInfo.Recurrence)
-            {
-                $recurrenceValue = [ordered]@{
-                    pattern = [ordered]@{
-                        dayOfMonth     = $schedule.ScheduleInfo.Recurrence.Pattern.dayOfMonth
-                        daysOfWeek     = $schedule.ScheduleInfo.Recurrence.Pattern.daysOfWeek
-                        firstDayOfWeek = $schedule.ScheduleInfo.Recurrence.Pattern.firstDayOfWeek
-                        index          = $schedule.ScheduleInfo.Recurrence.Pattern.index
-                        interval       = $schedule.ScheduleInfo.Recurrence.Pattern.interval
-                        month          = $schedule.ScheduleInfo.Recurrence.Pattern.month
-                        type           = $schedule.ScheduleInfo.Recurrence.Pattern.type
-                    }
-                    range   = [ordered]@{
-                        endDate             = $schedule.ScheduleInfo.Recurrence.Range.endDate
-                        numberOfOccurrences = $schedule.ScheduleInfo.Recurrence.Range.numberOfOccurrences
-                        recurrenceTimeZone  = $schedule.ScheduleInfo.Recurrence.Range.recurrenceTimeZone
-                        startDate           = $schedule.ScheduleInfo.Recurrence.Range.startDate
-                        type                = $schedule.ScheduleInfo.Recurrence.Range.type
-                    }
+                $expirationValue = [ordered]@{
+                    type     = $schedule.ScheduleInfo.Expiration.Type
                 }
-                $ScheduleInfoValue.Add('Recurrence', $recurrenceValue)
-            }
-        }
-        if ($null -ne $schedule.ScheduleInfo.StartDateTime)
-        {
-            $ScheduleInfoValue.Add('StartDateTime', $schedule.ScheduleInfo.StartDateTime.ToString('yyyy-MM-ddThh:mm:ssZ'))
-        }
-
-        $results = @{
-            Principal             = $PrincipalValue
-            PrincipalType         = $PrincipalType
-            RoleDefinition        = $RoleDefinition
-            DirectoryScopeId      = $request.DirectoryScopeId
-            AppScopeId            = $request.AppScopeId
-            #Action                = $request.Action
-            Id                    = $request.Id
-            Justification         = "Assignment of role '$RoleDefinition' to principal '$PrincipalValue' of type '$PrincipalType'."
-            #IsValidationOnly      = $request.IsValidationOnly
-            ScheduleInfo          = $ScheduleInfoValue
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Principal,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $RoleDefinition,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('agentUser', 'User', 'Group', 'ServicePrincipal')]
-        [System.String]
-        $PrincipalType,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DirectoryScopeId,
-
-        [Parameter()]
-        [System.String]
-        $AppScopeId,
-
-        [Parameter()]
-        [ValidateSet('adminAssign', 'adminUpdate', 'adminRemove', 'selfActivate', 'selfDeactivate', 'adminExtend', 'adminRenew', 'selfExtend', 'selfRenew', 'unknownFutureValue')]
-        [System.String]
-        $Action,
-
-        [Parameter()]
-        [System.String]
-        $Justification,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsValidationOnly,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ScheduleInfo,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TicketInfo,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    # TODO: Remove during next breaking change
-    if ($PSBoundParameters.ContainsKey('Action'))
-    {
-        Write-Warning -Message "The parameter 'Action' is deprecated. It will be removed in the next breaking change release."
-    }
-
-    if ($PSBoundParameters.ContainsKey('IsValidationOnly'))
-    {
-        Write-Warning -Message "The parameter 'IsValidationOnly' is deprecated. It will be removed in the next breaking change release."
-    }
-
-    if ($PSBoundParameters.ContainsKey('TicketInfo'))
-    {
-        Write-Warning -Message "The parameter 'TicketInfo' is deprecated. It will be removed in the next breaking change release."
-    }
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $ParametersOps = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($PrincipalType -eq 'User' -or $PrincipalType -eq 'agentUser')
-    {
-        Write-Verbose -Message "Retrieving Principal by UserPrincipalName {$Principal}"
-        [Array]$PrincipalIdValue = (Get-MgUser -Filter "UserPrincipalName eq '$($Principal -replace "'", "''")'").Id
-    }
-    elseif ($PrincipalType -eq 'Group')
-    {
-        Write-Verbose -Message "Retrieving Principal by DisplayName {$Principal}"
-        [Array]$PrincipalIdValue = (Get-MgGroup -Filter "DisplayName eq '$($Principal -replace "'", "''")'").Id
-    }
-    elseif ($PrincipalType -eq 'ServicePrincipal')
-    {
-        Write-Verbose -Message "Retrieving Principal by DisplayName {$Principal}"
-        [Array]$PrincipalIdValue = (Get-MgServicePrincipal -Filter "DisplayName eq '$($Principal -replace "'", "''")'").Id
-    }
-
-    if ($null -eq $PrincipalIdValue)
-    {
-        throw "Couldn't find Principal with Name {$Principal} of type {$PrincipalType}"
-    }
-    elseif ($PrincipalIdValue.Length -gt 1)
-    {
-        throw "Multiple Principal with Name {$Principal} of type {$PrincipalType} were found. Cannot create schedule."
-    }
-
-    $ParametersOps.Add('PrincipalId', $PrincipalIdValue[0])
-    $ParametersOps.Remove('Principal') | Out-Null
-
-    $roleDefinitionIdValue = (Get-MgBetaRoleManagementDirectoryRoleDefinition -Filter "DisplayName eq '$($RoleDefinition -replace "'", "''")'").Id
-    if ([System.String]::IsNullOrEmpty($roleDefinitionIdValue))
-    {
-        throw "Couldn't find Role Definition {$RoleDefinition}"
-    }
-    $ParametersOps.Add('RoleDefinitionId', $roleDefinitionIdValue)
-    $ParametersOps.Remove('RoleDefinition') | Out-Null
-
-    if ($null -ne $ScheduleInfo)
-    {
-        $ScheduleInfoValue = @{}
-        if ($ScheduleInfo.StartDateTime)
-        {
-            $ScheduleInfoValue.Add('startDateTime', $ScheduleInfo.StartDateTime)
-        }
-
-        if ($ScheduleInfo.Expiration)
-        {
-            $expirationValue = @{
-                endDateTime = $ScheduleInfo.Expiration.endDateTime
-                type        = $ScheduleInfo.Expiration.type
-            }
-            if ($ScheduleInfo.Expiration.duration)
-            {
-                $expirationValue.Add('duration', $ScheduleInfo.Expiration.duration)
-            }
-            $ScheduleInfoValue.Add('Expiration', $expirationValue)
-        }
-
-        $RecurrenceInfo = @{}
-        $foundRecurrenceItem = $false
-        if ($null -ne $ScheduleInfo.Recurrence.Pattern.Type)
-        {
-            $Pattern = @{
-                dayOfMonth     = $ScheduleInfo.Recurrence.Pattern.DayOfMonth
-                daysOfWeek     = $ScheduleInfo.Recurrence.Pattern.DaysOfWeek
-                firstDayOfWeek = $ScheduleInfo.Recurrence.Pattern.FirstDayOfWeek
-                index          = $ScheduleInfo.Recurrence.Pattern.Index
-                month          = $ScheduleInfo.Recurrence.Pattern.Month
-                type           = $ScheduleInfo.Recurrence.Pattern.Type
-            }
-            $RecurrenceInfo.Add('pattern', $Pattern)
-            $foundRecurrenceItem = $true
-        }
-        if ($null -ne $ScheduleInfo.Recurrence.Range.Type)
-        {
-            $Range = @{
-                endDate             = $ScheduleInfo.Recurrence.Range.EndDate
-                numberOfOccurrences = $ScheduleInfo.Recurrence.Range.NumberOfOccurrences
-                recurrenceTimeZone  = $ScheduleInfo.Recurrence.Range.RecurrenceTimeZone
-                startDate           = $ScheduleInfo.Recurrence.Range.StartDate
-                type                = $ScheduleInfo.Recurrence.Range.Type
-            }
-            $RecurrenceInfo.Add('range', $Range)
-            $foundRecurrenceItem = $true
-        }
-        if ($foundRecurrenceItem)
-        {
-            $ScheduleInfoValue.Add('recurrence', $RecurrenceInfo)
-        }
-
-        Write-Verbose -Message "ScheduleInfo: $(Convert-M365DscHashtableToString -Hashtable $ScheduleInfoValue)"
-        $ParametersOps.ScheduleInfo = $ScheduleInfoValue
-    }
-    $ParametersOps.Remove('PrincipalType') | Out-Null
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating a Role Assignment Schedule Request for principal {$Principal} and role {$RoleDefinition}"
-        $ParametersOps.Remove('Id') | Out-Null
-        $ParametersOps.Action = 'AdminAssign'
-        New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $ParametersOps
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Role Assignment Schedule Request for principal {$Principal} and role {$RoleDefinition}"
-        $ParametersOps.Remove('Id') | Out-Null
-        $ParametersOps.Action = 'AdminUpdate'
-        New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $ParametersOps
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Role Assignment Schedule Request for principal {$Principal} and role {$RoleDefinition}"
-        $ParametersOps.Remove('Id') | Out-Null
-        $ParametersOps.Action = 'AdminRemove'
-        New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $ParametersOps
-        if ($Script:AllSchedules.Count -gt 0)
-        {
-            # Remove the instance from the cached list to avoid re-processing
-            $Script:AllSchedules = $Script:AllSchedules | Where-Object {
-                $_.RoleDefinition -ne $RoleDefinition -and $_.Principal -ne $Principal -and $_.PrincipalType -ne $PrincipalType -and $_.DirectoryScopeId -ne $DirectoryScopeId
-            }
-        }
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Principal,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $RoleDefinition,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('agentUser', 'User', 'Group', 'ServicePrincipal')]
-        [System.String]
-        $PrincipalType,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DirectoryScopeId,
-
-        [Parameter()]
-        [System.String]
-        $AppScopeId,
-
-        [Parameter()]
-        [ValidateSet('adminAssign', 'adminUpdate', 'adminRemove', 'selfActivate', 'selfDeactivate', 'adminExtend', 'adminRenew', 'selfExtend', 'selfRenew', 'unknownFutureValue')]
-        [System.String]
-        $Action,
-
-        [Parameter()]
-        [System.String]
-        $Justification,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsValidationOnly,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ScheduleInfo,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $TicketInfo,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    # TODO: Remove during next breaking change
-    if ($PSBoundParameters.ContainsKey('Action'))
-    {
-        Write-Warning -Message "The parameter 'Action' is deprecated. It will be removed in the next breaking change release."
-    }
-
-    if ($PSBoundParameters.ContainsKey('IsValidationOnly'))
-    {
-        Write-Warning -Message "The parameter 'IsValidationOnly' is deprecated. It will be removed in the next breaking change release."
-    }
-
-    if ($PSBoundParameters.ContainsKey('TicketInfo'))
-    {
-        Write-Warning -Message "The parameter 'TicketInfo' is deprecated. It will be removed in the next breaking change release."
-    }
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-                                         -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-                                         @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        [array] $Script:exportedInstances = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -All -Filter $Filter -ErrorAction SilentlyContinue
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($Script:exportedInstances.Count -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        if ($null -eq $Script:RoleDefinitions)
-        {
-            $Script:RoleDefinitions = [System.Collections.Generic.Dictionary[string, object]]::new()
-            $roleDefinitions = Get-MgBetaRoleManagementDirectoryRoleDefinition -All -ErrorAction SilentlyContinue
-            foreach ($roleDefinition in $roleDefinitions)
-            {
-                $Script:RoleDefinitions.Add($roleDefinition.Id, $roleDefinition)
-            }
-        }
-        foreach ($request in $Script:exportedInstances)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            $displayedKey = $request.Id
-            Write-M365DSCHost -Message "    |---[$i/$($Script:exportedInstances.Count)] $displayedKey" -DeferWrite
-
-            # Find the Principal Type
-            $userInfo = Get-MgBetaDirectoryObjectById -Ids $request.PrincipalId -ErrorAction SilentlyContinue
-            $principalType = $userInfo['@odata.type'].Split('.')[2]
-            $PrincipalValue = if ($principalType -eq 'user' -or $principalType -eq 'agentUser')
-            {
-                $userInfo['userPrincipalName']
-            }
-            else
-            {
-                $userInfo['displayName']
-            }
-
-            if ($null -ne $PrincipalValue)
-            {
-                $roleDefinition = $Script:RoleDefinitions[$request.RoleDefinitionId]
-                if ($null -eq $roleDefinition)
+                if ($null -ne $schedule.ScheduleInfo.Expiration.Duration)
                 {
-                    $roleDefinition = Get-MgBetaRoleManagementDirectoryRoleDefinition -UnifiedRoleDefinitionId $request.RoleDefinitionId `
-                        -ErrorAction SilentlyContinue
-                    $Script:RoleDefinitions.Add($request.RoleDefinitionId, $roleDefinition)
+                    $expirationValue.Add('duration', $schedule.ScheduleInfo.Expiration.Duration)
                 }
-                $params = @{
-                    Id                    = $request.Id
-                    Principal             = $PrincipalValue
-                    PrincipalType         = $principalType
-                    DirectoryScopeId      = $request.DirectoryScopeId
-                    RoleDefinition        = $roleDefinition.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $Credential
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    ApplicationSecret     = $ApplicationSecret
-                    CertificateThumbprint = $CertificateThumbprint
-                    CertificatePath       = $CertificatePath
-                    CertificatePassword   = $CertificatePassword
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    AccessTokens          = $AccessTokens
+                if ($null -ne $schedule.ScheduleInfo.Expiration.EndDateTime)
+                {
+                    $expirationValue.Add('endDateTime', $schedule.ScheduleInfo.Expiration.EndDateTime.ToString('yyyy-MM-ddTHH:mm:ssZ'))
                 }
+                $ScheduleInfoValue.Add('expiration', $expirationValue)
             }
-
-            $Script:exportedInstance = $request
-            $Results = Get-TargetResource @Params
-
-            if ($null -ne $Results.ScheduleInfo)
+            if ($null -ne $schedule.ScheduleInfo.Recurrence)
             {
-                $complexMapping = @(
-                    @{
-                        Name            = 'ScheduleInfo'
-                        CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestSchedule'
-                        IsRequired      = $False
-                    },
-                    @{
-                        Name            = 'expiration'
-                        CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration'
-                        IsRequired      = $False
-                    },
-                    @{
-                        Name            = 'recurrence'
-                        CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrence'
-                        IsRequired      = $False
-                    },
-                    @{
-                        Name            = 'pattern'
-                        CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrencePattern'
-                        IsRequired      = $False
-                    },
-                    @{
-                        Name            = 'range'
-                        CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrenceRange'
-                        IsRequired      = $False
+                if ($this.TestRecurrenceIsConfigured($schedule.ScheduleInfo.Recurrence))
+                {
+                    $recurrenceValue = [ordered]@{
+                        pattern = [ordered]@{
+                            dayOfMonth     = $schedule.ScheduleInfo.Recurrence.Pattern.dayOfMonth
+                            daysOfWeek     = $schedule.ScheduleInfo.Recurrence.Pattern.daysOfWeek
+                            firstDayOfWeek = $schedule.ScheduleInfo.Recurrence.Pattern.firstDayOfWeek
+                            index          = $schedule.ScheduleInfo.Recurrence.Pattern.index
+                            interval       = $schedule.ScheduleInfo.Recurrence.Pattern.interval
+                            month          = $schedule.ScheduleInfo.Recurrence.Pattern.month
+                            type           = $schedule.ScheduleInfo.Recurrence.Pattern.type
+                        }
+                        range   = [ordered]@{
+                            endDate             = $schedule.ScheduleInfo.Recurrence.Range.endDate
+                            numberOfOccurrences = $schedule.ScheduleInfo.Recurrence.Range.numberOfOccurrences
+                            recurrenceTimeZone  = $schedule.ScheduleInfo.Recurrence.Range.recurrenceTimeZone
+                            startDate           = $schedule.ScheduleInfo.Recurrence.Range.startDate
+                            type                = $schedule.ScheduleInfo.Recurrence.Range.type
+                        }
                     }
-                )
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.ScheduleInfo `
-                    -CIMInstanceName 'MSFT_AADRoleAssignmentScheduleRequestSchedule' `
-                    -ComplexTypeMapping $complexMapping
-
-                if (-Not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.ScheduleInfo = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('ScheduleInfo') | Out-Null
+                    $ScheduleInfoValue.Add('Recurrence', $recurrenceValue)
                 }
             }
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('ScheduleInfo')
+            if ($null -ne $schedule.ScheduleInfo.StartDateTime)
+            {
+                $ScheduleInfoValue.Add('StartDateTime', $schedule.ScheduleInfo.StartDateTime.ToString('yyyy-MM-ddTHH:mm:ssZ'))
+            }
 
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            $principalTypeValue = $this.PrincipalType
+            $principalObject = Get-MgBetaDirectoryObjectById -Ids $schedule.PrincipalId -ErrorAction SilentlyContinue
+            if ($null -ne $principalObject -and $null -ne $principalObject['@odata.type'])
+            {
+                $principalTypeValue = $principalObject['@odata.type'].Split('.')[2]
+            }
+
+            $results = @{
+                Principal             = $PrincipalValue
+                PrincipalType         = $principalTypeValue
+                RoleDefinition        = $this.RoleDefinition
+                DirectoryScopeId      = $schedule.DirectoryScopeId
+                AppScopeId            = $schedule.AppScopeId
+                Id                    = $schedule.Id
+                Justification         = "Assignment of role '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
+                ScheduleInfo          = $ScheduleInfoValue
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        if ($_.ErrorDetails.Message -like '*The tenant needs an AAD Premium*' -or `
-                $_.ErrorDetails.Message -like '*[AadPremiumLicenseRequired]*')
+        catch
         {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
-            return ''
-        }
-        else
-        {
-            New-M365DSCLogEntry -Message 'Error during Export:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error retrieving data:')
 
             throw
         }
     }
-}
 
-function Test-M365DSCRecurrenceIsConfigured
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.Object]
-        $RecurrenceSettings
-    )
-
-    if ($null -eq $RecurrenceSettings.Pattern.DayOfMonth -and `
-        $null -eq $RecurrenceSettings.Pattern.DayOfWeek -and `
-        $null -eq $RecurrenceSettings.Pattern.FirstDayOfWeek -and `
-        $null -eq $RecurrenceSettings.Pattern.Index -and `
-        $null -eq $RecurrenceSettings.Pattern.Interval -and `
-        $null -eq $RecurrenceSettings.Pattern.Month -and `
-        $null -eq $RecurrenceSettings.Pattern.Type -and `
-        $null -eq $RecurrenceSettings.Range.EndDate -and `
-        $null -eq $RecurrenceSettings.Range.NumberOfOccurrences -and `
-        $null -eq $RecurrenceSettings.Range.RecurrenceTimeZone -and `
-        $null -eq $RecurrenceSettings.Range.StartDate -and `
-        $null -eq $RecurrenceSettings.Range.Type)
+    [void] Set()
     {
-        return $false
-    }
+        $PrincipalIdValue = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
 
-    return $true
-}
+        Confirm-M365DSCDependencies
 
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
+        $this.AddTelemetry('Set')
 
-    return @{
-        ExcludedProperties = @('Action', 'IsValidationOnly', 'Justification', 'TicketInfo')
-        PostProcessing = {
-            param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-            if (-not [System.String]::IsNullOrEmpty($DesiredValues.ScheduleInfo.StartDateTime))
+        $currentInstance = $this.Get().ToHashtable()
+        $ParametersOps = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        [Array]$PrincipalIdValue = ($this.FindPrincipal()).Id
+
+        if ($null -eq $PrincipalIdValue)
+        {
+            throw "Couldn't find Principal with Name {$($this.Principal)} of type {$($this.PrincipalType)}"
+        }
+        elseif ($PrincipalIdValue.Length -gt 1)
+        {
+            throw "Multiple Principal with Name {$($this.Principal)} of type {$($this.PrincipalType)} were found. Cannot create schedule."
+        }
+
+        $ParametersOps.Add('PrincipalId', $PrincipalIdValue[0])
+        $ParametersOps.Remove('Principal') | Out-Null
+
+        $roleDefinitionIdValue = (Get-MgBetaRoleManagementDirectoryRoleDefinition -Filter "DisplayName eq '$($this.RoleDefinition -replace "'", "''")'").Id
+        if ([System.String]::IsNullOrEmpty($roleDefinitionIdValue))
+        {
+            throw "Couldn't find Role Definition {$($this.RoleDefinition)}"
+        }
+        $ParametersOps.Add('RoleDefinitionId', $roleDefinitionIdValue)
+        $ParametersOps.Remove('RoleDefinition') | Out-Null
+
+        if ($null -ne $this.ScheduleInfo)
+        {
+            $ScheduleInfoValue = @{}
+            if ($this.ScheduleInfo.StartDateTime)
             {
-                $parsedDesiredDate = [System.DateTime]::MinValue
-                $parseResultDesired = [System.DateTime]::TryParse($DesiredValues.ScheduleInfo.StartDateTime, [ref]$parsedDesiredDate)
+                $ScheduleInfoValue.Add('startDateTime', $this.ScheduleInfo.StartDateTime)
+            }
 
-                $parsedCurrentDate = [System.DateTime]::MinValue
-                $parseResultCurrent = [System.DateTime]::TryParse($CurrentValues.ScheduleInfo.StartDateTime, [ref]$parsedCurrentDate)
-
-                if ($parseResultDesired -and $parseResultCurrent)
+            if ($this.ScheduleInfo.Expiration)
+            {
+                $expirationValue = @{
+                    endDateTime = $this.ScheduleInfo.Expiration.endDateTime
+                    type        = $this.ScheduleInfo.Expiration.type
+                }
+                if ($this.ScheduleInfo.Expiration.duration)
                 {
-                    Write-Verbose -Message "Parsed Desired StartDateTime: $parsedDesiredDate, Parsed Current StartDateTime: $parsedCurrentDate"
-                    if ($parsedDesiredDate -ne $parsedCurrentDate -and $parsedDesiredDate -lt [System.DateTime]::UtcNow)
-                    {
-                        Write-Verbose -Message "Ignoring StartDateTime in ScheduleInfo as it is in the past. StartDateTime cannot be set to a past date."
-                        Write-Verbose -Message "Aligning the Desired and Current StartDateTime values for comparison."
-                        $DesiredValues.ScheduleInfo.StartDateTime = $CurrentValues.ScheduleInfo.StartDateTime
-                    }
+                    $expirationValue.Add('duration', $this.ScheduleInfo.Expiration.duration)
+                }
+                $ScheduleInfoValue.Add('Expiration', $expirationValue)
+            }
+
+            $RecurrenceInfo = @{}
+            $foundRecurrenceItem = $false
+            if ($null -ne $this.ScheduleInfo.Recurrence.Pattern.Type)
+            {
+                $Pattern = @{
+                    dayOfMonth     = $this.ScheduleInfo.Recurrence.Pattern.DayOfMonth
+                    daysOfWeek     = $this.ScheduleInfo.Recurrence.Pattern.DaysOfWeek
+                    firstDayOfWeek = $this.ScheduleInfo.Recurrence.Pattern.FirstDayOfWeek
+                    index          = $this.ScheduleInfo.Recurrence.Pattern.Index
+                    month          = $this.ScheduleInfo.Recurrence.Pattern.Month
+                    type           = $this.ScheduleInfo.Recurrence.Pattern.Type
+                }
+                $RecurrenceInfo.Add('pattern', $Pattern)
+                $foundRecurrenceItem = $true
+            }
+            if ($null -ne $this.ScheduleInfo.Recurrence.Range.Type)
+            {
+                $Range = @{
+                    endDate             = $this.ScheduleInfo.Recurrence.Range.EndDate
+                    numberOfOccurrences = $this.ScheduleInfo.Recurrence.Range.NumberOfOccurrences
+                    recurrenceTimeZone  = $this.ScheduleInfo.Recurrence.Range.RecurrenceTimeZone
+                    startDate           = $this.ScheduleInfo.Recurrence.Range.StartDate
+                    type                = $this.ScheduleInfo.Recurrence.Range.Type
+                }
+                $RecurrenceInfo.Add('range', $Range)
+                $foundRecurrenceItem = $true
+            }
+            if ($foundRecurrenceItem)
+            {
+                $ScheduleInfoValue.Add('recurrence', $RecurrenceInfo)
+            }
+
+            Write-Verbose -Message "ScheduleInfo: $(Convert-M365DscHashtableToString -Hashtable $ScheduleInfoValue)"
+            $ParametersOps.ScheduleInfo = $ScheduleInfoValue
+        }
+        $ParametersOps.Remove('PrincipalType') | Out-Null
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating a Role Assignment Schedule Request for principal {$($this.Principal)} and role {$($this.RoleDefinition)}"
+            $ParametersOps.Remove('Id') | Out-Null
+            $ParametersOps.Action = 'AdminAssign'
+            New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $ParametersOps
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Role Assignment Schedule Request for principal {$($this.Principal)} and role {$($this.RoleDefinition)}"
+            $ParametersOps.Remove('Id') | Out-Null
+            $ParametersOps.Action = 'AdminUpdate'
+            New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $ParametersOps
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Role Assignment Schedule Request for principal {$($this.Principal)} and role {$($this.RoleDefinition)}"
+            $ParametersOps.Remove('Id') | Out-Null
+            $ParametersOps.Action = 'AdminRemove'
+            New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $ParametersOps
+            if ($this.ResourceCache['AllSchedules'].Count -gt 0)
+            {
+                # Remove the instance from the cached list to avoid re-processing
+                $this.ResourceCache['AllSchedules'] = $this.ResourceCache['AllSchedules'] | Where-Object -FilterScript {
+                    -not ($_.RoleDefinition -eq $this.RoleDefinition -and $_.Principal -eq $this.Principal -and $_.PrincipalType -eq $this.PrincipalType -and $_.DirectoryScopeId -eq $this.DirectoryScopeId)
                 }
             }
-            return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
         }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        $Params = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            #region resource generator code
+            [array] $this.ResourceCache['exportedInstances'] = Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -All -Filter $this.Filter -ExpandProperty 'principal', 'roleDefinition' -ErrorAction SilentlyContinue
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($this.ResourceCache['exportedInstances'].Count -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            if ($null -eq $this.ResourceCache['RoleDefinitions'])
+            {
+                $this.ResourceCache['RoleDefinitions'] = [System.Collections.Generic.Dictionary[string, object]]::new()
+                $roleDefinitions = Get-MgBetaRoleManagementDirectoryRoleDefinition -All -ErrorAction SilentlyContinue
+                foreach ($currentRoleDefinition in $roleDefinitions)
+                {
+                    $this.ResourceCache['RoleDefinitions'].Add($currentRoleDefinition.Id, $currentRoleDefinition)
+                }
+            }
+            foreach ($request in $this.ResourceCache['exportedInstances'])
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $request.Id
+                Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $displayedKey" -DeferWrite
+
+                # Find the Principal Type
+                $principalTypeValue = 'User'
+                $userInfo = $request.Principal
+                if ($null -eq $userInfo)
+                {
+                    $userInfo = Get-MgBetaDirectoryObjectById -Ids $request.PrincipalId -ErrorAction SilentlyContinue
+                }
+                $principalTypeValue = $userInfo['@odata.type'].Split('.')[2]
+                $PrincipalValue = if ($principalTypeValue -eq 'user' -or $principalTypeValue -eq 'agentUser')
+                {
+                    $userInfo['userPrincipalName']
+                }
+                else
+                {
+                    $userInfo['displayName']
+                }
+
+                if ($null -eq $PrincipalValue)
+                {
+                    $i++
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    continue
+                }
+
+                $currentRoleDefinition = $request.RoleDefinition
+                if ($null -eq $currentRoleDefinition)
+                {
+                    $currentRoleDefinition = $this.ResourceCache['RoleDefinitions'][$request.RoleDefinitionId]
+                }
+                if ($null -eq $currentRoleDefinition)
+                {
+                    $currentRoleDefinition = Get-MgBetaRoleManagementDirectoryRoleDefinition -UnifiedRoleDefinitionId $request.RoleDefinitionId `
+                        -ErrorAction SilentlyContinue
+                    $this.ResourceCache['RoleDefinitions'].Add($request.RoleDefinitionId, $currentRoleDefinition)
+                }
+                $params = @{
+                    Id                    = $request.Id
+                    Principal             = $PrincipalValue
+                    PrincipalType         = $principalTypeValue
+                    DirectoryScopeId      = $request.DirectoryScopeId
+                    RoleDefinition        = $currentRoleDefinition.DisplayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $request
+                $Results = $this.GetForExport($Params)
+
+                if ($null -ne $Results.ScheduleInfo)
+                {
+                    $complexMapping = @(
+                        @{
+                            Name            = 'ScheduleInfo'
+                            CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestSchedule'
+                            IsRequired      = $False
+                        },
+                        @{
+                            Name            = 'expiration'
+                            CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration'
+                            IsRequired      = $False
+                        },
+                        @{
+                            Name            = 'recurrence'
+                            CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrence'
+                            IsRequired      = $False
+                        },
+                        @{
+                            Name            = 'pattern'
+                            CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrencePattern'
+                            IsRequired      = $False
+                        },
+                        @{
+                            Name            = 'range'
+                            CimInstanceName = 'MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrenceRange'
+                            IsRequired      = $False
+                        }
+                    )
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.ScheduleInfo `
+                        -CIMInstanceName 'MSFT_AADRoleAssignmentScheduleRequestSchedule' `
+                        -ComplexTypeMapping $complexMapping
+
+                    if (-Not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.ScheduleInfo = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('ScheduleInfo') | Out-Null
+                    }
+                }
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('ScheduleInfo')
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            if ($_.ErrorDetails.Message -like '*The tenant needs an AAD Premium*' -or `
+                    $_.ErrorDetails.Message -like '*[AadPremiumLicenseRequired]*')
+            {
+                Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
+                return ''
+            }
+            else
+            {
+                $this.LogError($_, 'Error during Export:')
+
+                throw
+            }
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            ExcludedProperties = @('Justification')
+            PostProcessing = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
+                if (-not [System.String]::IsNullOrEmpty($DesiredValues.ScheduleInfo.StartDateTime))
+                {
+                    $parsedDesiredDate = [System.DateTime]::MinValue
+                    $parseResultDesired = [System.DateTime]::TryParse($DesiredValues.ScheduleInfo.StartDateTime, [ref]$parsedDesiredDate)
+
+                    $parsedCurrentDate = [System.DateTime]::MinValue
+                    $parseResultCurrent = [System.DateTime]::TryParse($CurrentValues.ScheduleInfo.StartDateTime, [ref]$parsedCurrentDate)
+
+                    if ($parseResultDesired -and $parseResultCurrent)
+                    {
+                        Write-Verbose -Message "Parsed Desired StartDateTime: $parsedDesiredDate, Parsed Current StartDateTime: $parsedCurrentDate"
+                        if ($parsedDesiredDate -ne $parsedCurrentDate -and $parsedDesiredDate -lt [System.DateTime]::Now)
+                        {
+                            Write-Verbose -Message "Ignoring StartDateTime in ScheduleInfo as it is in the past. StartDateTime cannot be set to a past date."
+                            Write-Verbose -Message "Aligning the Desired and Current StartDateTime values for comparison."
+                            $DesiredValues.ScheduleInfo.StartDateTime = $CurrentValues.ScheduleInfo.StartDateTime
+                        }
+                    }
+                }
+
+                $desiredExpiration = $DesiredValues.ScheduleInfo.expiration
+                $currentExpiration = $CurrentValues.ScheduleInfo.expiration
+                if ($desiredExpiration.type -eq 'afterDuration' -and $currentExpiration.type -eq 'afterDateTime' -and
+                    [M365DSCResourceBase]::IsSameDuration($desiredExpiration.duration, $CurrentValues.ScheduleInfo.startDateTime, $currentExpiration.endDateTime))
+                {
+                    Write-Verbose -Message "The schedule ends {$($desiredExpiration.duration)} after its start. Aligning the expiration for comparison."
+                    $currentExpiration.type = $desiredExpiration.type
+                    $currentExpiration.duration = $desiredExpiration.duration
+                    $currentExpiration.endDateTime = $desiredExpiration.endDateTime
+                }
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+            }
+        }
+    }
+
+    hidden [System.Object] FindPrincipal()
+    {
+        $principalTypes = @('User', 'Group', 'ServicePrincipal')
+        if (-not [System.String]::IsNullOrEmpty($this.PrincipalType))
+        {
+            $principalTypes = @($this.PrincipalType)
+        }
+
+        $escapedPrincipal = $this.Principal -replace "'", "''"
+        foreach ($principalType in $principalTypes)
+        {
+            if ($principalType -eq 'User' -or $principalType -eq 'agentUser')
+            {
+                Write-Verbose -Message "Retrieving Principal by UserPrincipalName {$($this.Principal)}"
+                [Array] $principalMatches = Get-MgUser -Filter "UserPrincipalName eq '$escapedPrincipal'" -ErrorAction SilentlyContinue
+            }
+            elseif ($principalType -eq 'Group')
+            {
+                Write-Verbose -Message "Retrieving Principal by DisplayName {$($this.Principal)}"
+                [Array] $principalMatches = Get-MgGroup -Filter "DisplayName eq '$escapedPrincipal'" -ErrorAction SilentlyContinue
+            }
+            else
+            {
+                Write-Verbose -Message "Retrieving Principal by DisplayName {$($this.Principal)}"
+                [Array] $principalMatches = Get-MgServicePrincipal -Filter "DisplayName eq '$escapedPrincipal'" -ErrorAction SilentlyContinue
+            }
+
+            if ($principalMatches.Count -gt 0)
+            {
+                return $principalMatches
+            }
+        }
+
+        return $null
+    }
+
+    hidden [System.Boolean] TestRecurrenceIsConfigured([System.Object] $RecurrenceSettings)
+    {
+        if ($null -eq $RecurrenceSettings.Pattern.DayOfMonth -and `
+            $null -eq $RecurrenceSettings.Pattern.DayOfWeek -and `
+            $null -eq $RecurrenceSettings.Pattern.FirstDayOfWeek -and `
+            $null -eq $RecurrenceSettings.Pattern.Index -and `
+            $null -eq $RecurrenceSettings.Pattern.Interval -and `
+            $null -eq $RecurrenceSettings.Pattern.Month -and `
+            $null -eq $RecurrenceSettings.Pattern.Type -and `
+            $null -eq $RecurrenceSettings.Range.EndDate -and `
+            $null -eq $RecurrenceSettings.Range.NumberOfOccurrences -and `
+            $null -eq $RecurrenceSettings.Range.RecurrenceTimeZone -and `
+            $null -eq $RecurrenceSettings.Range.StartDate -and `
+            $null -eq $RecurrenceSettings.Range.Type)
+        {
+            return $false
+        }
+
+        return $true
+    }
+
+    hidden [AADRoleAssignmentScheduleRequest] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADRoleAssignmentScheduleRequest])
+        {
+            return $Values
+        }
+
+        $result = [AADRoleAssignmentScheduleRequest]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')
+class MSFT_AADRoleAssignmentScheduleRequestSchedule
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('When the eligible or active assignment expires.')]
+    [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] $expiration
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The frequency of the eligible or active assignment. This property is currently unsupported in PIM.')]
+    [MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrence] $recurrence
+
+    [DscProperty()]
+    [System.ComponentModel.Description('When the eligible or active assignment becomes active.')]
+    [System.String] $startDateTime
+}
+
+class MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The requestor''s desired duration of access represented in ISO 8601 format for durations. For example, PT3H refers to three hours. If specified in a request, endDateTime should not be present and the type property should be set to afterDuration.')]
+    [System.String] $duration
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Timestamp of date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.')]
+    [System.String] $endDateTime
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The requestor''s desired expiration pattern type. The possible values are: notSpecified, noExpiration, afterDateTime, afterDuration.')]
+    [ValidateSet('notSpecified', 'noExpiration', 'afterDateTime', 'afterDuration')]
+    [System.String] $type
+}
+
+class MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrence
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The frequency of an event.')]
+    [MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrencePattern] $pattern
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The duration of an event.')]
+    [MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrenceRange] $range
+}
+
+class MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrencePattern
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The day of the month on which the event occurs.')]
+    [System.Nullable[System.UInt32]] $dayOfMonth
+
+    [DscProperty()]
+    [System.ComponentModel.Description('A collection of the days of the week on which the event occurs. The possible values are: sunday, monday, tuesday, wednesday, thursday, friday, saturday')]
+    [ValidateSet('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday')]
+    [System.String[]] $daysOfWeek
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The first day of the week.')]
+    [ValidateSet('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday')]
+    [System.String] $firstDayOfWeek
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies on which instance of the allowed days specified in daysOfWeek the event occurs, counted from the first instance in the month. The possible values are: first, second, third, fourth, last.')]
+    [ValidateSet('first', 'second', 'third', 'fourth', 'last')]
+    [System.String] $index
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The number of units between occurrences, where units can be in days, weeks, months, or years, depending on the type.')]
+    [System.Nullable[System.UInt32]] $interval
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The month in which the event occurs. This is a number from 1 to 12.')]
+    [System.Nullable[System.UInt32]] $month
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The recurrence pattern type: daily, weekly, absoluteMonthly, relativeMonthly, absoluteYearly, relativeYearly.')]
+    [ValidateSet('daily', 'weekly', 'absoluteMonthly', 'relativeMonthly', 'absoluteYearly', 'relativeYearly')]
+    [System.String] $type
+}
+
+class MSFT_AADRoleAssignmentScheduleRequestScheduleRecurrenceRange
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The date to stop applying the recurrence pattern. Depending on the recurrence pattern of the event, the last occurrence of the meeting may not be this date.')]
+    [System.Nullable[System.DateTime]] $endDate
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The number of times to repeat the event. Required and must be positive if type is numbered.')]
+    [System.Nullable[System.UInt32]] $numberOfOccurrences
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Time zone for the startDate and endDate properties.')]
+    [System.String] $recurrenceTimeZone
+
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The date to start applying the recurrence pattern. The first occurrence of the meeting may be this date or later, depending on the recurrence pattern of the event. Must be the same value as the start property of the recurring event.')]
+    [System.Nullable[System.DateTime]] $startDate
+
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The recurrence range. The possible values are: endDate, noEnd, numbered.')]
+    [ValidateSet('endDate', 'noEnd', 'numbered')]
+    [System.String] $type
+}

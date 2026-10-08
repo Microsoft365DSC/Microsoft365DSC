@@ -1,0 +1,26 @@
+{
+  "resourceName": "TestMissingType",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "testTypeThatDoesNotExist",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaTestGhost",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Fixture for MSFT_TestMissingType.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": []
+}

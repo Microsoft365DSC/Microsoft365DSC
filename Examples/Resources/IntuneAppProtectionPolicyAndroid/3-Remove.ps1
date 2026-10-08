@@ -19,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAppProtectionPolicyAndroid 'ConfigureAppProtectionPolicyAndroid'
+        IntuneAppProtectionPolicyAndroid 'IntuneAppProtectionPolicyAndroid-Example'
         {
-            DisplayName                             = 'My DSC Android App Protection Policy'
-            Ensure                                  = 'Absent'
+            DisplayName           = 'Android App Protection - Corporate'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

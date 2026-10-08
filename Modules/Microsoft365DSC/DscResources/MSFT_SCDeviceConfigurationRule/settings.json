@@ -1,5 +1,16 @@
 {
   "resourceName": "SCDeviceConfigurationRule",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "DeviceConfigurationRule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Device Configuration Rule in Purview.",
   "roles": {
     "read": [
@@ -18,12 +29,12 @@
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       }
@@ -43,7 +54,7 @@
       }
     },
     "purview": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Device Management"
         ],
@@ -51,7 +62,7 @@
           "Device Management"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Compliance Data Administrator"
         ],
@@ -71,6 +82,16 @@
   ],
   "mode": "Configuration",
   "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-DeviceConfigurationPolicy",
+        "Get-DeviceConfigurationRule",
+        "New-DeviceConfigurationRule",
+        "Remove-DeviceConfigurationRule",
+        "Set-DeviceConfigurationRule"
+      ]
+    },
     {
       "module": "Microsoft.Graph.Groups",
       "cmdlets": [

@@ -124,7 +124,7 @@ This returns the following output (still our example for the "Above Lock" catego
 ![Settings Catalog Policy Settings Example](image-4-settings-catalog-policy-settings-example.png)
 
 Those are the actual settings that are applied when the policy is assigned. As the first property, we have `SettingDefinitionId`, which is the fully qualified Id of the setting. It links to the setting definition with that id that can be fetched with the above call as well (using `-ExpandProperty settingDefinitions`). Next is (if available) the `SettingInstanceTemplateReference`. The template reference might not exist, as it is (most likely, not quite sure, but the name indicates it) only available for templates.
-In the `AdditionalProperties`, we have the representation of the value, in this case, both values are of type `#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance`, are configured to "Enabled" (value 1 at the end), and have no children.
+Next to it sits the value itself, under the name that belongs to the setting type - here `choiceSettingValue`. Both values are of type `#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance`, are configured to "Enabled" (value 1 at the end), and have no children.
 
 *Note*: Setting instances are not only used when fetching the settings (and their values), but also when we fetch a template. Then it's called a `SettingInstanceTemplate`. The template is built from these setting instance templates, where they represent a "top-level" setting or a group of settings. More on that later.
 
@@ -183,17 +183,17 @@ The types `ChoiceSetting*Definition` are used for settings where you can choose 
 $settings | Select-Object DisplayName, @{
     Name = "Options"
     Expression = {
-        $_.AdditionalProperties.options.displayName
+        $_.options.displayName
     }
 }, @{
     Name = "Value"
     Expression = {
-        $_.AdditionalProperties.options.optionValue.value
+        $_.options.optionValue.value
     }
 }, @{
     Name = "Type"
     Expression = {
-        $_.AdditionalProperties.options.optionValue.'@odata.type'
+        $_.options.optionValue.'@odata.type'
     }
 } | Format-List
 ```
@@ -226,7 +226,7 @@ $template = $settingTemplates | Where-Object { $_.SettingInstanceTemplate.settin
 $template.SettingInstanceTemplate | Select-Object SettingDefinitionId, @{
     Name = "ChildSettings"
     Expression= {
-        $_.AdditionalProperties.groupSettingCollectionValueTemplate.children.settingDefinitionId
+        $_.groupSettingCollectionValueTemplate.children.settingDefinitionId
     }
 } | Format-List
 ```
@@ -281,6 +281,13 @@ The name resolution in Microsoft365DSC lives in the C# class `SettingsCatalogHel
 3. If there is, it looks up the parent setting (via `dependentOn.parentSettingId`) and combines that parent's name with the current setting name.
 4. If that combination is still not unique, it traverses up the `OffsetUri` of the setting to find a distinguishing prefix. The `OffsetUri` is basically the path-like identifier of where the setting lives in the CSP (Configuration Service Provider) tree, so walking up that path often gives us a meaningful and unique prefix.
 5. As a very last resort, it falls back to deriving the name from parts of the setting definition Id.
+
+There are two rules that apply on top for group setting collections in order for the exported property name to match the one the generated class declares:
+
+- A group whose parent carries the same name would end up doubled, as in `Pol_HardenedPaths_Pol_HardenedPaths`. The prefix is dropped in that case, leaving `Pol_HardenedPaths`.
+- Children of a key/value pair - definition Ids ending in `_key` and `_value` - take those suffixes as their names, because the pair carries no distinguishing name of its own. Every other child keeps its resolved name, for example `threatTypeSettings_item_key` and `ElevationType` are untouched.
+
+The first rule lives in `SettingsCatalogHelper.WithoutDoubledParent()` and is shared by the builder, which derives the CIM class name for a group, and the exporter. The second one lives in `GetChildNameFromId()`, which both sides carry.
 
 Here is the core of `GetSettingName` in C#:
 
@@ -629,13 +636,13 @@ Let's walk through the key pieces.
 
 ### The Boundary Pattern
 
-If you have ever worked with the Microsoft Graph SDK for PowerShell, you know that the interesting data on those objects is often buried inside `AdditionalProperties`. That property is not publicly accessible on the Graph SDK types from C# - you need reflection with `BindingFlags.NonPublic | BindingFlags.Instance` to get to it. Doing that once is fine. Doing it hundreds of times during a recursive traversal? Not so much.
+Graph hands PowerShell loosely typed data: nested hashtables whose keys can be whatever the service sent, with the interesting parts several levels down. Reading that shape directly during a recursive traversal means a dictionary lookup and a cast at every step, repeated hundreds of times per policy.
 
-We solved this with what we call the "boundary pattern": at the very edge where PowerShell hands off Graph SDK objects to C#, we map everything into strongly-typed C# models. All the reflection happens exactly once per object, right at that boundary. After that, the entire recursive traversal works with clean C# properties. No more reflection, no more dictionary lookups.
+We solve this with what we call the "boundary pattern": at the very edge where PowerShell hands the Graph payload to C#, we map everything into strongly-typed C# models. Each object is read only once, right at that boundary. After that, the entire recursive traversal works with clean C# properties. No more key lookups, no more casts.
 
 There are three mapper classes that handle this boundary:
 
-**`SettingDefinitionMapper`** converts Graph SettingDefinition objects into `SettingDefinitionInfo`. It extracts the `Id`, `Name`, `OffsetUri`, the `@odata.type`, `options`, `childIds`, `maximumCount`, `valueDefinition`, and, critically, the parent setting IDs from both `dependentOn` and `options.dependentOn`. All that `AdditionalProperties` digging happens here, once, and then we are done with it.
+**`SettingDefinitionMapper`** converts Graph SettingDefinition objects into `SettingDefinitionInfo`. It extracts the `Id`, `Name`, `OffsetUri`, the `@odata.type`, `options`, `childIds`, `maximumCount`, `valueDefinition`, and, critically, the parent setting IDs from both `dependentOn` and `options.dependentOn`. All the key digging happens here, once, and then we are done with it.
 
 ```csharp
 public static SettingDefinitionInfo FromGraphObject(object settingDefinition)
@@ -647,27 +654,31 @@ public static SettingDefinitionInfo FromGraphObject(object settingDefinition)
         OffsetUri = TryGetProperty(settingDefinition, "OffsetUri")
     };
 
-    // Extract AdditionalProperties via reflection (NonPublic | Instance)
-    // This is the expensive part, we do it once and never again
-    IDictionary<string, object>? additionalProperties = ExtractAdditionalProperties(settingDefinition);
-
-    if (additionalProperties is not null)
+    // Collect every property of the model that is not explicitly named
+    List<string> defaultProperties = ["Id", "Name", "OffsetUri"];
+    IDictionary<string, object> properties = new Dictionary<string, object>();
+    foreach (DictionaryEntry entry in settingDefinition as Hashtable)
     {
-        info.DependentOnParentSettingIds = ExtractParentSettingIds(additionalProperties, "dependentOn");
-        info.OptionsDependentOnParentSettingIds = ExtractOptionsParentSettingIds(additionalProperties);
-        info.Options = ExtractOptions(additionalProperties);
-        // ... maxCount, childIds, valueDefinition, etc.
+        if (!defaultProperties.Contains(entry.Key.ToString(), StringComparer.OrdinalIgnoreCase))
+        {
+            properties[entry.Key.ToString()] = entry.Value;
+        }
     }
+
+    info.DependentOnParentSettingIds = ExtractParentSettingIds(properties, "dependentOn");
+    info.OptionsDependentOnParentSettingIds = ExtractOptionsParentSettingIds(properties);
+    info.Options = ExtractOptions(properties);
+    // ... maxCount, childIds, valueDefinition, etc.
 
     return info;
 }
 ```
 
-**`SettingInstanceTemplateMapper`** converts the raw template objects into `SettingInstanceTemplateInfo`. This one has a twist: root-level templates store their data in `AdditionalProperties`, while child templates (from the value template's `children` array) have the data at the top level without an `AdditionalProperties` property. The mapper handles both cases through an `isRoot` parameter.
+**`SettingInstanceTemplateMapper`** converts the raw template objects into `SettingInstanceTemplateInfo`. This one has a twist: root-level templates nest their data one level down, while child templates (from the value template's `children` array) carry it at the top level. The mapper handles both cases through an `isRoot` parameter.
 
 It also pre-computes the `SettingValueName` (like `choiceSettingValue` or `groupSettingCollectionValue`) from the OData type, so the builder does not need to recompute that string manipulation on every recursive call.
 
-**`SettingInstanceMapper`** does the same for actual setting instances (as opposed to templates). It converts the Graph API response objects into `SettingInstanceInfo`, which holds the data in a type-specific way: `SimpleSettingValue` for simple settings, `ChoiceSettingValue` for choice settings, `GroupSettingCollectionValue` for groups, and so on. Again, root vs. child instances are handled differently because the PowerShell Graph SDK formats them differently.
+**`SettingInstanceMapper`** does the same for actual setting instances (as opposed to templates). It converts the Graph API response objects into `SettingInstanceInfo`, which holds the data in a type-specific way: `SimpleSettingValue` for simple settings, `ChoiceSettingValue` for choice settings, `GroupSettingCollectionValue` for groups, and so on. Again, root vs. child instances are handled differently because Graph formats them differently.
 
 ### Building the API body from DSC parameters
 
@@ -686,7 +697,9 @@ return [Microsoft365DSC.Intune.SettingCatalogPolicySettingBuilder]::Build(
     $ContainsDeviceAndUserSettings.IsPresent)
 ```
 
-Inside `Build()`, the first thing that happens is the boundary mapping. All Graph objects get converted to `SettingTemplateInfo` (which contains a `SettingInstanceTemplateInfo` and a list of `SettingDefinitionInfo`). From here on, zero reflection is needed.
+Inside `Build()`, the first thing that happens is the boundary mapping. All Graph objects get converted to `SettingTemplateInfo` (which contains a `SettingInstanceTemplateInfo` and a list of `SettingDefinitionInfo`). From here on, the traversal only sees typed models.
+
+Embedded properties reach the builder in the shape the resource holds them: class-based resources pass PowerShell class instances, older paths pass `CimInstance` objects, and both may arrive wrapped in a `PSObject`. The lookup matches them by class name, including the versioned variants such as `...ExclusionsV2`, and reads the properties that hold a value. A property the configuration left out arrives as null or as an empty string, and is skipped - sending it would attach a child setting to a choice option that does not have it, which the service refuses.
 
 The core loop in `BuildCore()` iterates over each setting template, finds its root definition (the one that matches the instance template's `SettingDefinitionId` and has no parent dependencies), and then calls `BuildSettingInstanceValue()` recursively. That method is essentially a big switch on the setting type:
 
@@ -730,7 +743,7 @@ Each of these builder methods follows the same pattern: find the relevant DSC pa
 
 A core piece of the builder is `SettingValueResolver.Resolve()`. Its job is to take a setting definition, look up the corresponding DSC parameter by name (using `SettingsCatalogHelper.GetSettingName()`), and return the value in the format the Graph API expects.
 
-For simple settings, this is straightforward: strings stay strings, integers stay integers. For choice settings, it gets more interesting. The DSC parameter holds a human-readable value (like `"1"` or `"enabled"`), but the Graph API wants the full option `itemId` (like `"device_vendor_msft_policy_config_defender_puaprotection_1"`). So `ResolveChoiceSettingValue` looks up the matching option by its `optionValue.value` first, and falls back to constructing the `itemId` from the definition ID plus the DSC value if needed:
+For simple settings, the value has to carry its concrete type: `deviceManagementConfigurationStringSettingValue` or `...IntegerSettingValue`. The base type has no `value` property, which means that a value sent under it is refused. The type comes from the definition's `valueDefinition` first, and if that doesn't contain anything useful, then from the value in hand. Any integral type counts as an integer and strings as normal strings. For choice settings, it gets a little bit more interesting. The DSC parameter holds a human-readable value (like `"1"` or `"enabled"`), but the Graph API wants the full option `itemId` (like `"device_vendor_msft_policy_config_defender_puaprotection_1"`). So `ResolveChoiceSettingValue` looks up the matching option by its `optionValue.value` first, and falls back to constructing the `itemId` from the definition ID plus the DSC value if needed:
 
 ```csharp
 private static SettingDSCValueResult ResolveChoiceSettingValue(
@@ -845,7 +858,7 @@ Microsoft365DSC bridges that gap between the Graph API's complex JSON structures
 - **`SettingCatalogPolicySettingBuilder`** takes DSC parameters and produces the Graph API request body, recursively building the right structure for each setting type.
 - **`SettingCatalogPolicyExporter`** does the reverse, flattening the Graph API response back into DSC parameters.
 - **`SettingValueResolver`** bridges the gap between human-readable DSC values and the Graph API's option IDs and value types.
-- The **boundary mappers** (`SettingDefinitionMapper`, `SettingInstanceTemplateMapper`, `SettingInstanceMapper`) ensure that reflection into `AdditionalProperties` happens exactly once per object.
+- The **boundary mappers** (`SettingDefinitionMapper`, `SettingInstanceTemplateMapper`, `SettingInstanceMapper`) ensure that the raw Graph payload is read once per object.
 
 PowerShell remains the entry point: It handles Graph API calls, DSC resource lifecycle, and the module interface. The C# assembly slots in behind it, doing the data transformation work that benefits most from strong typing and raw execution speed.
 

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,19 +19,20 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADSecurityDefaults 'Defaults'
+        AADSecurityDefaults 'AADSecurityDefaults-Example'
         {
+            Description           = "Security defaults is a set of basic identity security mechanisms recommended by Microsoft. When enabled, these recommendations will be automatically enforced in your organization. Administrators and users will be better protected from common identity related attacks.";
+            DisplayName           = "Security Defaults";
+            IsEnabled             = $False;
+            IsSingleInstance      = "Yes";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            Description          = "Security defaults is a set of basic identity security mechanisms recommended by Microsoft. When enabled, these recommendations will be automatically enforced in your organization. Administrators and users will be better protected from common identity related attacks.";
-            DisplayName          = "Security Defaults";
-            IsEnabled            = $False;
-            IsSingleInstance     = "Yes";
         }
     }
 }

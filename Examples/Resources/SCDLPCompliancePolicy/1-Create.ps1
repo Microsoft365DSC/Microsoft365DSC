@@ -5,23 +5,37 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCDLPCompliancePolicy 'ConfigureCompliancePolicy'
+        SCDLPCompliancePolicy 'SCDLPCompliancePolicy-Example'
         {
-            Name               = "MyPolicy"
-            Comment            = "Test Policy"
-            Priority           = 1
-            SharePointLocation = "https://contoso.sharepoint.com/sites/demo"
-            Ensure             = "Present"
-            Credential         = $Credscredential
+            Name                                  = "Customer Financial Data Protection"
+            Comment                               = "Blocks sharing of credit card numbers"
+            Priority                              = 1
+            ExchangeLocation                      = @("All")
+            ExchangeSenderMemberOfException       = @("SalesandMarketing@$TenantId")
+            Mode                                  = "TestWithoutNotifications"
+            Ensure                                = "Present"
+            ApplicationId                         = $ApplicationId
+            TenantId                              = $TenantId
+            CertificateThumbprint                 = $CertificateThumbprint
         }
     }
 }

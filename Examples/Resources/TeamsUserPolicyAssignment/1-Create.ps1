@@ -6,41 +6,52 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $credsCredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsUserPolicyAssignment 'TeamsPolicyAssignment'
+        TeamsUserPolicyAssignment 'TeamsUserPolicyAssignment-Example'
         {
-            Credential                      = $Credential
-            CallingLineIdentity             = "Test";
-            ExternalAccessPolicy            = "Test";
-            OnlineVoicemailPolicy           = "Test";
-            OnlineVoiceRoutingPolicy        = "Drift";
-            TeamsAppPermissionPolicy        = "Test";
-            TeamsAppSetupPolicy             = "Test";
-            TeamsAudioConferencingPolicy    = "Test";
-            TeamsCallHoldPolicy             = "Test";
-            TeamsCallingPolicy              = "Test";
-            TeamsCallParkPolicy             = "Test";
-            TeamsChannelsPolicy             = "Test";
-            TeamsEmergencyCallingPolicy     = "Test";
-            TeamsEmergencyCallRoutingPolicy = "Test";
-            TeamsEnhancedEncryptionPolicy   = "Test";
-            TeamsEventsPolicy               = "Test";
-            TeamsMeetingBroadcastPolicy     = "Test";
-            TeamsMeetingPolicy              = "Test";
-            TeamsMessagingPolicy            = "Test";
-            TeamsMobilityPolicy             = "Test";
-            TeamsUpdateManagementPolicy     = "Test";
-            TeamsUpgradePolicy              = "Test";
-            TenantDialPlan                  = "DemTestPlan";
+            CallingLineIdentity             = "CorporateCallerID";
+            ExternalAccessPolicy            = "CorporateFederation";
+            OnlineVoicemailPolicy           = "CorporateVoicemail";
+            OnlineVoiceRoutingPolicy        = "NewVoiceRoutingPolicy";
+            TeamsAppPermissionPolicy        = "SalesAppPermissions";
+            TeamsAppSetupPolicy             = "Frontline App Setup";
+            TeamsAudioConferencingPolicy    = "CorporateAudioConferencing";
+            TeamsCallHoldPolicy             = "CorporateCallHold";
+            TeamsCallingPolicy              = "AllowCalling";
+            TeamsCallParkPolicy             = "CorporateCallPark";
+            TeamsChannelsPolicy             = "New Channels Policy";
+            TeamsEmergencyCallingPolicy     = "Headquarters Emergency Calling Policy";
+            TeamsEmergencyCallRoutingPolicy = "Amsterdam Office";
+            TeamsEnhancedEncryptionPolicy   = "CorporateEncryption";
+            TeamsEventsPolicy               = "CorporateEvents";
+            TeamsMeetingBroadcastPolicy     = "CorporateBroadcast";
+            TeamsMeetingPolicy              = "Corporate Meeting Policy";
+            TeamsMessagingPolicy            = "CorporateMessaging";
+            TeamsMobilityPolicy             = "CorporateMobility";
+            TeamsPersonalAttendantPolicy    = "Global";
+            TeamsUpdateManagementPolicy     = "EarlyAdopters";
+            TeamsUpgradePolicy              = "UpgradeToTeams";
+            TenantDialPlan                  = "AmsterdamPlan";
             User                            = "john.smith@contoso.com";
+            ApplicationId                   = $ApplicationId
+            TenantId                        = $TenantId
+            CertificateThumbprint           = $CertificateThumbprint
         }
     }
 }

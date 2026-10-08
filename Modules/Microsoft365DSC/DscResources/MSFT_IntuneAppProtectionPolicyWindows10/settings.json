@@ -1,5 +1,42 @@
 {
   "resourceName": "IntuneAppProtectionPolicyWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "windowsManagedAppProtection",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceAppManagementWindowsManagedAppProtection",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AllowedInboundDataTransferSourceApps",
+      "reason": "Deferred",
+      "note": "The service accepts only the value none."
+    },
+    {
+      "name": "AllowedOutboundDataTransferDestinationApps",
+      "reason": "Deferred",
+      "note": "The service accepts only the value none."
+    },
+    {
+      "name": "DeployedAppCount",
+      "reason": "ReadOnly",
+      "note": "Intune counts the apps targeted through the Apps property"
+    },
+    {
+      "name": "DeploymentSummary",
+      "reason": "ReadOnly",
+      "note": "Intune reports the deployment rollup across users and apps"
+    },
+    {
+      "name": "IsAssigned",
+      "reason": "ReadOnly",
+      "note": "Intune derives the flag from the Assignments property"
+    }
+  ],
   "description": "This resource configures an Intune App Protection Policy for Windows10.",
   "permissions": {
     "graph": {
@@ -12,7 +49,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -23,7 +63,10 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -36,7 +79,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -47,7 +93,10 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

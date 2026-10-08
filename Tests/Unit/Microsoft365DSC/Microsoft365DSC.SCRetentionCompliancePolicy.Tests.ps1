@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -47,6 +47,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             Mock -CommandName Start-Sleep -MockWith {
+            }
+
+            Mock -CommandName Set-RetentionCompliancePolicy -MockWith {
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
@@ -72,15 +75,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set()
             }
         }
 
@@ -136,15 +139,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should recreate from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set()
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -165,15 +168,194 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should delete from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName 'Remove-RetentionCompliancePolicy' -Exactly 1 -ParameterFilter { $Confirm -eq $false -and -not $ForceDeletion }
+                Should -Invoke -CommandName 'Remove-RetentionCompliancePolicy' -Exactly 1 -ParameterFilter { $Confirm -eq $false -and $ForceDeletion }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
+            }
+        }
+
+        Context -Name 'Adaptive policy does not exist' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Ensure                = 'Present'
+                    Credential            = $Credential
+                    AdaptiveScopeLocation = @('Finance Users')
+                    Applications          = @('User:Exchange,OneDriveForBusiness')
+                    Name                  = 'TestPolicy'
+                }
+
+                Mock -CommandName Get-RetentionCompliancePolicy -MockWith {
+                    return $null
+                }
+            }
+
+            It 'Should create the policy with its adaptive scopes and applications from the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName 'New-RetentionCompliancePolicy' -Exactly 1 -ParameterFilter {
+                    $Name -eq 'TestPolicy' -and $AdaptiveScopeLocation -eq 'Finance Users' -and $Applications -eq 'User:Exchange,OneDriveForBusiness'
+                }
+            }
+        }
+
+        Context -Name 'Adaptive policy exists with different adaptive scopes' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Ensure                = 'Present'
+                    Credential            = $Credential
+                    AdaptiveScopeLocation = @('Finance Users')
+                    Applications          = @('User:Exchange')
+                    Name                  = 'TestPolicy'
+                }
+
+                Mock -CommandName Get-RetentionCompliancePolicy -MockWith {
+                    return @{
+                        Name                  = 'TestPolicy'
+                        AdaptiveScopeLocation = @(@{ Name = 'Sales Users' })
+                        Applications          = @('User:Exchange')
+                        IsAdaptivePolicy      = $true
+                    }
+                }
+            }
+
+            It 'Should return the adaptive scopes and applications from the Get method' {
+                $result = (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Get().ToHashtable()
+                $result.AdaptiveScopeLocation | Should -Be @('Sales Users')
+                $result.Applications | Should -Be @('User:Exchange')
+            }
+
+            It 'Should return false from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Test() | Should -Be $false
+            }
+
+            It 'Should add and remove the adaptive scopes from the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName 'Set-RetentionCompliancePolicy' -Exactly 1 -ParameterFilter {
+                    $AddAdaptiveScopeLocation -eq 'Finance Users' -and
+                    $RemoveAdaptiveScopeLocation -eq 'Sales Users' -and
+                    -not $PSBoundParameters.ContainsKey('AdaptiveScopeLocation')
+                }
+            }
+        }
+
+        Context -Name 'Static policy should become adaptive' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Ensure                = 'Present'
+                    Credential            = $Credential
+                    AdaptiveScopeLocation = @('Finance Users')
+                    Applications          = @('User:Exchange')
+                    Name                  = 'TestPolicy'
+                }
+
+                Mock -CommandName Get-RetentionCompliancePolicy -MockWith {
+                    return @{
+                        Name             = 'TestPolicy'
+                        ExchangeLocation = @(@{ Name = 'All' })
+                    }
+                }
+            }
+
+            It 'Should throw from the Set method' {
+                { (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set() } | Should -Throw '*cannot switch between adaptive and static locations*'
+                Should -Invoke -CommandName 'Set-RetentionCompliancePolicy' -Exactly 0
+            }
+        }
+
+        Context -Name 'Policy combines adaptive scopes with static locations' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Ensure                = 'Present'
+                    Credential            = $Credential
+                    AdaptiveScopeLocation = @('Finance Users')
+                    ExchangeLocation      = @('All')
+                    Name                  = 'TestPolicy'
+                }
+
+                Mock -CommandName Get-RetentionCompliancePolicy -MockWith {
+                    return $null
+                }
+            }
+
+            It 'Should throw from the Set method' {
+                { (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set() } | Should -Throw '*cannot combine AdaptiveScopeLocation with static locations*'
+                Should -Invoke -CommandName 'New-RetentionCompliancePolicy' -Exactly 0
+            }
+        }
+
+        Context -Name 'Updating the policy fails for a reason other than a pending deployment' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Ensure             = 'Present'
+                    Credential         = $Credential
+                    SharePointLocation = 'https://contoso.sharepoint.com/sites/demo'
+                    Comment            = 'Updated comment'
+                    Name               = 'TestPolicy'
+                }
+
+                Mock -CommandName Get-RetentionCompliancePolicy -MockWith {
+                    return @{
+                        Name               = 'TestPolicy'
+                        SharePointLocation = @(@{ Name = 'https://contoso.sharepoint.com/sites/demo' })
+                    }
+                }
+
+                Mock -CommandName Set-RetentionCompliancePolicy -MockWith {
+                    throw 'The comment is too long.'
+                }
+            }
+
+            It 'Should throw from the Set method instead of reporting success' {
+                { (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Set() } | Should -Throw '*The comment is too long.*'
+            }
+        }
+
+        Context -Name 'Policy is pending deletion' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Ensure     = 'Absent'
+                    Credential = $Credential
+                    Name       = 'TestPolicy'
+                }
+
+                Mock -CommandName Get-RetentionCompliancePolicy -MockWith {
+                    return @{
+                        Name = 'TestPolicy'
+                        Mode = 'PendingDeletion'
+                    }
+                }
+            }
+
+            It 'Should return true from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $testParams).Test() | Should -Be $true
+            }
+        }
+
+        Context -Name 'Static policy applied from its own export' -Fixture {
+            BeforeAll {
+                Mock -CommandName Get-RetentionCompliancePolicy -MockWith {
+                    return @{
+                        Name               = 'TestPolicy'
+                        Comment            = 'Old comment'
+                        SharePointLocation = @(@{ Name = 'https://contoso.sharepoint.com/sites/demo' })
+                    }
+                }
+            }
+
+            It 'Should update the policy without treating it as adaptive' {
+                $exported = (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property @{ Name = 'TestPolicy'; Credential = $Credential }).Get().ToHashtable()
+                $exported.AdaptiveScopeLocation | Should -BeNullOrEmpty
+                $exported.Comment = 'New comment'
+
+                { (New-M365DSCResourceInstance -ResourceName 'SCRetentionCompliancePolicy' -Property $exported).Set() } | Should -Not -Throw
+                Should -Invoke -CommandName 'Set-RetentionCompliancePolicy' -Exactly 1
             }
         }
 
@@ -194,7 +376,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCRetentionCompliancePolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

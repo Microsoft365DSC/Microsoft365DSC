@@ -1,4 +1,5 @@
-﻿using Microsoft.Management.Infrastructure;
+using Microsoft.Management.Infrastructure;
+using Microsoft365DSC.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace Microsoft365DSC.Compare
     /// </summary>
     public static class ComplexObjectComparer
     {
-        private static HashSet<string> excludedSet = new(StringComparer.OrdinalIgnoreCase);
+        private const string ComputerNameProperty = "PSComputerName";
 
         /// <summary>
         /// Compares two complex M365DSC objects to detect configuration drift.
@@ -21,375 +22,518 @@ namespace Microsoft365DSC.Compare
         /// <param name="source">Source (desired) object</param>
         /// <param name="target">Target (current) object</param>
         /// <param name="propertyName">Property name for drift reporting</param>
-        /// <returns>True if objects are identical (no drift), false otherwise</returns>
+        /// <param name="excludedSet">Property names to skip during comparison</param>
+        /// <returns>The drifts found and true when the objects are identical</returns>
         public static Tuple<List<Dictionary<string, object>>, bool> Compare(
             object source,
             object target,
             string propertyName,
             HashSet<string>? excludedSet)
         {
-            var drifts = new List<Dictionary<string, object>>();
-            if (excludedSet is not null)
+            List<Hashtable> drifts = [];
+            bool result = CompareInto(source, target, propertyName, excludedSet, drifts, null);
+
+            List<Dictionary<string, object>> converted = new(drifts.Count);
+            foreach (Hashtable drift in drifts)
             {
-                ComplexObjectComparer.excludedSet = excludedSet;
+                converted.Add(DriftRecord.ToDictionary(drift));
             }
-            bool result = CompareWithDrifts(source, target, propertyName, drifts);
-            return new Tuple<List<Dictionary<string, object>>, bool>(drifts, result);
+
+            return new Tuple<List<Dictionary<string, object>>, bool>(converted, result);
         }
 
-        /// <summary>
-        /// Compares two complex M365DSC objects and collects drift information.
-        /// </summary>
-        /// <param name="source">Source (desired) object</param>
-        /// <param name="target">Target (current) object</param>
-        /// <param name="propertyName">Property name for drift reporting</param>
-        /// <param name="drifts">List to collect detected drifts</param>
-        /// <returns>True if objects are identical (no drift), false otherwise</returns>
-        public static bool CompareWithDrifts(
-            object source,
-            object target,
+        internal static bool CompareInto(
+            object? source,
+            object? target,
             string propertyName,
-            List<Dictionary<string, object>> drifts)
+            HashSet<string>? excludedSet,
+            List<Hashtable> drifts,
+            HashSet<string>? rootSkippedKeys,
+            SchemaIndex? schema = null,
+            string? className = null)
         {
-            var workStack = new Stack<ComparisonFrame>();
-            workStack.Push(new ComparisonFrame
+            Traversal traversal = new(excludedSet ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase), schema);
+            return traversal.Run(source, target, propertyName, drifts, 0, className, rootSkippedKeys);
+        }
+
+        private readonly struct Frame
+        {
+            public Frame(object? left, object? right, string? propName, string? className, HashSet<string>? skippedKeys)
             {
-                Left = source,
-                Right = target,
-                PropName = propertyName
-            });
+                Left = left;
+                Right = right;
+                PropName = propName;
+                ClassName = className;
+                SkippedKeys = skippedKeys;
+            }
 
-            bool result = true;
-            while (workStack.Count > 0)
+            public object? Left { get; }
+
+            public object? Right { get; }
+
+            public string? PropName { get; }
+
+            public string? ClassName { get; }
+
+            public HashSet<string>? SkippedKeys { get; }
+        }
+
+        private sealed class Traversal
+        {
+            private readonly HashSet<string> _excluded;
+            private readonly SchemaIndex? _schema;
+            private readonly bool _pathExclusionsPresent;
+            private readonly List<Stack<Frame>> _stacks = [];
+
+            public Traversal(HashSet<string> excluded, SchemaIndex? schema)
             {
-                var frame = workStack.Pop();
-                var left = frame.Left;
-                var right = frame.Right;
-                var propName = frame.PropName;
-
-                if (excludedSet.Contains(propName))
+                _excluded = excluded;
+                _schema = schema;
+                foreach (string name in excluded)
                 {
-                    continue;
-                }
-
-                // Both null => identical
-                if (left is null && right is null)
-                {
-                    continue;
-                }
-
-                // One null and the other not => drift
-                if ((left is null) != (right is null))
-                {
-                    var drift = new Dictionary<string, object>
+                    if (name.IndexOf('.') >= 0 || name.IndexOf('[') >= 0)
                     {
-                        { "PropertyName", propName },
-                        { "CurrentValue", right is null ? "Current value is null" : "Current value is NOT null" },
-                        { "DesiredValue", left is null ? "Desired value is null" : "Desired value is NOT null" }
-                    };
-                    drifts.Add(drift);
-                    result = false;
-                    continue;
+                        _pathExclusionsPresent = true;
+                        break;
+                    }
                 }
+            }
 
-                // Check if left is a complex array
-                if (IsComplexArrayCandidate(left) || IsComplexArrayCandidate(right))
-                {
-                    _ = CompareComplexArray(left, right, propName, drifts, workStack, ref result);
-                    continue;
-                }
+            public bool Run(
+                object? left,
+                object? right,
+                string? propName,
+                List<Hashtable>? drifts,
+                int depth,
+                string? className = null,
+                HashSet<string>? skippedKeys = null)
+            {
+                bool collecting = drifts is not null;
+                Stack<Frame> stack = GetStack(depth);
+                stack.Push(new Frame(left, right, propName, className, skippedKeys));
 
-                // Check if left is a normal array
-                if (left is Array || right is Array)
+                bool result = true;
+                while (stack.Count > 0)
                 {
-                    Array leftArray = ToArray(left);
-                    Array rightArray = ToArray(right);
-                    var arrayCompareResult = ArrayComparer.CompareArrays(rightArray, leftArray);
-                    if (arrayCompareResult.Count > 0)
+                    Frame frame = stack.Pop();
+
+                    if (frame.PropName is not null && _excluded.Contains(frame.PropName))
                     {
-                        var driftEntry = new Dictionary<string, object>
+                        continue;
+                    }
+
+                    if (frame.Left is null && frame.Right is null)
+                    {
+                        continue;
+                    }
+
+                    if ((frame.Left is null) != (frame.Right is null))
+                    {
+                        if (!collecting)
                         {
-                            { "PropertyName", $"{propName}" },
-                            { "CurrentValue", string.Join(", ", rightArray as IEnumerable<object>) },
-                            { "DesiredValue", string.Join(", ", leftArray as IEnumerable<object>) },
-                            { "DeltaValue", string.Join("; ", arrayCompareResult.Select(d => $"{d.SideIndicator} {d.InputObject}")) }
-                        };
-                        drifts.Add(driftEntry);
+                            return false;
+                        }
+
+                        drifts!.Add(NullMismatch(frame.PropName!, frame.Left is null, frame.Right is null));
+                        result = false;
+                        continue;
+                    }
+
+                    if (IsComplexArrayCandidate(frame.Left) || IsComplexArrayCandidate(frame.Right))
+                    {
+                        if (!CompareComplexArray(frame.Left!, frame.Right!, frame.PropName, drifts, depth, frame.ClassName))
+                        {
+                            if (!collecting)
+                            {
+                                return false;
+                            }
+
+                            result = false;
+                        }
+
+                        continue;
+                    }
+
+                    if (frame.Left is Array || frame.Right is Array)
+                    {
+                        Array leftArray = ToArray(frame.Left);
+                        Array rightArray = ToArray(frame.Right);
+                        List<CompareObjectModel> differences = ArrayComparer.CompareArrays(rightArray, leftArray);
+                        if (differences.Count > 0)
+                        {
+                            if (!collecting)
+                            {
+                                return false;
+                            }
+
+                            drifts!.Add(DriftRecord.Create(
+                                frame.PropName!,
+                                string.Join(", ", rightArray.Cast<object>()),
+                                string.Join(", ", leftArray.Cast<object>()),
+                                ArrayComparer.FormatDelta(differences)));
+                            result = false;
+                        }
+
+                        continue;
+                    }
+
+                    if (!CompareSingleObject(frame, drifts, stack))
+                    {
+                        if (!collecting)
+                        {
+                            return false;
+                        }
+
                         result = false;
                     }
-                    continue;
                 }
 
-                // Handle single complex objects or simple values
-                _ = CompareSingleObject(left, right, propName, drifts, workStack, ref result);
+                return result;
+            }
+
+            private Stack<Frame> GetStack(int depth)
+            {
+                while (_stacks.Count <= depth)
+                {
+                    _stacks.Add(new Stack<Frame>());
+                }
+
+                Stack<Frame> stack = _stacks[depth];
+                stack.Clear();
+                return stack;
+            }
+
+            private bool CompareComplexArray(object left, object right, string? propName, List<Hashtable>? drifts, int depth, string? elementClassName)
+            {
+                bool collecting = drifts is not null;
+                Array leftArray = ToArray(left);
+                Array rightArray = ToArray(right);
+
+                if (leftArray.Length > 0 && rightArray.Length > 0 &&
+                    !(leftArray.GetValue(0) is CimInstance firstLeft && IsIntuneAssignmentClass(firstLeft.CimSystemProperties.ClassName)) &&
+                    TryGetPrimaryKeys(elementClassName, out List<string> primaryKeyNames) &&
+                    PrimaryKeyPairing.CanPair(AsObjectArray(leftArray), primaryKeyNames) &&
+                    PrimaryKeyPairing.CanPair(AsObjectArray(rightArray), primaryKeyNames))
+                {
+                    return CompareComplexArrayByKeys(leftArray, rightArray, propName, drifts, depth, elementClassName!, primaryKeyNames);
+                }
+
+                if (leftArray.Length != rightArray.Length)
+                {
+                    if (collecting)
+                    {
+                        drifts!.Add(DriftRecord.Create(
+                            propName!,
+                            $"Current value has {{{rightArray.Length}}} items",
+                            $"Desired value has {{{leftArray.Length}}} items"));
+                    }
+
+                    return false;
+                }
+
+                if (leftArray.GetValue(0) is CimInstance cimInstance && IsIntuneAssignmentClass(cimInstance.CimSystemProperties.ClassName))
+                {
+                    return IntunePolicyAssignmentComparer.Compare(leftArray, rightArray, drifts ?? []);
+                }
+
+                bool nameNeeded = collecting || _pathExclusionsPresent;
+                bool[] consumed = new bool[rightArray.Length];
+                bool anyAttemptFailed = false;
+
+                for (int i = 0; i < leftArray.Length; i++)
+                {
+                    object? sourceItem = leftArray.GetValue(i);
+                    string? itemName = nameNeeded ? $"{propName}[{i}]" : null;
+                    bool found = false;
+
+                    for (int j = 0; j < rightArray.Length; j++)
+                    {
+                        if (consumed[j])
+                        {
+                            continue;
+                        }
+
+                        if (Run(sourceItem, rightArray.GetValue(j), itemName, null, depth + 1))
+                        {
+                            consumed[j] = true;
+                            found = true;
+                            break;
+                        }
+
+                        anyAttemptFailed = true;
+                    }
+
+                    if (found)
+                    {
+                        continue;
+                    }
+
+                    if (!collecting)
+                    {
+                        return false;
+                    }
+
+                    int before = drifts!.Count;
+                    for (int j = 0; j < rightArray.Length; j++)
+                    {
+                        if (!consumed[j])
+                        {
+                            Run(sourceItem, rightArray.GetValue(j), itemName, drifts, depth + 1);
+                        }
+                    }
+
+                    if (!anyAttemptFailed && drifts.Count == before)
+                    {
+                        drifts.Add(DriftRecord.Create(itemName!, right, left));
+                    }
+
+                    return false;
+                }
+
+                return true;
+            }
+
+            private bool CompareComplexArrayByKeys(
+                Array leftArray,
+                Array rightArray,
+                string? propName,
+                List<Hashtable>? drifts,
+                int depth,
+                string elementClassName,
+                List<string> primaryKeyNames)
+            {
+                bool collecting = drifts is not null;
+                var (pairs, extras) = PrimaryKeyPairing.Pair(AsObjectArray(leftArray), AsObjectArray(rightArray), primaryKeyNames);
+                HashSet<string> skippedKeys = PrimaryKeyPairing.SkippedKeys(primaryKeyNames, null, false);
+                bool result = true;
+
+                foreach (var (desiredItem, currentItem, idx) in pairs)
+                {
+                    if (currentItem is null)
+                    {
+                        if (!collecting)
+                        {
+                            return false;
+                        }
+
+                        drifts!.Add(DriftRecord.Create($"{propName}[{idx}]", null, desiredItem));
+                        result = false;
+                        continue;
+                    }
+
+                    if (!Run(desiredItem, currentItem, $"{propName}[{idx}]", drifts, depth + 1, elementClassName, skippedKeys))
+                    {
+                        if (!collecting)
+                        {
+                            return false;
+                        }
+
+                        result = false;
+                    }
+                }
+
+                foreach (var (extraItem, idx) in extras)
+                {
+                    if (!collecting)
+                    {
+                        return false;
+                    }
+
+                    drifts!.Add(DriftRecord.Create($"{propName}[extra:{idx}]", extraItem, null));
+                    result = false;
+                }
+
+                return result;
+            }
+
+            private bool TryGetPrimaryKeys(string? className, out List<string> primaryKeyNames)
+            {
+                primaryKeyNames = [];
+                if (_schema is null || string.IsNullOrEmpty(className) || !_schema.TryGetClass(className, out ClassDefinition definition))
+                {
+                    return false;
+                }
+
+                primaryKeyNames = definition.Mandatory.Names;
+                return primaryKeyNames.Count > 0;
+            }
+
+            private string? GetChildClassName(string? className, string key)
+            {
+                if (_schema is null || string.IsNullOrEmpty(className) || !_schema.TryGetClass(className, out ClassDefinition definition))
+                {
+                    return null;
+                }
+
+                return definition.TryGetParameter(key, out ParameterDefinition parameter) ? parameter.ElementClassName : null;
+            }
+
+            private bool CompareSingleObject(Frame frame, List<Hashtable>? drifts, Stack<Frame> stack)
+            {
+                bool collecting = drifts is not null;
+                bool nameNeeded = collecting || _pathExclusionsPresent;
+                object? right = frame.Right is PSObject psObject ? psObject.BaseObject : frame.Right;
+                bool returnResult = true;
+
+                foreach (string key in GetObjectKeys(frame.Left!))
+                {
+                    if (_excluded.Contains(key))
+                    {
+                        continue;
+                    }
+
+                    if (frame.SkippedKeys is not null && frame.SkippedKeys.Contains(key))
+                    {
+                        continue;
+                    }
+
+                    if (!HasKey(right, key))
+                    {
+                        continue;
+                    }
+
+                    object? sourceValue = GetValue(frame.Left!, key);
+                    object? targetValue = GetValue(right, key);
+
+                    if ((sourceValue is null) != (targetValue is null))
+                    {
+                        if (!collecting)
+                        {
+                            return false;
+                        }
+
+                        drifts!.Add(NullMismatch($"{frame.PropName}.{key}", sourceValue is null, targetValue is null));
+                        returnResult = false;
+                        continue;
+                    }
+
+                    if (sourceValue is null)
+                    {
+                        continue;
+                    }
+
+                    if (IsComplexType(sourceValue))
+                    {
+                        stack.Push(new Frame(
+                            sourceValue,
+                            targetValue,
+                            nameNeeded ? $"{frame.PropName}.{key}" : null,
+                            GetChildClassName(frame.ClassName, key),
+                            null));
+                        continue;
+                    }
+
+                    if (!CompareSimpleValues(sourceValue, targetValue!))
+                    {
+                        if (!collecting)
+                        {
+                            return false;
+                        }
+
+                        drifts!.Add(DriftRecord.Create($"{frame.PropName}.{key}", targetValue, sourceValue));
+                        returnResult = false;
+                    }
+                }
+
+                return returnResult;
+            }
+        }
+
+        private static object[] AsObjectArray(Array source)
+        {
+            if (source is object[] typed)
+            {
+                return typed;
+            }
+
+            object[] result = new object[source.Length];
+            for (int i = 0; i < source.Length; i++)
+            {
+                result[i] = source.GetValue(i);
             }
 
             return result;
         }
 
-        /// <summary>
-        /// Compares complex array objects with order-insensitive matching.
-        /// </summary>
-        private static bool CompareComplexArray(
-            object left,
-            object right,
-            string propName,
-            List<Dictionary<string, object>> drifts,
-            Stack<ComparisonFrame> workStack,
-            ref bool result)
+        private static Hashtable NullMismatch(string propName, bool leftIsNull, bool rightIsNull)
         {
-            Array leftArray = ToArray(left);
-            Array rightArray = ToArray(right);
-
-            // Check count mismatch
-            if (leftArray.Length != rightArray.Length)
-            {
-                drifts.Add(new Dictionary<string, object>
-                {
-                    { "PropertyName", propName },
-                    { "CurrentValue", $"Current value has {{{rightArray.Length}}} items" },
-                    { "DesiredValue", $"Desired value has {{{leftArray.Length}}} items" }
-                });
-                result = false;
-                return false;
-            }
-
-            if (leftArray.GetValue(0) is CimInstance cimInstance)
-            {
-                if (cimInstance.CimSystemProperties.ClassName.Equals("MSFT_DeviceManagementConfigurationPolicyAssignments") ||
-                    cimInstance.CimSystemProperties.ClassName.Equals("MSFT_DeviceManagementMobileAppAssignment") ||
-                    (cimInstance.CimSystemProperties.ClassName.Contains("MSFT_Intune") && cimInstance.CimSystemProperties.ClassName.EndsWith("Assignments") &&
-                    !cimInstance.CimSystemProperties.ClassName.Equals("MSFT_IntuneDeviceRemediationPolicyAssignments")))
-                {
-                    bool compareResult = IntunePolicyAssignmentComparer.Compare(leftArray, rightArray, drifts);
-                    if (!compareResult)
-                    {
-                        result = false;
-                        return false;
-                    }
-                    return true;
-                }
-            }
-
-            // For arrays: we must find for each source element a matching distinct target element
-            // We'll keep a boolean array for consumed target elements
-            var consumed = new bool[rightArray.Length];
-            var wasProcessed = false;
-            for (int i = 0; i < leftArray.Length; i++)
-            {
-                var srcItem = leftArray.GetValue(i);
-                bool found = false;
-
-                int driftCounter = 0;
-                for (int j = 0; j < rightArray.Length; j++)
-                {
-                    if (consumed[j])
-                    {
-                        continue;
-                    }
-
-                    var tgtItem = rightArray.GetValue(j);
-                    var tempDrifts = new List<Dictionary<string, object>>();
-
-                    if (CompareWithDrifts(srcItem, tgtItem, $"{propName}[{i}]", tempDrifts))
-                    {
-                        consumed[j] = true;
-                        found = true;
-                        break;
-                    }
-
-                    if (tempDrifts.Count > 0)
-                    {
-                        // Track last drifts for reporting
-                        driftCounter += tempDrifts.Count;
-                        drifts.AddRange(tempDrifts);
-                        wasProcessed = true;
-                    }
-                }
-
-                if (found)
-                {
-                    if (drifts.Count > 0)
-                    {
-                        // Remove any drifts recorded during failed attempts for this source item
-                        drifts.RemoveRange(drifts.Count - driftCounter, driftCounter);
-                    }
-                    continue;
-                }
-
-                // If no attempts happened (r was empty) or lastCompareResult is $null, record AllDrifts as original did
-                if (!wasProcessed)
-                {
-                    drifts.Add(new Dictionary<string, object>
-                    {
-                        { "PropertyName", $"{propName}[{i}]" },
-                        { "CurrentValue", right },
-                        { "DesiredValue", left }
-                    });
-                }
-                result = false;
-                return false;
-            }
-
-            return true;
+            return DriftRecord.Create(
+                propName,
+                rightIsNull ? "Current value is null" : "Current value is NOT null",
+                leftIsNull ? "Desired value is null" : "Desired value is NOT null");
         }
 
-        /// <summary>
-        /// Compares a single (non-array) complex object or simple value.
-        /// </summary>
-        private static bool CompareSingleObject(
-            object left,
-            object right,
-            string propName,
-            List<Dictionary<string, object>> drifts,
-            Stack<ComparisonFrame> workStack,
-            ref bool result)
+        private static bool IsIntuneAssignmentClass(string className)
         {
-            // Get keys from source object
-            var leftKeys = GetObjectKeys(left);
-            if (right is PSObject psObject)
-            {
-                right = psObject.BaseObject;
-            }
-
-            bool returnResult = true;
-            foreach (var key in leftKeys)
-            {
-                if (excludedSet.Contains(key))
-                {
-                    continue;
-                }
-
-                // Check if key exists in target
-                if (!HasKey(right, key))
-                {
-                    continue;
-                }
-
-                var sourceValue = GetValue(left, key);
-                var targetValue = GetValue(right, key);
-
-                // One null and the other not => drift
-                if ((sourceValue is null) != (targetValue is null))
-                {
-                    drifts.Add(new Dictionary<string, object>
-                    {
-                        { "PropertyName", $"{propName}.{key}" },
-                        { "CurrentValue", targetValue is null ? "Current value is null" : "Current value is NOT null" },
-                        { "DesiredValue", sourceValue is null ? "Desired value is null" : "Desired value is NOT null" }
-                    });
-                    result = false;
-                    returnResult = false;
-                    continue;
-                }
-
-                if (sourceValue is not null && targetValue is not null)
-                {
-                    // Check if complex nested type
-                    if (IsComplexType(sourceValue))
-                    {
-                        // Push nested comparison onto stack
-                        workStack.Push(new ComparisonFrame
-                        {
-                            Left = sourceValue,
-                            Right = targetValue,
-                            PropName = $"{propName}.{key}"
-                        });
-                        continue;
-                    }
-
-                    // Simple type comparison
-                    if (!CompareSimpleValues(sourceValue, targetValue))
-                    {
-                        drifts.Add(new Dictionary<string, object>
-                        {
-                            { "PropertyName", $"{propName}.{key}" },
-                            { "CurrentValue", targetValue },
-                            { "DesiredValue", sourceValue }
-                        });
-                        result = false;
-                        returnResult = false;
-                        continue;
-                    }
-                }
-            }
-
-            return returnResult;
+            return className.Equals("MSFT_DeviceManagementConfigurationPolicyAssignments") ||
+                className.Equals("MSFT_DeviceManagementMobileAppAssignment") ||
+                (className.Contains("MSFT_Intune") && className.EndsWith("Assignments") &&
+                !className.Equals("MSFT_IntuneDeviceRemediationPolicyAssignments"));
         }
 
-        /// <summary>
-        /// Compares simple (non-complex) values.
-        /// </summary>
         private static bool CompareSimpleValues(object left, object right)
         {
             if (left is PSObject psObject)
-                left = psObject.BaseObject;
-
-            if (right is PSObject psObjectRight)
-                right = psObjectRight.BaseObject;
-
-            // Handle DateTime comparison
-            if (left is DateTime leftDate && right is DateTime rightDate)
-                return leftDate == rightDate;
-
-            // Handle string comparison with normalization
-            if (left is string leftStr && right is string rightStr)
             {
-                // Normalize line endings
-                leftStr = leftStr.Replace("\r\n", "\n");
-                rightStr = rightStr.Replace("\r\n", "\n");
-                return string.Equals(leftStr, rightStr, StringComparison.OrdinalIgnoreCase);
+                left = psObject.BaseObject;
             }
 
-            // Handle numeric type comparisons (Int32, Int64, Int16, UInt32, etc.)
+            if (right is PSObject psObjectRight)
+            {
+                right = psObjectRight.BaseObject;
+            }
+
+            if (left is DateTime leftDate && right is DateTime rightDate)
+            {
+                return leftDate == rightDate;
+            }
+
+            if (left is bool leftBool && right is bool rightBool)
+            {
+                return leftBool == rightBool;
+            }
+
+            if (left is string leftStr && right is string rightStr)
+            {
+                return string.Equals(
+                    Utilities.Utilities.NormalizeLineEndings(leftStr),
+                    Utilities.Utilities.NormalizeLineEndings(rightStr),
+                    StringComparison.OrdinalIgnoreCase);
+            }
+
             if (IsNumericType(left) && IsNumericType(right))
             {
                 return CompareNumericValues(left, right);
             }
 
-            // Default comparison
             return left.ToString().Equals(right.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>
-        /// Determines if an object is a numeric type.
-        /// </summary>
         private static bool IsNumericType(object obj)
         {
             if (obj is null)
+            {
                 return false;
+            }
 
-            Type type = obj.GetType();
-            return type == typeof(byte) ||
-                   type == typeof(sbyte) ||
-                   type == typeof(short) ||
-                   type == typeof(ushort) ||
-                   type == typeof(int) ||
-                   type == typeof(uint) ||
-                   type == typeof(long) ||
-                   type == typeof(ulong) ||
-                   type == typeof(float) ||
-                   type == typeof(double) ||
-                   type == typeof(decimal);
+            return Type.GetTypeCode(obj.GetType())
+                is TypeCode.Byte or TypeCode.SByte
+                or TypeCode.Int16 or TypeCode.UInt16
+                or TypeCode.Int32 or TypeCode.UInt32
+                or TypeCode.Int64 or TypeCode.UInt64
+                or TypeCode.Single or TypeCode.Double or TypeCode.Decimal;
         }
 
-        /// <summary>
-        /// Compares two numeric values, handling different numeric types.
-        /// </summary>
         private static bool CompareNumericValues(object left, object right)
         {
             try
             {
-                // Convert both values to decimal for comparison
-                // Decimal provides the widest range and precision for most scenarios
                 decimal leftDecimal = Convert.ToDecimal(left);
                 decimal rightDecimal = Convert.ToDecimal(right);
                 return leftDecimal == rightDecimal;
             }
             catch (OverflowException)
             {
-                // If decimal conversion fails (e.g., for very large ulong values),
-                // fall back to double comparison
                 try
                 {
                     double leftDouble = Convert.ToDouble(left);
@@ -398,148 +542,129 @@ namespace Microsoft365DSC.Compare
                 }
                 catch
                 {
-                    // If all conversions fail, use default equality
                     return Equals(left, right);
                 }
             }
             catch
             {
-                // For any other conversion issues, fall back to default equality
                 return Equals(left, right);
             }
         }
 
-        /// <summary>
-        /// Determines if an object is a complex array candidate.
-        /// </summary>
-        private static bool IsComplexArrayCandidate(object obj)
+        private static bool IsComplexArrayCandidate(object? obj)
         {
-            if (obj is null)
-                return false;
-
             if (obj is Array array && array.Length > 0)
             {
-                var firstElement = array.GetValue(0);
-                return IsComplexType(firstElement);
+                return IsComplexType(array.GetValue(0));
             }
 
             return false;
         }
 
-        /// <summary>
-        /// Determines if an object is a complex type requiring deep comparison.
-        /// </summary>
-        private static bool IsComplexType(object obj)
+        private static bool IsComplexType(object? obj)
         {
             if (obj is null)
+            {
                 return false;
+            }
 
             if (obj is PSObject psObject && psObject.BaseObject is not null)
+            {
                 obj = psObject.BaseObject;
+            }
 
             return obj is CimInstance ||
                    obj is IDictionary ||
                    obj is Array;
         }
 
-        /// <summary>
-        /// Converts an object to an array.
-        /// </summary>
-        private static Array ToArray(object obj)
+        private static Array ToArray(object? obj)
         {
             if (obj is null)
+            {
                 return Array.Empty<object>();
+            }
 
             if (obj is Array array)
+            {
                 return array;
+            }
 
             if (obj is IEnumerable enumerable)
+            {
                 return enumerable.Cast<object>().ToArray();
+            }
 
             return new[] { obj };
         }
 
-        /// <summary>
-        /// Gets keys from an object (hashtable, PSObject, etc.).
-        /// </summary>
         private static IEnumerable<string> GetObjectKeys(object obj)
         {
-            if (obj is Hashtable hashtable)
-            {
-                return hashtable.Keys.Cast<object>()
-                    .Select(k => k.ToString())
-                    .Where(k => k != "PSComputerName");
-            }
-
             if (obj is PSObject psObj)
             {
                 return psObj.Properties
-                    .Where(p => p.Name != "PSComputerName")
+                    .Where(p => p.Name != ComputerNameProperty)
                     .Select(p => p.Name);
             }
 
             if (obj is IDictionary dict)
             {
-                return dict.Keys.Cast<object>()
-                    .Select(k => k.ToString())
-                    .Where(k => k != "PSComputerName");
+                List<string> keys = new(dict.Count);
+                foreach (object key in dict.Keys)
+                {
+                    string name = key.ToString();
+                    if (name != ComputerNameProperty)
+                    {
+                        keys.Add(name);
+                    }
+                }
+
+                return keys;
             }
 
             if (obj is CimInstance cimInstance)
             {
                 return cimInstance.CimInstanceProperties
-                    .Where(p => p.IsValueModified && p.Name != "PSComputerName")
+                    .Where(p => p.IsValueModified && p.Name != ComputerNameProperty)
                     .Select(p => p.Name);
             }
 
             return [];
         }
 
-        /// <summary>
-        /// Checks if an object has a specific key.
-        /// </summary>
-        private static bool HasKey(object obj, string key)
+        private static bool HasKey(object? obj, string key)
         {
-            if (obj is Hashtable hashtable)
-                return hashtable.ContainsKey(key);
-
             if (obj is PSObject psObj)
+            {
                 return psObj.Properties[key] is not null;
+            }
 
             if (obj is IDictionary dict)
+            {
                 return dict.Contains(key);
+            }
 
             return false;
         }
 
-        /// <summary>
-        /// Gets a value from an object by key.
-        /// </summary>
-        private static object? GetValue(object obj, string key)
+        private static object? GetValue(object? obj, string key)
         {
             if (obj is CimInstance cimInstance)
+            {
                 return cimInstance.CimInstanceProperties[key]?.Value;
-
-            if (obj is Hashtable hashtable)
-                return hashtable[key];
+            }
 
             if (obj is PSObject psObj)
+            {
                 return psObj.Properties[key]?.Value;
+            }
 
             if (obj is IDictionary dict)
+            {
                 return dict[key];
+            }
 
             return null;
-        }
-
-        /// <summary>
-        /// Represents a comparison frame in the iterative comparison stack.
-        /// </summary>
-        private class ComparisonFrame
-        {
-            public object Left { get; set; }
-            public object Right { get; set; }
-            public string PropName { get; set; }
         }
     }
 }

@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString 'password' -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
             $Script:ExportMode = $false
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -64,6 +64,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     RequireSenderAuthenticationEnabled = $True
                     SendModerationNotifications        = 'Always'
                     GroupType                          = @('Universal')
+                    RecipientTypeDetails               = 'MailUniversalDistributionGroup'
+                    AcceptMessagesOnlyFromSendersOrMembersWithDisplayNames = @('john.smith@contoso.com')
                 }
             }
             Mock -CommandName Get-Recipient -MockWith {
@@ -80,6 +82,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             $Script:ExportMode = $false
 
             Mock -CommandName Get-DistributionGroupMember -MockWith {
+            }
+
+            Mock -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -MockWith {
             }
         }
 
@@ -110,19 +115,34 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Mock -CommandName Get-DistributionGroup -MockWith {
                     return $null
                 }
+
+                Mock -CommandName Get-DistributionGroup -ParameterFilter { $Identity -eq 'DemoDG' } -MockWith {
+                    return @{
+                        Identity = 'DemoDG'
+                    }
+                }
+
+                Mock -CommandName New-DistributionGroup -MockWith {
+                    return @{
+                        Identity = 'DemoDG'
+                    }
+                }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-DistributionGroup' -Exactly 1
+                Should -Invoke -CommandName 'Get-DistributionGroup' -Exactly 2 -ParameterFilter { $Identity -eq 'DemoDG' }
+                Should -Invoke -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -Exactly 0
+                Should -Invoke -CommandName 'Set-DistributionGroup' -Exactly 1 -ParameterFilter { $Identity -eq 'DemoDG' }
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
         }
 
@@ -151,16 +171,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Set-DistributionGroup' -Exactly 1
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -184,16 +204,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrimarySmtpAddress                 = 'demodg@contoso.com'
                     RequireSenderAuthenticationEnabled = $True
                     SendModerationNotifications        = 'Always'
+                    RoomList                           = $False
+                    AcceptMessagesOnlyFromSendersOrMembers = @('john.smith@contoso.com')
                     Credential                         = $Credential
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -222,16 +244,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Remove-DistributionGroup' -Exactly 1
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXODistributionGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -245,7 +267,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXODistributionGroup' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

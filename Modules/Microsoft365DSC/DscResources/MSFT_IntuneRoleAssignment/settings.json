@@ -1,12 +1,49 @@
 {
   "resourceName": "IntuneRoleAssignment",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceAndAppManagementRoleAssignment",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementRoleAssignment",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "MembersDisplayNames",
+      "reason": "Accepted",
+      "note": "Resolves the member security groups"
+    },
+    {
+      "name": "ResourceScopesDisplayNames",
+      "reason": "Accepted",
+      "note": "Resolves the resource scope security groups"
+    },
+    {
+      "name": "RoleDefinitionDisplayName",
+      "reason": "OwnedByOtherResource",
+      "note": "Resolves the role definition by display name"
+    },
+    {
+      "name": "RoleScopeTags",
+      "reason": "Accepted",
+      "note": "Configured through the RoleScopeTagIds property on the resource. Most likely a duplicate relation."
+    },
+    {
+      "name": "ScopeMembers",
+      "reason": "Deprecated",
+      "note": "Legacy spelling of resourceScopes, already configured through ResourceScopes"
+    }
+  ],
   "description": "This resource configures an Intune Role Assignment.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementRBAC.Read.All"
@@ -14,7 +51,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementRBAC.ReadWrite.All"
@@ -24,7 +61,7 @@
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementRBAC.Read.All"
@@ -32,7 +69,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementRBAC.ReadWrite.All"

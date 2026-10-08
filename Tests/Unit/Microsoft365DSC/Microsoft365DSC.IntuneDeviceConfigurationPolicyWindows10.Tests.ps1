@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-GUID).ToString() -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -43,7 +43,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return @()
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
             Mock -CommandName Update-DeviceConfigurationPolicyAssignment -MockWith {
@@ -51,6 +51,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             # Mock Write-M365DSCHost to hide output during the tests
             Mock -CommandName Write-M365DSCHost -MockWith {
             }
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
+
             $Script:exportedInstances =$null
             $Script:ExportMode = $false
         }
@@ -94,12 +98,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DefenderCloudExtendedTimeout                          = 25
                     DefenderCloudExtendedTimeoutInSeconds                 = 25
                     DefenderDaysBeforeDeletingQuarantinedMalware          = 25
-                    defenderDetectedMalwareActions                        = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions1 -Property @{
+                    defenderDetectedMalwareActions                        = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                             lowSeverity      = 'deviceDefault'
                             severeSeverity   = 'deviceDefault'
                             moderateSeverity = 'deviceDefault'
                             highSeverity     = 'deviceDefault'
-                        } -ClientOnly)
+                        })
                     defenderDisableCatchupFullScan                        = $True
                     defenderDisableCatchupQuickScan                       = $True
                     defenderFileExtensionsToExclude                       = @('FakeStringValue')
@@ -130,6 +134,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderSystemScanSchedule                            = 'userDefined'
                     description                                           = 'FakeStringValue'
                     developerUnlockSetting                                = 'notConfigured'
+                    deviceManagementApplicabilityRuleDeviceMode           = @{
+                        Name       = 'FakeStringValue'
+                        DeviceMode = 'sModeConfiguration'
+                        RuleType   = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsEdition            = @{
+                        Name           = 'FakeStringValue'
+                        OsEditionTypes = @('windows10Enterprise')
+                        RuleType       = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsVersion            = @{
+                        Name         = 'FakeStringValue'
+                        MinOSVersion = '10.0.19045.0'
+                        MaxOSVersion = '10.0.26100.9999'
+                        RuleType     = 'include'
+                    }
                     deviceManagementBlockFactoryResetOnMobile             = $True
                     deviceManagementBlockManualUnenroll                   = $True
                     diagnosticsDataSubmissionMode                         = 'userDefined'
@@ -168,10 +188,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgeFavoritesBarVisibility                            = 'notConfigured'
                     edgeFavoritesListLocation                             = 'FakeStringValue'
                     edgeFirstRunUrl                                       = 'FakeStringValue'
-                    edgeHomeButtonConfiguration                           = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeHomeButtonConfiguration -Property @{
+                    edgeHomeButtonConfiguration                           = ([MSFT_MicrosoftGraphedgeHomeButtonConfiguration] @{
                             odataType           = '#microsoft.graph.edgeHomeButtonHidden'
                             homeButtonCustomURL = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     edgeHomeButtonConfigurationEnabled                    = $True
                     edgeHomepageUrls                                      = @('FakeStringValue')
                     edgeKioskModeRestriction                              = 'notConfigured'
@@ -181,11 +201,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgePreventCertificateErrorOverride                   = $True
                     edgeRequiredExtensionPackageFamilyNames               = @('FakeStringValue')
                     edgeRequireSmartScreen                                = $True
-                    edgeSearchEngine                                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeSearchEngineBase -Property @{
+                    edgeSearchEngine                                      = ([MSFT_MicrosoftGraphedgeSearchEngineBase] @{
                             edgeSearchEngineOpenSearchXmlUrl = 'FakeStringValue'
                             edgeSearchEngineType             = 'default'
                             odataType                        = '#microsoft.graph.edgeSearchEngine'
-                        } -ClientOnly)
+                        })
                     edgeSendIntranetTrafficToInternetExplorer             = $True
                     edgeShowMessageWhenOpeningInternetExplorerSites       = 'notConfigured'
                     edgeSyncFavoritesWithInternetExplorer                 = $True
@@ -227,11 +247,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     networkProxyApplySettingsDeviceWide                   = $True
                     networkProxyAutomaticConfigurationUrl                 = 'FakeStringValue'
                     networkProxyDisableAutoDetect                         = $True
-                    networkProxyServer                                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10NetworkProxyServer -Property @{
+                    networkProxyServer                                    = ([MSFT_MicrosoftGraphwindows10NetworkProxyServer] @{
                             useForLocalAddresses = $True
                             exceptions           = @('FakeStringValue')
                             address              = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     nfcBlocked                                            = $True
                     oneDriveDisableFileSync                               = $True
                     passwordBlockSimple                                   = $True
@@ -345,11 +365,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     wiFiBlocked                                           = $True
                     wiFiBlockManualConfiguration                          = $True
                     wiFiScanInterval                                      = 25
-                    windows10AppsForceUpdateSchedule                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule -Property @{
+                    windows10AppsForceUpdateSchedule                      = ([MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule] @{
                             runImmediatelyIfAfterStartDateTime = $True
                             recurrence                         = 'none'
                             startDateTime                      = '2023-01-01T00:00:00.0000000+00:00'
-                        } -ClientOnly)
+                        })
                     windowsSpotlightBlockConsumerSpecificFeatures         = $True
                     windowsSpotlightBlocked                               = $True
                     windowsSpotlightBlockOnActionCenter                   = $True
@@ -373,13 +393,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-MgBetaDeviceManagementDeviceConfiguration' -Exactly 1
             }
         }
@@ -422,12 +442,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DefenderCloudExtendedTimeout                          = 25
                     DefenderCloudExtendedTimeoutInSeconds                 = 25
                     DefenderDaysBeforeDeletingQuarantinedMalware          = 25
-                    defenderDetectedMalwareActions                        = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions1 -Property @{
+                    defenderDetectedMalwareActions                        = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                             lowSeverity      = 'deviceDefault'
                             severeSeverity   = 'deviceDefault'
                             moderateSeverity = 'deviceDefault'
                             highSeverity     = 'deviceDefault'
-                        } -ClientOnly)
+                        })
                     defenderDisableCatchupFullScan                        = $True
                     defenderDisableCatchupQuickScan                       = $True
                     defenderFileExtensionsToExclude                       = @('FakeStringValue')
@@ -458,6 +478,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderSystemScanSchedule                            = 'userDefined'
                     description                                           = 'FakeStringValue'
                     developerUnlockSetting                                = 'notConfigured'
+                    deviceManagementApplicabilityRuleDeviceMode           = @{
+                        Name       = 'FakeStringValue'
+                        DeviceMode = 'sModeConfiguration'
+                        RuleType   = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsEdition            = @{
+                        Name           = 'FakeStringValue'
+                        OsEditionTypes = @('windows10Enterprise')
+                        RuleType       = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsVersion            = @{
+                        Name         = 'FakeStringValue'
+                        MinOSVersion = '10.0.19045.0'
+                        MaxOSVersion = '10.0.26100.9999'
+                        RuleType     = 'include'
+                    }
                     deviceManagementBlockFactoryResetOnMobile             = $True
                     deviceManagementBlockManualUnenroll                   = $True
                     diagnosticsDataSubmissionMode                         = 'userDefined'
@@ -496,10 +532,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgeFavoritesBarVisibility                            = 'notConfigured'
                     edgeFavoritesListLocation                             = 'FakeStringValue'
                     edgeFirstRunUrl                                       = 'FakeStringValue'
-                    edgeHomeButtonConfiguration                           = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeHomeButtonConfiguration -Property @{
+                    edgeHomeButtonConfiguration                           = ([MSFT_MicrosoftGraphedgeHomeButtonConfiguration] @{
                             odataType           = '#microsoft.graph.edgeHomeButtonHidden'
                             homeButtonCustomURL = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     edgeHomeButtonConfigurationEnabled                    = $True
                     edgeHomepageUrls                                      = @('FakeStringValue')
                     edgeKioskModeRestriction                              = 'notConfigured'
@@ -509,11 +545,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgePreventCertificateErrorOverride                   = $True
                     edgeRequiredExtensionPackageFamilyNames               = @('FakeStringValue')
                     edgeRequireSmartScreen                                = $True
-                    edgeSearchEngine                                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeSearchEngineBase -Property @{
+                    edgeSearchEngine                                      = ([MSFT_MicrosoftGraphedgeSearchEngineBase] @{
                             edgeSearchEngineOpenSearchXmlUrl = 'FakeStringValue'
                             edgeSearchEngineType             = 'default'
                             odataType                        = '#microsoft.graph.edgeSearchEngine'
-                        } -ClientOnly)
+                        })
                     edgeSendIntranetTrafficToInternetExplorer             = $True
                     edgeShowMessageWhenOpeningInternetExplorerSites       = 'notConfigured'
                     edgeSyncFavoritesWithInternetExplorer                 = $True
@@ -555,11 +591,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     networkProxyApplySettingsDeviceWide                   = $True
                     networkProxyAutomaticConfigurationUrl                 = 'FakeStringValue'
                     networkProxyDisableAutoDetect                         = $True
-                    networkProxyServer                                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10NetworkProxyServer -Property @{
+                    networkProxyServer                                    = ([MSFT_MicrosoftGraphwindows10NetworkProxyServer] @{
                             useForLocalAddresses = $True
                             exceptions           = @('FakeStringValue')
                             address              = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     nfcBlocked                                            = $True
                     oneDriveDisableFileSync                               = $True
                     passwordBlockSimple                                   = $True
@@ -673,11 +709,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     wiFiBlocked                                           = $True
                     wiFiBlockManualConfiguration                          = $True
                     wiFiScanInterval                                      = 25
-                    windows10AppsForceUpdateSchedule                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule -Property @{
+                    windows10AppsForceUpdateSchedule                      = ([MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule] @{
                             runImmediatelyIfAfterStartDateTime = $True
                             recurrence                         = 'none'
                             startDateTime                      = '2023-01-01T00:00:00.0000000+00:00'
-                        } -ClientOnly)
+                        })
                     windowsSpotlightBlockConsumerSpecificFeatures         = $True
                     windowsSpotlightBlocked                               = $True
                     windowsSpotlightBlockOnActionCenter                   = $True
@@ -757,6 +793,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         edgeBlockFullScreenMode                               = $True
                         lockScreenTimeoutInSeconds                            = 25
                         developerUnlockSetting                                = 'notConfigured'
+                        deviceManagementApplicabilityRuleDeviceMode           = @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'sModeConfiguration'
+                            RuleType   = 'include'
+                        }
+                        deviceManagementApplicabilityRuleOsEdition            = @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Enterprise')
+                            RuleType       = 'include'
+                        }
+                        deviceManagementApplicabilityRuleOsVersion            = @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.19045.0'
+                            MaxOSVersion = '10.0.26100.9999'
+                            RuleType     = 'include'
+                        }
                         storageRestrictAppDataToSystemVolume                  = $True
                         cellularBlockVpn                                      = $True
                         powerHybridSleepPluggedIn                             = 'notConfigured'
@@ -1009,15 +1061,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -1059,12 +1111,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DefenderCloudExtendedTimeout                          = 25
                     DefenderCloudExtendedTimeoutInSeconds                 = 25
                     DefenderDaysBeforeDeletingQuarantinedMalware          = 25
-                    defenderDetectedMalwareActions                        = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions1 -Property @{
+                    defenderDetectedMalwareActions                        = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                             lowSeverity      = 'deviceDefault'
                             severeSeverity   = 'deviceDefault'
                             moderateSeverity = 'deviceDefault'
                             highSeverity     = 'deviceDefault'
-                        } -ClientOnly)
+                        })
                     defenderDisableCatchupFullScan                        = $True
                     defenderDisableCatchupQuickScan                       = $True
                     defenderFileExtensionsToExclude                       = @('FakeStringValue')
@@ -1095,6 +1147,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderSystemScanSchedule                            = 'userDefined'
                     description                                           = 'FakeStringValue'
                     developerUnlockSetting                                = 'notConfigured'
+                    deviceManagementApplicabilityRuleDeviceMode           = @{
+                        Name       = 'FakeStringValue'
+                        DeviceMode = 'sModeConfiguration'
+                        RuleType   = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsEdition            = @{
+                        Name           = 'FakeStringValue'
+                        OsEditionTypes = @('windows10Enterprise')
+                        RuleType       = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsVersion            = @{
+                        Name         = 'FakeStringValue'
+                        MinOSVersion = '10.0.19045.0'
+                        MaxOSVersion = '10.0.26100.9999'
+                        RuleType     = 'include'
+                    }
                     deviceManagementBlockFactoryResetOnMobile             = $True
                     deviceManagementBlockManualUnenroll                   = $True
                     diagnosticsDataSubmissionMode                         = 'userDefined'
@@ -1133,10 +1201,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgeFavoritesBarVisibility                            = 'notConfigured'
                     edgeFavoritesListLocation                             = 'FakeStringValue'
                     edgeFirstRunUrl                                       = 'FakeStringValue'
-                    edgeHomeButtonConfiguration                           = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeHomeButtonConfiguration -Property @{
+                    edgeHomeButtonConfiguration                           = ([MSFT_MicrosoftGraphedgeHomeButtonConfiguration] @{
                             odataType           = '#microsoft.graph.edgeHomeButtonHidden'
                             homeButtonCustomURL = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     edgeHomeButtonConfigurationEnabled                    = $True
                     edgeHomepageUrls                                      = @('FakeStringValue')
                     edgeKioskModeRestriction                              = 'notConfigured'
@@ -1146,11 +1214,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgePreventCertificateErrorOverride                   = $True
                     edgeRequiredExtensionPackageFamilyNames               = @('FakeStringValue')
                     edgeRequireSmartScreen                                = $True
-                    edgeSearchEngine                                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeSearchEngineBase -Property @{
+                    edgeSearchEngine                                      = ([MSFT_MicrosoftGraphedgeSearchEngineBase] @{
                             edgeSearchEngineOpenSearchXmlUrl = 'FakeStringValue'
                             edgeSearchEngineType             = 'default'
                             odataType                        = '#microsoft.graph.edgeSearchEngine'
-                        } -ClientOnly)
+                        })
                     edgeSendIntranetTrafficToInternetExplorer             = $True
                     edgeShowMessageWhenOpeningInternetExplorerSites       = 'notConfigured'
                     edgeSyncFavoritesWithInternetExplorer                 = $True
@@ -1192,11 +1260,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     networkProxyApplySettingsDeviceWide                   = $True
                     networkProxyAutomaticConfigurationUrl                 = 'FakeStringValue'
                     networkProxyDisableAutoDetect                         = $True
-                    networkProxyServer                                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10NetworkProxyServer -Property @{
+                    networkProxyServer                                    = ([MSFT_MicrosoftGraphwindows10NetworkProxyServer] @{
                             useForLocalAddresses = $True
                             exceptions           = @('FakeStringValue')
                             address              = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     nfcBlocked                                            = $True
                     oneDriveDisableFileSync                               = $True
                     passwordBlockSimple                                   = $True
@@ -1310,11 +1378,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     wiFiBlocked                                           = $True
                     wiFiBlockManualConfiguration                          = $True
                     wiFiScanInterval                                      = 25
-                    windows10AppsForceUpdateSchedule                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule -Property @{
+                    windows10AppsForceUpdateSchedule                      = ([MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule] @{
                             runImmediatelyIfAfterStartDateTime = $True
                             recurrence                         = 'none'
                             startDateTime                      = '2023-01-01T00:00:00.0000000+00:00'
-                        } -ClientOnly)
+                        })
                     windowsSpotlightBlockConsumerSpecificFeatures         = $True
                     windowsSpotlightBlocked                               = $True
                     windowsSpotlightBlockOnActionCenter                   = $True
@@ -1394,6 +1462,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         edgeBlockFullScreenMode                               = $True
                         lockScreenTimeoutInSeconds                            = 25
                         developerUnlockSetting                                = 'notConfigured'
+                        deviceManagementApplicabilityRuleDeviceMode           = @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'sModeConfiguration'
+                            RuleType   = 'include'
+                        }
+                        deviceManagementApplicabilityRuleOsEdition            = @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Enterprise')
+                            RuleType       = 'include'
+                        }
+                        deviceManagementApplicabilityRuleOsVersion            = @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.19045.0'
+                            MaxOSVersion = '10.0.26100.9999'
+                            RuleType     = 'include'
+                        }
                         storageRestrictAppDataToSystemVolume                  = $True
                         cellularBlockVpn                                      = $True
                         powerHybridSleepPluggedIn                             = 'notConfigured'
@@ -1647,7 +1731,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -1689,12 +1773,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DefenderCloudExtendedTimeout                          = 25
                     DefenderCloudExtendedTimeoutInSeconds                 = 25
                     DefenderDaysBeforeDeletingQuarantinedMalware          = 25
-                    defenderDetectedMalwareActions                        = (New-CimInstance -ClassName MSFT_MicrosoftGraphdefenderDetectedMalwareActions1 -Property @{
+                    defenderDetectedMalwareActions                        = ([MSFT_MicrosoftGraphdefenderDetectedMalwareActions] @{
                             lowSeverity      = 'deviceDefault'
                             severeSeverity   = 'deviceDefault'
                             moderateSeverity = 'deviceDefault'
                             highSeverity     = 'deviceDefault'
-                        } -ClientOnly)
+                        })
                     defenderDisableCatchupFullScan                        = $True
                     defenderDisableCatchupQuickScan                       = $True
                     defenderFileExtensionsToExclude                       = @('FakeStringValue')
@@ -1725,6 +1809,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     defenderSystemScanSchedule                            = 'userDefined'
                     description                                           = 'FakeStringValue'
                     developerUnlockSetting                                = 'notConfigured'
+                    deviceManagementApplicabilityRuleDeviceMode           = @{
+                        Name       = 'FakeStringValue'
+                        DeviceMode = 'sModeConfiguration'
+                        RuleType   = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsEdition            = @{
+                        Name           = 'FakeStringValue'
+                        OsEditionTypes = @('windows10Enterprise')
+                        RuleType       = 'include'
+                    }
+                    deviceManagementApplicabilityRuleOsVersion            = @{
+                        Name         = 'FakeStringValue'
+                        MinOSVersion = '10.0.19045.0'
+                        MaxOSVersion = '10.0.26100.9999'
+                        RuleType     = 'include'
+                    }
                     deviceManagementBlockFactoryResetOnMobile             = $True
                     deviceManagementBlockManualUnenroll                   = $True
                     diagnosticsDataSubmissionMode                         = 'userDefined'
@@ -1763,10 +1863,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgeFavoritesBarVisibility                            = 'notConfigured'
                     edgeFavoritesListLocation                             = 'FakeStringValue'
                     edgeFirstRunUrl                                       = 'FakeStringValue'
-                    edgeHomeButtonConfiguration                           = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeHomeButtonConfiguration -Property @{
+                    edgeHomeButtonConfiguration                           = ([MSFT_MicrosoftGraphedgeHomeButtonConfiguration] @{
                             odataType           = '#microsoft.graph.edgeHomeButtonHidden'
                             homeButtonCustomURL = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     edgeHomeButtonConfigurationEnabled                    = $True
                     edgeHomepageUrls                                      = @('FakeStringValue')
                     edgeKioskModeRestriction                              = 'notConfigured'
@@ -1776,11 +1876,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     edgePreventCertificateErrorOverride                   = $True
                     edgeRequiredExtensionPackageFamilyNames               = @('FakeStringValue')
                     edgeRequireSmartScreen                                = $True
-                    edgeSearchEngine                                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphedgeSearchEngineBase -Property @{
+                    edgeSearchEngine                                      = ([MSFT_MicrosoftGraphedgeSearchEngineBase] @{
                             edgeSearchEngineOpenSearchXmlUrl = 'FakeStringValue'
                             edgeSearchEngineType             = 'default'
                             odataType                        = '#microsoft.graph.edgeSearchEngine'
-                        } -ClientOnly)
+                        })
                     edgeSendIntranetTrafficToInternetExplorer             = $True
                     edgeShowMessageWhenOpeningInternetExplorerSites       = 'notConfigured'
                     edgeSyncFavoritesWithInternetExplorer                 = $True
@@ -1822,11 +1922,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     networkProxyApplySettingsDeviceWide                   = $True
                     networkProxyAutomaticConfigurationUrl                 = 'FakeStringValue'
                     networkProxyDisableAutoDetect                         = $True
-                    networkProxyServer                                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10NetworkProxyServer -Property @{
+                    networkProxyServer                                    = ([MSFT_MicrosoftGraphwindows10NetworkProxyServer] @{
                             useForLocalAddresses = $True
                             exceptions           = @('FakeStringValue')
                             address              = 'FakeStringValue'
-                        } -ClientOnly)
+                        })
                     nfcBlocked                                            = $True
                     oneDriveDisableFileSync                               = $True
                     passwordBlockSimple                                   = $True
@@ -1940,11 +2040,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     wiFiBlocked                                           = $True
                     wiFiBlockManualConfiguration                          = $True
                     wiFiScanInterval                                      = 25
-                    windows10AppsForceUpdateSchedule                      = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule -Property @{
+                    windows10AppsForceUpdateSchedule                      = ([MSFT_MicrosoftGraphwindows10AppsForceUpdateSchedule] @{
                             runImmediatelyIfAfterStartDateTime = $True
                             recurrence                         = 'none'
                             startDateTime                      = '2023-01-01T00:00:00.0000000+00:00'
-                        } -ClientOnly)
+                        })
                     windowsSpotlightBlockConsumerSpecificFeatures         = $True
                     windowsSpotlightBlocked                               = $True
                     windowsSpotlightBlockOnActionCenter                   = $True
@@ -2013,6 +2113,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         defenderFilesAndFoldersToExclude                      = @('FakeStringValue')
                         edgeTelemetryForMicrosoft365Analytics                 = 'notConfigured'
                         developerUnlockSetting                                = 'notConfigured'
+                        deviceManagementApplicabilityRuleDeviceMode           = @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'standardConfiguration'
+                            RuleType   = 'exclude'
+                        }
+                        deviceManagementApplicabilityRuleOsEdition            = @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Professional')
+                            RuleType       = 'exclude'
+                        }
+                        deviceManagementApplicabilityRuleOsVersion            = @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.22621.0'
+                            MaxOSVersion = '10.0.22631.9999'
+                            RuleType     = 'exclude'
+                        }
                         defenderFileExtensionsToExclude                       = @('FakeStringValue')
                         systemTelemetryProxyServer                            = 'FakeStringValue'
                         startMenuMode                                         = 'userDefined'
@@ -2094,15 +2210,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -2176,6 +2292,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         edgeBlockFullScreenMode                               = $True
                         lockScreenTimeoutInSeconds                            = 25
                         developerUnlockSetting                                = 'notConfigured'
+                        deviceManagementApplicabilityRuleDeviceMode           = @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'sModeConfiguration'
+                            RuleType   = 'include'
+                        }
+                        deviceManagementApplicabilityRuleOsEdition            = @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Enterprise')
+                            RuleType       = 'include'
+                        }
+                        deviceManagementApplicabilityRuleOsVersion            = @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.19045.0'
+                            MaxOSVersion = '10.0.26100.9999'
+                            RuleType     = 'include'
+                        }
                         storageRestrictAppDataToSystemVolume                  = $True
                         cellularBlockVpn                                      = $True
                         powerHybridSleepPluggedIn                             = 'notConfigured'
@@ -2427,7 +2559,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceConfigurationPolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

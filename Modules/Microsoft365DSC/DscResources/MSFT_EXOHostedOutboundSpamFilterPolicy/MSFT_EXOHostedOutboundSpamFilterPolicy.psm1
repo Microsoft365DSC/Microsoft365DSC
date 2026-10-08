@@ -1,513 +1,291 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOHostedOutboundSpamFilterPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOHostedOutboundSpamFilterPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Identity parameter specifies the name of the policy that you want to modify. There is only one policy named ''Default''')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AdminDisplayName parameter specifies a description for the policy.')]
+    [System.String] $AdminDisplayName
 
-        [Parameter()]
-        [System.String[]]
-        $BccSuspiciousOutboundAdditionalRecipients = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The BccSuspiciousOutboundAdditionalRecipients parameter specifies the recipients to add to the Bcc field of outgoing spam messages. Valid input for this parameter is an email address. Separate multiple email addresses with commas.')]
+    [System.String[]] $BccSuspiciousOutboundAdditionalRecipients
 
-        [Parameter()]
-        [Boolean]
-        $BccSuspiciousOutboundMail = $true,
+    [DscProperty()]
+    [System.ComponentModel.Description('The BccSuspiciousOutboundMail parameter enables or disables adding recipients to the Bcc field of outgoing spam messages. Valid input for this parameter is $true or $false. The default value is $false. You specify the additional recipients using the BccSuspiciousOutboundAdditionalRecipients parameter.')]
+    [System.Nullable[System.Boolean]] $BccSuspiciousOutboundMail
 
-        [Parameter()]
-        [System.String[]]
-        $NotifyOutboundSpamRecipients = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The NotifyOutboundSpam parameter enables or disables sending notification messages to administrators when an outgoing message is determined to be spam. Valid input for this parameter is $true or $false. The default value is $false. You specify the administrators to notify by using the NotifyOutboundSpamRecipients parameter.')]
+    [System.Nullable[System.Boolean]] $NotifyOutboundSpam
 
-        [Parameter()]
-        [Boolean]
-        $NotifyOutboundSpam = $true,
+    [DscProperty()]
+    [System.ComponentModel.Description('The NotifyOutboundSpamRecipients parameter specifies the administrators to notify when an outgoing message is determined to be spam. Valid input for this parameter is an email address. Separate multiple email addresses with commas.')]
+    [System.String[]] $NotifyOutboundSpamRecipients
 
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitInternalPerHour,
+    [DscProperty()]
+    [System.ComponentModel.Description('The RecipientLimitInternalPerHour parameter specifies the maximum number of internal recipients that a user can send to within an hour. A valid value is 0 to 10000. The default value is 0, which means the service defaults are used.')]
+    [System.Nullable[System.UInt32]] $RecipientLimitInternalPerHour
 
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitPerDay,
+    [DscProperty()]
+    [System.ComponentModel.Description('The RecipientLimitPerDay parameter specifies the maximum number of recipients that a user can send to within a day. A valid value is 0 to 10000. The default value is 0, which means the service defaults are used.')]
+    [System.Nullable[System.UInt32]] $RecipientLimitPerDay
 
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitExternalPerHour,
+    [DscProperty()]
+    [System.ComponentModel.Description('The RecipientLimitExternalPerHour parameter specifies the maximum number of external recipients that a user can send to within an hour. A valid value is 0 to 10000. The default value is 0, which means the service defaults are used.')]
+    [System.Nullable[System.UInt32]] $RecipientLimitExternalPerHour
 
-        [Parameter()]
-        [System.String]
-        $ActionWhenThresholdReached,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ActionWhenThresholdReached parameter specifies the action to take when any of the limits specified in the policy are reached. Valid values are: Alert, BlockUser, BlockUserForToday. BlockUserForToday is the default value.')]
+    [System.String] $ActionWhenThresholdReached
 
-        [Parameter()]
-        [System.String]
-        $AutoForwardingMode,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AutoForwardingMode specifies how the policy controls automatic email forwarding to outbound recipients. Valid values are: Automatic, On, Off.')]
+    [System.String] $AutoForwardingMode
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if this policy should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of HostedOutboundSpamFilterPolicy for $Identity"
-
-    try
+    [EXOHostedOutboundSpamFilterPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOHostedOutboundSpamFilterPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of HostedOutboundSpamFilterPolicy for $($this.Identity)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $HostedOutboundSpamFilterPolicy = Get-HostedOutboundSpamFilterPolicy -Identity $Identity -ErrorAction SilentlyContinue
-            if (-not $HostedOutboundSpamFilterPolicy)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                Write-Verbose -Message "HostedOutboundSpamFilterPolicy $($Identity) does not exist."
-                return $nullReturn
+                $null = $this.Connect('ExchangeOnline')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $HostedOutboundSpamFilterPolicy = Get-HostedOutboundSpamFilterPolicy -Identity $this.Identity -ErrorAction SilentlyContinue
+                if (-not $HostedOutboundSpamFilterPolicy)
+                {
+                    Write-Verbose -Message "HostedOutboundSpamFilterPolicy $($this.Identity) does not exist."
+                    return $this.AsResult($nullReturn)
+                }
             }
+            else
+            {
+                $HostedOutboundSpamFilterPolicy = $this.ExportedInstance
+            }
+
+            Write-Verbose -Message "Found HostedOutboundSpamFilterPolicy $($this.Identity)"
+
+            $result = @{
+                Ensure                                    = 'Present'
+                Identity                                  = $this.Identity
+                AdminDisplayName                          = $HostedOutboundSpamFilterPolicy.AdminDisplayName
+                BccSuspiciousOutboundAdditionalRecipients = $HostedOutboundSpamFilterPolicy.BccSuspiciousOutboundAdditionalRecipients
+                BccSuspiciousOutboundMail                 = $HostedOutboundSpamFilterPolicy.BccSuspiciousOutboundMail
+                NotifyOutboundSpamRecipients              = $HostedOutboundSpamFilterPolicy.NotifyOutboundSpamRecipients
+                NotifyOutboundSpam                        = $HostedOutboundSpamFilterPolicy.NotifyOutboundSpam
+                RecipientLimitInternalPerHour             = $HostedOutboundSpamFilterPolicy.RecipientLimitInternalPerHour
+                RecipientLimitPerDay                      = $HostedOutboundSpamFilterPolicy.RecipientLimitPerDay
+                RecipientLimitExternalPerHour             = $HostedOutboundSpamFilterPolicy.RecipientLimitExternalPerHour
+                ActionWhenThresholdReached                = $HostedOutboundSpamFilterPolicy.ActionWhenThresholdReached
+                AutoForwardingMode                        = $HostedOutboundSpamFilterPolicy.AutoForwardingMode
+                Credential                                = $this.Credential
+                ApplicationId                             = $this.ApplicationId
+                CertificateThumbprint                     = $this.CertificateThumbprint
+                CertificatePath                           = $this.CertificatePath
+                CertificatePassword                       = $this.CertificatePassword
+                ManagedIdentity                           = $this.ManagedIdentity
+                TenantId                                  = $this.TenantId
+                AccessTokens                              = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
         }
-        else
+        catch
         {
-            $HostedOutboundSpamFilterPolicy = $Script:exportedInstance
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        Write-Verbose -Message "Found HostedOutboundSpamFilterPolicy $($Identity)"
+        Write-Verbose -Message "Testing configuration of HostedOutboundSpamFilterPolicy for $($this.Identity)"
 
-        $result = @{
-            Ensure                                    = 'Present'
-            Identity                                  = $Identity
-            AdminDisplayName                          = $HostedOutboundSpamFilterPolicy.AdminDisplayName
-            BccSuspiciousOutboundAdditionalRecipients = $HostedOutboundSpamFilterPolicy.BccSuspiciousOutboundAdditionalRecipients
-            BccSuspiciousOutboundMail                 = $HostedOutboundSpamFilterPolicy.BccSuspiciousOutboundMail
-            NotifyOutboundSpamRecipients              = $HostedOutboundSpamFilterPolicy.NotifyOutboundSpamRecipients
-            NotifyOutboundSpam                        = $HostedOutboundSpamFilterPolicy.NotifyOutboundSpam
-            RecipientLimitInternalPerHour             = $HostedOutboundSpamFilterPolicy.RecipientLimitInternalPerHour
-            RecipientLimitPerDay                      = $HostedOutboundSpamFilterPolicy.RecipientLimitPerDay
-            RecipientLimitExternalPerHour             = $HostedOutboundSpamFilterPolicy.RecipientLimitExternalPerHour
-            ActionWhenThresholdReached                = $HostedOutboundSpamFilterPolicy.ActionWhenThresholdReached
-            AutoForwardingMode                        = $HostedOutboundSpamFilterPolicy.AutoForwardingMode
-            Credential                                = $Credential
-            ApplicationId                             = $ApplicationId
-            CertificateThumbprint                     = $CertificateThumbprint
-            CertificatePath                           = $CertificatePath
-            CertificatePassword                       = $CertificatePassword
-            ManagedIdentity                           = $ManagedIdentity.IsPresent
-            TenantId                                  = $TenantId
-            AccessTokens                              = $AccessTokens
+        $currentHostedOutboundSpamFilterPolicyConfig = $this.Get().ToHashtable()
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $null = $this.Connect('ExchangeOnline')
+
+        $HostedOutboundSpamFilterPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        # CASE: Hosted Outbound Spam Filter Policy doesn't exist but should;
+        if ($this.Ensure -eq 'Present' -and $currentHostedOutboundSpamFilterPolicyConfig.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Hosted Outbound Spam Filter Policy '$($this.Identity)' does not exist but it should. Create and configure it."
+            $HostedOutboundSpamFilterPolicyParams.Add('Name', $this.Identity)
+            $HostedOutboundSpamFilterPolicyParams.Remove('Identity') | Out-Null
+            New-HostedOutboundSpamFilterPolicy @HostedOutboundSpamFilterPolicyParams
+        }
+        # CASE: Hosted Outbound Spam Filter Policy exists but it shouldn't;
+        elseif ($this.Ensure -eq 'Absent' -and $currentHostedOutboundSpamFilterPolicyConfig.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Hosted Outbound Spam Filter Policy '$($this.Identity)' exists but it shouldn't. Remove it."
+            Remove-HostedOutboundSpamFilterPolicy -Identity $this.Identity -Force
+        }
+        # CASE: Hosted Outbound Spam Filter Policy exists and it should, but has different values than the desired ones
+        elseif ($this.Ensure -eq 'Present' -and $currentHostedOutboundSpamFilterPolicyConfig.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Hosted Outbound Spam Filter Policy '$($this.Identity)' already exists, but needs updating."
+            Write-Verbose -Message "Setting Hosted Outbound Spam Filter Policy $($this.Identity) with values: $(Convert-M365DscHashtableToString -Hashtable $HostedOutboundSpamFilterPolicyParams)"
+            Set-HostedOutboundSpamFilterPolicy @HostedOutboundSpamFilterPolicyParams -Confirm:$false
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$HostedOutboundSpamFilterPolicies = Get-HostedOutboundSpamFilterPolicy -ErrorAction stop
+            $dscContent = [System.Text.StringBuilder]::new()
+
+            if ($HostedOutboundSpamFilterPolicies.Count -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            $i = 1
+            foreach ($HostedOutboundSpamFilterPolicy in $HostedOutboundSpamFilterPolicies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $Params = @{
+                    Credential            = $this.Credential
+                    Identity              = $HostedOutboundSpamFilterPolicy.Identity
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    CertificatePath       = $this.CertificatePath
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $HostedOutboundSpamFilterPolicy
+                Write-M365DSCHost -Message "    |---[$i/$($HostedOutboundSpamFilterPolicies.Length)] $($HostedOutboundSpamFilterPolicy.Identity)" -DeferWrite
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXOHostedOutboundSpamFilterPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOHostedOutboundSpamFilterPolicy])
+        {
+            return $Values
+        }
+
+        $result = [EXOHostedOutboundSpamFilterPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $BccSuspiciousOutboundAdditionalRecipients = @(),
-
-        [Parameter()]
-        [Boolean]
-        $BccSuspiciousOutboundMail = $true,
-
-        [Parameter()]
-        [System.String[]]
-        $NotifyOutboundSpamRecipients = @(),
-
-        [Parameter()]
-        [Boolean]
-        $NotifyOutboundSpam = $true,
-
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitInternalPerHour,
-
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitPerDay,
-
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitExternalPerHour,
-
-        [Parameter()]
-        [System.String]
-        $ActionWhenThresholdReached,
-
-        [Parameter()]
-        [System.String]
-        $AutoForwardingMode,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Testing configuration of HostedOutboundSpamFilterPolicy for $Identity"
-
-    $currentHostedOutboundSpamFilterPolicyConfig = Get-TargetResource @PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    $HostedOutboundSpamFilterPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    # CASE: Hosted Outbound Spam Filter Policy doesn't exist but should;
-    if ($Ensure -eq 'Present' -and $currentHostedOutboundSpamFilterPolicyConfig.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Hosted Outbound Spam Filter Policy '$($Identity)' does not exist but it should. Create and configure it."
-        $HostedOutboundSpamFilterPolicyParams.Add('Name', $Identity)
-        $HostedOutboundSpamFilterPolicyParams.Remove('Identity') | Out-Null
-        New-HostedOutboundSpamFilterPolicy @HostedOutboundSpamFilterPolicyParams
-    }
-    # CASE: Hosted Outbound Spam Filter Policy exists but it shouldn't;
-    elseif ($Ensure -eq 'Absent' -and $currentHostedOutboundSpamFilterPolicyConfig.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Hosted Outbound Spam Filter Policy '$($Identity)' exists but it shouldn't. Remove it."
-        Remove-HostedOutboundSpamFilterPolicy -Identity $Identity -Force
-    }
-    # CASE: Hosted Outbound Spam Filter Policy exists and it should, but has different values than the desired ones
-    elseif ($Ensure -eq 'Present' -and $currentHostedOutboundSpamFilterPolicyConfig.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Hosted Outbound Spam Filter Policy '$($Identity)' already exists, but needs updating."
-        Write-Verbose -Message "Setting Hosted Outbound Spam Filter Policy $Identity with values: $(Convert-M365DscHashtableToString -Hashtable $HostedOutboundSpamFilterPolicyParams)"
-        Set-HostedOutboundSpamFilterPolicy @HostedOutboundSpamFilterPolicyParams -Confirm:$false
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $BccSuspiciousOutboundAdditionalRecipients = @(),
-
-        [Parameter()]
-        [Boolean]
-        $BccSuspiciousOutboundMail = $true,
-
-        [Parameter()]
-        [System.String[]]
-        $NotifyOutboundSpamRecipients = @(),
-
-        [Parameter()]
-        [Boolean]
-        $NotifyOutboundSpam = $true,
-
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitInternalPerHour,
-
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitPerDay,
-
-        [Parameter()]
-        [System.UInt32]
-        $RecipientLimitExternalPerHour,
-
-        [Parameter()]
-        [System.String]
-        $ActionWhenThresholdReached,
-
-        [Parameter()]
-        [System.String]
-        $AutoForwardingMode,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$HostedOutboundSpamFilterPolicies = Get-HostedOutboundSpamFilterPolicy -ErrorAction stop
-        $dscContent = [System.Text.StringBuilder]::new()
-
-        if ($HostedOutboundSpamFilterPolicies.Count -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        $i = 1
-        foreach ($HostedOutboundSpamFilterPolicy in $HostedOutboundSpamFilterPolicies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            $Params = @{
-                Credential            = $Credential
-                Identity              = $HostedOutboundSpamFilterPolicy.Identity
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                CertificatePath       = $CertificatePath
-                AccessTokens          = $AccessTokens
-            }
-            $Script:exportedInstance = $HostedOutboundSpamFilterPolicy
-            Write-M365DSCHost -Message "    |---[$i/$($HostedOutboundSpamFilterPolicies.Length)] $($HostedOutboundSpamFilterPolicy.Identity)" -DeferWrite
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

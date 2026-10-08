@@ -1,5 +1,16 @@
 {
   "resourceName": "EXODnssecForVerifiedDomain",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "DnssecStatusForVerifiedDomain",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the DnsSec status for a verified domain.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Configuration"
         ],
@@ -33,7 +44,7 @@
           "Security Admin"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "View-Only Organization Management"
         ],
@@ -47,5 +58,16 @@
   "supportedEnvironments": [
     "Global"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Disable-DnssecForVerifiedDomain",
+        "Enable-DnssecForVerifiedDomain",
+        "Get-AcceptedDomain",
+        "Get-DnssecStatusForVerifiedDomain"
+      ]
+    }
+  ]
 }

@@ -1,5 +1,16 @@
 {
   "resourceName": "AADAuthenticationContextClassReference",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "authenticationContextClassReference",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaIdentityConditionalAccessAuthenticationContextClassReference",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Represents a Microsoft Entra authentication context class reference. Authentication context class references are custom values that define a Conditional Access authentication requirement.",
   "roles": {
     "read": [

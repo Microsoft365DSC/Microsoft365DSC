@@ -1,12 +1,44 @@
 {
   "resourceName": "IntuneDeviceEnrollmentScopeConfigurationMam",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "mobileAppManagementPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyMobileAppManagementPolicy",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "ReadOnly",
+      "note": "Belongs to the built-in Intune mobility management application"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "ReadOnly",
+      "note": "Belongs to the built-in Intune mobility management application"
+    },
+    {
+      "name": "Id",
+      "reason": "Accepted",
+      "note": "Set supplies the service-assigned id. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "IsValid",
+      "reason": "ReadOnly",
+      "note": "The service derives policy validity"
+    }
+  ],
   "description": "This resource configures an Intune Device Enrollment Scope Configuration Mam.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.Read.All"
@@ -14,7 +46,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.ReadWrite.MobilityManagement"
@@ -44,7 +76,8 @@
     {
       "module": "Microsoft.Graph.Beta.Identity.SignIns",
       "cmdlets": [
-        "Get-MgBetaPolicyMobileAppManagementPolicy"
+        "Get-MgBetaPolicyMobileAppManagementPolicy",
+        "Update-MgBetaPolicyMobileAppManagementPolicy"
       ]
     },
     {

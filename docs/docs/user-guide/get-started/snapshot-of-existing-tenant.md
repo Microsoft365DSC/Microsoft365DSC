@@ -212,6 +212,10 @@ By default, specifying a workload will only export components that are part of t
 This parameter leads to a parallel export using runspaces. It is not guaranteed that there is a performance improvement over sequential execution (which is the default).
 Parallel execution is more memory and compute intensive than sequential execution. Please make sure that there is enough memory available (recommended: 8GB or more).
 
+### ThrottleLimit
+
+This parameter sets the number of parallel workers and can only be used together with **-Parallel**. Each worker imports the module once. The default is 5. A lower value reduces memory usage but increases the export duration.
+
 ### TokenReplacement
 
 This parameter allows replacing specific tokens that appear in the configuration with a variable. This is especially useful in cross-tenant scenarios, where each tenant has a slightly different name for example.

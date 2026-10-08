@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -48,7 +48,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 @{
                                     Id = "FakeStringValue"
                                     TargetType = "user"
-                                    TargetedAuthenticationMethod = "FakeStringValue"
+                                    TargetedAuthenticationMethod = "microsoftAuthenticator"
                                 }
                             )
                             State = "default"
@@ -101,7 +101,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -116,48 +116,48 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ReconfirmationInDays = 25
-                    RegistrationEnforcement = (New-CimInstance -ClassName MSFT_MicrosoftGraphregistrationEnforcement -Property @{
-                        AuthenticationMethodsRegistrationCampaign = (New-CimInstance -ClassName MSFT_MicrosoftGraphauthenticationMethodsRegistrationCampaign -Property @{
-                            IncludeTargets = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphauthenticationMethodsRegistrationCampaignIncludeTarget -Property @{
+                    RegistrationEnforcement = ([MSFT_MicrosoftGraphregistrationEnforcement] @{
+                        AuthenticationMethodsRegistrationCampaign = ([MSFT_MicrosoftGraphAuthenticationMethodsRegistrationCampaign] @{
+                            IncludeTargets = @(
+                                ([MSFT_MicrosoftGraphAuthenticationMethodsRegistrationCampaignIncludeTarget] @{
                                     Id = "FakeStringValue"
                                     TargetType = "user"
-                                    TargetedAuthenticationMethod = "FakeStringValue"
-                                } -ClientOnly)
+                                    TargetedAuthenticationMethod = "microsoftAuthenticator"
+                                })
                             )
                             State = "default"
                             SnoozeDurationInDays = 25
-                            ExcludeTargets = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyExcludeTarget -Property @{
+                            ExcludeTargets = @(
+                                ([MSFT_MicrosoftGraphExcludeTarget] @{
                                     TargetType = "user"
                                     Id = "FakeStringValue"
-                                } -ClientOnly)
+                                })
                             )
-                        } -ClientOnly)
-                        } -ClientOnly)
-                    ReportSuspiciousActivitySettings = (New-CimInstance -ClassName MSFT_MicrosoftGraphreportSuspiciousActivitySettings -Property @{
+                        })
+                        })
+                    ReportSuspiciousActivitySettings = ([MSFT_MicrosoftGraphreportSuspiciousActivitySettings] @{
                         VoiceReportingCode = 0
                         State = 'default'
-                        IncludeTarget = (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyIncludeTarget -Property @{
+                        IncludeTarget = ([MSFT_AADAuthenticationMethodPolicyIncludeTarget] @{
                                 Id = 'FakeStringValue2'
                                 TargetType = 'group'
-                        } -ClientOnly)
-                    } -ClientOnly);
-                    SystemCredentialPreferences = (New-CimInstance -ClassName MSFT_MicrosoftGraphsystemCredentialPreferences -Property @{
+                        })
+                    });
+                    SystemCredentialPreferences = ([MSFT_MicrosoftGraphsystemCredentialPreferences] @{
                         State = "default"
-                        IncludeTargets = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyIncludeTarget -Property @{
+                        IncludeTargets = @(
+                            ([MSFT_AADAuthenticationMethodPolicyIncludeTarget] @{
                                 TargetType = "user"
                                 Id = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                        ExcludeTargets = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyExcludeTarget -Property @{
+                        ExcludeTargets = @(
+                            ([MSFT_AADAuthenticationMethodPolicyExcludeTarget] @{
                                 TargetType = "user"
                                 Id = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
+                    })
                     IsSingleInstance = 'Yes'
                     Credential = $Credential;
                 }
@@ -167,10 +167,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).IsSingleInstance | Should -Be 'Yes'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicy' -Property $testParams).Get().ToHashtable()).IsSingleInstance | Should -Be 'Yes'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicy' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -178,55 +178,55 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ReconfirmationInDays = 25
-                    RegistrationEnforcement = (New-CimInstance -ClassName MSFT_MicrosoftGraphregistrationEnforcement -Property @{
-                        AuthenticationMethodsRegistrationCampaign = (New-CimInstance -ClassName MSFT_MicrosoftGraphauthenticationMethodsRegistrationCampaign -Property @{
-                            IncludeTargets = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphauthenticationMethodsRegistrationCampaignIncludeTarget -Property @{
+                    RegistrationEnforcement = ([MSFT_MicrosoftGraphregistrationEnforcement] @{
+                        AuthenticationMethodsRegistrationCampaign = ([MSFT_MicrosoftGraphAuthenticationMethodsRegistrationCampaign] @{
+                            IncludeTargets = @(
+                                ([MSFT_MicrosoftGraphAuthenticationMethodsRegistrationCampaignIncludeTarget] @{
                                     Id = "FakeStringValue"
                                     TargetType = "user"
-                                    TargetedAuthenticationMethod = "FakeStringValue"
-                                } -ClientOnly)
+                                    TargetedAuthenticationMethod = "microsoftAuthenticator"
+                                })
                             )
                             State = "default"
                             SnoozeDurationInDays = 25
-                            ExcludeTargets = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyExcludeTarget -Property @{
+                            ExcludeTargets = @(
+                                ([MSFT_MicrosoftGraphExcludeTarget] @{
                                     TargetType = "user"
                                     Id = "FakeStringValue"
-                                } -ClientOnly)
+                                })
                             )
-                        } -ClientOnly)
-                    } -ClientOnly)
-                    ReportSuspiciousActivitySettings = (New-CimInstance -ClassName MSFT_MicrosoftGraphreportSuspiciousActivitySettings -Property @{
+                        })
+                    })
+                    ReportSuspiciousActivitySettings = ([MSFT_MicrosoftGraphreportSuspiciousActivitySettings] @{
                         VoiceReportingCode = 0
                         State = 'default'
-                        IncludeTarget = (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyIncludeTarget -Property @{
+                        IncludeTarget = ([MSFT_AADAuthenticationMethodPolicyIncludeTarget] @{
                                 Id = 'FakeStringValue2'
                                 TargetType = 'group'
-                        } -ClientOnly)
-                    } -ClientOnly);
-                    SystemCredentialPreferences = (New-CimInstance -ClassName MSFT_MicrosoftGraphsystemCredentialPreferences -Property @{
+                        })
+                    });
+                    SystemCredentialPreferences = ([MSFT_MicrosoftGraphsystemCredentialPreferences] @{
                         State = "default"
-                        IncludeTargets = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyIncludeTarget -Property @{
+                        IncludeTargets = @(
+                            ([MSFT_AADAuthenticationMethodPolicyIncludeTarget] @{
                                 TargetType = "user"
                                 Id = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                        ExcludeTargets = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyExcludeTarget -Property @{
+                        ExcludeTargets = @(
+                            ([MSFT_AADAuthenticationMethodPolicyExcludeTarget] @{
                                 TargetType = "user"
                                 Id = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
+                    })
                     IsSingleInstance = 'Yes'
                     Credential = $Credential;
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -234,63 +234,63 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ReconfirmationInDays = 25
-                    RegistrationEnforcement = (New-CimInstance -ClassName MSFT_MicrosoftGraphregistrationEnforcement -Property @{
-                        AuthenticationMethodsRegistrationCampaign = (New-CimInstance -ClassName MSFT_MicrosoftGraphauthenticationMethodsRegistrationCampaign -Property @{
-                            IncludeTargets = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphauthenticationMethodsRegistrationCampaignIncludeTarget -Property @{
+                    RegistrationEnforcement = ([MSFT_MicrosoftGraphregistrationEnforcement] @{
+                        AuthenticationMethodsRegistrationCampaign = ([MSFT_MicrosoftGraphAuthenticationMethodsRegistrationCampaign] @{
+                            IncludeTargets = @(
+                                ([MSFT_MicrosoftGraphAuthenticationMethodsRegistrationCampaignIncludeTarget] @{
                                     Id = "FakeStringValue"
                                     TargetType = "user"
-                                    TargetedAuthenticationMethod = "FakeStringValue"
-                                } -ClientOnly)
+                                    TargetedAuthenticationMethod = "microsoftAuthenticator"
+                                })
                             )
                             State = "default"
                             SnoozeDurationInDays = 25
-                            ExcludeTargets = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyExcludeTarget -Property @{
+                            ExcludeTargets = @(
+                                ([MSFT_MicrosoftGraphExcludeTarget] @{
                                     TargetType = "user"
                                     Id = "FakeStringValue"
-                                } -ClientOnly)
+                                })
                             )
-                        } -ClientOnly)
-                    } -ClientOnly)
-                    ReportSuspiciousActivitySettings = (New-CimInstance -ClassName MSFT_MicrosoftGraphreportSuspiciousActivitySettings -Property @{
+                        })
+                    })
+                    ReportSuspiciousActivitySettings = ([MSFT_MicrosoftGraphreportSuspiciousActivitySettings] @{
                         VoiceReportingCode = 1 # Drift
                         State = 'default'
-                        IncludeTarget = (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyIncludeTarget -Property @{
+                        IncludeTarget = ([MSFT_AADAuthenticationMethodPolicyIncludeTarget] @{
                                 Id = 'FakeStringValue2'
                                 TargetType = 'group'
-                        } -ClientOnly)
-                    } -ClientOnly);
-                    SystemCredentialPreferences = (New-CimInstance -ClassName MSFT_MicrosoftGraphsystemCredentialPreferences -Property @{
+                        })
+                    });
+                    SystemCredentialPreferences = ([MSFT_MicrosoftGraphsystemCredentialPreferences] @{
                         State = "default"
-                        IncludeTargets = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyIncludeTarget -Property @{
+                        IncludeTargets = @(
+                            ([MSFT_AADAuthenticationMethodPolicyIncludeTarget] @{
                                 TargetType = "user"
                                 Id = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                        ExcludeTargets = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicyExcludeTarget -Property @{
+                        ExcludeTargets = @(
+                            ([MSFT_AADAuthenticationMethodPolicyExcludeTarget] @{
                                 TargetType = "user"
                                 Id = "FakeStringValue"
-                            } -ClientOnly)
+                            })
                         )
-                    } -ClientOnly)
+                    })
                     IsSingleInstance = 'Yes'
                     Credential = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).IsSingleInstance | Should -Be 'Yes'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicy' -Property $testParams).Get().ToHashtable()).IsSingleInstance | Should -Be 'Yes'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaPolicyAuthenticationMethodPolicy -Exactly 1
             }
         }
@@ -304,7 +304,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADAuthenticationMethodPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

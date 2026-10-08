@@ -1,25 +1,69 @@
-﻿using Microsoft365DSC.Cache;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
-using System.Management.Automation.Language;
 
 namespace Microsoft365DSC.Utilities
 {
     public static class Utilities
     {
-        public static List<string> GetFunctionParameterNamesByAST(string modulePath, string functionName)
-        {
-            ScriptBlockAst ast = Parser.ParseFile(modulePath, out var tokens, out var errors);
-            FunctionDefinitionAst? functionAst = ast.FindAll(node =>
-                node is FunctionDefinitionAst funcDef &&
-                funcDef.Name == functionName, true).FirstOrDefault() as FunctionDefinitionAst;
+        /// <summary>
+        /// The property names every resource carries for authentication. Callers build their own
+        /// set from these so each keeps its own string comparer.
+        /// </summary>
+        public static IReadOnlyList<string> AuthenticationPropertyNames { get; } =
+        [
+            "Credential", "ApplicationId", "ApplicationSecret", "TenantId", "CertificateThumbprint",
+            "CertificatePath", "CertificatePassword", "ManagedIdentity", "AccessTokens"
+        ];
 
-            return functionAst is null || functionAst.Body.ParamBlock is null
-                ? throw new InvalidOperationException($"Function '{functionName}' not found in module '{modulePath}' or it does not have a parameter block.")
-                : functionAst.Body.ParamBlock.Parameters.Select(param => param.Name.VariablePath.UserPath).ToList();
+        private static readonly HashSet<string> AuthenticationPropertySet =
+            new(AuthenticationPropertyNames, StringComparer.OrdinalIgnoreCase);
+
+        public static bool IsAuthenticationProperty(string name)
+        {
+            return AuthenticationPropertySet.Contains(name);
+        }
+
+        public static string NormalizeLineEndings(string text)
+        {
+            return text.IndexOf('\r') < 0 ? text : text.Replace("\r\n", "\n");
+        }
+
+        /// <summary>
+        /// The characters that cannot appear in a DSC instance name without escaping. The
+        /// smart quotes are listed by code point because this file is written in ASCII.
+        /// </summary>
+        private static readonly char[] UnsupportedInstanceNameCharacters =
+        [
+            '<', '>', ':', '"', '/', '\\', '|', '?', '*', '\'', '[', ']', '(', ')', '`', '$', ' ',
+            (char)0x2019, (char)0x201C, (char)0x201D, (char)0x201E, (char)0x201F
+        ];
+
+        /// <summary>
+        /// Replaces every character that would need escaping inside a DSC instance name with
+        /// an underscore.
+        /// </summary>
+        /// <param name="input">The value to turn into an instance name segment.</param>
+        /// <returns>A value that renders the same wherever it is written.</returns>
+        public static string RemoveSpecialCharacters(string input)
+        {
+            if (string.IsNullOrEmpty(input) || input.IndexOfAny(UnsupportedInstanceNameCharacters) < 0)
+            {
+                return input;
+            }
+
+            char[] characters = input.ToCharArray();
+            for (int i = 0; i < characters.Length; i++)
+            {
+                if (Array.IndexOf(UnsupportedInstanceNameCharacters, characters[i]) >= 0)
+                {
+                    characters[i] = '_';
+                }
+            }
+
+            return new string(characters);
         }
 
         /// <summary>
@@ -41,12 +85,12 @@ namespace Microsoft365DSC.Utilities
             return input;
         }
 
-        public static List<Hashtable> FilterHashtablesByResourceAndKey(IEnumerable<object> hashtables, string resourceName, string key, string keyValue)
+        public static List<Hashtable> FilterHashtablesByResourceAndKey(IEnumerable<object> hashtables, string resourceName, string key, string? keyValue)
         {
             List<Hashtable> results = [];
             foreach (Hashtable entry in hashtables.Cast<Hashtable>())
             {
-                if (entry["ResourceName"].ToString() == resourceName &&
+                if (entry["ResourceName"]?.ToString() == resourceName &&
                     entry[key]?.ToString() == keyValue)
                 {
                     results.Add(entry);
@@ -55,49 +99,15 @@ namespace Microsoft365DSC.Utilities
             return results;
         }
 
-        public static object? FilterLoadedCimClassesByName(string className)
-        {
-            if (CacheManager.IsSchemaLoaded)
-            {
-                return FilterCimClassesByName(CacheManager.Schema, className);
-            }
-            return null;
-        }
-
-        public static object? FilterCimClassesByName(IEnumerable<object> schemaObjects, string className)
-        {
-            foreach (object obj in schemaObjects)
-            {
-                if (obj is PSObject psObject)
-                {
-                    dynamic dyn = psObject as dynamic;
-                    string name = dyn.ClassName;
-                    if (name == className)
-                    {
-                        return psObject;
-                    }
-                }
-                else if (obj is IDictionary hashtable)
-                {
-                    if (hashtable["ClassName"]?.ToString() == className)
-                    {
-                        return hashtable;
-                    }
-                }
-            }
-            return null;
-        }
-
         public static Array UnwrapArray(Array array)
         {
+            object[] unwrapped = new object[array.Length];
             for (int i = 0; i < array.Length; i++)
             {
-                if (array.GetValue(i) is PSObject psObject)
-                {
-                    array.SetValue(psObject.BaseObject, i);
-                }
+                object? item = array.GetValue(i);
+                unwrapped[i] = item is PSObject psObject ? psObject.BaseObject : item;
             }
-            return array;
+            return unwrapped;
         }
 
         public static List<string> UnwrapArrayToStrings(Array array)

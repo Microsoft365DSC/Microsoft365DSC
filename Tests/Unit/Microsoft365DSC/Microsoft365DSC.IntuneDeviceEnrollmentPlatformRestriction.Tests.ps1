@@ -23,12 +23,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -42,6 +42,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceEnrollmentConfiguration -MockWith {
             }
 
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration
+            }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration -MockWith {
                 return @{
                     '@odata.type'       = '#microsoft.graph.deviceEnrollmentPlatformRestrictionConfiguration'
@@ -70,17 +73,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "When the restriction doesn't already exist" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                          = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
+                    Id                                = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
                     Description                       = ''
                     DisplayName                       = 'My DSC Restriction'
                     Ensure                            = 'Present'
                     DeviceEnrollmentConfigurationType = 'singlePlatformRestriction'
                     Credential                        = $Credential
                     Priority                          = 1
-                    IosRestriction                    = (New-CimInstance -ClassName MSFT_DeviceEnrollmentPlatformRestriction -Property @{
+                    IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $False
-                        } -ClientOnly)
+                        })
                 }
 
                 Mock -CommandName Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration -MockWith {
@@ -105,90 +108,97 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the restriction from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName 'New-MgBetaDeviceManagementDeviceEnrollmentConfiguration' -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Set()
+                Should -Invoke -CommandName 'New-MgBetaDeviceManagementDeviceEnrollmentConfiguration' -Exactly 1 -ParameterFilter {
+                    $BodyParameter.platformType -eq 'ios' -and $null -ne $BodyParameter.platformRestriction
+                }
             }
         }
 
         Context -Name 'When the restriction already exists and is in the Desired State' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                          = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
+                    Id                                = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
                     Description                       = ''
                     DisplayName                       = 'My DSC Restriction'
                     Ensure                            = 'Present'
                     DeviceEnrollmentConfigurationType = 'singlePlatformRestriction'
                     Credential                        = $Credential
                     Priority                          = 1
-                    IosRestriction                    = (New-CimInstance -ClassName MSFT_DeviceEnrollmentPlatformRestriction -Property @{
+                    IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $False
-                        } -ClientOnly)
+                        })
+                }
+
+                Mock -CommandName Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration -ParameterFilter { -not [System.String]::IsNullOrEmpty($DeviceEnrollmentConfigurationId) } -MockWith {
+                    return $null
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Test() | Should -Be $true
+                Should -Invoke -CommandName Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration -ParameterFilter { $Filter -eq "DisplayName eq 'My DSC Restriction'" }
             }
         }
 
         Context -Name 'When the restriction already exists and is NOT in the Desired State' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                          = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
+                    Id                                = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
                     Description                       = ''
                     DisplayName                       = 'My DSC Restriction'
                     Ensure                            = 'Present'
                     DeviceEnrollmentConfigurationType = 'singlePlatformRestriction'
                     Credential                        = $Credential
                     Priority                          = 1
-                    IosRestriction                    = (New-CimInstance -ClassName MSFT_DeviceEnrollmentPlatformRestriction -Property @{
+                    IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $True # Updated property
-                        } -ClientOnly)
+                        })
                 }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Test() | Should -Be $false
             }
         }
 
         Context -Name 'When the restriction exists and it SHOULD NOT' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Identity                          = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
+                    Id                                = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
                     Description                       = ''
                     DisplayName                       = 'My DSC Restriction'
                     Ensure                            = 'Absent'
                     DeviceEnrollmentConfigurationType = 'singlePlatformRestriction'
                     Credential                        = $Credential
                     Priority                          = 1
-                    IosRestriction                    = (New-CimInstance -ClassName MSFT_DeviceEnrollmentPlatformRestriction -Property @{
+                    IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $False
-                        } -ClientOnly)
+                        })
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams| Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Test()| Should -Be $false
             }
 
             It 'Should remove the restriction from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceEnrollmentConfiguration -Exactly 1
             }
         }
@@ -203,7 +213,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

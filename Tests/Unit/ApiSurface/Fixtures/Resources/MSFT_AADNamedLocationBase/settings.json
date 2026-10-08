@@ -1,0 +1,24 @@
+{
+  "resourceName": "AADNamedLocationBase",
+  "description": "Fixture for AADNamedLocationBase.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Identity.SignIns",
+      "cmdlets": [
+        "Get-MgBetaIdentityConditionalAccessNamedLocation",
+        "New-MgBetaIdentityConditionalAccessNamedLocation"
+      ]
+    }
+  ]
+}

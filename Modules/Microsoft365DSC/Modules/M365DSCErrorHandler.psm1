@@ -1,51 +1,4 @@
-$Script:M365DSCPartialExportMutex = $null
-$Script:M365DSCPartialExportMutexPath = $null
-
-function Get-M365DSCPartialExportFallbackPath
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $FilePath
-    )
-
-    $directory = Split-Path -Path $FilePath -Parent
-    $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($FilePath)
-    $extension = [System.IO.Path]::GetExtension($FilePath)
-    $fallbackFileName = '{0}.{1}{2}' -f $fileNameWithoutExtension, $PID, $extension
-
-    return (Join-Path -Path $directory -ChildPath $fallbackFileName)
-}
-
-function Get-M365DSCPartialExportMutexName
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $FilePath
-    )
-
-    $normalizedPath = [System.IO.Path]::GetFullPath($FilePath).ToLowerInvariant()
-    $sha256 = [System.Security.Cryptography.SHA256]::Create()
-    try
-    {
-        $bytes = [System.Text.Encoding]::UTF8.GetBytes($normalizedPath)
-        $hashBytes = $sha256.ComputeHash($bytes)
-    }
-    finally
-    {
-        $sha256.Dispose()
-    }
-
-    $hash = ([System.BitConverter]::ToString($hashBytes)).Replace('-', '')
-    return "Global\M365DSCPartialExport_$hash"
-}
+$Script:M365DSCPartialExportPath = $null
 
 <#
 .SYNOPSIS
@@ -82,65 +35,14 @@ function Save-M365DSCPartialExport
     if (-not [System.String]::IsNullOrEmpty($env:TEMP))
     {
         $tempPath = Join-Path -Path $env:TEMP -ChildPath $FileName
-
-        # Reuse the same named mutex object per path in-process while coordinating writes across processes.
-        if ($null -eq $Script:M365DSCPartialExportMutex -or $Script:M365DSCPartialExportMutexPath -ne $tempPath)
-        {
-            Close-M365DSCPartialExport
-            $mutexName = Get-M365DSCPartialExportMutexName -FilePath $tempPath
-            $Script:M365DSCPartialExportMutex = [System.Threading.Mutex]::new($false, $mutexName)
-            $Script:M365DSCPartialExportMutexPath = $tempPath
-        }
-
-        $maxRetries = 10
-        $lockAcquired = $false
-
-        for ($attempt = 1; $attempt -le $maxRetries; $attempt++)
-        {
-            try
-            {
-                $lockAcquired = $Script:M365DSCPartialExportMutex.WaitOne([System.TimeSpan]::FromSeconds(2))
-            }
-            catch
-            {
-                if ($_.Exception -is [System.Threading.AbandonedMutexException])
-                {
-                    # Another process exited while holding the lock. Continue and treat lock as acquired.
-                    $lockAcquired = $true
-                }
-                else
-                {
-                    throw
-                }
-            }
-
-            if ($lockAcquired)
-            {
-                try
-                {
-                    [System.IO.File]::AppendAllText($tempPath, $Content, [System.Text.Encoding]::UTF8)
-                    return
-                }
-                finally
-                {
-                    $Script:M365DSCPartialExportMutex.ReleaseMutex()
-                }
-            }
-
-            $delay = [System.Int32]([Math]::Min(1000, (50 * [Math]::Pow(2, $attempt - 1))))
-            Start-Sleep -Milliseconds $delay
-        }
-
-        # If lock contention persists, fall back to a per-process file to avoid data loss.
-        $fallbackPath = Get-M365DSCPartialExportFallbackPath -FilePath $tempPath
-        Write-Verbose -Message "Falling back to per-process partial export file '$fallbackPath' after lock contention."
-        [System.IO.File]::AppendAllText($fallbackPath, $Content, [System.Text.Encoding]::UTF8)
+        $Script:M365DSCPartialExportPath = $tempPath
+        [Microsoft365DSC.Cache.PartialExportWriter]::Append($tempPath, $Content)
     }
 }
 
 <#
 .DESCRIPTION
-    Releases the synchronization handle used by Save-M365DSCPartialExport. Call at export completion or on error.
+    Releases the lock used by Save-M365DSCPartialExport. Call at export completion or on error.
 
 .FUNCTIONALITY
     Internal
@@ -150,11 +52,10 @@ function Close-M365DSCPartialExport
     [CmdletBinding()]
     param()
 
-    if ($null -ne $Script:M365DSCPartialExportMutex)
+    if ($null -ne $Script:M365DSCPartialExportPath)
     {
-        $Script:M365DSCPartialExportMutex.Dispose()
-        $Script:M365DSCPartialExportMutex = $null
-        $Script:M365DSCPartialExportMutexPath = $null
+        [Microsoft365DSC.Cache.PartialExportWriter]::Release($Script:M365DSCPartialExportPath)
+        $Script:M365DSCPartialExportPath = $null
     }
 }
 
@@ -313,7 +214,9 @@ function Test-M365DSCNotFoundError
         '*Resource * does not exist*',
         '*resource * not found*',
         '*does not exist*',
+        '*doesn''t exist*',
         '*was not found*',
+        '*wasn''t found*',
         '*could not be found*',
         '*couldn''t be found*',
         '*cannot be found*',
@@ -478,10 +381,93 @@ function Invoke-M365DSCCommand
     }
 }
 
+<#
+.SYNOPSIS
+    Waits until a condition is met, with a maximum number of attempts.
+
+.DESCRIPTION
+    Invokes the scriptblock until it returns a truthy value the required number of times in a row.
+    Sleeps between attempts only after an unmet result. Used to wait for objects that the service
+    replicates with a delay.
+
+.PARAMETER ScriptBlock
+    The condition to evaluate. A truthy result counts as met.
+
+.PARAMETER Description
+    Describes what is awaited, used in the verbose messages.
+
+.PARAMETER MaxAttempts
+    Maximum number of evaluations. Default is 6.
+
+.PARAMETER RetryDelayInSeconds
+    Delay after an unmet result. Default is 5 seconds.
+
+.PARAMETER ConsecutiveCount
+    Number of consecutive met results required. Default is 1.
+
+.OUTPUTS
+    System.Boolean. $true when the condition was met, otherwise $false.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Wait-M365DSCCondition
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [scriptblock]
+        $ScriptBlock,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Description,
+
+        [Parameter()]
+        [System.Int32]
+        $MaxAttempts = 6,
+
+        [Parameter()]
+        [System.Int32]
+        $RetryDelayInSeconds = 5,
+
+        [Parameter()]
+        [System.Int32]
+        $ConsecutiveCount = 1
+    )
+
+    $metCount = 0
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++)
+    {
+        if (& $ScriptBlock)
+        {
+            $metCount++
+            if ($metCount -ge $ConsecutiveCount)
+            {
+                return $true
+            }
+            continue
+        }
+
+        $metCount = 0
+        if ($attempt -lt $MaxAttempts)
+        {
+            Write-Verbose -Message "Waiting for $Description (attempt $attempt of $MaxAttempts). Retrying in $RetryDelayInSeconds seconds."
+            Start-Sleep -Seconds $RetryDelayInSeconds
+        }
+    }
+
+    Write-Verbose -Message "Stopped waiting for $Description after $MaxAttempts attempts."
+    return $false
+}
+
 Export-ModuleMember -Function @(
     'Close-M365DSCPartialExport',
     'Invoke-M365DSCCommand',
     'Save-M365DSCPartialExport',
     'Test-M365DSCNotFoundError',
-    'Test-M365DSCTransientError'
+    'Test-M365DSCTransientError',
+    'Wait-M365DSCCondition'
 )

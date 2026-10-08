@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,15 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADUser 'ConfigureJohnSMith'
+        AADUser 'AADUser-Example'
         {
-            UserPrincipalName  = "John.Smith@$TenantId"
-            DisplayName        = "John J. Smith"
-            Ensure             = "Absent"
+            UserPrincipalName     = "John.Smith@$TenantId"
+            Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

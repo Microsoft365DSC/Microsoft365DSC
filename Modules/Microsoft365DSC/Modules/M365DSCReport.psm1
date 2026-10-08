@@ -1,4 +1,4 @@
-$Script:ReportCSS = @'
+﻿$Script:ReportCSS = @'
 <style>
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -250,7 +250,8 @@ function New-M365DSCWorkloadSection
 
 <#
 .DESCRIPTION
-    This function creates a new Markdown document from the specified exported configuration
+    This function creates a Markdown report from the specified exported configuration. Every
+    resource instance lands in one document, unless SplitByResource is specified.
 
 .FUNCTIONALITY
     Internal, Hidden
@@ -258,126 +259,66 @@ function New-M365DSCWorkloadSection
 function New-M365DSCConfigurationToMarkdown
 {
     [CmdletBinding()]
-    [OutputType([System.String])]
     param
     (
-        [Parameter()]
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
         [Array]
         $ParsedContent,
 
-        [Parameter()]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $OutputPath,
 
         [Parameter()]
         [System.String]
-        $TemplateName,
+        $OrganizationName,
+
+        [Parameter()]
+        [System.String]
+        $TenantGuid,
 
         [Parameter()]
         [Switch]
-        $SortProperties
+        $IncludeAllInformation,
+
+        [Parameter()]
+        [Switch]
+        $SplitByResource
     )
 
-    $crlf = "`r`n"
-    if ([System.String]::IsNullOrEmpty($TemplateName))
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    $OutputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
+    if ($SplitByResource -and [System.IO.Path]::GetExtension($OutputPath) -eq '.md')
     {
-        $TemplateName = 'Configuration Report'
+        $outputFolder = Split-Path -Path $OutputPath -Parent
+        Write-Warning -Message "A split Markdown report is written to a folder. Using '$outputFolder' instead of '$OutputPath'."
+        $OutputPath = $outputFolder
     }
 
-    Write-Output 'Generating Markdown report'
-    $fullMD = '# ' + $TemplateName + $crlf
-
-    $totalCount = $parsedContent.Count
-    $currentCount = 0
-    foreach ($resource in $parsedContent)
+    $resources = [System.Collections.Generic.List[System.Collections.IDictionary]]::new()
+    foreach ($resource in $ParsedContent)
     {
-        # Create a new table for each resource
-        $percentage = [math]::Round(($currentCount / $totalCount) * 100, 2)
-        Write-Progress -Activity 'Processing generated DSC Object' -Status ("{0:N2}% completed - $($resource.ResourceName)" -f $percentage) -PercentComplete $percentage
-
-        $fullMD += '## ' + $resource.ResourceInstanceName + $crlf
-        $fullMD += "|Item|Value|`r`n"
-        $fullMD += "|:---|:---|`r`n"
-        if ($SortProperties)
+        if ($resource -isnot [System.Collections.IDictionary])
         {
-            $properties = $resource.Keys | Sort-Object
-        }
-        else
-        {
-            $properties = $resource.Keys
+            throw "ParsedContent contains a $($resource.GetType().Name). Every entry has to be a dictionary."
         }
 
-        foreach ($property in $properties)
-        {
-            if ($property -ne 'ResourceName' `
-                -and $property -ne 'ApplicationId' `
-                -and $property -ne 'CertificateThumbprint' `
-                -and $property -ne 'TenantId')
-            {
-                # Create each row in the table
-                # This first bit is the property in column 1
-                $partMD += '|**' + $property + '**|'
-                $value = "`$null"
-                # And then the value in column 2
-                if ($null -ne $resource.$property)
-                {
-                    if ($resource.$property.GetType().Name -eq 'Object[]')
-                    {
-                        if ($resource.$property -and ($resource.$property[0].GetType().Name -eq 'Hashtable' -or
-                                $resource.$property[0].GetType().Name -eq 'OrderedDictionary'))
-                        {
-                            $value = ''
-                            foreach ($entry in $resource.$property)
-                            {
-                                foreach ($key in $entry.Keys)
-                                {
-                                    $value += "$key = $($entry.$key)<br>"
-                                }
-                                $value += '<br>'
-                            }
-                        }
-                        else
-                        {
-                            $temp = $resource.$property -join ','
-                            [array]$components = $temp.Split(',')
-                            if ($components.Length -gt 0 -and
-                                -not [System.String]::IsNullOrEmpty($temp))
-                            {
-                                $Value = ''
-                                foreach ($comp in $components)
-                                {
-                                    $value += "$comp<br>"
-                                }
-                                $value += '<br>'
-                            }
-                        }
-                    }
-                    else
-                    # strings are easy
-                    {
-                        if (-not [System.String]::IsNullOrEmpty($resource.$property))
-                        {
-                            $value = ($resource.$property).ToString() + '|'
-                        }
-                    }
-                }
-                $partMD += $value + $crlf
-            }
-        }
-
-        $fullMD += $partMD + $crlf
-        $partMD = ''
-
-        $currentCount++
+        $resources.Add($resource)
     }
 
-    if (-not [System.String]::IsNullOrEmpty($OutputPath))
-    {
-        Write-Output 'Saving Markdown report'
-        $fullMD | Out-File $OutputPath
-    }
+    $request = [Microsoft365DSC.Reporting.ReportRequest]::new()
+    $request.Resources = $resources
+    $request.OutputPath = $OutputPath
+    $request.ModuleRoot = Split-Path -Path $PSScriptRoot -Parent
+    $request.OrganizationName = $OrganizationName
+    $request.TenantGuid = $TenantGuid
+    $request.IncludeAllInformation = $IncludeAllInformation.IsPresent
+    $request.SplitByResource = $SplitByResource.IsPresent
+    $request.Warn = [System.Action[System.String]] { param($Message) Write-Warning -Message $Message }
 
-    Write-Output 'Completed generating Markdown report'
+    $null = [Microsoft365DSC.Reporting.ReportConverterRegistry]::Convert('Markdown', $request)
 }
 
 <#
@@ -925,7 +866,27 @@ function New-M365DSCConfigurationToCSV
     Specifies the source DSC configuration file path.
 
 .PARAMETER OutputPath
-    Specifies the destination report file path.
+    Specifies the destination report file path. A Markdown report that is split by resource is
+    written to a folder instead of a file.
+
+.PARAMETER IncludeAllInformation
+    Specifies that the report carries every property the resource supports, set or not, with its
+    attribute, data type, allowed values and description, and the permissions of the resource.
+    Without it, a report carries the name, data type and value of every property the
+    configuration sets. Only available when Type is Markdown.
+
+.PARAMETER SplitByResource
+    Specifies that every resource instance becomes its own document, in a folder per workload
+    below OutputPath. Without it, the whole configuration lands in a single document. Only
+    available when Type is Markdown.
+
+.PARAMETER OrganizationName
+    Specifies the tenant domain name that is replaced by a portable token in every value. Only
+    available when Type is Markdown.
+
+.PARAMETER TenantGuid
+    Specifies the tenant identifier that is replaced by a portable token in every value. Only
+    available when Type is Markdown.
 
 .EXAMPLE
     PS> New-M365DSCReportFromConfiguration -Type 'HTML' -ConfigurationPath 'C:\DSC\ConfigName.ps1' -OutputPath 'C:\Dsc\M365Report.html'
@@ -957,14 +918,33 @@ function New-M365DSCReportFromConfiguration
         [System.String]
         $OutputPath
     )
-    dynamicparam # parameter 'Delimiter' is only available when Type = 'CSV'
+
+    dynamicparam # 'Delimiter' requires Type = 'CSV', the other parameters require Type = 'Markdown'
     {
         $paramDictionary = [System.Management.Automation.RuntimeDefinedParameterDictionary]::new()
+        if ($Type -eq 'Markdown')
+        {
+            foreach ($markdownParam in @(
+                    @{ Name = 'IncludeAllInformation'; Type = [Switch] }
+                    @{ Name = 'SplitByResource'; Type = [Switch] }
+                    @{ Name = 'OrganizationName'; Type = [System.String] }
+                    @{ Name = 'TenantGuid'; Type = [System.String] }
+                ))
+            {
+                $markdownAttr = [System.Management.Automation.ParameterAttribute]::new()
+                $markdownAttr.Mandatory = $false
+                $markdownCollection = [System.Collections.ObjectModel.Collection[System.Attribute]]::new()
+                $markdownCollection.Add($markdownAttr)
+                $paramDictionary.Add($markdownParam.Name, [System.Management.Automation.RuntimeDefinedParameter]::New(
+                        $markdownParam.Name, $markdownParam.Type, $markdownCollection))
+            }
+        }
+
         if ($Type -eq 'CSV')
         {
-            $delimiterAttr = [System.Management.Automation.ParameterAttribute]::New()
+            $delimiterAttr = [System.Management.Automation.ParameterAttribute]::new()
             $delimiterAttr.Mandatory = $false
-            $attributeCollection = [System.Collections.ObjectModel.Collection[System.Attribute]]::New()
+            $attributeCollection = [System.Collections.ObjectModel.Collection[System.Attribute]]::new()
             $attributeCollection.Add($delimiterAttr)
             $delimiterParam = [System.Management.Automation.RuntimeDefinedParameter]::New('Delimiter', [System.String], $attributeCollection)
             $delimiterParam.Value = ';' # default value, comma makes a mess when importing a CSV-file in Excel
@@ -979,6 +959,15 @@ function New-M365DSCReportFromConfiguration
         if ($PSBoundParameters.ContainsKey('Delimiter'))
         {
             $Delimiter = $PSBoundParameters.Delimiter
+        }
+
+        $markdownParameters = @{ }
+        foreach ($markdownParam in @('IncludeAllInformation', 'SplitByResource', 'OrganizationName', 'TenantGuid'))
+        {
+            if ($PSBoundParameters.ContainsKey($markdownParam))
+            {
+                $markdownParameters.$markdownParam = $PSBoundParameters.$markdownParam
+            }
         }
     }
     process # required with DynamicParam
@@ -1009,7 +998,7 @@ function New-M365DSCReportFromConfiguration
                 'HTML'
                 {
                     $template = Get-Item $ConfigurationPath
-                    $templateName = $Template.Name.Split('.')[0]
+                    $templateName = $template.Name.Split('.')[0]
                     New-M365DSCConfigurationToHTML -ParsedContent $parsedContent -OutputPath $OutputPath -TemplateName $templateName
                 }
                 'JSON'
@@ -1018,9 +1007,7 @@ function New-M365DSCReportFromConfiguration
                 }
                 'Markdown'
                 {
-                    $template = Get-Item $ConfigurationPath
-                    $templateName = $Template.Name.Split('.')[0]
-                    New-M365DSCConfigurationToMarkdown -ParsedContent $parsedContent -OutputPath $OutputPath -TemplateName $templateName
+                    New-M365DSCConfigurationToMarkdown -ParsedContent $parsedContent -OutputPath $OutputPath @markdownParameters
                 }
                 'CSV'
                 {
@@ -1117,147 +1104,6 @@ function Get-M365DSCCIMInstanceKey
     }
 
     return $primaryKey
-}
-
-<#
-.DESCRIPTION
-    This function gets the key parameter for the specified resource
-
-.FUNCTIONALITY
-    Internal, Hidden
-#>
-function Get-M365DSCResourceKey
-{
-    [CmdletBinding()]
-    [OutputType([System.Object[]])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable]
-        $Resource,
-
-        [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable]
-        $DSCResourceInfo
-    )
-    $resourceInfo = $DSCResourceInfo[$Resource.ResourceName]
-    if ($null -eq $Script:MandatoryParametersCache)
-    {
-        $Script:MandatoryParametersCache = @{}
-    }
-
-    if ($Script:MandatoryParametersCache.ContainsKey($Resource.ResourceName))
-    {
-        return $Script:MandatoryParametersCache[$Resource.ResourceName]
-    }
-
-    [Array]$mandatoryParameters = $resourceInfo.Properties | Where-Object IsMandatory -EQ $true
-    if ($Resource.ContainsKey('IsSingleInstance') -and $mandatoryParameters.Name.Contains('IsSingleInstance'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('IsSingleInstance')
-        return @('IsSingleInstance')
-    }
-    elseif ($Resource.ContainsKey('DisplayName') -and $mandatoryParameters.Name.Contains('DisplayName') -and $Resource.ResourceName -in @('AADGroup', 'IntuneDeviceEnrollmentPlatformRestriction', 'TeamsChannel', 'TeamsTeam'))
-    {
-        if ($Resource.ResourceName -eq 'AADGroup' -and -not [System.String]::IsNullOrEmpty($Resource.MailNickname))
-        {
-            $Script:MandatoryParametersCache[$Resource.ResourceName] = @('DisplayName', 'MailNickname')
-            return ('DisplayName', 'MailNickname')
-        }
-        if ($Resource.ResourceName -eq 'IntuneDeviceEnrollmentPlatformRestriction' -and $Resource.Keys.Where({ $_ -like '*Restriction' }))
-        {
-            $Script:MandatoryParametersCache[$Resource.ResourceName] = @('ResourceInstanceName')
-            return @('ResourceInstanceName')
-        }
-        if ($Resource.ResourceName -eq 'TeamsChannel' -and -not [System.String]::IsNullOrEmpty($Resource.TeamName))
-        {
-            # Teams Channel displaynames are not tenant-unique (e.g. "General" is almost in every team), but should be unique per team
-            $Script:MandatoryParametersCache[$Resource.ResourceName] = @('TeamName', 'DisplayName')
-            return @('TeamName', 'DisplayName')
-        }
-        if ($Resource.ResourceName -eq 'TeamsTeam' -and -not [System.String]::IsNullOrEmpty($Resource.MailNickName))
-        {
-            # Teams names are not unique
-            $Script:MandatoryParametersCache[$Resource.ResourceName] = @('MailNickName', 'DisplayName')
-            return @('MailNickName', 'DisplayName')
-        }
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('DisplayName')
-        return @('DisplayName')
-    }
-    elseif ($Resource.ContainsKey('Identity') -and $mandatoryParameters.Name.Contains('Identity'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Identity')
-        return @('Identity')
-    }
-    elseif ($Resource.ContainsKey('Name') -and $mandatoryParameters.Name.Contains('Name'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Name')
-        return @('Name')
-    }
-    elseif ($Resource.ContainsKey('Url') -and $mandatoryParameters.Name.Contains('Url'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Url')
-        return @('Url')
-    }
-    elseif ($Resource.ContainsKey('Organization') -and $mandatoryParameters.Name.Contains('Organization'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Organization')
-        return @('Organization')
-    }
-    elseif ($Resource.ContainsKey('CDNType') -and $mandatoryParameters.Name.Contains('CDNType'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('CDNType')
-        return @('CDNType')
-    }
-    elseif ($Resource.ContainsKey('Action') -and $Resource.ResourceName -eq 'SCComplianceSearchAction' -and $mandatoryParameters.Name.Contains('Action'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('SearchName', 'Action')
-        return @('SearchName', 'Action')
-    }
-    elseif ($Resource.ContainsKey('Workload') -and $Resource.ResourceName -eq 'SCAuditConfigurationPolicy' -and $mandatoryParameters.Name.Contains('Workload'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Workload')
-        return @('Workload')
-    }
-    elseif ($Resource.ContainsKey('Title') -and $Resource.ResourceName -eq 'SPOSiteDesign' -and $mandatoryParameters.Name.Contains('Title'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Title')
-        return @('Title')
-    }
-    elseif ($Resource.ContainsKey('SiteDesignTitle') -and $mandatoryParameters.Name.Contains('SiteDesignTitle'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('SiteDesignTitle')
-        return @('SiteDesignTitle')
-    }
-    elseif ($Resource.ContainsKey('Key') -and $Resource.ResourceName -eq 'SPOStorageEntity' -and $mandatoryParameters.Name.Contains('Key'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Key')
-        return @('Key')
-    }
-    elseif ($Resource.ContainsKey('Usage') -and $mandatoryParameters.Name.Contains('Usage'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('Usage')
-        return @('Usage')
-    }
-    elseif ($Resource.ContainsKey('OrgWideAccount') -and $mandatoryParameters.Name.Contains('OrgWideAccount'))
-    {
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @('OrgWideAccount')
-        return @('OrgWideAccount')
-    }
-    elseif ($mandatoryParameters.Count -gt 0)
-    {
-        # return all mandatory parameters
-        if ($Resource.ResourceName -eq 'EXOTenantAllowBlockListItems')
-        {
-            $mandatoryParameters = $mandatoryParameters | Where-Object Name -NE 'Action' # Action is not a key property but still mandatory
-        }
-        $Script:MandatoryParametersCache[$Resource.ResourceName] = @($mandatoryParameters.Name)
-        return @($mandatoryParameters.Name)
-    }
-    elseif ($mandatoryParameters.Count -eq 0)
-    {
-        Write-Verbose -Message "No mandatory parameters found for $($Resource.ResourceName)"
-    }
 }
 
 <#
@@ -1421,11 +1267,6 @@ function New-M365DSCDeltaReport
     Confirm-M365DSCDependencies
     Initialize-M365DSCDllLoader -ErrorAction Stop
 
-    if ($null -eq (Get-Module -Name 'M365DSCCompare'))
-    {
-        Import-Module -Name "$PSScriptRoot\M365DSCCompare.psm1" -Force
-    }
-
     #region Telemetry
     $data = [System.Collections.Generic.Dictionary[[System.String], [System.Object]]]::new()
     $data.Add('Event', 'DeltaReport')
@@ -1439,14 +1280,7 @@ function New-M365DSCDeltaReport
 
     if ($null -eq $Script:DscResourceInfo)
     {
-        $currentModule = Get-Module -Name 'Microsoft365DSC'
-        $Script:DscResourceInfo = Get-DscResourceV2 -Module 'Microsoft365DSC' | Where-Object Version -EQ $currentModule.Version
-    }
-
-    $dscResourceInfoMap = @{}
-    foreach ($resource in $Script:DscResourceInfo)
-    {
-        $dscResourceInfoMap.Add($resource.Name, $resource)
+        $Script:DscResourceInfo = Get-M365DSCResourceSchema
     }
 
     Write-Verbose -Message 'Obtaining Delta between the source and destination configurations'
@@ -1608,165 +1442,62 @@ function New-M365DSCDeltaReport
             }
         }
 
-        $Delta = @()
-        foreach ($resource in $sourceReporting)
-        {
-            [array]$key = Get-M365DSCResourceKey -Resource $resource -DSCResourceInfo $dscResourceInfoMap
-            #Write-Progress -Activity "Scanning Source $Source...[$i/$($SourceObject.Count)]" -PercentComplete ($i / ($SourceObject.Count) * 100)
-            [array]$destinationResource = [Microsoft365DSC.Utilities.Utilities]::FilterHashtablesByResourceAndKey($desiredConfiguration, $resource.ResourceName, $key[0], $resource.($key[0]))
+        # The comparison runs on the schema the module ships, and resolves resource keys from it.
+        Initialize-M365DSCSchemaCache
 
-            $keyName = $key[0..1] -join '\'
-            $sourceKeyValue = $resource.($key[0])
-            # Filter on the second key
-            if ($key.Count -gt 1)
+        # PostProcessing callbacks are resource code, so they cannot come from the schema and are
+        # collected here for the resources the configurations mention.
+        $compareParameters = [System.Collections.Generic.Dictionary[System.String, Microsoft365DSC.Compare.ResourceCompareParameters]]::new()
+        foreach ($resourceName in @($sourceReporting.ResourceName) + @($desiredConfiguration.ResourceName) | Select-Object -Unique)
+        {
+            if ([System.String]::IsNullOrEmpty($resourceName) -or $compareParameters.ContainsKey($resourceName))
             {
-                [array]$destinationResource = $destinationResource.Where({ $_.($key[1]) -eq $resource.($key[1]) })
-                $sourceKeyValue = $resource.($key[0]), $resource.($key[1]) -join '\'
-            }
-            # Filter on the third key
-            if ($key.Count -gt 2)
-            {
-                [array]$destinationResource = $destinationResource.Where({ $_.($key[2]) -eq $resource.($key[2]) })
-                $sourceKeyValue = $resource.($key[0]), $resource.($key[1]), $resource.($key[2]) -join '\'
-            }
-            if ($null -eq $destinationResource -or $destinationResource.Count -eq 0)
-            {
-                $Delta += @{
-                    ResourceName         = $resource.ResourceName
-                    ResourceInstanceName = $resource.ResourceInstanceName
-                    Key                  = $keyName
-                    KeyValue             = $sourceKeyValue
-                    Properties           = @(@{
-                        ParameterName      = '_IsInConfiguration_'
-                        ValueInSource      = 'Present'
-                        ValueInDestination = 'Absent'
-                    })
-                }
                 continue
             }
 
-            # Get resource-specific comparison parameters from metadata
-            $resourceCompareParams = @{
-                ResourceName       = $resource.ResourceName
-                DesiredValues      = $destinationResource[0]
-                CurrentValues      = $resource
-                ExcludedProperties = $ExcludedProperties
-            }
-
-            # Check if this resource has custom comparison logic
-            $metadata = Get-M365DSCResourceComparisonMetadata -ResourceName $resource.ResourceName
-            if ($metadata.HasCustomComparison)
+            $schemaEntry = [Microsoft365DSC.Cache.CacheManager]::FilterLoadedCimClassesByName("MSFT_$resourceName")
+            if ($null -eq $schemaEntry -or -not $schemaEntry['HasPostProcessing'])
             {
-                Write-Verbose -Message "Resource $($resource.ResourceName) has custom comparison logic. Retrieving parameters..."
-                try
-                {
-                    $customCompareParams = Get-M365DSCResourceComparisonParameters -ResourceName $resource.ResourceName
-
-                    # Merge resource-specific ExcludedProperties with global ones
-                    if ($customCompareParams.ContainsKey('ExcludedProperties') -and $null -ne $customCompareParams.ExcludedProperties)
-                    {
-                        $resourceCompareParams.ExcludedProperties = $ExcludedProperties + $customCompareParams.ExcludedProperties | Select-Object -Unique
-                        Write-Verbose -Message "  Merged ExcludedProperties: $($resourceCompareParams.ExcludedProperties -join ', ')"
-                    }
-
-                    # Add IncludedProperties if specified
-                    if ($customCompareParams.ContainsKey('IncludedProperties') -and $null -ne $customCompareParams.IncludedProperties)
-                    {
-                        $resourceCompareParams.IncludedProperties = $customCompareParams.IncludedProperties
-                        Write-Verbose -Message "  IncludedProperties: $($customCompareParams.IncludedProperties -join ', ')"
-                    }
-
-                    # Add PostProcessing scriptblock if specified
-                    if ($customCompareParams.ContainsKey('PostProcessing') -and $null -ne $customCompareParams.PostProcessing)
-                    {
-                        $resourceCompareParams.PostProcessing = $customCompareParams.PostProcessing
-                        Write-Verbose -Message '  PostProcessing scriptblock applied'
-                    }
-
-                    # Add PostProcessingArgs if specified
-                    if ($customCompareParams.ContainsKey('PostProcessingArgs') -and $null -ne $customCompareParams.PostProcessingArgs)
-                    {
-                        $resourceCompareParams.PostProcessingArgs = $customCompareParams.PostProcessingArgs
-                        Write-Verbose -Message '  PostProcessingArgs applied'
-                    }
-                }
-                catch
-                {
-                    Write-Warning -Message "Failed to retrieve custom comparison parameters for $($resource.ResourceName): $_. Using default comparison."
-                }
+                continue
             }
 
-            $compareResult = Compare-M365DSCResourceState @resourceCompareParams
-
-            if (-not $compareResult -and $null -ne $Global:AllDrifts.DriftInfo -and $Global:AllDrifts.DriftInfo.Count -gt 0)
+            try
             {
-                foreach ($driftInfo in $Global:AllDrifts.DriftInfo)
-                {
-                    $propertiesValue = @{
-                        ParameterName      = $driftInfo.PropertyName
-                        ValueInSource      = $driftInfo.CurrentValue
-                        ValueInDestination = $driftInfo.DesiredValue
-                    }
-                    if ($driftInfo.ContainsKey('DeltaValue'))
-                    {
-                        $propertiesValue.Add('DeltaValue', $driftInfo.DeltaValue)
-                    }
-                    $Delta += @{
-                        ResourceName         = $resource.ResourceName
-                        ResourceInstanceName = $resource.ResourceInstanceName
-                        Key                  = $keyName
-                        KeyValue             = $sourceKeyValue
-                        Properties           = @($propertiesValue)
-                    }
-
-                    if ($destinationResource[0].ContainsKey("_metadata_$($driftInfo.PropertyName)"))
-                    {
-                        $Metadata = $destinationResource[0]."_metadata_$($driftInfo.PropertyName)"
-                        $Level = $Metadata.Split('|')[0].Replace('### ', '')
-                        $Information = $Metadata.Split('|')[1]
-                        $Delta[-1].Properties[0].Add('_Metadata_Level', $Level)
-                        $Delta[-1].Properties[0].Add('_Metadata_Info', $Information)
-                    }
-                }
-                $Global:AllDrifts.DriftInfo = @()
+                $customCompareParams = Get-M365DSCResourceComparisonParameters -ResourceName $resourceName
             }
+            catch
+            {
+                Write-Warning -Message "Failed to retrieve custom comparison parameters for $resourceName`: $_. Using default comparison."
+                continue
+            }
+
+            if ($null -eq $customCompareParams -or $customCompareParams.Count -eq 0)
+            {
+                continue
+            }
+
+            $parameters = [Microsoft365DSC.Compare.ResourceCompareParameters]::new()
+            $parameters.ExcludedProperties = [System.String[]] $customCompareParams.ExcludedProperties
+            $parameters.IncludedProperties = [System.String[]] $customCompareParams.IncludedProperties
+            $parameters.PostProcessing = $customCompareParams.PostProcessing
+
+            $existingArgs = @()
+            if ($null -ne $customCompareParams.PostProcessingArgs)
+            {
+                $existingArgs = @($customCompareParams.PostProcessingArgs)
+            }
+
+            $parameters.PostProcessingArgs = [System.Object[]] ($existingArgs + @{ IsReport = $true })
+            $compareParameters.Add($resourceName, $parameters)
         }
 
-        foreach ($resource in $desiredConfiguration)
-        {
-            [array]$key = Get-M365DSCResourceKey -Resource $resource -DSCResourceInfo $dscResourceInfoMap
-            $keyName = $key[0..1] -join '\'
-            $destinationKeyValue = $resource.($key[0])
-            [array]$sourceResource = [Microsoft365DSC.Utilities.Utilities]::FilterHashtablesByResourceAndKey($sourceReporting, $resource.ResourceName, $key[0], $resource.($key[0]))
-
-            # Filter on the second key
-            if ($key.Count -gt 1)
-            {
-                [array]$sourceResource = $sourceResource.Where({ $_.($key[1]) -eq $resource.($key[1]) })
-                $destinationKeyValue = $resource.($key[0]), $resource.($key[1]) -join '\'
-            }
-            # Filter on the third key
-            if ($key.Count -gt 2)
-            {
-                [array]$sourceResource = $sourceResource.Where({ $_.($key[2]) -eq $resource.($key[2]) })
-                $destinationKeyValue = $resource.($key[0]), $resource.($key[1]), $resource.($key[2]) -join '\'
-            }
-
-            if ($null -eq $sourceResource -or $sourceResource.Count -eq 0)
-            {
-                $Delta += @{
-                    ResourceName         = $resource.ResourceName
-                    ResourceInstanceName = $resource.ResourceInstanceName
-                    Key                  = $keyName
-                    KeyValue             = $destinationKeyValue
-                    Properties           = @(@{
-                        ParameterName      = '_IsInConfiguration_'
-                        ValueInSource      = 'Absent'
-                        ValueInDestination = 'Present'
-                    })
-                }
-            }
-        }
+        [Array]$Delta = [Microsoft365DSC.Compare.ConfigurationComparer]::Compare(
+            $sourceReporting,
+            $desiredConfiguration,
+            [Microsoft365DSC.Cache.CacheManager]::Schema,
+            $ExcludedProperties,
+            $ExcludedResources,
+            $compareParameters) | ForEach-Object -Process { $_.ToHashtable() }
     }
 
     if ($Type -eq 'HTML')
@@ -1867,6 +1598,17 @@ function New-M365DSCDeltaReport
                 [void]$sb.AppendLine("<h3>$($resource.ResourceName) - $($resource.Key) = $($resource.KeyValue)</h3>")
                 [void]$sb.AppendLine('</td>')
                 [void]$sb.AppendLine('</tr>')
+                $presence = $resource.Properties | Select-Object -First 1
+                if ($null -ne $presence._Metadata_Level)
+                {
+                    $emoticon = switch ($presence._Metadata_Level)
+                    {
+                        'L1' { '&#x1F7E5;' }
+                        'L2' { '&#x1F7E8;' }
+                        'L3' { '&#x1F7E6;' }
+                    }
+                    [void]$sb.AppendLine("<tr><td><span class='emoticon'>$emoticon</span> $($presence._Metadata_Info)</td></tr>")
+                }
                 [void]$sb.AppendLine('</table>')
                 return $sb.ToString()
             }
@@ -1896,39 +1638,25 @@ function New-M365DSCDeltaReport
         if ($resourcesInDrift.Count -gt 0)
         {
             # Combine resources instances together to make sure multiple drifts within the same resource don't appear as separate entries
-            $combinedResourcesInDrift = [System.Collections.Generic.List[System.Object]]::new()
+            $combinedResourcesInDrift = [System.Collections.Generic.LinkedList[System.Object]]::new()
+            $nodesByInstance = [System.Collections.Generic.Dictionary[System.String, System.Collections.Generic.LinkedListNode[System.Object]]]::new([System.StringComparer]::OrdinalIgnoreCase)
             foreach ($resource in $resourcesInDrift)
             {
-                $existingInstance = $combinedResourcesInDrift | `
-                    Where-Object -FilterScript {
-                        $_.ResourceName -eq $resource.ResourceName -and `
-                        $_.ResourceInstanceName -eq $resource.ResourceInstanceName
-                    }
-                if ($null -ne $existingInstance)
+                $instanceKey = "$($resource.ResourceName)|$($resource.ResourceInstanceName)"
+                $existingNode = $null
+                if ($nodesByInstance.TryGetValue($instanceKey, [ref] $existingNode))
                 {
-                    # Loop through all entries in the combinedResourcesInDrift and remove the entry for the current resource.
-                    $foundAt = -1
-                    for ($i = 0; $i -lt $combinedResourcesInDrift.Count; $i++)
-                    {
-                        if ($combinedResourcesInDrift[$i].ResourceName -eq $resource.ResourceName -and `
-                                $combinedResourcesInDrift[$i].ResourceInstanceName -eq $resource.ResourceInstanceName)
-                        {
-                            $foundAt = $i
-                            break
-                        }
-                    }
-                    $combinedResourcesInDrift = [System.Collections.Generic.List[System.Object]]$combinedResourcesInDrift
-                    $combinedResourcesInDrift.RemoveAt($foundAt)
-
+                    $existingInstance = $existingNode.Value
+                    $combinedResourcesInDrift.Remove($existingNode)
                     $existingInstance.Properties += $resource.Properties
-                    $combinedResourcesInDrift += $existingInstance
+                    $nodesByInstance[$instanceKey] = $combinedResourcesInDrift.AddLast($existingInstance)
                 }
                 else
                 {
-                    $combinedResourcesInDrift += $resource
+                    $nodesByInstance[$instanceKey] = $combinedResourcesInDrift.AddLast($resource)
                 }
             }
-            $resourcesInDrift = $combinedResourcesInDrift
+            $resourcesInDrift = @($combinedResourcesInDrift)
 
             [void]$reportSB.AppendLine('<br /><hr /><br />')
             [void]$reportSB.AppendLine("<a id='Drift'></a><h2>Resources with differences</h2>")

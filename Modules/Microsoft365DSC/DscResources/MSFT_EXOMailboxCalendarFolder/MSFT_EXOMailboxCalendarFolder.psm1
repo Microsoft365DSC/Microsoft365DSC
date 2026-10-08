@@ -1,466 +1,274 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOMailboxCalendarFolder'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOMailboxCalendarFolder : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Identity parameter specifies the calendar folder that you want to modify.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [ValidateSet('AvailabilityOnly', 'LimitedDetails', 'FullDetails')]
-        [System.String]
-        $DetailLevel = 'AvailabilityOnly',
+    [DscProperty()]
+    [System.ComponentModel.Description('The DetailLevel parameter specifies the level of calendar detail that''s published and available to anonymous users.')]
+    [ValidateSet('AvailabilityOnly', 'LimitedDetails', 'FullDetails')]
+    [System.String] $DetailLevel
 
-        [Parameter()]
-        [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
-        [System.String]
-        $PublishDateRangeFrom = 'ThreeMonths',
+    [DscProperty()]
+    [System.ComponentModel.Description('The PublishDateRangeFrom parameter specifies the start date of calendar information to publish (past information).')]
+    [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
+    [System.String] $PublishDateRangeFrom
 
-        [Parameter()]
-        [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
-        [System.String]
-        $PublishDateRangeTo,
+    [DscProperty()]
+    [System.ComponentModel.Description('The PublishDateRangeTo parameter specifies the end date of calendar information to publish (future information).')]
+    [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
+    [System.String] $PublishDateRangeTo
 
-        [Parameter()]
-        [System.Boolean]
-        $PublishEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The PublishEnabled parameter specifies whether to publish the specified calendar information.')]
+    [System.Nullable[System.Boolean]] $PublishEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $SearchableUrlEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SearchableUrlEnabled parameter specifies whether the published calendar URL is discoverable on the web.')]
+    [System.Nullable[System.Boolean]] $SearchableUrlEnabled
 
-        [Parameter()]
-        [System.String]
-        $SharedCalendarSyncStartDate,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SharedCalendarSyncStartDate parameter specifies the limit for past events in the shared calendar that are visible to delegates. A copy of the shared calendar within the specified date range is stored in the delegate''s mailbox.')]
+    [System.String] $SharedCalendarSyncStartDate
 
-        [Parameter()]
-        [ValidateSet('Present')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether or not the instance exist. This resource cannot be removed and the value must be set to ''Ensure''.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of Mailbox Calendar Folder with Identity {$Identity}"
-
-    try
+    [EXOMailboxCalendarFolder] Get()
     {
-        $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [EXOMailboxCalendarFolder]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration of Mailbox Calendar Folder with Identity {$($this.Identity)}"
+
+        try
+        {
+            $null = $this.Connect('ExchangeOnline')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullReturn = $this.GetBoundParameters()
+            $nullReturn.Ensure = 'Absent'
+
+            $IdentityParts = $this.Identity.Split(':')
+            $userInfo = @{
+                UserPrincipalName = $IdentityParts[0]
+            }
+            if ($IdentityParts[0] -notlike '*@*')
+            {
+                $userInfo = Get-User -Identity $IdentityParts[0]
+            }
+            $IdentityValue = $userInfo.UserPrincipalName + ':' + $IdentityParts[1]
+            $folder = Get-MailboxCalendarFolder -Identity $this.Identity -ErrorAction SilentlyContinue
+
+            if ($null -eq $folder)
+            {
+                return $this.AsResult($nullReturn)
+            }
+
+            $result = @{
+                Identity                    = $IdentityValue
+                DetailLevel                 = $folder.DetailLevel
+                PublishDateRangeFrom        = $folder.PublishDateRangeFrom
+                PublishDateRangeTo          = $folder.PublishDateRangeTo
+                PublishEnabled              = [Boolean]$folder.PublishEnabled
+                SearchableUrlEnabled        = [Boolean]$folder.SearchableUrlEnabled
+                SharedCalendarSyncStartDate = $folder.SharedCalendarSyncStartDate
+                Ensure                      = 'Present'
+                Credential                  = $this.Credential
+                ApplicationId               = $this.ApplicationId
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                TenantId                    = $this.TenantId
+                AccessTokens                = $this.AccessTokens
+            }
+
+            Write-Verbose -Message "Found Calendar Folder for {$($this.Identity)}"
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of Calendar Folder for {$($this.Identity)}"
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $nullReturn = $PSBoundParameters
-        $nullReturn.Ensure = 'Absent'
+        $null = $this.Get().ToHashtable()
+        $updateParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
-        $IdentityParts = $Identity.Split(':')
-        $userInfo = @{
-            UserPrincipalName = $IdentityParts[0]
-        }
-        if ($IdentityParts[0] -notlike '*@*')
+        # The SharedCalendarSyncStartDate needs to be used by itself in a subsequent call.
+        if ($this.GetBoundParameters().ContainsKey('SharedCalendarSyncStartDate'))
         {
-            $userInfo = Get-User -Identity $IdentityParts[0]
+            Write-Verbose -Message "Updating the Mailbox Calendar Folder SharedCalendarSyncStartDate property for {$($this.Identity)}"
+            Set-MailboxCalendarFolder -Identity $this.Identity -SharedCalendarSyncStartDate $this.SharedCalendarSyncStartDate
+            $updateParameters.Remove('SharedCalendarSyncStartDate') | Out-Null
         }
-        $IdentityValue = $userInfo.UserPrincipalName + ':' + $IdentityParts[1]
-        $folder = Get-MailboxCalendarFolder -Identity $Identity -ErrorAction SilentlyContinue
+        Write-Verbose -Message "Updating the Mailbox Calendar Folder for {$($this.Identity)}"
+        Set-MailboxCalendarFolder @updateParameters
+    }
 
-        if ($null -eq $folder)
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            return $nullReturn
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        $result = @{
-            Identity                    = $IdentityValue
-            DetailLevel                 = $folder.DetailLevel
-            PublishDateRangeFrom        = $folder.PublishDateRangeFrom
-            PublishDateRangeTo          = $folder.PublishDateRangeTo
-            PublishEnabled              = [Boolean]$folder.PublishEnabled
-            SearchableUrlEnabled        = [Boolean]$folder.SearchableUrlEnabled
-            SharedCalendarSyncStartDate = $folder.SharedCalendarSyncStartDate
-            Ensure                      = 'Present'
-            Credential                  = $Credential
-            ApplicationId               = $ApplicationId
-            CertificateThumbprint       = $CertificateThumbprint
-            CertificatePath             = $CertificatePath
-            CertificatePassword         = $CertificatePassword
-            ManagedIdentity             = $ManagedIdentity.IsPresent
-            TenantId                    = $TenantId
-            AccessTokens                = $AccessTokens
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $dscContent = [System.Text.StringBuilder]::new()
+            [array]$mailboxes = Get-M365DSCExportCachedCollection -Collection 'exoMailboxes'
+
+            if ($null -eq $mailboxes)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                return ''
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+
+            $i = 1
+            foreach ($mailbox in $mailboxes)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                # Name of calendar folder depends on the language of the mailbox
+                $calendarFolderName = (Get-MailboxFolderStatistics -Identity $($mailbox.UserPrincipalName) -FolderScope Calendar | Where-Object { $_.FolderType -eq 'Calendar' }).Name
+                $folderPath = $mailbox.UserPrincipalName + ':\' + $calendarFolderName
+                Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $($folderPath)" -DeferWrite
+                $Params = @{
+                    Identity              = $folderPath
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    CertificatePath       = $this.CertificatePath
+                    AccessTokens          = $this.AccessTokens
+                }
+                $Results = $this.GetForExport($Params)
+                if ($Results.SharedCalendarSyncStartDate -eq '01/02/0001 00:00:00')
+                {
+                    $Results.Remove('SharedCalendarSyncStartDate') | Out-Null
+                }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXOMailboxCalendarFolder] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOMailboxCalendarFolder])
+        {
+            return $Values
         }
 
-        Write-Verbose -Message "Found Calendar Folder for {$Identity}"
+        $result = [EXOMailboxCalendarFolder]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [ValidateSet('AvailabilityOnly', 'LimitedDetails', 'FullDetails')]
-        [System.String]
-        $DetailLevel = 'AvailabilityOnly',
-
-        [Parameter()]
-        [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
-        [System.String]
-        $PublishDateRangeFrom = 'ThreeMonths',
-
-        [Parameter()]
-        [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
-        [System.String]
-        $PublishDateRangeTo,
-
-        [Parameter()]
-        [System.Boolean]
-        $PublishEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SearchableUrlEnabled,
-
-        [Parameter()]
-        [System.String]
-        $SharedCalendarSyncStartDate,
-
-        [Parameter()]
-        [ValidateSet('Present')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Calendar Folder for {$Identity}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = Get-TargetResource @PSBoundParameters
-    $UpdateParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    # The SharedCalendarSyncStartDate needs to be used by itself in a subsequent call.
-    if ($PSBoundParameters.ContainsKey('SharedCalendarSyncStartDate'))
-    {
-        Write-Verbose -Message "Updating the Mailbox Calendar Folder SharedCalendarSyncStartDate property for {$Identity}"
-        Set-MailboxCalendarFolder -Identity $Identity -SharedCalendarSyncStartDate $SharedCalendarSyncStartDate
-        $UpdateParameters.Remove('SharedCalendarSyncStartDate') | Out-Null
-    }
-    Write-Verbose -Message "Updating the Mailbox Calendar Folder for {$Identity}"
-    Set-MailboxCalendarFolder @UpdateParameters
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [ValidateSet('AvailabilityOnly', 'LimitedDetails', 'FullDetails')]
-        [System.String]
-        $DetailLevel = 'AvailabilityOnly',
-
-        [Parameter()]
-        [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
-        [System.String]
-        $PublishDateRangeFrom = 'ThreeMonths',
-
-        [Parameter()]
-        [ValidateSet('OneDay', 'ThreeDays', 'OneWeek', 'OneMonth', 'ThreeMonths', 'SixMonths', 'OneYear')]
-        [System.String]
-        $PublishDateRangeTo,
-
-        [Parameter()]
-        [System.Boolean]
-        $PublishEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $SearchableUrlEnabled,
-
-        [Parameter()]
-        [System.String]
-        $SharedCalendarSyncStartDate,
-
-        [Parameter()]
-        [ValidateSet('Present')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $dscContent = [System.Text.StringBuilder]::new()
-        $mailboxes = Get-Mailbox -ResultSize 'Unlimited' -ErrorAction Stop
-
-        if ($null -eq $mailboxes)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            return ''
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-
-        $i = 1
-        foreach ($mailbox in $mailboxes)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            # Name of calendar folder depends on the language of the mailbox
-            $calendarFolderName = (Get-MailboxFolderStatistics -Identity $($mailbox.UserPrincipalName) -FolderScope Calendar | Where-Object { $_.FolderType -eq 'Calendar' }).Name
-            $folderPath = $mailbox.UserPrincipalName + ':\' + $calendarFolderName
-            Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $($folderPath)" -DeferWrite
-            $Params = @{
-                Identity              = $folderPath
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                CertificatePath       = $CertificatePath
-                AccessTokens          = $AccessTokens
-            }
-            $Results = Get-TargetResource @Params
-            if ($Results.SharedCalendarSyncStartDate -eq '01/02/0001 00:00:00')
-            {
-                $Results.Remove('SharedCalendarSyncStartDate') | Out-Null
-            }
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

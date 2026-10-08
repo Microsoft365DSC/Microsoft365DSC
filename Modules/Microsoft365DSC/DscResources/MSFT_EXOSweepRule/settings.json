@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOSweepRule",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "SweepRule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Use this resource to create Sweep rules in mailboxes. Sweep rules run at regular intervals to help keep your Inbox clean.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Configuration"
         ],
@@ -33,7 +44,7 @@
           "User Options"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "View-Only Organization Management"
         ],
@@ -48,5 +59,18 @@
     "Global",
     "USGov"
   ],
-  "mode": "Data"
+  "mode": "Data",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-Mailbox",
+        "Get-SweepRule",
+        "Get-User",
+        "New-SweepRule",
+        "Remove-SweepRule",
+        "Set-SweepRule"
+      ]
+    }
+  ]
 }

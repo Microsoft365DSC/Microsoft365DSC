@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,29 +19,36 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        DefenderDeviceAuthenticatedScanDefinition "DefenderDeviceAuthenticatedScanDefinition-MyScan"
+        DefenderDeviceAuthenticatedScanDefinition "DefenderDeviceAuthenticatedScanDefinition-Example"
         {
-            ApplicationId            = $ApplicationId;
-            CertificateThumbprint    = $CertificateThumbprint;
             Ensure                   = "Present";
             IntervalInHours          = 1;
             IsActive                 = $True;
-            Name                     = "MyScan";
+            Name                     = "Datacentre Network Scan";
             ScanAuthenticationParams = MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams{
-                Type = 'NoAuthNoPriv'
-                DataType = '#microsoft.windowsDefenderATP.api.SnmpAuthParams'
+                Type         = "AuthPriv"
+                DataType     = "#microsoft.windowsDefenderATP.api.SnmpAuthParams"
+                Username     = "svc-network-scanner"
+                AuthProtocol = "SHA1"
+                AuthPassword = "<snmp-auth-password>"
+                PrivProtocol = "AES"
+                PrivPassword = "<snmp-priv-password>"
             };
             ScannerAgent             = MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent{
-                machineId = '55c636a37ff1a21a3241437eb6ce15881xxxxxx'
-                machineName = 'WIN-XXXXXXXXXX'
-                id = 'c819dc6d-f9fe-4d05-8022-88a34766442d_55c636a37ff1a21a3241437eb6ce15881xxxxxxx'
+                machineId   = "<defender-machine-id>"
+                machineName = "CONTOSO-SCAN01"
+                id          = "<defender-scan-agent-id>"
             };
             ScanType                 = "Network";
-            Target                   = "172.1.12.1";
+            Target                   = "10.20.30.0/24";
+            ApplicationId            = $ApplicationId;
             TenantId                 = $TenantId;
+            CertificateThumbprint    = $CertificateThumbprint;
         }
     }
 }

@@ -5,25 +5,32 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCAutoSensitivityLabelPolicy 'TestPolicy'
+        SCAutoSensitivityLabelPolicy 'SCAutoSensitivityLabelPolicy-Example'
         {
-            ApplySensitivityLabel           = "TopSecret";
-            Comment                         = "This is a test";
-            Credential                      = $Credscredential;
-            Ensure                          = "Absent";
-            ExchangeLocation                = @("All");
-            Mode                            = "Enable";
-            Name                            = "TestPolicy";
-            Priority                        = 0;
+            Ensure                = "Absent";
+            Name                  = "Highly Confidential Sales Auto-labeling";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

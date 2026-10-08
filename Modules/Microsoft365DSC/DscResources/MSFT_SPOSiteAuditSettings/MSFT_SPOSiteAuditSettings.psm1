@@ -1,436 +1,276 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SPOSiteAuditSettings'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SPOSiteAuditSettings : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Url,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('URL of the site collection to configure.')]
+    [System.String] $Url
 
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('All', 'None')]
-        [System.String]
-        $AuditFlags,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Audit flag for the site collection. Can be ''All'' or ''None''.')]
+    [ValidateSet('All', 'None')]
+    [System.String] $AuditFlags
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the account to authenticate with.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting SPOSiteAuditSettings for {$Url}"
-
-    try
+    [SPOSiteAuditSettings] Get()
     {
-        $null = New-M365DSCConnection -Workload 'PNP' `
-            -InboundParameters $PSBoundParameters `
-            -Url $Url -ErrorAction SilentlyContinue
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $auditSettings = Get-PnPAuditing -ErrorAction Stop
-        $auditFlag = $auditSettings.AuditFlags
-        if ($null -eq $auditFlag)
+        if ($this.RequiresPowerShellCore())
         {
-            $auditFlag = 'None'
+            $remote = [SPOSiteAuditSettings]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
-        return @{
-            Url                   = $Url
-            AuditFlags            = $auditFlag
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
 
-        throw
-    }
-}
+        Write-Verbose -Message "Getting SPOSiteAuditSettings for {$($this.Url)}"
 
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Url,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('All', 'None')]
-        [System.String]
-        $AuditFlags,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting Audit settings for {$Url}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'PNP' `
-        -InboundParameters $PSBoundParameters `
-        -Url $Url
-
-    if ($AuditFlags -eq 'All')
-    {
-        Set-PnPAuditing -EnableAll
-    }
-    else
-    {
-        Set-PnPAuditing -DisableAll
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Url,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('All', 'None')]
-        [System.String]
-        $AuditFlags,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    try
-    {
-        $ConnectionMode = New-M365DSCConnection -Workload 'PNP' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $sites = Get-PnPTenantSite -ErrorAction Stop
-
-        $i = 1
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-
-        $principal = '' # Principal represents the "NetBios" name of the tenant (e.g. the M365DSC part of M365DSC.onmicrosoft.com)
-        if ($null -ne $Credential -and $Credential.UserName.Contains('@'))
+        try
         {
-            $organization = $Credential.UserName.Split('@')[1]
+            $null = $this.Connect('PNP', $this.Url)
 
-            if ($organization.IndexOf('.') -gt 0)
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $auditSettings = Get-PnPAuditing -ErrorAction Stop
+            $auditFlag = $auditSettings.AuditFlags
+            if ($null -eq $auditFlag)
             {
-                $principal = $organization.Split('.')[0]
+                $auditFlag = 'None'
             }
+            return $this.AsResult(@{
+                Url                   = $this.Url
+                AuditFlags            = $auditFlag
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            })
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting Audit settings for {$($this.Url)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $null = $this.Connect('PNP', $this.Url)
+
+        if ($this.AuditFlags -eq 'All')
+        {
+            Set-PnPAuditing -EnableAll
         }
         else
         {
-            $organization = $TenantId
-            $principal = $organization.Split('.')[0]
+            Set-PnPAuditing -DisableAll
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        $dscContent = [System.Text.StringBuilder]::new()
-        foreach ($site in $sites)
+        try
         {
-            try
+            $ConnectionMode = $this.Connect('PNP')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Export')
+            #endregion
+
+            $sites = Get-PnPTenantSite -ErrorAction Stop
+
+            $i = 1
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+
+            $principal = '' # Principal represents the "NetBios" name of the tenant (e.g. the M365DSC part of M365DSC.onmicrosoft.com)
+            if ($null -ne $this.Credential -and $this.Credential.UserName.Contains('@'))
             {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                $organization = $this.Credential.UserName.Split('@')[1]
+
+                if ($organization.IndexOf('.') -gt 0)
                 {
-                    $Global:M365DSCExportResourceInstancesCount++
+                    $principal = $organization.Split('.')[0]
                 }
+            }
+            else
+            {
+                $organization = $this.TenantId
+                $principal = $organization.Split('.')[0]
+            }
 
-                Write-M365DSCHost -Message "    [$i/$($sites.Length)] Audit Settings for {$($site.Url)}" -DeferWrite
-
-                $Params = @{
-                    Url                   = $site.Url
-                    AuditFlags            = 'None'
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    ApplicationSecret     = $ApplicationSecret
-                    CertificatePassword   = $CertificatePassword
-                    CertificatePath       = $CertificatePath
-                    CertificateThumbprint = $CertificateThumbprint
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    Credential            = $Credential
-                    AccessTokens          = $AccessTokens
-                }
-
-                $Results = Get-TargetResource @Params
-                if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
+            $dscContent = [System.Text.StringBuilder]::new()
+            foreach ($site in $sites)
+            {
+                try
                 {
-                    if ([System.String]::IsNullOrEmpty($Results.AuditFlags))
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
                     {
-                        $Results.AuditFlags = 'None'
+                        $Global:M365DSCExportResourceInstancesCount++
                     }
-                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                        -ConnectionMode $ConnectionMode `
-                        -ModulePath $PSScriptRoot `
-                        -Results $Results `
-                        -Credential $Credential
 
-                    # Make the Url parameterized
-                    if ($currentDSCBlock.ToLower().Contains($currentDSCBlock.ToLower()) -or `
-                            $currentDSCBlock.ToLower().Contains($currentDSCBlock.ToLower()))
+                    Write-M365DSCHost -Message "    [$i/$($sites.Length)] Audit Settings for {$($site.Url)}" -DeferWrite
+
+                    $Params = @{
+                        Url                   = $site.Url
+                        AuditFlags            = 'None'
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        ApplicationSecret     = $this.ApplicationSecret
+                        CertificatePassword   = $this.CertificatePassword
+                        CertificatePath       = $this.CertificatePath
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        ManagedIdentity       = $this.ManagedIdentity
+                        Credential            = $this.Credential
+                        AccessTokens          = $this.AccessTokens
+                    }
+
+                    $Results = $this.GetForExport($Params)
+                    if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
                     {
-                        $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('https://' + $principal + '.sharepoint.com/'), "https://`$(`$OrganizationName.Split('.')[0]).sharepoint.com/"
-                    }
-                    [void]$dscContent.Append($currentDSCBlock)
-                    Save-M365DSCPartialExport -Content $currentDSCBlock `
-                        -FileName $Global:PartialExportFileName
+                        if ([System.String]::IsNullOrEmpty($Results.AuditFlags))
+                        {
+                            $Results.AuditFlags = 'None'
+                        }
+                        $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                            -ConnectionMode $ConnectionMode `
+                            -ModulePath $this.GetModulePath() `
+                            -Results $Results `
+                            -Credential $this.Credential
 
-                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                        # Make the Url parameterized
+                        if ($currentDSCBlock.ToLower().Contains($currentDSCBlock.ToLower()) -or `
+                                $currentDSCBlock.ToLower().Contains($currentDSCBlock.ToLower()))
+                        {
+                            $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('https://' + $principal + '.sharepoint.com/'), "https://`$(`$OrganizationName.Split('.')[0]).sharepoint.com/"
+                        }
+                        [void]$dscContent.Append($currentDSCBlock)
+                        Save-M365DSCPartialExport -Content $currentDSCBlock `
+                            -FileName $Global:PartialExportFileName
+
+                        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    }
+                    else
+                    {
+                        Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+                    }
                 }
-                else
+                catch
                 {
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+
+                    $this.LogError($_, 'Error during Export:')
+
+                    Write-Verbose "There was an issue retrieving Audit Settings for $($this.Url)"
                 }
+                $i++
             }
-            catch
+
+            if ($i -eq 1)
             {
-                Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
-
-                New-M365DSCLogEntry -Message 'Error during Export:' `
-                    -Exception $_ `
-                    -Source $($MyInvocation.MyCommand.Source) `
-                    -TenantId $TenantId `
-                    -Credential $Credential
-
-                Write-Verbose "There was an issue retrieving Audit Settings for $Url"
+                Write-M365DSCHost -Message ''
             }
-            $i++
-        }
 
-        if ($i -eq 1)
+            return $dscContent.ToString()
+        }
+        catch
         {
-            Write-M365DSCHost -Message ''
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            ExcludedProperties = @('Url')
+        }
+    }
+
+    hidden [SPOSiteAuditSettings] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SPOSiteAuditSettings])
+        {
+            return $Values
         }
 
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        $result = [SPOSiteAuditSettings]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
 
-        throw
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('Url')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

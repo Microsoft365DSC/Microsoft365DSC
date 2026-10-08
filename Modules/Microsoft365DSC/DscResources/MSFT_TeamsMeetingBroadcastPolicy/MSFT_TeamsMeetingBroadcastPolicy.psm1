@@ -1,437 +1,259 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_TeamsMeetingBroadcastPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class TeamsMeetingBroadcastPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The identifier of the Teams Meeting Broadcast Policy.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowBroadcastScheduling,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether this user can create broadcast events in Teams. This setting impacts broadcasts that use both self-service and external encoder production methods.')]
+    [System.Nullable[System.Boolean]] $AllowBroadcastScheduling
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowBroadcastTranscription,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether real-time transcription and translation can be enabled in the broadcast event. Note: this setting is applicable to broadcast events that use Teams Meeting production only and does not apply when external encoder is used as production method.')]
+    [System.Nullable[System.Boolean]] $AllowBroadcastTranscription
 
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'EveryoneInCompany', 'InvitedUsersInCompany', 'EveryoneInCompanyAndExternal', 'InvitedUsersInCompanyAndExternal')]
-        $BroadcastAttendeeVisibilityMode,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the attendee visibility mode of the broadcast events created by this user.  This setting controls who can watch the broadcast event - e.g. anyone can watch this event including anonymous users or only authenticated users in my company can watch the event.  Note: this setting is applicable to broadcast events that use Teams Meeting production only and does not apply when external encoder is used as production method.')]
+    [ValidateSet('Everyone', 'EveryoneInCompany', 'InvitedUsersInCompany', 'EveryoneInCompanyAndExternal', 'InvitedUsersInCompanyAndExternal')]
+    [System.String] $BroadcastAttendeeVisibilityMode
 
-        [Parameter()]
-        [System.String]
-        [ValidateSet('AlwaysEnabled', 'AlwaysDisabled', 'UserOverride')]
-        $BroadcastRecordingMode,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether broadcast events created by this user are always recorded, never recorded or user can choose whether to record or not. Note: this setting is applicable to broadcast events that use Teams Meeting production only and does not apply when external encoder is used as production method.')]
+    [ValidateSet('AlwaysEnabled', 'AlwaysDisabled', 'UserOverride')]
+    [System.String] $BroadcastRecordingMode
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the Policy exists, absent ensures it is removed')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Teams Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of Teams Meeting Broadcast Policy {$Identity}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter = '*'
 
-    try
+    [TeamsMeetingBroadcastPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        $nullReturn = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $config = Get-CsTeamsMeetingBroadcastPolicy -Identity $Identity `
-                -ErrorAction SilentlyContinue
-        }
-        else
-        {
-            $config = $Script:exportedInstance
+            $remote = [TeamsMeetingBroadcastPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
 
-        if ($null -ne $config)
+        Write-Verbose -Message "Getting configuration of Teams Meeting Broadcast Policy {$($this.Identity)}"
+
+        try
         {
-            return @{
-                Identity                        = $Identity
-                AllowBroadcastScheduling        = $config.AllowBroadcastScheduling
-                AllowBroadcastTranscription     = $config.AllowBroadcastTranscription
-                BroadcastAttendeeVisibilityMode = $config.BroadcastAttendeeVisibilityMode
-                BroadcastRecordingMode          = $config.BroadcastRecordingMode
-                Ensure                          = 'Present'
-                Credential                      = $Credential
-                ApplicationId                   = $ApplicationId
-                TenantId                        = $TenantId
-                CertificateThumbprint           = $CertificateThumbprint
-                ManagedIdentity                 = $ManagedIdentity.IsPresent
-                AccessTokens                    = $AccessTokens
-            }
-        }
-        return $nullReturn
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowBroadcastScheduling,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowBroadcastTranscription,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'EveryoneInCompany', 'InvitedUsersInCompany', 'EveryoneInCompanyAndExternal', 'InvitedUsersInCompanyAndExternal')]
-        $BroadcastAttendeeVisibilityMode,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('AlwaysEnabled', 'AlwaysDisabled', 'UserOverride')]
-        $BroadcastRecordingMode,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Teams Meeting Broadcast Policy {$Identity}"
-
-    # Check that at least one optional parameter is specified
-    $inputValues = @()
-    foreach ($item in $PSBoundParameters.Keys)
-    {
-        if (-not [System.String]::IsNullOrEmpty($PSBoundParameters.$item) -and $item -ne 'Credential' `
-                -and $item -ne 'Identity' -and $item -ne 'Ensure')
-        {
-            $inputValues += $item
-        }
-    }
-
-    if ($inputValues.Count -eq 0)
-    {
-        throw 'You need to specify at least one optional parameter for the Set-TargetResource function' + `
-            " of the [TeamsMeetingBroadcastPolicy] instance {$Identity}"
-    }
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentValues = Get-TargetResource @PSBoundParameters
-    $SetParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentValues.Ensure -eq 'Absent')
-    {
-        New-CsTeamsMeetingBroadcastPolicy @SetParams
-    }
-    elseif ($Ensure -eq 'Present' -and $currentValues.Ensure -eq 'Present')
-    {
-        Set-CsTeamsMeetingBroadcastPolicy @SetParams
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentValues.Ensure -eq 'Present')
-    {
-        Remove-CsTeamsMeetingBroadcastPolicy -Identity $Identity
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowBroadcastScheduling,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowBroadcastTranscription,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'EveryoneInCompany', 'InvitedUsersInCompany', 'EveryoneInCompanyAndExternal', 'InvitedUsersInCompanyAndExternal')]
-        $BroadcastAttendeeVisibilityMode,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('AlwaysEnabled', 'AlwaysDisabled', 'UserOverride')]
-        $BroadcastRecordingMode,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter = "*",
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$policies = Get-CsTeamsMeetingBroadcastPolicy -Filter $Filter -ErrorAction Stop
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        foreach ($policy in $policies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $null = $this.Connect('MicrosoftTeams')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $config = Get-CsTeamsMeetingBroadcastPolicy -Identity $this.Identity `
+                    -ErrorAction SilentlyContinue
+            }
+            else
+            {
+                $config = $this.ExportedInstance
             }
 
-            $params = @{
-                Identity              = $policy.Identity
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            if ($null -ne $config)
+            {
+                return $this.AsResult(@{
+                    Identity                        = $this.Identity
+                    AllowBroadcastScheduling        = $config.AllowBroadcastScheduling
+                    AllowBroadcastTranscription     = $config.AllowBroadcastTranscription
+                    BroadcastAttendeeVisibilityMode = $config.BroadcastAttendeeVisibilityMode
+                    BroadcastRecordingMode          = $config.BroadcastRecordingMode
+                    Ensure                          = 'Present'
+                    Credential                      = $this.Credential
+                    ApplicationId                   = $this.ApplicationId
+                    TenantId                        = $this.TenantId
+                    CertificateThumbprint           = $this.CertificateThumbprint
+                    ManagedIdentity                 = $this.ManagedIdentity
+                    AccessTokens                    = $this.AccessTokens
+                })
             }
-            Write-M365DSCHost -Message "    |---[$i/$($policies.Length)] $($policy.Identity)" -DeferWrite
-
-            $Script:exportedInstance = $policy
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($nullReturn)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
 
-        throw
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of Teams Meeting Broadcast Policy {$($this.Identity)}"
+
+        # Check that at least one optional parameter is specified
+        $inputValues = @()
+        foreach ($item in $this.GetBoundParameters().Keys)
+        {
+            if (-not [System.String]::IsNullOrEmpty($this.GetBoundParameters().$item) -and $item -ne 'Credential' `
+                    -and $item -ne 'Identity' -and $item -ne 'Ensure')
+            {
+                $inputValues += $item
+            }
+        }
+
+        if ($inputValues.Count -eq 0)
+        {
+            throw "You need to specify at least one optional parameter for the [TeamsMeetingBroadcastPolicy] instance {$($this.Identity)}"
+        }
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentValues = $this.Get().ToHashtable()
+        $SetParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present' -and $currentValues.Ensure -eq 'Absent')
+        {
+            New-CsTeamsMeetingBroadcastPolicy @SetParams
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentValues.Ensure -eq 'Present')
+        {
+            Set-CsTeamsMeetingBroadcastPolicy @SetParams
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentValues.Ensure -eq 'Present')
+        {
+            Remove-CsTeamsMeetingBroadcastPolicy -Identity $this.Identity
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftTeams')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$policies = Get-CsTeamsMeetingBroadcastPolicy -Filter $this.Filter -ErrorAction Stop
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            foreach ($policy in $policies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $params = @{
+                    Identity              = $policy.Identity
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($policies.Length)] $($policy.Identity)" -DeferWrite
+
+                $this.ExportedInstance = $policy
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [TeamsMeetingBroadcastPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [TeamsMeetingBroadcastPolicy])
+        {
+            return $Values
+        }
+
+        $result = [TeamsMeetingBroadcastPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

@@ -1,5 +1,16 @@
 {
   "resourceName": "AADIdentityProtectionPolicySettings",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Use this resource to monitor the identity protection policy settings in AAD",
   "roles": {
     "read": [],

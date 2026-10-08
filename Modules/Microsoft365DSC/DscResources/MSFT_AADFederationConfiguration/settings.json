@@ -1,5 +1,16 @@
 {
   "resourceName": "AADFederationConfiguration",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "identityProviderBase",
+    "odataSubtype": "samlOrWsFedExternalDomainFederation",
+    "cmdletNoun": "MgBetaDirectoryFederationConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures federation in Entra Id.",
   "roles": {
     "read": [],
@@ -16,6 +27,9 @@
         "update": [
           {
             "name": "IdentityProvider.ReadWrite.All"
+          },
+          {
+            "name": "Domain.Read.All"
           }
         ]
       },
@@ -28,6 +42,9 @@
         "update": [
           {
             "name": "IdentityProvider.ReadWrite.All"
+          },
+          {
+            "name": "Domain.Read.All"
           }
         ]
       }

@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-GUID).ToString() -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -36,56 +36,77 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                 return @{
-                    postponeRebootUntilAfterDeadline        = $True
-                    featureUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    businessReadyUpdatesOnly                = 'userDefined'
-                    updateWeeks                             = 'userDefined'
-                    qualityUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    skipChecksBeforeRestart                 = $True
-                    deadlineForFeatureUpdatesInDays         = 25
-                    featureUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    qualityUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    scheduleImminentRestartWarningInMinutes = 25
-                    featureUpdatesDeferralPeriodInDays      = 25
-                    driversExcluded                         = $True
-                    featureUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    deadlineForQualityUpdatesInDays         = 25
-                    deliveryOptimizationMode                = 'userDefined'
-                    scheduleRestartWarningInHours           = 25
-                    prereleaseFeatures                      = 'userDefined'
-                    featureUpdatesPaused                    = $True
-                    updateNotificationLevel                 = 'notConfigured'
-                    automaticUpdateMode                     = 'userDefined'
-                    allowWindows11Upgrade                   = $True
-                    featureUpdatesRollbackWindowInDays      = 25
-                    engagedRestartTransitionScheduleInDays  = 25
-                    engagedRestartDeadlineInDays            = 25
-                    qualityUpdatesDeferralPeriodInDays      = 25
-                    qualityUpdatesPaused                    = $True
-                    deadlineGracePeriodInDays               = 25
-                    autoRestartNotificationDismissal        = 'notConfigured'
-                    installationSchedule                    = @{
+                    postponeRebootUntilAfterDeadline            = $True
+                    featureUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    businessReadyUpdatesOnly                    = 'userDefined'
+                    updateWeeks                                 = 'userDefined'
+                    qualityUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    skipChecksBeforeRestart                     = $True
+                    deadlineForFeatureUpdatesInDays             = 25
+                    featureUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    scheduleImminentRestartWarningInMinutes     = 25
+                    featureUpdatesDeferralPeriodInDays          = 25
+                    driversExcluded                             = $True
+                    featureUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    deadlineForQualityUpdatesInDays             = 25
+                    deliveryOptimizationMode                    = 'userDefined'
+                    scheduleRestartWarningInHours               = 25
+                    prereleaseFeatures                          = 'userDefined'
+                    featureUpdatesPaused                        = $True
+                    updateNotificationLevel                     = 'notConfigured'
+                    automaticUpdateMode                         = 'userDefined'
+                    allowWindows11Upgrade                       = $True
+                    featureUpdatesRollbackWindowInDays          = 25
+                    featureUpdatesWillBeRolledBack              = $True
+                    engagedRestartTransitionScheduleInDays      = 25
+                    engagedRestartDeadlineInDays                = 25
+                    qualityUpdatesDeferralPeriodInDays          = 25
+                    qualityUpdatesPaused                        = $True
+                    deadlineGracePeriodInDays                   = 25
+                    autoRestartNotificationDismissal            = 'notConfigured'
+                    installationSchedule                        = @{
                         activeHoursStart     = '00:00:00'
                         scheduledInstallTime = '00:00:00'
                         scheduledInstallDay  = 'userDefined'
                         activeHoursEnd       = '00:00:00'
                         '@odata.type'        = '#microsoft.graph.windowsUpdateActiveHoursInstall'
                     }
-                    engagedRestartSnoozeScheduleInDays      = 25
-                    '@odata.type'                           = '#microsoft.graph.windowsUpdateForBusinessConfiguration'
-                    qualityUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    userPauseAccess                         = 'notConfigured'
-                    userWindowsUpdateScanAccess             = 'notConfigured'
-                    microsoftUpdateServiceAllowed           = $True
-                    description          = 'FakeStringValue'
-                    displayName          = 'FakeStringValue'
-                    id                   = 'FakeStringValue'
+                    engagedRestartSnoozeScheduleInDays          = 25
+                    '@odata.type'                               = '#microsoft.graph.windowsUpdateForBusinessConfiguration'
+                    qualityUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesWillBeRolledBack              = $True
+                    userPauseAccess                             = 'notConfigured'
+                    userWindowsUpdateScanAccess                 = 'notConfigured'
+                    microsoftUpdateServiceAllowed               = $True
+                    description                                 = 'FakeStringValue'
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name       = 'FakeStringValue'
+                        DeviceMode = 'standardConfiguration'
+                        RuleType   = 'include'
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition  = @{
+                        Name           = 'FakeStringValue'
+                        OsEditionTypes = @('windows10Enterprise')
+                        RuleType       = 'include'
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion  = @{
+                        Name         = 'FakeStringValue'
+                        MinOSVersion = '10.0.19045.0'
+                        MaxOSVersion = '10.0.26100.9999'
+                        RuleType     = 'include'
+                    }
+                    displayName                                 = 'FakeStringValue'
+                    id                                          = 'FakeStringValue'
                 }
             }
 
@@ -104,51 +125,69 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10 should exist but it DOES NOT' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    AllowWindows11Upgrade                   = $True
-                    AutomaticUpdateMode                     = 'userDefined'
-                    AutoRestartNotificationDismissal        = 'notConfigured'
-                    BusinessReadyUpdatesOnly                = 'userDefined'
-                    DeadlineForFeatureUpdatesInDays         = 25
-                    DeadlineForQualityUpdatesInDays         = 25
-                    DeadlineGracePeriodInDays               = 25
-                    DeliveryOptimizationMode                = 'userDefined'
-                    description                             = 'FakeStringValue'
-                    displayName                             = 'FakeStringValue'
-                    DriversExcluded                         = $True
-                    EngagedRestartDeadlineInDays            = 25
-                    EngagedRestartSnoozeScheduleInDays      = 25
-                    EngagedRestartTransitionScheduleInDays  = 25
-                    FeatureUpdatesDeferralPeriodInDays      = 25
-                    FeatureUpdatesPaused                    = $True
-                    FeatureUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    FeatureUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesRollbackWindowInDays      = 25
-                    id                                      = 'FakeStringValue'
-                    installationSchedule                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType -Property @{
+                    AllowWindows11Upgrade                       = $True
+                    AutomaticUpdateMode                         = 'userDefined'
+                    AutoRestartNotificationDismissal            = 'notConfigured'
+                    BusinessReadyUpdatesOnly                    = 'userDefined'
+                    DeadlineForFeatureUpdatesInDays             = 25
+                    DeadlineForQualityUpdatesInDays             = 25
+                    DeadlineGracePeriodInDays                   = 25
+                    DeliveryOptimizationMode                    = 'userDefined'
+                    description                                 = 'FakeStringValue'
+                    DeviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'standardConfiguration'
+                            RuleType   = 'include'
+                        })
+                    DeviceManagementApplicabilityRuleOsEdition  = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Enterprise')
+                            RuleType       = 'include'
+                        })
+                    DeviceManagementApplicabilityRuleOsVersion  = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.19045.0'
+                            MaxOSVersion = '10.0.26100.9999'
+                            RuleType     = 'include'
+                        })
+                    displayName                                 = 'FakeStringValue'
+                    DriversExcluded                             = $True
+                    EngagedRestartDeadlineInDays                = 25
+                    EngagedRestartSnoozeScheduleInDays          = 25
+                    EngagedRestartTransitionScheduleInDays      = 25
+                    FeatureUpdatesDeferralPeriodInDays          = 25
+                    FeatureUpdatesPaused                        = $True
+                    FeatureUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    FeatureUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesRollbackWindowInDays          = 25
+                    FeatureUpdatesWillBeRolledBack              = $True
+                    id                                          = 'FakeStringValue'
+                    installationSchedule                        = ([MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType] @{
                             activeHoursStart     = '00:00:00'
                             scheduledInstallTime = '00:00:00'
                             scheduledInstallDay  = 'userDefined'
                             activeHoursEnd       = '00:00:00'
                             odataType            = '#microsoft.graph.windowsUpdateActiveHoursInstall'
-                        } -ClientOnly)
-                    microsoftUpdateServiceAllowed           = $True
-                    postponeRebootUntilAfterDeadline        = $True
-                    prereleaseFeatures                      = 'userDefined'
-                    qualityUpdatesDeferralPeriodInDays      = 25
-                    qualityUpdatesPaused                    = $True
-                    qualityUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    qualityUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    qualityUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    scheduleImminentRestartWarningInMinutes = 25
-                    scheduleRestartWarningInHours           = 25
-                    skipChecksBeforeRestart                 = $True
-                    updateNotificationLevel                 = 'notConfigured'
-                    updateWeeks                             = 'userDefined'
-                    userPauseAccess                         = 'notConfigured'
-                    userWindowsUpdateScanAccess             = 'notConfigured'
-                    Ensure                                  = 'Present'
-                    Credential                              = $Credential
+                        })
+                    microsoftUpdateServiceAllowed               = $True
+                    postponeRebootUntilAfterDeadline            = $True
+                    prereleaseFeatures                          = 'userDefined'
+                    qualityUpdatesDeferralPeriodInDays          = 25
+                    qualityUpdatesPaused                        = $True
+                    qualityUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    qualityUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesWillBeRolledBack              = $True
+                    scheduleImminentRestartWarningInMinutes     = 25
+                    scheduleRestartWarningInHours               = 25
+                    skipChecksBeforeRestart                     = $True
+                    updateNotificationLevel                     = 'notConfigured'
+                    updateWeeks                                 = 'userDefined'
+                    userPauseAccess                             = 'notConfigured'
+                    userWindowsUpdateScanAccess                 = 'notConfigured'
+                    Ensure                                      = 'Present'
+                    Credential                                  = $Credential
                 }
 
                 Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
@@ -156,13 +195,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -170,64 +209,82 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10 exists but it SHOULD NOT' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    AllowWindows11Upgrade                   = $True
-                    AutomaticUpdateMode                     = 'userDefined'
-                    AutoRestartNotificationDismissal        = 'notConfigured'
-                    BusinessReadyUpdatesOnly                = 'userDefined'
-                    DeadlineForFeatureUpdatesInDays         = 25
-                    DeadlineForQualityUpdatesInDays         = 25
-                    DeadlineGracePeriodInDays               = 25
-                    DeliveryOptimizationMode                = 'userDefined'
-                    description                             = 'FakeStringValue'
-                    displayName                             = 'FakeStringValue'
-                    DriversExcluded                         = $True
-                    EngagedRestartDeadlineInDays            = 25
-                    EngagedRestartSnoozeScheduleInDays      = 25
-                    EngagedRestartTransitionScheduleInDays  = 25
-                    FeatureUpdatesDeferralPeriodInDays      = 25
-                    FeatureUpdatesPaused                    = $True
-                    FeatureUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    FeatureUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesRollbackWindowInDays      = 25
-                    id                                      = 'FakeStringValue'
-                    installationSchedule                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType -Property @{
+                    AllowWindows11Upgrade                       = $True
+                    AutomaticUpdateMode                         = 'userDefined'
+                    AutoRestartNotificationDismissal            = 'notConfigured'
+                    BusinessReadyUpdatesOnly                    = 'userDefined'
+                    DeadlineForFeatureUpdatesInDays             = 25
+                    DeadlineForQualityUpdatesInDays             = 25
+                    DeadlineGracePeriodInDays                   = 25
+                    DeliveryOptimizationMode                    = 'userDefined'
+                    description                                 = 'FakeStringValue'
+                    DeviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'standardConfiguration'
+                            RuleType   = 'include'
+                        })
+                    DeviceManagementApplicabilityRuleOsEdition  = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Enterprise')
+                            RuleType       = 'include'
+                        })
+                    DeviceManagementApplicabilityRuleOsVersion  = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.19045.0'
+                            MaxOSVersion = '10.0.26100.9999'
+                            RuleType     = 'include'
+                        })
+                    displayName                                 = 'FakeStringValue'
+                    DriversExcluded                             = $True
+                    EngagedRestartDeadlineInDays                = 25
+                    EngagedRestartSnoozeScheduleInDays          = 25
+                    EngagedRestartTransitionScheduleInDays      = 25
+                    FeatureUpdatesDeferralPeriodInDays          = 25
+                    FeatureUpdatesPaused                        = $True
+                    FeatureUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    FeatureUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesRollbackWindowInDays          = 25
+                    FeatureUpdatesWillBeRolledBack              = $True
+                    id                                          = 'FakeStringValue'
+                    installationSchedule                        = ([MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType] @{
                             activeHoursStart     = '00:00:00'
                             scheduledInstallTime = '00:00:00'
                             scheduledInstallDay  = 'userDefined'
                             activeHoursEnd       = '00:00:00'
                             odataType            = '#microsoft.graph.windowsUpdateActiveHoursInstall'
-                        } -ClientOnly)
-                    microsoftUpdateServiceAllowed           = $True
-                    postponeRebootUntilAfterDeadline        = $True
-                    prereleaseFeatures                      = 'userDefined'
-                    qualityUpdatesDeferralPeriodInDays      = 25
-                    qualityUpdatesPaused                    = $True
-                    qualityUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    qualityUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    qualityUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    scheduleImminentRestartWarningInMinutes = 25
-                    scheduleRestartWarningInHours           = 25
-                    skipChecksBeforeRestart                 = $True
-                    updateNotificationLevel                 = 'notConfigured'
-                    updateWeeks                             = 'userDefined'
-                    userPauseAccess                         = 'notConfigured'
-                    userWindowsUpdateScanAccess             = 'notConfigured'
-                    Ensure                                  = 'Absent'
-                    Credential                              = $Credential
+                        })
+                    microsoftUpdateServiceAllowed               = $True
+                    postponeRebootUntilAfterDeadline            = $True
+                    prereleaseFeatures                          = 'userDefined'
+                    qualityUpdatesDeferralPeriodInDays          = 25
+                    qualityUpdatesPaused                        = $True
+                    qualityUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    qualityUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesWillBeRolledBack              = $True
+                    scheduleImminentRestartWarningInMinutes     = 25
+                    scheduleRestartWarningInHours               = 25
+                    skipChecksBeforeRestart                     = $True
+                    updateNotificationLevel                     = 'notConfigured'
+                    updateWeeks                                 = 'userDefined'
+                    userPauseAccess                             = 'notConfigured'
+                    userWindowsUpdateScanAccess                 = 'notConfigured'
+                    Ensure                                      = 'Absent'
+                    Credential                                  = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -235,120 +292,156 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10 Exists and Values are already in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    AllowWindows11Upgrade                   = $True
-                    AutomaticUpdateMode                     = 'userDefined'
-                    AutoRestartNotificationDismissal        = 'notConfigured'
-                    BusinessReadyUpdatesOnly                = 'userDefined'
-                    DeadlineForFeatureUpdatesInDays         = 25
-                    DeadlineForQualityUpdatesInDays         = 25
-                    DeadlineGracePeriodInDays               = 25
-                    DeliveryOptimizationMode                = 'userDefined'
-                    description                             = 'FakeStringValue'
-                    displayName                             = 'FakeStringValue'
-                    DriversExcluded                         = $True
-                    EngagedRestartDeadlineInDays            = 25
-                    EngagedRestartSnoozeScheduleInDays      = 25
-                    EngagedRestartTransitionScheduleInDays  = 25
-                    FeatureUpdatesDeferralPeriodInDays      = 25
-                    FeatureUpdatesPaused                    = $True
-                    FeatureUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    FeatureUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesRollbackWindowInDays      = 25
-                    id                                      = 'FakeStringValue'
-                    installationSchedule                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType -Property @{
+                    AllowWindows11Upgrade                       = $True
+                    AutomaticUpdateMode                         = 'userDefined'
+                    AutoRestartNotificationDismissal            = 'notConfigured'
+                    BusinessReadyUpdatesOnly                    = 'userDefined'
+                    DeadlineForFeatureUpdatesInDays             = 25
+                    DeadlineForQualityUpdatesInDays             = 25
+                    DeadlineGracePeriodInDays                   = 25
+                    DeliveryOptimizationMode                    = 'userDefined'
+                    description                                 = 'FakeStringValue'
+                    DeviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'standardConfiguration'
+                            RuleType   = 'include'
+                        })
+                    DeviceManagementApplicabilityRuleOsEdition  = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Enterprise')
+                            RuleType       = 'include'
+                        })
+                    DeviceManagementApplicabilityRuleOsVersion  = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.19045.0'
+                            MaxOSVersion = '10.0.26100.9999'
+                            RuleType     = 'include'
+                        })
+                    displayName                                 = 'FakeStringValue'
+                    DriversExcluded                             = $True
+                    EngagedRestartDeadlineInDays                = 25
+                    EngagedRestartSnoozeScheduleInDays          = 25
+                    EngagedRestartTransitionScheduleInDays      = 25
+                    FeatureUpdatesDeferralPeriodInDays          = 25
+                    FeatureUpdatesPaused                        = $True
+                    FeatureUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    FeatureUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesRollbackWindowInDays          = 25
+                    FeatureUpdatesWillBeRolledBack              = $True
+                    id                                          = 'FakeStringValue'
+                    installationSchedule                        = ([MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType] @{
                             activeHoursStart     = '00:00:00'
                             scheduledInstallTime = '00:00:00'
                             scheduledInstallDay  = 'userDefined'
                             activeHoursEnd       = '00:00:00'
                             odataType            = '#microsoft.graph.windowsUpdateActiveHoursInstall'
-                        } -ClientOnly)
-                    microsoftUpdateServiceAllowed           = $True
-                    postponeRebootUntilAfterDeadline        = $True
-                    prereleaseFeatures                      = 'userDefined'
-                    qualityUpdatesDeferralPeriodInDays      = 25
-                    qualityUpdatesPaused                    = $True
-                    qualityUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    qualityUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    qualityUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    scheduleImminentRestartWarningInMinutes = 25
-                    scheduleRestartWarningInHours           = 25
-                    skipChecksBeforeRestart                 = $True
-                    updateNotificationLevel                 = 'notConfigured'
-                    updateWeeks                             = 'userDefined'
-                    userPauseAccess                         = 'notConfigured'
-                    userWindowsUpdateScanAccess             = 'notConfigured'
-                    Ensure                                  = 'Present'
-                    Credential                              = $Credential
+                        })
+                    microsoftUpdateServiceAllowed               = $True
+                    postponeRebootUntilAfterDeadline            = $True
+                    prereleaseFeatures                          = 'userDefined'
+                    qualityUpdatesDeferralPeriodInDays          = 25
+                    qualityUpdatesPaused                        = $True
+                    qualityUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    qualityUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesWillBeRolledBack              = $True
+                    scheduleImminentRestartWarningInMinutes     = 25
+                    scheduleRestartWarningInHours               = 25
+                    skipChecksBeforeRestart                     = $True
+                    updateNotificationLevel                     = 'notConfigured'
+                    updateWeeks                                 = 'userDefined'
+                    userPauseAccess                             = 'notConfigured'
+                    userWindowsUpdateScanAccess                 = 'notConfigured'
+                    Ensure                                      = 'Present'
+                    Credential                                  = $Credential
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'The IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10 exists and values are NOT in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    AllowWindows11Upgrade                   = $False # Updated property
-                    AutomaticUpdateMode                     = 'userDefined'
-                    AutoRestartNotificationDismissal        = 'notConfigured'
-                    BusinessReadyUpdatesOnly                = 'userDefined'
-                    DeadlineForFeatureUpdatesInDays         = 25
-                    DeadlineForQualityUpdatesInDays         = 25
-                    DeadlineGracePeriodInDays               = 25
-                    DeliveryOptimizationMode                = 'userDefined'
-                    description                             = 'FakeStringValue'
-                    displayName                             = 'FakeStringValue'
-                    DriversExcluded                         = $True
-                    EngagedRestartDeadlineInDays            = 25
-                    EngagedRestartSnoozeScheduleInDays      = 25
-                    EngagedRestartTransitionScheduleInDays  = 25
-                    FeatureUpdatesDeferralPeriodInDays      = 25
-                    FeatureUpdatesPaused                    = $True
-                    FeatureUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    FeatureUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    FeatureUpdatesRollbackWindowInDays      = 25
-                    id                                      = 'FakeStringValue'
-                    installationSchedule                    = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType -Property @{
+                    AllowWindows11Upgrade                       = $False # Updated property
+                    AutomaticUpdateMode                         = 'userDefined'
+                    AutoRestartNotificationDismissal            = 'notConfigured'
+                    BusinessReadyUpdatesOnly                    = 'userDefined'
+                    DeadlineForFeatureUpdatesInDays             = 25
+                    DeadlineForQualityUpdatesInDays             = 25
+                    DeadlineGracePeriodInDays                   = 25
+                    DeliveryOptimizationMode                    = 'userDefined'
+                    description                                 = 'FakeStringValue'
+                    DeviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                            Name       = 'FakeStringValue'
+                            DeviceMode = 'standardConfiguration'
+                            RuleType   = 'exclude' # Updated property
+                        })
+                    DeviceManagementApplicabilityRuleOsEdition  = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                            Name           = 'FakeStringValue'
+                            OsEditionTypes = @('windows10Enterprise')
+                            RuleType       = 'exclude' # Updated property
+                        })
+                    DeviceManagementApplicabilityRuleOsVersion  = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                            Name         = 'FakeStringValue'
+                            MinOSVersion = '10.0.19045.0'
+                            MaxOSVersion = '10.0.26100.9999'
+                            RuleType     = 'exclude' # Updated property
+                        })
+                    displayName                                 = 'FakeStringValue'
+                    DriversExcluded                             = $True
+                    EngagedRestartDeadlineInDays                = 25
+                    EngagedRestartSnoozeScheduleInDays          = 25
+                    EngagedRestartTransitionScheduleInDays      = 25
+                    FeatureUpdatesDeferralPeriodInDays          = 25
+                    FeatureUpdatesPaused                        = $True
+                    FeatureUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    FeatureUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    FeatureUpdatesRollbackWindowInDays          = 25
+                    FeatureUpdatesWillBeRolledBack              = $False # Updated property
+                    id                                          = 'FakeStringValue'
+                    installationSchedule                        = ([MSFT_MicrosoftGraphwindowsUpdateInstallScheduleType] @{
                             activeHoursStart     = '00:00:00'
                             scheduledInstallTime = '00:00:00'
                             scheduledInstallDay  = 'userDefined'
                             activeHoursEnd       = '00:00:00'
                             odataType            = '#microsoft.graph.windowsUpdateActiveHoursInstall'
-                        } -ClientOnly)
-                    microsoftUpdateServiceAllowed           = $True
-                    postponeRebootUntilAfterDeadline        = $True
-                    prereleaseFeatures                      = 'userDefined'
-                    qualityUpdatesDeferralPeriodInDays      = 25
-                    qualityUpdatesPaused                    = $True
-                    qualityUpdatesPauseExpiryDateTime       = '2023-01-01T00:00:00.0000000+00:00'
-                    qualityUpdatesPauseStartDate            = '2023-01-01T00:00:00.0000000'
-                    qualityUpdatesRollbackStartDateTime     = '2023-01-01T00:00:00.0000000+00:00'
-                    scheduleImminentRestartWarningInMinutes = 25
-                    scheduleRestartWarningInHours           = 25
-                    skipChecksBeforeRestart                 = $True
-                    updateNotificationLevel                 = 'notConfigured'
-                    updateWeeks                             = 'userDefined'
-                    userPauseAccess                         = 'notConfigured'
-                    userWindowsUpdateScanAccess             = 'notConfigured'
-                    Ensure                                  = 'Present'
-                    Credential                              = $Credential
+                        })
+                    microsoftUpdateServiceAllowed               = $True
+                    postponeRebootUntilAfterDeadline            = $True
+                    prereleaseFeatures                          = 'userDefined'
+                    qualityUpdatesDeferralPeriodInDays          = 25
+                    qualityUpdatesPaused                        = $True
+                    qualityUpdatesPauseExpiryDateTime           = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesPauseStartDate                = '2023-01-01T00:00:00.0000000'
+                    qualityUpdatesRollbackStartDateTime         = '2023-01-01T00:00:00.0000000+00:00'
+                    qualityUpdatesWillBeRolledBack              = $False # Updated property
+                    scheduleImminentRestartWarningInMinutes     = 25
+                    scheduleRestartWarningInHours               = 25
+                    skipChecksBeforeRestart                     = $True
+                    updateNotificationLevel                     = 'notConfigured'
+                    updateWeeks                                 = 'userDefined'
+                    userPauseAccess                             = 'notConfigured'
+                    userWindowsUpdateScanAccess                 = 'notConfigured'
+                    Ensure                                      = 'Present'
+                    Credential                                  = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -363,7 +456,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

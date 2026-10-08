@@ -1,394 +1,249 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SCAuditConfigurationPolicy'
+﻿using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SCAuditConfigurationPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Exchange', 'SharePoint', 'OneDriveForBusiness')]
-        [System.String]
-        $Workload,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Workload associated with the policy.')]
+    [ValidateSet('Exchange', 'SharePoint', 'OneDriveForBusiness')]
+    [System.String] $Workload
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if this policy should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of SCAuditConfigurationPolicy for Workload {$Workload}"
-
-    try
+    [SCAuditConfigurationPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Workload -ne $Workload)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-                -InboundParameters $PSBoundParameters
+            $remote = [SCAuditConfigurationPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of SCAuditConfigurationPolicy for Workload {$($this.Workload)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $PolicyObject = $null
-            Write-Verbose -Message "Current Workload = {$Workload}"
-
-            if ($Workload -eq 'OneDriveForBusiness')
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Workload -ne $this.Workload)
             {
-                $PolicyObject = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Name -eq 'a415dcce-19a0-4153-b137-eb6fd67995b5' }
+                $null = $this.Connect('SecurityComplianceCenter')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $PolicyObject = $null
+                Write-Verbose -Message "Current Workload = {$($this.Workload)}"
+
+                if ($this.Workload -eq 'OneDriveForBusiness')
+                {
+                    $PolicyObject = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Name -eq 'a415dcce-19a0-4153-b137-eb6fd67995b5' }
+                }
+                else
+                {
+                    $PolicyObject = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Workload -eq $this.Workload }
+                }
+
+                if ($null -eq $PolicyObject)
+                {
+                    Write-Verbose -Message "SCAuditConfigurationPolicy $($this.Workload) does not exist."
+                    return $this.AsResult($nullReturn)
+                }
             }
             else
             {
-                $PolicyObject = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Workload -eq $Workload }
+                $PolicyObject = $this.ExportedInstance
             }
 
-            if ($null -eq $PolicyObject)
-            {
-                Write-Verbose -Message "SCAuditConfigurationPolicy $Workload does not exist."
-                return $nullReturn
+            Write-Verbose -Message "Found existing SCAuditConfigurationPolicy $($this.Workload)"
+            $result = @{
+                Ensure                = 'Present'
+                Workload              = $this.Workload
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
             }
+
+            return $this.AsResult($result)
         }
-        else
+        catch
         {
-            $PolicyObject = $Script:exportedInstance
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        Write-Verbose -Message "Found existing SCAuditConfigurationPolicy $Workload"
-        $result = @{
-            Ensure                = 'Present'
-            Workload              = $Workload
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
+        Write-Verbose -Message "Setting configuration of SCAuditConfigurationPolicy for $($this.Workload)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentPolicy = $this.Get().ToHashtable()
+
+        if ($this.Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Absent')
+        {
+            $CreationParams = @{Workload = $this.Workload }
+            New-AuditConfigurationPolicy @CreationParams
+        }
+        elseif ($this.Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Present')
+        {
+            Write-Verbose "SCAuditConfigurationPolicy already exists for Workload {$($this.Workload)}"
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentPolicy.Ensure -eq 'Present')
+        {
+            # If the Policy exists and it shouldn't, simply remove it;
+            Write-Verbose "Removing SCAuditConfigurationPolicy for Workload {$($this.Workload)}"
+            if ($this.Workload -eq 'OneDriveForBusiness')
+            {
+                $policy = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Name -eq 'a415dcce-19a0-4153-b137-eb6fd67995b5' }
+            }
+            else
+            {
+                $policy = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Workload -eq $CurrentPolicy.Workload }
+            }
+
+            try
+            {
+                Remove-AuditConfigurationPolicy -Identity $policy.Identity -ErrorAction Stop
+            }
+            catch
+            {
+                Write-Verbose -Message "Policy for $($this.Workload) is already in the process of being deleted."
+                $this.LogError($_, "Error removing the audit configuration policy for $($this.Workload)")
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('SecurityComplianceCenter')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$policies = Get-AuditConfigurationPolicy -ErrorAction Stop
+            $dscContent = [System.Text.StringBuilder]::new()
+            $i = 1
+            if ($policies.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($policy in $policies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($policies.Length)] $($policy.Workload)" -DeferWrite
+
+                $this.ExportedInstance = $policy
+                $Results = $this.GetForExport(@{ Workload = $policy.Workload })
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [SCAuditConfigurationPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SCAuditConfigurationPolicy])
+        {
+            return $Values
+        }
+
+        $result = [SCAuditConfigurationPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Exchange', 'SharePoint', 'OneDriveForBusiness')]
-        [System.String]
-        $Workload,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of SCAuditConfigurationPolicy for $Workload"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentPolicy = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Absent')
-    {
-        $CreationParams = @{Workload = $Workload }
-        New-AuditConfigurationPolicy @CreationParams
-    }
-    elseif ($Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Present')
-    {
-        Write-Verbose "SCAuditConfigurationPolicy already exists for Workload {$Workload}"
-    }
-    elseif ($Ensure -eq 'Absent' -and $CurrentPolicy.Ensure -eq 'Present')
-    {
-        # If the Policy exists and it shouldn't, simply remove it;
-        Write-Verbose "Removing SCAuditConfigurationPolicy for Workload {$Workload}"
-        if ($Workload -eq 'OneDriveForBusiness')
-        {
-            $policy = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Name -eq 'a415dcce-19a0-4153-b137-eb6fd67995b5' }
-        }
-        else
-        {
-            $policy = Get-AuditConfigurationPolicy | Where-Object -FilterScript { $_.Workload -eq $CurrentPolicy.Workload }
-        }
-
-        try
-        {
-            Remove-AuditConfigurationPolicy -Identity $policy.Identity -ErrorAction Stop
-        }
-        catch
-        {
-            Write-Verbose -Message "Policy for $Workload is already in the process of being deleted."
-            New-M365DSCLogEntry -Message $_ `
-                -Exception $_ `
-                -Source $MyInvocation.MyCommand.ModuleName
-        }
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Exchange', 'SharePoint', 'OneDriveForBusiness')]
-        [System.String]
-        $Workload,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$policies = Get-AuditConfigurationPolicy -ErrorAction Stop
-        $dscContent = [System.Text.StringBuilder]::new()
-        $i = 1
-        if ($policies.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($policy in $policies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            Write-M365DSCHost -Message "    |---[$i/$($policies.Length)] $($policy.Workload)" -DeferWrite
-
-            $Script:exportedInstance = $policy
-            $Results = Get-TargetResource @PSBoundParameters -Workload $policy.Workload
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

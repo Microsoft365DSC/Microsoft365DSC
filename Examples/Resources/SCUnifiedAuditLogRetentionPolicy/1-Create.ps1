@@ -22,15 +22,18 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCUnifiedAuditLogRetentionPolicy 'Example'
+        SCUnifiedAuditLogRetentionPolicy 'SCUnifiedAuditLogRetentionPolicy-Example'
         {
-            Credential            = $Credentials
-            Ensure                = 'Present'
-            Name                  = 'Test Policy'
+            Ensure                = "Present"
+            Name                  = "Seven Day Audit Retention"
+            Description           = "Retains mailbox permission changes made for the finance leadership team"
+            Operations            = @("Add-MailboxPermission", "Remove-MailboxPermission")
+            RecordTypes           = @("ExchangeAdmin")
+            UserIds               = @("AdeleV@$TenantId", "MeganB@$TenantId")
             Priority              = 1
-            RetentionDuration     = 'SevenDays'
+            RetentionDuration     = "SevenDays"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

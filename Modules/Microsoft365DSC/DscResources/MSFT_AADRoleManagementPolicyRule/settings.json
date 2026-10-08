@@ -1,5 +1,62 @@
 {
   "resourceName": "AADRoleManagementPolicyRule",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleManagementPolicyRule",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyRoleManagementPolicyRule",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ApprovalRule",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyApprovalRule"
+    },
+    {
+      "name": "AuthenticationContextRule",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyAuthenticationContextRule"
+    },
+    {
+      "name": "EnablementRule",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "ExpirationRule",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyExpirationRule"
+    },
+    {
+      "name": "NotificationRule",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "PolicyId",
+      "reason": "Accepted",
+      "note": "The role management policy the rule belongs to"
+    },
+    {
+      "name": "RoleDisplayName",
+      "reason": "Accepted",
+      "note": "Display name of the role the policy applies to"
+    },
+    {
+      "name": "RuleType",
+      "reason": "Accepted",
+      "note": "Type of the policy rule, used to tell rule types apart"
+    },
+    {
+      "name": "Target",
+      "reason": "ReadOnly",
+      "note": "Derived from the rule identity with no configuration surface"
+    }
+  ],
   "description": "This resource configures an Azure AD Role Management Policy Rule.",
   "permissions": {
     "graph": {

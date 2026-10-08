@@ -26,7 +26,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -34,7 +34,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -49,45 +49,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The instance exists and values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    IsEnabled             = $False;
-                    IsSingleInstance      = "Yes";
-                    Credential            = $Credential;
+                    IsDefaultAccessEnabled = $True;
+                    IsEnabled              = $False;
+                    IsSingleInstance       = "Yes";
+                    Credential             = $Credential;
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
                     return @{
-                        isEnabled = $false
+                        isDefaultAccessEnabled = $true
+                        isEnabled              = $false
                     }
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADOnPremisesPublishingProfilesSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The instance exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    IsEnabled             = $True; #Drift
-                    IsSingleInstance      = "Yes";
-                    Credential            = $Credential;
+                    IsDefaultAccessEnabled = $False; #Drift
+                    IsEnabled              = $True; #Drift
+                    IsSingleInstance       = "Yes";
+                    Credential             = $Credential;
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
                     return @{
-                        isEnabled = $false
+                        isDefaultAccessEnabled = $true
+                        isEnabled              = $false
                     }
                 }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADOnPremisesPublishingProfilesSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADOnPremisesPublishingProfilesSettings' -Property $testParams).Set()
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 1
             }
         }
 
@@ -99,14 +103,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential  = $Credential;
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
                     return @{
                         isEnabled = $false
                     }
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADOnPremisesPublishingProfilesSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

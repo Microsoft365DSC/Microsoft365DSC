@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="microsoft.graph" Alias="graph" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="entity" Abstract="true">
+        <Key>
+          <PropertyRef Name="id" />
+        </Key>
+        <Property Name="id" Type="Edm.String" Nullable="false" />
+      </EntityType>
+      <EntityType Name="directoryObject" BaseType="graph.entity">
+        <Property Name="deletedDateTime" Type="Edm.DateTimeOffset" />
+      </EntityType>
+      <EntityType Name="group" BaseType="graph.directoryObject">
+        <Property Name="displayName" Type="Edm.String" />
+        <Property Name="mailEnabled" Type="Edm.Boolean" />
+        <NavigationProperty Name="members" Type="Collection(graph.directoryObject)" />
+        <NavigationProperty Name="owners" Type="Collection(graph.directoryObject)" />
+      </EntityType>
+      <EntityType Name="directory" BaseType="graph.entity">
+        <NavigationProperty Name="attributeSets" Type="Collection(graph.attributeSet)" ContainsTarget="true" />
+      </EntityType>
+      <EntityType Name="attributeSet" BaseType="graph.entity">
+        <Property Name="description" Type="Edm.String" />
+        <Property Name="maxAttributesPerSet" Type="Edm.Int32" />
+        <Property Name="isCustom" Type="Edm.Boolean" />
+      </EntityType>
+      <EntityType Name="deviceManagement" BaseType="graph.entity">
+        <NavigationProperty Name="deviceCategories" Type="Collection(graph.deviceCategory)" ContainsTarget="true" />
+        <NavigationProperty Name="deviceCompliancePolicies" Type="Collection(graph.deviceCompliancePolicy)" ContainsTarget="true" />
+      </EntityType>
+      <EntityType Name="deviceCategory" BaseType="graph.entity">
+        <Property Name="displayName" Type="Edm.String" />
+        <Property Name="description" Type="Edm.String" />
+      </EntityType>
+      <EntityType Name="deviceCompliancePolicy" BaseType="graph.entity" Abstract="true">
+        <Property Name="displayName" Type="Edm.String" />
+        <NavigationProperty Name="assignments" Type="Collection(graph.deviceCompliancePolicyAssignment)" ContainsTarget="true" />
+      </EntityType>
+      <EntityType Name="windows10CompliancePolicy" BaseType="graph.deviceCompliancePolicy">
+        <Property Name="bitLockerEnabled" Type="Edm.Boolean" />
+      </EntityType>
+      <EntityType Name="iosCompliancePolicy" BaseType="graph.deviceCompliancePolicy">
+        <Property Name="passcodeRequired" Type="Edm.Boolean" />
+      </EntityType>
+      <EntityType Name="deviceCompliancePolicyAssignment" BaseType="graph.entity">
+        <Property Name="target" Type="Edm.String" />
+      </EntityType>
+      <EntityType Name="identityContainer" BaseType="graph.entity">
+        <NavigationProperty Name="conditionalAccess" Type="graph.conditionalAccessRoot" ContainsTarget="true" />
+      </EntityType>
+      <EntityType Name="conditionalAccessRoot" BaseType="graph.entity">
+        <NavigationProperty Name="policies" Type="Collection(graph.conditionalAccessPolicy)" ContainsTarget="true" />
+        <NavigationProperty Name="namedLocations" Type="Collection(graph.namedLocation)" ContainsTarget="true" />
+      </EntityType>
+      <EntityType Name="conditionalAccessPolicy" BaseType="graph.entity">
+        <Property Name="displayName" Type="Edm.String" />
+        <Property Name="state" Type="graph.conditionalAccessPolicyState" />
+      </EntityType>
+      <EntityType Name="namedLocation" BaseType="graph.entity">
+        <Property Name="displayName" Type="Edm.String" />
+      </EntityType>
+      <EntityType Name="ipNamedLocation" BaseType="graph.namedLocation">
+        <Property Name="isTrusted" Type="Edm.Boolean" />
+      </EntityType>
+      <ComplexType Name="conditionalAccessExternalTenants" Abstract="true">
+        <Property Name="membershipKind" Type="Edm.String" />
+      </ComplexType>
+      <ComplexType Name="conditionalAccessAllExternalTenants" BaseType="graph.conditionalAccessExternalTenants" />
+      <EnumType Name="conditionalAccessPolicyState">
+        <Member Name="enabled" Value="0" />
+        <Member Name="disabled" Value="1" />
+      </EnumType>
+      <EntityContainer Name="GraphService">
+        <EntitySet Name="groups" EntityType="microsoft.graph.group" />
+        <Singleton Name="directory" Type="microsoft.graph.directory" />
+        <Singleton Name="deviceManagement" Type="microsoft.graph.deviceManagement" />
+        <Singleton Name="identity" Type="microsoft.graph.identityContainer" />
+        <Singleton Name="networkAccess" Type="microsoft.graph.networkaccess.networkAccessRoot" />
+      </EntityContainer>
+    </Schema>
+    <Schema Namespace="microsoft.graph.networkaccess" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="networkAccessRoot" BaseType="graph.entity">
+        <NavigationProperty Name="filteringProfiles" Type="Collection(graph.networkaccess.filteringProfile)" ContainsTarget="true" />
+      </EntityType>
+      <EntityType Name="filteringProfile" BaseType="graph.entity">
+        <Property Name="name" Type="Edm.String" />
+      </EntityType>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

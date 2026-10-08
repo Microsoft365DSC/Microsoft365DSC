@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,33 +19,34 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWindowsAutopilotDeploymentProfileAzureADHybridJoined 'Example'
+        IntuneWindowsAutopilotDeploymentProfileAzureADHybridJoined 'IntuneWindowsAutopilotDeploymentProfileAzureADHybridJoined-Example'
         {
             Assignments                            = @();
             Description                            = "";
             DeviceNameTemplate                     = "";
             DeviceType                             = "windowsPc";
             DisplayName                            = "hybrid";
-            EnableWhiteGlove                       = $False; # Updated Property
+            PreprovisioningAllowed                 = $False; # Updated Property
             Ensure                                 = "Present";
-            ExtractHardwareHash                    = $False;
+            HardwareHashExtractionEnabled          = $False;
             HybridAzureADJoinSkipConnectivityCheck = $True;
-            Language                               = "os-default";
-            OutOfBoxExperienceSettings             = MSFT_MicrosoftGraphoutOfBoxExperienceSettings{
-                HideEULA = $True
-                HideEscapeLink = $True
-                HidePrivacySettings = $True
-                DeviceUsageType = 'singleUser'
-                SkipKeyboardSelectionPage = $False
-                UserType = 'standard'
+            Locale                                 = "os-default";
+            OutOfBoxExperienceSetting              = MSFT_MicrosoftGraphoutOfBoxExperienceSetting{
+                DeviceUsageType              = 'singleUser'
+                EscapeLinkHidden             = $True
+                EulaHidden                   = $True
+                KeyboardSelectionPageSkipped = $False
+                PrivacySettingsHidden        = $True
+                UserType                     = 'standard'
             };
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                          = $ApplicationId;
+            TenantId                               = $TenantId;
+            CertificateThumbprint                  = $CertificateThumbprint;
         }
     }
 }

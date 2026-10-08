@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOTenantAllowBlockListItems "Example"
+        EXOTenantAllowBlockListItems "EXOTenantAllowBlockListItems-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            TenantId              = $TenantId;
             Action                = "Block";
             Ensure                = "Present";
-            ExpirationDate        = "10/11/2024 9:00:00 PM";
             ListSubType           = "Tenant";
             ListType              = "Sender";
-            Notes                 = "Test block with updated notes";
+            NoExpiration          = $true;
+            Notes                 = "Blocked sender confirmed by the security team"; # Updated Property
             Value                 = "example.com";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

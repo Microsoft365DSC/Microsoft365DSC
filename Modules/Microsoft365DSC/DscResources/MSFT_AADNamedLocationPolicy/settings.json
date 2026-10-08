@@ -1,5 +1,31 @@
 {
   "resourceName": "AADNamedLocationPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "namedLocation",
+    "odataSubtype": [
+      "countryNamedLocation",
+      "ipNamedLocation",
+      "compliantNetworkNamedLocation"
+    ],
+    "cmdletNoun": "MgBetaIdentityConditionalAccessNamedLocation",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "CompliantNetworkType",
+      "reason": "ReadOnly",
+      "note": "Belongs to beta compliantNetworkNamedLocation and the service assigns it"
+    },
+    {
+      "name": "OdataType",
+      "reason": "Accepted",
+      "note": "Selects an IP or a country named location type."
+    }
+  ],
   "description": "This resource configures the Azure AD Named Location Policies in Azure Active Directory.",
   "roles": {
     "read": [
@@ -44,9 +70,7 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
-    "Microsoft.Graph.Beta.Identity.SignIns",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Beta.Identity.SignIns"
   ],
   "supportedEnvironments": [
     "Global",
@@ -55,22 +79,12 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.Identity.SignIns",
       "cmdlets": [
         "Get-MgBetaIdentityConditionalAccessNamedLocation",
-        "Remove-MgBetaIdentityConditionalAccessNamedLocation"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
+        "New-MgBetaIdentityConditionalAccessNamedLocation",
+        "Remove-MgBetaIdentityConditionalAccessNamedLocation",
+        "Update-MgBetaIdentityConditionalAccessNamedLocation"
       ]
     }
   ]

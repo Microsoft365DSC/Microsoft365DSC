@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,19 +19,21 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOTenantAllowBlockListSpoofItems "EXOTenantAllowBlockListSpoofItems-b66ffa0c-ad85-df9d-0a16-ad3cb9956f71"
+        EXOTenantAllowBlockListSpoofItems "EXOTenantAllowBlockListSpoofItems-Example"
         {
-            Action                = "Block"; #Drift
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
+            Action                = "Block"; # Updated Property
             Ensure                = "Present";
             SendingInfrastructure = "121.0.0.7";
             SpoofedUser           = "contoso.com";
             SpoofType             = "Internal";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

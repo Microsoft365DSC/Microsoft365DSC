@@ -1,383 +1,223 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADExternalIdentityPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADExternalIdentityPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Only valid value is ''Yes''.')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowDeletedIdentitiesDataRemoval,
+    [DscProperty()]
+    [System.ComponentModel.Description('Reserved for future use.')]
+    [System.Nullable[System.Boolean]] $AllowDeletedIdentitiesDataRemoval
 
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $AllowExternalIdentitiesToLeave,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Defines whether external users can leave the guest tenant. If set to false, self-service controls are disabled, and the admin of the guest tenant must manually remove the external user from the guest tenant. When the external user leaves the tenant, their data in the guest tenant is first soft-deleted then permanently deleted in 30 days.')]
+    [System.Nullable[System.Boolean]] $AllowExternalIdentitiesToLeave
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials for the Microsoft Graph delegated permissions.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message 'Getting configuration of External Identity Policy'
-
-    try
+    [AADExternalIdentityPolicy] Get()
     {
-        $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [AADExternalIdentityPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message 'Getting configuration of External Identity Policy'
+
+        try
+        {
+            $null = $this.Connect('MicrosoftGraph')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $Policy = Get-MgBetaPolicyExternalIdentityPolicy -ErrorAction Stop
+
+            $result = @{
+                IsSingleInstance                  = 'Yes'
+                AllowDeletedIdentitiesDataRemoval = $Policy.allowDeletedIdentitiesDataRemoval
+                AllowExternalIdentitiesToLeave    = $Policy.allowExternalIdentitiesToLeave
+                Credential                        = $this.Credential
+                ApplicationSecret                 = $this.ApplicationSecret
+                ApplicationId                     = $this.ApplicationId
+                TenantId                          = $this.TenantId
+                CertificateThumbprint             = $this.CertificateThumbprint
+                CertificatePath                   = $this.CertificatePath
+                CertificatePassword               = $this.CertificatePassword
+                ManagedIdentity                   = $this.ManagedIdentity
+                AccessTokens                      = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        $DisplayName = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Setting configuration for External Identity Policy'
+
+        $null = $this.Connect('MicrosoftGraph')
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $Policy = Get-MgBetaPolicyExternalIdentityPolicy -ErrorAction Stop
+        $desiredParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $desiredParameters.Remove('IsSingleInstance') | Out-Null
 
-        $result = @{
-            IsSingleInstance                  = 'Yes'
-            AllowDeletedIdentitiesDataRemoval = $Policy.allowDeletedIdentitiesDataRemoval
-            AllowExternalIdentitiesToLeave    = $Policy.allowExternalIdentitiesToLeave
-            Credential                        = $Credential
-            ApplicationSecret                 = $ApplicationSecret
-            ApplicationId                     = $ApplicationId
-            TenantId                          = $TenantId
-            CertificateThumbprint             = $CertificateThumbprint
-            CertificatePath                   = $CertificatePath
-            CertificatePassword               = $CertificatePassword
-            ManagedIdentity                   = $ManagedIdentity.IsPresent
-            AccessTokens                      = $AccessTokens
+        try
+        {
+            Write-Verbose -Message "Updating existing authorization policy with values: $(Convert-M365DscHashtableToString -Hashtable $desiredParameters)"
+            Update-MgBetaPolicyExternalIdentityPolicy -BodyParameter $desiredParameters -ErrorAction Stop | Out-Null
+        }
+        catch
+        {
+            $this.LogError($_, 'Error updating data:')
+            throw
+        }
+        Write-Verbose -Message "Set(): finished processing Policy $Displayname"
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        $currentDSCBlock = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        try
+        {
+            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            {
+                $Global:M365DSCExportResourceInstancesCount++
+            }
+
+            $params = @{
+                IsSingleInstance               = 'Yes'
+                AllowExternalIdentitiesToLeave = $true
+                Credential                     = $this.Credential
+                ApplicationId                  = $this.ApplicationId
+                TenantId                       = $this.TenantId
+                ApplicationSecret              = $this.ApplicationSecret
+                CertificateThumbprint          = $this.CertificateThumbprint
+                CertificatePath                = $this.CertificatePath
+                CertificatePassword            = $this.CertificatePassword
+                ManagedIdentity                = $this.ManagedIdentity
+                AccessTokens                   = $this.AccessTokens
+            }
+            $Results = $this.GetForExport($Params)
+
+            if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+                Write-M365DSCHost -Message '    |---[1/1] External Identity Policy' -DeferWrite
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $results `
+                    -Credential $this.Credential
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+            }
+
+            return $currentDSCBlock
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [AADExternalIdentityPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADExternalIdentityPolicy])
+        {
+            return $Values
+        }
+
+        $result = [AADExternalIdentityPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowDeletedIdentitiesDataRemoval,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $AllowExternalIdentitiesToLeave,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting configuration for External Identity Policy'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $desiredParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $desiredParameters.Remove('IsSingleInstance') | Out-Null
-
-    try
-    {
-        Write-Verbose -Message "Updating existing authorization policy with values: $(Convert-M365DscHashtableToString -Hashtable $desiredParameters)"
-        Update-MgBetaPolicyExternalIdentityPolicy -BodyParameter $desiredParameters -ErrorAction Stop | Out-Null
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error updating data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        Write-Verbose -Message "Set-Targetresource: Failed change policy $DisplayName"
-        throw $_
-    }
-    Write-Verbose -Message "Set-Targetresource: finished processing Policy $Displayname"
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowDeletedIdentitiesDataRemoval,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $AllowExternalIdentitiesToLeave,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    try
-    {
-        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-        {
-            $Global:M365DSCExportResourceInstancesCount++
-        }
-
-        $params = @{
-            IsSingleInstance               = 'Yes'
-            AllowExternalIdentitiesToLeave = $true
-            Credential                     = $Credential
-            ApplicationId                  = $ApplicationId
-            TenantId                       = $TenantId
-            ApplicationSecret              = $ApplicationSecret
-            CertificateThumbprint          = $CertificateThumbprint
-            CertificatePath                = $CertificatePath
-            CertificatePassword            = $CertificatePassword
-            ManagedIdentity                = $ManagedIdentity
-            AccessTokens                   = $AccessTokens
-        }
-        $Results = Get-TargetResource @Params
-
-        if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-            Write-M365DSCHost -Message '    |---[1/1] External Identity Policy' -DeferWrite
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $results `
-                -Credential $Credential
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
-        }
-
-        return $currentDSCBlock
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

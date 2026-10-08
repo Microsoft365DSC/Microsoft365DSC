@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,7 +33,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -71,6 +71,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                    = 'Present'
                     Credential                = $Credential
                     Identity                  = 'TestPolicy'
+                    ExtendedNotifications     = @(
+                        [MSFT_TeamsEmergencyCallingExtendedNotification] @{
+                            EmergencyDialString       = '112'
+                            NotificationGroup         = @('security.desk@contoso.com', 'facilities@contoso.com')
+                            NotificationDialOutNumber = '+31205550142'
+                            NotificationMode          = 'ConferenceMuted'
+                        }
+                    )
                     NotificationDialOutNumber = '+1234567890'
                     NotificationGroup         = 'john.smith@contoso.onmicrosoft.com'
                     NotificationMode          = 'NotificationOnly'
@@ -79,19 +87,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Mock -CommandName Get-CsTeamsEmergencyCallingPolicy -MockWith {
                     return $null
                 }
+
+                Mock -CommandName New-CsTeamsEmergencyCallingExtendedNotification -MockWith {
+                    return [PSCustomObject] @{
+                        EmergencyDialString = $EmergencyDialString
+                        NotificationGroup   = $NotificationGroup
+                    }
+                }
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the policy in the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName New-CsTeamsEmergencyCallingPolicy -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName New-CsTeamsEmergencyCallingExtendedNotification -Exactly 1 -ParameterFilter {
+                    $EmergencyDialString -eq '112' -and $NotificationGroup -eq 'security.desk@contoso.com;facilities@contoso.com'
+                }
+                Should -Invoke -CommandName New-CsTeamsEmergencyCallingPolicy -Exactly 1 -ParameterFilter {
+                    $ExtendedNotifications.Count -eq 1 -and $ExtendedNotifications[0].EmergencyDialString -eq '112'
+                }
             }
         }
 
@@ -109,15 +129,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-CsTeamsEmergencyCallingPolicy -Exactly 1
                 Should -Invoke -CommandName New-CsTeamsEmergencyCallingPolicy -Exactly 0
             }
@@ -137,11 +157,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -159,15 +179,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-CsTeamsEmergencyCallingPolicy -Exactly 1
             }
         }
@@ -181,7 +201,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should throw an error from the Set method' {
-                { Set-TargetResource @testParams } | Should -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'TeamsEmergencyCallingPolicy' -Property $testParams).Set() } | Should -Throw
             }
         }
 
@@ -195,7 +215,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsEmergencyCallingPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

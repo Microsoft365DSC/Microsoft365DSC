@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,30 +19,31 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADOrganizationCertificateBasedAuthConfiguration "AADOrganizationCertificateBasedAuthConfiguration-58b6e58e-10d1-4b8c-845d-d6aefaaecba2"
+        AADOrganizationCertificateBasedAuthConfiguration "AADOrganizationCertificateBasedAuthConfiguration-Example"
         {
-            ApplicationId             = $ApplicationId
-            TenantId                  = $TenantId
-            CertificateThumbprint     = $CertificateThumbprint
             CertificateAuthorities = @(
                 MSFT_MicrosoftGraphcertificateAuthority{
-                    IsRootAuthority = $True
-                    DeltaCertificateRevocationListUrl = 'pqr.com'
-                    Certificate = '<Base64 encoded cert>'
+                    IsRootAuthority                   = $True
+                    DeltaCertificateRevocationListUrl = "http://crl.contoso.com/root-delta.crl"
+                    Certificate                       = "<base64-encoded-certificate>"
                 }
                 MSFT_MicrosoftGraphcertificateAuthority{
-                    IsRootAuthority = $True
-                    CertificateRevocationListUrl = 'xyz.com'
-                    DeltaCertificateRevocationListUrl = 'pqr.com'
-                    Certificate = '<Base64 encoded cert 2>'
+                    IsRootAuthority                   = $False
+                    CertificateRevocationListUrl      = "http://crl.contoso.com/issuing.crl"
+                    DeltaCertificateRevocationListUrl = "http://crl.contoso.com/issuing-delta.crl"
+                    Certificate                       = "<base64-encoded-certificate-2>"
                 }
             );
             Ensure                 = "Present";
-            OrganizationId         = "e91d4e0e-d5a5-4e3a-be14-2192592a59af";
+            OrganizationId         = "$TenantId";
+            ApplicationId          = $ApplicationId
+            TenantId               = $TenantId
+            CertificateThumbprint  = $CertificateThumbprint
         }
     }
 }

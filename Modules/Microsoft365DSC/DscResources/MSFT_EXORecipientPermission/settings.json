@@ -1,5 +1,16 @@
 {
   "resourceName": "EXORecipientPermission",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "RecipientPermission",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "Mail Recipients"
         ],
@@ -33,7 +44,7 @@
           "Mail Recipients"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Recipient Management"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Data"
+  "mode": "Data",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Add-RecipientPermission",
+        "Get-RecipientPermission",
+        "Get-User",
+        "Remove-RecipientPermission"
+      ]
+    }
+  ]
 }

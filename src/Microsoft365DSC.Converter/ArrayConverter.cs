@@ -7,7 +7,7 @@ namespace Microsoft365DSC.Converter
 {
     internal class ArrayConverter
     {
-        public static string ToString(Array array)
+        public static string ConvertToString(Array array)
         {
             StringBuilder sb = new();
             _ = sb.Append("(");
@@ -17,12 +17,12 @@ namespace Microsoft365DSC.Converter
                 if (item is Hashtable hashtable)
                 {
                     _ = sb.Append("{");
-                    _ = sb.Append(HashtableConverter.ToString(hashtable));
+                    _ = sb.Append(HashtableConverter.ConvertToString(hashtable));
                     _ = sb.Append("}");
                 }
                 else if (item is CimInstance cimInstance)
                 {
-                    _ = sb.Append(CimInstanceConverter.ToString(cimInstance));
+                    _ = sb.Append(CimInstanceConverter.ConvertToString(cimInstance));
                 }
                 else
                 {

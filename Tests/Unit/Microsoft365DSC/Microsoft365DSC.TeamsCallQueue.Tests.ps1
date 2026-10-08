@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-GUID).ToString() -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -34,11 +34,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             Mock -CommandName Get-CsCallQueue -MockWith {
-                return @{
-                    Id                                         = "12345-12345-12345-12345-12345"
+                return @{ Identity = "d0b1c6f2-3c1e-4a51-9a7e-6f0d2c8b4e17"; Name = "TestQueue EU" }, @{
+                    Identity                                   = "5e3a575e-1faa-49ff-83c2-5cf1c36c0e01"
                     AgentAlertTime                             = 114;
                     AllowOptOut                                = $True;
                     AuthorizedUsers                            = @("9abce74d-d108-475f-a2cb-bbb82f484982");
+                    CallbackEmailNotificationTarget            = @{Id = "4b1c8a3e-6f2d-4e9a-b7c5-2d8f1e0a9c63"}
                     ChannelId                                  = "19:Y6MG7XdME2Cf9IRmU8PUXNfA1OtqmjyBgCmCGBN2tzY1@thread.tacv2";
                     ConferenceMode                             = $True;
                     DistributionLists                          = @("36c88f29-faba-4f4a-89a7-e5af29e7095e");
@@ -46,18 +47,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     EnableTimeoutSharedVoicemailTranscription  = $False;
                     LanguageId                                 = "fr-CA";
                     HideAuthorizedUsers                        = @("9abce74d-d108-475f-a2cb-bbb82f484982");
+                    MusicOnHoldResourceId                      = "7d2e9f41-3a6b-4c8d-9e15-0b4a7c3f2d86"
                     Name                                       = "TestQueue";
                     OverflowAction                             = "Forward";
                     OverflowActionTarget                       = @{Id="9abce74d-d108-475f-a2cb-bbb82f484982"}
                     OverflowThreshold                          = 50;
                     PresenceBasedRouting                       = $True;
                     RoutingMethod                              = "RoundRobin";
+                    SharedVoicemailTriageSettingsTemplateId    = "3a4b3d9b-91d8-4fbf-bcff-6907f325842c";
                     TextAnnouncementForCR                      = "FakeStringValue";
                     TextAnnouncementForCRFailure               = "FakeStringValue";
                     TimeoutAction                              = "Forward";
                     TimeoutActionTarget                        = @{Id = "9abce74d-d108-475f-a2cb-bbb82f484982"}
                     TimeoutThreshold                           = 1200;
                     UseDefaultMusicOnHold                      = $False;
+                    WelcomeMusicResourceId                     = "e8a4c2b6-1d3f-4a7e-8c9b-5f6d0e2a1b47"
                     Ensure                                     = 'Present'
                     Credential                                 = $Credential
                 }
@@ -74,12 +78,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Get-CsOnlineUser -MockWith {
                 return @{
-                    Id = "9abce74d-d108-475f-a2cb-bbb82f484982"
+                    Identity = "9abce74d-d108-475f-a2cb-bbb82f484982"
                     UserPrincipalName = "dummy@contoso.com"
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -97,6 +101,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     AgentAlertTime                             = 114;
                     AllowOptOut                                = $True;
                     AuthorizedUsers                            = @("9abce74d-d108-475f-a2cb-bbb82f484982");
+                    CallbackEmailNotificationTarget            = "4b1c8a3e-6f2d-4e9a-b7c5-2d8f1e0a9c63"
                     ChannelId                                  = "19:Y6MG7XdME2Cf9IRmU8PUXNfA1OtqmjyBgCmCGBN2tzY1@thread.tacv2";
                     ConferenceMode                             = $True;
                     DistributionLists                          = @("36c88f29-faba-4f4a-89a7-e5af29e7095e");
@@ -104,18 +109,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     EnableTimeoutSharedVoicemailTranscription  = $False;
                     LanguageId                                 = "fr-CA";
                     HideAuthorizedUsers                        = @("dummy@contoso.com");
+                    MusicOnHoldAudioFileId                     = "7d2e9f41-3a6b-4c8d-9e15-0b4a7c3f2d86"
                     Name                                       = "TestQueue";
                     OverflowAction                             = "Forward";
                     OverflowActionTarget                       = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     OverflowThreshold                          = 50;
                     PresenceBasedRouting                       = $True;
                     RoutingMethod                              = "RoundRobin";
+                    SharedVoicemailTriageSettingsTemplateId    = "3a4b3d9b-91d8-4fbf-bcff-6907f325842c";
                     TextAnnouncementForCR                      = "FakeStringValue";
                     TextAnnouncementForCRFailure               = "FakeStringValue";
                     TimeoutAction                              = "Forward";
                     TimeoutActionTarget                        = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     TimeoutThreshold                           = 1200;
                     UseDefaultMusicOnHold                      = $False;
+                    WelcomeMusicAudioFileId                    = "e8a4c2b6-1d3f-4a7e-8c9b-5f6d0e2a1b47"
                     Ensure                                     = 'Present'
                     Credential                                 = $Credential
                 }
@@ -126,15 +134,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Set()
                 Should -Invoke -CommandName New-CsCallQueue -Exactly 1
             }
         }
@@ -145,6 +153,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     AgentAlertTime                             = 114;
                     AllowOptOut                                = $True;
                     AuthorizedUsers                            = @("9abce74d-d108-475f-a2cb-bbb82f484982");
+                    CallbackEmailNotificationTarget            = "4b1c8a3e-6f2d-4e9a-b7c5-2d8f1e0a9c63"
                     ChannelId                                  = "19:Y6MG7XdME2Cf9IRmU8PUXNfA1OtqmjyBgCmCGBN2tzY1@thread.tacv2";
                     ConferenceMode                             = $True;
                     DistributionLists                          = @("36c88f29-faba-4f4a-89a7-e5af29e7095e");
@@ -152,34 +161,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     EnableTimeoutSharedVoicemailTranscription  = $False;
                     LanguageId                                 = "fr-CA";
                     HideAuthorizedUsers                        = @("dummy@contoso.com");
+                    MusicOnHoldAudioFileId                     = "7d2e9f41-3a6b-4c8d-9e15-0b4a7c3f2d86"
                     Name                                       = "TestQueue";
                     OverflowAction                             = "Forward";
                     OverflowActionTarget                       = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     OverflowThreshold                          = 50;
                     PresenceBasedRouting                       = $True;
                     RoutingMethod                              = "RoundRobin";
+                    SharedVoicemailTriageSettingsTemplateId    = "3a4b3d9b-91d8-4fbf-bcff-6907f325842c";
                     TextAnnouncementForCR                      = "FakeStringValue";
                     TextAnnouncementForCRFailure               = "FakeStringValue";
                     TimeoutAction                              = "Forward";
                     TimeoutActionTarget                        = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     TimeoutThreshold                           = 1200;
                     UseDefaultMusicOnHold                      = $False;
+                    WelcomeMusicAudioFileId                    = "e8a4c2b6-1d3f-4a7e-8c9b-5f6d0e2a1b47"
                     Ensure                                     = 'Absent'
                     Credential                                 = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the queue from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Remove-CsCallQueue -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Set()
+                Should -Invoke -CommandName Remove-CsCallQueue -Exactly 1 -ParameterFilter { $Identity -eq '5e3a575e-1faa-49ff-83c2-5cf1c36c0e01' }
             }
         }
 
@@ -189,6 +201,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     AgentAlertTime                             = 114;
                     AllowOptOut                                = $True;
                     AuthorizedUsers                            = @("9abce74d-d108-475f-a2cb-bbb82f484982");
+                    CallbackEmailNotificationTarget            = "4b1c8a3e-6f2d-4e9a-b7c5-2d8f1e0a9c63"
                     ChannelId                                  = "19:Y6MG7XdME2Cf9IRmU8PUXNfA1OtqmjyBgCmCGBN2tzY1@thread.tacv2";
                     ConferenceMode                             = $True;
                     DistributionLists                          = @("36c88f29-faba-4f4a-89a7-e5af29e7095e");
@@ -196,29 +209,32 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     EnableTimeoutSharedVoicemailTranscription  = $False;
                     LanguageId                                 = "fr-CA";
                     HideAuthorizedUsers                        = @("dummy@contoso.com");
+                    MusicOnHoldAudioFileId                     = "7d2e9f41-3a6b-4c8d-9e15-0b4a7c3f2d86"
                     Name                                       = "TestQueue";
                     OverflowAction                             = "Forward";
                     OverflowActionTarget                       = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     OverflowThreshold                          = 50;
                     PresenceBasedRouting                       = $True;
                     RoutingMethod                              = "RoundRobin";
+                    SharedVoicemailTriageSettingsTemplateId    = "3a4b3d9b-91d8-4fbf-bcff-6907f325842c";
                     TextAnnouncementForCR                      = "FakeStringValue";
                     TextAnnouncementForCRFailure               = "FakeStringValue";
                     TimeoutAction                              = "Forward";
                     TimeoutActionTarget                        = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     TimeoutThreshold                           = 1200;
                     UseDefaultMusicOnHold                      = $False;
+                    WelcomeMusicAudioFileId                    = "e8a4c2b6-1d3f-4a7e-8c9b-5f6d0e2a1b47"
                     Ensure                                     = 'Present'
                     Credential                                 = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -228,6 +244,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     AgentAlertTime                             = 120; # Drift
                     AllowOptOut                                = $True;
                     AuthorizedUsers                            = @("9abce74d-d108-475f-a2cb-bbb82f484982");
+                    CallbackEmailNotificationTarget            = "4b1c8a3e-6f2d-4e9a-b7c5-2d8f1e0a9c63"
                     ChannelId                                  = "19:Y6MG7XdME2Cf9IRmU8PUXNfA1OtqmjyBgCmCGBN2tzY1@thread.tacv2";
                     ConferenceMode                             = $True;
                     DistributionLists                          = @("36c88f29-faba-4f4a-89a7-e5af29e7095e");
@@ -235,34 +252,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     EnableTimeoutSharedVoicemailTranscription  = $False;
                     LanguageId                                 = "fr-CA";
                     HideAuthorizedUsers                        = @("dummy@contoso.com");
+                    MusicOnHoldAudioFileId                     = "7d2e9f41-3a6b-4c8d-9e15-0b4a7c3f2d86"
                     Name                                       = "TestQueue";
                     OverflowAction                             = "Forward";
                     OverflowActionTarget                       = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     OverflowThreshold                          = 50;
                     PresenceBasedRouting                       = $True;
                     RoutingMethod                              = "RoundRobin";
+                    SharedVoicemailTriageSettingsTemplateId    = "3a4b3d9b-91d8-4fbf-bcff-6907f325842c";
                     TextAnnouncementForCR                      = "FakeStringValue";
                     TextAnnouncementForCRFailure               = "FakeStringValue";
                     TimeoutAction                              = "Forward";
                     TimeoutActionTarget                        = "9abce74d-d108-475f-a2cb-bbb82f484982";
                     TimeoutThreshold                           = 1200;
                     UseDefaultMusicOnHold                      = $False;
+                    WelcomeMusicAudioFileId                    = "e8a4c2b6-1d3f-4a7e-8c9b-5f6d0e2a1b47"
                     Ensure                                     = 'Present'
                     Credential                                 = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Update the queue from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Set-CsCallQueue -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'TeamsCallQueue' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-CsCallQueue -Exactly 1 -ParameterFilter { $Identity -eq '5e3a575e-1faa-49ff-83c2-5cf1c36c0e01' }
             }
         }
 
@@ -276,7 +296,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsCallQueue' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

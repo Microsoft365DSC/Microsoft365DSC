@@ -1,0 +1,1561 @@
+[
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_policy_config_deviceinstallation_preventinstallationofmatchingdevicesetupclasses_deviceinstall_classes_deny_retroactive_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_policy_config_deviceinstallation_preventinstallationofmatchingdevicesetupclasses_deviceinstall_classes_deny_retroactive"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_deviceinstallation_preventinstallationofmatchingdevicesetupclasses_deviceinstall_classes_deny_list",
+            "simpleSettingCollectionValue": [
+              {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                "value": "{d48179be-ec20-11d1-b6b8-00c04fa372a7}"
+              }
+            ]
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "fb131912-ce30-464c-b84b-a8dab771cc66"
+        },
+        "value": "device_vendor_msft_policy_config_deviceinstallation_preventinstallationofmatchingdevicesetupclasses_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_deviceinstallation_preventinstallationofmatchingdevicesetupclasses",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "3803f09f-9d87-4038-aed3-946a5aae32ab"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype_encryptionmethodwithxtsosdropdown_name_6"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype_encryptionmethodwithxtsosdropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype_encryptionmethodwithxtsfdvdropdown_name_6"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype_encryptionmethodwithxtsfdvdropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype_encryptionmethodwithxtsrdvdropdown_name_3"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype_encryptionmethodwithxtsrdvdropdown_name"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "b83adf14-b420-4fbb-b08e-a67b9d19e082"
+        },
+        "value": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_encryptionmethodbydrivetype",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "fc2802f4-a3d6-4e37-8c58-d87592ee0185"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvhiderecoverypage_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvhiderecoverypage_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvactivedirectorybackup_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvactivedirectorybackup_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvrecoverypasswordusagedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvrecoverypasswordusagedropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvrequireactivedirectorybackup_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvrequireactivedirectorybackup_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvallowdra_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvallowdra_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvactivedirectorybackupdropdown_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvactivedirectorybackupdropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvrecoverykeyusagedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_fdvrecoverykeyusagedropdown_name"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "e88fa0ae-49ef-4e76-84cc-cd8332221bb6"
+        },
+        "value": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrecoveryoptions",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "6cb5ecd0-769d-46ac-89d2-3d908da2c80a"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "faae236e-a165-4699-97e8-8725b1b898e6"
+        },
+        "value": "device_vendor_msft_bitlocker_fixeddrivesrequireencryption_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesrequireencryption",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "44e22c12-0b44-4ddb-bd3f-6aadaf883da4"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_fixeddrivesencryptiontype_fdvencryptiontypedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesencryptiontype_fdvencryptiontypedropdown_name"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5b8b7c0f-e3e9-4b78-92d4-d142ff3df4be"
+        },
+        "value": "device_vendor_msft_bitlocker_fixeddrivesencryptiontype_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_fixeddrivesencryptiontype",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "6e2f7ebd-95c2-446a-aae3-b43d5aa8d7af"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "2e2000bd-b478-47b6-bce5-acdc83c83a85"
+        },
+        "value": "device_vendor_msft_bitlocker_systemdrivesenableprebootpinexceptionondecapabledevice_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesenableprebootpinexceptionondecapabledevice",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "b7a6f816-3dcd-47da-bef0-439e5931be32"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "32636c59-f5bc-4377-b68b-bb32a100fee0"
+        },
+        "value": "device_vendor_msft_bitlocker_systemdrivesenhancedpin_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesenhancedpin",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "ec4bc4cb-cf98-42a7-bdfe-6dfe2ea4ff68"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osactivedirectorybackup_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osactivedirectorybackup_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osrequireactivedirectorybackup_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osrequireactivedirectorybackup_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osrecoverypasswordusagedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osrecoverypasswordusagedropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osallowdra_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osallowdra_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osactivedirectorybackupdropdown_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osactivedirectorybackupdropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_oshiderecoverypage_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_oshiderecoverypage_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osrecoverykeyusagedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_osrecoverykeyusagedropdown_name"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "123d9c1e-3918-4472-b6e9-093616d77f16"
+        },
+        "value": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrecoveryoptions",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "0d560665-1035-4ace-baa5-5756edc4b157"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "50455d44-5816-4dd9-90d9-91710d863110"
+        },
+        "value": "device_vendor_msft_bitlocker_systemdrivesenableprebootinputprotectorsonslates_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesenableprebootinputprotectorsonslates",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "7cdb730c-b91a-4bfa-b189-e31899c5c48a"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesencryptiontype_osencryptiontypedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesencryptiontype_osencryptiontypedropdown_name"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "2236adac-f98c-4482-b85c-8691e2c0db13"
+        },
+        "value": "device_vendor_msft_bitlocker_systemdrivesencryptiontype_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesencryptiontype",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "33232649-0bce-4dfb-b19a-821551e513b0"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configuretpmstartupkeyusagedropdown_name_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configuretpmstartupkeyusagedropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configuretpmpinkeyusagedropdown_name_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configuretpmpinkeyusagedropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configurenontpmstartupkeyusage_name_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configurenontpmstartupkeyusage_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configuretpmusagedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configuretpmusagedropdown_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configurepinusagedropdown_name_2"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_configurepinusagedropdown_name"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "440762c8-38c8-4646-89e6-40e09f6d03b6"
+        },
+        "value": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "04deae1a-9c84-47ae-8097-9f185ab9cd9d"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [
+                {
+                  "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                  "choiceSettingValue": {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                    "children": [
+                      {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                        "choiceSettingValue": {
+                          "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                          "children": [],
+                          "value": "device_vendor_msft_bitlocker_removabledrivesencryptiontype_rdvencryptiontypedropdown_name_2"
+                        },
+                        "settingDefinitionId": "device_vendor_msft_bitlocker_removabledrivesencryptiontype_rdvencryptiontypedropdown_name"
+                      }
+                    ],
+                    "value": "device_vendor_msft_bitlocker_removabledrivesencryptiontype_1"
+                  },
+                  "settingDefinitionId": "device_vendor_msft_bitlocker_removabledrivesencryptiontype"
+                }
+              ],
+              "value": "device_vendor_msft_bitlocker_removabledrivesconfigurebde_rdvallowbde_name_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_removabledrivesconfigurebde_rdvallowbde_name"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_removabledrivesconfigurebde_rdvdisablebde_name_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_removabledrivesconfigurebde_rdvdisablebde_name"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "dd0511eb-0e2c-471d-8110-2e26b45e26cc"
+        },
+        "value": "device_vendor_msft_bitlocker_removabledrivesconfigurebde_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_removabledrivesconfigurebde",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "6f3faf0c-c9ea-4add-ad1a-1a84419e9400"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_bitlocker_removabledrivesrequireencryption_rdvcrossorg_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_bitlocker_removabledrivesrequireencryption_rdvcrossorg"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "6f26653b-9fc2-4878-b383-6bc95274244d"
+        },
+        "value": "device_vendor_msft_bitlocker_removabledrivesrequireencryption_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_removabledrivesrequireencryption",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "8db96fbf-a2d7-47ae-9fe9-0915249ea7a3"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_policy_config_admx_windowsexplorer_enablesmartscreen_enablesmartscreendropdown_block"
+            },
+            "settingDefinitionId": "device_vendor_msft_policy_config_admx_windowsexplorer_enablesmartscreen_enablesmartscreendropdown"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "ef23702f-1466-4f94-9217-e6e68ad35b49"
+        },
+        "value": "device_vendor_msft_policy_config_admx_windowsexplorer_enablesmartscreen_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_admx_windowsexplorer_enablesmartscreen",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "7f1ee405-3709-4afe-b5d5-75705af97114"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "c328b24d-8552-4b80-a25c-9e1606569672"
+        },
+        "value": "device_vendor_msft_policy_config_internetexplorer_disablebypassofsmartscreenwarningsaboutuncommonfiles_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_internetexplorer_disablebypassofsmartscreenwarningsaboutuncommonfiles",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "fd3761b3-4271-4899-8992-abae13cbcd04"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_policy_config_internetexplorer_preventmanagingsmartscreenfilter_ie9safetyfilteroptions_1"
+            },
+            "settingDefinitionId": "device_vendor_msft_policy_config_internetexplorer_preventmanagingsmartscreenfilter_ie9safetyfilteroptions"
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "3e8a6f2f-1b7f-469f-b5c0-5a771e192ed9"
+        },
+        "value": "device_vendor_msft_policy_config_internetexplorer_preventmanagingsmartscreenfilter_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_internetexplorer_preventmanagingsmartscreenfilter",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "64c4f61d-053d-4912-8af6-8a154d435c27"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "73d787de-0c2c-43ba-8759-7c281ad85ff9"
+        },
+        "value": "device_vendor_msft_bitlocker_allowwarningforotherdiskencryption_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_allowwarningforotherdiskencryption",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "a0016822-f132-4f14-8759-12769ba414c9"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "f6e0fa92-83f4-474e-8649-9d67f443ddaa"
+        },
+        "value": "device_vendor_msft_bitlocker_configurerecoverypasswordrotation_2"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_configurerecoverypasswordrotation",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "e52eb853-15f0-40d5-8ca5-a90c77f9921f"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "1d38ed5d-fcce-48f1-89cc-587f78982229"
+        },
+        "value": "device_vendor_msft_bitlocker_requiredeviceencryption_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_bitlocker_requiredeviceencryption",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "3a4dbcce-a6ed-4a96-bcea-335cb4814f42"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "c68cd34f-82b9-4da9-a09d-2e7b2efebbe1"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowarchivescanning_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowarchivescanning",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "a9033310-7bdd-4394-8abb-55b647edbe22"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "cb63ce36-59cd-4fef-94c8-09831121089a"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowbehaviormonitoring_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowbehaviormonitoring",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "32ef611c-6234-4b3d-8625-213f9093a5c9"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "7719b2ad-f690-493f-8d44-567f343c6b12"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowcloudprotection_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowcloudprotection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "787df6bc-f7af-4f39-9ab2-c9ad280130ba"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "778373cd-a915-44fa-a76f-82722f0242b3"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowemailscanning_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowemailscanning",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "ae01cfde-974e-46be-850e-dfde5ae89bb7"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "0922b479-f94b-4e7d-9d1c-f89063c45ce3"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowfullscanremovabledrivescanning_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowfullscanremovabledrivescanning",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "fea4a9ea-79b5-4472-8f02-f5465ab91a66"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "f437f139-aaa0-4f8a-8898-56a21a7303eb"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowonaccessprotection_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowonaccessprotection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "c286202e-7c9b-437c-931b-da19cd3783ed"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "da5d715c-b046-4d8a-b281-cf9a76fca8a4"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "775f8729-9ce5-4b6f-8afd-1ab61891d195"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "60937510-8e73-4e4d-8b49-8da6ec21e2f5"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowscanningnetworkfiles_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowscanningnetworkfiles",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "beb59c6e-aeef-428d-a01f-50cd1e55fcbb"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "c206746f-19bd-4f24-a0be-cd14e646d5cc"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowioavprotection_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowioavprotection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "582be4eb-44da-4164-af90-a19e9c25a18e"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "a31fd9db-3538-4f25-ae6b-48948bc8f26b"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowscriptscanning_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowscriptscanning",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "bf36d3ca-d40d-422c-a6b2-2608a3d21ca4"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5ab2c344-8780-42eb-8a8f-c4ee59f182bb"
+        },
+        "value": "device_vendor_msft_policy_config_defender_allowuseruiaccess_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_allowuseruiaccess",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "a5839f4c-bf1e-44fa-8f8c-b8d369a5c895"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+      "groupSettingCollectionValue": [
+        {
+          "children": [
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "91409606-7176-458e-96b9-1c7e3f7aec30"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutionofpotentiallyobfuscatedscripts_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutionofpotentiallyobfuscatedscripts"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "ec23ad6c-1052-4b9e-8d5a-ec46e8c8542b"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockofficecommunicationappfromcreatingchildprocesses_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockofficecommunicationappfromcreatingchildprocesses"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "989dfdef-5fc4-4068-b009-7c19168c1485"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockallofficeapplicationsfromcreatingchildprocesses_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockallofficeapplicationsfromcreatingchildprocesses"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "0354f594-0285-41ef-8cf3-8c7d95b6270b"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockwin32apicallsfromofficemacros_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockwin32apicallsfromofficemacros"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "f4705d07-f00e-4072-9d9f-9aee57636a49"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutablefilesrunningunlesstheymeetprevalenceagetrustedlistcriterion_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutablefilesrunningunlesstheymeetprevalenceagetrustedlistcriterion"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "18993a9a-248e-4cb6-bd36-b16774556160"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockjavascriptorvbscriptfromlaunchingdownloadedexecutablecontent_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockjavascriptorvbscriptfromlaunchingdownloadedexecutablecontent"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "4aaa50df-dd34-4957-a673-fd0c8bef67f5"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockuntrustedunsignedprocessesthatrunfromusb_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockuntrustedunsignedprocessesthatrunfromusb"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "796d3468-ab13-4fa6-8399-72542710eeba"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockwebshellcreationforservers_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockwebshellcreationforservers"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "9adb9840-deaa-42ab-863a-bff267e56c74"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockadobereaderfromcreatingchildprocesses_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockadobereaderfromcreatingchildprocesses"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "a9e07d11-4468-42d3-8855-a4dd57d6ff6e"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockcredentialstealingfromwindowslocalsecurityauthoritysubsystem_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockcredentialstealingfromwindowslocalsecurityauthoritysubsystem"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "9860f9c9-ff7d-4f06-897b-45a18d5c6962"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockabuseofexploitedvulnerablesigneddrivers_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockabuseofexploitedvulnerablesigneddrivers"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "f33ab3fc-ad7a-4eb0-891f-2e11bff30bb5"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockpersistencethroughwmieventsubscription_audit"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockpersistencethroughwmieventsubscription"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "a2c9847d-b33e-4bc6-acbd-40dfb32d22b3"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockuseofcopiedorimpersonatedsystemtools_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockuseofcopiedorimpersonatedsystemtools"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "e3f3cdd2-9b78-4b0d-adf0-092c9c7a2faf"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockofficeapplicationsfrominjectingcodeintootherprocesses_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockofficeapplicationsfrominjectingcodeintootherprocesses"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "5c1f6b1c-9e75-4a07-95a0-cf44fcdfd556"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_useadvancedprotectionagainstransomware_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_useadvancedprotectionagainstransomware"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "27b3063b-0855-40e1-bc09-524ec2811850"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockprocesscreationsfrompsexecandwmicommands_audit"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockprocesscreationsfrompsexecandwmicommands"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "d58c963a-73da-488f-b6cc-10fa555218c9"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockrebootingmachineinsafemode_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockrebootingmachineinsafemode"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "6d5025f4-71f7-42c6-b5cd-9adcbc68a8ca"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutablecontentfromemailclientandwebmail_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutablecontentfromemailclientandwebmail"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "023ebdba-dbfa-42e8-bcdc-89327c9594cc"
+                },
+                "value": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockofficeapplicationsfromcreatingexecutablecontent_block"
+              },
+              "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockofficeapplicationsfromcreatingexecutablecontent"
+            }
+          ]
+        }
+      ],
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "c1d89476-ce60-45a3-bdd7-eb378e54f826"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "9fd68849-f92b-4bcb-9024-437339f2f085"
+        },
+        "value": "device_vendor_msft_policy_config_defender_checkforsignaturesbeforerunningscan_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_checkforsignaturesbeforerunningscan",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "ccf1e60a-1ae5-48ef-82c5-c43b83f40f51"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "ccd0decb-f889-488c-919f-efb3d5999ccd"
+        },
+        "value": "device_vendor_msft_policy_config_defender_cloudblocklevel_2"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_cloudblocklevel",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "d40b50b7-d140-4b65-8a8c-fb8187253083"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_cloudextendedtimeout",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "e8a35780-23ca-404d-b633-a13043fd319e"
+      },
+      "simpleSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "206cac30-206c-413c-a8a4-ac49e5bcfc9c"
+        },
+        "value": 50
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "64c062e6-5196-4d90-8f14-e99cc1c51d92"
+        },
+        "value": "device_vendor_msft_defender_configuration_disablelocaladminmerge_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_defender_configuration_disablelocaladminmerge",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "85c48954-014f-4a61-958b-993517f45de1"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "7166fed9-046b-4cf1-a422-c62c121c4a4f"
+        },
+        "value": "device_vendor_msft_policy_config_defender_enablenetworkprotection_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_enablenetworkprotection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "4ee504a7-ed61-4b40-88e9-2a08b78e5801"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "8c2e5491-150b-47e3-b4ac-8ba158c62d92"
+        },
+        "value": "device_vendor_msft_defender_configuration_hideexclusionsfromlocaladmins_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_defender_configuration_hideexclusionsfromlocaladmins",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "a7d8b6c2-47aa-47b0-911e-5d05efe8eb25"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "d4df3e6f-6583-47d7-993d-b677bdab9b5b"
+        },
+        "value": "device_vendor_msft_defender_configuration_hideexclusionsfromlocalusers_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_defender_configuration_hideexclusionsfromlocalusers",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "dabc32f0-094d-4aed-8a7d-a6a8b3059268"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "329d5e1c-c1b0-4e69-88c8-57d23b8f10f7"
+        },
+        "value": "device_vendor_msft_defender_configuration_oobeenablertpandsigupdate_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_defender_configuration_oobeenablertpandsigupdate",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "6b58ab49-2d53-4a19-937b-f82f9d854875"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "8dc5e01f-4f69-41dc-ba68-bc193151fef9"
+        },
+        "value": "device_vendor_msft_policy_config_defender_puaprotection_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_puaprotection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "8736a35b-e6e3-415a-9dbb-c5101d4d5df6"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5efcb76f-71c2-482b-9b0c-e92a87a70ce9"
+        },
+        "value": "device_vendor_msft_policy_config_defender_realtimescandirection_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_realtimescandirection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "7bba3966-73f2-46a7-a0b8-cb8017ac14a2"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "bcaec511-9698-49e9-a794-e3cdbce2f606"
+        },
+        "value": "device_vendor_msft_policy_config_defender_scanparameter_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_scanparameter",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "53dd1377-80d8-4a68-a40f-df78a870d9cf"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_schedulequickscantime",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "2c460ad6-23cd-45e9-a601-1b8293e15061"
+      },
+      "simpleSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5accefc3-fe1b-435a-8cef-c6ca7601d160"
+        },
+        "value": 120
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "4a0c57c6-e741-4efe-bd07-47719c928dd5"
+        },
+        "value": "device_vendor_msft_policy_config_defender_schedulescanday_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_schedulescanday",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "87634bb8-cff1-4f25-97f3-f8d100870de2"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_schedulescantime",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "3a546569-d14c-4af9-9ed6-7fff81ea899b"
+      },
+      "simpleSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5c1f90ad-6fef-4e83-bdef-af422af22d51"
+        },
+        "value": 120
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_signatureupdateinterval",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "d2774c98-982c-449a-8451-9181a69ee28e"
+      },
+      "simpleSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "3cbffe65-7801-4a80-a0ac-07c50fda3807"
+        },
+        "value": 4
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5b447fce-83eb-409c-8a5d-4fe9a9b0e13c"
+        },
+        "value": "device_vendor_msft_policy_config_defender_submitsamplesconsent_3"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_defender_submitsamplesconsent",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "22595133-83c1-402f-acb5-b285e051161d"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "02461f54-5471-46c2-b39d-5daee9a166b6"
+        },
+        "value": "device_vendor_msft_policy_config_deviceguard_lsacfgflags_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_deviceguard_lsacfgflags",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "9c840fb2-c96b-4a0e-8055-4059dbdfbc52"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "58025354-ea20-49e6-bd7e-b41455011ae5"
+        },
+        "value": "device_vendor_msft_policy_config_dmaguard_deviceenumerationpolicy_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_dmaguard_deviceenumerationpolicy",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "a4aa6b0c-e539-4dab-bc4b-eeacbfd7916d"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "ba4bc12a-4c4c-499c-9f0e-924e6d2c5b30"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_smartscreenenabled_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_smartscreenenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "9494b3dd-d859-4fa3-8937-c1ea14853976"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "9d9216a9-fc58-4f91-b2a4-580d777dd705"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edgev80diff~policy~microsoft_edge~smartscreen_smartscreenpuaenabled_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edgev80diff~policy~microsoft_edge~smartscreen_smartscreenpuaenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "40f986ab-922f-488c-b25f-7ad3efa3d3db"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5cc052be-1889-445f-822f-ac73b175cc8f"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edgev97~policy~microsoft_edge~smartscreen_smartscreendnsrequestsenabled_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edgev97~policy~microsoft_edge~smartscreen_smartscreendnsrequestsenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "c203af5f-ca42-402b-8061-c5555ead7694"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "dc5ebc02-de95-4528-92fe-a51219eb2e40"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edgev95~policy~microsoft_edge~smartscreen_newsmartscreenlibraryenabled_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edgev95~policy~microsoft_edge~smartscreen_newsmartscreenlibraryenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "e0111f00-1843-4df3-97d5-a90b350f88cd"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "e0e76cf1-c502-4393-a1e9-f6f7ba84be58"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edgev78diff~policy~microsoft_edge~smartscreen_smartscreenfortrusteddownloadsenabled_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edgev78diff~policy~microsoft_edge~smartscreen_smartscreenfortrusteddownloadsenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "4daa59bf-7828-45a8-9b12-eeac27b7b31f"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "265a0466-95f3-4966-9470-edc298baa774"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_preventsmartscreenpromptoverride_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_preventsmartscreenpromptoverride",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "97362a65-b46f-4366-8283-812319daf05a"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "45461f6d-b05b-4327-9664-9c3b1dc61c98"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_preventsmartscreenpromptoverrideforfiles_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_preventsmartscreenpromptoverrideforfiles",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "d184ba06-889f-4572-a814-26ec95d091ec"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "b5d501b1-63e6-4148-a099-05e7b07eb030"
+        },
+        "value": "user_vendor_msft_policy_config_internetexplorer_disablebypassofsmartscreenwarningsaboutuncommonfiles_1"
+      },
+      "settingDefinitionId": "user_vendor_msft_policy_config_internetexplorer_disablebypassofsmartscreenwarningsaboutuncommonfiles",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "f935a3e0-81d6-4546-98b7-c1f653531d9c"
+      }
+    }
+  }
+]

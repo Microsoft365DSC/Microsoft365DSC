@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -111,15 +111,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return the current Language as null from the Get method' {
-                (Get-TargetResource @testParams).Language | Should -Be $null
+                ((New-M365DSCResourceInstance -ResourceName 'EXOGroupSettings' -Property $testParams).Get().ToHashtable()).Language | Should -Be $null
             }
 
             It 'Should return False from the Test method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'EXOGroupSettings' -Property $testParams).Test() | Should -Be $False
             }
 
-            It 'Should call New-UnifiedGroup from the Set-TargetResource method' {
-                Set-TargetResource @testParams
+            It 'Should call New-UnifiedGroup from the Set() method' {
+                (New-M365DSCResourceInstance -ResourceName 'EXOGroupSettings' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Set-UnifiedGroup' -Exactly 1
             }
         }
@@ -153,11 +153,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return the current Language as en-US from the Get method' {
-                (Get-TargetResource @testParams).Language | Should -Be 'en-US'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOGroupSettings' -Property $testParams).Get().ToHashtable()).Language | Should -Be 'en-US'
             }
 
             It 'Should return True from the Test method' {
-                Test-TargetResource @testParams | Should -Be $True
+                (New-M365DSCResourceInstance -ResourceName 'EXOGroupSettings' -Property $testParams).Test() | Should -Be $True
             }
         }
         Context -Name "The Resource is not in the Desired State" -Fixture {
@@ -188,10 +188,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return False from the Test method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'EXOGroupSettings' -Property $testParams).Test() | Should -Be $False
             }
-            It 'Should call Set-UnifiedGroup from the Set-TargetResource method' {
-                Set-TargetResource @testParams
+            It 'Should call Set-UnifiedGroup from the Set() method' {
+                (New-M365DSCResourceInstance -ResourceName 'EXOGroupSettings' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Set-UnifiedGroup' -Exactly 1
             }
         }
@@ -206,7 +206,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOGroupSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

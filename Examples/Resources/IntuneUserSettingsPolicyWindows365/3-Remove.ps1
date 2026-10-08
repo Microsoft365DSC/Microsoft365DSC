@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneUserSettingsPolicyWindows365 "My User Settings Policy for Windows 365"
+        IntuneUserSettingsPolicyWindows365 "IntuneUserSettingsPolicyWindows365-Example"
         {
             DisplayName           = "User Settings Policy W365";
             Ensure                = "Absent";

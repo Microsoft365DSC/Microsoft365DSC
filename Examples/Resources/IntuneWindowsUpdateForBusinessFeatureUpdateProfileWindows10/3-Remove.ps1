@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 'Example'
+        IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 'IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10-Example'
         {
-            DisplayName          = 'WUfB Feature -dsc'
-            Ensure               = 'Absent'
+            DisplayName           = 'Feature Updates - Windows 10 22H2'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

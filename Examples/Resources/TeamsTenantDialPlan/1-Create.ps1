@@ -6,19 +6,27 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsTenantDialPlan 'ConfigureTenantDialPlan'
+        TeamsTenantDialPlan 'TeamsTenantDialPlan-Example'
         {
-            Identity              = 'DemoPlan'
-            Description           = 'This is a demo dial plan'
+            Identity              = 'AmsterdamPlan'
+            Description           = 'Dial plan for the Amsterdam office'
             NormalizationRules    = @(
                 MSFT_TeamsVoiceNormalizationRule
                 {
@@ -30,9 +38,11 @@ Configuration Example
                     IsInternalExtension = $False
                 }
             )
-            SimpleName            = 'DemoPlan'
+            SimpleName            = 'AmsterdamPlan'
             Ensure                = 'Present'
-            Credential            = $Credscredential
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,16 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOMailContact 'TestMailContact'
+        EXOMailContact 'EXOMailContact-Example'
         {
-            Alias                       = 'TestMailContact'
-            DisplayName                 = 'My Test Contact'
-            Ensure                      = 'Absent'
-            ExternalEmailAddress        = 'SMTP:test@tailspintoys.com'
-            Name                        = 'My Test Contact'
-            OrganizationalUnit          = $TenantId
-            SendModerationNotifications = 'Always'
-            UsePreferMessageFormat      = $false # Updated Property
-            CustomAttribute1            = 'Custom Value 1'
-            ExtensionCustomAttribute5   = 'Extension Custom Value 1', 'Extension Custom Value 2'
+            Ensure                = 'Absent'
+            ExternalEmailAddress  = 'SMTP:orders@tailspintoys.com'
+            Name                  = 'Tailspin Toys Orders'
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

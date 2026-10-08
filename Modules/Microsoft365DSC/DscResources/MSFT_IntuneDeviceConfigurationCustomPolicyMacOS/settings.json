@@ -1,0 +1,119 @@
+{
+  "resourceName": "IntuneDeviceConfigurationCustomPolicyMacOS",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceConfiguration",
+    "odataSubtype": "macOSCustomConfiguration",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "createOnlyProperties": [],
+    "textPayloadProperties": [
+      "Payload"
+    ],
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeviceManagementApplicabilityRuleDeviceMode",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "DeviceManagementApplicabilityRuleOsEdition",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "DeviceManagementApplicabilityRuleOsVersion",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    }
+  ],
+  "description": "This resource configures a Intune Device Configuration Custom Policy for macOS.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {
+    "graph": {
+      "delegated": {
+        "read": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
+          }
+        ]
+      },
+      "application": {
+        "read": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
+          }
+        ]
+      }
+    }
+  },
+  "requiredModules": [
+    "Microsoft.Graph.Beta.DeviceManagement",
+    "Microsoft.Graph.Groups"
+  ],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.DeviceManagement",
+      "cmdlets": [
+        "Get-MgBetaDeviceManagementAssignmentFilter",
+        "Get-MgBetaDeviceManagementDeviceConfiguration",
+        "Get-MgBetaDeviceManagementDeviceConfigurationAssignment",
+        "New-MgBetaDeviceManagementDeviceConfiguration",
+        "Remove-MgBetaDeviceManagementDeviceConfiguration",
+        "Update-MgBetaDeviceManagementDeviceConfiguration"
+      ]
+    },
+    {
+      "module": "Microsoft.Graph.Groups",
+      "cmdlets": [
+        "Get-MgGroup"
+      ]
+    }
+  ]
+}

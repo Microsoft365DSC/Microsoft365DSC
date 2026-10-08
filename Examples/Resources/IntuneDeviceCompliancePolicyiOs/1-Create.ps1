@@ -4,7 +4,8 @@ This example creates a new Device Compliance Policy for iOs devices
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,32 +18,63 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceCompliancePolicyiOs 'ConfigureDeviceCompliancePolicyiOS'
+        IntuneDeviceCompliancePolicyiOs 'IntuneDeviceCompliancePolicyiOs-Example'
         {
-            DisplayName                                 = 'Test iOS Device Compliance Policy'
-            Description                                 = 'Test iOS Device Compliance Policy Description'
-            PasscodeBlockSimple                         = $True
-            PasscodeExpirationDays                      = 365
-            PasscodeMinimumLength                       = 6
-            PasscodeMinutesOfInactivityBeforeLock       = 5
-            PasscodePreviousPasscodeBlockCount          = 3
-            PasscodeMinimumCharacterSetCount            = 2
-            PasscodeRequiredType                        = 'numeric'
-            PasscodeRequired                            = $True
-            OsMinimumVersion                            = 10
-            OsMaximumVersion                            = 12
-            SecurityBlockJailbrokenDevices              = $True
-            DeviceThreatProtectionEnabled               = $True
-            DeviceThreatProtectionRequiredSecurityLevel = 'medium'
-            ManagedEmailProfileRequired                 = $True
-            Ensure                                      = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            DisplayName                                    = 'iOS Device Compliance'
+            Description                                    = 'Baseline compliance requirements for corporate iPhones and iPads'
+            RoleScopeTagIds                                = @('0')
+            Assignments                                    = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                    deviceAndAppManagementAssignmentFilterType = 'none'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    deviceAndAppManagementAssignmentFilterType = 'none'
+                    groupDisplayName                           = 'Intune Excluded Devices'
+                }
+            )
+            PasscodeBlockSimple                            = $True
+            PasscodeExpirationDays                         = 365
+            PasscodeMinimumLength                          = 6
+            PasscodeMinutesOfInactivityBeforeLock          = 5
+            PasscodeMinutesOfInactivityBeforeScreenTimeout = 5
+            PasscodePreviousPasscodeBlockCount             = 3
+            PasscodeMinimumCharacterSetCount               = 2
+            PasscodeRequiredType                           = 'alphanumeric'
+            PasscodeRequired                               = $True
+            OsMinimumVersion                               = '16.0'
+            OsMaximumVersion                               = '18.5'
+            OsMinimumBuildVersion                          = '20A362'
+            OsMaximumBuildVersion                          = '22F76'
+            ScheduledActionsForRule                        = @(
+                MSFT_ScheduledActionConfigurations{
+                    actionType       = 'block'
+                    gracePeriodHours = 24
+                }
+            )
+            SecurityBlockJailbrokenDevices                 = $True
+            DeviceThreatProtectionEnabled                  = $True
+            DeviceThreatProtectionRequiredSecurityLevel    = 'medium'
+            AdvancedThreatProtectionRequiredSecurityLevel  = 'medium'
+            ManagedEmailProfileRequired                    = $True
+            RestrictedApps                                 = @(
+                MSFT_appListItem{
+                    name        = 'Facebook'
+                    publisher   = 'Meta Platforms, Inc.'
+                    appStoreUrl = 'https://apps.apple.com/app/facebook/id284882215'
+                    appId       = 'com.facebook.Facebook'
+                }
+            )
+            Ensure                                         = 'Present'
+            ApplicationId                                  = $ApplicationId;
+            TenantId                                       = $TenantId;
+            CertificateThumbprint                          = $CertificateThumbprint;
         }
     }
 }

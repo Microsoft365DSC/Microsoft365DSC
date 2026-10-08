@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,30 +19,52 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOMailContact 'TestMailContact'
+        EXOMailContact 'EXOMailContact-Example'
         {
-            Alias                       = 'TestMailContact'
-            DisplayName                 = 'My Test Contact'
+            Alias                       = 'AlbertoPereira'
+            DisplayName                 = 'Alberto Pereira'
             Ensure                      = 'Present'
-            ExternalEmailAddress        = 'SMTP:test@tailspintoys.com'
+            ExternalEmailAddress        = 'SMTP:orders@tailspintoys.com'
+            FirstName                   = 'Alberto'
+            Initials                    = 'R'
+            LastName                    = 'Pereira'
             MacAttachmentFormat         = 'BinHex'
             MessageBodyFormat           = 'TextAndHtml'
             MessageFormat               = 'Mime'
             ModeratedBy                 = @()
             ModerationEnabled           = $false
-            Name                        = 'My Test Contact'
+            Name                        = 'Tailspin Toys Orders'
             OrganizationalUnit          = $TenantId
             SendModerationNotifications = 'Always'
             UsePreferMessageFormat      = $false # Updated Property
-            CustomAttribute1            = 'Custom Value 1'
-            ExtensionCustomAttribute5   = 'Extension Custom Value 1', 'Extension Custom Value 2'
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            CustomAttribute1            = 'Supplier'
+            CustomAttribute2            = 'Toys and Games'
+            CustomAttribute3            = 'Tailspin Toys'
+            CustomAttribute4            = 'North America'
+            CustomAttribute5            = 'Seattle'
+            CustomAttribute6            = 'Procurement'
+            CustomAttribute7            = 'Net 30'
+            CustomAttribute8            = 'Preferred'
+            CustomAttribute9            = 'Wholesale'
+            CustomAttribute10           = 'English'
+            CustomAttribute11           = 'Pacific Standard Time'
+            CustomAttribute12           = 'Contract 4471'
+            CustomAttribute13           = 'Renews 2027'
+            CustomAttribute14           = 'Account Management'
+            CustomAttribute15           = 'Active'
+            ExtensionCustomAttribute1   = @("Product Catalogue")
+            ExtensionCustomAttribute2   = @("Product Catalogue", "Price List")
+            ExtensionCustomAttribute3   = @("Order Confirmations", "Shipping Notices")
+            ExtensionCustomAttribute4   = @("Trade Shows", "Partner Webinars")
+            ExtensionCustomAttribute5   = @("Quarterly Business Review", "Annual Supplier Summit")
+            ApplicationId               = $ApplicationId
+            TenantId                    = $TenantId
+            CertificateThumbprint       = $CertificateThumbprint
         }
     }
 }

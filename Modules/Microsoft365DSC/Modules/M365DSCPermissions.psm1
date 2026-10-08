@@ -2,6 +2,57 @@ using namespace System.Management.Automation.Language
 
 <#
 .SYNOPSIS
+    Returns an empty permissions matrix.
+
+.DESCRIPTION
+    Returns an empty permissions matrix pre-populated with the Organization.Read.All Graph
+    application permission every tenant interaction needs.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function New-M365DSCPermissionsMatrix
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param ()
+
+    return @{
+        AdministrativeRoles = @{
+            Read   = @()
+            Update = @()
+        }
+        Read                = @(
+            @{
+                API        = 'graph'
+                Permission = @{
+                    Name = 'Organization.Read.All'
+                    Type = 'Application'
+                }
+            }
+        )
+        Update              = @(
+            @{
+                API        = 'graph'
+                Permission = @{
+                    Name = 'Organization.Read.All'
+                    Type = 'Application'
+                }
+            }
+        )
+        RequiredRoles       = @{
+            Read   = @()
+            Update = @()
+        }
+        RequiredRoleGroups  = @{
+            Read   = @()
+            Update = @()
+        }
+    }
+}
+
+<#
+.SYNOPSIS
     Compiles required permissions for selected Microsoft365DSC resources.
 
 .DESCRIPTION
@@ -68,46 +119,13 @@ function Get-M365DSCCompiledPermissionList
         $GroupByResourceName
     )
 
-    $baseObject = @{
-        AdministrativeRoles = @{
-            Read   = @()
-            Update = @()
-        }
-        Read                = @(
-            @{
-                API        = 'Graph'
-                Permission = @{
-                    Name = 'Organization.Read.All'
-                    Type = 'Application'
-                }
-            }
-        )
-        Update              = @(
-            @{
-                API        = 'Graph'
-                Permission = @{
-                    Name = 'Organization.Read.All'
-                    Type = 'Application'
-                }
-            }
-        )
-        RequiredRoles       = @{
-            Read   = @()
-            Update = @()
-        }
-        RequiredRoleGroups  = @{
-            Read   = @()
-            Update = @()
-        }
-    }
-
     if ($GroupByResourceName)
     {
         $results = [ordered]@{}
     }
     else
     {
-        $results = $baseObject
+        $results = New-M365DSCPermissionsMatrix
     }
 
     $total = $ResourceNameList.Count
@@ -122,26 +140,15 @@ function Get-M365DSCCompiledPermissionList
 
         if ($GroupByResourceName)
         {
-            $currentResourceResults = $baseObject.Clone()
+            $currentResourceResults = New-M365DSCPermissionsMatrix
         }
-        $settingsFilePath = $null
-        try
+        $resourceSettings = Get-M365DSCResourceSetting -ResourceName $resourceName
+        if ($null -eq $resourceSettings)
         {
-            $settingsFilePath = Join-Path -Path $PSScriptRoot `
-                -ChildPath "..\DscResources\MSFT_$resourceName\settings.json" `
-                -Resolve `
-                -ErrorAction Stop
+            Write-Warning -Message "Settings were not found for resource {$resourceName}"
         }
-        catch
+        else
         {
-            Write-Warning -Message "File settings.json was not found for resource {$resourceName}"
-        }
-
-        if ($null -ne $settingsFilePath)
-        {
-            $fileContent = Get-Content $settingsFilePath -Raw
-            $resourceSettings = ConvertFrom-Json -InputObject $fileContent
-
             $targetMatrix = if ($GroupByResourceName) { $currentResourceResults } else { $results }
 
             # Entra / Administrative roles
@@ -181,250 +188,51 @@ function Get-M365DSCCompiledPermissionList
                 continue
             }
 
-            # Graph permissions
-            if ($null -ne $resourceSettings.permissions.graph)
+            foreach ($api in $resourceSettings.permissions.PSObject.Properties)
             {
-                Write-Verbose -Message '  Retrieving Graph permissions'
+                $apiName = $api.Name
+                Write-Verbose -Message "  Retrieving $apiName permissions"
 
-                # Delegated Update permissions
-                Update-M365DSCPermissionsMatrix -Source 'Graph' `
-                    -PermissionType 'Delegated' `
-                    -AccessType 'Update' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-
-                # Application Update permissions
-                Update-M365DSCPermissionsMatrix -Source 'Graph' `
-                    -PermissionType 'Application' `
-                    -AccessType 'Update' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-
-                # Delegated Read permissions
-                Update-M365DSCPermissionsMatrix -Source 'Graph' `
-                    -PermissionType 'Delegated' `
-                    -AccessType 'Read' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-
-                # Application Read permissions
-                Update-M365DSCPermissionsMatrix -Source 'Graph' `
-                    -PermissionType 'Application' `
-                    -AccessType 'Read' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-            }
-            else
-            {
-                Write-Verbose "  No Graph node in settings.json for $resourceName."
-            }
-
-            # Exchange permissions
-            if ($null -ne $resourceSettings.permissions.exchange)
-            {
-                Write-Verbose -Message '  Retrieving Exchange permissions'
-                # Required Role
-                foreach ($requiredRole in $resourceSettings.permissions.exchange.requiredroles.read)
+                foreach ($permissionType in @('Delegated', 'Application'))
                 {
-                    if (-not $targetMatrix.RequiredRoles.Read.Contains($requiredRole))
+                    foreach ($accessType in @('Read', 'Update'))
                     {
-                        Write-Verbose -Message "    Found new Read Required Role {$($requiredRole)}"
-                        $targetMatrix.RequiredRoles.Read += $requiredRole
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Read Role {$($requiredRole)} was already added"
-                    }
-                }
-                foreach ($requiredRole in $resourceSettings.permissions.exchange.requiredroles.update)
-                {
-                    if (-not $targetMatrix.RequiredRoles.Update.Contains($requiredRole))
-                    {
-                        Write-Verbose -Message "    Found new Update Required Role {$($requiredRole)}"
-                        $targetMatrix.RequiredRoles.Update += $requiredRole
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Update Role {$($requiredRole)} was already added"
+                        Update-M365DSCPermissionsMatrix -Source $apiName `
+                            -PermissionType $permissionType `
+                            -AccessType $accessType `
+                            -Matrix ([ref]$targetMatrix) `
+                            -Permissions ($api.Value)
                     }
                 }
 
-                # Required RoleGroups
-                foreach ($requiredRoleGroup in $resourceSettings.permissions.exchange.requiredrolegroups.read)
+                foreach ($accessType in @('Read', 'Update'))
                 {
-                    if (-not $targetMatrix.RequiredRoleGroups.Read.Contains($requiredRoleGroup))
+                    foreach ($requiredRole in $api.Value.requiredRoles.$accessType)
                     {
-                        Write-Verbose -Message "    Found new Read Required Role Group {$($requiredRoleGroup)}"
-                        $targetMatrix.RequiredRoleGroups.Read += $requiredRoleGroup
+                        if (-not $targetMatrix.RequiredRoles.$accessType.Contains($requiredRole))
+                        {
+                            Write-Verbose -Message "    Found new $accessType Required Role {$($requiredRole)}"
+                            $targetMatrix.RequiredRoles.$accessType += $requiredRole
+                        }
+                        else
+                        {
+                            Write-Verbose -Message "    Required $accessType Role {$($requiredRole)} was already added"
+                        }
                     }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Read Role Group {$($requiredRoleGroup)} was already added"
-                    }
-                }
-                foreach ($requiredRoleGroup in $resourceSettings.permissions.exchange.requiredrolegroups.update)
-                {
-                    if (-not $targetMatrix.RequiredRoleGroups.Update.Contains($requiredRoleGroup))
-                    {
-                        Write-Verbose -Message "    Found new Update Required Role Group {$($requiredRoleGroup)}"
-                        $targetMatrix.RequiredRoleGroups.Update += $requiredRoleGroup
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Update Role Group {$($requiredRoleGroup)} was already added"
-                    }
-                }
 
-                $exchangeRead = $targetMatrix.Read | Where-Object -FilterScript { $_.API -eq 'Exchange' -and $_.Permission.Name -eq 'Exchange.ManageAsApp' }
-                if ($null -eq $exchangeRead)
-                {
-                    $targetMatrix.Read += @{
-                        API        = 'Exchange'
-                        Permission = @{
-                            Type = 'Application'
-                            Name = 'Exchange.ManageAsApp'
+                    foreach ($requiredRoleGroup in $api.Value.requiredRoleGroups.$accessType)
+                    {
+                        if (-not $targetMatrix.RequiredRoleGroups.$accessType.Contains($requiredRoleGroup))
+                        {
+                            Write-Verbose -Message "    Found new $accessType Required Role Group {$($requiredRoleGroup)}"
+                            $targetMatrix.RequiredRoleGroups.$accessType += $requiredRoleGroup
+                        }
+                        else
+                        {
+                            Write-Verbose -Message "    Required $accessType Role Group {$($requiredRoleGroup)} was already added"
                         }
                     }
                 }
-
-                $exchangeUpdate = $targetMatrix.Update | Where-Object -FilterScript { $_.API -eq 'Exchange' -and $_.Permission.Name -eq 'Exchange.ManageAsApp' }
-                if ($null -eq $exchangeUpdate)
-                {
-                    $targetMatrix.Update += @{
-                        API        = 'Exchange'
-                        Permission = @{
-                            Type = 'Application'
-                            Name = 'Exchange.ManageAsApp'
-                        }
-                    }
-                }
-            }
-            else
-            {
-                Write-Verbose "  No Exchange node in settings.json for $resourceName."
-            }
-
-            # Purview permissions
-            if ($null -ne $resourceSettings.permissions.purview)
-            {
-                Write-Verbose -Message '  Retrieving Purview permissions'
-                # Required Role
-                foreach ($requiredRole in $resourceSettings.permissions.purview.requiredroles.read)
-                {
-                    if (-not $targetMatrix.RequiredRoles.Read.Contains($requiredRole))
-                    {
-                        Write-Verbose -Message "    Found new Read Required Role {$($requiredRole)}"
-                        $targetMatrix.RequiredRoles.Read += $requiredRole
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Read Role {$($requiredRole)} was already added"
-                    }
-                }
-                foreach ($requiredRole in $resourceSettings.permissions.purview.requiredroles.update)
-                {
-                    if (-not $targetMatrix.RequiredRoles.Update.Contains($requiredRole))
-                    {
-                        Write-Verbose -Message "    Found new Update Required Role {$($requiredRole)}"
-                        $targetMatrix.RequiredRoles.Update += $requiredRole
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Update Role {$($requiredRole)} was already added"
-                    }
-                }
-
-                # Required RoleGroups
-                foreach ($requiredRoleGroup in $resourceSettings.permissions.purview.requiredrolegroups.read)
-                {
-                    if (-not $targetMatrix.RequiredRoleGroups.Read.Contains($requiredRoleGroup))
-                    {
-                        Write-Verbose -Message "    Found new Read Required Role Group {$($requiredRoleGroup)}"
-                        $targetMatrix.RequiredRoleGroups.Read += $requiredRoleGroup
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Read Role Group {$($requiredRoleGroup)} was already added"
-                    }
-                }
-                foreach ($requiredRoleGroup in $resourceSettings.permissions.purview.requiredrolegroups.update)
-                {
-                    if (-not $targetMatrix.RequiredRoleGroups.Update.Contains($requiredRoleGroup))
-                    {
-                        Write-Verbose -Message "    Found new Update Required Role Group {$($requiredRoleGroup)}"
-                        $targetMatrix.RequiredRoleGroups.Update += $requiredRoleGroup
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Required Update Role Group {$($requiredRoleGroup)} was already added"
-                    }
-                }
-
-                $exchangeRead = $targetMatrix.Read | Where-Object -FilterScript { $_.API -eq 'Exchange' -and $_.Permission.Name -eq 'Exchange.ManageAsApp' }
-                if ($null -eq $exchangeRead)
-                {
-                    $targetMatrix.Read += @{
-                        API        = 'Exchange'
-                        Permission = @{
-                            Type = 'Application'
-                            Name = 'Exchange.ManageAsApp'
-                        }
-                    }
-                }
-
-                $exchangeUpdate = $targetMatrix.Update | Where-Object -FilterScript { $_.API -eq 'Exchange' -and $_.Permission.Name -eq 'Exchange.ManageAsApp' }
-                if ($null -eq $exchangeUpdate)
-                {
-                    $targetMatrix.Update += @{
-                        API        = 'Exchange'
-                        Permission = @{
-                            Type = 'Application'
-                            Name = 'Exchange.ManageAsApp'
-                        }
-                    }
-                }
-            }
-            else
-            {
-                Write-Verbose "  No Purview node in settings.json for $resourceName."
-            }
-
-            # SharePoint permissions
-            if ($null -ne $resourceSettings.permissions.sharepoint)
-            {
-                Write-Verbose -Message '  Retrieving SharePoint permissions'
-
-                # Delegated Update permissions
-                Update-M365DSCPermissionsMatrix -Source 'SharePoint' `
-                    -PermissionType 'Delegated' `
-                    -AccessType 'Update' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-
-                # Application Update permissions
-                Update-M365DSCPermissionsMatrix -Source 'SharePoint' `
-                    -PermissionType 'Application' `
-                    -AccessType 'Update' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-
-                # Delegated Read permissions
-                Update-M365DSCPermissionsMatrix -Source 'SharePoint' `
-                    -PermissionType 'Delegated' `
-                    -AccessType 'Read' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-
-                # Application Read permissions
-                Update-M365DSCPermissionsMatrix -Source 'SharePoint' `
-                    -PermissionType 'Application' `
-                    -AccessType 'Read' `
-                    -Matrix ([ref]$targetMatrix) `
-                    -Settings ($resourceSettings)
-            }
-            else
-            {
-                Write-Verbose "  No SharePoint node in settings.json for $resourceName."
             }
 
             if ($GroupByResourceName)
@@ -498,10 +306,10 @@ function Update-M365DSCPermissionsMatrix
 
         [Parameter(Mandatory = $true)]
         [PSCustomObject]
-        $Settings
+        $Permissions
     )
 
-    foreach ($permission in $Settings.permissions.$Source.$PermissionType.$AccessType)
+    foreach ($permission in $Permissions.$PermissionType.$AccessType)
     {
         if ($permission.Name -ne 'NotSupported')
         {
@@ -622,6 +430,87 @@ function Update-M365DSCAllowedGraphScopes
 
 <#
 .SYNOPSIS
+    Resolves the service principal backing an API name used in a resource settings.json file.
+
+.DESCRIPTION
+    Resolves the service principal using the API name provided. A known API name resolves through
+    its application id because the Entra portal name may be different from what's in the settings file.
+
+.PARAMETER ApiName
+    Name of the API as written in the settings file or passed by the caller.
+
+.PARAMETER Cache
+    Hashtable holding the service principals already resolved during the current call.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function Get-M365DSCApiServicePrincipal
+{
+    [CmdletBinding()]
+    [OutputType([System.Object])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ApiName,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Cache
+    )
+
+    $knownApiAppIds = @{
+        'graph'                                = '00000003-0000-0000-c000-000000000000'
+        'Microsoft Graph'                      = '00000003-0000-0000-c000-000000000000'
+        'sharepoint'                           = '00000003-0000-0ff1-ce00-000000000000'
+        'Office 365 SharePoint Online'         = '00000003-0000-0ff1-ce00-000000000000'
+        'exchange'                             = '00000002-0000-0ff1-ce00-000000000000'
+        'purview'                              = '00000002-0000-0ff1-ce00-000000000000'
+        'Office 365 Exchange Online'           = '00000002-0000-0ff1-ce00-000000000000'
+        'Azure Service Management'             = '797f4846-ba00-4fd7-ba43-dac1f8f63013'
+        'Azure DevOps'                         = '499b84ac-1321-427f-aa17-267ca6975798'
+        'M365 License Manager'                 = 'aeb86249-8ea3-49e2-900b-54cc8e308f85'
+        'powerAppsService'                     = '475226c6-020e-4fb2-8a90-7a972cbfc1d4'
+        'ProjectWorkManagement'                = '09abbdfd-ed23-44ee-a2d9-a627aa1c90f3'
+        'Verifiable Credentials Service Admin' = '6a8b4b39-c021-437c-b060-5a14a3fd65f3'
+        'WindowsDefenderATP'                   = 'fc780465-2017-40d4-a0c5-307022471b92'
+    }
+
+    $appId = $null
+    if ([System.Guid]::TryParse($ApiName, [ref][System.Guid]::Empty))
+    {
+        $appId = $ApiName
+    }
+    elseif ($knownApiAppIds.ContainsKey($ApiName))
+    {
+        $appId = $knownApiAppIds.$ApiName
+    }
+
+    if ($null -ne $appId)
+    {
+        $cacheKey = $appId
+        $filter = "appId eq '$appId'"
+    }
+    else
+    {
+        $cacheKey = $ApiName
+        $filter = "displayName eq '$($ApiName -replace "'", "''")'"
+    }
+
+    if ($Cache.ContainsKey($cacheKey))
+    {
+        return $Cache.$cacheKey
+    }
+
+    $servicePrincipal = Get-MgServicePrincipal -Filter $filter -ErrorAction SilentlyContinue | Select-Object -First 1
+    $Cache.Add($cacheKey, $servicePrincipal)
+
+    return $servicePrincipal
+}
+
+<#
+.SYNOPSIS
     Creates or updates the Microsoft365DSC Entra application registration.
 
 .DESCRIPTION
@@ -630,8 +519,14 @@ function Update-M365DSCAllowedGraphScopes
 
     This application can then be used for Application Authentication.
 
-    The provided permissions have to be as an array of hashtables, with Api=Graph, SharePoint
-    or Exchange and PermissionsName set to a list of permissions. See examples for more information.
+    With Type set to ManagedIdentity, the function assigns the permissions to an existing managed identity
+    instead. It creates no application, grants no consent and creates no credential.
+
+    The provided permissions have to be as an array of hashtables, with Api set to the name of the API
+    owning the permission and PermissionName set to the permission itself. The Api value is any API name a
+    resource settings file uses, such as 'Office 365 Exchange Online' or 'Azure Service Management', one of
+    the Microsoft365DSC aliases 'Graph', 'SharePoint' and 'Exchange', or an application id. See examples for
+    more information.
 
     NOTE:
     Please make sure you have the following permissions for the 'Microsoft Graph Command Line Tools'
@@ -669,13 +564,15 @@ function Update-M365DSCAllowedGraphScopes
     https://microsoft365dsc.com/user-guide/get-started/authentication-and-permissions/#power-apps-permissions
 
 .PARAMETER ApplicationName
-    Specifies the application display name.
+    Specifies the application display name. With Type set to ManagedIdentity, specifies the display name,
+    object id or client id of the managed identity.
 
 .PARAMETER Permissions
     Specifies permission definitions to assign.
 
 .PARAMETER Type
-    Specifies whether the app should use a secret or certificate credential.
+    Specifies whether the app should use a secret or certificate credential, or whether the permissions
+    are assigned to an existing managed identity.
 
 .PARAMETER MonthsValid
     Specifies the validity period in months for newly created credentials.
@@ -728,6 +625,10 @@ function Update-M365DSCAllowedGraphScopes
     PS> $creds = Get-Credential
     PS> Update-M365DSCAzureAdApplication -ApplicationName 'Microsoft365DSC' -Permissions $((Get-M365DSCCompiledPermissionList -ResourceNameList (Get-M365DSCAllResources) -PermissionType Application -AccessType Read).Permissions) -Type Certificate -CreateSelfSignedCertificate -AdminConsent -MonthsValid 12 -Credential $creds -CertificatePath c:\Temp\M365DSC.cer
 
+.EXAMPLE
+    PS> $creds = Get-Credential
+    PS> Update-M365DSCAzureAdApplication -ApplicationName 'm365dsc-automation' -Permissions @(@{Api='Graph';PermissionName='Group.ReadWrite.All'},@{Api='Exchange';PermissionName='Exchange.ManageAsApp'}) -Type ManagedIdentity -Credential $creds
+
 .FUNCTIONALITY
     Public
 #>
@@ -748,7 +649,7 @@ function Update-M365DSCAzureAdApplication
 
         [Parameter(ParameterSetName = 'Secret')]
         [Parameter(ParameterSetName = 'Certificate')]
-        [ValidateSet('Secret', 'Certificate')]
+        [ValidateSet('Secret', 'Certificate', 'ManagedIdentity')]
         [System.String]
         $Type = 'Secret',
 
@@ -905,15 +806,101 @@ function Update-M365DSCAzureAdApplication
                 }
             }
         }
+        'ManagedIdentity'
+        {
+            Write-LogEntry -Message '  Assigning the permissions to a managed identity'
+            if ($AdminConsent)
+            {
+                Write-LogEntry -Message '  AdminConsent is ignored because permissions assigned to a managed identity need no consent.' -Type Warning
+            }
+        }
     }
 
-    $resourceAppIdMsGraph = '00000003-0000-0000-c000-000000000000'
-    $resourceAppIdSharePoint = '00000003-0000-0ff1-ce00-000000000000'
-    $resourceAppIdExchange = '00000002-0000-0ff1-ce00-000000000000'
+    if ($Type -eq 'ManagedIdentity')
+    {
+        Write-LogEntry ' '
+        Write-LogEntry 'Checking existence of managed identity'
+        $identityFilter = "servicePrincipalType eq 'ManagedIdentity' and displayName eq '$($ApplicationName -replace "'", "''")'"
+        if ([System.Guid]::TryParse($ApplicationName, [ref][System.Guid]::Empty))
+        {
+            $identityFilter = "servicePrincipalType eq 'ManagedIdentity' and (id eq '$ApplicationName' or appId eq '$ApplicationName')"
+        }
 
-    $graphSvcprincipal = Get-MgServicePrincipal -Filter "AppId eq '$resourceAppIdMsGraph'"
-    $spSvcprincipal = Get-MgServicePrincipal -Filter "AppId eq '$resourceAppIdSharePoint'"
-    $exSvcprincipal = Get-MgServicePrincipal -Filter "AppId eq '$resourceAppIdExchange'"
+        $identities = @(Get-MgServicePrincipal -Filter $identityFilter -ErrorAction SilentlyContinue)
+        if ($identities.Count -eq 0)
+        {
+            Write-LogEntry -Message "No managed identity '$ApplicationName' found." -Type Error
+            return
+        }
+        if ($identities.Count -gt 1)
+        {
+            Write-LogEntry -Message "Multiple managed identities named '$ApplicationName' found. Specify the object id or client id of the managed identity instead." -Type Error
+            return
+        }
+
+        $identity = $identities[0]
+        Write-LogEntry "  Managed identity '$($identity.DisplayName)' found"
+
+        Write-LogEntry ' '
+        Write-LogEntry 'Checking managed identity permissions'
+        $assignmentsUri = "/v1.0/servicePrincipals/$($identity.Id)/appRoleAssignments"
+        $existingAssignments = Get-M365DSCRawGraphCollection -Uri $assignmentsUri
+        $servicePrincipalCache = @{}
+        foreach ($permission in $Permissions)
+        {
+            if ([System.String]::IsNullOrWhiteSpace($permission.Api) -or [System.String]::IsNullOrWhiteSpace($permission.PermissionName))
+            {
+                Write-LogEntry "Specified permission is invalid $(Convert-M365DscHashtableToString -Hashtable $permission)" -Type Warning
+                continue
+            }
+            Write-LogEntry "  Checking permission '$($permission.Api)\$($permission.PermissionName)'"
+
+            $svcprincipal = Get-M365DSCApiServicePrincipal -ApiName ($permission.Api) -Cache $servicePrincipalCache
+            if ($null -eq $svcprincipal)
+            {
+                Write-LogEntry "    No service principal found for API '$($permission.Api)'. Grant '$($permission.PermissionName)' manually." -Type Warning
+                continue
+            }
+
+            $appRoleId = ($svcprincipal.AppRoles | Where-Object -Property Value -EQ $permission.PermissionName).Id
+            if ($null -eq $appRoleId -and [System.Guid]::TryParse($permission.PermissionName, [ref][System.Guid]::Empty))
+            {
+                $appRoleId = $permission.PermissionName
+            }
+            if ($null -eq $appRoleId)
+            {
+                Write-LogEntry "    API '$($permission.Api)' has no application permission '$($permission.PermissionName)'." -Type Warning
+                continue
+            }
+
+            if ($null -ne ($existingAssignments | Where-Object -FilterScript { $_.resourceId -eq $svcprincipal.Id -and $_.appRoleId -eq $appRoleId }))
+            {
+                Write-LogEntry "    Permission '$($permission.Api)\$($permission.PermissionName)' already assigned to the managed identity!"
+                continue
+            }
+
+            try
+            {
+                $null = Invoke-MgGraphRequest -Method POST -Uri $assignmentsUri -Body @{
+                    principalId = $identity.Id
+                    resourceId  = $svcprincipal.Id
+                    appRoleId   = $appRoleId
+                } -ErrorAction Stop
+                Write-LogEntry "    Permission '$($permission.Api)\$($permission.PermissionName)' assigned to the managed identity"
+            }
+            catch
+            {
+                Write-LogEntry "    Error while assigning permission '$($permission.Api)\$($permission.PermissionName)': $($_.Exception.Message)" -Type Error
+            }
+        }
+
+        Write-LogEntry ' '
+        Write-LogEntry "Managed identity client id: $($identity.AppId)"
+        Write-LogEntry ' '
+        Write-LogEntry 'NOTE: Make sure you add the managed identity to the required Microsoft 365 (e.g. Global Admin) or Exchange (e.g. Organization Management) role groups as well!'
+        Write-LogEntry '      See the documentation for any required permissions.'
+        return
+    }
 
     Write-LogEntry ' '
     Write-LogEntry 'Checking existence of AD Application'
@@ -933,29 +920,21 @@ function Update-M365DSCAzureAdApplication
         Write-LogEntry ' '
         Write-LogEntry 'Checking app permissions'
         $allRequiredAccess = @{}
+        $servicePrincipalCache = @{}
         foreach ($permission in $Permissions)
         {
-            if ($null -eq $permission.Api -or $permission.Api -notin @('Graph', 'SharePoint', 'Exchange'))
+            if ([System.String]::IsNullOrWhiteSpace($permission.Api) -or [System.String]::IsNullOrWhiteSpace($permission.PermissionName))
             {
                 Write-LogEntry "Specified permission is invalid $(Convert-M365DscHashtableToString -Hashtable $permission)" -Type Warning
                 continue
             }
             Write-LogEntry "  Checking permission '$($permission.Api)\$($permission.PermissionName)'"
 
-            switch ($permission.Api)
+            $svcprincipal = Get-M365DSCApiServicePrincipal -ApiName ($permission.Api) -Cache $servicePrincipalCache
+            if ($null -eq $svcprincipal)
             {
-                'Graph'
-                {
-                    $svcprincipal = $graphSvcprincipal
-                }
-                'SharePoint'
-                {
-                    $svcprincipal = $spSvcprincipal
-                }
-                'Exchange'
-                {
-                    $svcprincipal = $exSvcprincipal
-                }
+                Write-LogEntry "    No service principal found for API '$($permission.Api)'. Grant '$($permission.PermissionName)' manually." -Type Warning
+                continue
             }
 
             $appRole = $azureADApp.AppRoles | Where-Object -Property Value -EQ $permission.PermissionName
@@ -1110,7 +1089,7 @@ function Update-M365DSCAzureAdApplication
                         displayName = 'Created by Microsoft365DSC'
                         endDateTime = $endDate
                     }
-                    $appCred = Add-MgApplicationPassword -ApplicationId $azureADApp.Id -BodyParameter @{
+                    $appCred = Add-MgBetaApplicationPassword -ApplicationId $azureADApp.Id -BodyParameter @{
                         passwordCredential = $passwordCred
                     }
                 }

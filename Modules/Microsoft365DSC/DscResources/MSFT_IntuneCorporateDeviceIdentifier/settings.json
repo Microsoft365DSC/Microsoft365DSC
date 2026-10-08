@@ -1,5 +1,57 @@
 {
   "resourceName": "IntuneCorporateDeviceIdentifier",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "importedDeviceIdentity",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementImportedDeviceIdentity",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "Accepted",
+      "note": "MSFT_IntuneDeviceIdentifier carries it inside the Devices array"
+    },
+    {
+      "name": "Devices",
+      "reason": "Accepted",
+      "note": "Aggregates the tenant importedDeviceIdentity collection."
+    },
+    {
+      "name": "EnrollmentState",
+      "reason": "ReadOnly",
+      "note": "Intune recomputes the enrollment progress of the imported device"
+    },
+    {
+      "name": "Id",
+      "reason": "Accepted",
+      "note": "Set supplies the service-assigned id. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "ImportedDeviceIdentifier",
+      "reason": "Accepted",
+      "note": "Declared as the key of the MSFT_IntuneDeviceIdentifier members of Devices"
+    },
+    {
+      "name": "ImportedDeviceIdentityType",
+      "reason": "Accepted",
+      "note": "Declared on the MSFT_IntuneDeviceIdentifier members of Devices with the full enum"
+    },
+    {
+      "name": "LastContactedDateTime",
+      "reason": "ReadOnly",
+      "note": "Intune stamps the last service contact of an imported device"
+    },
+    {
+      "name": "Platform",
+      "reason": "Accepted",
+      "note": "Declared as Platform on the MSFT_IntuneDeviceIdentifier members of Devices"
+    }
+  ],
   "description": "This resource manages Intune corporate device identifiers for pre-registering devices as corporate-owned.",
   "permissions": {
     "graph": {
@@ -42,8 +94,7 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Beta.DeviceManagement.Enrollment"
   ],
   "supportedEnvironments": [
     "Global",
@@ -52,15 +103,11 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
+      "module": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
       "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
+        "Get-MgBetaDeviceManagementImportedDeviceIdentity",
+        "Import-MgBetaDeviceManagementImportedDeviceIdentityList",
+        "Remove-MgBetaDeviceManagementImportedDeviceIdentity"
       ]
     }
   ]

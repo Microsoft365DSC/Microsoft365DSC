@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,31 +19,29 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneCloudProvisioningPolicyWindows365 "IntuneCloudProvisioningPolicyWindows365_1"
+        IntuneCloudProvisioningPolicyWindows365 "IntuneCloudProvisioningPolicyWindows365-Example"
         {
-            ApplicationId            = $ApplicationId;
             Assignments              = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
-                    dataType = "#microsoft.graph.cloudPcManagementGroupAssignmentTarget"
-                    groupId = "42a638ec-2bf2-47a8-8f5f-176ce2124b7b"
+                    dataType         = "#microsoft.graph.cloudPcManagementGroupAssignmentTarget"
+                    groupDisplayName = "Intune Pilot Users"
                 }
             );
-            Autopatch                = MSFT_MicrosoftGraphCloudPcProvisioningPolicyAutopatch{
-                AutopatchGroupId = "db2d8ac9-0697-4f04-a5cd-b3d230f31dc6"
-            };
             CloudPcNamingTemplate    = "CPC-%USERNAME:5%-%RAND:5%";
-            Description              = "";
-            DisplayName              = "IntuneCloudProvisioningPolicyWindows365_1";
+            Description              = "Enterprise Cloud PCs for the pilot user group in Europe"; # Updated Property
+            DisplayName              = "Pilot Users Cloud PC";
             DomainJoinConfigurations = @(
                 MSFT_MicrosoftGraphCloudPcDomainJoinConfiguration{
-                    Type = "azureADJoin"
-                    RegionName = "automatic"
-                    DomainJoinType = "azureADJoin"
-                    RegionGroup = "europe" # Updated property
+                    Type                   = "azureADJoin"
+                    RegionName             = "automatic"
+                    DomainJoinType         = "azureADJoin"
+                    RegionGroup            = "automatic"
+                    GeographicLocationType = "europe"
                 }
             );
             EnableSingleSignOn       = $True;
@@ -51,15 +50,16 @@ Configuration Example
             ImageId                  = "microsoftwindowsdesktop_windows-ent-cpc_win11-25h2-ent-cpc";
             ImageType                = "gallery";
             ProvisioningType         = "dedicated";
-            RoleScopeTagIds          = @("0");
+            ScopeIds                 = @("0");
             WindowsSetting           = MSFT_MicrosoftGraphCloudPcWindowsSetting{
                 Locale = "en-US"
             };
             WindowsSettings          = MSFT_MicrosoftGraphCloudPcWindowsSettings{
                 Language = "en-US"
             };
-            CertificateThumbprint    = $CertificateThumbprint;
+            ApplicationId            = $ApplicationId;
             TenantId                 = $TenantId;
+            CertificateThumbprint    = $CertificateThumbprint;
         }
     }
 }

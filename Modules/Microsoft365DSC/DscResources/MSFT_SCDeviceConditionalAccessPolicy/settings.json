@@ -1,5 +1,16 @@
 {
   "resourceName": "SCDeviceConditionalAccessPolicy",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "DeviceConditionalAccessPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Device Conditional Access Policy in Purview.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "purview": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Device Management"
         ],
@@ -33,7 +44,7 @@
           "Device Management"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Security Reader"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-DeviceConditionalAccessPolicy",
+        "New-DeviceConditionalAccessPolicy",
+        "Remove-DeviceConditionalAccessPolicy",
+        "Set-DeviceConditionalAccessPolicy"
+      ]
+    }
+  ]
 }

@@ -4,7 +4,8 @@ This example creates a new Intune Mobile App Configuration Policy for iOs device
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,17 +18,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName 'Microsoft365DSC'
 
     Node localhost
     {
-        IntuneManagedInstallerPolicyWindows10 "IntuneManagedInstallerPolicyWindows10-SideCar ManagedInstaller Script"
+        IntuneManagedInstallerPolicyWindows10 "IntuneManagedInstallerPolicyWindows10-Example"
         {
-            DisplayName              = "SideCar ManagedInstaller Script";
-            Ensure                   = "Absent";
-            ApplicationId            = $ApplicationId;
-            CertificateThumbprint    = $CertificateThumbprint;
-            TenantId                 = $OrganizationName;
+            DisplayName           = "Intune Management Extension Managed Installer";
+            Ensure                = "Absent";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

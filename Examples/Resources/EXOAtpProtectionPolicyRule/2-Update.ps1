@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,28 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOATPProtectionPolicyRule "EXOATPProtectionPolicyRule-Strict Preset Security Policy"
+        EXOATPProtectionPolicyRule "EXOATPProtectionPolicyRule-Example"
         {
-            Comments                = "Built-in Strict Preset Security Policy with comments"; # Changed value
-            Enabled                 = $True; # Changed value
-            Identity                = "Strict Preset Security Policy";
-            Name                    = "Strict Preset Security Policy";
-            Priority                = 0;
-            SafeAttachmentPolicy    = "Strict Preset Security Policy1725468967835";
-            SafeLinksPolicy         = "Strict Preset Security Policy1725468969412";
-            Ensure                  = "Present"
-            ApplicationId           = $ApplicationId
-            TenantId                = $TenantId
-            CertificateThumbprint   = $CertificateThumbprint
+            Comments                  = "Scopes the Standard preset Defender for Office 365 protections to the pilot recipients.";
+            Enabled                   = $False;
+            Identity                  = "Standard Preset Security Policy";
+            Name                      = "Standard Preset Security Policy";
+            Priority                  = 0;
+            RecipientDomainIs         = @("contoso.com");
+            SentTo                    = @("AdeleV@$TenantId");
+            SentToMemberOf            = @("Retail@$TenantId");
+            ExceptIfRecipientDomainIs = @("fabrikam.com");
+            ExceptIfSentTo            = @("AlexW@$TenantId");
+            ExceptIfSentToMemberOf    = @("Executives@$TenantId");
+            Ensure                    = "Present"
+            ApplicationId             = $ApplicationId
+            TenantId                  = $TenantId
+            CertificateThumbprint     = $CertificateThumbprint
         }
     }
 }

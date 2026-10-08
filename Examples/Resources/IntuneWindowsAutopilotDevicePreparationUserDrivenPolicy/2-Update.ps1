@@ -22,35 +22,35 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWindowsAutopilotDevicePreparationUserDrivenPolicy 'Example'
+        IntuneWindowsAutopilotDevicePreparationUserDrivenPolicy 'IntuneWindowsAutopilotDevicePreparationUserDrivenPolicy-Example'
         {
             AccountType           = "1";
             AllowDiagnostics      = "true";
             AllowedApplications   = @("IntuneMobileAppsMicrosoftEdge_Windows","IntuneMobileAppsWindowsOfficeSuiteApp_1");
             AllowedScripts        = @("IntuneDeviceConfigurationPlatformScriptWindows_1");
             AllowSkip             = "true";
-            ApplicationId         = $ApplicationId;
             Assignments           = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
-                    dataType = "#microsoft.graph.groupAssignmentTarget"
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
                     deviceAndAppManagementAssignmentFilterType = "none"
-                    groupDisplayName = "Include"
+                    groupDisplayName                           = "Intune Pilot Users"
                 }
             );
-            AssignmentTarget      = "Exclude"; # Updated property
-            CertificateThumbprint = $CertificateThumbprint;
+            AssignmentTarget      = "Intune Excluded Devices"; # Updated Property
             CustomErrorMessage    = "Contact your organization’s support person for help.";
             DeploymentMode        = "0";
             DeploymentType        = "0";
-            Description           = "";
-            DisplayName           = "IntuneWindowsAutopilotDevicePreparationPolicy_1";
+            Description           = "Installs core apps and scripts during user-driven Autopilot setup of corporate Windows devices";
+            DisplayName           = "Windows User-Driven Device Preparation";
             Ensure                = "Present";
             JoinType              = "0";
             RoleScopeTagIds       = @("0");
-            TenantId              = $TenantId;
             Timeout               = 60;
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

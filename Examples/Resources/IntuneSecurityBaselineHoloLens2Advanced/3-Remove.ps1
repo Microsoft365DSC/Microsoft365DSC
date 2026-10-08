@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,13 +19,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneSecurityBaselineHoloLens2Advanced 'mySecurityBaselineAdvanced'
+        IntuneSecurityBaselineHoloLens2Advanced 'IntuneSecurityBaselineHoloLens2Advanced-Example'
         {
-            DisplayName           = 'test'
+            DisplayName           = 'HoloLens 2 Advanced Baseline'
             Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;

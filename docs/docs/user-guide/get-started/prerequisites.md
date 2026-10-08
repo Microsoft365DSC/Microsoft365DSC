@@ -4,7 +4,13 @@ For Microsoft365DSC to function, you need to arrange the following components:
 
 ## PowerShell version
 
-Microsoft365DSC is supported for PowerShell version 5.1 and 7.3+. For additional details on how to leverage it with PowerShell 7, please refer to our [PowerShell 7+ Guide for Microsoft365DSC](https://microsoft365dsc.com/user-guide/get-started/powershell7-support/).
+Microsoft365DSC requires PowerShell 7.6 or higher. Every cmdlet of the module such as `Export-M365DSCConfiguration`, has to be run from a PowerShell 7 console. You can download the latest release from [aka.ms/powershell-release](https://aka.ms/powershell-release).
+
+**Please note:** Microsoft365DSC still requires to be installed in Windows PowerShell 5.1 if you want to use the Local Configuration Manager (LCM). Run `Update-M365DSCDependencies` in both Windows PowerShell and PowerShell 7 to install all dependencies.
+
+Windows PowerShell 5.1 remains supported for a single scenario: compiling a configuration into a MOF file and applying or testing it through the LCM (`Start-DscConfiguration` and `Test-DscConfiguration`). The LCM only runs on Windows PowerShell, so in that case it relays the execution of every resource to a PowerShell 7 session on the same machine. This means PowerShell 7 still has to be installed, even when you drive the module through the LCM.
+
+For additional details, please refer to our [PowerShell 7+ Guide for Microsoft365DSC](https://microsoft365dsc.com/user-guide/get-started/powershell7-support/).
 
 ## PowerShell Execution Policy
 
@@ -13,6 +19,8 @@ Microsoft365DSC consists of its own module and various PowerShell submodules. Al
 ## Windows Remote Management (WinRM)
 
 Microsoft365DSC uses the Local Configuration Manager (LCM). This requires PowerShell Remoting to be enabled. Please run either `winrm quickconfig -force` or `Enable-PSRemoting -Force -SkipNetworkProfileCheck` to enable it.
+
+Run `Enable-PSRemoting -Force -SkipNetworkProfileCheck` from an elevated **PowerShell 7** console as well. This registers the `PowerShell.7` session configuration, which the LCM relay uses to hand the execution of the resources over to PowerShell 7.
 
 ## Tooling
 
@@ -33,7 +41,7 @@ Before you start using Microsoft365DSC, it is important that you also have the p
 That is why it is important that you have the correct experience and skills. To use this module properly you should be very familiar with:
 
 * [Microsoft 365 administration across all services / workloads](https://docs.microsoft.com/en-us/microsoft-365/admin/admin-overview/admin-center-overview)
-* [(Windows) PowerShell](https://docs.microsoft.com/en-us/powershell/)
+* [PowerShell](https://docs.microsoft.com/en-us/powershell/)
 * [PowerShell Desired State Configuration](https://docs.microsoft.com/en-us/powershell/dsc/getting-started/winGettingStarted?view=dsc-1.1)
 * [Authentication methods and permission management in Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory/develop/msal-authentication-flows)
 

@@ -5,52 +5,67 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCComplianceSearchAction 'ComplianceSearchActionPurge'
+        SCComplianceSearchAction 'SCComplianceSearchAction-Example1'
         {
-            Action            = "Purge"
-            PurgeType         = "SoftDelete"
-            IncludeCredential = $True
-            RetryOnError      = $False
-            SearchName        = "Demo Search"
-            Ensure            = "Present"
-            Credential        = $Credscredential
-        }
-
-        SCComplianceSearchAction 'ComplianceSearchActionExport'
-        {
-            IncludeSharePointDocumentVersions   = $False
             Action                              = "Export"
-            SearchName                          = "Demo Search"
-            FileTypeExclusionsForUnindexedItems = $null
+            ActionScope                         = "BothIndexedAndUnindexedItems"
+            EnableDedupe                        = $True
+            FileTypeExclusionsForUnindexedItems = @("exe", "dll", "iso")
             IncludeCredential                   = $False
+            IncludeSharePointDocumentVersions   = $True
             RetryOnError                        = $False
-            ActionScope                         = "IndexedItemsOnly"
-            EnableDedupe                        = $False
+            SearchName                          = "Budget Mailbox Search"
             Ensure                              = "Present"
-            Credential                          = $Credscredential
+            ApplicationId                       = $ApplicationId
+            TenantId                            = $TenantId
+            CertificateThumbprint               = $CertificateThumbprint
         }
 
-        SCComplianceSearchAction 'ComplianceSearchActionRetention'
+        SCComplianceSearchAction 'SCComplianceSearchAction-Example2'
         {
-            IncludeSharePointDocumentVersions   = $False
+            Action            = "Preview"
+            IncludeCredential = $False
+            RetryOnError      = $False
+            SearchName        = "Budget Mailbox Search"
+            Ensure            = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
+        }
+
+        SCComplianceSearchAction 'SCComplianceSearchAction-Example3'
+        {
             Action                              = "Retention"
-            SearchName                          = "Demo Search"
-            FileTypeExclusionsForUnindexedItems = $null
-            IncludeCredential                   = $False
-            RetryOnError                        = $False
             ActionScope                         = "IndexedItemsOnly"
             EnableDedupe                        = $False
+            FileTypeExclusionsForUnindexedItems = @("exe", "dll")
+            IncludeCredential                   = $False
+            IncludeSharePointDocumentVersions   = $False
+            RetryOnError                        = $False
+            SearchName                          = "Budget Mailbox Search"
             Ensure                              = "Present"
-            Credential                          = $Credscredential
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

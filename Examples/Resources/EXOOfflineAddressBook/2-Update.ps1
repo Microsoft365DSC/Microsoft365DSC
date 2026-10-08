@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,15 +22,15 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOOfflineAddressBook 'ConfigureOfflineAddressBook'
+        EXOOfflineAddressBook 'EXOOfflineAddressBook-Example'
         {
-            Name                 = "Integration Address Book"
-            AddressLists         = @('\All Users')
-            DiffRetentionPeriod  = "60" # Updated Property
-            IsDefault            = $true
-            Ensure               = "Present"
+            Name                  = "Global Offline Address Book"
+            AddressLists          = @('\All Users')
+            DiffRetentionPeriod   = "60" # Updated Property
+            IsDefault             = $true
+            Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,21 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        SCInsiderRiskEntityList "SCInsiderRiskEntityList-MyFileType"
+        SCInsiderRiskEntityList "SCInsiderRiskEntityList-Example"
         {
-            ApplicationId                          = $ApplicationId;
-            CertificateThumbprint                  = $CertificateThumbprint;
-            Description                            = "Test file type";
-            DisplayName                            = "MyFileType";
-            Ensure                                 = "Present";
-            FileTypes                              = @(".exe",".txt",".bat"); # Drfit
-            Keywords                               = @();
-            ListType                               = "CustomFileTypeLists";
-            Name                                   = "MyFileTypeList";
-            TenantId                               = $OrganizationName;
+            Description           = "High risk file types monitored when data is copied to removable media";
+            DisplayName           = "High risk file types";
+            Ensure                = "Present";
+            FileTypes             = @(".exe",".txt",".bat"); # Updated Property
+            Keywords              = @();
+            ListType              = "CustomFileTypeLists";
+            Name                  = "Restricted File Types";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

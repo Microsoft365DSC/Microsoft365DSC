@@ -1,5 +1,16 @@
 {
   "resourceName": "AADCustomSecurityAttributeDefinition",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "customSecurityAttributeDefinition",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDirectoryCustomSecurityAttributeDefinition",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures custom security attribute definitions in Entra Id.",
   "roles": {
     "read": [
@@ -52,7 +63,8 @@
         "Get-MgBetaDirectoryCustomSecurityAttributeDefinition",
         "New-MgBetaDirectoryCustomSecurityAttributeDefinition",
         "New-MgBetaDirectoryCustomSecurityAttributeDefinitionAllowedValue",
-        "Update-MgBetaDirectoryCustomSecurityAttributeDefinition"
+        "Update-MgBetaDirectoryCustomSecurityAttributeDefinition",
+        "Update-MgBetaDirectoryCustomSecurityAttributeDefinitionAllowedValue"
       ]
     }
   ]

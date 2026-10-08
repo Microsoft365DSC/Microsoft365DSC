@@ -5,21 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsTenantTrustedIPAddress 'Example'
+        TeamsTenantTrustedIPAddress 'TeamsTenantTrustedIPAddress-Example'
         {
-            Credential           = $Credscredential;
-            Ensure               = "Present";
-            Identity             = "10.2.34.3";
-            MaskBits             = 32;
+            Description           = "Head office internet egress address";
+            Ensure                = "Present";
+            Identity              = "10.2.34.3";
+            MaskBits              = 32;
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

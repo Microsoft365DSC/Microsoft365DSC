@@ -1,5 +1,37 @@
 {
   "resourceName": "AADNetworkAccessForwardingPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "networkaccess.forwardingPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaNetworkAccessForwardingPolicy",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "ReadOnly",
+      "note": "The service assigns it and Graph beta documents no create or update"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on Name and resolves the id at run time"
+    },
+    {
+      "name": "PrivateAccessAppId",
+      "reason": "ReadOnly",
+      "note": "Undocumented in Graph beta and the policy entity has no create or update operation"
+    },
+    {
+      "name": "TrafficForwardingType",
+      "reason": "ReadOnly",
+      "note": "Service-assigned discriminator read only to choose an update branch"
+    }
+  ],
   "description": "Use this resource to monitor the forwarding policy rules associated with the forwarding policies.",
   "permissions": {
     "graph": {

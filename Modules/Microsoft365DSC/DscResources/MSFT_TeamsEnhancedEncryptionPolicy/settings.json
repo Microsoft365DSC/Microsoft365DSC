@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsEnhancedEncryptionPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTeamsEnhancedEncryptionPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Use this resource to create a new Teams enhanced encryption policy.",
   "roles": {
     "read": [

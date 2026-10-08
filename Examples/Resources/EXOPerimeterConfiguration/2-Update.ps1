@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,15 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOPerimeterConfiguration 'ConfigurePerimeterConfiguration'
+        EXOPerimeterConfiguration 'EXOPerimeterConfiguration-Example'
         {
-            IsSingleInstance   = 'Yes'
-            #GatewayIPAddresses = '123.0.0.1'
-            Ensure             = 'Present'
+            IsSingleInstance      = 'Yes'
+            GatewayIPAddresses    = @("192.0.2.10", "192.0.2.11")
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

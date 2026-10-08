@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -45,26 +45,42 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementManagedDeviceCleanupRule -MockWith {
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies/FakeStringValue" } -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies/FakeStringValue" } -MockWith {
                 return @{
                     Description = "FakeStringValue"
                     HotpatchEnabled = $True
                     RoleScopeTagIds = @("0")
+                    ApprovalSettings = @(
+                        @{
+                            ApprovalMethodType = "automatic"
+                            DeferredDeploymentInDay = 2
+                            WindowsQualityUpdateCadence = "monthly"
+                            WindowsQualityUpdateCategory = "all"
+                        }
+                    )
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                 }
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies" } -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies*" -and $Uri -notlike "*FakeStringValue*" } -MockWith {
                 return @{
                     value = @(
                         @{
                             Description = "FakeStringValue"
                             HotpatchEnabled = $True
                             RoleScopeTagIds = @("0")
+                            ApprovalSettings = @(
+                                @{
+                                    ApprovalMethodType = "automatic"
+                                    DeferredDeploymentInDay = 2
+                                    WindowsQualityUpdateCadence = "monthly"
+                                    WindowsQualityUpdateCategory = "all"
+                                }
+                            )
                             DisplayName = "FakeStringValue"
                             Id = "FakeStringValue"
                         }
@@ -72,7 +88,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -90,29 +106,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Description = "FakeStringValue"
                     HotpatchEnabled = $True
                     RoleScopeTagIds = @("0")
+                    ApprovalSettings = @(
+                        ([MSFT_MicrosoftGraphWindowsQualityUpdateApprovalSetting] @{
+                            ApprovalMethodType = "automatic"
+                            DeferredDeploymentInDay = 2
+                            WindowsQualityUpdateCadence = "monthly"
+                            WindowsQualityUpdateCategory = "all"
+                        })
+                    )
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     Ensure = "Present"
                     Credential = $Credential;
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies" } -MockWith {
+                Mock -CommandName Invoke-M365DSCGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies*" -and $Uri -notlike "*FakeStringValue*" } -MockWith {
                     return $null
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies/FakeStringValue" } -MockWith {
+                Mock -CommandName Invoke-M365DSCGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like "*windowsQualityUpdatePolicies/FakeStringValue" } -MockWith {
                     return $null
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 3
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Set()
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 3
             }
         }
 
@@ -122,6 +146,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Description = "FakeStringValue"
                     HotpatchEnabled = $True
                     RoleScopeTagIds = @("0")
+                    ApprovalSettings = @(
+                        ([MSFT_MicrosoftGraphWindowsQualityUpdateApprovalSetting] @{
+                            ApprovalMethodType = "automatic"
+                            DeferredDeploymentInDay = 2
+                            WindowsQualityUpdateCadence = "monthly"
+                            WindowsQualityUpdateCategory = "all"
+                        })
+                    )
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     Ensure = "Absent"
@@ -130,16 +162,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 3
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Set()
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 3
             }
         }
 
@@ -149,6 +181,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Description = "FakeStringValue"
                     HotpatchEnabled = $True
                     RoleScopeTagIds = @("0")
+                    ApprovalSettings = @(
+                        ([MSFT_MicrosoftGraphWindowsQualityUpdateApprovalSetting] @{
+                            ApprovalMethodType = "automatic"
+                            DeferredDeploymentInDay = 2
+                            WindowsQualityUpdateCadence = "monthly"
+                            WindowsQualityUpdateCategory = "all"
+                        })
+                    )
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     Ensure = "Present"
@@ -157,7 +197,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -167,6 +207,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Description = "FakeStringValue"
                     HotpatchEnabled = $False # Drift
                     RoleScopeTagIds = @("0")
+                    ApprovalSettings = @(
+                        ([MSFT_MicrosoftGraphWindowsQualityUpdateApprovalSetting] @{
+                            ApprovalMethodType = "automatic"
+                            DeferredDeploymentInDay = 2
+                            WindowsQualityUpdateCadence = "monthly"
+                            WindowsQualityUpdateCategory = "all"
+                        })
+                    )
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     Ensure = "Present"
@@ -175,16 +223,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 3
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -Property $testParams).Set()
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 3
             }
         }
 
@@ -198,7 +246,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

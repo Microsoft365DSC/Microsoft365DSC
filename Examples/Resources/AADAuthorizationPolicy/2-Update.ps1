@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,9 +22,9 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADAuthorizationPolicy 'AADAuthPol'
+        AADAuthorizationPolicy 'AADAuthorizationPolicy-Example'
         {
             IsSingleInstance                                  = 'Yes'
             DisplayName                                       = 'Authorization Policy'
@@ -33,15 +34,18 @@ Configuration Example
             AllowedToSignUpEmailBasedSubscriptions            = $true
             AllowedToUseSspr                                  = $true
             BlockMsolPowerShell                               = $false
-            DefaultUserRoleAllowedToCreateApps                = $true
-            DefaultUserRoleAllowedToCreateSecurityGroups      = $true
-            DefaultUserRoleAllowedToReadOtherUsers            = $true
+            DefaultUserRolePermissions                        = MSFT_DefaultUserRolePermissions{
+                AllowedToCreateApps           = $true
+                AllowedToCreateSecurityGroups = $true
+                AllowedToReadOtherUsers       = $true
+            }
+            EnabledPreviewFeatures                            = @('assignGroupsToRoles')
             GuestUserRole                                     = 'Guest'
             PermissionGrantPolicyIdsAssignedToDefaultUserRole = @()
             Ensure                                            = 'Present'
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                                     = $ApplicationId
+            TenantId                                          = $TenantId
+            CertificateThumbprint                             = $CertificateThumbprint
         }
     }
 }

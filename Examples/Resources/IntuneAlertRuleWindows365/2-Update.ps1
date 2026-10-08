@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,21 +21,22 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        IntuneAlertRuleWindows365 "IntuneAlertRuleWindows365-cloudPcProvisionScenario"
+        IntuneAlertRuleWindows365 "IntuneAlertRuleWindows365-Example"
         {
             AlertRuleTemplate     = "cloudPcProvisionScenario";
             Conditions            = @(
                 MSFT_IntuneAlertRuleCondition{
-                    Aggregation = "affectedCloudPcCount"
+                    Aggregation       = "affectedCloudPcCount"
                     ConditionCategory = "provisionFailures"
-                    ThresholdValue = "1"
-                    RelationshipType = "or"
-                    Operator = "greaterOrEqual"
+                    ThresholdValue    = "1"
+                    RelationshipType  = "or"
+                    Operator          = "greaterOrEqual"
                 }
             );
-            Enabled               = $True; # Updated property
+            Enabled               = $True; # Updated Property
             NotificationChannels  = @(
                 MSFT_IntuneAlertRuleNotificationChannel{
                     NotificationChannelType = "portal"

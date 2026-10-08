@@ -4,7 +4,8 @@ This example creates a new Intune Trusted Root Certificate Configuration Policy 
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,17 +18,30 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName 'Microsoft365DSC'
 
     Node localhost
     {
-        IntuneTrustedRootCertificateIOS "ConfigureIntuneTrustedRootCertificateIOS"
+        IntuneTrustedRootCertificateIOS "IntuneTrustedRootCertificateIOS-Example"
         {
-            Description            = "IntuneTrustedRootCertificateIOS Description";
-            DisplayName            = "IntuneTrustedRootCertificateIOS DisplayName";
+            Description            = "Deploys the Contoso issuing root certificate to corporate iPhones and iPads";
+            DisplayName            = "Contoso Root CA (iOS)";
+            RoleScopeTagIds        = @("0");
             Ensure                 = "Present";
-            certFileName           = "newfakename.cer"; #changed value
-            trustedRootCertificate = "insertValidBase64StringHereForAnotherCert" #changed value
+            certFileName           = "ContosoRootCA-2027.cer"; # Updated Property
+            trustedRootCertificate = "<base64-encoded-root-certificate-updated>"; # Updated Property
+            Assignments            = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                    groupDisplayName                           = "Intune Pilot Devices"
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName = "Intune Excluded Devices"
+                }
+            );
             ApplicationId          = $ApplicationId;
             TenantId               = $TenantId;
             CertificateThumbprint  = $CertificateThumbprint;

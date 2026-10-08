@@ -1,41 +1,64 @@
 {
   "resourceName": "IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10",
-  "description": "This resource configures an Intune Device Configuration Delivery Optimization Policy for Windows10.",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceManagementConfigurationPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementConfigurationPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "This resource configures an Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "DeviceManagementConfiguration.Read.All"
           },
           {
-            "name": "DeviceManagementConfiguration.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "DeviceManagementConfiguration.ReadWrite.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "DeviceManagementConfiguration.Read.All"
           },
           {
-            "name": "DeviceManagementConfiguration.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "DeviceManagementConfiguration.ReadWrite.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
@@ -55,11 +78,12 @@
       "module": "Microsoft.Graph.Beta.DeviceManagement",
       "cmdlets": [
         "Get-MgBetaDeviceManagementAssignmentFilter",
-        "Get-MgBetaDeviceManagementDeviceConfiguration",
-        "Get-MgBetaDeviceManagementDeviceConfigurationAssignment",
-        "New-MgBetaDeviceManagementDeviceConfiguration",
-        "Remove-MgBetaDeviceManagementDeviceConfiguration",
-        "Update-MgBetaDeviceManagementDeviceConfiguration"
+        "Get-MgBetaDeviceManagementConfigurationPolicy",
+        "Get-MgBetaDeviceManagementConfigurationPolicyAssignment",
+        "Get-MgBetaDeviceManagementConfigurationPolicySetting",
+        "Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate",
+        "New-MgBetaDeviceManagementConfigurationPolicy",
+        "Remove-MgBetaDeviceManagementConfigurationPolicy"
       ]
     },
     {

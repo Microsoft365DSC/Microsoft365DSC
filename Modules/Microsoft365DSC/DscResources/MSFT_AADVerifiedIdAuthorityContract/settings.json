@@ -1,5 +1,16 @@
 {
   "resourceName": "AADVerifiedIdAuthorityContract",
+  "generatedFrom": {
+    "workload": "AdminAPI",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Azure AD Verified Identity Authority Contracts.",
   "roles": {
     "read": [

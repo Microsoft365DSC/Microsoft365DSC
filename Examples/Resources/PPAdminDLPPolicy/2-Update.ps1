@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,20 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        PPAdminDLPPolicy "PPAdminDLPPolicy-Test"
+        PPAdminDLPPolicy "PPAdminDLPPolicy-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            DisplayName           = "SuperTest";
+            DisplayName           = "Contoso Connector Governance";
             Ensure                = "Present";
-            Environments          = "Default-e91d4e0e-d5a5-4e3a-be14-2192592a59af";
-            FilterType            = "include"; # Drift
+            Environments          = @("<power-platform-environment-name>", "<power-platform-environment-name-2>"); # Updated Property
+            FilterType            = "include";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

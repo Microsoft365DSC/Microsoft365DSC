@@ -1,5 +1,42 @@
 {
   "resourceName": "IntuneRoleAssignmentWindows365",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleAssignmentMultiple",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaRoleManagementCloudPcRoleAssignment",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AppScopes",
+      "reason": "ReadOnly",
+      "note": "Read-only containment expansion of the admin-selectable AppScopeIds"
+    },
+    {
+      "name": "Condition",
+      "reason": "NotConfigurable",
+      "note": "The service takes the write and reads the value back as null."
+    },
+    {
+      "name": "DirectoryScopeIds",
+      "reason": "Accepted",
+      "note": "DirectoryScopes carries the resolved group display names for these ids"
+    },
+    {
+      "name": "PrincipalIds",
+      "reason": "Accepted",
+      "note": "Principals carries the resolved group display names for these ids"
+    },
+    {
+      "name": "RoleDefinitionId",
+      "reason": "Accepted",
+      "note": "RoleDefinition carries the resolved role definition display name"
+    }
+  ],
   "description": "This resource configures an Intune Role Assignment Windows365.",
   "permissions": {
     "graph": {
@@ -12,12 +49,18 @@
             "name": "DeviceManagementRBAC.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "CloudPC.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.ReadWrite.All"
           }
         ]
       },
@@ -30,12 +73,18 @@
             "name": "DeviceManagementRBAC.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "CloudPC.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.ReadWrite.All"
           }
         ]
       }

@@ -16,7 +16,36 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+
+      - name: Ensure No MOF Schema Files Remain
+        shell: pwsh
+        run: |
+          $schemaFiles = @(Get-ChildItem './Modules/Microsoft365DSC/DscResources' -Filter '*.schema.mof' -File -Recurse)
+
+          if ($schemaFiles.Count -gt 0)
+          {
+            $names = ($schemaFiles.Name -join ', ')
+            throw "Class-based resources do not ship a MOF schema. Remove: $names"
+          }
+
+      - name: Ensure Every Resource Is Class-Based
+        shell: pwsh
+        run: |
+          $resources = Get-ChildItem './Modules/Microsoft365DSC/DscResources' -Filter 'MSFT_*.psm1' -File -Recurse
+
+          foreach ($resource in $resources)
+          {
+            $content = Get-Content $resource.FullName -Raw
+            if ($content -notmatch '(?m)^\s*\[DscResource\(\)\]')
+            {
+              throw "Resource {$($resource.Name)} does not declare a [DscResource()] class."
+            }
+            if ($content -match '(?m)^\s*function\s+(Get|Set|Test|Export)-TargetResource\b')
+            {
+              throw "Resource {$($resource.Name)} still declares *-TargetResource functions. Use class methods instead."
+            }
+          }
 
       - name: Ensure No Hardcoded Graph Endpoints
         shell: pwsh
@@ -36,16 +65,15 @@ jobs:
       - name: Ensure resource names are not too long
         shell: pwsh
         run: |
-          $resources = Get-ChildItem -Path './Modules/Microsoft365DSC/DscResources/*.psm1' -Recurse
+          $root = (Resolve-Path './Modules/Microsoft365DSC/DscResources').Path
           $fixedLength = 107 # Usually between 100-105, taking a bit more
 
-          foreach ($resource in $resources)
+          foreach ($file in (Get-ChildItem -Path $root -Recurse -File))
           {
-            $resourceName = $resource.Name.Replace(".psm1", "")
-            $directoryWithFileName = "$resourceName\$resourceName.schema.mof"
-            if ($directoryWithFileName.Length + $fixedLength -gt 255)
+            $relativePath = $file.FullName.Substring($root.Length + 1)
+            if ($relativePath.Length + $fixedLength -gt 255)
             {
-              throw "Resource {$($resource.Name)} has a name that leads to import errors because the path is too long."
+              throw "Resource file {$relativePath} has a name that leads to import errors because the path is too long."
             }
           }
 

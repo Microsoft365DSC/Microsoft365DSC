@@ -31,7 +31,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "ServicePrincipalWithThumbprint"
             }
 
@@ -46,14 +46,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     IsSingleInstance = 'Yes'
-                    AADSSOForGateway                                                      = (New-CimInstance -ClassName MSFT_FabricTenantSetting -Property @{
+                    AADSSOForGateway                                                      = ([MSFT_FabricTenantSetting] @{
                         settingName              = 'AADSSOForGateway'
                         canSpecifySecurityGroups = $False
                         enabled                  = $True
                         tenantSettingGroup       = 'Integration settings'
                         title                    = 'Microsoft Entra single sign-on for data gateway'
-                    } -ClientOnly);
-                    AdminApisIncludeDetailedMetadata                                      = (New-CimInstance -ClassName MSFT_FabricTenantSetting -Property @{
+                    });
+                    AdminApisIncludeDetailedMetadata                                      = ([MSFT_FabricTenantSetting] @{
                             settingName              = 'AdminApisIncludeDetailedMetadata'
                             canSpecifySecurityGroups = $True
                             enabled                  = $True
@@ -61,9 +61,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             title                    = 'Enhance admin APIs responses with detailed metadata'
                             excludedSecurityGroups   = @('MyExcludedGroup')
                             enabledSecurityGroups    = @('Group1','Group2')
-                    } -ClientOnly)
+                    })
                     ApplicationId         = (New-GUID).ToString()
-                    TenantId              = 'Contoso.com'
+                    TenantId              = 'contoso.onmicrosoft.com'
                     CertificateThumbprint = (New-GUID).ToString()
                 }
 
@@ -103,7 +103,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'FabricAdminTenantSettings' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -111,14 +111,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     IsSingleInstance = 'Yes'
-                    AADSSOForGateway                                                      = (New-CimInstance -ClassName MSFT_FabricTenantSetting -Property @{
+                    AADSSOForGateway                                                      = ([MSFT_FabricTenantSetting] @{
                         settingName              = 'AADSSOForGateway'
                         canSpecifySecurityGroups = $False
                         enabled                  = $True
                         tenantSettingGroup       = 'Integration settings'
                         title                    = 'Microsoft Entra single sign-on for data gateway'
-                    } -ClientOnly);
-                    AdminApisIncludeDetailedMetadata                                      = (New-CimInstance -ClassName MSFT_FabricTenantSetting -Property @{
+                    });
+                    AdminApisIncludeDetailedMetadata                                      = ([MSFT_FabricTenantSetting] @{
                             settingName              = 'AdminApisIncludeDetailedMetadata'
                             canSpecifySecurityGroups = $True
                             enabled                  = $True
@@ -126,9 +126,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             title                    = 'Enhance admin APIs responses with detailed metadata'
                             excludedSecurityGroups   = @('MyExcludedGroup')
                             enabledSecurityGroups    = @('Group1','Group4') # Drift
-                    } -ClientOnly)
+                    })
                     ApplicationId         = (New-GUID).ToString()
-                    TenantId              = 'Contoso.com'
+                    TenantId              = 'contoso.onmicrosoft.com'
                     CertificateThumbprint = (New-GUID).ToString()
                 }
 
@@ -166,7 +166,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'FabricAdminTenantSettings' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -176,7 +176,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
                 $testParams = @{
                     ApplicationId         = (New-GUID).ToString()
-                    TenantId              = 'Contoso.com'
+                    TenantId              = 'contoso.onmicrosoft.com'
                     CertificateThumbprint = (New-GUID).ToString()
                 }
 
@@ -213,7 +213,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'FabricAdminTenantSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

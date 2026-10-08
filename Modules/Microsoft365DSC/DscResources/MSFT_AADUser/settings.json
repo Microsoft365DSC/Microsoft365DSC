@@ -1,5 +1,527 @@
 {
   "resourceName": "AADUser",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "v1.0",
+    "entityType": "user",
+    "odataSubtype": null,
+    "cmdletNoun": "MgUser",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AboutMe",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which maybe SPOUserProfileProperty writes."
+    },
+    {
+      "name": "Activities",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only activity records across the user devices."
+    },
+    {
+      "name": "AdhocCalls",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only call records."
+    },
+    {
+      "name": "AgreementAcceptances",
+      "reason": "ReadOnly",
+      "note": "The service records terms of use acceptances"
+    },
+    {
+      "name": "AppRoleAssignments",
+      "reason": "OwnedByOtherResource",
+      "note": "AADServicePrincipal writes them through AppRoleAssignedTo"
+    },
+    {
+      "name": "AssignedLicenses",
+      "reason": "Accepted",
+      "note": "LicenseAssignment carries skuId through Set-MgUserLicense without disabledPlans"
+    },
+    {
+      "name": "AssignedPlans",
+      "reason": "ReadOnly",
+      "note": "Derived from the licenses on the user"
+    },
+    {
+      "name": "Authentication",
+      "reason": "Accepted",
+      "note": "Per-user credential registrations live behind their own authentication method endpoints."
+    },
+    {
+      "name": "Birthday",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "BusinessPhones",
+      "reason": "Accepted",
+      "note": "PhoneNumber writes the single supported business phone number"
+    },
+    {
+      "name": "Calendar",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOMailboxCalendarConfiguration and EXOMailboxCalendarFolder manage the mailbox calendar."
+    },
+    {
+      "name": "CalendarGroups",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "Calendars",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "CalendarView",
+      "reason": "ReadOnly",
+      "note": "A read only query projection over the events of a calendar."
+    },
+    {
+      "name": "Chats",
+      "reason": "Accepted",
+      "note": "Teams chat content rather than a directory attribute."
+    },
+    {
+      "name": "CloudClipboard",
+      "reason": "Accepted",
+      "note": "Roaming clipboard items for the signed-in user rather than configuration."
+    },
+    {
+      "name": "CloudPCs",
+      "reason": "ReadOnly",
+      "note": "Windows 365 provisioning policies and licenses attach Cloud PCs to the user"
+    },
+    {
+      "name": "ConsentProvidedForMinor",
+      "reason": "NotConfigurable",
+      "note": "Written and read back as null."
+    },
+    {
+      "name": "ContactFolders",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "Contacts",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "CreatedObjects",
+      "reason": "ReadOnly",
+      "note": "The directory records objects the user creates"
+    },
+    {
+      "name": "CreationType",
+      "reason": "ReadOnly",
+      "note": "The directory sets the creation type at account creation"
+    },
+    {
+      "name": "DataSecurityAndGovernance",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "DeviceEnrollmentLimit",
+      "reason": "Deferred",
+      "note": "Refused on permissions the module does not request today."
+    },
+    {
+      "name": "DeviceManagementTroubleshootingEvents",
+      "reason": "ReadOnly",
+      "note": "Intune emits these troubleshooting events for the user"
+    },
+    {
+      "name": "DirectReports",
+      "reason": "ReadOnly",
+      "note": "Computed from the manager relationship set on other users"
+    },
+    {
+      "name": "Drive",
+      "reason": "ReadOnly",
+      "note": "Graph documents the OneDrive navigation as read only."
+    },
+    {
+      "name": "Drives",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "EmployeeExperience",
+      "reason": "Accepted",
+      "note": "Viva learning course activity rather than a directory attribute."
+    },
+    {
+      "name": "Events",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "Extensions",
+      "reason": "Accepted",
+      "note": "Open extensions carry application data created through their own endpoint."
+    },
+    {
+      "name": "ExternalUserState",
+      "reason": "ReadOnly",
+      "note": "The invitation flow sets the guest redemption state"
+    },
+    {
+      "name": "ExternalUserStateChangeDateTime",
+      "reason": "ReadOnly",
+      "note": "The service stamps it when the guest redemption state changes"
+    },
+    {
+      "name": "FollowedSites",
+      "reason": "Accepted",
+      "note": "A personal SharePoint preference rather than a directory attribute."
+    },
+    {
+      "name": "HireDate",
+      "reason": "Deprecated",
+      "note": "A SharePoint specific property replaced by employeeHireDate"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "The directory assigns the object id at user creation"
+    },
+    {
+      "name": "IdentityParentId",
+      "reason": "ReadOnly",
+      "note": "Set by the directory for agent users and null for regular accounts"
+    },
+    {
+      "name": "ImAddresses",
+      "reason": "ReadOnly",
+      "note": "Graph marks the instant messaging addresses read only"
+    },
+    {
+      "name": "InferenceClassification",
+      "reason": "Accepted",
+      "note": "Per-sender focused inbox overrides inside the mailbox."
+    },
+    {
+      "name": "Insights",
+      "reason": "ReadOnly",
+      "note": "The service computes item insights from user activity"
+    },
+    {
+      "name": "Interests",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "IsManagementRestricted",
+      "reason": "ReadOnly",
+      "note": "AADAdministrativeUnit controls the restricted management unit that sets this flag"
+    },
+    {
+      "name": "IsResourceAccount",
+      "reason": "Deprecated",
+      "note": "Reserved for future use and not to be used"
+    },
+    {
+      "name": "JoinedTeams",
+      "reason": "OwnedByOtherResource",
+      "note": "TeamsUser manages team membership for a user"
+    },
+    {
+      "name": "LastPasswordChangeDateTime",
+      "reason": "ReadOnly",
+      "note": "The directory stamps it when the user password changes"
+    },
+    {
+      "name": "LegalAgeGroupClassification",
+      "reason": "ReadOnly",
+      "note": "Calculated from the age group and minor consent values"
+    },
+    {
+      "name": "LicenseAssignment",
+      "reason": "Accepted",
+      "note": "SKU part numbers from the licenseDetails batch request."
+    },
+    {
+      "name": "LicenseAssignmentStates",
+      "reason": "ReadOnly",
+      "note": "The service reports each assignment state including group based assignments and errors"
+    },
+    {
+      "name": "LicenseDetails",
+      "reason": "ReadOnly",
+      "note": "Follows from the assigned licenses and fills LicenseAssignment"
+    },
+    {
+      "name": "MailboxSettings",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOMailboxSettings and EXOMailboxAutoReplyConfiguration manage them"
+    },
+    {
+      "name": "MailFolders",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "MailNickname",
+      "reason": "Accepted",
+      "note": "Derived from the local part of the user principal name at create time"
+    },
+    {
+      "name": "ManagedAppRegistrations",
+      "reason": "ReadOnly",
+      "note": "Intune creates them when a user runs a protected application"
+    },
+    {
+      "name": "ManagedDevices",
+      "reason": "ReadOnly",
+      "note": "Intune enrollment creates the managed devices for the user"
+    },
+    {
+      "name": "Messages",
+      "reason": "ReadOnly",
+      "note": "Graph documents the navigation as read only."
+    },
+    {
+      "name": "MySite",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "Oauth2PermissionGrants",
+      "reason": "Accepted",
+      "note": "Delegated permission grants are consent artifacts of application management."
+    },
+    {
+      "name": "Onenote",
+      "reason": "Accepted",
+      "note": "Notebooks, sections and pages are user authored content."
+    },
+    {
+      "name": "OnlineMeetings",
+      "reason": "Accepted",
+      "note": "Meeting instances rather than configuration."
+    },
+    {
+      "name": "OnPremisesDistinguishedName",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes it from the on premises directory"
+    },
+    {
+      "name": "OnPremisesDomainName",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value from the on premises directory."
+    },
+    {
+      "name": "OnPremisesImmutableId",
+      "reason": "NotConfigurable",
+      "note": "Written and read back as null."
+    },
+    {
+      "name": "OnPremisesLastSyncDateTime",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization stamps this timestamp on each sync pass."
+    },
+    {
+      "name": "OnPremisesProvisioningErrors",
+      "reason": "ReadOnly",
+      "note": "The service reports synchronization errors here."
+    },
+    {
+      "name": "OnPremisesSamAccountName",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value from the on premises directory."
+    },
+    {
+      "name": "OnPremisesSecurityIdentifier",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value from the on premises directory."
+    },
+    {
+      "name": "OnPremisesSyncEnabled",
+      "reason": "ReadOnly",
+      "note": "The directory sets this flag from on premises sync state."
+    },
+    {
+      "name": "OnPremisesUserPrincipalName",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value from the on premises directory."
+    },
+    {
+      "name": "Outlook",
+      "reason": "Accepted",
+      "note": "The container holds mailbox preferences such as master categories."
+    },
+    {
+      "name": "OwnedDevices",
+      "reason": "ReadOnly",
+      "note": "Device registration creates the ownership relationship."
+    },
+    {
+      "name": "OwnedObjects",
+      "reason": "ReadOnly",
+      "note": "The directory derives this from ownership recorded on the target objects."
+    },
+    {
+      "name": "PasswordProfile",
+      "reason": "Accepted",
+      "note": "Declared as Password and sent to New-MgUser only on create."
+    },
+    {
+      "name": "PastProjects",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "People",
+      "reason": "ReadOnly",
+      "note": "The service computes the relevant people list."
+    },
+    {
+      "name": "PermissionGrants",
+      "reason": "Accepted",
+      "note": "Consent records written when a user grants an application access."
+    },
+    {
+      "name": "PhoneNumber",
+      "reason": "Deferred",
+      "note": "Renamed businessPhones, holding its first entry."
+    },
+    {
+      "name": "Photo",
+      "reason": "ReadOnly",
+      "note": "Graph marks the navigation read only and the image is uploaded as binary content."
+    },
+    {
+      "name": "Photos",
+      "reason": "ReadOnly",
+      "note": "The service generates sized renditions from the uploaded picture."
+    },
+    {
+      "name": "Planner",
+      "reason": "ReadOnly",
+      "note": "Graph documents the entry point as read only and PlannerPlan models the plans."
+    },
+    {
+      "name": "PreferredDataLocation",
+      "reason": "NotConfigurable",
+      "note": "Written and read back as null."
+    },
+    {
+      "name": "PreferredName",
+      "reason": "Deprecated",
+      "note": "Microsoft documents this as not supported, and it always returns an empty string."
+    },
+    {
+      "name": "Presence",
+      "reason": "ReadOnly",
+      "note": "Teams reports availability and activity."
+    },
+    {
+      "name": "Print",
+      "reason": "Accepted",
+      "note": "The container holds Universal Print shares and task triggers."
+    },
+    {
+      "name": "ProvisionedPlans",
+      "reason": "ReadOnly",
+      "note": "The service reports provisioning status following from assigned licenses."
+    },
+    {
+      "name": "ProxyAddresses",
+      "reason": "Deferred",
+      "note": "Refused on permissions the module does not request today."
+    },
+    {
+      "name": "RegisteredDevices",
+      "reason": "ReadOnly",
+      "note": "Device registration and join create these entries."
+    },
+    {
+      "name": "Responsibilities",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "Roles",
+      "reason": "Accepted",
+      "note": "Role display names from the role assignments naming the user."
+    },
+    {
+      "name": "Schools",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "ScopedRoleMemberOf",
+      "reason": "OwnedByOtherResource",
+      "note": "AADAdministrativeUnit manages these through ScopedRoleMembers."
+    },
+    {
+      "name": "SecurityIdentifier",
+      "reason": "ReadOnly",
+      "note": "The directory issues this when it creates the user."
+    },
+    {
+      "name": "ServiceProvisioningErrors",
+      "reason": "ReadOnly",
+      "note": "Services report provisioning failures here."
+    },
+    {
+      "name": "Settings",
+      "reason": "Accepted",
+      "note": "Per-user preferences whose tenant equivalents live in O365SearchAndIntelligenceConfigurations."
+    },
+    {
+      "name": "ShowInAddressList",
+      "reason": "Deprecated",
+      "note": "Microsoft marks this do-not-use in Graph and directs admins to the admin center."
+    },
+    {
+      "name": "SignInActivity",
+      "reason": "ReadOnly",
+      "note": "The directory records last sign in timestamps from actual sign ins."
+    },
+    {
+      "name": "SignInSessionsValidFromDateTime",
+      "reason": "ReadOnly",
+      "note": "The directory stamps this when it revokes sign in sessions."
+    },
+    {
+      "name": "Skills",
+      "reason": "OwnedByOtherResource",
+      "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "Solutions",
+      "reason": "ReadOnly",
+      "note": "Graph documents the working time schedule entry point as read only."
+    },
+    {
+      "name": "SponsorOf",
+      "reason": "ReadOnly",
+      "note": "The directory derives this from sponsors recorded on other users."
+    },
+    {
+      "name": "Teamwork",
+      "reason": "ReadOnly",
+      "note": "Graph documents the Teams container as read only."
+    },
+    {
+      "name": "Todo",
+      "reason": "Accepted",
+      "note": "Personal task lists and tasks rather than directory configuration."
+    },
+    {
+      "name": "TransitiveMemberOf",
+      "reason": "ReadOnly",
+      "note": "Expanded from direct memberships, which MemberOf manages"
+    }
+  ],
   "description": "",
   "roles": {
     "read": [
@@ -21,7 +543,7 @@
             "name": "User.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "User-LifeCycleInfo.Read.All"
           },
           {
             "name": "GroupMember.Read.All"
@@ -42,6 +564,9 @@
           },
           {
             "name": "User.ReadWrite.All"
+          },
+          {
+            "name": "User-LifeCycleInfo.ReadWrite.All"
           },
           {
             "name": "User.DeleteRestore.All"
@@ -66,6 +591,12 @@
             "name": "User.Read.All"
           },
           {
+            "name": "User-LifeCycleInfo.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
             "name": "CustomSecAttributeAssignment.Read.All"
           }
         ],
@@ -81,6 +612,9 @@
           },
           {
             "name": "User.ReadWrite.All"
+          },
+          {
+            "name": "User-LifeCycleInfo.ReadWrite.All"
           },
           {
             "name": "User.DeleteRestore.All"

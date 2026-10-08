@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,9 +22,9 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneMobileAppsMicrosoftEdge "IntuneMobileAppsMicrosoftEdge-Edge Windows App"
+        IntuneMobileAppsMicrosoftEdge "IntuneMobileAppsMicrosoftEdge-Example"
         {
             DisplayName           = "Edge Windows App";
             TargetPlatform        = "windows";

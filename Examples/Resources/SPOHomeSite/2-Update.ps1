@@ -5,21 +5,33 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SPOHomeSite 'SetMarketingSiteCollectionAsHomeSite'
+        SPOHomeSite 'SPOHomeSite-Example'
         {
-            IsSingleInstance = "Yes"
-            Url              = "https://contoso.sharepoint.com/sites/Marketing"
-            Ensure           = "Present"
-            Credential       = $Credscredential
+            IsSingleInstance      = "Yes"
+            Url                   = "https://contoso.sharepoint.com/sites/Marketing"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

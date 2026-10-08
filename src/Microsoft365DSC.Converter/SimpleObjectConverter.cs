@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Microsoft365DSC.Converter
 {
-    public static class SimpleObjectConverter
+    internal static class SimpleObjectConverter
     {
         /// <summary>
         /// Converts a simple object type to its string representation in DSC format.

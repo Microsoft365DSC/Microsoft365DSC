@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -46,8 +46,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MailContact -MockWith {
             }
 
+            Mock -CommandName Set-Contact -MockWith {
+            }
+
+            Mock -CommandName Get-Contact -MockWith {
+                return @{
+                    Identity  = 'My Test Contact'
+                    FirstName = 'Alberto'
+                    Initials  = 'R'
+                    LastName  = 'Pereira'
+                }
+            }
+
             Mock -CommandName Get-MailContact -MockWith {
                 return @{
+                    Identity                    = 'My Test Contact'
                     Alias                       = 'TestMailContact'
                     DisplayName                 = 'My Test Contact'
                     ExternalEmailAddress        = 'SMTP:test@tailspintoys.com'
@@ -61,6 +74,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     SendModerationNotifications = 'Always'
                     UsePreferMessageFormat      = $True
                 }
+            }
+
+            Mock -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -MockWith {
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
@@ -91,21 +107,38 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Get-MailContact -MockWith {
+                    if ($Script:contactCreated)
+                    {
+                        return @{
+                            Name = 'My Test Contact'
+                        }
+                    }
                     return $null
+                }
+
+                Mock -CommandName New-MailContact -MockWith {
+                    $Script:contactCreated = $true
                 }
             }
 
+            BeforeEach {
+                $Script:contactCreated = $false
+            }
+
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MailContact -Exactly 1
+                Should -Invoke -CommandName Get-MailContact -Exactly 3 -ParameterFilter { $Identity -eq 'My Test Contact' }
+                Should -Invoke -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -Exactly 0
+                Should -Invoke -CommandName Set-MailContact -Exactly 1 -ParameterFilter { $Identity -eq 'My Test Contact' }
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
         }
 
@@ -117,6 +150,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName                 = 'My Test Contact'
                     Ensure                      = 'Present'
                     ExternalEmailAddress        = 'SMTP:test@tailspintoys.com'
+                    FirstName                   = 'Alberto'
+                    LastName                    = 'Ferreira' # Drift
                     MacAttachmentFormat         = 'BinHex'
                     MessageBodyFormat           = 'Text' # Drift
                     MessageFormat               = 'Mime'
@@ -130,16 +165,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should update from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-MailContact -Exactly 1
+                Should -Invoke -CommandName Set-Contact -Exactly 1 -ParameterFilter { $LastName -eq 'Ferreira' -and -not $PesterBoundParameters.ContainsKey('FirstName') }
             }
         }
 
@@ -160,15 +196,20 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     OrganizationalUnit          = 'nampr03a010.prod.outlook.com/Microsoft Exchange Hosted Organizations/tailspintoys.com'
                     SendModerationNotifications = 'Always'
                     UsePreferMessageFormat      = $True
+                    FirstName                   = 'Alberto'
+                    Initials                    = 'R'
+                    LastName                    = 'Pereira'
                 }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Get().ToHashtable()
+                $result.Ensure | Should -Be 'Present'
+                $result.LastName | Should -Be 'Pereira'
             }
         }
 
@@ -193,15 +234,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should remove from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOMailContact' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MailContact -Exactly 1
             }
         }
@@ -216,7 +257,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOMailContact' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

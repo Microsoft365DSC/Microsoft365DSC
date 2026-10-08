@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,16 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOManagementRoleAssignment 'AssignManagementRole'
+        EXOManagementRoleAssignment 'EXOManagementRoleAssignment-Example'
         {
-            Ensure               = "Absent";
-            Name                 = "MyManagementRoleAssignment";
-            Role                 = "UserApplication";
-            User                 = "AlexW@$TenantId"; # Updated Property
+            Ensure                = "Absent";
+            Name                  = "Contoso Helpdesk User Application";
+            Role                  = "UserApplication";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

@@ -4,23 +4,56 @@ This example adds a new Teams Events Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $credsTeamsAdmin
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsEventsPolicy 'ConfigureEventsPolicy'
+        TeamsEventsPolicy 'TeamsEventsPolicy-Example'
         {
-            Identity             = "My Events Policy";
-            Description          = "This is a my Events Policy";
-            AllowWebinars        = "Disabled";
-            EventAccessType      = "EveryoneInCompanyExcludingGuests";
-            Credential           = $credsTeamsAdmin
-            Ensure               = "Present";
+            Identity                                = "CorporateEvents"
+            Description                             = "Lets the marketing team run town halls and webinars"
+            AllowEmailEditing                       = "Enabled"
+            AllowEngagementReport                   = "ForceEnabled"
+            AllowEventIntegrations                  = $true
+            AllowWebinars                           = "Enabled"
+            AllowTownhalls                          = "Enabled"
+            AllowedQuestionTypesInRegistrationForm  = "AllQuestions"
+            AllowedTownhallTypesForRecordingPublish = "EveryoneInCompanyIncludingGuests"
+            AllowedWebinarTypesForRecordingPublish  = "EveryoneInCompanyIncludingGuests"
+            BackroomChat                            = "Enabled"
+            BroadcastPremiumApps                    = "Enabled"
+            ExternalPresenterJoinVerification       = "eOTP"
+            ImmersiveEvents                         = "Enabled"
+            InfoShownInReportMode                   = "IdentityOnly"
+            RecordingForTownhall                    = "Enabled"
+            RecordingForWebinar                     = "Enabled"
+            Registration                            = "Enabled"
+            TownhallChatExperience                  = "Optimized"
+            TownhallEventAttendeeAccess             = "EveryoneInOrganizationAndGuests"
+            TownhallMaxResolution                   = "Max1080p"
+            TranscriptionForTownhall                = "Enabled"
+            TranscriptionForWebinar                 = "Enabled"
+            UseMicrosoftECDN                        = $true
+            EventAccessType                         = "EveryoneInCompanyExcludingGuests"
+            Ensure                                  = "Present"
+            ApplicationId                           = $ApplicationId
+            TenantId                                = $TenantId
+            CertificateThumbprint                   = $CertificateThumbprint
         }
     }
 }

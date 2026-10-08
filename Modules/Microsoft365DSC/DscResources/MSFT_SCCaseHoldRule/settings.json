@@ -1,5 +1,16 @@
 {
   "resourceName": "SCCaseHoldRule",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CaseHoldRule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Case Hold Rule in Purview.",
   "roles": {
     "read": [
@@ -30,5 +41,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-CaseHoldPolicy",
+        "Get-CaseHoldRule",
+        "New-CaseHoldRule",
+        "Remove-CaseHoldRule",
+        "Set-CaseHoldRule"
+      ]
+    }
+  ]
 }

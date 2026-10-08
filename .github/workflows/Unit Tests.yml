@@ -1,9 +1,18 @@
 name: Unit Tests
 on: pull_request
 
+concurrency:
+  group: unit-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
 jobs:
   quality-test:
-    # The type of runner that the job will run on
     runs-on: windows-latest
 
     permissions: write-all
@@ -11,37 +20,16 @@ jobs:
     # Only when run from the main repo
     if: github.repository == 'Microsoft365DSC/Microsoft365DSC'
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
-      - name: Install Modules
-        shell: pwsh
-        run: |
-          Install-PSResource -Name ReverseDSC -Scope AllUsers -TrustRepository
-          Install-PSResource -Name DSCParser -Scope AllUsers -TrustRepository
-          Install-PSResource -Name PSDesiredStateConfiguration -Scope AllUsers -TrustRepository
-          Install-PSResource -Name Pester -Scope AllUsers -TrustRepository -Version 6.0.0
-          [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine);
-
-      - name: Generate SchemaDefinition.json
-        shell: pwsh
-        run: |
-          Import-Module './Modules/Microsoft365DSC/Modules/M365DSCSchemaHandler.psm1'
-          New-M365DSCSchemaDefinition
-
-      - name: Build Dll Files
-        shell: pwsh
-        run: |
-          & ./Utilities/Build-DllFiles.ps1 -Configuration Release
+      - name: Setup Microsoft365DSC
+        uses: ./.github/actions/setup-m365dsc
 
       - name: Run Quality Checks
         shell: pwsh
         run: |
-          # Add the module to the PSModulePath so that it can be imported
-          $env:PSModulePath = $env:PSModulePath + [System.IO.Path]::PathSeparator + (Join-Path -Path . -ChildPath 'Modules/Microsoft365DSC')
           Import-Module './Tests/TestHarness.psm1' -Force;
           $MaximumFunctionCount = 32767
 
@@ -61,7 +49,6 @@ jobs:
           }
 
   unit-test:
-    # The type of runner that the job will run on
     runs-on: windows-latest
 
     permissions: write-all
@@ -69,57 +56,119 @@ jobs:
     # Only when run from the main repo
     if: github.repository == 'Microsoft365DSC/Microsoft365DSC'
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+
+    outputs:
+      measured: ${{ steps.tests.outputs.measured }}
+
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
-      - name: Install Modules
-        shell: pwsh
-        run: |
-          Install-PSResource -Name ReverseDSC -Scope AllUsers -TrustRepository
-          Install-PSResource -Name DSCParser -Scope AllUsers -TrustRepository
-          Install-PSResource -Name PSDesiredStateConfiguration -Scope AllUsers -TrustRepository
-          Install-PSResource -Name Pester -Scope AllUsers -TrustRepository -Version 6.0.0
-          [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine);
-
-      - name: Generate SchemaDefinition.json
-        shell: pwsh
-        run: |
-          Import-Module './Modules/Microsoft365DSC/Modules/M365DSCSchemaHandler.psm1'
-          New-M365DSCSchemaDefinition
-
-      - name: Build Dll Files
-        shell: pwsh
-        run: |
-          & ./Utilities/Build-DllFiles.ps1 -Configuration Release
+      - name: Setup Microsoft365DSC
+        uses: ./.github/actions/setup-m365dsc
 
       - name: Run Test Harness
+        id: tests
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Add a symbolic link for the Module to appear in Program Files
-          New-Item -Type SymbolicLink -Path "C:\Program Files\WindowsPowerShell\Modules\Microsoft365DSC" -Target (Join-Path -Path . -ChildPath 'Modules/Microsoft365DSC' -Resolve)
           Import-Module './Tests/TestHarness.psm1' -Force;
           $MaximumFunctionCount = 32767
+          $harnessParameters = @{
+              ShardIndex = ${{ matrix.shard }}
+              ShardCount = ${{ strategy.job-total }}
+          }
+
+          $changedFiles = gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename'
+          $scope = Get-M365DSCTestCoverageScope -ChangedFile $changedFiles
+          $measured = $scope.CoveragePath.Count -gt 0
+          if ($measured)
+          {
+              Write-Host -Object "Measuring coverage of $($scope.CoveragePath.Count) file(s)."
+              $harnessParameters.CodeCoveragePath = $scope.CoveragePath
+          }
+          else
+          {
+              Write-Host -Object 'No resource or module file changed, skipping code coverage.'
+              $harnessParameters.IgnoreCodeCoverage = $true
+          }
 
           try
           {
-              $results = Invoke-TestHarness
+              $results = Invoke-TestHarness @harnessParameters
           }
           catch
           {
               $MaximumFunctionCount = 32767
               Import-Module './Tests/TestHarness.psm1' -Force;
-              $results = Invoke-TestHarness
+              $results = Invoke-TestHarness @harnessParameters
           }
+
+          if ($measured)
+          {
+              Export-M365DSCCoverageData -TestResult $results -Path 'coverage-shard-${{ matrix.shard }}.json'
+          }
+          "measured=$($measured.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
           if ($results.FailedCount -gt 0)
           {
               throw "{$($results.FailedCount)} Unit Test(s) Failed"
           }
 
+      - name: Upload Shard Coverage Data
+        if: steps.tests.outputs.measured == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: coverage-shard-${{ matrix.shard }}.json
+          retention-days: 1
+
+  code-coverage:
+    runs-on: windows-latest
+
+    needs: unit-test
+
+    permissions:
+      contents: read
+
+    if: needs.unit-test.outputs.measured == 'true'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-PSResource -Name Pester -Scope AllUsers -TrustRepository -Version 6.2.0
+
+      - name: Download Shard Coverage Data
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-shard-*
+          path: coverage-data
+          merge-multiple: true
+
+      - name: Merge Code Coverage
+        shell: pwsh
+        run: |
+          Import-Module -Name Pester -RequiredVersion 6.2.0
+          Import-Module './Tests/TestHarness.psm1' -Force
+
+          $shardFiles = @(Get-ChildItem -Path './coverage-data' -Filter 'coverage-shard-*.json').FullName
+          Write-Host -Object "Merging coverage of $($shardFiles.Count) shard(s)."
+          $coverage = Merge-M365DSCCoverageData -Path $shardFiles -OutputPath 'coverage.xml'
+
+          "### Code coverage: {0:n2}% ({1} of {2} commands)" -f $coverage.CoveragePercent, $coverage.CommandsExecutedCount, $coverage.CommandsAnalyzedCount |
+              Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+
       - name: Upload Code Coverage as Artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Code Coverage Report
           path: coverage.xml

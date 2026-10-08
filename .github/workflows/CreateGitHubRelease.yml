@@ -1,0 +1,66 @@
+name: Create GitHub Release
+
+on:
+  push:
+    branches:
+      - Master
+
+permissions:
+  contents: write
+
+jobs:
+  CreateRelease:
+    runs-on: ubuntu-latest
+
+    # Only when run from the main repo
+    if: github.repository == 'Microsoft365DSC/Microsoft365DSC'
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Create Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Import-PowerShellDataFile ./Modules/Microsoft365DSC/Microsoft365DSC.psd1).ModuleVersion
+
+          gh release view $version --json tagName 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0)
+          {
+              Write-Host "Release $version already exists."
+              exit 0
+          }
+
+          $notes = [System.Collections.Generic.List[System.String]]::new()
+          $inSection = $false
+          foreach ($line in Get-Content -Path ./CHANGELOG.md -Encoding utf8)
+          {
+              if ($line -match '^#\s+(\S+)\s*$')
+              {
+                  if ($inSection)
+                  {
+                      break
+                  }
+                  $inSection = $Matches[1] -eq $version
+                  continue
+              }
+
+              if ($inSection)
+              {
+                  $notes.Add($line)
+              }
+          }
+
+          $body = ($notes -join "`n").Trim()
+          if ([System.String]::IsNullOrWhiteSpace($body))
+          {
+              throw "CHANGELOG.md has no entries under the heading '# $version'."
+          }
+
+          $notesFile = Join-Path -Path $env:RUNNER_TEMP -ChildPath 'ReleaseNotes.md'
+          Set-Content -Path $notesFile -Value $body -Encoding utf8NoBOM
+
+          gh release create $version --target $env:GITHUB_SHA --title "Release $version" --notes-file $notesFile --latest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

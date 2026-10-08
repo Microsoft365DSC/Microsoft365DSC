@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADDomain "AADDomain-Mail"
+        AADDomain "AADDomain-Example"
         {
-            ApplicationId                    = $ApplicationId;
-            CertificateThumbprint            = $CertificateThumbprint;
-            Ensure                           = "Absent";
-            Id                               = "M365x73318397.mail.onmicrosoft.com";
-            TenantId                         = $TenantId;
+            Ensure                = "Absent";
+            Id                    = "fabrikam.com";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,34 +19,35 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        AADAuthenticationMethodPolicyHardware "AADAuthenticationMethodPolicyHardware-HardwareOath"
+        AADAuthenticationMethodPolicyHardware "AADAuthenticationMethodPolicyHardware-Example"
         {
+            Ensure                = "Present";
+            ExcludeTargets        = @(
+                MSFT_AADAuthenticationMethodPolicyHardwareExcludeTarget{
+                    Id         = 'Executives'
+                    TargetType = 'group'
+                }
+                MSFT_AADAuthenticationMethodPolicyHardwareExcludeTarget{
+                    Id         = 'Paralegals'
+                    TargetType = 'group'
+                }
+            );
+            Id                    = "HardwareOath";
+            IncludeTargets        = @(
+                MSFT_AADAuthenticationMethodPolicyHardwareIncludeTarget{
+                    Id         = 'Legal Team'
+                    TargetType = 'group'
+                }
+            );
+            State                 = "enabled"; # Updated Property
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            Ensure               = "Present";
-            ExcludeTargets       = @(
-                MSFT_AADAuthenticationMethodPolicyHardwareExcludeTarget{
-                    Id = 'Executives'
-                    TargetType = 'group'
-                }
-                MSFT_AADAuthenticationMethodPolicyHardwareExcludeTarget{
-                    Id = 'Paralegals'
-                    TargetType = 'group'
-                }
-            );
-            Id                   = "HardwareOath";
-            IncludeTargets       = @(
-                MSFT_AADAuthenticationMethodPolicyHardwareIncludeTarget{
-                    Id = 'Legal Team'
-                    TargetType = 'group'
-                }
-            );
-            State                = "enabled"; # Updated Property
         }
     }
 }

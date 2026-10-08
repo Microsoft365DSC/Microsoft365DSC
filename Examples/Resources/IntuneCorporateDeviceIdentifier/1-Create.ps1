@@ -4,7 +4,8 @@ This example creates corporate device identifiers in Intune.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,11 +18,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneCorporateDeviceIdentifier 'CorporateDevices'
+        IntuneCorporateDeviceIdentifier 'IntuneCorporateDeviceIdentifier-Example'
         {
             IsSingleInstance      = 'Yes'
             Devices               = @(

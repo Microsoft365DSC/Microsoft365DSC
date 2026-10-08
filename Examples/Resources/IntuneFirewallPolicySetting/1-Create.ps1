@@ -4,7 +4,8 @@ This example creates a new Intune Firewall Policy Setting.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,20 +18,21 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneFirewallPolicySetting "IntuneFirewallPolicySetting-IntuneFirewallPolicySetting_1"
+        IntuneFirewallPolicySetting "IntuneFirewallPolicySetting-Example"
         {
             Description           = "";
             DisplayName           = "IntuneFirewallPolicySetting_1";
             Ensure                = "Present";
             PolicySettings        = @(
                 MSFT_ReusableFirewallPolicySetting{
-                    Keyword = "ReusableSetting1"
+                    Keyword     = "ReusableSetting1"
                     AutoResolve = $False
-                    Addresses = @(
+                    Addresses   = @(
                         "192.168.10.0/24"
                         "0.0.0.0/32"
                         "::1/64"

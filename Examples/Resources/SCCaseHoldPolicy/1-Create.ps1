@@ -19,17 +19,17 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCCaseHoldPolicy 'CaseHoldPolicy'
+        SCCaseHoldPolicy 'SCCaseHoldPolicy-Example'
         {
-            Case                  = 'Test Case'
-            ExchangeLocation      = 'DemoGroup@contoso.onmicrosoft.com'
-            Name                  = 'Demo Hold'
-            PublicFolderLocation  = 'All'
-            Comment               = 'This is a demo'
+            Case                  = 'Contoso Litigation 2026'
+            ExchangeLocation      = @("AdeleV@$TenantId", "MeganB@$TenantId")
+            Name                  = 'Litigation Hold 2026'
+            Comment               = 'Preserves content for the pending litigation'
             Enabled               = $True
             Ensure                = 'Present'
             ApplicationId         = $ApplicationId

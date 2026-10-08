@@ -34,20 +34,27 @@ namespace Microsoft365DSC.Converter
                 // PSObject can wrap null
                 if (psObject.BaseObject is null || psObject.BaseObject is PSCustomObject)
                 {
-                    return Normalize(psObject);
+                    return ComplexObjectConverter.ToHashtable(psObject);
                 }
                 obj = psObject.BaseObject;
             }
 
-            // Primitives and well-known leaf types: return directly
-            if (IsLeafType(obj))
+            if (ValueClassifier.IsLeaf(obj))
                 return obj;
 
             // Arrays (including CimInstance[], object[], string[]): normalize each element
             if (obj is Array array)
                 return NormalizeArray(array);
-                
+
             if (obj is IDictionary or CimInstance)
+                return ComplexObjectConverter.ToHashtable(obj);
+
+            // Complex values that are neither dictionaries nor CIM instances: a PowerShell class
+            // instance (what a class-based resource holds in a complex property) or a Graph SDK
+            // model. Both decompose by reflection. The test is deliberately narrow rather than
+            // "any object with properties", so Uri, Version, PSCredential and the like keep their
+            // leaf behaviour.
+            if (ValueClassifier.IsReflectableComplex(obj.GetType()))
                 return ComplexObjectConverter.ToHashtable(obj);
 
             // IEnumerable but not primitive/array/dictionary: treat as array
@@ -57,40 +64,6 @@ namespace Microsoft365DSC.Converter
 
             // Truly unknown leaf: return as-is (ToString will be used downstream)
             return obj;
-        }
-
-        /// <summary>
-        /// Returns true if the object is a leaf type that should not be decomposed further.
-        /// </summary>
-        private static bool IsLeafType(object obj)
-        {
-            if (obj is null)
-                return true;
-
-            Type type = obj.GetType();
-
-            // All .NET primitive types (bool, int, long, double, etc.)
-            if (type.IsPrimitive)
-                return true;
-
-            // Common non-primitive leaf types
-            if (type == typeof(string) ||
-                type == typeof(DateTime) ||
-                type == typeof(DateTimeOffset) ||
-                type == typeof(decimal) ||
-                type == typeof(Guid) ||
-                type == typeof(TimeSpan))
-                return true;
-
-            // Enum values are leaf types
-            if (type.IsEnum)
-                return true;
-
-            // SwitchParameter from PowerShell
-            if (type == typeof(SwitchParameter))
-                return true;
-
-            return false;
         }
 
         /// <summary>

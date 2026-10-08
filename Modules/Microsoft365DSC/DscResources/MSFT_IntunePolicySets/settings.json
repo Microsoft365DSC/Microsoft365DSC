@@ -1,12 +1,34 @@
 {
   "resourceName": "IntunePolicySets",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "policySet",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceAppManagementPolicySet",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ErrorCode",
+      "reason": "ReadOnly",
+      "note": "The service reports this error state. Cannot be configured through a configuration."
+    },
+    {
+      "name": "Status",
+      "reason": "ReadOnly",
+      "note": "The service computes validation and assignment status after deployment"
+    }
+  ],
   "description": "This resource configures an Intune Policy Sets.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
@@ -14,7 +36,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
@@ -24,7 +46,7 @@
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
@@ -32,7 +54,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
@@ -85,6 +107,7 @@
         "Get-MgBetaDeviceAppManagementTargetedManagedAppConfiguration",
         "New-MgBetaDeviceAppManagementPolicySet",
         "Remove-MgBetaDeviceAppManagementPolicySet",
+        "Update-MgBetaDeviceAppManagementMultiplePolicySet",
         "Update-MgBetaDeviceAppManagementPolicySet"
       ]
     },

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,21 +19,26 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADEntitlementManagementAccessPackageCatalogResource 'myAccessPackageCatalogResource'
+        AADEntitlementManagementAccessPackageCatalogResource 'AADEntitlementManagementAccessPackageCatalogResource-Example'
         {
-            ApplicationId         = $ApplicationId;
-            CatalogId             = "My Catalog";
-            CertificateThumbprint = $CertificateThumbprint;
-            DisplayName           = "DSCGroup";
-            OriginSystem          = "AADGroup";
-            OriginId              = '849b3661-61a8-44a8-92e7-fcc91d296235'
+            CatalogId             = "General";
+            DisplayName           = "Mark 8 Project Team";
+            OriginSystem          = "AadGroup";
+            OriginId              = "Mark 8 Project Team";
+            AddedBy               = "MeganB@$TenantId";
+            AddedOn               = "2026-01-01T00:00:00.0000000Z";
+            Description           = "Welcome to the team that we've assembled to create the Mark 8.";
+            ResourceType          = "Microsoft 365 Teams Group";
             Ensure                = "Present";
             IsPendingOnboarding   = $False;
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

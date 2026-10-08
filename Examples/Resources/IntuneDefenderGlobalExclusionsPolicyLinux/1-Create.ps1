@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,21 +19,22 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDefenderGlobalExclusionsPolicyLinux 'myIntuneDefenderGlobalExclusionsPolicyLinux'
+        IntuneDefenderGlobalExclusionsPolicyLinux 'IntuneDefenderGlobalExclusionsPolicyLinux-Example'
         {
-            Assignments = @();
-            Description = "";
-            DisplayName = "Test";
-            Ensure      = "Present";
-            Exclusions  = @(
+            Assignments           = @();
+            Description           = "";
+            DisplayName           = "Linux Servers - Defender Global Exclusions";
+            Ensure                = "Present";
+            Exclusions            = @(
                 MSFT_MicrosoftGraphIntuneSettingsCatalogExclusionsV2{
-                    exclusions_item_path = '/path/to/directory'
+                    exclusions_item_path        = '/path/to/directory'
                     exclusions_item_isDirectory = 'true'
-                    exclusions_item_type = 'excludedPath'
+                    exclusions_item_type        = 'excludedPath'
                 }
                 MSFT_MicrosoftGraphIntuneSettingsCatalogExclusionsV2{
                     Exclusions_item_name = 'process1'

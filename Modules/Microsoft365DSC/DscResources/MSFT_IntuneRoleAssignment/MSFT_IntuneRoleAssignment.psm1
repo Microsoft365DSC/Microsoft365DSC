@@ -1,738 +1,530 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneRoleAssignment'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneRoleAssignment : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of the Role Assignment.')]
+    [System.String] $Description
 
-        [Parameter(Mandatory = $True)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The display or friendly name of the role Assignment.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String[]]
-        $ResourceScopes,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of ids of role scope member security groups. These are IDs from Azure Active Directory. Ignored if ScopeType is not ''ResourceScope''')]
+    [System.String[]] $ResourceScopes
 
-        [Parameter()]
-        [System.String[]]
-        $ResourceScopesDisplayNames,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of DisplayName of role scope member security groups. These are Displayname from Azure Active Directory. Ignored if ScopeType is not ''ResourceScope''')]
+    [System.String[]] $ResourceScopesDisplayNames
 
-        [Parameter()]
-        [System.String]
-        $ScopeType,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the type of scope for a Role Assignment. Default type ''ResourceScope'' allows assignment of ResourceScopes. Possible values are: resourceScope, allDevices, allLicensedUsers, allDevicesAndLicensedUsers.')]
+    [System.String] $ScopeType
 
-        [Parameter()]
-        [System.String[]]
-        $Members,
+    [DscProperty()]
+    [System.ComponentModel.Description('The list of ids of role member security groups. These are IDs from Azure Active Directory.')]
+    [System.String[]] $Members
 
-        [Parameter()]
-        [System.String[]]
-        $MembersDisplayNames,
+    [DscProperty()]
+    [System.ComponentModel.Description('The list of Displaynames of role member security groups. These are Displaynamnes from Azure Active Directory.')]
+    [System.String[]] $MembersDisplayNames
 
-        [Parameter()]
-        [System.String]
-        $RoleDefinition,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Role Definition Id.')]
+    [System.String] $RoleDefinition
 
-        [Parameter()]
-        [System.String]
-        $RoleDefinitionDisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Role Definition Displayname.')]
+    [System.String] $RoleDefinitionDisplayName
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tags for this Entity instance.')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the Role exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Intune Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    Write-Verbose -Message "Getting configuration of the Intune Role Assignment with Id {$Id} and DisplayName {$DisplayName}"
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    try
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    [IntuneRoleAssignment] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneRoleAssignment]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of the Intune Role Assignment with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                $getValue = Get-MgBetaDeviceManagementRoleAssignment -DeviceAndAppManagementRoleAssignmentId $Id -ErrorAction SilentlyContinue
-            }
+                $null = $this.Connect('MicrosoftGraph')
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Role Assignment with Id {$Id}"
+                Confirm-M365DSCDependencies
 
-                $getValue = Get-MgBetaDeviceManagementRoleAssignment `
-                    -All `
-                    -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                    -ErrorAction SilentlyContinue
-            }
+                $this.AddTelemetry('Get')
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Role Assignment with DisplayName {$DisplayName}"
-                return $nullResult
-            }
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
 
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Role Assignment with Id {$Id} and DisplayName {$DisplayName} was found"
-
-        # Get Roledefinition first, loop through all roledefinitions and find the assignment that matches the Id
-        $tempRoleDefinitions = Get-MgDeviceManagementRoleDefinition
-        foreach ($tempRoleDefinition in $tempRoleDefinitions)
-        {
-            $item = Get-MgDeviceManagementRoleDefinitionRoleAssignment -RoleDefinitionId $tempRoleDefinition.Id | Where-Object { $_.Id -eq $getValue.Id }
-            if ($null -ne $item)
-            {
-                $RoleDefinition = $tempRoleDefinition.Id
-                $RoleDefinitionDisplayName = $tempRoleDefinition.DisplayName
-                break
-            }
-        }
-
-        $resourceScopesDisplayNamesValue = @()
-        foreach ($resourceScope in $getValue.ResourceScopes)
-        {
-            $group = Get-MgGroup -GroupId $resourceScope -ErrorAction SilentlyContinue
-            if ($null -eq $group)
-            {
-                Write-Warning -Message "Could not find group with Id {$resourceScope} when retrieving resource scope display names"
-                continue
-            }
-            $resourceScopesDisplayNamesValue += $group.DisplayName
-        }
-
-        $membersDisplayNamesValue = @()
-        foreach ($tempMember in $getValue.Members)
-        {
-            $group = Get-MgGroup -GroupId $tempMember -ErrorAction SilentlyContinue
-            if ($null -eq $group)
-            {
-                Write-Warning -Message "Could not find group with Id {$tempMember} when retrieving member display names"
-                continue
-            }
-            $membersDisplayNamesValue += $group.DisplayName
-        }
-
-        $scopeTypeValue = $null
-        if (-not ([System.String]::IsNullOrEmpty($getValue.ScopeType)))
-        {
-            $scopeTypeValue = $getValue.ScopeType.ToString()
-        }
-        $results = @{
-            Id                         = $getValue.Id
-            Description                = $getValue.Description
-            DisplayName                = $getValue.DisplayName
-            ResourceScopes             = $getValue.ResourceScopes
-            ResourceScopesDisplayNames = $resourceScopesDisplayNamesValue
-            ScopeType                  = $scopeTypeValue
-            Members                    = $getValue.Members
-            MembersDisplayNames        = $membersDisplayNamesValue
-            RoleDefinition             = $RoleDefinition
-            RoleDefinitionDisplayName  = $RoleDefinitionDisplayName
-            Ensure                     = 'Present'
-            Credential                 = $Credential
-            ApplicationId              = $ApplicationId
-            TenantId                   = $TenantId
-            ApplicationSecret          = $ApplicationSecret
-            CertificateThumbprint      = $CertificateThumbprint
-            CertificatePath            = $CertificatePath
-            CertificatePassword        = $CertificatePassword
-            ManagedIdentity            = $ManagedIdentity.IsPresent
-            AccessTokens               = $AccessTokens
-        }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $True)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $ResourceScopes,
-
-        [Parameter()]
-        [System.String[]]
-        $ResourceScopesDisplayNames,
-
-        [Parameter()]
-        [System.String]
-        $ScopeType,
-
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [System.String[]]
-        $MembersDisplayNames,
-
-        [Parameter()]
-        [System.String]
-        $RoleDefinition,
-
-        [Parameter()]
-        [System.String]
-        $RoleDefinitionDisplayName,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of the Intune Role Assignment with Id {$Id} and DisplayName {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    if ($RoleDefinition -notmatch '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$' -or $RoleDefinition -eq '00000000-0000-0000-0000-000000000000')
-    {
-        $RoleDefinition = $null
-        $filter = "DisplayName eq '$($RoleDefinitionDisplayName -replace "'", "''")'"
-        $roleDefinitionId = Get-MgDeviceManagementRoleDefinition -All -Filter $filter -ErrorAction SilentlyContinue
-        if ($null -ne $roleDefinitionId)
-        {
-            $RoleDefinition = $roleDefinitionId.Id
-        }
-        else
-        {
-            Write-Verbose -Message "No role definition with DisplayName {$RoleDefinitionDisplayName} was found"
-        }
-    }
-
-    [array]$membersValue = @()
-    if ($PSBoundParameters.ContainsKey('MembersDisplayNames'))
-    {
-        foreach ($membersDisplayName in $MembersDisplayNames)
-        {
-            $filter = "displayName eq '$($membersDisplayName -replace "'", "''")'"
-            $memberId = Get-MgGroup -Filter $filter -ErrorAction SilentlyContinue
-            if ($null -ne $memberId)
-            {
-                if ($membersValue -notcontains $memberId.Id)
+                $getValue = $null
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    $membersValue += $memberId.Id
+                    $getValue = Get-MgBetaDeviceManagementRoleAssignment -DeviceAndAppManagementRoleAssignmentId $this.Id -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Role Assignment with Id {$($this.Id)}"
+
+                    $getValue = Get-MgBetaDeviceManagementRoleAssignment `
+                        -All `
+                        -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                        -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Role Assignment with DisplayName {$($this.DisplayName)}"
+                    return $this.AsResult($nullResult)
                 }
             }
             else
             {
-                Write-Verbose -Message "No member of type group with DisplayName {$membersDisplayName} was found"
+                $getValue = $this.ExportedInstance
             }
-        }
-    }
-    else
-    {
-        $membersValue = $Members
-    }
 
-    [array]$resourceScopesValue = @()
-    if ($PSBoundParameters.ContainsKey('ResourceScopesDisplayNames'))
-    {
-        foreach ($resourceScopesDisplayName in $ResourceScopesDisplayNames)
-        {
-            $filter = "DisplayName eq '$($resourceScopesDisplayName -replace "'", "''")'"
-            $resourceScopeId = Get-MgGroup -Filter $filter -ErrorAction SilentlyContinue
-            if ($null -ne $resourceScopeId)
+            Write-Verbose -Message "An Intune Role Assignment with Id {$($getValue.Id)} and DisplayName {$($this.DisplayName)} was found"
+
+            # Get Roledefinition first, loop through all roledefinitions and find the assignment that matches the Id
+            $currentRoleDefinitionId = $null
+            $currentRoleDefinitionDisplayName = $null
+            $tempRoleDefinitions = Get-MgDeviceManagementRoleDefinition
+            foreach ($tempRoleDefinition in $tempRoleDefinitions)
             {
-                if ($resourceScopesValue -notcontains $resourceScopeId.Id)
+                $item = Get-MgDeviceManagementRoleDefinitionRoleAssignment -RoleDefinitionId $tempRoleDefinition.Id | Where-Object { $_.Id -eq $getValue.Id }
+                if ($null -ne $item)
                 {
-                    $resourceScopesValue += $resourceScopeId.Id
+                    $currentRoleDefinitionId = $tempRoleDefinition.Id
+                    $currentRoleDefinitionDisplayName = $tempRoleDefinition.DisplayName
+                    break
                 }
             }
-            else
+
+            $resourceScopesDisplayNamesValue = @()
+            foreach ($resourceScope in $getValue.ResourceScopes)
             {
-                Write-Verbose -Message "No resource scope of type group with DisplayName {$resourceScopesDisplayName} was found"
+                $group = Get-M365DSCIntuneGroup -GroupId $resourceScope
+                if ($null -eq $group)
+                {
+                    Write-Warning -Message "Could not find group with Id {$resourceScope} when retrieving resource scope display names"
+                    continue
+                }
+                $resourceScopesDisplayNamesValue += $group.DisplayName
             }
-        }
-    }
-    else
-    {
-        $resourceScopesValue = $ResourceScopes
-    }
 
-    $scopeTypeValue = $ScopeType
-    if ($ScopeType -match 'AllDevices|AllLicensedUsers|AllDevicesAndLicensedUsers')
-    {
-        $resourceScopesValue = $null
-    }
-    else
-    {
-        $scopeTypeValue = 'resourceScope'
-    }
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Role Assignment with DisplayName {$DisplayName}"
-
-        $createParameters = @{
-            description                 = $Description
-            displayName                 = $DisplayName
-            scopeType                   = $scopeTypeValue
-            members                     = $membersValue
-            '@odata.type'               = '#microsoft.graph.deviceAndAppManagementRoleAssignment'
-            'roleDefinition@odata.bind' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)beta/deviceManagement/roleDefinitions('$RoleDefinition')"
-        }
-
-        if ($null -ne $resourceScopesValue)
-        {
-            $createParameters['resourceScopes'] = $resourceScopesValue
-        }
-
-        $null = New-MgBetaDeviceManagementRoleAssignment -BodyParameter $createParameters
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Intune Role Assignment with Id {$($currentInstance.Id)} and DisplayName {$DisplayName}"
-
-        $updateParameters = @{
-            description                 = $Description
-            displayName                 = $DisplayName
-            scopeType                   = $scopeTypeValue
-            members                     = $membersValue
-            '@odata.type'               = '#microsoft.graph.deviceAndAppManagementRoleAssignment'
-            'roleDefinition@odata.bind' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)beta/deviceManagement/roleDefinitions('$RoleDefinition')"
-        }
-
-        if ($null -ne $resourceScopesValue)
-        {
-            $updateParameters['resourceScopes'] = $resourceScopesValue
-        }
-
-        $null = Update-MgBetaDeviceManagementRoleAssignment `
-            -BodyParameter $updateParameters `
-            -DeviceAndAppManagementRoleAssignmentId $currentInstance.Id
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Intune Role Assignment with Id {$($currentInstance.Id)} and DisplayName {$DisplayName}"
-        Remove-MgBetaDeviceManagementRoleAssignment -DeviceAndAppManagementRoleAssignmentId $currentInstance.Id
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $True)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $ResourceScopes,
-
-        [Parameter()]
-        [System.String[]]
-        $ResourceScopesDisplayNames,
-
-        [Parameter()]
-        [System.String]
-        $ScopeType,
-
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [System.String[]]
-        $MembersDisplayNames,
-
-        [Parameter()]
-        [System.String]
-        $RoleDefinition,
-
-        [Parameter()]
-        [System.String]
-        $RoleDefinitionDisplayName,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $baseFilter = "isof('microsoft.graph.deviceAndAppManagementRoleAssignment')"
-        if (-not [string]::IsNullOrEmpty($Filter))
-        {
-            $Filter = "($baseFilter) and ($Filter)"
-        }
-        else
-        {
-            $Filter = $baseFilter
-        }
-        [array]$getValue = Get-MgBetaDeviceManagementRoleAssignment -Filter $Filter -All -ErrorAction Stop
-
-        if (-not $getValue)
-        {
-            [array]$getValue = Get-MgBetaDeviceManagementRoleAssignment `
-                -ErrorAction Stop
-        }
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            $membersDisplayNamesValue = @()
+            foreach ($tempMember in $getValue.Members)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $group = Get-M365DSCIntuneGroup -GroupId $tempMember
+                if ($null -eq $group)
+                {
+                    Write-Warning -Message "Could not find group with Id {$tempMember} when retrieving member display names"
+                    continue
+                }
+                $membersDisplayNamesValue += $group.DisplayName
             }
 
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
+            $scopeTypeValue = $null
+            if (-not ([System.String]::IsNullOrEmpty($getValue.ScopeType)))
             {
-                $displayedKey = $config.displayName
+                $scopeTypeValue = $getValue.ScopeType.ToString()
             }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.displayName
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            $results = @{
+                Id                         = $getValue.Id
+                Description                = $getValue.Description
+                DisplayName                = $getValue.DisplayName
+                ResourceScopes             = $getValue.ResourceScopes
+                ResourceScopesDisplayNames = $resourceScopesDisplayNamesValue
+                ScopeType                  = $scopeTypeValue
+                Members                    = $getValue.Members
+                MembersDisplayNames        = $membersDisplayNamesValue
+                RoleDefinition             = $currentRoleDefinitionId
+                RoleDefinitionDisplayName  = $currentRoleDefinitionDisplayName
+                RoleScopeTagIds            = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Ensure                     = 'Present'
+                Credential                 = $this.Credential
+                ApplicationId              = $this.ApplicationId
+                TenantId                   = $this.TenantId
+                ApplicationSecret          = $this.ApplicationSecret
+                CertificateThumbprint      = $this.CertificateThumbprint
+                CertificatePath            = $this.CertificatePath
+                CertificatePassword        = $this.CertificatePassword
+                ManagedIdentity            = $this.ManagedIdentity
+                AccessTokens               = $this.AccessTokens
             }
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $rawResults = $Results.Clone()
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        if ($_.Exception -like '*401*' -or $_.ErrorDetails.Message -like "*`"ErrorCode`":`"Forbidden`"*" -or `
-                $_.Exception -like '*Request not applicable to target tenant*')
+        catch
         {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
-        }
-        else
-        {
-            New-M365DSCLogEntry -Message 'Error during Export:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error retrieving data:')
 
             throw
         }
     }
-}
 
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
 
-    return @{
-        PostProcessing = {
-            param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-            if ($DesiredValues.ContainsKey('MembersDisplayNames'))
+        Write-Verbose -Message "Setting configuration of the Intune Role Assignment with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        $resolvedRoleScopeTagIds = $this.RoleScopeTagIds
+        if ($null -ne $resolvedRoleScopeTagIds)
+        {
+            $resolvedRoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $resolvedRoleScopeTagIds
+        }
+
+        $roleDefinitionValue = $this.RoleDefinition
+        if ($this.Ensure -eq 'Present' -and
+            ($roleDefinitionValue -notmatch '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$' -or $roleDefinitionValue -eq '00000000-0000-0000-0000-000000000000'))
+        {
+            $roleDefinitionFilter = "DisplayName eq '$($this.RoleDefinitionDisplayName -replace "'", "''")'"
+            $roleDefinitionId = Get-MgDeviceManagementRoleDefinition -All -Filter $roleDefinitionFilter -ErrorAction SilentlyContinue
+            if ($null -ne $roleDefinitionId)
             {
-                $ValuesToCheck.Remove('Members') | Out-Null
+                $roleDefinitionValue = $roleDefinitionId.Id
             }
-            if ($DesiredValues.ContainsKey('ResourceScopesDisplayNames'))
+            else
             {
-                $ValuesToCheck.Remove('ResourceScopes') | Out-Null
+                throw "No role definition with DisplayName {$($this.RoleDefinitionDisplayName)} was found"
             }
-            if ($DesiredValues.ContainsKey('RoleDefinitionDisplayName'))
+        }
+
+        [array]$membersValue = @()
+        if ($this.GetBoundParameters().ContainsKey('MembersDisplayNames'))
+        {
+            foreach ($membersDisplayName in $this.MembersDisplayNames)
             {
-                $ValuesToCheck.Remove('RoleDefinition') | Out-Null
+                $memberFilter = "displayName eq '$($membersDisplayName -replace "'", "''")'"
+                $memberId = Get-MgGroup -All -Filter $memberFilter -ErrorAction SilentlyContinue
+                if ($null -ne $memberId)
+                {
+                    if ($membersValue -notcontains $memberId.Id)
+                    {
+                        $membersValue += $memberId.Id
+                    }
+                }
+                else
+                {
+                    Write-Warning -Message "No member of type group with DisplayName {$membersDisplayName} was found"
+                }
             }
-            return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+        }
+        else
+        {
+            $membersValue = $this.Members
+        }
+
+        [array]$resourceScopesValue = @()
+        if ($this.GetBoundParameters().ContainsKey('ResourceScopesDisplayNames'))
+        {
+            foreach ($resourceScopesDisplayName in $this.ResourceScopesDisplayNames)
+            {
+                $resourceScopeFilter = "DisplayName eq '$($resourceScopesDisplayName -replace "'", "''")'"
+                $resourceScopeId = Get-MgGroup -All -Filter $resourceScopeFilter -ErrorAction SilentlyContinue
+                if ($null -ne $resourceScopeId)
+                {
+                    if ($resourceScopesValue -notcontains $resourceScopeId.Id)
+                    {
+                        $resourceScopesValue += $resourceScopeId.Id
+                    }
+                }
+                else
+                {
+                    Write-Warning -Message "No resource scope of type group with DisplayName {$resourceScopesDisplayName} was found"
+                }
+            }
+        }
+        else
+        {
+            $resourceScopesValue = $this.ResourceScopes
+        }
+
+        $scopeTypeValue = $this.ScopeType
+        if ($this.ScopeType -match 'AllDevices|AllLicensedUsers|AllDevicesAndLicensedUsers')
+        {
+            $resourceScopesValue = $null
+        }
+        else
+        {
+            $scopeTypeValue = 'resourceScope'
+        }
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating an Intune Role Assignment with DisplayName {$($this.DisplayName)}"
+
+            $createParameters = @{
+                description                 = $this.Description
+                displayName                 = $this.DisplayName
+                scopeType                   = $scopeTypeValue
+                members                     = $membersValue
+                '@odata.type'               = '#microsoft.graph.deviceAndAppManagementRoleAssignment'
+                'roleDefinition@odata.bind' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)beta/deviceManagement/roleDefinitions('$roleDefinitionValue')"
+            }
+
+            if ($null -ne $resourceScopesValue)
+            {
+                $createParameters['resourceScopes'] = $resourceScopesValue
+            }
+
+            if ($null -ne $resolvedRoleScopeTagIds)
+            {
+                $createParameters['roleScopeTagIds'] = $resolvedRoleScopeTagIds
+            }
+
+            $null = New-MgBetaDeviceManagementRoleAssignment -BodyParameter $createParameters
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Intune Role Assignment with Id {$($currentInstance.Id)} and DisplayName {$($this.DisplayName)}"
+
+            $updateParameters = @{
+                description                 = $this.Description
+                displayName                 = $this.DisplayName
+                scopeType                   = $scopeTypeValue
+                members                     = $membersValue
+                '@odata.type'               = '#microsoft.graph.deviceAndAppManagementRoleAssignment'
+                'roleDefinition@odata.bind' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)beta/deviceManagement/roleDefinitions('$roleDefinitionValue')"
+            }
+
+            if ($null -ne $resourceScopesValue)
+            {
+                $updateParameters['resourceScopes'] = $resourceScopesValue
+            }
+
+            if ($null -ne $resolvedRoleScopeTagIds)
+            {
+                $updateParameters['roleScopeTagIds'] = $resolvedRoleScopeTagIds
+            }
+
+            $null = Update-MgBetaDeviceManagementRoleAssignment `
+                -BodyParameter $updateParameters `
+                -DeviceAndAppManagementRoleAssignmentId $currentInstance.Id
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Intune Role Assignment with Id {$($currentInstance.Id)} and DisplayName {$($this.DisplayName)}"
+            Remove-MgBetaDeviceManagementRoleAssignment -DeviceAndAppManagementRoleAssignmentId $currentInstance.Id
         }
     }
-}
 
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $baseFilter = "isof('microsoft.graph.deviceAndAppManagementRoleAssignment')"
+            $mergedFilter = $baseFilter
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
+            {
+                $mergedFilter = "($baseFilter) and ($($this.Filter))"
+            }
+            [array]$getValue = Get-MgBetaDeviceManagementRoleAssignment -Filter $mergedFilter -All -ErrorAction Stop
+
+            if (-not $getValue)
+            {
+                [array]$getValue = Get-MgBetaDeviceManagementRoleAssignment `
+                    -ErrorAction Stop
+            }
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
+                {
+                    $displayedKey = $config.displayName
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.displayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            if ($_.Exception -like '*401*' -or $_.ErrorDetails.Message -like "*`"ErrorCode`":`"Forbidden`"*" -or `
+                    $_.Exception -like '*Request not applicable to target tenant*')
+            {
+                Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+            }
+            else
+            {
+                $this.LogError($_, 'Error during Export:')
+
+                throw
+            }
+        }
+
+        # Every code path must return in a method with a declared return type.
+        return ''
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            PostProcessing = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
+                if ($DesiredValues.ContainsKey('MembersDisplayNames'))
+                {
+                    $ValuesToCheck.Remove('Members') | Out-Null
+                }
+                if ($DesiredValues.ContainsKey('ResourceScopesDisplayNames'))
+                {
+                    $ValuesToCheck.Remove('ResourceScopes') | Out-Null
+                }
+                if ($DesiredValues.ContainsKey('RoleDefinitionDisplayName'))
+                {
+                    $ValuesToCheck.Remove('RoleDefinition') | Out-Null
+                }
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+            }
+        }
+    }
+
+    hidden [IntuneRoleAssignment] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneRoleAssignment])
+        {
+            return $Values
+        }
+
+        $result = [IntuneRoleAssignment]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
+    }
+}

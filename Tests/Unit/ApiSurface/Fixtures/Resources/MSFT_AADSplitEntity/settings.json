@@ -1,0 +1,24 @@
+{
+  "resourceName": "AADSplitEntity",
+  "description": "Fixture for AADSplitEntity.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Groups",
+      "cmdlets": [
+        "Get-MgBetaSplitEntity",
+        "New-MgBetaSplitEntity"
+      ]
+    }
+  ]
+}

@@ -5,24 +5,35 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        O365SearchAndIntelligenceConfigurations 'SearchAndIntelligenceConfigurations'
+        O365SearchAndIntelligenceConfigurations 'O365SearchAndIntelligenceConfigurations-Example'
         {
-            Credential                               = $Credscredential;
-            IsSingleInstance                         = "Yes";
-            ItemInsightsIsEnabledInOrganization      = $False;
-            MeetingInsightsIsEnabledInOrganization   = $True;
-            ItemInsightsDisabledForGroup             = "TestGroup"
-            PersonInsightsIsEnabledInOrganization    = $True;
+            IsSingleInstance                       = "Yes";
+            ItemInsightsIsEnabledInOrganization    = $False;
+            MeetingInsightsIsEnabledInOrganization = $True;
+            ItemInsightsDisabledForGroup           = "Executives"
+            PersonInsightsIsEnabledInOrganization  = $True;
+            ApplicationId                          = $ApplicationId;
+            TenantId                               = $TenantId;
+            CertificateThumbprint                  = $CertificateThumbprint;
         }
     }
 }

@@ -1,1469 +1,1321 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADGroup'
+﻿using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADGroup : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('DisplayName of the Azure Active Directory Group')]
+    [System.String] $DisplayName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $MailNickname,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Specifies a mail nickname for the group.')]
+    [System.String] $MailNickname
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a description for the group.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String[]]
-        $Owners,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies an ID for the group.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String[]]
-        $Members,
+    [DscProperty()]
+    [System.ComponentModel.Description('User Service Principal values for the group''s owners.')]
+    [System.String[]] $Owners
 
-        [Parameter()]
-        [System.String[]]
-        $GroupAsMembers,
+    [DscProperty()]
+    [System.ComponentModel.Description('User Service Principal values for the group''s members.')]
+    [System.String[]] $Members
 
-        [Parameter()]
-        [System.String[]]
-        $MemberOf,
+    [DscProperty()]
+    [System.ComponentModel.Description('Displayname values for the groups member of the group.')]
+    [System.String[]] $GroupAsMembers
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('DisplayName values for the groups that this group is a member of.')]
+    [System.String[]] $MemberOf
 
-        [Parameter()]
-        [System.Boolean]
-        $GroupLifecyclePolicySelectedEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies if the current group is part of a selected Group Lifecycle Policy configuration. Only applicable for Microsoft 365 Groups.')]
+    [System.Nullable[System.Boolean]] $GroupLifecyclePolicySelectedEnabled
 
-        [Parameter()]
-        [System.String[]]
-        $GroupTypes,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the type of the group. To create a security group, leave empty. To create a dynamic membership security group, specify DynamicMembership. To create a Microsoft 365 (aka Unified) group, specify Unified. To create a Microsoft 365 dynamic membership group, specify both Unified and DynamicMembership.')]
+    [System.String[]] $GroupTypes
 
-        [Parameter()]
-        [System.String]
-        $MembershipRule,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the membership rule for a dynamic group.')]
+    [System.String] $MembershipRule
 
-        [Parameter()]
-        [ValidateSet('On', 'Paused')]
-        [System.String]
-        $MembershipRuleProcessingState,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the rule processing state. The acceptable values for this parameter are: On. Process the group rule or Paused. Stop processing the group rule.')]
+    [ValidateSet('On', 'Paused')]
+    [System.String] $MembershipRuleProcessingState
 
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $SecurityEnabled,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Specifies whether the group is security enabled. For security groups, this value must be $True.')]
+    [System.Nullable[System.Boolean]] $SecurityEnabled
 
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $MailEnabled,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Specifies whether this group is mail enabled. Currently, you cannot create mail enabled groups in Microsoft Graph, instead the EXODistributionGroup resource can be used.')]
+    [System.Nullable[System.Boolean]] $MailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $IsAssignableToRole,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether this group can be assigned a role. Only available when creating a group and can''t be modified after group is created.')]
+    [System.Nullable[System.Boolean]] $IsAssignableToRole
 
-        [Parameter()]
-        [System.String[]]
-        $AssignedToRole,
+    [DscProperty()]
+    [System.ComponentModel.Description('DisplayName values for the roles that the group is assigned to.')]
+    [System.String[]] $AssignedToRole
 
-        [Parameter()]
-        [ValidateSet('Public', 'Private', 'HiddenMembership')]
-        [System.String]
-        $Visibility,
+    [DscProperty()]
+    [System.ComponentModel.Description('This parameter determines the visibility of the group''s content and members list.')]
+    [ValidateSet('Public', 'Private', 'HiddenMembership')]
+    [System.String] $Visibility
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $AssignedLicenses,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a Microsoft 365 group''s color theme. Possible values are Teal, Purple, Green, Blue, Pink, Orange or Red. Returned by default.')]
+    [ValidateSet('Teal', 'Purple', 'Green', 'Blue', 'Pink', 'Orange', 'Red')]
+    [System.String] $Theme
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Licenses assigned to the group.')]
+    [MSFT_AADGroupLicense[]] $AssignedLicenses
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether or not a group is configured to write back group object properties to on-premises Active Directory. These properties are used when group writeback is configured in the Microsoft Entra Connect sync client.')]
+    [MSFT_MicrosoftGraphGroupWritebackConfiguration] $WritebackConfiguration
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if the Azure AD Group should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials for the Microsoft Graph delegated permissions.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-    Write-Verbose -Message "Getting configuration of AzureAD Group with DisplayName {$DisplayName}"
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    try
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
+
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    [AADGroup] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [AADGroup]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of AzureAD Group with DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-            $nullReturn.Owners = @()
-            $nullReturn.Members = @()
-            $nullReturn.GroupAsMembers = @()
-            $nullReturn.MemberOf = @()
-            $nullReturn.AssignedToRole = @()
-            $nullReturn.AssignedLicenses = @()
-
-            if ($PSBoundParameters.ContainsKey('Id') -and -not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                Write-Verbose -Message 'GroupID was specified'
-                try
+                $null = $this.Connect('MicrosoftGraph')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+                $nullReturn.Owners = @()
+                $nullReturn.Members = @()
+                $nullReturn.GroupAsMembers = @()
+                $nullReturn.MemberOf = @()
+                $nullReturn.AssignedToRole = @()
+                $nullReturn.AssignedLicenses = @()
+
+                # Graph omits writebackConfiguration and assignedLicenses from the default group projection
+                $selectProperties = @('id', 'displayName', 'description', 'mailNickname', 'mail', 'mailEnabled', 'securityEnabled', 'groupTypes', 'membershipRule', 'membershipRuleProcessingState', 'isAssignableToRole', 'visibility', 'theme', 'assignedLicenses', 'writebackConfiguration')
+
+                if ($this.GetBoundParameters().ContainsKey('Id') -and -not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    $Group = Get-MgBetaGroup -GroupId $Id -ExpandProperty 'members' -ErrorAction Stop
+                    Write-Verbose -Message 'GroupID was specified'
+                    try
+                    {
+                        $Group = Get-MgBetaGroup -GroupId $this.Id -Property $selectProperties -ExpandProperty 'members' -ErrorAction Stop
+                    }
+                    catch
+                    {
+                        Write-Verbose -Message "Couldn't get group by ID, trying by name"
+                        [array]$Group = Get-MgBetaGroup -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" -Property $selectProperties -ExpandProperty 'members' -ErrorAction Stop
+                        if ($Group.Count -gt 1)
+                        {
+                            throw "Duplicate AzureAD Groups named $($this.DisplayName) exist in tenant"
+                        }
+                    }
                 }
-                catch
+                else
                 {
-                    Write-Verbose -Message "Couldn't get group by ID, trying by name"
-                    [array]$Group = Get-MgBetaGroup -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" -ExpandProperty 'members' -ErrorAction Stop
+                    Write-Verbose -Message 'Id was NOT specified'
+                    ## Can retreive multiple AAD Groups since displayname is not unique
+                    [array]$Group = Get-MgBetaGroup -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" -Property $selectProperties -ExpandProperty 'members' -ErrorAction Stop
                     if ($Group.Count -gt 1)
                     {
-                        throw "Duplicate AzureAD Groups named $DisplayName exist in tenant"
+                        throw "Duplicate AzureAD Groups named $($this.DisplayName) exist in tenant"
                     }
+                }
+
+                if ($null -eq $Group)
+                {
+                    Write-Verbose -Message 'Group was null, returning null'
+                    return $this.AsResult($nullReturn)
                 }
             }
             else
             {
-                Write-Verbose -Message 'Id was NOT specified'
-                ## Can retreive multiple AAD Groups since displayname is not unique
-                [array]$Group = Get-MgBetaGroup -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" -ExpandProperty 'members' -ErrorAction Stop
-                if ($Group.Count -gt 1)
+                $Group = $this.ExportedInstance
+            }
+
+            Write-Verbose -Message 'Found existing AzureAD Group'
+            $prefetched = $null
+            $navigationCache = $this.ResourceCache['NavigationCache']
+            if ($null -ne $navigationCache -and $navigationCache.ContainsKey($Group.Id))
+            {
+                $prefetched = $navigationCache[$Group.Id]
+            }
+
+            $batchResponse = @()
+            if ($null -eq $prefetched)
+            {
+                $batchRequests = @(
+                    @{
+                        id     = 'Owners'
+                        method = 'GET'
+                        url    = "/groups/$($Group.Id)/owners"
+                    }
+                    @{
+                        id     = 'MemberOf'
+                        method = 'GET'
+                        url    = "/groups/$($Group.Id)/memberOf"
+                    }
+                    @{
+                        id     = 'GroupLifecyclePolicies'
+                        method = 'GET'
+                        url    = "/groups/$($Group.Id)/groupLifecyclePolicies"
+                    }
+                )
+                $batchResponse = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
+            }
+
+            # Owners
+            [Array]$ownersResponse = if ($null -ne $prefetched) { $prefetched.Owners } else { ($batchResponse | Where-Object -FilterScript { $_.id -eq 'Owners' }).body.value }
+            $OwnersValues = @()
+            foreach ($owner in $ownersResponse)
+            {
+                if ($null -ne $owner.userPrincipalName)
                 {
-                    throw "Duplicate AzureAD Groups named $DisplayName exist in tenant"
+                    $OwnersValues += $owner.userPrincipalName
+                }
+                elseif ($owner.'@odata.type' -eq '#microsoft.graph.servicePrincipal')
+                {
+                    $OwnersValues += $owner.displayName
                 }
             }
 
-            if ($null -eq $Group)
-            {
-                Write-Verbose -Message 'Group was null, returning null'
-                return $nullReturn
-            }
-        }
-        else
-        {
-            $Group = $Script:exportedInstance
-        }
+            $MembersValues = $null
+            $result = @{}
+            $MembersValues = [System.Collections.Generic.List[System.String]]::new()
+            $GroupAsMembersValues = [System.Collections.Generic.List[System.String]]::new()
 
-        Write-Verbose -Message 'Found existing AzureAD Group'
-        $batchRequests = @(
-            @{
-                id     = 'Owners'
-                method = 'GET'
-                url    = "/groups/$($Group.Id)/owners"
-            }
-            @{
-                id     = 'MemberOf'
-                method = 'GET'
-                url    = "/groups/$($Group.Id)/memberOf"
-            }
-            @{
-                id     = 'Licenses'
-                method = 'GET'
-                url    = "/groups/$($Group.Id)/assignedLicenses"
-            }
-            @{
-                id     = 'GroupLifecyclePolicies'
-                method = 'GET'
-                url    = "/groups/$($Group.Id)/groupLifecyclePolicies"
-            }
-        )
-        $batchResponse = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
-
-        # Owners
-        [Array]$owners = ($batchResponse | Where-Object -FilterScript { $_.id -eq 'Owners' }).body.value
-        $OwnersValues = @()
-        foreach ($owner in $owners)
-        {
-            if ($null -ne $owner.userPrincipalName)
+            # If the Members and GroupAsMembers parameters are not specified, do not attempt to retrieve them as part of the Get() method.
+            if ($Group.MembershipRuleProcessingState -ne 'On' -and ($this.GetBoundParameters().ContainsKey('Members') -or $this.GetBoundParameters().ContainsKey('GroupAsMembers')))
             {
-                $OwnersValues += $owner.userPrincipalName
-            }
-            elseif ($owner.'@odata.type' -eq '#microsoft.graph.servicePrincipal')
-            {
-                $OwnersValues += $owner.displayName
-            }
-        }
-
-        $MembersValues = $null
-        $result = @{}
-        $MembersValues = [System.Collections.Generic.List[System.String]]::new()
-        $GroupAsMembersValues = [System.Collections.Generic.List[System.String]]::new()
-
-        # If the Members and GroupAsMembers parameters are not specified, do not attempt to retrieve them as part of the Get-TargetResource.
-        if ($Group.MembershipRuleProcessingState -ne 'On' -and ($PSBoundParameters.ContainsKey('Members') -or $PSBoundParameters.ContainsKey('GroupAsMembers')))
-        {
-            # Members
-            $groupMembers = $Group.Members
-            if ((($Members.Count -gt 0 -or $GroupAsMembers.Count -gt 0) -and $Group.Members.Count -eq 20) -or `
-                $Script:requireGroupMemberFetching -eq $true)
-            {
-                # Fetch all group members
-                $groupMembers = Get-MgGroupMember -GroupId $Group.Id -All -Top 999
-            }
-            foreach ($member in $groupMembers)
-            {
-                switch ($member.'@odata.type')
+                # Members
+                $groupMembers = $Group.Members
+                if ((($this.Members.Count -gt 0 -or $this.GroupAsMembers.Count -gt 0) -and $Group.Members.Count -eq 20) -or `
+                    $this.ResourceCache['requireGroupMemberFetching'] -eq $true)
                 {
-                    '#microsoft.graph.user'
+                    # Fetch all group members
+                    $groupMembers = Get-MgBetaGroupMember -GroupId $Group.Id -All -Top 999
+                }
+                foreach ($member in $groupMembers)
+                {
+                    switch ($member.'@odata.type')
                     {
-                        $MembersValues.Add($member.userPrincipalName)
-                    }
-                    '#microsoft.graph.servicePrincipal'
-                    {
-                        $MembersValues.Add($member.displayName)
-                    }
-                    '#microsoft.graph.device'
-                    {
-                        $MembersValues.Add($member.displayName)
-                    }
-                    '#microsoft.graph.group'
-                    {
-                        $GroupAsMembersValues.Add($member.displayName)
+                        '#microsoft.graph.user'
+                        {
+                            $MembersValues.Add($member.userPrincipalName)
+                        }
+                        '#microsoft.graph.servicePrincipal'
+                        {
+                            $MembersValues.Add($member.displayName)
+                        }
+                        '#microsoft.graph.device'
+                        {
+                            $MembersValues.Add($member.displayName)
+                        }
+                        '#microsoft.graph.group'
+                        {
+                            $GroupAsMembersValues.Add($member.displayName)
+                        }
                     }
                 }
             }
-        }
 
-        # MemberOf
-        [Array]$memberOf = ($batchResponse | Where-Object -FilterScript { $_.id -eq 'MemberOf' }).body.value
-        $MemberOfValues = @()
-        # Note: only process security-groups that this group is a member of and not directory roles (if any)
-        foreach ($member in ($memberOf | Where-Object -FilterScript { $_.'@odata.type' -eq '#microsoft.graph.group' }))
-        {
-            if ($null -ne $member.displayName)
+            # MemberOf
+            [Array]$memberOfResponse = if ($null -ne $prefetched) { $prefetched.MemberOf } else { ($batchResponse | Where-Object -FilterScript { $_.id -eq 'MemberOf' }).body.value }
+            $MemberOfValues = @()
+            # Note: only process security-groups that this group is a member of and not directory roles (if any)
+            foreach ($member in ($memberOfResponse | Where-Object -FilterScript { $_.'@odata.type' -eq '#microsoft.graph.group' }))
             {
-                $MemberOfValues += $member.displayName
-            }
-        }
-
-        if ($null -eq $Script:DirectoryRoleDefinitions)
-        {
-            $Script:DirectoryRoleDefinitions = [System.Collections.Generic.Dictionary[string, string]]::new()
-            $allRoleDefinitions = Get-MgBetaRoleManagementDirectoryRoleDefinition -All
-            foreach ($roleDefinition in $allRoleDefinitions)
-            {
-                $Script:DirectoryRoleDefinitions.Add($roleDefinition.Id, $roleDefinition.DisplayName)
-            }
-        }
-
-        # AssignedToRole
-        $AssignedToRoleValues = @()
-        if ($Group.IsAssignableToRole -eq $true)
-        {
-            $roleAssignments = Get-MgBetaRoleManagementDirectoryRoleAssignment -Filter "PrincipalId eq '$($Group.Id)'"
-            foreach ($assignment in $roleAssignments)
-            {
-                $roleDefinition = Get-MgBetaRoleManagementDirectoryRoleDefinition -UnifiedRoleDefinitionId $assignment.RoleDefinitionId
-                $AssignedToRoleValues += $roleDefinition.DisplayName
-            }
-        }
-
-        # Licenses
-        $assignedLicensesValues = @()
-        $assignedLicensesRequest = ($batchResponse | Where-Object -FilterScript { $_.id -eq 'Licenses' }).body
-        if ($assignedLicensesRequest.value.Length -gt 0)
-        {
-            [Array]$assignedLicensesValues = Get-M365DSCAzureADGroupLicenses -AssignedLicenses $assignedLicensesRequest.value
-        }
-
-        # GroupLifecyclePolicies
-        $groupLifecyclePoliciesRequest = ($batchResponse | Where-Object -FilterScript { $_.id -eq 'GroupLifecyclePolicies' }).body.value
-        $isGroupLifecyclePoliciesEnabled = $null -ne $groupLifecyclePoliciesRequest -and `
-            $groupLifecyclePoliciesRequest.managedGroupTypes -eq 'selected'
-
-        $policySettings = @{
-            DisplayName                   = $Group.DisplayName
-            Id                            = $Group.Id
-            Owners                        = $OwnersValues
-            MemberOf                      = $MemberOfValues
-            Description                   = $Group.Description
-            GroupTypes                    = Get-M365DSCArrayFromProperty -PropertyValue $Group.GroupTypes -ElementType ([System.String])
-            MembershipRule                = $Group.MembershipRule
-            MembershipRuleProcessingState = $Group.MembershipRuleProcessingState
-            GroupAsMembers                = $GroupAsMembersValues
-            Members                       = $MembersValues
-            SecurityEnabled               = $Group.SecurityEnabled
-            MailEnabled                   = $Group.MailEnabled
-            IsAssignableToRole            = $false -or $Group.IsAssignableToRole
-            AssignedToRole                = $AssignedToRoleValues
-            MailNickname                  = $Group.MailNickname
-            Visibility                    = $Group.Visibility
-            AssignedLicenses              = $assignedLicensesValues
-            Ensure                        = 'Present'
-            ApplicationId                 = $ApplicationId
-            TenantId                      = $TenantId
-            CertificateThumbprint         = $CertificateThumbprint
-            ApplicationSecret             = $ApplicationSecret
-            Credential                    = $Credential
-            ManagedIdentity               = $ManagedIdentity.IsPresent
-            AccessTokens                  = $AccessTokens
-        }
-
-        $result += $policySettings
-        if ($result.MailEnabled)
-        {
-            $result.Add('GroupLifecyclePolicySelectedEnabled', $isGroupLifecyclePoliciesEnabled)
-        }
-
-        return $result
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $MailNickname,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String[]]
-        $Owners,
-
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [System.String[]]
-        $GroupAsMembers,
-
-        [Parameter()]
-        [System.String[]]
-        $MemberOf,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.Boolean]
-        $GroupLifecyclePolicySelectedEnabled,
-
-        [Parameter()]
-        [System.String[]]
-        $GroupTypes,
-
-        [Parameter()]
-        [System.String]
-        $MembershipRule,
-
-        [Parameter()]
-        [ValidateSet('On', 'Paused')]
-        [System.String]
-        $MembershipRuleProcessingState,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $SecurityEnabled,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $MailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsAssignableToRole,
-
-        [Parameter()]
-        [System.string[]]
-        $AssignedToRole,
-
-        [Parameter()]
-        [ValidateSet('Public', 'Private', 'HiddenMembership')]
-        [System.String]
-        $Visibility,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $AssignedLicenses,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting configuration of Azure AD Groups'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $currentGroup = Get-TargetResource @PSBoundParameters
-    $backCurrentOwners = $currentGroup.Owners
-    $backCurrentMembers = $currentGroup.Members
-    $backCurrentGroupAsMembers = $currentGroup.GroupAsMembers
-    $backCurrentMemberOf = $currentGroup.MemberOf
-    $backCurrentAssignedToRole = $currentGroup.AssignedToRole
-    $currentParameters.Remove('Owners') | Out-Null
-    $currentParameters.Remove('Members') | Out-Null
-    $currentParameters.Remove('GroupAsMembers') | Out-Null
-    $currentParameters.Remove('MemberOf') | Out-Null
-    $currentParameters.Remove('AssignedToRole') | Out-Null
-
-    if ($Ensure -eq 'Present' -and `
-        ($null -ne $GroupTypes -and $GroupTypes.Contains('Unified')) -and `
-        ($null -ne $MailEnabled -and $MailEnabled -eq $false))
-    {
-        Write-Verbose -Message 'Cannot set mailenabled to false if GroupTypes is set to Unified when creating group.'
-        throw 'Cannot set mailenabled to false if GroupTypes is set to Unified when creating a group.'
-    }
-
-    $currentValuesToCheck = @()
-    if ($currentGroup.AssignedLicenses.Length -gt 0)
-    {
-        $currentValuesToCheck = $currentGroup.AssignedLicenses.SkuId
-    }
-    $desiredValuesToCheck = @()
-    if ($AssignedLicenses.Length -gt 0)
-    {
-        $desiredValuesToCheck = $AssignedLicenses.SkuId
-    }
-
-    [Array]$licensesDiff = Compare-Object -ReferenceObject $currentValuesToCheck -DifferenceObject $desiredValuesToCheck -IncludeEqual
-    $toAdd = @()
-    $toRemove = @()
-    foreach ($diff in $licensesDiff)
-    {
-        if ($diff.SideIndicator -eq '=>')
-        {
-            $toAdd += $diff.InputObject
-        }
-        elseif ($diff.SideIndicator -eq '<=')
-        {
-            $toRemove += $diff.InputObject
-        }
-        elseif ($diff.SideIndicator -eq '==')
-        {
-            # This will take care of the scenario where the license is already assigned but has different disabled plans
-            $toAdd += $diff.InputObject
-        }
-    }
-
-    # Convert AssignedLicenses from SkuPartNumber back to GUID
-    $licensesToAdd = @()
-    $licensesToRemove = @()
-    [Array]$AllLicenses = Get-M365DSCCombinedLicenses -DesiredLicenses $AssignedLicenses -CurrentLicenses $currentGroup.AssignedLicenses
-
-    $allSkus = Get-MgBetaSubscribedSku
-    # Create complete list of all Service Plans
-    $allServicePlans = @()
-    Write-Verbose -Message 'Getting all Service Plans'
-    foreach ($sku in $allSkus)
-    {
-        foreach ($serviceplan in $sku.ServicePlans)
-        {
-            if ($allServicePlans.Length -eq 0 -or -not $allServicePlans.ServicePlanName.Contains($servicePlan.ServicePlanName))
-            {
-                $allServicePlans += @{
-                    ServicePlanId   = $serviceplan.ServicePlanId
-                    ServicePlanName = $serviceplan.ServicePlanName
-                }
-            }
-        }
-    }
-
-    foreach ($assignedLicense in $AllLicenses)
-    {
-        $skuInfo = $allSkus | Where-Object -FilterScript { ($_.SkuPartNumber -replace [char]0xFEFF, '') -eq $assignedLicense.SkuId }
-        if ($skuInfo)
-        {
-            if ($toAdd.Contains($assignedLicense.SkuId))
-            {
-                $disabledPlansValues = @()
-                foreach ($plan in $assignedLicense.DisabledPlans)
+                if ($null -ne $member.displayName)
                 {
-                    $foundItem = $allServicePlans | Where-Object -FilterScript { $_.ServicePlanName -eq $plan }
-                    $disabledPlansValues += $foundItem.ServicePlanId
+                    $MemberOfValues += $member.displayName
                 }
+            }
 
-                $skuInfo = $allSkus | Where-Object -FilterScript { ($_.SkuPartNumber -replace [char]0xFEFF, '') -eq $assignedLicense.SkuId }
-                $licensesToAdd += @{
-                    disabledPlans = $disabledPlansValues
-                    skuId         = $skuInfo.SkuId
+            if ($null -eq $this.ResourceCache['DirectoryRoleDefinitions'])
+            {
+                $this.ResourceCache['DirectoryRoleDefinitions'] = [System.Collections.Generic.Dictionary[System.String, System.String]]::new()
+                $allRoleDefinitions = Get-MgBetaRoleManagementDirectoryRoleDefinition -All
+                foreach ($roleDefinition in $allRoleDefinitions)
+                {
+                    $this.ResourceCache['DirectoryRoleDefinitions'].Add($roleDefinition.Id, $roleDefinition.DisplayName)
                 }
             }
-            elseif ($toRemove.Contains($assignedLicense.SkuId))
+
+            # AssignedToRole
+            $AssignedToRoleValues = @()
+            if ($Group.IsAssignableToRole -eq $true)
             {
-                $licensesToRemove += $skuInfo.SkuId
+                $roleAssignments = Get-MgBetaRoleManagementDirectoryRoleAssignment -Filter "PrincipalId eq '$($Group.Id)'"
+                foreach ($assignment in $roleAssignments)
+                {
+                    $roleDisplayName = $null
+                    if (-not $this.ResourceCache['DirectoryRoleDefinitions'].TryGetValue($assignment.RoleDefinitionId, [ref] $roleDisplayName))
+                    {
+                        $roleDisplayName = (Get-MgBetaRoleManagementDirectoryRoleDefinition -UnifiedRoleDefinitionId $assignment.RoleDefinitionId).DisplayName
+                    }
+                    $AssignedToRoleValues += $roleDisplayName
+                }
             }
+
+            # Licenses
+            $assignedLicensesValues = @()
+            if ($Group.AssignedLicenses.Count -gt 0)
+            {
+                [Array]$assignedLicensesValues = $this.GetGroupLicenses($Group.AssignedLicenses)
+            }
+
+            $writebackConfigurationValue = $null
+            if ($null -ne $Group.WritebackConfiguration -and `
+                ($null -ne $Group.WritebackConfiguration.isEnabled -or `
+                    -not [System.String]::IsNullOrEmpty($Group.WritebackConfiguration.onPremisesGroupType)))
+            {
+                $writebackConfigurationValue = @{
+                    IsEnabled           = $Group.WritebackConfiguration.isEnabled
+                    OnPremisesGroupType = $Group.WritebackConfiguration.onPremisesGroupType
+                }
+            }
+
+            # GroupLifecyclePolicies
+            $groupLifecyclePoliciesRequest = if ($null -ne $prefetched) { $prefetched.GroupLifecyclePolicies } else { ($batchResponse | Where-Object -FilterScript { $_.id -eq 'GroupLifecyclePolicies' }).body.value }
+            $isGroupLifecyclePoliciesEnabled = $null -ne $groupLifecyclePoliciesRequest -and `
+                $groupLifecyclePoliciesRequest.managedGroupTypes -eq 'selected'
+
+            $policySettings = @{
+                DisplayName                   = $Group.DisplayName
+                Id                            = $Group.Id
+                Owners                        = $OwnersValues
+                MemberOf                      = $MemberOfValues
+                Description                   = $Group.Description
+                GroupTypes                    = Get-M365DSCArrayFromProperty -PropertyValue $Group.GroupTypes -ElementType ([System.String])
+                MembershipRule                = $Group.MembershipRule
+                MembershipRuleProcessingState = $Group.MembershipRuleProcessingState
+                GroupAsMembers                = $GroupAsMembersValues
+                Members                       = $MembersValues
+                SecurityEnabled               = $Group.SecurityEnabled
+                MailEnabled                   = $Group.MailEnabled
+                IsAssignableToRole            = $false -or $Group.IsAssignableToRole
+                AssignedToRole                = $AssignedToRoleValues
+                MailNickname                  = $Group.MailNickname
+                Visibility                    = $Group.Visibility
+                Theme                         = $Group.Theme
+                AssignedLicenses              = $assignedLicensesValues
+                WritebackConfiguration        = $writebackConfigurationValue
+                Ensure                        = 'Present'
+                ApplicationId                 = $this.ApplicationId
+                TenantId                      = $this.TenantId
+                CertificateThumbprint         = $this.CertificateThumbprint
+                ApplicationSecret             = $this.ApplicationSecret
+                Credential                    = $this.Credential
+                ManagedIdentity               = $this.ManagedIdentity
+                AccessTokens                  = $this.AccessTokens
+            }
+
+            $result += $policySettings
+            if ($result.MailEnabled)
+            {
+                $result.Add('GroupLifecyclePolicySelectedEnabled', $isGroupLifecyclePoliciesEnabled)
+            }
+
+            return $this.AsResult($result)
         }
-        else
+        catch
         {
-            Write-Warning -Message "Specified Sku {$($assignedLicense.SkuId)} could not be found on the tenant."
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
         }
     }
 
-    $currentParameters.Remove('AssignedLicenses') | Out-Null
-
-    if ($Ensure -eq 'Present' -and $currentGroup.Ensure -eq 'Absent')
+    [void] Set()
     {
-        Write-Verbose -Message "Checking to see if an existing deleted group exists with DisplayName {$DisplayName}"
-        $restoringExisting = $false
-        # Not using Get-MgBetaDirectoryDeletedItemAsGroup because the URI from Find-MgGraphCommand is not correct
-        [Array]$groups = (Invoke-MgGraphRequest -Uri "/beta/directory/deletedItems/microsoft.graph.group?`$filter=DisplayName eq '$($DisplayName -replace "'", "''")'").value
-        if ($groups.Length -gt 1)
+        if ($this.RequiresPowerShellCore())
         {
-            throw "Multiple deleted groups with the name {$DisplayName} were found. Cannot restore the existing group. Please ensure that you either have no instance of the group in the deleted list or that you have a single one."
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        if ($groups.Length -eq 1)
-        {
-            Write-Verbose -Message "Found an instance of a deleted group {$DisplayName}. Restoring it."
-            Restore-MgBetaDirectoryDeletedItem -DirectoryObjectId $groups[0].Id
-            $restoringExisting = $true
-            do
-            {
-                $currentGroup = Get-MgBetaGroup -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" -ErrorAction Stop
-            } while ($null -eq $currentGroup)
-            $null = Invoke-M365DSCCommand -ScriptBlock { Get-MgBetaGroup -GroupId $currentGroup.Id -ErrorAction Stop } -RetryOnNotFoundError
-            $null = Invoke-M365DSCCommand -ScriptBlock { Get-MgBetaGroupMember -GroupId $currentGroup.Id -ErrorAction Stop } -RetryOnNotFoundError
-            $commandParameters = ([Hashtable]$PSBoundParameters).Clone()
-            $currentGroup = Invoke-M365DSCCommand -ScriptBlock { Get-TargetResource @commandParameters } -RetryOnNotFoundError
-            $backCurrentOwners = $currentGroup.Owners
-            $backCurrentMembers = $currentGroup.Members
-        }
+        Write-Verbose -Message 'Setting configuration of Azure AD Groups'
 
-        if (-not $restoringExisting)
-        {
-            Write-Verbose -Message "Creating new group {$DisplayName}"
-            $currentParameters.Remove('Id') | Out-Null
+        Confirm-M365DSCDependencies
 
-            try
+        $this.AddTelemetry('Set')
+
+        $currentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $currentGroup = $this.Get().ToHashtable()
+        $backCurrentOwners = $currentGroup.Owners
+        $backCurrentMembers = $currentGroup.Members
+        $backCurrentGroupAsMembers = $currentGroup.GroupAsMembers
+        $backCurrentMemberOf = $currentGroup.MemberOf
+        $backCurrentAssignedToRole = $currentGroup.AssignedToRole
+        $currentParameters.Remove('Owners') | Out-Null
+        $currentParameters.Remove('Members') | Out-Null
+        $currentParameters.Remove('GroupAsMembers') | Out-Null
+        $currentParameters.Remove('MemberOf') | Out-Null
+        $currentParameters.Remove('AssignedToRole') | Out-Null
+        $currentParameters.Remove('GroupLifecyclePolicySelectedEnabled') | Out-Null
+
+        if ($null -ne $this.WritebackConfiguration)
+        {
+            $writebackConfigurationBody = @{}
+            if ($null -ne $this.WritebackConfiguration.IsEnabled)
             {
-                Write-Verbose -Message "Creating Group with Values: $(Convert-M365DscHashtableToString -Hashtable $currentParameters)"
-                $currentGroup = New-MgGroup -BodyParameter $currentParameters
-                Write-Verbose -Message "Created Group $($currentGroup.id), wait for sync to complete"
-                Invoke-M365DSCCommand -ScriptBlock { Get-MgBetaGroup -GroupId $currentGroup.Id -Property Id -ErrorAction Stop } -RetryOnNotFoundError | Out-Null
+                $writebackConfigurationBody.Add('isEnabled', $this.WritebackConfiguration.IsEnabled)
             }
-            catch
+            if (-not [System.String]::IsNullOrEmpty($this.WritebackConfiguration.OnPremisesGroupType))
             {
-                Write-Verbose -Message $_
-                New-M365DSCLogEntry -Message "Couldn't create group $DisplayName" `
-                    -Exception $_ `
-                    -Source $MyInvocation.MyCommand.ModuleName
+                $writebackConfigurationBody.Add('onPremisesGroupType', $this.WritebackConfiguration.OnPremisesGroupType)
+            }
+            $currentParameters.WritebackConfiguration = $writebackConfigurationBody
+        }
+
+        if ($this.Ensure -eq 'Present' -and `
+            ($null -ne $this.GroupTypes -and $this.GroupTypes.Contains('Unified')) -and `
+            ($null -ne $this.MailEnabled -and $this.MailEnabled -eq $false))
+        {
+            Write-Verbose -Message 'Cannot set mailenabled to false if GroupTypes is set to Unified when creating group.'
+            throw 'Cannot set mailenabled to false if GroupTypes is set to Unified when creating a group.'
+        }
+
+        $currentValuesToCheck = @()
+        if ($currentGroup.AssignedLicenses.Length -gt 0)
+        {
+            $currentValuesToCheck = $currentGroup.AssignedLicenses.SkuId
+        }
+        $desiredValuesToCheck = @()
+        if ($this.AssignedLicenses.Length -gt 0)
+        {
+            $desiredValuesToCheck = $this.AssignedLicenses.SkuId
+        }
+
+        [Array]$licensesDiff = Compare-Object -ReferenceObject $currentValuesToCheck -DifferenceObject $desiredValuesToCheck -IncludeEqual
+        $toAdd = @()
+        $toRemove = @()
+        foreach ($diff in $licensesDiff)
+        {
+            if ($diff.SideIndicator -eq '=>')
+            {
+                $toAdd += $diff.InputObject
+            }
+            elseif ($diff.SideIndicator -eq '<=')
+            {
+                $toRemove += $diff.InputObject
+            }
+            elseif ($diff.SideIndicator -eq '==')
+            {
+                # This will take care of the scenario where the license is already assigned but has different disabled plans
+                $toAdd += $diff.InputObject
             }
         }
-    }
 
-    if ($Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Group {$DisplayName} exists and it should."
-        try
+        # Convert AssignedLicenses from SkuPartNumber back to GUID
+        $licensesToAdd = @()
+        $licensesToRemove = @()
+        [Array]$AllLicenses = $this.GetCombinedLicenses($currentGroup.AssignedLicenses, $this.AssignedLicenses)
+
+        $allSkus = Get-MgBetaSubscribedSku
+        # Create complete list of all Service Plans
+        $allServicePlans = @()
+        Write-Verbose -Message 'Getting all Service Plans'
+        foreach ($sku in $allSkus)
         {
-            if ($currentGroup.Ensure -eq 'Present')
+            foreach ($serviceplan in $sku.ServicePlans)
             {
-                Write-Verbose -Message "Updating settings by ID for group {$DisplayName}"
-
-                if ($currentParameters.ContainsKey('IsAssignableToRole'))
+                if ($allServicePlans.Length -eq 0 -or -not $allServicePlans.ServicePlanName.Contains($servicePlan.ServicePlanName))
                 {
-                    Write-Verbose -Message 'Cannot set IsAssignableToRole once group is created.'
-                    $currentParameters.Remove('IsAssignableToRole') | Out-Null
+                    $allServicePlans += @{
+                        ServicePlanId   = $serviceplan.ServicePlanId
+                        ServicePlanName = $serviceplan.ServicePlanName
+                    }
+                }
+            }
+        }
+
+        foreach ($assignedLicense in $AllLicenses)
+        {
+            $skuInfo = $allSkus | Where-Object -FilterScript { ($_.SkuPartNumber -replace [char]0xFEFF, '') -eq $assignedLicense.SkuId }
+            if ($skuInfo)
+            {
+                if ($toAdd.Contains($assignedLicense.SkuId))
+                {
+                    $disabledPlansValues = @()
+                    foreach ($plan in $assignedLicense.DisabledPlans)
+                    {
+                        $foundItem = $allServicePlans | Where-Object -FilterScript { $_.ServicePlanName -eq $plan }
+                        $disabledPlansValues += $foundItem.ServicePlanId
+                    }
+
+                    $skuInfo = $allSkus | Where-Object -FilterScript { ($_.SkuPartNumber -replace [char]0xFEFF, '') -eq $assignedLicense.SkuId }
+                    $licensesToAdd += @{
+                        disabledPlans = $disabledPlansValues
+                        skuId         = $skuInfo.SkuId
+                    }
+                }
+                elseif ($toRemove.Contains($assignedLicense.SkuId))
+                {
+                    $licensesToRemove += $skuInfo.SkuId
+                }
+            }
+            else
+            {
+                Write-Warning -Message "Specified Sku {$($assignedLicense.SkuId)} could not be found on the tenant."
+            }
+        }
+
+        $currentParameters.Remove('AssignedLicenses') | Out-Null
+
+        if ($this.Ensure -eq 'Present' -and $currentGroup.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Checking to see if an existing deleted group exists with DisplayName {$($this.DisplayName)}"
+            $restoringExisting = $false
+            [Array]$groups = Get-MgBetaDirectoryDeletedItemAsGroup -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'"
+            if ($groups.Length -gt 1)
+            {
+                throw "Multiple deleted groups with the name {$($this.DisplayName)} were found. Cannot restore the existing group. Please ensure that you either have no instance of the group in the deleted list or that you have a single one."
+            }
+
+            if ($groups.Length -eq 1)
+            {
+                Write-Verbose -Message "Found an instance of a deleted group {$($this.DisplayName)}. Restoring it."
+                Restore-MgBetaDirectoryDeletedItem -DirectoryObjectId $groups[0].Id
+                $restoringExisting = $true
+                $restoredGroupId = $groups[0].Id
+                $null = Invoke-M365DSCCommand -ScriptBlock { Get-MgBetaGroup -GroupId $restoredGroupId -ErrorAction Stop } -RetryOnNotFoundError -MaxRetries 5
+                $null = Invoke-M365DSCCommand -ScriptBlock { Get-MgBetaGroupMember -GroupId $restoredGroupId -ErrorAction Stop } -RetryOnNotFoundError -MaxRetries 5
+                $commandParameters = ([Hashtable]$this.GetBoundParameters()).Clone()
+                $commandParameters.Id = $restoredGroupId
+                $currentGroup = Invoke-M365DSCCommand -ScriptBlock { $this.GetForExport($commandParameters) } -RetryOnNotFoundError
+                $backCurrentOwners = $currentGroup.Owners
+                $backCurrentMembers = $currentGroup.Members
+            }
+
+            if (-not $restoringExisting)
+            {
+                Write-Verbose -Message "Creating new group {$($this.DisplayName)}"
+                $currentParameters.Remove('Id') | Out-Null
+
+                $ownerReferences = [AADGroup]::GetDirectoryObjectReferences($this.Owners, $false)
+                $memberReferences = @()
+                if ($this.MembershipRuleProcessingState -ne 'On')
+                {
+                    $memberReferences = [AADGroup]::GetDirectoryObjectReferences($this.Members, $true)
                 }
 
-                if ($currentParameters.ContainsKey('Id'))
+                if ($null -ne $ownerReferences -and $null -ne $memberReferences -and ($ownerReferences.Count + $memberReferences.Count) -le 20)
                 {
-                    $currentParameters.Remove('Id') | Out-Null
+                    if ($ownerReferences.Count -gt 0)
+                    {
+                        $currentParameters.Add('owners@odata.bind', $ownerReferences)
+                        $backCurrentOwners = $this.Owners
+                    }
+
+                    if ($memberReferences.Count -gt 0)
+                    {
+                        $currentParameters.Add('members@odata.bind', $memberReferences)
+                        $backCurrentMembers = $this.Members
+                    }
                 }
 
-                Write-Verbose -Message "Updating existing Group with Values: $(Convert-M365DscHashtableToString -Hashtable $currentParameters)"
-                Update-MgGroup -GroupId $currentGroup.Id -BodyParameter $currentParameters -ErrorAction Stop
-            }
-
-            if (($licensesToAdd.Length -gt 0 -or $licensesToRemove.Length -gt 0) -and $PSBoundParameters.ContainsKey('AssignedLicenses'))
-            {
                 try
                 {
-                    Write-Verbose -Message "Setting Group Licenses with:`r`nLicensesToAdd: $(ConvertTo-Json $licensesToAdd)`r`nLicensesToRemove: $(ConvertTo-Json $licensesToRemove)"
-                    Set-MgGroupLicense -GroupId $currentGroup.Id `
-                        -AddLicenses $licensesToAdd `
-                        -RemoveLicenses $licensesToRemove `
-                        -ErrorAction Stop | Out-Null
+                    Write-Verbose -Message "Creating Group with Values: $(Convert-M365DscHashtableToString -Hashtable $currentParameters)"
+                    $currentGroup = New-MgBetaGroup -BodyParameter $currentParameters
+                    Write-Verbose -Message "Created Group $($currentGroup.id), wait for sync to complete"
+                    Invoke-M365DSCCommand -ScriptBlock { Get-MgBetaGroup -GroupId $currentGroup.Id -Property Id -ErrorAction Stop } -RetryOnNotFoundError | Out-Null
                 }
                 catch
                 {
                     Write-Verbose -Message $_
-                }
-            }
-        }
-        catch
-        {
-            New-M365DSCLogEntry -Message "Couldn't set group $DisplayName" `
-                -Exception $_ `
-                -Source $MyInvocation.MyCommand.ModuleName
-        }
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentGroup.Ensure -eq 'Present')
-    {
-        try
-        {
-            Remove-MgGroup -GroupId $currentGroup.Id | Out-Null
-        }
-        catch
-        {
-            New-M365DSCLogEntry -Message "Couldn't delete group $DisplayName" `
-                -Exception $_ `
-                -Source $MyInvocation.MyCommand.ModuleName
-        }
-    }
+                    $this.LogError($_, "Couldn't create group $($this.DisplayName)")
 
-    if ($Ensure -ne 'Absent')
-    {
-        #Owners
-        Write-Verbose -Message 'Updating Owners'
-        if ($PSBoundParameters.ContainsKey('Owners'))
+                    throw
+                }
+            }
+        }
+
+        if ($this.Ensure -eq 'Present')
         {
-            $desiredOwnersValue = @()
-            if ($Owners.Length -gt 0)
+            Write-Verbose -Message "Group {$($this.DisplayName)} exists and it should."
+            try
             {
-                $desiredOwnersValue = $Owners
-            }
-            if ($null -eq $backCurrentOwners)
-            {
-                $backCurrentOwners = @()
-            }
-            $ownersDiff = Compare-Object -ReferenceObject $backCurrentOwners -DifferenceObject $desiredOwnersValue
-            foreach ($diff in $ownersDiff)
-            {
-                $directoryObject = Get-MgUser -UserId $diff.InputObject -ErrorAction SilentlyContinue
-                if ($null -eq $directoryObject)
+                if ($currentGroup.Ensure -eq 'Present')
                 {
-                    Write-Verbose -Message "Trying to retrieve Service Principal {$($diff.InputObject)}"
-                    [array]$app = Get-MgApplication -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'"
-                    if ($app.Count -gt 0)
+                    Write-Verbose -Message "Updating settings by ID for group {$($this.DisplayName)}"
+
+                    if ($currentParameters.ContainsKey('IsAssignableToRole'))
                     {
-                        $directoryObject = Get-MgServicePrincipal -Filter "AppId eq '$($app.AppId)'"
+                        Write-Verbose -Message 'Cannot set IsAssignableToRole once group is created.'
+                        $currentParameters.Remove('IsAssignableToRole') | Out-Null
                     }
-                    else
+
+                    if ($currentParameters.ContainsKey('Id'))
                     {
-                        [array]$spInstances = Get-MgServicePrincipal -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'"
-                        if ($spInstances.Count -gt 1)
-                        {
-                            throw "Duplicate Service Principals named '$($diff.InputObject)' exist in tenant"
+                        $currentParameters.Remove('Id') | Out-Null
+                    }
+
+                    Write-Verbose -Message "Updating existing Group with Values: $(Convert-M365DscHashtableToString -Hashtable $currentParameters)"
+                    Invoke-M365DSCCommand -ScriptBlock {
+                        Update-MgBetaGroup -GroupId $currentGroup.Id -BodyParameter $currentParameters -ErrorAction Stop
+                    } -RetryOnNotFoundError -MaxRetries 5 | Out-Null
+                }
+
+                if (($licensesToAdd.Length -gt 0 -or $licensesToRemove.Length -gt 0) -and $this.GetBoundParameters().ContainsKey('AssignedLicenses'))
+                {
+                    Write-Verbose -Message "Setting Group Licenses with:`r`nLicensesToAdd: $(ConvertTo-Json $licensesToAdd)`r`nLicensesToRemove: $(ConvertTo-Json $licensesToRemove)"
+                    Invoke-M365DSCCommand -ScriptBlock {
+                        Set-MgGroupLicense -GroupId $currentGroup.Id `
+                            -AddLicenses $licensesToAdd `
+                            -RemoveLicenses $licensesToRemove `
+                            -ErrorAction Stop
+                    } -RetryOnNotFoundError -MaxRetries 5 | Out-Null
+                }
+            }
+            catch
+            {
+                $this.LogError($_, "Couldn't set group $($this.DisplayName)")
+
+                throw
+            }
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentGroup.Ensure -eq 'Present')
+        {
+            try
+            {
+                Remove-MgBetaGroup -GroupId $currentGroup.Id | Out-Null
+            }
+            catch
+            {
+                $this.LogError($_, "Couldn't delete group $($this.DisplayName)")
+
+                throw
+            }
+        }
+
+        if ($this.Ensure -ne 'Absent')
+        {
+            #Owners
+            Write-Verbose -Message 'Updating Owners'
+            if ($this.GetBoundParameters().ContainsKey('Owners'))
+            {
+                $desiredOwnersValue = @()
+                if ($this.Owners.Length -gt 0)
+                {
+                    $desiredOwnersValue = $this.Owners
+                }
+                if ($null -eq $backCurrentOwners)
+                {
+                    $backCurrentOwners = @()
+                }
+                $ownersDiff = Compare-Object -ReferenceObject $backCurrentOwners -DifferenceObject $desiredOwnersValue
+                foreach ($diff in $ownersDiff)
+                {
+                    $directoryObject = [AADGroup]::GetDirectoryObject($diff.InputObject, $false)
+                    if ($diff.SideIndicator -eq '=>')
+                    {
+                        Write-Verbose -Message "Adding new owner {$($diff.InputObject)} to AAD Group {$($currentGroup.DisplayName)}"
+                        $ownerObject = @{
+                            '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/{$($directoryObject.Id)}"
                         }
-                        elseif ($spInstances.Count -eq 1)
+                        try
                         {
-                            $directoryObject = $spInstances
+                            Invoke-M365DSCCommand -ScriptBlock {
+                                New-MgGroupOwnerByRef -GroupId ($currentGroup.Id) -BodyParameter $ownerObject -ErrorAction Stop | Out-Null
+                            } -RetryOnNotFoundError -MaxRetries 5
                         }
+                        catch
+                        {
+                            if ($_.Exception.Message -notlike '*One or more added object references already exist for the following modified properties*')
+                            {
+                                throw $_
+                            }
+                        }
+                    }
+                    elseif ($diff.SideIndicator -eq '<=')
+                    {
+                        Write-Verbose -Message "Removing new owner {$($diff.InputObject)} to AAD Group {$($currentGroup.DisplayName)}"
+                        Remove-MgGroupOwnerDirectoryObjectByRef -GroupId ($currentGroup.Id) -DirectoryObjectId ($directoryObject.Id) | Out-Null
                     }
                 }
-                if ($diff.SideIndicator -eq '=>')
+
+            }
+
+            #Members
+            Write-Verbose -Message 'Updating Members'
+            if ($this.MembershipRuleProcessingState -ne 'On' -and $this.GetBoundParameters().ContainsKey('Members'))
+            {
+                $desiredMembersValue = @()
+                if ($this.Members.Length -ne 0)
                 {
-                    Write-Verbose -Message "Adding new owner {$($diff.InputObject)} to AAD Group {$($currentGroup.DisplayName)}"
-                    $ownerObject = @{
-                        '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/{$($directoryObject.Id)}"
+                    $desiredMembersValue = $this.Members
+                }
+                if ($null -eq $backCurrentMembers)
+                {
+                    $backCurrentMembers = @()
+                }
+                Write-Verbose -Message 'Comparing current members and desired list'
+                $membersDiff = Compare-Object -ReferenceObject $backCurrentMembers -DifferenceObject $desiredMembersValue
+                foreach ($diff in $membersDiff)
+                {
+                    Write-Verbose -Message "Found difference for member {$($diff.InputObject)}"
+                    $directoryObject = [AADGroup]::GetDirectoryObject($diff.InputObject, $true)
+
+                    if ($diff.SideIndicator -eq '=>')
+                    {
+                        Write-Verbose -Message "Adding new member {$($diff.InputObject)} to AAD Group {$($currentGroup.DisplayName)}"
+                        try
+                        {
+                            $memberObject = @{
+                                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/{$($directoryObject.Id)}"
+                            }
+                            Invoke-M365DSCCommand -ScriptBlock {
+                                New-MgBetaGroupMemberByRef -GroupId ($currentGroup.Id) -BodyParameter $memberObject -ErrorAction Stop
+                            } -RetryOnNotFoundError -MaxRetries 5
+                        }
+                        catch
+                        {
+                            if ($_.Exception.Message -notlike '*One or more added object references already exist for the following modified properties*')
+                            {
+                                throw $_
+                            }
+                        }
                     }
+                    elseif ($diff.SideIndicator -eq '<=')
+                    {
+                        Write-Verbose -Message "Removing new member {$($diff.InputObject)} from AAD Group {$($currentGroup.DisplayName)}"
+                        Remove-MgBetaGroupMemberDirectoryObjectByRef -GroupId ($currentGroup.Id) -DirectoryObjectId ($directoryObject.Id) | Out-Null
+                    }
+                }
+            }
+            elseif ($this.MembershipRuleProcessingState -eq 'On')
+            {
+                Write-Verbose -Message 'Ignoring membership since this is a dynamic group.'
+            }
+
+            #GroupAsMembers
+            Write-Verbose -Message 'Updating GroupAsMembers'
+            if ($this.MembershipRuleProcessingState -ne 'On' -and $this.GetBoundParameters().ContainsKey('GroupAsMembers'))
+            {
+                $desiredGroupAsMembersValue = @()
+                if ($this.GroupAsMembers.Length -ne 0)
+                {
+                    $desiredGroupAsMembersValue = $this.GroupAsMembers
+                }
+                if ($null -eq $backCurrentGroupAsMembers)
+                {
+                    $backCurrentGroupAsMembers = @()
+                }
+                $groupAsMembersDiff = Compare-Object -ReferenceObject $backCurrentGroupAsMembers -DifferenceObject $desiredGroupAsMembersValue
+                foreach ($diff in $groupAsMembersDiff)
+                {
                     try
                     {
-                        New-MgGroupOwnerByRef -GroupId ($currentGroup.Id) -BodyParameter $ownerObject -ErrorAction Stop | Out-Null
+                        $groupAsMember = Get-MgBetaGroup -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'" -ErrorAction SilentlyContinue
                     }
                     catch
                     {
-                        if ($_.Exception.Message -notlike '*One or more added object references already exist for the following modified properties*')
-                        {
-                            throw $_
-                        }
+                        $groupAsMember = $null
                     }
-                }
-                elseif ($diff.SideIndicator -eq '<=')
-                {
-                    Write-Verbose -Message "Removing new owner {$($diff.InputObject)} to AAD Group {$($currentGroup.DisplayName)}"
-                    Remove-MgGroupOwnerDirectoryObjectByRef -GroupId ($currentGroup.Id) -DirectoryObjectId ($directoryObject.Id) | Out-Null
-                }
-            }
-
-        }
-
-        #Members
-        Write-Verbose -Message 'Updating Members'
-        if ($MembershipRuleProcessingState -ne 'On' -and $PSBoundParameters.ContainsKey('Members'))
-        {
-            $desiredMembersValue = @()
-            if ($Members.Length -ne 0)
-            {
-                $desiredMembersValue = $Members
-            }
-            if ($null -eq $backCurrentMembers)
-            {
-                $backCurrentMembers = @()
-            }
-            Write-Verbose -Message 'Comparing current members and desired list'
-            $membersDiff = Compare-Object -ReferenceObject $backCurrentMembers -DifferenceObject $desiredMembersValue
-            foreach ($diff in $membersDiff)
-            {
-                Write-Verbose -Message "Found difference for member {$($diff.InputObject)}"
-                $directoryObject = Get-MgUser -UserId $diff.InputObject -ErrorAction SilentlyContinue
-
-                if ($null -eq $directoryObject)
-                {
-                    Write-Verbose -Message "Trying to retrieve Service Principal {$($diff.InputObject)}"
-                    [array]$app = Get-MgApplication -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'"
-                    if ($app.Count -gt 0)
+                    if ($null -eq $groupAsMember)
                     {
-                        $directoryObject = Get-MgServicePrincipal -Filter "AppId eq '$($app.AppId)'"
+                        throw "Group '$($diff.InputObject)' does not exist"
                     }
                     else
                     {
-                        [array]$spInstances = Get-MgServicePrincipal -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'"
-                        if ($spInstances.Count -gt 1)
+                        if ($diff.SideIndicator -eq '=>')
                         {
-                            throw "Duplicate Service Principals named '$($diff.InputObject)' exist in tenant"
+                            Write-Verbose -Message "Adding AAD group {$($groupAsMember.DisplayName)} as member of AAD group {$($currentGroup.DisplayName)}"
+                            $groupAsMemberObject = @{
+                                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/$($groupAsMember.Id)"
+                            }
+                            Invoke-M365DSCCommand -ScriptBlock {
+                                New-MgBetaGroupMemberByRef -GroupId ($currentGroup.Id) -Body $groupAsMemberObject -ErrorAction Stop
+                            } -RetryOnNotFoundError -MaxRetries 5 | Out-Null
                         }
-                        elseif ($spInstances.Count -eq 1)
+                        if ($diff.SideIndicator -eq '<=')
                         {
-                            $directoryObject = $spInstances
+                            Write-Verbose -Message "Removing AAD Group {$($groupAsMember.DisplayName)} from AAD group {$($currentGroup.DisplayName)}"
+                            Remove-MgBetaGroupMemberDirectoryObjectByRef -GroupId ($currentGroup.Id) -DirectoryObjectId ($groupAsMember.Id) | Out-Null
                         }
                     }
                 }
-
-                if ($null -eq $directoryObject)
-                {
-                    Write-Verbose -Message "Trying to retrieve Device {$($diff.InputObject)}"
-                    $directoryObject = Get-MgDevice -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'"
-                }
-
-                if ($diff.SideIndicator -eq '=>')
-                {
-                    Write-Verbose -Message "Adding new member {$($diff.InputObject)} to AAD Group {$($currentGroup.DisplayName)}"
-                    New-MgGroupMemberByRef -GroupId ($currentGroup.Id) -BodyParameter @{
-                        '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/{$($directoryObject.Id)}"
-                    }
-                }
-                elseif ($diff.SideIndicator -eq '<=')
-                {
-                    Write-Verbose -Message "Removing new member {$($diff.InputObject)} from AAD Group {$($currentGroup.DisplayName)}"
-                    Remove-MgGroupMemberDirectoryObjectByRef -GroupId ($currentGroup.Id) -DirectoryObjectId ($directoryObject.Id) | Out-Null
-                }
             }
-        }
-        elseif ($MembershipRuleProcessingState -eq 'On')
-        {
-            Write-Verbose -Message 'Ignoring membership since this is a dynamic group.'
-        }
 
-        #GroupAsMembers
-        Write-Verbose -Message 'Updating GroupAsMembers'
-        if ($MembershipRuleProcessingState -ne 'On' -and $PSBoundParameters.ContainsKey('GroupAsMembers'))
-        {
-            $desiredGroupAsMembersValue = @()
-            if ($GroupAsMembers.Length -ne 0)
+            #MemberOf
+            Write-Verbose -Message 'Updating MemberOf'
+            if ($this.GetBoundParameters().ContainsKey('MemberOf'))
             {
-                $desiredGroupAsMembersValue = $GroupAsMembers
-            }
-            if ($null -eq $backCurrentGroupAsMembers)
-            {
-                $backCurrentGroupAsMembers = @()
-            }
-            $groupAsMembersDiff = Compare-Object -ReferenceObject $backCurrentGroupAsMembers -DifferenceObject $desiredGroupAsMembersValue
-            foreach ($diff in $groupAsMembersDiff)
-            {
-                try
+                $desiredMemberOfValue = @()
+                if ($this.MemberOf.Length -ne 0)
                 {
-                    $groupAsMember = Get-MgBetaGroup -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'" -ErrorAction SilentlyContinue
+                    $desiredMemberOfValue = $this.MemberOf
                 }
-                catch
+                if ($null -eq $backCurrentMemberOf)
                 {
-                    $groupAsMember = $null
+                    $backCurrentMemberOf = @()
                 }
-                if ($null -eq $groupAsMember)
+                $memberOfDiff = Compare-Object -ReferenceObject $backCurrentMemberOf -DifferenceObject $desiredMemberOfValue
+                foreach ($diff in $memberOfDiff)
                 {
-                    throw "Group '$($diff.InputObject)' does not exist"
-                }
-                else
-                {
-                    if ($diff.SideIndicator -eq '=>')
+                    try
                     {
-                        Write-Verbose -Message "Adding AAD group {$($groupAsMember.DisplayName)} as member of AAD group {$($currentGroup.DisplayName)}"
-                        $groupAsMemberObject = @{
-                            '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/$($groupAsMember.Id)"
-                        }
-                        New-MgBetaGroupMemberByRef -GroupId ($currentGroup.Id) -Body $groupAsMemberObject | Out-Null
+                        $memberOfGroup = Get-MgBetaGroup -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'" -ErrorAction Stop
                     }
-                    if ($diff.SideIndicator -eq '<=')
+                    catch
                     {
-                        Write-Verbose -Message "Removing AAD Group {$($groupAsMember.DisplayName)} from AAD group {$($currentGroup.DisplayName)}"
-                        Remove-MgBetaGroupMemberDirectoryObjectByRef -GroupId ($currentGroup.Id) -DirectoryObjectId ($groupAsMember.Id) | Out-Null
+                        $memberOfGroup = $null
                     }
-                }
-            }
-        }
-
-        #MemberOf
-        Write-Verbose -Message 'Updating MemberOf'
-        if ($PSBoundParameters.ContainsKey('MemberOf'))
-        {
-            $desiredMemberOfValue = @()
-            if ($MemberOf.Length -ne 0)
-            {
-                $desiredMemberOfValue = $MemberOf
-            }
-            if ($null -eq $backCurrentMemberOf)
-            {
-                $backCurrentMemberOf = @()
-            }
-            $memberOfDiff = Compare-Object -ReferenceObject $backCurrentMemberOf -DifferenceObject $desiredMemberOfValue
-            foreach ($diff in $memberOfDiff)
-            {
-                try
-                {
-                    $memberOfGroup = Get-MgBetaGroup -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'" -ErrorAction Stop
-                }
-                catch
-                {
-                    $memberOfGroup = $null
-                }
-                if ($null -eq $memberOfGroup)
-                {
-                    throw "Security-group or directory role '$($diff.InputObject)' does not exist"
-                }
-                else
-                {
-                    if ($diff.SideIndicator -eq '=>')
+                    if ($null -eq $memberOfGroup)
                     {
-                        # see if memberOfGroup contains property SecurityEnabled (it can be true or false)
-                        if ($memberOfGroup.SecurityEnabled)
+                        throw "Security-group or directory role '$($diff.InputObject)' does not exist"
+                    }
+                    else
+                    {
+                        if ($diff.SideIndicator -eq '=>')
                         {
-                            Write-Verbose -Message "Adding AAD group {$($currentGroup.DisplayName)} as member of AAD group {$($memberOfGroup.DisplayName)}"
-                            New-MgGroupMemberByRef -GroupId ($memberOfGroup.Id) -BodyParameter @{
-                                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/$($currentGroup.Id)"
-                            } | Out-Null
+                            # see if memberOfGroup contains property SecurityEnabled (it can be true or false)
+                            if ($memberOfGroup.SecurityEnabled)
+                            {
+                                Write-Verbose -Message "Adding AAD group {$($currentGroup.DisplayName)} as member of AAD group {$($memberOfGroup.DisplayName)}"
+                                $memberOfObject = @{
+                                    '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/$($currentGroup.Id)"
+                                }
+                                Invoke-M365DSCCommand -ScriptBlock {
+                                    New-MgBetaGroupMemberByRef -GroupId ($memberOfGroup.Id) -BodyParameter $memberOfObject -ErrorAction Stop
+                                } -RetryOnNotFoundError -MaxRetries 5 | Out-Null
+                            }
+                            else
+                            {
+                                throw "Cannot add AAD group {$($currentGroup.DisplayName)} to {$($memberOfGroup.DisplayName)} as it is not a security-group"
+                            }
                         }
-                        else
+                        elseif ($diff.SideIndicator -eq '<=')
                         {
-                            throw "Cannot add AAD group {$($currentGroup.DisplayName)} to {$($memberOfGroup.DisplayName)} as it is not a security-group"
+                            if ($memberOfGroup.SecurityEnabled)
+                            {
+                                Write-Verbose -Message "Removing AAD Group {$($currentGroup.DisplayName)} from AAD group {$($memberOfGroup.DisplayName)}"
+                                Remove-MgBetaGroupMemberDirectoryObjectByRef -GroupId ($memberOfGroup.Id) -DirectoryObjectId ($currentGroup.Id) | Out-Null
+                            }
+                            else
+                            {
+                                throw "Cannot remove AAD group {$($currentGroup.DisplayName)} from {$($memberOfGroup.DisplayName)} as it is not a security-group"
+                            }
                         }
                     }
-                    elseif ($diff.SideIndicator -eq '<=')
+                }
+            }
+
+            if ($currentGroup.IsAssignableToRole -eq $true -and $this.GetBoundParameters().ContainsKey('AssignedToRole'))
+            {
+                $desiredAssignedToRoleValue = @()
+                if ($this.AssignedToRole.Length -ne 0)
+                {
+                    $desiredAssignedToRoleValue = $this.AssignedToRole
+                }
+                if ($null -eq $backCurrentAssignedToRole)
+                {
+                    $backCurrentAssignedToRole = @()
+                }
+                $assignedToRoleDiff = Compare-Object -ReferenceObject $backCurrentAssignedToRole -DifferenceObject $desiredAssignedToRoleValue
+                foreach ($diff in $assignedToRoleDiff)
+                {
+                    try
                     {
-                        if ($memberOfGroup.SecurityEnabled)
+                        $role = Get-MgBetaRoleManagementDirectoryRoleDefinition -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'"
+                    }
+                    catch
+                    {
+                        $role = $null
+                    }
+                    if ($null -eq $role)
+                    {
+                        throw "Directory Role '$($diff.InputObject)' does not exist"
+                    }
+                    else
+                    {
+                        if ($diff.SideIndicator -eq '=>')
                         {
-                            Write-Verbose -Message "Removing AAD Group {$($currentGroup.DisplayName)} from AAD group {$($memberOfGroup.DisplayName)}"
-                            Remove-MgGroupMemberDirectoryObjectByRef -GroupId ($memberOfGroup.Id) -DirectoryObjectId ($currentGroup.Id) | Out-Null
+                            Write-Verbose -Message "Assigning AAD group {$($currentGroup.DisplayName)} to Directory Role {$($diff.InputObject)}"
+                            New-MgBetaRoleManagementDirectoryRoleAssignment -RoleDefinitionId $role.Id -PrincipalId $currentGroup.Id -DirectoryScopeId '/'
                         }
-                        else
+                        elseif ($diff.SideIndicator -eq '<=')
                         {
-                            throw "Cannot remove AAD group {$($currentGroup.DisplayName)} from {$($memberOfGroup.DisplayName)} as it is not a security-group"
+                            Write-Verbose -Message "Removing AAD group {$($currentGroup.DisplayName)} from Directory Role {$($role.DisplayName)}"
+                            $roleAssignment = Get-MgBetaRoleManagementDirectoryRoleAssignment -Filter "PrincipalId eq '$($currentGroup.Id)' and RoleDefinitionId eq '$($role.Id)'"
+                            Remove-MgBetaRoleManagementDirectoryRoleAssignment -UnifiedRoleAssignmentId $roleAssignment.Id
                         }
                     }
                 }
             }
+
+            # GroupLifecyclePolicies
+            if ($this.GetBoundParameters().ContainsKey('GroupLifecyclePolicySelectedEnabled'))
+            {
+                if ($null -eq $this.ResourceCache['GroupLifecyclePolicy'])
+                {
+                    $this.ResourceCache['GroupLifecyclePolicy'] = Get-MgBetaGroupLifecyclePolicy
+                }
+
+                if ($this.ResourceCache['GroupLifecyclePolicy'].ManagedGroupTypes -ne 'selected')
+                {
+                    Write-Warning -Message "Cannot assign or remove group from lifecycle policy because the current mode is not 'Selected'."
+                    return
+                }
+
+                if (-not $currentGroup.MailEnabled)
+                {
+                    Write-Warning -Message 'Cannot assign or remove group from lifecycle policy because it is not a Microsoft 365 Group.'
+                    return
+                }
+
+                if ($this.GroupLifecyclePolicySelectedEnabled -and -not $currentGroup.GroupLifecyclePolicySelectedEnabled)
+                {
+                    Write-Verbose -Message "Enabling Group Lifecycle Policy for AAD group {$($currentGroup.DisplayName)}"
+                    Add-MgBetaGroupToLifecyclePolicy -GroupLifecyclePolicyId $this.ResourceCache['GroupLifecyclePolicy'].Id -GroupId $currentGroup.Id
+                }
+                elseif (-not $this.GroupLifecyclePolicySelectedEnabled -and $currentGroup.GroupLifecyclePolicySelectedEnabled)
+                {
+                    Write-Verbose -Message "Removing AAD group {$($currentGroup.DisplayName)} from Group Lifecycle Policy"
+                    Remove-MgBetaGroupFromLifecyclePolicy -GroupLifecyclePolicyId $this.ResourceCache['GroupLifecyclePolicy'].Id -GroupId $currentGroup.Id
+                }
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        if ($currentGroup.IsAssignableToRole -eq $true -and $PSBoundParameters.ContainsKey('AssignedToRole'))
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            $desiredAssignedToRoleValue = @()
-            if ($AssignedToRole.Length -ne 0)
-            {
-                $desiredAssignedToRoleValue = $AssignedToRole
+            $ExportParameters = @{
+                Filter         = $this.Filter
+                All            = [switch]$true
+                ExpandProperty = 'members'
+                Property       = 'id', 'displayName', 'description', 'mailNickname', 'mail', 'mailEnabled', 'securityEnabled', 'groupTypes', 'membershipRule', 'membershipRuleProcessingState', 'isAssignableToRole', 'visibility', 'theme', 'assignedLicenses', 'writebackConfiguration'
+                ErrorAction    = 'Stop'
+                Sort           = 'DisplayName'
             }
-            if ($null -eq $backCurrentAssignedToRole)
+
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
             {
-                $backCurrentAssignedToRole = @()
+                # Sort (OrderBy) and Expand cannot be used together
+                $ExportParameters.Remove('Sort') | Out-Null
             }
-            $assignedToRoleDiff = Compare-Object -ReferenceObject $backCurrentAssignedToRole -DifferenceObject $desiredAssignedToRoleValue
-            foreach ($diff in $assignedToRoleDiff)
+
+            # Define the list of attributes
+            $attributesToCheck = @(
+                'description',
+                'displayName',
+                'hasMembersWithLicenseErrors',
+                'mail',
+                'mailNickname',
+                'onPremisesSecurityIdentifier',
+                'onPremisesSyncEnabled',
+                'preferredLanguage'
+            )
+
+            # Initialize a flag to indicate whether any attribute matches the condition
+            $matchConditionFound = $false
+
+            # Check each attribute in the list
+            foreach ($attribute in $attributesToCheck)
             {
-                try
+                if ($this.Filter -like "*$attribute eq *")
                 {
-                    $role = Get-MgBetaRoleManagementDirectoryRoleDefinition -Filter "DisplayName eq '$($diff.InputObject -replace "'", "''")'"
+                    $matchConditionFound = $true
+                    break
                 }
-                catch
-                {
-                    $role = $null
+            }
+
+            # If any attribute matches, add parameters to $ExportParameters
+            if ($matchConditionFound -or ($this.Filter -like '*endsWith*') -or ($this.Filter -like '*not*'))
+            {
+                $ExportParameters.Add('CountVariable', 'count')
+                $ExportParameters.Add('ConsistencyLevel', 'eventual')
+                $ExportParameters.Remove('ExpandProperty') | Out-Null
+                $this.ResourceCache['requireGroupMemberFetching'] = $true
+            }
+
+            # Exclude Distribution Groups and mail enabled security groups from Exchange
+            [array] $this.ResourceCache['exportedGroups'] = Get-MgBetaGroup @ExportParameters
+            $this.ResourceCache['exportedGroups'] = $this.ResourceCache['exportedGroups'] | Where-Object -FilterScript {
+                -not ($_.MailEnabled -and ($null -eq $_.GroupTypes -or $_.GroupTypes.Count -eq 0)) -and `
+                    -not ($_.MailEnabled -and $_.SecurityEnabled -and ($null -eq $_.GroupTypes -or $_.GroupTypes.Count -eq 0))
+            }
+
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
+            {
+                $this.ResourceCache['exportedGroups'] = $this.ResourceCache['exportedGroups'] | Sort-Object -Property DisplayName
+            }
+
+            $navigationCache = @{}
+            $navigationRequests = @()
+            foreach ($exportedGroup in $this.ResourceCache['exportedGroups'])
+            {
+                $navigationCache[$exportedGroup.Id] = @{
+                    Owners                 = @()
+                    MemberOf               = @()
+                    GroupLifecyclePolicies = @()
                 }
-                if ($null -eq $role)
-                {
-                    throw "Directory Role '$($diff.InputObject)' does not exist"
+                $navigationRequests += @{
+                    id     = "$($exportedGroup.Id)|Owners"
+                    method = 'GET'
+                    url    = "/groups/$($exportedGroup.Id)/owners"
                 }
-                else
+                $navigationRequests += @{
+                    id     = "$($exportedGroup.Id)|MemberOf"
+                    method = 'GET'
+                    url    = "/groups/$($exportedGroup.Id)/memberOf"
+                }
+                $navigationRequests += @{
+                    id     = "$($exportedGroup.Id)|GroupLifecyclePolicies"
+                    method = 'GET'
+                    url    = "/groups/$($exportedGroup.Id)/groupLifecyclePolicies"
+                }
+            }
+            if ($navigationRequests.Count -gt 0)
+            {
+                $navigationResponses = Invoke-M365DSCGraphBatchRequest -Requests $navigationRequests
+                foreach ($navigationResponse in $navigationResponses)
                 {
-                    if ($diff.SideIndicator -eq '=>')
+                    if ($navigationResponse.status -ne 200 -or $null -eq $navigationResponse.body)
                     {
-                        Write-Verbose -Message "Assigning AAD group {$($currentGroup.DisplayName)} to Directory Role {$($diff.InputObject)}"
-                        New-MgBetaRoleManagementDirectoryRoleAssignment -RoleDefinitionId $role.Id -PrincipalId $currentGroup.Id -DirectoryScopeId '/'
+                        continue
                     }
-                    elseif ($diff.SideIndicator -eq '<=')
+
+                    $separatorIndex = ([System.String]$navigationResponse.id).LastIndexOf('|')
+                    if ($separatorIndex -lt 0)
                     {
-                        Write-Verbose -Message "Removing AAD group {$($currentGroup.DisplayName)} from Directory Role {$($role.DisplayName)}"
-                        $roleAssignment = Get-MgBetaRoleManagementDirectoryRoleAssignment -Filter "PrincipalId eq '$($currentGroup.Id)' and RoleDefinitionId eq '$($role.Id)'"
-                        Remove-MgBetaRoleManagementDirectoryRoleAssignment -UnifiedRoleAssignmentId $roleAssignment.Id
+                        continue
+                    }
+
+                    $groupId = ([System.String]$navigationResponse.id).Substring(0, $separatorIndex)
+                    $navigationName = ([System.String]$navigationResponse.id).Substring($separatorIndex + 1)
+                    if ($navigationCache.ContainsKey($groupId))
+                    {
+                        $navigationCache[$groupId][$navigationName] = @($navigationResponse.body.value)
                     }
                 }
             }
-        }
+            $this.ResourceCache['NavigationCache'] = $navigationCache
 
-        # GroupLifecyclePolicies
-        if ($PSBoundParameters.ContainsKey('GroupLifecyclePolicySelectedEnabled'))
-        {
-            if ($null -eq $Script:GroupLifecyclePolicy)
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            foreach ($group in $this.ResourceCache['exportedGroups'])
             {
-                $Script:GroupLifecyclePolicy = Get-MgBetaGroupLifecyclePolicy
-            }
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
 
-            if ($Script:GroupLifecyclePolicy.ManagedGroupTypes -ne 'selected')
-            {
-                Write-Warning -Message "Cannot assign or remove group from lifecycle policy because the current mode is not 'Selected'."
-                return
-            }
+                Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedGroups'].Count)] $($group.DisplayName)" -DeferWrite
+                $Params = @{
+                    ApplicationSecret     = $this.ApplicationSecret
+                    DisplayName           = $group.DisplayName
+                    MailNickName          = $group.MailNickName
+                    Members               = @('toextract')
+                    SecurityEnabled       = $true
+                    MailEnabled           = $true
+                    Id                    = $group.Id
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $group
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
 
-            if (-not $currentGroup.MailEnabled)
-            {
-                Write-Warning -Message 'Cannot assign or remove group from lifecycle policy because it is not a Microsoft 365 Group.'
-                return
-            }
+                if ($null -ne $Results.AssignedLicenses)
+                {
+                    $complexMapping = @(
+                        @{
+                            Name            = 'AssignedLicenses'
+                            CimInstanceName = 'AADGroupLicense'
+                            IsRequired      = $False
+                        }
+                    )
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.AssignedLicenses `
+                        -CIMInstanceName 'AADGroupLicense' `
+                        -ComplexTypeMapping $complexMapping
 
-            if ($GroupLifecyclePolicySelectedEnabled -and -not $currentGroup.GroupLifecyclePolicySelectedEnabled)
-            {
-                Write-Verbose -Message "Enabling Group Lifecycle Policy for AAD group {$($currentGroup.DisplayName)}"
-                Add-MgBetaGroupToLifecyclePolicy -GroupLifecyclePolicyId $Script:GroupLifecyclePolicy.Id -GroupId $currentGroup.Id
-            }
-            elseif (-not $GroupLifecyclePolicySelectedEnabled -and $currentGroup.GroupLifecyclePolicySelectedEnabled)
-            {
-                Write-Verbose -Message "Removing AAD group {$($currentGroup.DisplayName)} from Group Lifecycle Policy"
-                Remove-MgBetaGroupFromLifecyclePolicy -GroupLifecyclePolicyId $Script:GroupLifecyclePolicy.Id -GroupId $currentGroup.Id
-            }
-        }
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $MailNickname,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String[]]
-        $Owners,
-
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [System.String[]]
-        $GroupAsMembers,
-
-        [Parameter()]
-        [System.String[]]
-        $MemberOf,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.Boolean]
-        $GroupLifecyclePolicySelectedEnabled,
-
-        [Parameter()]
-        [System.String[]]
-        $GroupTypes,
-
-        [Parameter()]
-        [System.String]
-        $MembershipRule,
-
-        [Parameter()]
-        [ValidateSet('On', 'Paused')]
-        [System.String]
-        $MembershipRuleProcessingState,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $SecurityEnabled,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $MailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsAssignableToRole,
-
-        [Parameter()]
-        [System.String[]]
-        $AssignedToRole,
-
-        [Parameter()]
-        [ValidateSet('Public', 'Private', 'HiddenMembership')]
-        [System.String]
-        $Visibility,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $AssignedLicenses,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $ExportParameters = @{
-            Filter         = $Filter
-            All            = [switch]$true
-            ExpandProperty = 'members'
-            ErrorAction    = 'Stop'
-            Sort           = 'DisplayName'
-        }
-
-        # Define the list of attributes
-        $attributesToCheck = @(
-            'description',
-            'displayName',
-            'hasMembersWithLicenseErrors',
-            'mail',
-            'mailNickname',
-            'onPremisesSecurityIdentifier',
-            'onPremisesSyncEnabled',
-            'preferredLanguage'
-        )
-
-        # Initialize a flag to indicate whether any attribute matches the condition
-        $matchConditionFound = $false
-
-        # Check each attribute in the list
-        foreach ($attribute in $attributesToCheck)
-        {
-            if ($Filter -like "*$attribute eq *")
-            {
-                $matchConditionFound = $true
-                break
-            }
-        }
-
-        # If any attribute matches, add parameters to $ExportParameters
-        if ($matchConditionFound -or ($Filter -like '*endsWith*') -or ($Filter -like '*not*'))
-        {
-            $ExportParameters.Add('CountVariable', 'count')
-            $ExportParameters.Add('ConsistencyLevel', 'eventual')
-            $ExportParameters.Remove('ExpandProperty') | Out-Null
-            $Script:requireGroupMemberFetching = $true
-        }
-
-        # Exclude Distribution Groups and mail enabled security groups from Exchange
-        [array] $Script:exportedGroups = Get-MgBetaGroup @ExportParameters
-        $Script:exportedGroups = $Script:exportedGroups | Where-Object -FilterScript {
-            -not ($_.MailEnabled -and ($null -eq $_.GroupTypes -or $_.GroupTypes.Count -eq 0)) -and `
-                -not ($_.MailEnabled -and $_.SecurityEnabled -and ($null -eq $_.GroupTypes -or $_.GroupTypes.Count -eq 0))
-        } | Sort-Object -Property DisplayName
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        foreach ($group in $Script:exportedGroups)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            Write-M365DSCHost -Message "    |---[$i/$($Script:exportedGroups.Count)] $($group.DisplayName)" -DeferWrite
-            $Params = @{
-                ApplicationSecret     = $ApplicationSecret
-                DisplayName           = $group.DisplayName
-                MailNickName          = $group.MailNickName
-                Members               = @('toextract')
-                SecurityEnabled       = $true
-                MailEnabled           = $true
-                Id                    = $group.Id
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-            $Script:exportedInstance = $group
-            $Results = Get-TargetResource @Params
-
-            if ($null -ne $Results.AssignedLicenses)
-            {
-                $complexMapping = @(
-                    @{
-                        Name            = 'AssignedLicenses'
-                        CimInstanceName = 'AADGroupLicense'
-                        IsRequired      = $False
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.AssignedLicenses = $complexTypeStringResult
                     }
-                )
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.AssignedLicenses `
-                    -CIMInstanceName 'AADGroupLicense' `
-                    -ComplexTypeMapping $complexMapping
+                    else
+                    {
+                        $Results.Remove('AssignedLicenses') | Out-Null
+                    }
+                }
 
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                if ($null -ne $Results.WritebackConfiguration)
                 {
-                    $Results.AssignedLicenses = $complexTypeStringResult
+                    $complexMapping = @(
+                        @{
+                            Name            = 'WritebackConfiguration'
+                            CimInstanceName = 'MicrosoftGraphGroupWritebackConfiguration'
+                            IsRequired      = $False
+                        }
+                    )
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.WritebackConfiguration `
+                        -CIMInstanceName 'MicrosoftGraphGroupWritebackConfiguration' `
+                        -ComplexTypeMapping $complexMapping
+
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.WritebackConfiguration = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('WritebackConfiguration') | Out-Null
+                    }
                 }
-                else
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('AssignedLicenses', 'WritebackConfiguration') `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            PostProcessing = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
+                if ($DesiredValues.ContainsKey('GroupLifecyclePolicySelectedEnabled') -and -not $CurrentValues.MailEnabled)
                 {
-                    $Results.Remove('AssignedLicenses') | Out-Null
+                    Write-Verbose -Message "Removing 'GroupLifecyclePolicySelectedEnabled' from comparison because group is not a Microsoft 365 Group."
+                    $ValuesToCheck.Remove('GroupLifecyclePolicySelectedEnabled') | Out-Null
                 }
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
             }
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('AssignedLicenses')
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Get-M365DSCAzureADGroupLicenses
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable[]])]
-    param(
-        [Parameter(Mandatory = $true)]
-        $AssignedLicenses
-    )
-
-    $returnValue = @()
-    if ($null -eq $Script:SubscribedSkus)
-    {
-        $Script:SubscribedSkus = Get-MgBetaSubscribedSku
     }
 
-    # Create complete list of all Service Plans
-    $allServicePlans = @()
-    Write-Verbose -Message 'Getting all Service Plans'
-    foreach ($sku in $Script:SubscribedSkus)
+    hidden static [System.Object] GetDirectoryObject([System.String] $Identity, [System.Boolean] $IncludeDevices)
     {
-        foreach ($serviceplan in $sku.ServicePlans)
+        $directoryObject = Get-MgUser -UserId $Identity -ErrorAction SilentlyContinue
+        if ($null -eq $directoryObject)
         {
-            if ($allServicePlans.Length -eq 0 -or -not $allServicePlans.ServicePlanName.Contains($servicePlan.ServicePlanName))
+            Write-Verbose -Message "Trying to retrieve Service Principal {$Identity}"
+            [array]$app = Get-MgApplication -Filter "DisplayName eq '$($Identity -replace "'", "''")'"
+            if ($app.Count -gt 0)
             {
-                $allServicePlans += @{
-                    ServicePlanId   = $serviceplan.ServicePlanId
-                    ServicePlanName = $serviceplan.ServicePlanName
-                }
-            }
-        }
-    }
-
-    foreach ($assignedLicense in $AssignedLicenses)
-    {
-        $skuPartNumber = $Script:SubscribedSkus | Where-Object -FilterScript { $_.SkuId -eq $assignedLicense.SkuId }
-        $disabledPlansValues = @()
-        foreach ($plan in $assignedLicense.DisabledPlans)
-        {
-            $foundItem = $allServicePlans | Where-Object -FilterScript { $_.ServicePlanId -eq $plan }
-            $disabledPlansValues += $foundItem.ServicePlanName
-        }
-        $currentLicense = @{
-            disabledPlans = $disabledPlansValues
-            skuId         = $skuPartNumber.SkuPartNumber -replace [char]0xFEFF
-        }
-        $returnValue += $currentLicense
-    }
-
-    return $returnValue
-}
-
-function Get-M365DSCCombinedLicenses
-{
-    [CmdletBinding()]
-    [OutputType([System.Object[]])]
-    param(
-        [Parameter()]
-        [System.Object[]]
-        $CurrentLicenses,
-
-        [Parameter()]
-        [System.Object[]]
-        $DesiredLicenses
-    )
-
-    $result = @()
-    if ($currentLicenses.Length -gt 0)
-    {
-        foreach ($license in $CurrentLicenses)
-        {
-            Write-Verbose -Message "Including Current $license"
-            $result += @{
-                skuId         = $license.SkuId
-                disabledPlans = $license.DisabledPlans
-            }
-        }
-    }
-
-    if ($DesiredLicenses.Length -gt 0)
-    {
-        foreach ($license in $DesiredLicenses)
-        {
-            $licenseSkuId = $license.SkuId
-            if ($result.Length -eq 0)
-            {
-                $result += @{
-                    skuId         = $licenseSkuId
-                    disabledPlans = $license.DisabledPlans
-                }
+                $directoryObject = Get-MgServicePrincipal -Filter "AppId eq '$($app.AppId)'"
             }
             else
             {
-                if (-not $result.skuId.Contains($licenseSkuId))
+                [array]$spInstances = Get-MgServicePrincipal -Filter "DisplayName eq '$($Identity -replace "'", "''")'"
+                if ($spInstances.Count -gt 1)
+                {
+                    throw "Duplicate Service Principals named '$Identity' exist in tenant"
+                }
+                elseif ($spInstances.Count -eq 1)
+                {
+                    $directoryObject = $spInstances
+                }
+            }
+        }
+
+        if ($null -eq $directoryObject -and $IncludeDevices)
+        {
+            Write-Verbose -Message "Trying to retrieve Device {$Identity}"
+            $directoryObject = Get-MgDevice -Filter "DisplayName eq '$($Identity -replace "'", "''")'"
+        }
+
+        return $directoryObject
+    }
+
+    hidden static [System.String[]] GetDirectoryObjectReferences([System.String[]] $Identities, [System.Boolean] $IncludeDevices)
+    {
+        $directoryObjectsUrl = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'v1.0/directoryObjects/'
+        $references = @()
+        foreach ($identity in $Identities)
+        {
+            $directoryObject = [AADGroup]::GetDirectoryObject($identity, $IncludeDevices)
+            if (@($directoryObject.Id).Count -ne 1 -or [System.String]::IsNullOrEmpty($directoryObject.Id))
+            {
+                return $null
+            }
+
+            $references += $directoryObjectsUrl + $directoryObject.Id
+        }
+
+        return $references
+    }
+
+    hidden [System.Collections.Hashtable[]] GetGroupLicenses([System.Object] $AssignedLicenses)
+    {
+        $returnValue = @()
+        if ($null -eq $this.ResourceCache['SubscribedSkus'])
+        {
+            $this.ResourceCache['SubscribedSkus'] = Get-MgBetaSubscribedSku
+        }
+
+        # Create complete list of all Service Plans
+        $allServicePlans = @()
+        Write-Verbose -Message 'Getting all Service Plans'
+        foreach ($sku in $this.ResourceCache['SubscribedSkus'])
+        {
+            foreach ($serviceplan in $sku.ServicePlans)
+            {
+                if ($allServicePlans.Length -eq 0 -or -not $allServicePlans.ServicePlanName.Contains($servicePlan.ServicePlanName))
+                {
+                    $allServicePlans += @{
+                        ServicePlanId   = $serviceplan.ServicePlanId
+                        ServicePlanName = $serviceplan.ServicePlanName
+                    }
+                }
+            }
+        }
+
+        foreach ($assignedLicense in $AssignedLicenses)
+        {
+            $skuPartNumber = $this.ResourceCache['SubscribedSkus'] | Where-Object -FilterScript { $_.SkuId -eq $assignedLicense.SkuId }
+            $disabledPlansValues = @()
+            foreach ($plan in $assignedLicense.DisabledPlans)
+            {
+                $foundItem = $allServicePlans | Where-Object -FilterScript { $_.ServicePlanId -eq $plan }
+                $disabledPlansValues += $foundItem.ServicePlanName
+            }
+            $currentLicense = @{
+                disabledPlans = $disabledPlansValues
+                skuId         = $skuPartNumber.SkuPartNumber -replace [char]0xFEFF
+            }
+            $returnValue += $currentLicense
+        }
+
+        return $returnValue
+    }
+
+    hidden [System.Object[]] GetCombinedLicenses([System.Object[]] $CurrentLicenses, [System.Object[]] $DesiredLicenses)
+    {
+        $result = @()
+        if ($currentLicenses.Length -gt 0)
+        {
+            foreach ($license in $CurrentLicenses)
+            {
+                Write-Verbose -Message "Including Current $license"
+                $result += @{
+                    skuId         = $license.SkuId
+                    disabledPlans = $license.DisabledPlans
+                }
+            }
+        }
+
+        if ($DesiredLicenses.Length -gt 0)
+        {
+            foreach ($license in $DesiredLicenses)
+            {
+                $licenseSkuId = $license.SkuId
+                if ($result.Length -eq 0)
                 {
                     $result += @{
                         skuId         = $licenseSkuId
@@ -1472,39 +1324,68 @@ function Get-M365DSCCombinedLicenses
                 }
                 else
                 {
-                    # Set the Desired Disabled Plans if the sku is already added to the list
-                    foreach ($item in $result)
+                    if (-not $result.skuId.Contains($licenseSkuId))
                     {
-                        if ($item.skuId -eq $licenseSkuId)
+                        $result += @{
+                            skuId         = $licenseSkuId
+                            disabledPlans = $license.DisabledPlans
+                        }
+                    }
+                    else
+                    {
+                        # Set the Desired Disabled Plans if the sku is already added to the list
+                        foreach ($item in $result)
                         {
-                            $item.disabledPlans = $license.disabledPlans
+                            if ($item.skuId -eq $licenseSkuId)
+                            {
+                                $item.disabledPlans = $license.disabledPlans
+                            }
                         }
                     }
                 }
             }
         }
+
+        return $result
     }
 
-    return $result
-}
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        PostProcessing = {
-            param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-            if ($DesiredValues.ContainsKey('GroupLifecyclePolicySelectedEnabled') -and -not $CurrentValues.MailEnabled)
-            {
-                Write-Verbose -Message "Removing 'GroupLifecyclePolicySelectedEnabled' from comparison because group is not a Microsoft 365 Group."
-                $ValuesToCheck.Remove('GroupLifecyclePolicySelectedEnabled') | Out-Null
-            }
-            return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+    hidden [AADGroup] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADGroup])
+        {
+            return $Values
         }
+
+        $result = [AADGroup]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')
+class MSFT_AADGroupLicense
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('A collection of the unique identifiers for plans that have been disabled.')]
+    [System.String[]] $DisabledPlans
+
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The unique identifier for the SKU.')]
+    [System.String] $SkuId
+}
+
+class MSFT_MicrosoftGraphGroupWritebackConfiguration
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether writeback of cloud groups to on-premise Active Directory is enabled. Default value is true for Microsoft 365 groups and false for security groups.')]
+    [System.Nullable[System.Boolean]] $IsEnabled
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the target on-premises group type the cloud object is written back as. Nullable. The possible values are: universalDistributionGroup, universalSecurityGroup, universalMailEnabledSecurityGroup.If the cloud group is a unified (Microsoft 365) group, this property can be one of the following: universalDistributionGroup, universalSecurityGroup, universalMailEnabledSecurityGroup. Microsoft Entra security groups can be written back as universalSecurityGroup. If isEnabled or the NewUnifiedGroupWritebackDefault group setting is true but this property isn''t explicitly configured: Microsoft 365 groups are written back as universalDistributionGroup by defaultSecurity groups are written back as universalSecurityGroup by default')]
+    [ValidateSet('universalDistributionGroup', 'universalSecurityGroup', 'universalMailEnabledSecurityGroup')]
+    [System.String] $OnPremisesGroupType
+}

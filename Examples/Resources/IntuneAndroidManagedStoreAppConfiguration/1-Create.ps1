@@ -4,7 +4,8 @@ This example creates a new Intune Mobile App Configuration Policy for iOs device
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,38 +18,44 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName 'Microsoft365DSC'
 
     Node localhost
     {
-        IntuneAndroidManagedStoreAppConfiguration "ConfigureIntuneAndroidManagedStoreAppConfiguration"
+        IntuneAndroidManagedStoreAppConfiguration "IntuneAndroidManagedStoreAppConfiguration-Example"
         {
-            Description           = "IntuneAndroidManagedStoreAppConfiguration Description";
-            DisplayName           = "IntuneAndroidManagedStoreAppConfiguration DisplayName";
-            Ensure                = "Present";
-            appSupportsOemConfig  = $False;
-            connectedAppsEnabled  = $False;
-            packageId             = "app:org.mozilla.firefox";
-            payloadJson           = "";
-            permissionActions     = @(
-                MSFT_androidPermissionAction{
-                    action = 'prompt'
-                    permission = 'android.permission.RECEIVE_SMS'
-                }
-                MSFT_androidPermissionAction{
-                    action = 'prompt'
-                    permission = 'android.permission.READ_SMS'
-                }
-                MSFT_androidPermissionAction{
-                    action = 'prompt'
-                    permission = 'android.permission.RECEIVE_WAP_PUSH'
+            Assignments                 = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                    groupDisplayName                           = "Intune Pilot Devices"
                 }
             );
-            profileApplicability  = "androidDeviceOwner";
-            targetedMobileApps    = @("30ab8f7a-14fb-4a05-befa-ea7f51141ad9");
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            Description                 = "Grants Microsoft Authenticator the camera access it needs to scan sign-in QR codes";
+            RoleScopeTagIds             = @("0");
+            DisplayName                 = "Microsoft Authenticator Permissions";
+            Ensure                      = "Present";
+            appSupportsOemConfig        = $False;
+            connectedAppsEnabled        = $False;
+            credentialProviderRoleState = "allowed";
+            packageId                   = "app:com.azure.authenticator";
+            payloadJson                 = "";
+            permissionActions           = @(
+                MSFT_androidPermissionAction{
+                    action     = 'autoGrant'
+                    permission = 'android.permission.CAMERA'
+                }
+                MSFT_androidPermissionAction{
+                    action     = 'prompt'
+                    permission = 'android.permission.ACCESS_FINE_LOCATION'
+                }
+            );
+            profileApplicability        = "androidDeviceOwner";
+            targetedMobileApps          = @("Microsoft Authenticator");
+            ApplicationId               = $ApplicationId;
+            TenantId                    = $TenantId;
+            CertificateThumbprint       = $CertificateThumbprint;
         }
     }
 }

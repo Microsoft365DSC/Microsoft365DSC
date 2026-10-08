@@ -1,557 +1,361 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AzureDiagnosticSettingsCustomSecurityAttribute'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AzureDiagnosticSettingsCustomSecurityAttribute : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Diagnostic setting name.')]
+    [System.String] $Name
 
-        [Parameter()]
-        [System.String]
-        $StorageAccountId,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of log categories.')]
+    [MSFT_AzureDiagnosticSettingsCustomSecurityAttributeCategory[]] $Categories
 
-        [Parameter()]
-        [System.String]
-        $ServiceBusRuleId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Storage account id.')]
+    [System.String] $StorageAccountId
 
-        [Parameter()]
-        [System.String]
-        $EventHubAuthorizationRuleId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Service bus id.')]
+    [System.String] $ServiceBusRuleId
 
-        [Parameter()]
-        [System.String]
-        $EventHubName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Event hub id.')]
+    [System.String] $EventHubAuthorizationRuleId
 
-        [Parameter()]
-        [System.String]
-        $WorkspaceId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Event hub name.')]
+    [System.String] $EventHubName
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Categories,
+    [DscProperty()]
+    [System.ComponentModel.Description('Workspace id.')]
+    [System.String] $WorkspaceId
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Absent', 'Present')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Azure subscription to connect to if the access is restricted on subscription level.')]
+    [System.String] $SubscriptionId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for Azure Diagnostic Settings Custom Security Attribute for Name $Name"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [AzureDiagnosticSettingsCustomSecurityAttribute] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Name -ne $Name)
+        $nullResult = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'Azure' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings?api-version=2017-04-01-preview" `
-                -Method Get
-            $instances = (ConvertFrom-Json $response.Content).value
-            $instance = $instances | Where-Object -FilterScript { $_.name -eq $Name }
-        }
-        else
-        {
-            $instance = $Script:exportedInstance
+            $remote = [AzureDiagnosticSettingsCustomSecurityAttribute]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
 
-        if ($null -eq $instance)
+        Write-Verbose -Message "Getting configuration for Azure Diagnostic Settings Custom Security Attribute for Name $($this.Name)"
+
+        try
         {
-            return $nullResult
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.Name)
+            {
+                $null = $this.Connect('Azure')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings?api-version=2017-04-01-preview" `
+                    -Method Get
+                $instances = (ConvertFrom-Json $response.Content).value
+                $instance = $instances | Where-Object -FilterScript { $_.name -eq $this.Name }
+            }
+            else
+            {
+                $instance = $this.ExportedInstance
+            }
+
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            $CategoriesValue = @()
+            foreach ($category in $instance.properties.logs)
+            {
+                $CategoriesValue += @{
+                    category = $category.category
+                    enabled  = $category.enabled
+                }
+            }
+
+            $results = @{
+                Name                        = $instance.Name
+                StorageAccountId            = $instance.properties.storageAccountId
+                ServiceBusRuleId            = $instance.properties.serviceBusRuleId
+                EventHubAuthorizationRuleId = $instance.properties.eventHubAuthorizationRuleId
+                EventHubName                = $instance.properties.eventHubName
+                WorkspaceId                 = $instance.properties.workspaceId
+                Categories                  = $CategoriesValue
+                Ensure                      = 'Present'
+                SubscriptionId              = $this.SubscriptionId
+                Credential                  = $this.Credential
+                ApplicationId               = $this.ApplicationId
+                TenantId                    = $this.TenantId
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                AccessTokens                = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        $CategoriesValue = @()
-        foreach ($category in $instance.properties.logs)
+        Write-Verbose -Message "Setting configuration for Azure Diagnostic Settings Custom Security Attribute for Name $($this.Name)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        $instanceParams = @{
+            name       = $this.Name
+            properties = @{
+                logs = @()
+            }
+        }
+
+        foreach ($category in $this.Categories)
         {
-            $CategoriesValue += @{
+            $instanceParams.properties.logs += @{
                 category = $category.category
                 enabled  = $category.enabled
             }
         }
 
-        $results = @{
-            Name                        = $instance.Name
-            StorageAccountId            = $instance.properties.storageAccountId
-            ServiceBusRuleId            = $instance.properties.serviceBusRuleId
-            EventHubAuthorizationRuleId = $instance.properties.eventHubAuthorizationRuleId
-            EventHubName                = $instance.properties.eventHubName
-            WorkspaceId                 = $instance.properties.workspaceId
-            Categories                  = $CategoriesValue
-            Ensure                      = 'Present'
-            SubscriptionId              = $SubscriptionId
-            Credential                  = $Credential
-            ApplicationId               = $ApplicationId
-            TenantId                    = $TenantId
-            CertificateThumbprint       = $CertificateThumbprint
-            CertificatePath             = $CertificatePath
-            CertificatePassword         = $CertificatePassword
-            ManagedIdentity             = $ManagedIdentity.IsPresent
-            AccessTokens                = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.String]
-        $StorageAccountId,
-
-        [Parameter()]
-        [System.String]
-        $ServiceBusRuleId,
-
-        [Parameter()]
-        [System.String]
-        $EventHubAuthorizationRuleId,
-
-        [Parameter()]
-        [System.String]
-        $EventHubName,
-
-        [Parameter()]
-        [System.String]
-        $WorkspaceId,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Categories,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Azure Diagnostic Settings Custom Security Attribute for Name $Name"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    $instanceParams = @{
-        name       = $Name
-        properties = @{
-            logs = @()
-        }
-    }
-
-    foreach ($category in $Categories)
-    {
-        $instanceParams.properties.logs += @{
-            category = $category.category
-            enabled  = $category.enabled
-        }
-    }
-
-    if (-not [System.String]::IsNullOrEmpty($StorageAccountId))
-    {
-        $instanceParams.properties.Add('storageAccountId', $StorageAccountId)
-    }
-    if (-not [System.String]::IsNullOrEmpty($WorkspaceId))
-    {
-        $instanceParams.properties.Add('workspaceId', $WorkspaceId)
-    }
-    if (-not [System.String]::IsNullOrEmpty($ServiceBusRuleId))
-    {
-        $instanceParams.properties.Add('eventHubName', $EventHubName)
-    }
-    if (-not [System.String]::IsNullOrEmpty($EventHubName))
-    {
-        $instanceParams.properties.Add('workspaceId', $WorkspaceId)
-    }
-    if (-not [System.String]::IsNullOrEmpty($EventHubAuthorizationRuleId))
-    {
-        $instanceParams.properties.Add('eventHubAuthorizationRuleId', $EventHubAuthorizationRuleId)
-    }
-    $payload = ConvertTo-Json $instanceParams -Depth 10 -Compress
-
-    # CREATE/UPDATE
-    if ($Ensure -eq 'Present')
-    {
-        if ($currentInstance.Ensure -eq 'Absent')
+        if (-not [System.String]::IsNullOrEmpty($this.StorageAccountId))
         {
-            Write-Verbose -Message "Creating new diagnostic setting {$Name}"
+            $instanceParams.properties.Add('storageAccountId', $this.StorageAccountId)
         }
-        else
+        if (-not [System.String]::IsNullOrEmpty($this.WorkspaceId))
         {
-            Write-Verbose -Message "Updating diagnostic setting {$Name}"
+            $instanceParams.properties.Add('workspaceId', $this.WorkspaceId)
         }
-        $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings/$($Name)?api-version=2017-04-01-preview" `
-            -Method PUT `
-            -Payload $payload
-        Write-Verbose -Message "RESPONSE: $($response.Content)"
-    }
-    # REMOVE
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing diagnostic setting {$Name}"
-        $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings/$($Name)?api-version=2017-04-01-preview" `
-            -Method DELETE
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.String]
-        $StorageAccountId,
-
-        [Parameter()]
-        [System.String]
-        $ServiceBusRuleId,
-
-        [Parameter()]
-        [System.String]
-        $EventHubAuthorizationRuleId,
-
-        [Parameter()]
-        [System.String]
-        $EventHubName,
-
-        [Parameter()]
-        [System.String]
-        $WorkspaceId,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Categories,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings?api-version=2017-04-01-preview" `
-            -Method Get
-        [array] $exportedInstances = (ConvertFrom-Json $response.Content).value
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($exportedInstances.Length -eq 0)
+        if (-not [System.String]::IsNullOrEmpty($this.ServiceBusRuleId))
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            $instanceParams.properties.Add('eventHubName', $this.EventHubName)
         }
-        else
+        if (-not [System.String]::IsNullOrEmpty($this.EventHubName))
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            $instanceParams.properties.Add('workspaceId', $this.WorkspaceId)
         }
-        foreach ($config in $exportedInstances)
+        if (-not [System.String]::IsNullOrEmpty($this.EventHubAuthorizationRuleId))
         {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            $instanceParams.properties.Add('eventHubAuthorizationRuleId', $this.EventHubAuthorizationRuleId)
+        }
+        $payload = ConvertTo-Json $instanceParams -Depth 10 -Compress
+
+        # CREATE/UPDATE
+        if ($this.Ensure -eq 'Present')
+        {
+            if ($currentInstance.Ensure -eq 'Absent')
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                Write-Verbose -Message "Creating new diagnostic setting {$($this.Name)}"
             }
-
-            $displayedKey = $config.Name
-            Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Name                  = $config.Name
-                SubscriptionId        = $SubscriptionId
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-
-            if ($Results.Categories)
+            else
             {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Categories -CIMInstanceName AzureDiagnosticSettingsCustomSecurityAttributeCategory
-                if ($complexTypeStringResult)
-                {
-                    $Results.Categories = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('Categories') | Out-Null
-                }
+                Write-Verbose -Message "Updating diagnostic setting {$($this.Name)}"
             }
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('Categories')
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings/$($this.Name)?api-version=2017-04-01-preview" `
+                -Method PUT `
+                -Payload $payload
+            Write-Verbose -Message "RESPONSE: $($response.Content)"
         }
-        return $dscContent.ToString()
+        # REMOVE
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing diagnostic setting {$($this.Name)}"
+            $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings/$($this.Name)?api-version=2017-04-01-preview" `
+                -Method DELETE
+        }
     }
-    catch
+
+    [bool] Test()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        return ([M365DSCResourceBase] $this).Test()
+    }
 
-        throw
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('Azure')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $response = Invoke-AzRestMethod -Uri "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/microsoft.AadCustomSecurityAttributesDiagnosticSettings/diagnosticsettings?api-version=2017-04-01-preview" `
+                -Method Get
+            [array] $exportedInstances = (ConvertFrom-Json $response.Content).value
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($exportedInstances.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $exportedInstances)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $config.Name
+                Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Name                  = $config.Name
+                    SubscriptionId        = $this.SubscriptionId
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+
+                if ($Results.Categories)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Categories -CIMInstanceName AzureDiagnosticSettingsCustomSecurityAttributeCategory
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.Categories = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('Categories') | Out-Null
+                    }
+                }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('Categories')
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            ExcludedProperties = @('SubscriptionId')
+        }
+    }
+
+    hidden [AzureDiagnosticSettingsCustomSecurityAttribute] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AzureDiagnosticSettingsCustomSecurityAttribute])
+        {
+            return $Values
+        }
+
+        $result = [AzureDiagnosticSettingsCustomSecurityAttribute]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-function Get-CompareParameters
+class MSFT_AzureDiagnosticSettingsCustomSecurityAttributeCategory
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Name of the category.')]
+    [System.String] $Category
 
-    return @{
-        ExcludedProperties = @('SubscriptionId')
-    }
+    [DscProperty()]
+    [System.ComponentModel.Description('Is the log category enabled or not.')]
+    [System.Nullable[System.Boolean]] $enabled
 }
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

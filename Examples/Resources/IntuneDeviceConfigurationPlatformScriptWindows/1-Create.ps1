@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,26 +19,32 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationPlatformScriptWindows 'Example'
+        IntuneDeviceConfigurationPlatformScriptWindows 'IntuneDeviceConfigurationPlatformScriptWindows-Example'
         {
-            Assignments          = @(
+            Assignments           = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
                 }
             );
-            DisplayName           = "custom";
+            Description           = "Activates the high performance power plan on lab workstations";
+            DisplayName           = "Set High Performance Power Plan";
             Ensure                = "Present";
             EnforceSignatureCheck = $False;
-            FileName              = "script.ps1";
-            Id                    = "00000000-0000-0000-0000-000000000000";
+            FileName              = "set-power-plan.ps1";
             RunAs32Bit            = $True;
+            RoleScopeTagIds       = @("0");
             RunAsAccount          = "system";
-            ScriptContent         = "Base64 encoded script content";
+            ScriptContent         = "cG93ZXJjZmcgL3NldGFjdGl2ZSBTQ0hFTUVfTUlODQo=";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

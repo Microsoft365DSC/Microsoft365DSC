@@ -1,5 +1,16 @@
 {
   "resourceName": "AADAuthenticationRequirement",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaUserAuthenticationRequirement",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures Azure AD Authentication MFA Requirements for a user.",
   "roles": {
     "read": [],
@@ -34,9 +45,8 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
-    "Microsoft.Graph.Users",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Beta.Identity.SignIns",
+    "Microsoft.Graph.Users"
   ],
   "supportedEnvironments": [
     "Global",
@@ -45,21 +55,16 @@
   "mode": "Data",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
+      "module": "Microsoft.Graph.Beta.Identity.SignIns",
       "cmdlets": [
-        "Invoke-MgGraphRequest"
+        "Get-MgBetaUserAuthenticationRequirement",
+        "Update-MgBetaUserAuthenticationRequirement"
       ]
     },
     {
       "module": "Microsoft.Graph.Users",
       "cmdlets": [
         "Get-MgUser"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

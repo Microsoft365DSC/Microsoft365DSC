@@ -5,44 +5,47 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsComplianceRecordingPolicy "TeamsComplianceRecordingPolicy-Tag:MyTeamsComplianceRecordingPolicy"
+        TeamsComplianceRecordingPolicy "TeamsComplianceRecordingPolicy-Example"
         {
-            Credential                                          = $credsCredential;
             ComplianceRecordingApplications                     = @(
                 MSFT_TeamsComplianceRecordingApplication{
-                    Id = '00000000-0000-0000-0000-000000000000'
-                    ComplianceRecordingPairedApplications = @('00000000-0000-0000-0000-000000000000')
-                    ConcurrentInvitationCount = 1
-                    RequiredDuringCall = $True
-                    RequiredBeforeMeetingJoin = $True
-                    RequiredBeforeCallEstablishment = $True
-                    RequiredDuringMeeting = $True
-                }
-                MSFT_TeamsComplianceRecordingApplication{
-                    Id = '12345678-0000-0000-0000-000000000000'
-                    ComplianceRecordingPairedApplications = @('87654321-0000-0000-0000-000000000000')
-                    ConcurrentInvitationCount = 1
-                    RequiredDuringCall = $True
-                    RequiredBeforeMeetingJoin = $True
-                    RequiredBeforeCallEstablishment = $True
-                    RequiredDuringMeeting = $True
+                    Id                                    = "<compliance-recording-application-id>"
+                    ComplianceRecordingPairedApplications = @("<compliance-recording-paired-application-id>")
+                    ConcurrentInvitationCount             = 1
+                    RequiredDuringCall                    = $True
+                    RequiredBeforeMeetingJoin             = $True
+                    RequiredBeforeCallEstablishment       = $True
+                    RequiredDuringMeeting                 = $True
                 }
             );
-            Description                                         = "MyTeamsComplianceRecordingPolicy";
+            Description                                         = "Records calls and meetings of the trading floor staff";
             DisableComplianceRecordingAudioNotificationForCalls = $False;
             Enabled                                             = $True;
             Ensure                                              = "Present";
-            Identity                                            = "Tag:MyTeamsComplianceRecordingPolicy";
+            Identity                                            = "Tag:Trading Floor Recording";
             WarnUserOnRemoval                                   = $True;
+            ApplicationId                                       = $ApplicationId;
+            TenantId                                            = $TenantId;
+            CertificateThumbprint                               = $CertificateThumbprint;
         }
     }
 }

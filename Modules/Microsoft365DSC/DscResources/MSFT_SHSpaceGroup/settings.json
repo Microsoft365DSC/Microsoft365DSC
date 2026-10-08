@@ -1,5 +1,16 @@
 {
   "resourceName": "SHSpaceGroup",
+  "generatedFrom": {
+    "workload": "EngageHub",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Represents a Services Hub space group.",
   "roles": {
     "read": [
@@ -18,12 +29,12 @@
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       }

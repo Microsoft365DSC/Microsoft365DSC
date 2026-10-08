@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsTargetingPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTeamsTargetingPolicy",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Teams Targeting Policy.",
   "roles": {
     "read": [
@@ -9,7 +20,7 @@
       "Teams Administrator"
     ]
   },
-  "permissions": [],
+  "permissions": {},
   "requiredModules": [
     "MicrosoftTeams"
   ],

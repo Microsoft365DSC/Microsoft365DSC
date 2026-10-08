@@ -1,5 +1,77 @@
 {
   "resourceName": "AADIdentityGovernanceLifecycleWorkflow",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "identityGovernance.workflow",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaIdentityGovernanceLifecycleWorkflow",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ExecutionScope",
+      "reason": "ReadOnly",
+      "note": "The service computes this list from the workflow execution conditions"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-generated identifier. The resource keys on DisplayName and looks it up"
+    },
+    {
+      "name": "NextScheduleRunDateTime",
+      "reason": "ReadOnly",
+      "note": "The service calculates it from the tenant schedule interval and execution conditions"
+    },
+    {
+      "name": "PreviewScope",
+      "reason": "ReadOnly",
+      "note": "The service evaluates this preview collection from the workflow execution conditions"
+    },
+    {
+      "name": "QuarantineDetails",
+      "reason": "ReadOnly",
+      "note": "Reports current quarantine state. The quarantine configuration under settings is configurable"
+    },
+    {
+      "name": "Runs",
+      "reason": "ReadOnly",
+      "note": "The service creates a run per execution with status and computed counts"
+    },
+    {
+      "name": "Settings",
+      "reason": "Deferred",
+      "note": "Absent from the documented update body of the workflow."
+    },
+    {
+      "name": "SubjectProcessingResults",
+      "reason": "ReadOnly",
+      "note": "The service writes one read-only result per subject during execution"
+    },
+    {
+      "name": "TargetSubjectType",
+      "reason": "Deferred",
+      "note": "Absent from the documented update body of the workflow."
+    },
+    {
+      "name": "TaskReports",
+      "reason": "ReadOnly",
+      "note": "The service aggregates task execution counts after a workflow runs"
+    },
+    {
+      "name": "UserProcessingResults",
+      "reason": "ReadOnly",
+      "note": "The service records one result per user on each execution"
+    },
+    {
+      "name": "Versions",
+      "reason": "ReadOnly",
+      "note": "The service appends a version history entry on every update"
+    }
+  ],
   "description": "Use this resource to manage Lifecycle workflows.",
   "roles": {
     "read": [

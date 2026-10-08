@@ -21,7 +21,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -44,11 +44,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
@@ -71,14 +71,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADSecurityDefaults' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaPolicyIdentitySecurityDefaultEnforcementPolicy' -Exactly 1
             }
             It 'Should return false from the test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADSecurityDefaults' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should create the Enable from the set method' {
-                Set-TargetResource @testParams |
+                (New-M365DSCResourceInstance -ResourceName 'AADSecurityDefaults' -Property $testParams).Set() |
                 Should -Invoke -CommandName 'Update-MgBetaPolicyIdentitySecurityDefaultEnforcementPolicy' -Exactly 1
             }
         }
@@ -94,12 +94,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADSecurityDefaults' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaPolicyIdentitySecurityDefaultEnforcementPolicy' -Exactly 1
             }
 
             It 'Should return false from the test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADSecurityDefaults' -Property $testParams).Test() | Should -Be $true
             }
         }
     }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,9 +21,10 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOCASMailboxSettings 'AdeleVCasMailboxSettings'
+        EXOCASMailboxSettings 'EXOCASMailboxSettings-Example'
         {
             ActiveSyncAllowedDeviceIDs              = @()
             ActiveSyncBlockedDeviceIDs              = @()
@@ -31,7 +33,7 @@ Configuration Example
             ActiveSyncMailboxPolicy                 = 'Default'
             ActiveSyncSuppressReadReceipt           = $False
             EwsEnabled                              = $True
-            Identity                                = "admin@$TenantId"
+            Identity                                = "MeganB@$TenantId"
             ImapEnabled                             = $True # Updated Property
             ImapForceICalForCalendarRetrievalOption = $False
             ImapMessagesRetrievalMimeFormat         = 'BestBodyFormat'
@@ -42,7 +44,7 @@ Configuration Example
             OutlookMobileEnabled                    = $True
             OWAEnabled                              = $True
             OWAforDevicesEnabled                    = $True
-            OwaMailboxPolicy                        = 'OwaMailboxPolicy-Integration'
+            OwaMailboxPolicy                        = 'OwaMailboxPolicy-Restricted'
             PopEnabled                              = $False
             PopForceICalForCalendarRetrievalOption  = $True
             PopMessagesRetrievalMimeFormat          = 'BestBodyFormat'
@@ -52,9 +54,9 @@ Configuration Example
             ShowGalAsDefaultView                    = $True
             UniversalOutlookEnabled                 = $True
             Ensure                                  = 'Present'
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                           = $ApplicationId
+            TenantId                                = $TenantId
+            CertificateThumbprint                   = $CertificateThumbprint
         }
     }
 }

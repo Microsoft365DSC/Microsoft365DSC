@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,32 +19,36 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationPlatformScriptMacOS 'Example'
+        IntuneDeviceConfigurationPlatformScriptMacOS 'IntuneDeviceConfigurationPlatformScriptMacOS-Example'
         {
-            Assignments          = @(
+            Assignments                 = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
                 }
             );
-            DisplayName          = "custom";
-            Ensure               = "Present";
+            DisplayName                 = "Configure Dock Layout";
+            Ensure                      = "Present";
             BlockExecutionNotifications = $False;
-            Description                 = "";
-            ExecutionFrequency          = "00:00:00";
-            FileName                    = "shellscript.sh";
-            Id                          = "00000000-0000-0000-0000-000000000000";
+            Description                 = "Hides the Dock automatically on managed Macs";
+            ExecutionFrequency          = "1.00:00:00";
+            FileName                    = "configure-dock.sh";
             RetryCount                  = 0;
             RoleScopeTagIds             = @("0");
             RunAsAccount                = "user";
-            ScriptContent               = "Base64 encoded script content";
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ScriptContent               = "IyEvYmluL3pzaApkZWZhdWx0cyB3cml0ZSBjb20uYXBwbGUuZG9jayBhdXRvaGlkZSAtYm9vbCB0cnVlCmtpbGxhbGwgRG9jawo=";
+            ApplicationId               = $ApplicationId;
+            TenantId                    = $TenantId;
+            CertificateThumbprint       = $CertificateThumbprint;
         }
     }
 }

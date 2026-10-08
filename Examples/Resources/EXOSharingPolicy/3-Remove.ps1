@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOSharingPolicy 'ConfigureSharingPolicy'
+        EXOSharingPolicy 'EXOSharingPolicy-Example'
         {
-            Name       = "Integration Sharing Policy"
-            Default    = $False # Updated Property
-            Domains    = @("Anonymous:CalendarSharingFreeBusyReviewer", "*:CalendarSharingFreeBusySimple")
-            Enabled    = $True
-            Ensure     = "Absent"
+            Name                  = "External Calendar Sharing"
+            Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

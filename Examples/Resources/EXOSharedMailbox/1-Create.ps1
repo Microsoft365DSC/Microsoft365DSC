@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,20 +19,24 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOSharedMailbox 'SharedMailbox'
+        EXOSharedMailbox 'EXOSharedMailbox-Example'
         {
-            DisplayName        = "Integration"
-            PrimarySMTPAddress = "Integration@$TenantId"
-            EmailAddresses     = @("IntegrationSM@$TenantId")
-            Alias              = "IntegrationSM"
-            Ensure             = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            DisplayName                       = "Sales Enquiries"
+            PrimarySMTPAddress                = "SalesEnquiries@$TenantId"
+            EmailAddresses                    = @("SalesInfo@$TenantId")
+            Alias                             = "SalesEnquiries"
+            AuditEnabled                      = $true
+            MessageCopyForSendOnBehalfEnabled = $true
+            MessageCopyForSentAsEnabled       = $false
+            Ensure                            = "Present"
+            ApplicationId                     = $ApplicationId
+            TenantId                          = $TenantId
+            CertificateThumbprint             = $CertificateThumbprint
         }
     }
 }

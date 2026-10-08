@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,26 +33,39 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
             Mock -CommandName Get-CsTeamsMeetingConfiguration -MockWith {
                 return @{
-                    ClientAppSharingPort        = 50040
-                    ClientAppSharingPortRange   = 20
-                    ClientAudioPort             = 50000
-                    ClientAudioPortRange        = 20
-                    ClientMediaPortRangeEnabled = $True
-                    ClientVideoPort             = 50020
-                    ClientVideoPortRange        = 20
-                    CustomFooterText            = $null
-                    DisableAnonymousJoin        = $False
-                    EnableQoS                   = $False
-                    HelpURL                     = $null
-                    Identity                    = 'Global'
-                    LegalURL                    = $null
-                    LogoURL                     = $null
+                    ClientAppSharingPort                 = 50040
+                    ClientAppSharingPortRange            = 20
+                    ClientAudioPort                      = 50000
+                    ClientAudioPortRange                 = 20
+                    ClientMediaPortRangeEnabled          = $True
+                    ClientVideoPort                      = 50020
+                    ClientVideoPortRange                 = 20
+                    CustomFooterText                     = $null
+                    DisableAnonymousJoin                 = $False
+                    EnableAttributedTranscripts          = $False
+                    EnableGraphTranscriptAccess          = $False
+                    EnableQoS                            = $False
+                    HelpURL                              = $null
+                    Identity                             = 'Global'
+                    LegalURL                             = $null
+                    LogoURL                              = $null
+                    PublishedEntraAuthenticationContexts = @(
+                        @{
+                            Id                   = 'c3'
+                            PublishedName        = 'Confidential meetings'
+                            PublishedDescription = 'Requires step-up authentication to join confidential meetings'
+                            EntraName            = 'Confidential access'
+                            EntraDescription     = 'Step-up authentication for confidential resources'
+                            Published            = $True
+                        }
+                    )
+                    ReportMeeting                        = 'Enabled'
                 }
             }
 
@@ -70,64 +83,78 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'When settings are correctly set' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    ClientAppSharingPort        = 50040
-                    ClientAppSharingPortRange   = 20
-                    ClientAudioPort             = 50000
-                    ClientAudioPortRange        = 20
-                    ClientMediaPortRangeEnabled = $True
-                    ClientVideoPort             = 50020
-                    ClientVideoPortRange        = 20
-                    CustomFooterText            = $null
-                    DisableAnonymousJoin        = $False
-                    EnableQoS                   = $False
-                    Credential                  = $Credential
-                    HelpURL                     = $null
-                    IsSingleInstance            = 'Yes'
-                    LegalURL                    = $null
-                    LogoURL                     = $null
+                    ClientAppSharingPort                 = 50040
+                    ClientAppSharingPortRange            = 20
+                    ClientAudioPort                      = 50000
+                    ClientAudioPortRange                 = 20
+                    ClientMediaPortRangeEnabled          = $True
+                    ClientVideoPort                      = 50020
+                    ClientVideoPortRange                 = 20
+                    CustomFooterText                     = $null
+                    DisableAnonymousJoin                 = $False
+                    EnableAttributedTranscripts          = $False
+                    EnableGraphTranscriptAccess          = $False
+                    EnableQoS                            = $False
+                    Credential                           = $Credential
+                    HelpURL                              = $null
+                    IsSingleInstance                     = 'Yes'
+                    LegalURL                             = $null
+                    LogoURL                              = $null
+                    PublishedEntraAuthenticationContexts = @(
+                        [MSFT_TeamsPublishedEntraAuthenticationContext] @{
+                            Id                   = 'c3'
+                            PublishedName        = 'Confidential meetings'
+                            PublishedDescription = 'Requires step-up authentication to join confidential meetings'
+                        }
+                    )
+                    ReportMeeting                        = 'Enabled'
                 }
             }
 
             It 'Should return 20 for the ClientVideoPortRange property from the Get method' {
-                (Get-TargetResource @testParams).ClientVideoPortRange | Should -Be 20
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsMeetingConfiguration' -Property $testParams).Get().ToHashtable()).ClientVideoPortRange | Should -Be 20
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingConfiguration' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'When settings are NOT correctly set' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    ClientAppSharingPort        = 50040
-                    ClientAppSharingPortRange   = 20
-                    ClientAudioPort             = 50000
-                    ClientAudioPortRange        = 20
-                    ClientMediaPortRangeEnabled = $True
-                    ClientVideoPort             = 50020
-                    ClientVideoPortRange        = 21; # Drift
-                    CustomFooterText            = $null
-                    DisableAnonymousJoin        = $False
-                    EnableQoS                   = $False
-                    Credential                  = $Credential
-                    HelpURL                     = $null
-                    IsSingleInstance            = 'Yes'
-                    LegalURL                    = $null
-                    LogoURL                     = $null
+                    ClientAppSharingPort                 = 50040
+                    ClientAppSharingPortRange            = 20
+                    ClientAudioPort                      = 50000
+                    ClientAudioPortRange                 = 20
+                    ClientMediaPortRangeEnabled          = $True
+                    ClientVideoPort                      = 50020
+                    ClientVideoPortRange                 = 21; # Drift
+                    CustomFooterText                     = $null
+                    DisableAnonymousJoin                 = $False
+                    EnableAttributedTranscripts          = $False
+                    EnableGraphTranscriptAccess          = $False
+                    EnableQoS                            = $False
+                    Credential                           = $Credential
+                    HelpURL                              = $null
+                    IsSingleInstance                     = 'Yes'
+                    LegalURL                             = $null
+                    LogoURL                              = $null
+                    PublishedEntraAuthenticationContexts = @()
+                    ReportMeeting                        = 'Enabled'
                 }
             }
 
             It 'Should return 20 for the ClientVideoPortRange property from the Get method' {
-                (Get-TargetResource @testParams).ClientVideoPortRange | Should -Be 20
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsMeetingConfiguration' -Property $testParams).Get().ToHashtable()).ClientVideoPortRange | Should -Be 20
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Updates the Teams Client settings in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsMeetingConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-CsTeamsMeetingConfiguration -Exactly 1
             }
         }
@@ -142,7 +169,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsMeetingConfiguration' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

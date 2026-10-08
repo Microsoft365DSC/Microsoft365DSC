@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,13 +19,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOMobileDeviceMailboxPolicy 'ConfigureMobileDeviceMailboxPolicy'
+        EXOMobileDeviceMailboxPolicy 'EXOMobileDeviceMailboxPolicy-Example'
         {
-            Name                                     = "Default"
+            Name                                     = "Contoso Mobile Devices"
             AllowApplePushNotifications              = $True
             AllowBluetooth                           = "Allow"
             AllowBrowser                             = $False # Updated Property
@@ -55,7 +57,6 @@ Configuration Example
             DeviceEncryptionEnabled                  = $False
             DevicePolicyRefreshInterval              = "Unlimited"
             IrmEnabled                               = $True
-            IsDefault                                = $True
             MaxAttachmentSize                        = "Unlimited"
             MaxCalendarAgeFilter                     = "All"
             MaxEmailAgeFilter                        = "All"
@@ -79,9 +80,9 @@ Configuration Example
             UNCAccessEnabled                         = $True
             WSSAccessEnabled                         = $True
             Ensure                                   = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                            = $ApplicationId
+            TenantId                                 = $TenantId
+            CertificateThumbprint                    = $CertificateThumbprint
         }
     }
 }

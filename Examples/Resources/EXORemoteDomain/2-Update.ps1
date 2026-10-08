@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,13 +19,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXORemoteDomain 583b0b70-b45d-401f-98a6-0e7fa8434946
+        EXORemoteDomain "EXORemoteDomain-Example"
         {
-            Identity                             = "Integration"
+            Identity                             = "Fabrikam"
             AllowedOOFType                       = "External"
             AutoForwardEnabled                   = $True
             AutoReplyEnabled                     = $False # Updated Property
@@ -37,7 +39,7 @@ Configuration Example
             IsInternal                           = $False
             LineWrapSize                         = "Unlimited"
             MeetingForwardNotificationEnabled    = $False
-            Name                                 = "Integration"
+            Name                                 = "Fabrikam"
             NonMimeCharacterSet                  = "iso-8859-1"
             PreferredInternetCodePageForShiftJis = "Undefined"
             TargetDeliveryDomain                 = $False
@@ -45,9 +47,9 @@ Configuration Example
             TrustedMailOutboundEnabled           = $False
             UseSimpleDisplayName                 = $False
             Ensure                               = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                        = $ApplicationId
+            TenantId                             = $TenantId
+            CertificateThumbprint                = $CertificateThumbprint
         }
     }
 }

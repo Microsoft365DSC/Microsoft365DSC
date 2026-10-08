@@ -1,0 +1,743 @@
+<#
+.SYNOPSIS
+    Takes a snapshot, compares it against the committed baseline and writes the drift report.
+
+.DESCRIPTION
+    The only part of this module that reads files, reaches the gallery or imports a module.
+    api-drift.json is written on every run. api-surface.json is replaced only with
+    -UpdateBaseline.
+
+.PARAMETER RepositoryRoot
+    Specifies the root of the Microsoft365DSC repository. Defaults to the parent of this module.
+
+.PARAMETER BaselinePath
+    Specifies the committed api-surface.json.
+
+.PARAMETER DriftPath
+    Specifies where api-drift.json is written.
+
+.PARAMETER MarkdownPath
+    Specifies where the Markdown report is written. Defaults to api-drift.md beside
+    api-drift.json.
+
+.PARAMETER IssueBodyPath
+    Specifies where the tracking Issue body is written. Omitted means no body is written.
+
+.PARAMETER CurrentIssueBodyPath
+    Specifies the body the tracking Issue holds right now. Its ticks are carried into the new
+    body. A missing file means nothing was ticked.
+
+.PARAMETER SchemaCachePath
+    Specifies DscSchemaCache.json, which the build regenerates.
+
+.PARAMETER ExclusionPath
+    Specifies exclusions.json.
+
+.PARAMETER Current
+    Specifies an already-taken snapshot, which skips the acquire step.
+
+.PARAMETER Force
+    Indicates that the baseline is written even when this run saw less than it holds.
+
+.PARAMETER UpdateBaseline
+    Indicates that the current snapshot replaces the committed baseline.
+
+.PARAMETER IncludeTenantConnected
+    Indicates that the workloads which need a tenant connection are captured.
+
+.PARAMETER Credential
+    Specifies the credential to authenticate with.
+
+.PARAMETER ApplicationId
+    Specifies the application registration.
+
+.PARAMETER TenantId
+    Specifies the tenant domain name.
+
+.PARAMETER CertificateThumbprint
+    Specifies the certificate registered on the application.
+
+.PARAMETER WorkloadAuthentication
+    Specifies per-workload ApplicationId and CertificateThumbprint overrides, keyed by workload.
+
+.PARAMETER SkipGalleryLookup
+    Indicates that no dependency is looked up in the gallery.
+
+.PARAMETER RunDate
+    Specifies the date stamped on a finding seen for the first time. Defaults to today in UTC.
+
+.EXAMPLE
+    Invoke-M365DSCApiSurfaceCheck
+
+.EXAMPLE
+    Invoke-M365DSCApiSurfaceCheck -UpdateBaseline -SkipGalleryLookup
+
+.OUTPUTS
+    An ordered dictionary with Findings, Coverage, Backlog, Summary and the paths written.
+#>
+function Invoke-M365DSCApiSurfaceCheck
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Specialized.OrderedDictionary])]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $RepositoryRoot = (Join-Path -Path $PSScriptRoot -ChildPath '../../..' -Resolve),
+
+        [Parameter()]
+        [System.String]
+        $BaselinePath,
+
+        [Parameter()]
+        [System.String]
+        $DriftPath,
+
+        [Parameter()]
+        [System.String]
+        $MarkdownPath,
+
+        [Parameter()]
+        [System.String]
+        $IssueBodyPath,
+
+        [Parameter()]
+        [System.String]
+        $CurrentIssueBodyPath,
+
+        [Parameter()]
+        [System.String]
+        $SchemaCachePath,
+
+        [Parameter()]
+        [System.String]
+        $ExclusionPath,
+
+        [Parameter()]
+        [AllowNull()]
+        [System.Object]
+        $Current,
+
+        [Parameter()]
+        [switch]
+        $UpdateBaseline,
+
+        [Parameter()]
+        [switch]
+        $Force,
+
+        [Parameter()]
+        [switch]
+        $IncludeTenantConnected,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $Credential,
+
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $WorkloadAuthentication = @{},
+
+        [Parameter()]
+        [switch]
+        $SkipGalleryLookup,
+
+        [Parameter()]
+        [System.String]
+        $RunDate
+    )
+
+    $defaults = @{
+        BaselinePath    = 'Utilities/ApiSurface/api-surface.json'
+        DriftPath       = 'Utilities/ApiSurface/api-drift.json'
+        MarkdownPath    = 'Utilities/ApiSurface/api-drift.md'
+        SchemaCachePath = 'Modules/Microsoft365DSC/DscSchemaCache.json'
+        ExclusionPath   = 'Utilities/ApiSurface/exclusions.json'
+    }
+
+    foreach ($name in $defaults.Keys)
+    {
+        if ([System.String]::IsNullOrEmpty((Get-Variable -Name $name -ValueOnly)))
+        {
+            Set-Variable -Name $name -Value (Join-Path -Path $RepositoryRoot -ChildPath $defaults[$name])
+        }
+    }
+
+    if ([System.String]::IsNullOrEmpty($RunDate))
+    {
+        $RunDate = [System.DateTime]::UtcNow.ToString('yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+
+    if (-not (Test-Path -Path $SchemaCachePath))
+    {
+        throw "'$SchemaCachePath' does not exist. It is gitignored and regenerated by the build, so run Utilities/Build-Microsoft365DSC.ps1 and Utilities/New-M365DSCDscSchemaCache.ps1 first."
+    }
+
+    if ($null -eq $Current)
+    {
+        $acquire = @{
+            RepositoryRoot         = $RepositoryRoot
+            IncludeTenantConnected = $IncludeTenantConnected
+            SkipGalleryLookup      = $SkipGalleryLookup
+            WorkloadAuthentication = $WorkloadAuthentication
+        }
+
+        if (-not [System.String]::IsNullOrEmpty($ApplicationId))
+        {
+            $acquire['ApplicationId'] = $ApplicationId
+        }
+
+        if (-not [System.String]::IsNullOrEmpty($TenantId))
+        {
+            $acquire['TenantId'] = $TenantId
+        }
+
+        if (-not [System.String]::IsNullOrEmpty($CertificateThumbprint))
+        {
+            $acquire['CertificateThumbprint'] = $CertificateThumbprint
+        }
+
+        if ($null -ne $Credential)
+        {
+            $acquire['Credential'] = $Credential
+        }
+
+        $Current = Get-M365DSCApiSurface @acquire
+    }
+
+    $baseline = $Current
+    if (Test-Path -Path $BaselinePath)
+    {
+        $baseline = Get-Content -Path $BaselinePath -Raw | ConvertFrom-Json
+    }
+    else
+    {
+        Write-Warning -Message "'$BaselinePath' does not exist. The current snapshot is compared against itself, which reports no vendor drift."
+    }
+
+    $exclusion = $null
+    if (Test-Path -Path $ExclusionPath)
+    {
+        $exclusion = Get-Content -Path $ExclusionPath -Raw | ConvertFrom-Json
+    }
+
+    $resourcePath = Join-Path -Path $RepositoryRoot -ChildPath 'Modules/Microsoft365DSC/DscResources'
+    $origin = @(Get-ResourceOriginSurface -ResourcePath $resourcePath)
+    $excludedProperty = Get-ExcludedPropertyMap -ResourcePath $resourcePath
+    $schemaKeyword = Get-SchemaKeywordMap -Path $SchemaCachePath
+
+    $previous = @()
+    if (Test-Path -Path $DriftPath)
+    {
+        $previous = @((Get-Content -Path $DriftPath -Raw | ConvertFrom-Json).findings)
+    }
+
+    $coveragePath = Join-Path -Path $RepositoryRoot -ChildPath 'Utilities/ApiSurface/coverage.json'
+    $coverageIgnorePath = Join-Path -Path $RepositoryRoot -ChildPath 'Utilities/ApiSurface/coverage-ignore.json'
+    $coverage = Get-CoverageReport -Origin $origin `
+        -PinnedVersion ([System.String] $Current.dependencies.'Microsoft.Graph.Authentication'.pinned) `
+        -CoveragePath $coveragePath `
+        -IgnorePath $coverageIgnorePath
+
+    $subtype = Get-SubtypeReport -RepositoryRoot $RepositoryRoot `
+        -Origin $origin `
+        -CoveragePath $coveragePath `
+        -IgnorePath $coverageIgnorePath
+
+    . (Join-Path -Path $RepositoryRoot -ChildPath 'Utilities/Get-M365DSCIntuneTemplateBinding.ps1')
+    $templateBinding = @(Get-M365DSCIntuneTemplateBinding -ResourcePath $resourcePath)
+    $declaredProperty = Get-DeclaredPropertyMap -ResourcePath $resourcePath `
+        -Resource ([System.String[]] @($templateBinding | ForEach-Object -Process { $_.Resource }))
+
+    $result = Compare-M365DSCApiSurface -Baseline $baseline `
+        -CoverageCandidate $coverage.Candidate `
+        -CoverageBaselineNoun $coverage.BaselineNoun `
+        -SubtypeCandidate $subtype.Candidate `
+        -SubtypeBaseline $subtype.Baseline `
+        -TemplateBinding $templateBinding `
+        -DeclaredProperty $declaredProperty `
+        -Current $Current `
+        -Origin $origin `
+        -SchemaKeyword $schemaKeyword `
+        -Exclusion $exclusion `
+        -ExcludedProperty $excludedProperty `
+        -PreviousFinding $previous `
+        -RunDate $RunDate
+
+    Add-FindingClrType -Finding $result.Findings -RepositoryRoot $RepositoryRoot
+
+    $tenantWarning = [System.String] $Current.completeness.tenantError
+
+    $drift = [ordered]@{
+        formatVersion = 1
+        baseline      = [System.String] $baseline.capturedAt
+        current       = [System.String] $Current.capturedAt
+        summary       = $result.Summary
+        findings      = @($result.Findings)
+        coverage      = @($result.Coverage)
+    }
+
+    $null = New-Item -Path (Split-Path -Path $DriftPath -Parent) -ItemType Directory -Force -ErrorAction SilentlyContinue
+    [System.IO.File]::WriteAllText($DriftPath, (ConvertTo-M365DSCApiSurfaceJson -Surface $drift), [System.Text.UTF8Encoding]::new($false))
+
+    if (-not [System.String]::IsNullOrEmpty($MarkdownPath))
+    {
+        $markdown = (Format-DriftMarkdown -Result $result -Warning $tenantWarning) -replace "`r`n", "`n" -replace "`n", "`r`n"
+        [System.IO.File]::WriteAllText($MarkdownPath, $markdown, [System.Text.UTF8Encoding]::new($false))
+    }
+
+    if (-not [System.String]::IsNullOrEmpty($IssueBodyPath))
+    {
+        $ticked = [System.String[]] @()
+        if (-not [System.String]::IsNullOrEmpty($CurrentIssueBodyPath) -and (Test-Path -Path $CurrentIssueBodyPath))
+        {
+            $ticked = [System.String[]] @(Get-DriftIssueTicked -Body ([System.IO.File]::ReadAllText($CurrentIssueBodyPath)))
+        }
+
+        $since = Get-DriftVendorSince -Baseline $baseline -Current $Current
+        $body = Format-DriftIssueBody -Result $result -Ticked $ticked -Since $since -Warning $tenantWarning
+        [System.IO.File]::WriteAllText($IssueBodyPath, ($body -replace "`r`n", "`n"), [System.Text.UTF8Encoding]::new($false))
+    }
+
+    if ($UpdateBaseline)
+    {
+        $lost = @()
+        if (-not $Force)
+        {
+            $lost = @(Get-BaselineRegression -Baseline $baseline -Current $Current)
+        }
+
+        if ($lost.Count -gt 0)
+        {
+            throw ("The baseline was not updated. This run saw less than the committed baseline: $($lost -join ', '). " +
+                'Connect the missing workloads, or pass -Force to overwrite anyway.')
+        }
+
+        [System.IO.File]::WriteAllText($BaselinePath, (ConvertTo-M365DSCApiSurfaceJson -Surface $Current), [System.Text.UTF8Encoding]::new($false))
+
+        if (@($coverage.Candidate).Count -gt 0)
+        {
+            # The stored candidate carries only what the delta and a reader need. Verbs are the
+            # same four on every candidate and the reasons are recomputed each run.
+            $stored = [ordered]@{
+                source     = $coverage.Source
+                candidates = @($coverage.Candidate | ForEach-Object -Process {
+                        [ordered]@{
+                            noun        = $_.noun
+                            modules     = $_.modules
+                            apiVersions = $_.apiVersions
+                            uri         = $_.uri
+                            score       = $_.score
+                        }
+                    })
+                subtypes   = @($subtype.Candidate | ForEach-Object -Process {
+                        [ordered]@{
+                            subtype    = $_.subtype
+                            entityType = $_.entityType
+                            apiVersion = $_.apiVersion
+                            score      = $_.score
+                        }
+                    })
+            }
+            [System.IO.File]::WriteAllText($coveragePath, (ConvertTo-M365DSCApiSurfaceJson -Surface $stored), [System.Text.UTF8Encoding]::new($false))
+
+            $markdown = (Format-CoverageMarkdown -Candidate $coverage.Candidate -Source $coverage.Source -Subtype $subtype.Candidate) -replace "`r`n", "`n" -replace "`n", "`r`n"
+            [System.IO.File]::WriteAllText(
+                (Join-Path -Path $RepositoryRoot -ChildPath 'Utilities/ApiSurface/coverage.md'),
+                $markdown, [System.Text.UTF8Encoding]::new($false))
+            Write-Host -Object "The coverage report was written to '$coveragePath' and 'Utilities/ApiSurface/coverage.md'."
+        }
+    }
+
+    return [ordered]@{
+        Findings      = $result.Findings
+        Coverage      = $result.Coverage
+        Backlog       = $result.Backlog
+        Summary       = $result.Summary
+        DriftPath     = $DriftPath
+        MarkdownPath  = $MarkdownPath
+        IssueBodyPath = $IssueBodyPath
+        BaselinePath  = $BaselinePath
+    }
+}
+
+<#
+.SYNOPSIS
+    Projects the raw vendor type on each finding into the CLR type the generator would emit.
+
+.DESCRIPTION
+    Only the resource generator's New-M365DSCPropertyModel maps a vendor type to the CLR type and
+    the nullable flag the finding contract wants. Doing it here keeps the differ free of module
+    imports.
+
+.PARAMETER Finding
+    Specifies the findings to enrich in place.
+
+.PARAMETER RepositoryRoot
+    Specifies the root of the Microsoft365DSC repository.
+#>
+function Add-FindingClrType
+{
+    [CmdletBinding()]
+    [OutputType([System.Void])]
+    param
+    (
+        [Parameter()]
+        [AllowEmptyCollection()]
+        [System.Object[]]
+        $Finding = @(),
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $RepositoryRoot
+    )
+
+    $candidates = @($Finding | Where-Object -FilterScript {
+            $null -ne $_.to -and -not [System.String]::IsNullOrEmpty([System.String] $_.to.vendorType)
+        })
+
+    if ($candidates.Count -eq 0)
+    {
+        return
+    }
+
+    $generator = Get-M365DSCApiSurfaceGenerator -RepositoryRoot $RepositoryRoot
+
+    foreach ($item in $candidates)
+    {
+        $model = & $generator {
+            param($Name, $Type, $IsArray, $EnumValues)
+            New-M365DSCPropertyModel -Name $Name -Type $Type -IsArray $IsArray -EnumValues $EnumValues
+        } ([System.String] $item.property) ([System.String] $item.to.vendorType) ([System.Boolean] $item.to.isArray) ([System.String[]] @($item.to.enum))
+
+        $item.to['clrType'] = [System.String] $model.ClrType
+        $item.to['nullable'] = $model.ClrType -like 'System.Nullable*'
+    }
+}
+
+<#
+.SYNOPSIS
+    Names the workloads the committed baseline holds and this run could not see.
+
+.DESCRIPTION
+    A downgraded run writes a smaller snapshot. Overwriting the baseline with it drops the
+    tenant sections, and the next comparison then reads the gap as removals.
+
+.PARAMETER Baseline
+    Specifies the committed snapshot.
+
+.PARAMETER Current
+    Specifies the snapshot this run captured.
+
+.OUTPUTS
+    The workload names that were captured before and are skipped now.
+#>
+function Get-BaselineRegression
+{
+    [CmdletBinding()]
+    [OutputType([System.String[]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Object]
+        $Baseline,
+
+        [Parameter(Mandatory = $true)]
+        [System.Object]
+        $Current
+    )
+
+    $before = [System.String[]] @($Baseline.completeness.skippedWorkloads)
+    $now = [System.String[]] @($Current.completeness.skippedWorkloads)
+
+    return [System.String[]] @($now | Where-Object -FilterScript { $_ -notin $before })
+}
+
+<#
+.SYNOPSIS
+    Reads the DSC property names of the named resources.
+
+.PARAMETER ResourcePath
+    Specifies the folder holding the MSFT_<Name> resource folders.
+
+.PARAMETER Resource
+    Specifies the resources to read.
+
+.OUTPUTS
+    A map of resource name to a case-insensitive set of property names.
+#>
+function Get-DeclaredPropertyMap
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.IDictionary])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ResourcePath,
+
+        [Parameter()]
+        [AllowEmptyCollection()]
+        [System.String[]]
+        $Resource = @()
+    )
+
+    $map = @{}
+
+    foreach ($name in $Resource)
+    {
+        $path = Join-Path -Path $ResourcePath -ChildPath "MSFT_$name/MSFT_$name.psm1"
+        if (-not (Test-Path -Path $path))
+        {
+            continue
+        }
+
+        $map[$name] = Get-ResourceDeclaredProperty -Path $path
+    }
+
+    return $map
+}
+
+<#
+.SYNOPSIS
+    Reads the excludedProperties array of every resource.
+
+.PARAMETER ResourcePath
+    Specifies the folder holding the MSFT_<Name> resource folders.
+
+.OUTPUTS
+    A map of resource name to its excludedProperties entries.
+#>
+function Get-ExcludedPropertyMap
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ResourcePath
+    )
+
+    $map = [System.Collections.Hashtable]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($folder in (Get-ChildItem -Path $ResourcePath -Directory))
+    {
+        $settingsPath = Join-Path -Path $folder.FullName -ChildPath 'settings.json'
+        if (-not (Test-Path -Path $settingsPath))
+        {
+            continue
+        }
+
+        $settings = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
+        $map[($folder.Name -replace '^MSFT_', '')] = @($settings.excludedProperties)
+    }
+
+    return $map
+}
+
+<#
+.SYNOPSIS
+    Reads the resource keywords out of DscSchemaCache.json.
+
+.DESCRIPTION
+    A resource keyword carries nameMode NameRequired. The complex types carry NoName and an
+    MSFT_ prefixed name.
+
+.PARAMETER Path
+    Specifies DscSchemaCache.json.
+
+.OUTPUTS
+    A map of resource name to its keyword.
+#>
+function Get-SchemaKeywordMap
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Path
+    )
+
+    $map = [System.Collections.Hashtable]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    $lines = [System.IO.File]::ReadAllLines($Path)
+    for ($index = 2; $index -lt $lines.Count; $index++)
+    {
+        $keyword = ConvertFrom-Json -InputObject $lines[$index]
+        if ($keyword.nameMode -ne 'NameRequired')
+        {
+            continue
+        }
+
+        $map[[System.String] $keyword.resourceName] = $keyword
+    }
+
+    return $map
+}
+
+<#
+.SYNOPSIS
+    Builds the coverage candidates and reads the nouns the committed file already holds.
+
+.DESCRIPTION
+    The inventory comes from the installed Graph SDK and is not committed. Only the derived
+    candidates are stored. An SDK away from the pinned version yields no candidates.
+
+.PARAMETER Origin
+    Specifies the resource rows.
+
+.PARAMETER PinnedVersion
+    Specifies the version Manifest.psd1 pins for Microsoft.Graph.Authentication.
+
+.PARAMETER CoveragePath
+    Specifies the committed coverage file.
+
+.PARAMETER IgnorePath
+    Specifies coverage-ignore.json.
+
+.OUTPUTS
+    An ordered dictionary with Source, Candidate and BaselineNoun.
+#>
+function Get-CoverageReport
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Specialized.OrderedDictionary])]
+    param
+    (
+        [Parameter()]
+        [AllowEmptyCollection()]
+        [System.Object[]]
+        $Origin = @(),
+
+        [Parameter()]
+        [AllowEmptyString()]
+        [System.String]
+        $PinnedVersion,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $CoveragePath,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $IgnorePath
+    )
+
+    $inventory = Get-GraphCommandInventory -PinnedVersion $PinnedVersion
+    $empty = [ordered]@{ Source = $inventory.Source; Candidate = @(); BaselineNoun = @() }
+
+    if ($inventory.Noun.Count -eq 0)
+    {
+        return $empty
+    }
+
+    if ($inventory.Source.versionSource -ne 'pinned')
+    {
+        Write-Warning -Message "Microsoft.Graph.Authentication $($inventory.Source.version) is not the pinned $PinnedVersion. The coverage report is skipped."
+        return $empty
+    }
+
+    $ignore = $null
+    if (Test-Path -Path $IgnorePath)
+    {
+        $ignore = Get-Content -Path $IgnorePath -Raw | ConvertFrom-Json
+    }
+
+    $baselineNoun = @()
+    if (Test-Path -Path $CoveragePath)
+    {
+        $baselineNoun = [System.String[]] @((Get-Content -Path $CoveragePath -Raw | ConvertFrom-Json).candidates |
+                ForEach-Object -Process { [System.String] $_.noun })
+    }
+
+    $claim = Get-CoverageClaimSet -Origin $Origin -Inventory $inventory.Noun
+
+    return [ordered]@{
+        Source       = $inventory.Source
+        Candidate    = @(Find-CoverageGap -Inventory $inventory.Noun -Claim $claim -Ignore $ignore -BaselineNoun $baselineNoun)
+        BaselineNoun = $baselineNoun
+    }
+}
+
+<#
+.SYNOPSIS
+    Builds the OData subtype candidates and reads the subtypes the committed file holds.
+
+.PARAMETER RepositoryRoot
+    Specifies the root of the Microsoft365DSC repository.
+
+.PARAMETER Origin
+    Specifies the resource rows from Get-ResourceOriginSurface.
+
+.PARAMETER CoveragePath
+    Specifies the committed coverage file.
+
+.PARAMETER IgnorePath
+    Specifies coverage-ignore.json.
+
+.OUTPUTS
+    An ordered dictionary with Candidate and Baseline.
+#>
+function Get-SubtypeReport
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Specialized.OrderedDictionary])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $RepositoryRoot,
+
+        [Parameter()]
+        [AllowEmptyCollection()]
+        [System.Object[]]
+        $Origin = @(),
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $CoveragePath,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $IgnorePath
+    )
+
+    $ignore = $null
+    if (Test-Path -Path $IgnorePath)
+    {
+        $ignore = Get-Content -Path $IgnorePath -Raw | ConvertFrom-Json
+    }
+
+    $baseline = @()
+    if (Test-Path -Path $CoveragePath)
+    {
+        $baseline = [System.String[]] @((Get-Content -Path $CoveragePath -Raw | ConvertFrom-Json).subtypes |
+                ForEach-Object -Process { [System.String] $_.subtype } |
+                Where-Object -FilterScript { -not [System.String]::IsNullOrEmpty($_) })
+    }
+
+    $generator = Get-M365DSCApiSurfaceGenerator -RepositoryRoot $RepositoryRoot
+    $surface = @(Get-ODataSubtypeSurface -Generator $generator `
+            -Origin $Origin `
+            -ResourcePath (Join-Path -Path $RepositoryRoot -ChildPath 'Modules/Microsoft365DSC/DscResources'))
+
+    return [ordered]@{
+        Candidate = @(Find-SubtypeGap -Subtype $surface -Ignore $ignore -BaselineSubtype $baseline)
+        Baseline  = $baseline
+    }
+}

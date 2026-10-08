@@ -22,16 +22,17 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsNotificationAndFeedsPolicy 'Example'
+        TeamsNotificationAndFeedsPolicy 'TeamsNotificationAndFeedsPolicy-Example'
         {
-            ApplicationId             = $ApplicationId;
-            CertificateThumbprint     = $CertificateThumbprint;
+            Description               = "Keeps activity feed suggestions available with a user opt-out";
             IsSingleInstance          = "Yes";
-            SuggestedFeedsEnabledType = "EnabledUserOverride"; # Updated property
-            TenantId                  = $TenantId;
+            SuggestedFeedsEnabledType = "EnabledUserOverride"; # Updated Property
             TrendingFeedsEnabledType  = "EnabledUserOverride";
+            ApplicationId             = $ApplicationId;
+            TenantId                  = $TenantId;
+            CertificateThumbprint     = $CertificateThumbprint;
         }
     }
 }

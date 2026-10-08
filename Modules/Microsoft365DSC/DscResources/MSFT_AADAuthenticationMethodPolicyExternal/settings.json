@@ -1,5 +1,22 @@
 {
   "resourceName": "AADAuthenticationMethodPolicyExternal",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "authenticationMethodConfiguration",
+    "odataSubtype": "externalAuthenticationMethodConfiguration",
+    "cmdletNoun": "MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Entra generates the GUID at create time and it routes only"
+    }
+  ],
   "description": "This resource configures an Azure AD Authentication Method Policy External.",
   "roles": {
     "read": [
@@ -17,7 +34,7 @@
             "name": "Policy.Read.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -25,7 +42,7 @@
             "name": "Policy.ReadWrite.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       },
@@ -35,7 +52,7 @@
             "name": "Policy.Read.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -43,7 +60,7 @@
             "name": "Policy.ReadWrite.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       }

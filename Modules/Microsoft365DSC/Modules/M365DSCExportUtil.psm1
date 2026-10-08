@@ -11,21 +11,59 @@ $Script:M365DSCAuthenticationParameterSet = @{
     ManagedIdentity = @('ManagedIdentity', 'TenantId')
     AccessTokens = @('AccessTokens', 'TenantId')
 }
-$templatesPath = Join-Path -Path $PSScriptRoot -ChildPath 'M365DSCRelationTemplates.json'
-$jsonContent = Get-Content -Path $templatesPath -Raw | ConvertFrom-Json
-$Script:RelationTemplates = @{
-    templates = @{}
-}
-foreach ($template in $jsonContent.templates.psobject.Properties)
+$Script:M365DSCRelationIndex = $null
+$Script:M365DSCExportComponentNames = $null
+
+<#
+.SYNOPSIS
+    Returns the resource names offered by the Components argument completer.
+
+.DESCRIPTION
+    Resolved on first completion rather than at import, because the manifest reader lives in a
+    module that loads after this one.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.String[]
+#>
+function Get-M365DSCExportComponentName
 {
-    $Script:RelationTemplates.templates[$template.Name] = $template.Value
+    [CmdletBinding()]
+    [OutputType([System.String[]])]
+    param()
+
+    if ($null -ne $Script:M365DSCExportComponentNames)
+    {
+        return $Script:M365DSCExportComponentNames
+    }
+
+    $names = @()
+    $dscResourcesFolder = Join-Path -Path $PSScriptRoot -ChildPath '../DscResources/'
+    if (Test-Path -Path $dscResourcesFolder)
+    {
+        $names = @(Get-ChildItem -Path $dscResourcesFolder -Recurse -Filter 'MSFT_*.psm1' -File | ForEach-Object {
+            $_.Name -replace 'MSFT_', '' -replace '.psm1', ''
+        })
+    }
+
+    if ($names.Count -eq 0)
+    {
+        $manifestPath = Join-Path -Path $PSScriptRoot -ChildPath '../Microsoft365DSC.psd1'
+        if (Test-Path -Path $manifestPath)
+        {
+            $names = @((Import-PowerShellDataFile -Path $manifestPath).DscResourcesToExport)
+        }
+    }
+
+    $Script:M365DSCExportComponentNames = [System.String[]] $names
+    return $Script:M365DSCExportComponentNames
 }
-$allResourcesArgumentCompleter = Get-ChildItem -Path ($PSScriptRoot + '/../DscResources/') -Recurse -Filter '*.psm1' -File | Foreach-Object {
-    $_.Name -replace 'MSFT_', '' -replace '.psm1', ''
-}
+
 Register-ArgumentCompleter -CommandName Export-M365DSCConfiguration -ParameterName Components -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    $resources = $allResourcesArgumentCompleter -like "$wordToComplete*"
+    $resources = (Get-M365DSCExportComponentName) -like "$wordToComplete*"
     foreach ($resource in $resources)
     {
         [System.Management.Automation.CompletionResult]::new($resource, $resource, 'ParameterValue', $resource)
@@ -106,6 +144,9 @@ Register-ArgumentCompleter -CommandName Export-M365DSCConfiguration -ParameterNa
 .PARAMETER Parallel
     Indicates whether export should execute in parallel.
 
+.PARAMETER ThrottleLimit
+    Specifies the number of parallel workers. Requires Parallel. Default: 5.
+
 .PARAMETER TokenReplacement
     Specifies token replacement mappings applied to exported content.
 
@@ -133,6 +174,9 @@ Register-ArgumentCompleter -CommandName Export-M365DSCConfiguration -ParameterNa
 .EXAMPLE
     PS> Export-M365DSCConfiguration -Workloads @("SPO") -ApplicationId $clientId -TenantId $tenantName -CertificateThumbprint $certThumbprint -IncludeDependencies
 
+.EXAMPLE
+    PS> Export-M365DSCConfiguration -Workloads @("SPO") -ApplicationId $clientId -TenantId $tenantName -CertificateThumbprint $certThumbprint -IncludeDependencies -Parallel -ThrottleLimit 2
+
 .FUNCTIONALITY
     Public
 #>
@@ -146,48 +190,59 @@ function Export-M365DSCConfiguration
         $LaunchWebUI,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $Path,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $FileName,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $ConfigurationName,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String[]]
         $Components,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String[]]
         $ExcludeComponents,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [ValidateSet('AAD', 'ADO', 'AZURE', 'COMMERCE', 'DEFENDER', 'EXO', 'FABRIC', 'INTUNE', 'O365', 'OD', 'PLANNER', 'PP', 'SC', 'SENTINEL', 'SH', 'SPO', 'TEAMS', 'VIVA')]
         [System.String[]]
         $Workloads,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [ValidateSet('Default', 'Full')]
         [System.String]
         $Mode = 'Default',
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.Boolean]
         $GenerateInfo = $false,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.Collections.Hashtable]
         $Filters,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $ApplicationId,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [ValidateScript({
                 $invalid = $false
                 if ([System.Guid]::TryParse($_, [ref][System.Guid]::Empty))
@@ -206,54 +261,72 @@ function Export-M365DSCConfiguration
 
         # TODO: Change to PSCredential during next breaking change
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $ApplicationSecret,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $CertificateThumbprint,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.Management.Automation.PSCredential]
         $Credential,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.Management.Automation.PSCredential]
         $CertificatePassword,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $CertificatePath,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [Switch]
         $ManagedIdentity,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String[]]
         $AccessTokens,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.String]
         $SubscriptionId,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [Switch]
         $Validate,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel', Mandatory = $true)]
         [Switch]
         $Parallel,
 
+        [Parameter(ParameterSetName = 'ExportParallel')]
+        [ValidateRange(1, [System.Int32]::MaxValue)]
+        [System.Int32]
+        $ThrottleLimit = 5,
+
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [System.Collections.Hashtable]
         $TokenReplacement,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [Switch]
         $WithStatistics,
 
         [Parameter(ParameterSetName = 'Export')]
+        [Parameter(ParameterSetName = 'ExportParallel')]
         [Switch]
         $IncludeDependencies
     )
@@ -270,18 +343,26 @@ function Export-M365DSCConfiguration
 
     Clear-M365DSCHostMessageCache
 
-    # Define the exported resource instances' names Global variable
-    $Global:M365DSCExportedResourceInstancesNames = [System.Collections.Generic.HashSet[System.String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    # Initialize the relation assembly and reset its state for this export session
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    [Microsoft365DSC.Relations.ExportInstanceNames]::Reset()
+    [Microsoft365DSC.Intune.ConfigurationPolicyCache]::Reset()
+    Initialize-M365DSCExportCollectionCache
+    Reset-M365DSCConnectionFailureCache
 
     # Clear performance caches for fresh export
     $Script:M365DSCMandatoryKeyCache = @{}
     $Script:M365DSCCompiledRegexCache = @{}
+    Set-M365DSCStringReplacementMap -Clear
+    $Global:M365DSCStringReplacementMap = $null
+    Clear-ConfigurationDataContent
 
-    # Define the exported resource instances registry for DependsOn tracking
-    $Global:M365DSCExportedResourceInstances = @{}
-
-    # Define the export dependencies collector
-    $Global:M365DSCExportDependencies = @()
+    # Track cross-resource relations only when the caller asked for DependsOn output.
+    [Microsoft365DSC.Relations.ExportRelationSession]::Reset()
+    if ($IncludeDependencies.IsPresent)
+    {
+        $null = New-M365DSCExportRelationSession
+    }
 
     # LaunchWebUI specified, launching that now
     if ($LaunchWebUI)
@@ -414,98 +495,121 @@ function Export-M365DSCConfiguration
     }
 
     Add-M365DSCTelemetryEvent -Type 'ExportInitiated' -Data $data
-    Initialize-M365DSCAllResourcesDictionary
+    Initialize-M365DSCResourcesDictionary
     if ($PSBoundParameters.ContainsKey('TokenReplacement'))
     {
         Set-M365DSCStringReplacementMap -Map $TokenReplacement
     }
 
     $resourceSettings = Get-M365DSCResourceSettings
-    if ($null -ne $Workloads)
+    try
     {
-        Write-M365DSCHost -Message "Exporting Microsoft 365 configuration for Workloads: $($Workloads -join ', ')"
-        Start-M365DSCConfigurationExtract -Credential $Credential `
-            -Workloads $Workloads `
-            -ExcludeComponents $ExcludeComponents `
-            -Mode $Mode `
-            -Path $Path -FileName $FileName `
-            -ConfigurationName $ConfigurationName `
-            -ApplicationId $ApplicationId `
-            -ApplicationSecret $ApplicationSecret `
-            -TenantId $TenantId `
-            -CertificateThumbprint $CertificateThumbprint `
-            -CertificatePath $CertificatePath `
-            -CertificatePassword $CertificatePassword `
-            -ManagedIdentity:$ManagedIdentity.IsPresent `
-            -AccessTokens $AccessTokens `
-            -SubscriptionId $SubscriptionId `
-            -GenerateInfo $GenerateInfo `
-            -Filters $Filters `
-            -Validate:$Validate.IsPresent `
-            -Parallel:$Parallel.IsPresent `
-            -ResourceSettings $resourceSettings `
-            -ErrorAction $ErrorActionPreference `
-            -WithStatistics:$WithStatistics.IsPresent `
-            -IncludeDependencies:$IncludeDependencies.IsPresent
+        if ($null -ne $Workloads)
+        {
+            Write-M365DSCHost -Message "Exporting Microsoft 365 configuration for Workloads: $($Workloads -join ', ')"
+            Start-M365DSCConfigurationExtract -Credential $Credential `
+                -Workloads $Workloads `
+                -ExcludeComponents $ExcludeComponents `
+                -Mode $Mode `
+                -Path $Path -FileName $FileName `
+                -ConfigurationName $ConfigurationName `
+                -ApplicationId $ApplicationId `
+                -ApplicationSecret $ApplicationSecret `
+                -TenantId $TenantId `
+                -CertificateThumbprint $CertificateThumbprint `
+                -CertificatePath $CertificatePath `
+                -CertificatePassword $CertificatePassword `
+                -ManagedIdentity:$ManagedIdentity.IsPresent `
+                -AccessTokens $AccessTokens `
+                -SubscriptionId $SubscriptionId `
+                -GenerateInfo $GenerateInfo `
+                -Filters $Filters `
+                -Validate:$Validate.IsPresent `
+                -Parallel:$Parallel.IsPresent `
+                -ThrottleLimit $ThrottleLimit `
+                -ResourceSettings $resourceSettings `
+                -ErrorAction $ErrorActionPreference `
+                -WithStatistics:$WithStatistics.IsPresent `
+                -IncludeDependencies:$IncludeDependencies.IsPresent
+        }
+        elseif ($null -ne $Components)
+        {
+            Write-M365DSCHost -Message "Exporting Microsoft 365 configuration for Components: $($Components -join ', ')"
+            Start-M365DSCConfigurationExtract -Credential $Credential `
+                -Components $Components `
+                -ExcludeComponents $ExcludeComponents `
+                -Path $Path -FileName $FileName `
+                -ConfigurationName $ConfigurationName `
+                -ApplicationId $ApplicationId `
+                -ApplicationSecret $ApplicationSecret `
+                -TenantId $TenantId `
+                -CertificateThumbprint $CertificateThumbprint `
+                -CertificatePath $CertificatePath `
+                -CertificatePassword $CertificatePassword `
+                -ManagedIdentity:$ManagedIdentity.IsPresent `
+                -AccessTokens $AccessTokens `
+                -SubscriptionId $SubscriptionId `
+                -GenerateInfo $GenerateInfo `
+                -Filters $Filters `
+                -Validate:$Validate.IsPresent `
+                -Parallel:$Parallel.IsPresent `
+                -ThrottleLimit $ThrottleLimit `
+                -ResourceSettings $resourceSettings `
+                -ErrorAction $ErrorActionPreference `
+                -WithStatistics:$WithStatistics.IsPresent `
+                -IncludeDependencies:$IncludeDependencies.IsPresent
+        }
+        elseif ($null -ne $Mode)
+        {
+            Write-M365DSCHost -Message "Exporting Microsoft 365 configuration for Mode: $Mode"
+            Start-M365DSCConfigurationExtract -Credential $Credential `
+                -Mode $Mode `
+                -ExcludeComponents $ExcludeComponents `
+                -Path $Path -FileName $FileName `
+                -ConfigurationName $ConfigurationName `
+                -ApplicationId $ApplicationId `
+                -ApplicationSecret $ApplicationSecret `
+                -TenantId $TenantId `
+                -CertificateThumbprint $CertificateThumbprint `
+                -CertificatePath $CertificatePath `
+                -CertificatePassword $CertificatePassword `
+                -ManagedIdentity:$ManagedIdentity.IsPresent `
+                -AccessTokens $AccessTokens `
+                -SubscriptionId $SubscriptionId `
+                -GenerateInfo $GenerateInfo `
+                -AllComponents `
+                -Filters $Filters `
+                -Validate:$Validate.IsPresent `
+                -Parallel:$Parallel.IsPresent `
+                -ThrottleLimit $ThrottleLimit `
+                -ResourceSettings $resourceSettings `
+                -ErrorAction $ErrorActionPreference `
+                -WithStatistics:$WithStatistics.IsPresent `
+                -IncludeDependencies:$IncludeDependencies.IsPresent
+        }
     }
-    elseif ($null -ne $Components)
+    finally
     {
-        Write-M365DSCHost -Message "Exporting Microsoft 365 configuration for Components: $($Components -join ', ')"
-        Start-M365DSCConfigurationExtract -Credential $Credential `
-            -Components $Components `
-            -ExcludeComponents $ExcludeComponents `
-            -Path $Path -FileName $FileName `
-            -ConfigurationName $ConfigurationName `
-            -ApplicationId $ApplicationId `
-            -ApplicationSecret $ApplicationSecret `
-            -TenantId $TenantId `
-            -CertificateThumbprint $CertificateThumbprint `
-            -CertificatePath $CertificatePath `
-            -CertificatePassword $CertificatePassword `
-            -ManagedIdentity:$ManagedIdentity.IsPresent `
-            -AccessTokens $AccessTokens `
-            -SubscriptionId $SubscriptionId `
-            -GenerateInfo $GenerateInfo `
-            -Filters $Filters `
-            -Validate:$Validate.IsPresent `
-            -Parallel:$Parallel.IsPresent `
-            -ResourceSettings $resourceSettings `
-            -ErrorAction $ErrorActionPreference `
-            -WithStatistics:$WithStatistics.IsPresent `
-            -IncludeDependencies:$IncludeDependencies.IsPresent
-    }
-    elseif ($null -ne $Mode)
-    {
-        Write-M365DSCHost -Message "Exporting Microsoft 365 configuration for Mode: $Mode"
-        Start-M365DSCConfigurationExtract -Credential $Credential `
-            -Mode $Mode `
-            -ExcludeComponents $ExcludeComponents `
-            -Path $Path -FileName $FileName `
-            -ConfigurationName $ConfigurationName `
-            -ApplicationId $ApplicationId `
-            -ApplicationSecret $ApplicationSecret `
-            -TenantId $TenantId `
-            -CertificateThumbprint $CertificateThumbprint `
-            -CertificatePath $CertificatePath `
-            -CertificatePassword $CertificatePassword `
-            -ManagedIdentity:$ManagedIdentity.IsPresent `
-            -AccessTokens $AccessTokens `
-            -SubscriptionId $SubscriptionId `
-            -GenerateInfo $GenerateInfo `
-            -AllComponents `
-            -Filters $Filters `
-            -Validate:$Validate.IsPresent `
-            -Parallel:$Parallel.IsPresent `
-            -ResourceSettings $resourceSettings `
-            -ErrorAction $ErrorActionPreference `
-            -WithStatistics:$WithStatistics.IsPresent `
-            -IncludeDependencies:$IncludeDependencies.IsPresent
+        Reset-M365DSCExportCollectionCache
+        Reset-M365DSCConnectionFailureCache
     }
 
-    # Clear the exported resource instances' names Global variable
-    $Global:M365DSCExportedResourceInstancesNames = $null
-    $Global:M365DSCExportedResourceInstances = $null
-    $Global:M365DSCExportDependencies = $null
+    if ($IncludeDependencies.IsPresent)
+    {
+        $relationSession = [Microsoft365DSC.Relations.ExportRelationSession]::Current
+        if ($null -eq $relationSession -or $relationSession.InstanceCount -eq 0)
+        {
+            Write-Warning -Message ('No resource instances were recorded for dependency tracking, so no DependsOn ' + `
+                'statements were generated. Please report this at https://github.com/Microsoft365DSC/Microsoft365DSC.')
+        }
+    }
+
+    # Release the export-scoped state held on the relation assembly
+    [Microsoft365DSC.Relations.ExportInstanceNames]::Reset()
+    [Microsoft365DSC.Relations.ExportRelationSession]::Reset()
+    [Microsoft365DSC.Intune.ConfigurationPolicyCache]::Reset()
+    Reset-M365DSCExportCollectionCache
+    Reset-M365DSCConnectionFailureCache
     $Global:M365DSCExportInProgress = $false
 
     $data = [System.Collections.Generic.Dictionary[[System.String], [System.Object]]]::new()
@@ -616,6 +720,9 @@ function Get-M365DSCResourcesByExportMode
 .PARAMETER SkipAuthenticationUpdate
     Indicates that authentication fields should not be transformed.
 
+.PARAMETER SkipRemoveSpecialCharacters
+    Indicates that special characters should not be removed from the resource instance name.
+
 .PARAMETER AllowVariablesInStrings
     Indicates that variable placeholders may be preserved inside strings.
 
@@ -662,6 +769,10 @@ function Get-M365DSCExportContentForResource
 
         [Parameter()]
         [switch]
+        $SkipRemoveSpecialCharacters,
+
+        [Parameter()]
+        [switch]
         $AllowVariablesInStrings,
 
         [Parameter()]
@@ -700,20 +811,7 @@ function Get-M365DSCExportContentForResource
     }
     else
     {
-        $Resource = (Get-M365DSCAllResourcesDictionary).$ResourceName
-        $Keys = $Resource.Properties.Where({ $_.IsMandatory }) | Select-Object -ExpandProperty Name
-        if ($null -eq $Keys)
-        {
-            $moduleFullName = 'MSFT_' + $ResourceName
-            if (-not (Get-Module $moduleFullName))
-            {
-                $m365dscModuleBase = (Get-Module -Name 'Microsoft365DSC').ModuleBase
-                $moduleFullNamePath = Join-Path -Path $m365dscModuleBase -ChildPath "DscResources/$moduleFullName/$moduleFullName.psm1"
-                Import-Module $moduleFullNamePath -Force
-            }
-            $cmdInfo = Get-Command $moduleFullName\Get-TargetResource -ErrorAction SilentlyContinue
-            $Keys = $cmdInfo.Parameters.Values.Where({ $_.ParameterSets.Values.IsMandatory }).Name
-        }
+        $Keys = @(Get-M365DSCResourceMandatoryKey -ResourceName $ResourceName)
         $Script:M365DSCMandatoryKeyCache[$ResourceName] = $Keys
     }
 
@@ -773,16 +871,14 @@ function Get-M365DSCExportContentForResource
     $instanceName = $ResourceName
     if (-not [System.String]::IsNullOrEmpty($primaryKey))
     {
-        if ($AllowVariablesInStrings)
+        if ($SkipRemoveSpecialCharacters)
         {
-            $primaryKey = $primaryKey.Replace('`', '``').Replace('"', '`"')
+            $instanceName += "-$primaryKey"
         }
         else
         {
-            $primaryKey = $primaryKey.Replace('`', '``').Replace('$', '`$').Replace('"', '`"')
+            $instanceName += "-$(Remove-M365DSCSpecialCharacters -String $primaryKey)"
         }
-        $primaryKey = Update-M365DSCSpecialCharacters -String $primaryKey
-        $instanceName += "-$primaryKey"
     }
 
     if ($Results.ContainsKey('Workload'))
@@ -790,45 +886,24 @@ function Get-M365DSCExportContentForResource
         $instanceName += "-$($Results.Workload)"
     }
 
-    # Check to see if a resource with this exact name was already exported, if so, append a number to the end.
-    $i = 2
-    $tempName = $instanceName
-    if ($null -eq $Global:M365DSCExportedResourceInstancesNames)
-    {
-        $Global:M365DSCExportedResourceInstancesNames = [System.Collections.Generic.HashSet[System.String]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    }
-    while ($null -ne $Global:M365DSCExportedResourceInstancesNames -and `
-            $Global:M365DSCExportedResourceInstancesNames.Contains($tempName))
-    {
-        $tempName = $instanceName + '-' + $i.ToString()
-        $i++
-    }
-    $instanceName = $tempName
-    [void]$Global:M365DSCExportedResourceInstancesNames.Add($tempName)
+    # Check to see if a resource with this exact name was already exported, if so, append a
+    # number to the end. Claiming the name is one atomic operation on the shared registry, so
+    # two runspaces of a parallel export cannot both decide the same name is free.
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    $instanceName = [Microsoft365DSC.Relations.ExportInstanceNames]::Reserve($instanceName)
 
-    # Register this instance in the dependency tracking registry
-    if ($null -ne $Global:M365DSCExportedResourceInstances)
-    {
-        $registryKey = "[$ResourceName]$instanceName"
-        $Global:M365DSCExportedResourceInstances[$registryKey] = @{
-            InstanceName = $instanceName
-            ResourceName = $ResourceName
-            PrimaryKey   = $primaryKey
-            Results      = $Results
-        }
-    }
-
-    # Resolve cross-resource relations and register dependencies
-    if ($null -ne $Global:M365DSCExportDependencies)
+    # Record the instance and resolve its cross-resource relations
+    $relationSession = Get-M365DSCExportRelationSession
+    if ($null -ne $relationSession)
     {
         $resolveResults = $Results
         if ($null -ne $RawResults)
         {
             $resolveResults = $RawResults
         }
-        Resolve-M365DSCExportRelations -ResourceName $ResourceName `
-            -InstanceName $instanceName `
-            -Results $resolveResults
+
+        $relationSession.RegisterInstance($ResourceName, $instanceName, $primaryKey, $resolveResults)
+        $relationSession.ResolveRelations($ResourceName, $instanceName, $resolveResults)
     }
 
     $content = [System.Text.StringBuilder]::new()
@@ -836,7 +911,7 @@ function Get-M365DSCExportContentForResource
     [void]$content.Append("        {`r`n")
     $partialContent = Get-DSCBlock -Params $Results -ModulePath $ModulePath -NoEscape $NoEscape -AllowVariablesInStrings:$AllowVariablesInStrings
 
-    if ($partialContent.ToLower().IndexOf($OrganizationName.ToLower()) -gt 0)
+    if ($partialContent.IndexOf($OrganizationName, [System.StringComparison]::OrdinalIgnoreCase) -gt 0)
     {
         if (-not $Script:M365DSCCompiledRegexCache.ContainsKey("OrgColon_$OrganizationName"))
         {
@@ -872,7 +947,7 @@ function Get-M365DSCExportContentForResource
                 continue
             }
 
-            if ($partialContent.ToLower().IndexOf($target.ToLower()) -gt 0)
+            if ($partialContent.IndexOf($target, [System.StringComparison]::OrdinalIgnoreCase) -gt 0)
             {
                 $cacheKeyBase = "Map_$target"
                 if (-not $Script:M365DSCCompiledRegexCache.ContainsKey("${cacheKeyBase}_colon"))
@@ -890,6 +965,11 @@ function Get-M365DSCExportContentForResource
 
     [void]$content.Append($partialContent)
     [void]$content.Append("        }`r`n")
+
+    if ($null -ne $Global:M365DSCExportInstanceTally)
+    {
+        $Global:M365DSCExportInstanceTally++
+    }
 
     return $content.ToString()
 }
@@ -1352,15 +1432,310 @@ function Register-M365DSCExportDependency
         $TargetKey
     )
 
-    if ($null -ne $Global:M365DSCExportDependencies)
+    $session = Get-M365DSCExportRelationSession
+    if ($null -ne $session)
     {
-        $Global:M365DSCExportDependencies += @{
-            SourceInstanceName = $SourceInstanceName
-            SourceResourceName = $SourceResourceName
-            TargetResourceType = $TargetResourceType
-            TargetKey          = $TargetKey
+        $session.RegisterDependency($SourceInstanceName, $SourceResourceName, $TargetResourceType, $TargetKey)
+    }
+}
+
+<#
+.SYNOPSIS
+    Removes JavaScript-style comments from a JSON document.
+
+.DESCRIPTION
+    The relation templates are annotated with // and /* */ comments. Windows PowerShell's
+    ConvertFrom-Json rejects those, so they are stripped before parsing on that edition.
+    The scanner tracks string literals so that a comment marker appearing inside a value is
+    left untouched.
+
+    This exists only to keep Windows PowerShell working. Delete it, and its caller in
+    Get-M365DSCRelationIndex, once the module requires PowerShell 7.
+
+.PARAMETER Json
+    Specifies the raw JSON document.
+
+.OUTPUTS
+    System.String
+
+.FUNCTIONALITY
+    Internal
+#>
+function Remove-M365DSCJsonComment
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [System.String]
+        $Json
+    )
+
+    $builder = [System.Text.StringBuilder]::new($Json.Length)
+    $inString = $false
+    $escaped = $false
+    $index = 0
+
+    while ($index -lt $Json.Length)
+    {
+        $character = $Json[$index]
+
+        if ($inString)
+        {
+            [void]$builder.Append($character)
+            if ($escaped)
+            {
+                $escaped = $false
+            }
+            elseif ($character -eq '\')
+            {
+                $escaped = $true
+            }
+            elseif ($character -eq '"')
+            {
+                $inString = $false
+            }
+
+            $index++
+            continue
+        }
+
+        if ($character -eq '"')
+        {
+            $inString = $true
+            [void]$builder.Append($character)
+            $index++
+            continue
+        }
+
+        if ($character -eq '/' -and ($index + 1) -lt $Json.Length)
+        {
+            $next = $Json[$index + 1]
+
+            if ($next -eq '/')
+            {
+                while ($index -lt $Json.Length -and $Json[$index] -ne "`n")
+                {
+                    $index++
+                }
+                continue
+            }
+
+            if ($next -eq '*')
+            {
+                $index += 2
+                while (($index + 1) -lt $Json.Length -and -not ($Json[$index] -eq '*' -and $Json[$index + 1] -eq '/'))
+                {
+                    $index++
+                }
+                $index += 2
+                continue
+            }
+        }
+
+        [void]$builder.Append($character)
+        $index++
+    }
+
+    return $builder.ToString()
+}
+
+<#
+.SYNOPSIS
+    Expands relation entries, resolving any template references they contain.
+
+.DESCRIPTION
+    A relation may be a $ref pointing at another template rather than a relation of its own.
+    This returns a flat list with every reference replaced by the relations it names.
+
+.PARAMETER Relations
+    Specifies the relation entries to expand.
+
+.PARAMETER Templates
+    Specifies all templates, used to look references up.
+
+.PARAMETER Visited
+    Specifies the template names already being expanded, used to stop reference cycles.
+
+.OUTPUTS
+    System.Collections.Generic.List[System.Object]
+
+.FUNCTIONALITY
+    Internal
+#>
+function Expand-M365DSCRelationTemplate
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Generic.List[System.Object]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [System.Object]
+        $Relations,
+
+        [Parameter(Mandatory = $true)]
+        [System.Object]
+        $Templates,
+
+        [Parameter()]
+        [System.Collections.Generic.HashSet[System.String]]
+        $Visited
+    )
+
+    if ($null -eq $Visited)
+    {
+        $Visited = [System.Collections.Generic.HashSet[System.String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    }
+
+    $expanded = [System.Collections.Generic.List[System.Object]]::new()
+    foreach ($relation in $Relations)
+    {
+        $reference = $relation.'$ref'
+        if ([System.String]::IsNullOrEmpty($reference))
+        {
+            $expanded.Add($relation)
+            continue
+        }
+
+        $referencedName = $reference.Split('/')[-1]
+        if (-not $Visited.Add($referencedName))
+        {
+            Write-Verbose -Message "Skipping circular relation template reference '$referencedName'."
+            continue
+        }
+
+        $referenced = Expand-M365DSCRelationTemplate -Relations $Templates.$referencedName.relations `
+            -Templates $Templates `
+            -Visited $Visited
+        $expanded.AddRange($referenced)
+        [void]$Visited.Remove($referencedName)
+    }
+
+    return , $expanded
+}
+
+<#
+.SYNOPSIS
+    Returns the relation index, building it on first use.
+
+.DESCRIPTION
+    Parses M365DSCRelationTemplates.json and inverts it into a lookup keyed by resource name.
+    The templates list the resources each relation applies to, so without this inversion every
+    exported instance would have to scan every template.
+
+    Parsing stays in PowerShell deliberately: handing the parsed schema to the relation
+    assembly keeps that assembly free of a JSON dependency, and therefore free of assembly
+    version conflicts with other modules loaded in the same session.
+
+.OUTPUTS
+    Microsoft365DSC.Relations.RelationIndex
+
+.FUNCTIONALITY
+    Internal
+#>
+function Get-M365DSCRelationIndex
+{
+    [CmdletBinding()]
+    # Quoted so the attribute does not force the type to resolve while the module is being
+    # parsed, which happens before the assemblies are loaded.
+    [OutputType('Microsoft365DSC.Relations.RelationIndex')]
+    param()
+
+    if ($null -ne $Script:M365DSCRelationIndex)
+    {
+        return $Script:M365DSCRelationIndex
+    }
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    $templatesPath = Join-Path -Path $PSScriptRoot -ChildPath 'M365DSCRelationTemplates.json'
+    $rawTemplates = Get-Content -Path $templatesPath -Raw
+
+    if ($PSVersionTable.PSEdition -eq 'Desktop')
+    {
+        $rawTemplates = Remove-M365DSCJsonComment -Json $rawTemplates
+    }
+
+    $templates = ($rawTemplates | ConvertFrom-Json).templates
+    $builder = [Microsoft365DSC.Relations.RelationIndexBuilder]::new()
+
+    foreach ($template in $templates.PSObject.Properties)
+    {
+        $relations = Expand-M365DSCRelationTemplate -Relations $template.Value.relations -Templates $templates
+        foreach ($resourceName in $template.Value.resources)
+        {
+            foreach ($relation in $relations)
+            {
+                $builder.AddRelation(
+                    $resourceName,
+                    $relation.property,
+                    $relation.childProperty,
+                    $relation.targetResource,
+                    $relation.targetKeyProperty,
+                    $relation.condition)
+            }
         }
     }
+
+    $Script:M365DSCRelationIndex = $builder.Build()
+    return $Script:M365DSCRelationIndex
+}
+
+<#
+.SYNOPSIS
+    Creates the relation session used to collect dependencies during an export.
+
+.DESCRIPTION
+    Returns a session that records exported instances, accumulates the references between
+    them, and rewrites the finished configuration with DependsOn declarations.
+
+.OUTPUTS
+    Microsoft365DSC.Relations.ExportRelationSession
+
+.FUNCTIONALITY
+    Internal
+#>
+function New-M365DSCExportRelationSession
+{
+    [CmdletBinding()]
+    [OutputType('Microsoft365DSC.Relations.ExportRelationSession')]
+    param()
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    $index = Get-M365DSCRelationIndex
+
+    return [Microsoft365DSC.Relations.ExportRelationSession]::Start($index)
+}
+
+<#
+.SYNOPSIS
+    Returns the relation session the running export is accumulating into.
+
+.DESCRIPTION
+    The session lives on the relation assembly rather than in a variable. A parallel export
+    runs its resources in a pool of runspaces, and PowerShell variables are not shared across
+    runspaces, so a session held in one would be invisible to the workers that need to write
+    to it. The assemblies are loaded once per process, so static state on them is visible
+    everywhere.
+
+.OUTPUTS
+    Microsoft365DSC.Relations.ExportRelationSession, or $null when the export was not asked
+    for dependency tracking.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Get-M365DSCExportRelationSession
+{
+    [CmdletBinding()]
+    [OutputType('Microsoft365DSC.Relations.ExportRelationSession')]
+    param()
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    return [Microsoft365DSC.Relations.ExportRelationSession]::Current
 }
 
 <#
@@ -1397,218 +1772,13 @@ function Resolve-M365DSCExportRelations
         $Results
     )
 
-    # Determine relations from template
-    $relations = @()
-    foreach ($template in $Script:RelationTemplates.templates.GetEnumerator())
-    {
-        if ($template.Value.resources.Contains($ResourceName))
-        {
-            $resourceRelations = $template.Value.relations
-            foreach ($relation in $resourceRelations)
-            {
-                if ($null -ne $relation.'$ref')
-                {
-                    $templateName = $relation.'$ref'.Split("/")[-1]
-                    $relations += $Script:RelationTemplates.templates.$templateName.relations
-                    continue
-                }
-                $relations += $relation
-            }
-        }
-    }
-
-    if ($relations.Count -eq 0)
+    $session = Get-M365DSCExportRelationSession
+    if ($null -eq $session)
     {
         return
     }
 
-    foreach ($relation in $relations)
-    {
-        $propertyValue = $Results
-        $splittedProperty = $relation.property.Split('.')
-        for ($i = 0; $i -lt $splittedProperty.Count; $i++)
-        {
-            $propertyName = $splittedProperty[$i]
-            if ($propertyValue -is [System.Array])
-            {
-                if ($propertyValue.Count -eq 0)
-                {
-                    continue
-                }
-
-                $found = $false
-                $propertyValue | Foreach-Object {
-                    if ($_ -is [System.Collections.IDictionary] -and $_.Contains($propertyName))
-                    {
-                        $found = $true
-                    }
-                }
-                if (-not $found)
-                {
-                    continue
-                }
-            }
-            else
-            {
-                if (-not $propertyValue.ContainsKey($propertyName))
-                {
-                    continue
-                }
-            }
-
-            $propertyValue = $propertyValue.$propertyName
-            if ($null -eq $propertyValue)
-            {
-                continue
-            }
-        }
-
-        # Handle array of complex objects (e.g., Assignments)
-        if ($propertyValue -is [System.Array])
-        {
-            foreach ($item in $propertyValue)
-            {
-                $targetKey = Get-M365DSCRelationTargetKey -Item $item -Relation $relation
-                if (-not [System.String]::IsNullOrEmpty($targetKey))
-                {
-                    Register-M365DSCExportDependency -SourceInstanceName $InstanceName `
-                        -SourceResourceName $ResourceName `
-                        -TargetResourceType $relation.targetResource `
-                        -TargetKey $targetKey
-                }
-            }
-        }
-        elseif ($propertyValue -is [System.Collections.IDictionary] -or $propertyValue -is [Microsoft.Management.Infrastructure.CimInstance])
-        {
-            $targetKey = Get-M365DSCRelationTargetKey -Item $propertyValue -Relation $relation
-            if (-not [System.String]::IsNullOrEmpty($targetKey))
-            {
-                Register-M365DSCExportDependency -SourceInstanceName $InstanceName `
-                    -SourceResourceName $ResourceName `
-                    -TargetResourceType $relation.targetResource `
-                    -TargetKey $targetKey
-            }
-        }
-        else
-        {
-            # Simple string property referencing a target resource key directly
-            Register-M365DSCExportDependency -SourceInstanceName $InstanceName `
-                -SourceResourceName $ResourceName `
-                -TargetResourceType $relation.targetResource `
-                -TargetKey $propertyValue.ToString()
-        }
-    }
-}
-
-<#
-.Description
-    Extracts the target key value from a complex item based on the relation definition.
-
-.Functionality
-    Internal
-#>
-function Get-M365DSCRelationTargetKey
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.Object]
-        $Item,
-
-        [Parameter(Mandatory = $true)]
-        [System.Object]
-        $Relation
-    )
-
-    # If there's a condition, check it first
-    if (-not [System.String]::IsNullOrEmpty($Relation.condition))
-    {
-        $conditionMet = Test-M365DSCRelationCondition -Item $Item -Condition $Relation.condition
-        if (-not $conditionMet)
-        {
-            return $null
-        }
-    }
-
-    # Extract the child property value
-    $childProperty = $Relation.childProperty
-    $value = $null
-
-    if ($Item -is [System.Collections.IDictionary])
-    {
-        if ($Item.Contains($childProperty))
-        {
-            $value = $Item[$childProperty]
-        }
-    }
-    elseif ($null -ne $Item)
-    {
-        $value = $Item.$childProperty
-    }
-
-    if ([System.String]::IsNullOrEmpty($value))
-    {
-        return $null
-    }
-
-    return $value.ToString()
-}
-
-<#
-.Description
-    Evaluates a simple condition expression against a complex object item.
-    Supports: "propertyName in ['value1', 'value2']"
-
-.Functionality
-    Internal
-#>
-function Test-M365DSCRelationCondition
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.Object]
-        $Item,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Condition
-    )
-
-    # Parse "propertyName in ['value1', 'value2']" pattern
-    if ($Condition -match "^(\w+)\s+in\s+\[(.+)\]$")
-    {
-        $propName = $Matches[1]
-        $valuesString = $Matches[2]
-        $allowedValues = $valuesString -split ',\s*' | ForEach-Object { $_.Trim().Trim("'").Trim('"') }
-
-        $itemValue = $null
-        if ($Item -is [System.Collections.Hashtable])
-        {
-            if ($Item.ContainsKey($propName))
-            {
-                $itemValue = $Item[$propName]
-            }
-        }
-        elseif ($null -ne $Item)
-        {
-            $itemValue = $Item.$propName
-        }
-
-        if ($null -eq $itemValue)
-        {
-            return $false
-        }
-
-        return ($allowedValues -contains $itemValue.ToString())
-    }
-
-    # Unknown condition format - default to true
-    return $true
+    $session.ResolveRelations($ResourceName, $InstanceName, $Results)
 }
 
 <#
@@ -1635,130 +1805,91 @@ function Add-M365DSCExportDependsOn
         $DSCContent
     )
 
-    if ($null -eq $Global:M365DSCExportDependencies -or $Global:M365DSCExportDependencies.Count -eq 0)
+    $session = Get-M365DSCExportRelationSession
+    if ($null -eq $session -or $session.DependencyCount -eq 0)
     {
         return $DSCContent
     }
 
-    if ($null -eq $Global:M365DSCExportedResourceInstances)
+    $processedContent = $session.InjectDependsOn($DSCContent, (New-M365DSCStubBlockOption))
+
+    foreach ($warning in $session.Warnings)
     {
-        return $DSCContent
+        Write-Verbose -Message $warning
     }
 
-    # Build a lookup from target resource+key to instance reference
-    $targetLookup = @{}
-    foreach ($entry in $Global:M365DSCExportedResourceInstances.GetEnumerator())
+    return $processedContent
+}
+
+<#
+.SYNOPSIS
+    Collects the inputs needed to render dependency stub blocks.
+
+.DESCRIPTION
+    Gathers the mandatory properties of every resource and the authentication properties for
+    the current connection mode, so the relation assembly can render stubs without calling
+    back into the module while it rewrites the configuration.
+
+.OUTPUTS
+    Microsoft365DSC.Relations.StubBlockOptions
+
+.FUNCTIONALITY
+    Internal
+#>
+function New-M365DSCStubBlockOption
+{
+    [CmdletBinding()]
+    [OutputType('Microsoft365DSC.Relations.StubBlockOptions')]
+    param()
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    # The type and any allowed values travel with each property, so a stub can be given a
+    # placeholder of the right shape for every mandatory property instead of only for the
+    # handful whose names happen to be recognised.
+    $mandatoryProperties = @{}
+    try
     {
-        $inst = $entry.Value
-        $lookupKey = "$($inst.ResourceName)|$($inst.PrimaryKey)"
-        $targetLookup[$lookupKey] = $entry.Key
-    }
-
-    # Group dependencies by source instance
-    $dependenciesBySource = @{}
-    $unresolvedTargets = @{}
-
-    foreach ($dep in $Global:M365DSCExportDependencies)
-    {
-        $lookupKey = "$($dep.TargetResourceType)|$($dep.TargetKey)"
-        $targetRef = $targetLookup[$lookupKey]
-
-        if ($null -ne $targetRef)
+        foreach ($resourceName in (Get-M365DSCAllResources))
         {
-            # Target was exported - add DependsOn reference
-            $sourceRef = "[$($dep.SourceResourceName)]$($dep.SourceInstanceName)"
-            if (-not $dependenciesBySource.ContainsKey($sourceRef))
+            $definition = Get-M365DSCResourceDefinition -ResourceName $resourceName
+            if ($null -eq $definition)
             {
-                $dependenciesBySource[$sourceRef] = @()
+                continue
             }
-            if ($dependenciesBySource[$sourceRef] -notcontains $targetRef)
-            {
-                $dependenciesBySource[$sourceRef] += $targetRef
-            }
-        }
-        else
-        {
-            # Target was NOT exported - needs a stub
-            $stubKey = "$($dep.TargetResourceType)|$($dep.TargetKey)"
-            if (-not $unresolvedTargets.ContainsKey($stubKey))
-            {
-                $unresolvedTargets[$stubKey] = @{
-                    ResourceType = $dep.TargetResourceType
-                    TargetKey    = $dep.TargetKey
+
+            $properties = @($definition.Properties.Where({ $_.IsMandatory }) | ForEach-Object {
+                @{
+                    Name         = $_.Name
+                    PropertyType = $_.PropertyType
+                    Values       = [System.String[]]@($_.Values)
                 }
-            }
+            })
 
-            # Still record the dependency for injection after stub is created
-            $sourceRef = "[$($dep.SourceResourceName)]$($dep.SourceInstanceName)"
-            if (-not $dependenciesBySource.ContainsKey($sourceRef))
+            if ($properties.Count -gt 0)
             {
-                $dependenciesBySource[$sourceRef] = @()
-            }
-            $stubInstanceName = "$($dep.TargetResourceType)-$($dep.TargetKey)"
-            $stubRef = "[$($dep.TargetResourceType)]$stubInstanceName"
-            if ($dependenciesBySource[$sourceRef] -notcontains $stubRef)
-            {
-                $dependenciesBySource[$sourceRef] += $stubRef
+                $mandatoryProperties[$resourceName] = $properties
             }
         }
     }
-
-    # Inject DependsOn into each source block
-    foreach ($sourceEntry in $dependenciesBySource.GetEnumerator())
+    catch
     {
-        $sourceRef = $sourceEntry.Key
-        $targets = $sourceEntry.Value
-
-        # Parse resource name and instance name from "[ResourceName]InstanceName"
-        if ($sourceRef -match '^\[([^\]]+)\](.+)$')
-        {
-            $srcResourceName = $Matches[1]
-            $srcInstanceName = $Matches[2]
-
-            # Build DependsOn line
-            $dependsOnEntries = Get-M365DSCArrayFromProperty -PropertyValue ($targets | ForEach-Object { "`"$_`"" }) -ElementType ([System.String])
-            if ($dependsOnEntries.Count -eq 1)
-            {
-                $dependsOnLine = "            DependsOn = @($($dependsOnEntries[0]))"
-            }
-            else
-            {
-                $dependsOnLine = "            DependsOn = @($($dependsOnEntries -join ', '))"
-            }
-
-            # Find the closing brace of this resource block and inject DependsOn before it
-            $blockPattern = "        $srcResourceName `"$srcInstanceName`""
-            $blockStart = $DSCContent.IndexOf($blockPattern)
-            if ($blockStart -ge 0)
-            {
-                # Find the closing "        }" for this block
-                $searchFrom = $blockStart + $blockPattern.Length
-                $closingBrace = $DSCContent.IndexOf("`r`n        }`r`n", $searchFrom)
-                if ($closingBrace -gt 0)
-                {
-                    $DSCContent = $DSCContent.Insert($closingBrace + 1, $dependsOnLine)
-                }
-            }
-        }
+        Write-Verbose -Message "Unable to load resource dictionary for stub generation: $_"
     }
 
-    # Generate stub blocks for unresolved targets
-    if ($unresolvedTargets.Count -gt 0)
+    # ConnectionMode is only set once an export has authenticated; without that guard the
+    # hashtable lookup below throws on a null key.
+    $authenticationProperties = @()
+    if (-not [System.String]::IsNullOrEmpty($Script:ConnectionMode))
     {
-        $stubContent = Get-M365DSCMinimalExportBlocks -UnresolvedTargets $unresolvedTargets
-        if (-not [System.String]::IsNullOrEmpty($stubContent))
-        {
-            # Insert stubs before the closing "    }" of the Node block
-            # Just after the last resource block's closing brace
-            $nodeClose = $DSCContent.LastIndexOf("        }`r`n")
-            if ($nodeClose -gt 0)
-            {
-                $DSCContent = $DSCContent.Insert($nodeClose + 11, $stubContent)
-            }
-        }
+        $authenticationProperties = $Script:M365DSCAuthenticationParameterSet.$($Script:ConnectionMode)
     }
 
-    return $DSCContent
+    $options = [Microsoft365DSC.Relations.StubBlockOptions]::new()
+    $options.MandatoryPropertiesByResource = $mandatoryProperties
+    $options.AuthenticationProperties = [System.String[]]@($authenticationProperties)
+
+    return $options
 }
 
 <#
@@ -1785,85 +1916,583 @@ function Get-M365DSCMinimalExportBlocks
         $UnresolvedTargets
     )
 
-    $stubBuilder = [System.Text.StringBuilder]::new()
-    [void]$stubBuilder.Append("`r`n        # Dependency stubs - minimal resource blocks for referenced resources`r`n")
+    Initialize-M365DSCDllLoader -ErrorAction Stop
 
-    $dictionary = $null
-    try
-    {
-        $dictionary = Get-M365DSCAllResourcesDictionary
-    }
-    catch
-    {
-        Write-Verbose -Message "Unable to load resource dictionary for stub generation: $_"
-        return ''
-    }
-
-    foreach ($target in $UnresolvedTargets.GetEnumerator())
-    {
-        $resourceType = $target.Value.ResourceType
-        $targetKey = $target.Value.TargetKey
-        $instanceName = "$resourceType-$targetKey"
-
-        # Get key properties from the resource dictionary
-        $resourceInfo = $null
-        if ($null -ne $dictionary -and $dictionary.ContainsKey($resourceType))
-        {
-            $resourceInfo = $dictionary[$resourceType]
-        }
-
-        [void]$stubBuilder.Append("        $resourceType `"$instanceName`"`r`n")
-        [void]$stubBuilder.Append("        {`r`n")
-
-        if ($null -ne $resourceInfo)
-        {
-            $keyProps = $resourceInfo.Properties | Where-Object -Property IsMandatory -EQ $true
-            foreach ($prop in $keyProps)
-            {
-                if ($prop.Name -eq 'IsSingleInstance')
-                {
-                    [void]$stubBuilder.Append("            IsSingleInstance = `"Yes`"`r`n")
-                }
-                elseif ($prop.Name -eq 'MailEnabled')
-                {
-                    [void]$stubBuilder.Append("            $($prop.Name) = `$false`r`n")
-                }
-                elseif ($prop.Name -eq 'SecurityEnabled')
-                {
-                    [void]$stubBuilder.Append("            $($prop.Name) = `$true`r`n")
-                }
-                elseif ($prop.Name -in @('DisplayName', 'MailNickName', 'Name', 'Title', 'Identity', 'Id'))
-                {
-                    [void]$stubBuilder.Append("            $($prop.Name) = `"$targetKey`"`r`n")
-                }
-            }
-
-            foreach ($prop in $Script:M365DSCAuthenticationParameterSet.$($Script:ConnectionMode))
-            {
-                if ($prop -eq 'ManagedIdentity')
-                {
-                    [void]$stubBuilder.Append("            $($prop) = `$true`r`n")
-                }
-                else
-                {
-                    [void]$stubBuilder.Append("            $($prop) = `$ConfigurationData.NonNodeData.$($prop)`r`n")
-                }
-            }
-        }
-        else
-        {
-            # Fallback: assume DisplayName is the key
-            [void]$stubBuilder.Append("            DisplayName = `"$targetKey`"`r`n")
-        }
-
-        [void]$stubBuilder.Append("            Ensure      = `"Present`"`r`n")
-        [void]$stubBuilder.Append("        }`r`n")
-    }
-
-    return $stubBuilder.ToString()
+    return [Microsoft365DSC.Relations.DependsOnInjector]::RenderStubs($UnresolvedTargets.Values, (New-M365DSCStubBlockOption))
 }
 
+<#
+.SYNOPSIS
+    Maps each export collection cache key to the resources that consume it.
+
+.DESCRIPTION
+    Returns the resource names whose Export() lists a collection through Get-M365DSCExportCachedCollection,
+    keyed by collection. Used to register and release cache consumers during an export.
+
+.OUTPUTS
+    System.Collections.Hashtable
+#>
+function Get-M365DSCExportCollectionConsumerMap
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param ()
+
+    return @{
+        deviceConfigurations           = @(
+            'IntuneDeviceConfigurationCustomPolicyMacOS',
+            'IntuneDeviceConfigurationCustomPolicyWindows10',
+            'IntuneDeviceConfigurationCustomPolicyiOS',
+            'IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10',
+            'IntuneDeviceConfigurationDomainJoinPolicyWindows10',
+            'IntuneDeviceConfigurationEmailProfilePolicyWindows10',
+            'IntuneDeviceConfigurationEndpointProtectionPolicyWindows10',
+            'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10',
+            'IntuneDeviceConfigurationHealthMonitoringPolicyWindows10',
+            'IntuneDeviceConfigurationIdentityProtectionPolicyWindows10',
+            'IntuneDeviceConfigurationImportedPfxCertificatePolicyWindows10',
+            'IntuneDeviceConfigurationKioskPolicyWindows10',
+            'IntuneDeviceConfigurationNetworkBoundaryPolicyWindows10',
+            'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10',
+            'IntuneDeviceConfigurationPolicyAndroidDeviceOwner',
+            'IntuneDeviceConfigurationPolicyAndroidOpenSourceProject',
+            'IntuneDeviceConfigurationPolicyAndroidWorkProfile',
+            'IntuneDeviceConfigurationPolicyMacOS',
+            'IntuneDeviceConfigurationPolicyWindows10',
+            'IntuneDeviceConfigurationPolicyiOS',
+            'IntuneDeviceConfigurationSCEPCertificatePolicyWindows10',
+            'IntuneDeviceConfigurationSecureAssessmentPolicyWindows10',
+            'IntuneDeviceConfigurationSharedMultiDevicePolicyWindows10',
+            'IntuneDeviceConfigurationTrustedCertificatePolicyWindows10',
+            'IntuneDeviceConfigurationVpnPolicyWindows10',
+            'IntuneDeviceConfigurationWindowsTeamPolicyWindows10',
+            'IntuneDeviceConfigurationWiredNetworkPolicyMacOS',
+            'IntuneDeviceConfigurationWiredNetworkPolicyWindows10',
+            'IntuneDeviceFeaturesConfigurationPolicyIOS',
+            'IntuneDeviceFeaturesConfigurationPolicyMacOS',
+            'IntuneTrustedRootCertificateAndroidDeviceOwner',
+            'IntuneTrustedRootCertificateAndroidWork',
+            'IntuneTrustedRootCertificateIOS',
+            'IntuneVPNConfigurationPolicyAndroidDeviceOwner',
+            'IntuneVPNConfigurationPolicyAndroidWork',
+            'IntuneVPNConfigurationPolicyIOS',
+            'IntuneVPNConfigurationPolicyMacOS',
+            'IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner',
+            'IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile',
+            'IntuneWifiConfigurationPolicyAndroidForWork',
+            'IntuneWifiConfigurationPolicyAndroidOpenSourceProject',
+            'IntuneWifiConfigurationPolicyIOS',
+            'IntuneWifiConfigurationPolicyMacOS',
+            'IntuneWifiConfigurationPolicyWindows10',
+            'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10'
+        )
+        deviceCompliancePolicies       = @(
+            'IntuneDeviceCompliancePolicyAndroidDeviceOwner',
+            'IntuneDeviceCompliancePolicyAndroidWorkProfile',
+            'IntuneDeviceCompliancePolicyMacOS',
+            'IntuneDeviceCompliancePolicyWindows10',
+            'IntuneDeviceCompliancePolicyiOs'
+        )
+        deviceEnrollmentConfigurations = @(
+            'IntuneDeviceEnrollmentLimitRestriction',
+            'IntuneDeviceEnrollmentPlatformRestriction',
+            'IntuneDeviceEnrollmentStatusPageWindows10',
+            'IntuneWindowsBackupForOrganizationConfiguration',
+            'IntuneWindowsHelloForBusinessGlobalPolicy'
+        )
+        exoMailboxes                   = @(
+            'EXOCalendarProcessing',
+            'EXOFocusedInbox',
+            'EXOMailboxAutoReplyConfiguration',
+            'EXOMailboxCalendarConfiguration',
+            'EXOMailboxCalendarFolder',
+            'EXOMailboxIRMAccess',
+            'EXOMailboxPermission',
+            'EXOMailboxSettings',
+            'EXOSweepRule'
+        )
+        exoUsers                       = @(
+            'EXOCalendarProcessing',
+            'EXOMailboxPermission',
+            'EXORecipientPermission'
+        )
+        pimGroups                      = @(
+            'AADGroupEligibilitySchedule',
+            'AADGroupEligibilityScheduleSettings',
+            'AADPIMGroupSetting'
+        )
+        reusablePolicySettings         = @(
+            'IntuneDeviceComplianceScriptLinux',
+            'IntuneDeviceControlPolicySetting',
+            'IntuneEpmCertificatePolicySetting',
+            'IntuneFirewallPolicySetting'
+        )
+    }
+}
+
+<#
+.SYNOPSIS
+    Clears and enables the export collection cache for a new export session.
+
+.DESCRIPTION
+    Resets the process-wide export collection cache and enables it so that resources exported in this
+    session share one download per Graph collection.
+#>
+function Initialize-M365DSCExportCollectionCache
+{
+    [CmdletBinding()]
+    param ()
+
+    [Microsoft365DSC.Cache.ExportCollectionCache]::Reset()
+    [Microsoft365DSC.Intune.IntuneGroupCache]::Reset()
+    [Microsoft365DSC.Intune.SettingTemplateCache]::Reset()
+    [Microsoft365DSC.Intune.RoleScopeTagCache]::Reset()
+    Clear-M365DSCIntuneAssignmentFilterCache
+    [Microsoft365DSC.Cache.ExportCollectionCache]::Enable()
+}
+
+<#
+.SYNOPSIS
+    Clears and disables the export collection cache.
+
+.DESCRIPTION
+    Releases every cached collection and disables the cache so that resources use live Graph requests.
+#>
+function Reset-M365DSCExportCollectionCache
+{
+    [CmdletBinding()]
+    param ()
+
+    Clear-M365DSCIntuneAssignmentFilterCache
+    if ($null -ne ('Microsoft365DSC.Cache.ExportCollectionCache' -as [System.Type]))
+    {
+        [Microsoft365DSC.Cache.ExportCollectionCache]::Reset()
+        [Microsoft365DSC.Intune.IntuneGroupCache]::Reset()
+        [Microsoft365DSC.Intune.SettingTemplateCache]::Reset()
+        [Microsoft365DSC.Intune.RoleScopeTagCache]::Reset()
+        [Microsoft365DSC.Intune.ConfigurationPolicyCache]::Reset()
+    }
+}
+
+<#
+.SYNOPSIS
+    Registers how many exported resources consume each cached collection.
+
+.DESCRIPTION
+    Counts the resources in the export selection per collection key and registers those counts with
+    the export collection cache so that a collection is released after its last consumer.
+
+.PARAMETER ResourceNames
+    Specifies the names of the resources selected for the export.
+#>
+function Register-M365DSCExportCollectionConsumers
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [System.String[]]
+        $ResourceNames
+    )
+
+    $map = Get-M365DSCExportCollectionConsumerMap
+    foreach ($key in $map.Keys)
+    {
+        $count = @($map[$key] | Where-Object -FilterScript { $ResourceNames -contains $_ }).Count
+        if ($count -gt 0)
+        {
+            [Microsoft365DSC.Cache.ExportCollectionCache]::RegisterConsumers($key, $count)
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Releases the cached collections consumed by a resource once its export has completed.
+
+.DESCRIPTION
+    Decrements the consumer count of every collection the resource consumes. The cache frees a
+    collection when its count reaches zero.
+
+.PARAMETER ResourceName
+    Specifies the name of the resource whose export has completed.
+#>
+function Complete-M365DSCExportCollectionConsumer
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ResourceName
+    )
+
+    if ($null -eq ('Microsoft365DSC.Cache.ExportCollectionCache' -as [System.Type]))
+    {
+        return
+    }
+
+    $map = Get-M365DSCExportCollectionConsumerMap
+    foreach ($key in $map.Keys)
+    {
+        if ($map[$key] -contains $ResourceName)
+        {
+            $null = [Microsoft365DSC.Cache.ExportCollectionCache]::Release($key)
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Returns the items of an Intune collection, served from the export collection cache when possible.
+
+.DESCRIPTION
+    Lists a Graph collection once per export and filters the cached items client-side on '@odata.type'.
+    Performs the resource's live filtered request when the cache is disabled or when a user filter is
+    supplied.
+
+.PARAMETER Collection
+    Specifies the Graph collection to list.
+
+.PARAMETER ODataType
+    Specifies the OData types to return, written like the isof() argument (for example
+    'microsoft.graph.windowsKioskConfiguration'). Returns every type when omitted.
+
+.PARAMETER ExcludeODataType
+    Specifies the OData types to exclude from the result.
+
+.PARAMETER PropertyName
+    Specifies the top-level property to match, for collections whose consumers differ by a property
+    rather than by OData type. Applied client-side on the cached items and server-side otherwise.
+
+.PARAMETER PropertyValue
+    Specifies the values the property must match. Returns every item when omitted.
+
+.PARAMETER Filter
+    Specifies the user-supplied OData filter. A non-empty filter bypasses the cache.
+
+.OUTPUTS
+    System.Object[]
+#>
+function Get-M365DSCExportCachedCollection
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('deviceConfigurations', 'deviceCompliancePolicies', 'deviceEnrollmentConfigurations', 'reusablePolicySettings', 'exoMailboxes', 'exoUsers', 'pimGroups')]
+        [System.String]
+        $Collection,
+
+        [Parameter()]
+        [System.String[]]
+        $ODataType = @(),
+
+        [Parameter()]
+        [System.String[]]
+        $ExcludeODataType = @(),
+
+        [Parameter()]
+        [System.String]
+        $PropertyName,
+
+        [Parameter()]
+        [System.String[]]
+        $PropertyValue = @(),
+
+        [Parameter()]
+        [System.String]
+        $Filter
+    )
+
+    $descriptors = @{
+        deviceConfigurations           = @{ Expand = @('assignments'); ServerSideTypeFilter = $true }
+        deviceCompliancePolicies       = @{ Expand = @('scheduledActionsForRule($expand=scheduledActionConfigurations)', 'assignments'); ServerSideTypeFilter = $true }
+        deviceEnrollmentConfigurations = @{ Expand = @('assignments'); ServerSideTypeFilter = $false }
+        reusablePolicySettings         = @{ Expand = @(); ServerSideTypeFilter = $false; Select = @('id', 'displayName', 'description', 'settingDefinitionId', 'settingInstance') }
+        exoMailboxes                   = @{ Fetch = { Get-Mailbox -ResultSize 'Unlimited' -ErrorAction Stop } }
+        exoUsers                       = @{ Fetch = { Get-User -ResultSize 'Unlimited' } }
+        pimGroups                      = @{ Fetch = { Get-M365DSCPIMEnabledGroup } }
+    }
+    $descriptor = $descriptors[$Collection]
+
+    $cacheAvailable = $null -ne ('Microsoft365DSC.Cache.ExportCollectionCache' -as [System.Type]) -and
+        [Microsoft365DSC.Cache.ExportCollectionCache]::IsEnabled
+
+    if ($null -ne $descriptor -and $null -ne $descriptor.Fetch)
+    {
+        if (-not $cacheAvailable)
+        {
+            return , [System.Object[]]@(& $descriptor.Fetch)
+        }
+
+        $items = $null
+        if ([Microsoft365DSC.Cache.ExportCollectionCache]::TryGet($Collection, [ref] $items))
+        {
+            return , [System.Object[]]@($items)
+        }
+
+        $fetched = @(& $descriptor.Fetch)
+        $null = [Microsoft365DSC.Cache.ExportCollectionCache]::TrySet($Collection, [System.Object[]]$fetched)
+        return , [System.Object[]]$fetched
+    }
+
+    if ($cacheAvailable -and [System.String]::IsNullOrEmpty($Filter))
+    {
+        $cached = [Microsoft365DSC.Cache.ExportCollectionCache]::GetByODataType($Collection, [System.String[]]$ODataType, [System.String[]]$ExcludeODataType)
+        if ($null -eq $cached)
+        {
+            $all = Invoke-M365DSCExportCollectionList -Collection $Collection -ExpandProperty $descriptor.Expand -Property $descriptor.Select
+            $null = [Microsoft365DSC.Cache.ExportCollectionCache]::TrySet($Collection, [System.Object[]]$all)
+            $cached = [Microsoft365DSC.Cache.ExportCollectionCache]::FilterByODataType([System.Object[]]$all, [System.String[]]$ODataType, [System.String[]]$ExcludeODataType)
+        }
+
+        return , [System.Object[]][Microsoft365DSC.Cache.ExportCollectionCache]::FilterByProperty([System.Object[]]$cached, $PropertyName, [System.String[]]$PropertyValue)
+    }
+
+    $typeFilter = ''
+    if ($descriptor.ServerSideTypeFilter -and $ODataType.Count -gt 0)
+    {
+        $typeFilter = ($ODataType | ForEach-Object -Process { "isof('$_')" }) -join ' or '
+        if ($ODataType.Count -gt 1)
+        {
+            $typeFilter = "($typeFilter)"
+        }
+        foreach ($excluded in $ExcludeODataType)
+        {
+            $typeFilter += " and not isof('$excluded')"
+        }
+    }
+
+    if (-not [System.String]::IsNullOrEmpty($PropertyName) -and $PropertyValue.Count -gt 0)
+    {
+        $propertyFilter = ($PropertyValue | ForEach-Object -Process { "$PropertyName eq '$_'" }) -join ' or '
+        if ($PropertyValue.Count -gt 1)
+        {
+            $propertyFilter = "($propertyFilter)"
+        }
+        $typeFilter = if ([System.String]::IsNullOrEmpty($typeFilter)) { $propertyFilter } else { "($typeFilter) and ($propertyFilter)" }
+    }
+
+    $mergedFilter = $typeFilter
+    if (-not [System.String]::IsNullOrEmpty($Filter))
+    {
+        $mergedFilter = if ([System.String]::IsNullOrEmpty($typeFilter)) { $Filter } else { "($typeFilter) and ($Filter)" }
+    }
+
+    $items = Invoke-M365DSCExportCollectionList -Collection $Collection -ExpandProperty $descriptor.Expand -Property $descriptor.Select -Filter $mergedFilter
+    if (-not $descriptor.ServerSideTypeFilter -and $null -ne ('Microsoft365DSC.Cache.ExportCollectionCache' -as [System.Type]))
+    {
+        $items = [Microsoft365DSC.Cache.ExportCollectionCache]::FilterByODataType([System.Object[]]$items, [System.String[]]$ODataType, [System.String[]]$ExcludeODataType)
+    }
+    elseif (-not $descriptor.ServerSideTypeFilter -and $ODataType.Count -gt 0)
+    {
+        $wanted = @($ODataType | ForEach-Object -Process { $_.TrimStart('#') })
+        $items = @($items | Where-Object -FilterScript { $wanted -contains ([System.String]$_.'@odata.type').TrimStart('#') })
+    }
+
+    return , [System.Object[]]$items
+}
+
+<#
+.SYNOPSIS
+    Lists the groups enabled in Privileged Identity Management (PIM) for Groups.
+
+.DESCRIPTION
+    Reads the group resources of PIM for Groups and resolves their display names in one batch. A group
+    is listed once a PIM operation, such as a policy change or an eligible assignment, has enabled it.
+
+.OUTPUTS
+    System.Object[]
+#>
+function Get-M365DSCPIMEnabledGroup
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param ()
+
+    $resources = Get-M365DSCRawGraphCollection -Uri '/beta/identityGovernance/privilegedAccess/group/resources' -Property 'id'
+    $requests = foreach ($resource in $resources)
+    {
+        @{
+            id     = $resource.id
+            method = 'GET'
+            url    = "/groups/$($resource.id)?`$select=id,displayName"
+        }
+    }
+
+    foreach ($response in (Invoke-M365DSCGraphBatchRequest -Requests @($requests) -AsList))
+    {
+        if ($response.status -eq 200)
+        {
+            [PSCustomObject]@{
+                Id          = $response.body.id
+                DisplayName = $response.body.displayName
+            }
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Lists a Graph collection as raw JSON items, following the paging links.
+
+.DESCRIPTION
+    Calls Invoke-MgGraphRequest on the collection and follows '@odata.nextLink' until every page has
+    been read. Returns the items in the shape Graph sends them rather than in the SDK object model.
+
+.PARAMETER Uri
+    Specifies the collection URI.
+
+.PARAMETER Property
+    Specifies the properties to select. Required for properties the collection omits by default.
+
+.PARAMETER Filter
+    Specifies the OData filter to apply.
+
+.OUTPUTS
+    System.Object[]
+#>
+function Get-M365DSCRawGraphCollection
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Uri,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String]
+        $Filter
+    )
+
+    $query = [System.Collections.Generic.List[System.String]]::new()
+    if ($Property.Count -gt 0)
+    {
+        $query.Add('$select=' + ($Property -join ','))
+    }
+    if (-not [System.String]::IsNullOrEmpty($Filter))
+    {
+        $query.Add('$filter=' + $Filter)
+    }
+
+    $requestUri = $Uri
+    if ($query.Count -gt 0)
+    {
+        $requestUri = $Uri + '?' + ($query -join '&')
+    }
+
+    $items = [System.Collections.Generic.List[System.Object]]::new()
+    while (-not [System.String]::IsNullOrEmpty($requestUri))
+    {
+        $response = Invoke-MgGraphRequest -Method GET -Uri $requestUri -ErrorAction Stop
+        foreach ($item in $response.value)
+        {
+            if ($null -ne $item)
+            {
+                $items.Add($item)
+            }
+        }
+
+        $requestUri = $response.'@odata.nextLink'
+    }
+
+    return , $items.ToArray()
+}
+
+<#
+.SYNOPSIS
+    Lists a Graph collection with the given expand and filter.
+
+.DESCRIPTION
+    Calls the collection's Get cmdlet with -All and returns the items as an array without null entries.
+
+.PARAMETER Collection
+    Specifies the Graph collection to list.
+
+.PARAMETER ExpandProperty
+    Specifies the navigation properties to expand.
+
+.PARAMETER Property
+    Specifies the properties to select. Required for properties the collection omits by default.
+
+.PARAMETER Filter
+    Specifies the OData filter to apply.
+
+.OUTPUTS
+    System.Object[]
+#>
+function Invoke-M365DSCExportCollectionList
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Collection,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String]
+        $Filter
+    )
+
+    $params = @{ All = $true; ErrorAction = 'Stop' }
+    if ($ExpandProperty.Count -gt 0)
+    {
+        $params.ExpandProperty = $ExpandProperty
+    }
+    if ($Property.Count -gt 0)
+    {
+        $params.Property = $Property
+    }
+    if (-not [System.String]::IsNullOrEmpty($Filter))
+    {
+        $params.Filter = $Filter
+    }
+
+    $result = switch ($Collection)
+    {
+        'deviceConfigurations' { Get-MgBetaDeviceManagementDeviceConfiguration @params }
+        'deviceCompliancePolicies' { Get-MgBetaDeviceManagementDeviceCompliancePolicy @params }
+        'deviceEnrollmentConfigurations' { Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration @params }
+        'reusablePolicySettings' { Get-M365DSCRawGraphCollection -Uri '/beta/deviceManagement/reusablePolicySettings' -Property $Property -Filter $Filter }
+    }
+
+    $items = [System.Collections.Generic.List[System.Object]]::new()
+    foreach ($item in $result)
+    {
+        if ($null -ne $item)
+        {
+            $items.Add($item)
+        }
+    }
+
+    return , $items.ToArray()
+}
+
+
 Export-ModuleMember -Function @(
+    'Get-M365DSCExportCollectionConsumerMap',
+    'Initialize-M365DSCExportCollectionCache',
+    'Reset-M365DSCExportCollectionCache',
+    'Register-M365DSCExportCollectionConsumers',
+    'Complete-M365DSCExportCollectionConsumer',
+    'Get-M365DSCExportCachedCollection',
+    'Get-M365DSCPIMEnabledGroup',
+    'Get-M365DSCRawGraphCollection',
+    'Invoke-M365DSCExportCollectionList',
     'Export-M365DSCConfiguration',
     'Get-M365DSCExportContentForResource',
     'Get-M365DSCResourcesByExportMode',

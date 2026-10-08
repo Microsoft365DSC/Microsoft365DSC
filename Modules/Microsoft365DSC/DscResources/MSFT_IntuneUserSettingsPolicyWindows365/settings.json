@@ -1,5 +1,22 @@
 {
   "resourceName": "IntuneUserSettingsPolicyWindows365",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "cloudPcUserSetting",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementVirtualEndpointUserSetting",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "SelfServiceEnabled",
+      "reason": "Deprecated",
+      "note": "Deprecated and returning no data since December 1, 2023"
+    }
+  ],
   "description": "This resource configures an Intune User Settings Policy for Windows365.",
   "permissions": {
     "graph": {
@@ -9,7 +26,7 @@
             "name": "CloudPC.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "read": [
@@ -17,7 +34,7 @@
             "name": "CloudPC.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       },
@@ -27,7 +44,7 @@
             "name": "CloudPC.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "read": [
@@ -35,7 +52,7 @@
             "name": "CloudPC.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       }

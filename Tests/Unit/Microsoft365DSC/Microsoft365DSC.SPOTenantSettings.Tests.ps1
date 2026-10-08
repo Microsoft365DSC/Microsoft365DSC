@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -31,7 +31,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -71,6 +71,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ApplyAppEnforcedRestrictionsToAdHocRecipients = $true
                     FilePickerExternalImageSearchEnabled          = $true
                     HideDefaultThemes                             = $false
+                    EnableSensitivityLabelForOneNote              = $true
+                    EnableSensitivityLabelForVideoFiles           = $true
                     TenantDefaultTimeZone                         = "(UTC-05:00) Eastern Time (US and Canada)"
                 }
 
@@ -82,7 +84,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         LegacyAuthProtocolsEnabled                    = $true
                         SignInAccelerationDomain                      = ''
                         UsePersistentCookiesForExplorerView           = $false
-                        UserVoiceForFeedbackEnabled                   = $true
                         PublicCdnEnabled                              = $false
                         PublicCdnAllowedFileTypes                     = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
                         UseFindPeopleInPeoplePicker                   = $false
@@ -102,7 +103,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         LegacyAuthProtocolsEnabled                    = $true
                         SignInAccelerationDomain                      = ''
                         UsePersistentCookiesForExplorerView           = $false
-                        UserVoiceForFeedbackEnabled                   = $true
                         PublicCdnEnabled                              = $false
                         PublicCdnAllowedFileTypes                     = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
                         UseFindPeopleInPeoplePicker                   = $false
@@ -111,6 +111,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ApplyAppEnforcedRestrictionsToAdHocRecipients = $true
                         FilePickerExternalImageSearchEnabled          = $true
                         HideDefaultThemes                             = $true
+                        EnableSensitivityLabelForOneNote              = $false
+                        EnableSensitivityLabelForVideoFiles           = $false
                     }
                 }
 
@@ -122,11 +124,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Sets the tenant AccessControl settings in Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantSettings' -Property $testParams).Set()
             }
         }
 
@@ -150,6 +152,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ApplyAppEnforcedRestrictionsToAdHocRecipients = $true
                     FilePickerExternalImageSearchEnabled          = $true
                     HideDefaultThemes                             = $false
+                    EnableSensitivityLabelForOneNote              = $true
+                    EnableSensitivityLabelForVideoFiles           = $true
                     TenantDefaultTimeZone                         = "(UT-05:00)"
                 }
 
@@ -161,7 +165,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         LegacyAuthProtocolsEnabled                    = $true
                         SignInAccelerationDomain                      = ''
                         UsePersistentCookiesForExplorerView           = $false
-                        UserVoiceForFeedbackEnabled                   = $true
                         PublicCdnEnabled                              = $false
                         PublicCdnAllowedFileTypes                     = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
                         UseFindPeopleInPeoplePicker                   = $false
@@ -181,7 +184,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         LegacyAuthProtocolsEnabled                    = $true
                         SignInAccelerationDomain                      = ''
                         UsePersistentCookiesForExplorerView           = $false
-                        UserVoiceForFeedbackEnabled                   = $true
                         PublicCdnEnabled                              = $false
                         PublicCdnAllowedFileTypes                     = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
                         UseFindPeopleInPeoplePicker                   = $false
@@ -190,6 +192,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ApplyAppEnforcedRestrictionsToAdHocRecipients = $true
                         FilePickerExternalImageSearchEnabled          = $true
                         HideDefaultThemes                             = $true
+                        EnableSensitivityLabelForOneNote              = $true
+                        EnableSensitivityLabelForVideoFiles           = $true
                     }
                 }
 
@@ -205,11 +209,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Sets the tenant AccessControl settings in Set method should throw' {
-                {Set-TargetResource @testParams} | Should -Throw
+                {(New-M365DSCResourceInstance -ResourceName 'SPOTenantSettings' -Property $testParams).Set()} | Should -Throw
             }
         }
 
@@ -229,7 +233,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         LegacyAuthProtocolsEnabled                    = $true
                         SignInAccelerationDomain                      = ''
                         UsePersistentCookiesForExplorerView           = $false
-                        UserVoiceForFeedbackEnabled                   = $true
                         PublicCdnEnabled                              = $false
                         PublicCdnAllowedFileTypes                     = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
                         UseFindPeopleInPeoplePicker                   = $false
@@ -238,6 +241,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ApplyAppEnforcedRestrictionsToAdHocRecipients = $true
                         FilePickerExternalImageSearchEnabled          = $true
                         HideDefaultThemes                             = $false
+                        EnableSensitivityLabelForOneNote              = $true
+                        EnableSensitivityLabelForVideoFiles           = $true
                     }
                 }
 
@@ -249,7 +254,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOTenantSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

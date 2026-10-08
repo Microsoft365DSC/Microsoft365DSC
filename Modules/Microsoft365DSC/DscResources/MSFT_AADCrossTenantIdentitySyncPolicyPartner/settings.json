@@ -1,5 +1,43 @@
 {
   "resourceName": "AADCrossTenantIdentitySyncPolicyPartner",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "crossTenantIdentitySyncPolicyPartner",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyCrossTenantAccessPolicyPartnerIdentitySynchronization",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "CrossTenantAccessPolicyConfigurationPartnerTenantId",
+      "reason": "Accepted",
+      "note": "Renamed from tenantId so the key does not collide with the authentication TenantId parameter."
+    },
+    {
+      "name": "GroupSyncInbound",
+      "reason": "OwnedByOtherResource",
+      "note": "AADCrossTenantAccessPolicyConfigurationPartner writes it through its IdentitySynchronization property."
+    },
+    {
+      "name": "IsRoleEnabledGroupSyncAllowed",
+      "reason": "Accepted",
+      "vendorPath": "roleEnabledGroupSyncInbound.isSyncAllowed",
+      "note": "Flattened from roleEnabledGroupSyncInbound, the way IsSyncAllowed carries the user sync value."
+    },
+    {
+      "name": "RoleEnabledGroupSyncInbound",
+      "reason": "Accepted",
+      "note": "Flattened onto IsRoleEnabledGroupSyncAllowed"
+    },
+    {
+      "name": "UserSyncInbound",
+      "reason": "Accepted",
+      "note": "Flattened onto IsSyncAllowed"
+    }
+  ],
   "description": "Create a cross-tenant user synchronization policy for a partner-specific configuration.",
   "roles": {
     "read": [

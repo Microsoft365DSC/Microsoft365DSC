@@ -23,15 +23,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
+            }
+
+            Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
             }
 
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -70,6 +73,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id          = "00000000-0000-0000-0000-000000000004"
                     DisplayName = "Phishing-resistant MFA"
                 }
+            }
+            Mock -CommandName Get-MgBetaAgreement -MockWith {
+                return @(
+                    @{
+                        Id          = '4a2f1c8b-1b59-4f0e-9d21-2f8e5c3d7a10'
+                        DisplayName = 'Contractor Data Handling Agreement'
+                    },
+                    @{
+                        Id          = 'b7c3e5d9-6f42-4a1b-8c07-19d4e2f6a5b3'
+                        DisplayName = 'Employee Acceptable Use Policy'
+                    }
+                )
             }
             Mock -CommandName Get-MgServicePrincipal -ParameterFilter { $Filter -eq "AppId eq '00000012-0000-0000-c000-000000000000'" } -MockWith {
                 return @{
@@ -159,9 +174,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             IsEnabled = $True
                         }
                         SignInFrequency                 = @{
-                            IsEnabled = $True
-                            Type      = 'Days'
-                            Value     = 5
+                            IsEnabled          = $True
+                            Type               = 'Days'
+                            Value              = 5
+                            AuthenticationType = 'primaryAndSecondaryAuthentication'
                         }
                         PersistentBrowser               = @{
                             IsEnabled = $True
@@ -172,7 +188,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName New-MgBetaIdentityConditionalAccessPolicy -MockWith {
+            }
+
+            Mock -CommandName Update-MgBetaIdentityConditionalAccessPolicy -MockWith {
+            }
+
+            Mock -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -MockWith {
             }
 
             Mock -CommandName Remove-MgBetaIdentityConditionalAccessPolicy -MockWith {
@@ -223,6 +245,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PersistentBrowserMode                = 'Always'
                     DisableResilienceDefaultsIsEnabled   = $True
                     SecureSignInSessionIsEnabled         = $True
+                    SignInFrequencyAuthenticationType    = 'primaryAndSecondaryAuthentication'
                     SignInFrequencyIsEnabled             = $True
                     SignInFrequencyType                  = 'Days'
                     SignInFrequencyValue                 = 5
@@ -239,16 +262,19 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the policy in the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaIdentityConditionalAccessPolicy -Exactly 1 -ParameterFilter {
+                    ($BodyParameter.conditions.platforms.includePlatforms -join ',') -ceq 'android,iOS' -and
+                    ($BodyParameter.conditions.platforms.excludePlatforms -join ',') -ceq 'windows,windowsPhone,macOS'
+                }
             }
         }
 
@@ -291,6 +317,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisableResilienceDefaultsIsEnabled       = $True
                     ServicePrincipalRiskLevels               = @('High')
                     SecureSignInSessionIsEnabled             = $True
+                    SignInFrequencyAuthenticationType        = 'primaryAndSecondaryAuthentication'
                     SignInFrequencyIsEnabled                 = $True
                     SignInFrequencyType                      = 'Days'
                     SignInFrequencyValue                     = 5
@@ -303,16 +330,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1
             }
         }
 
@@ -327,16 +354,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1
             }
         }
 
@@ -378,6 +405,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PersistentBrowserMode                    = 'Always'
                     DisableResilienceDefaultsIsEnabled       = $True
                     SecureSignInSessionIsEnabled             = $True
+                    SignInFrequencyAuthenticationType        = 'primaryAndSecondaryAuthentication'
                     SignInFrequencyIsEnabled                 = $True
                     SignInFrequencyType                      = 'Days'
                     SignInFrequencyValue                     = 5
@@ -390,11 +418,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -430,6 +458,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PersistentBrowserMode                    = 'Always'
                     DisableResilienceDefaultsIsEnabled       = $True
                     SecureSignInSessionIsEnabled             = $True
+                    SignInFrequencyAuthenticationType        = 'primaryAndSecondaryAuthentication'
                     SignInFrequencyIsEnabled                 = $True
                     SignInFrequencyType                      = 'Days'
                     SignInFrequencyValue                     = 5
@@ -442,15 +471,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaIdentityConditionalAccessPolicy -Exactly 1
             }
         }
@@ -494,35 +523,33 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     }
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
-                    return @{
-                        value = @(
-                            @{ id = 'AttributeSet_MyAttribute' }
-                        )
-                    }
+                Mock -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -MockWith {
+                    return @(
+                        @{ id = 'AttributeSet_MyAttribute' }
+                    )
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return the correct ServicePrincipalFilterMode from Get' {
-                (Get-TargetResource @testParams).ServicePrincipalFilterMode | Should -Be 'include'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).ServicePrincipalFilterMode | Should -Be 'include'
             }
 
             It 'Should return the correct ServicePrincipalFilterRule from Get' {
-                (Get-TargetResource @testParams).ServicePrincipalFilterRule | Should -Be "CustomSecurityAttribute.AttributeSet_MyAttribute -eq 'Value1'"
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).ServicePrincipalFilterRule | Should -Be "CustomSecurityAttribute.AttributeSet_MyAttribute -eq 'Value1'"
             }
 
             It 'Should return true from the Test method when in desired state' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $true
             }
 
-            It 'Should call Invoke-MgGraphRequest for validation and update when applying the filter' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'GET' }
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'PATCH' }
+            It 'Should validate the attributes and update the policy when applying the filter' {
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1
             }
         }
 
@@ -565,36 +592,34 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     }
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
-                    return @{
-                        value = @(
-                            @{ id = 'Set1_AttrA' }
-                            @{ id = 'Set2_AttrB' }
-                        )
-                    }
+                Mock -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -MockWith {
+                    return @(
+                        @{ id = 'Set1_AttrA' }
+                        @{ id = 'Set2_AttrB' }
+                    )
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return the correct ServicePrincipalFilterMode from Get' {
-                (Get-TargetResource @testParams).ServicePrincipalFilterMode | Should -Be 'exclude'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).ServicePrincipalFilterMode | Should -Be 'exclude'
             }
 
             It 'Should return the correct ServicePrincipalFilterRule from Get' {
-                (Get-TargetResource @testParams).ServicePrincipalFilterRule | Should -Be "CustomSecurityAttribute.Set1_AttrA -eq 'Foo' -or CustomSecurityAttribute.Set2_AttrB -eq 'Bar'"
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).ServicePrincipalFilterRule | Should -Be "CustomSecurityAttribute.Set1_AttrA -eq 'Foo' -or CustomSecurityAttribute.Set2_AttrB -eq 'Bar'"
             }
 
             It 'Should return true from the Test method when in desired state' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $true
             }
 
-            It 'Should call Invoke-MgGraphRequest for validation and update when applying the filter' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'GET' }
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'PATCH' }
+            It 'Should validate the attributes and update the policy when applying the filter' {
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1
             }
         }
 
@@ -615,19 +640,19 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     return $null
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
-                    return @{
-                        value = @()
-                    }
+                Mock -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -MockWith {
+                    return @(
+
+                    )
                 }
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should throw when applying a filter that references a missing custom attribute' {
-                { Set-TargetResource @testParams } | Should -Throw
+                { (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set() } | Should -Throw
             }
         }
 
@@ -670,27 +695,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     }
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
-                    return @{
-                        value = @(
-                            @{ id = 'AttributeSet_MyAttribute' }
-                        )
-                    }
+                Mock -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -MockWith {
+                    return @(
+                        @{ id = 'AttributeSet_MyAttribute' }
+                    )
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method when ServicePrincipalFilterMode has drifted' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should validate attributes and update the policy from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'GET' }
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'PATCH' }
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1
             }
         }
 
@@ -733,27 +756,178 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     }
                 }
 
-                Mock -CommandName Invoke-MgGraphRequest -MockWith {
-                    return @{
-                        value = @(
-                            @{ id = 'AttributeSet_MyAttribute' }
-                        )
-                    }
+                Mock -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -MockWith {
+                    return @(
+                        @{ id = 'AttributeSet_MyAttribute' }
+                    )
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method when ServicePrincipalFilterRule has drifted' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should validate attributes and update the policy from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'GET' }
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'PATCH' }
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Get-MgDirectoryCustomSecurityAttributeDefinition -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1
+            }
+        }
+
+        Context -Name 'Policy requires two terms of use' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    DisplayName          = 'Allin'
+                    Ensure               = 'Present'
+                    Credential           = $Credscredential
+                    State                = 'disabled'
+                    IncludeApplications  = @('All')
+                    IncludeUsers         = 'All'
+                    GrantControlOperator = 'AND'
+                    BuiltInControls      = @('Mfa')
+                    TermsOfUse           = @('Contractor Data Handling Agreement', 'Employee Acceptable Use Policy')
+                }
+
+                Mock -CommandName Get-MgBetaIdentityConditionalAccessPolicy -MockWith {
+                    return @{
+                        Id              = 'bcc0cf19-ee89-46f0-8e12-4b89123ee6f9'
+                        DisplayName     = 'Allin'
+                        State           = 'disabled'
+                        Conditions      = @{
+                            Applications = @{
+                                IncludeApplications = @('All')
+                            }
+                            Users        = @{
+                                IncludeUsers = 'All'
+                            }
+                        }
+                        GrantControls   = @{
+                            Operator        = 'AND'
+                            BuiltInControls = @('Mfa')
+                            TermsOfUse      = @('4a2f1c8b-1b59-4f0e-9d21-2f8e5c3d7a10', 'b7c3e5d9-6f42-4a1b-8c07-19d4e2f6a5b3')
+                        }
+                        SessionControls = $null
+                    }
+                }
+            }
+
+            It 'Should resolve every terms of use id from the Get method' {
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()
+                $result.TermsOfUse | Should -Be @('Contractor Data Handling Agreement', 'Employee Acceptable Use Policy')
+            }
+
+            It 'Should return true from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $true
+            }
+
+            It 'Should send every terms of use id from the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1 -ParameterFilter {
+                    $BodyParameter.grantControls.termsOfUse.Count -eq 2 -and
+                    $BodyParameter.grantControls.termsOfUse[0] -eq '4a2f1c8b-1b59-4f0e-9d21-2f8e5c3d7a10' -and
+                    $BodyParameter.grantControls.termsOfUse[1] -eq 'b7c3e5d9-6f42-4a1b-8c07-19d4e2f6a5b3'
+                }
+            }
+        }
+
+        Context -Name 'Policy requires no terms of use' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    DisplayName                        = 'Allin'
+                    Ensure                             = 'Present'
+                    Credential                         = $Credscredential
+                    State                              = 'disabled'
+                    IncludeApplications                = @('All')
+                    IncludeUsers                       = 'All'
+                    GrantControlOperator               = 'AND'
+                    BuiltInControls                    = @('Mfa')
+                    DisableResilienceDefaultsIsEnabled = $false
+                }
+
+                Mock -CommandName Get-MgBetaIdentityConditionalAccessPolicy -MockWith {
+                    return @{
+                        Id              = 'bcc0cf19-ee89-46f0-8e12-4b89123ee6f9'
+                        DisplayName     = 'Allin'
+                        State           = 'disabled'
+                        Conditions      = @{
+                            Applications = @{
+                                IncludeApplications = @('All')
+                            }
+                            Users        = @{
+                                IncludeUsers = 'All'
+                            }
+                        }
+                        GrantControls   = @{
+                            Operator        = 'AND'
+                            BuiltInControls = @('Mfa')
+                        }
+                        SessionControls = $null
+                    }
+                }
+            }
+
+            It 'Should return an empty terms of use collection from the Get method' {
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Get().ToHashtable()
+                $result.TermsOfUse -is [System.String[]] | Should -BeTrue
+                $result.TermsOfUse | Should -BeNullOrEmpty
+                $result.DisableResilienceDefaultsIsEnabled | Should -Be $false
+                Should -Invoke -CommandName Get-MgBetaAgreement -Exactly 0
+            }
+
+            It 'Should return true from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $true
+            }
+        }
+
+        Context -Name 'Terms of use that the tenant does not hold' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    DisplayName          = 'Allin'
+                    Ensure               = 'Present'
+                    Credential           = $Credscredential
+                    State                = 'disabled'
+                    IncludeApplications  = @('All')
+                    IncludeUsers         = 'All'
+                    GrantControlOperator = 'AND'
+                    BuiltInControls      = @('Mfa')
+                    TermsOfUse           = @('Vendor Confidentiality Agreement')
+                }
+
+                Mock -CommandName Get-MgBetaIdentityConditionalAccessPolicy -MockWith {
+                    return @{
+                        Id              = 'bcc0cf19-ee89-46f0-8e12-4b89123ee6f9'
+                        DisplayName     = 'Allin'
+                        State           = 'disabled'
+                        Conditions      = @{
+                            Applications = @{
+                                IncludeApplications = @('All')
+                            }
+                            Users        = @{
+                                IncludeUsers = 'All'
+                            }
+                        }
+                        GrantControls   = @{
+                            Operator        = 'AND'
+                            BuiltInControls = @('Mfa')
+                        }
+                        SessionControls = $null
+                    }
+                }
+            }
+
+            It 'Should return false from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Test() | Should -Be $false
+            }
+
+            It 'Should omit the terms of use grant control from the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'AADConditionalAccessPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MgBetaIdentityConditionalAccessPolicy -Exactly 1 -ParameterFilter {
+                    -not $BodyParameter.grantControls.ContainsKey('termsOfUse')
+                }
             }
         }
 
@@ -767,7 +941,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADConditionalAccessPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

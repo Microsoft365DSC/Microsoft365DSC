@@ -1,5 +1,16 @@
 {
   "resourceName": "ADOPermissionGroup",
+  "generatedFrom": {
+    "workload": "AzureDevOPS",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Manages Azure DevOPS permission groups.",
   "roles": {
     "read": [],
@@ -26,5 +37,6 @@
     }
   },
   "requiredModules": [],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": []
 }

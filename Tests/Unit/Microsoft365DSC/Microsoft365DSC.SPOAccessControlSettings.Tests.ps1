@@ -23,12 +23,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -43,54 +43,57 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'PNP AccessControl settings are not configured' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Credential                   = $Credential
-                    IsSingleInstance             = 'Yes'
-                    DisplayStartASiteOption      = $false
-                    StartASiteFormUrl            = 'https://o365dsc1.sharepoint.com'
-                    IPAddressEnforcement         = $false
-                    #IPAddressAllowList           = "" #would generate an error while writing this resource
-                    IPAddressWACTokenLifetime    = 15
-                    DisallowInfectedFileDownload = $false
-                    ExternalServicesEnabled      = $true
-                    EmailAttestationRequired     = $false
-                    EmailAttestationReAuthDays   = 30
+                    Credential                    = $Credential
+                    IsSingleInstance              = 'Yes'
+                    EnableRestrictedAccessControl = $true
+                    DisplayStartASiteOption       = $false
+                    StartASiteFormUrl             = 'https://o365dsc1.sharepoint.com'
+                    IPAddressEnforcement          = $false
+                    #IPAddressAllowList            = "" #would generate an error while writing this resource
+                    IPAddressWACTokenLifetime     = 15
+                    DisallowInfectedFileDownload  = $false
+                    ExternalServicesEnabled       = $true
+                    EmailAttestationRequired      = $false
+                    EmailAttestationReAuthDays    = 30
                 }
 
                 Mock -CommandName Set-PnPTenant -MockWith {
                     return @{
-                        DisplayStartASiteOption      = $false
-                        StartASiteFormUrl            = 'https://o365dsc1.sharepoint.com'
-                        IPAddressEnforcement         = $false
-                        #IPAddressAllowList           = "" #would generate an error while writing this resource
-                        IPAddressWACTokenLifetime    = 15
-                        DisallowInfectedFileDownload = $false
-                        ExternalServicesEnabled      = $true
-                        EmailAttestationRequired     = $false
-                        EmailAttestationReAuthDays   = 30
+                        DisplayStartASiteOption       = $false
+                        EnableRestrictedAccessControl = $true
+                        StartASiteFormUrl             = 'https://o365dsc1.sharepoint.com'
+                        IPAddressEnforcement          = $false
+                        #IPAddressAllowList            = "" #would generate an error while writing this resource
+                        IPAddressWACTokenLifetime     = 15
+                        DisallowInfectedFileDownload  = $false
+                        ExternalServicesEnabled       = $true
+                        EmailAttestationRequired      = $false
+                        EmailAttestationReAuthDays    = 30
                     }
                 }
 
                 Mock -CommandName Get-PnPTenant -MockWith {
                     return @{
-                        DisplayStartASiteOption      = $true
-                        StartASiteFormUrl            = 'https://o365dsc1.sharepoint.com'
-                        IPAddressEnforcement         = $false
-                        #IPAddressAllowList           = "" #would generate an error while writing this resource
-                        IPAddressWACTokenLifetime    = 20
-                        DisallowInfectedFileDownload = $false
-                        ExternalServicesEnabled      = $true
-                        EmailAttestationRequired     = $false
-                        EmailAttestationReAuthDays   = 29
+                        DisplayStartASiteOption       = $true
+                        EnableRestrictedAccessControl = $true
+                        StartASiteFormUrl             = 'https://o365dsc1.sharepoint.com'
+                        IPAddressEnforcement          = $false
+                        #IPAddressAllowList            = "" #would generate an error while writing this resource
+                        IPAddressWACTokenLifetime     = 20
+                        DisallowInfectedFileDownload  = $false
+                        ExternalServicesEnabled       = $true
+                        EmailAttestationRequired      = $false
+                        EmailAttestationReAuthDays    = 29
                     }
                 }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOAccessControlSettings' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Sets the tenant AccessControl settings in Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOAccessControlSettings' -Property $testParams).Set()
             }
         }
 
@@ -118,7 +121,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOAccessControlSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

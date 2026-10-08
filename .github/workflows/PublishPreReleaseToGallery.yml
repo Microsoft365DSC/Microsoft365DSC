@@ -1,0 +1,233 @@
+name: Publish Pre-Release to PowerShell Gallery
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Module version, e.g. 2026.1007.1. Defaults to <yyyy>.<Mdd>.1 of the current UTC date when empty.'
+        required: false
+        type: string
+      prerelease:
+        description: 'Pre-release suffix, e.g. preview1. Derived from the gallery when empty.'
+        required: false
+        type: string
+      whatif:
+        description: 'Resolve the version, build and validate the module without publishing it.'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-prerelease-to-gallery
+  cancel-in-progress: false
+
+jobs:
+  PublishPreReleaseToGallery:
+    runs-on: windows-latest
+
+    if: github.repository == 'Microsoft365DSC/Microsoft365DSC'
+
+    steps:
+      - name: Authorize Actor
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.triggering_actor }}
+        run: |
+          $role = gh api "repos/$env:REPOSITORY/collaborators/$env:ACTOR/permission" --jq '.role_name'
+          if ($role -notin @('admin', 'maintain'))
+          {
+              throw "Only maintainers can publish a pre-release. '$env:ACTOR' has the role '$role'."
+          }
+
+      - uses: actions/checkout@v7
+        with:
+          ref: Dev
+
+      - name: Resolve Version
+        id: version
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $requestedVersion = "$env:INPUT_VERSION".Trim()
+          $requestedPrerelease = "$env:INPUT_PRERELEASE".Trim()
+
+          if ($requestedVersion -and $requestedVersion -notmatch '^\d{4}\.\d{3,4}\.\d+$')
+          {
+              throw "Version '$requestedVersion' does not match the format <yyyy>.<Mdd>.<build>, e.g. 2026.1007.1."
+          }
+          if ($requestedPrerelease -and $requestedPrerelease -notmatch '^[0-9A-Za-z]+$')
+          {
+              throw "Pre-release suffix '$requestedPrerelease' may contain only ASCII letters and digits."
+          }
+
+          if ($requestedVersion)
+          {
+              $version = [System.Version] $requestedVersion
+          }
+          else
+          {
+              $today = [System.DateTime]::UtcNow
+              $version = [System.Version]::new($today.Year, [System.Int32] $today.ToString('Mdd'), 1)
+          }
+
+          $published = Find-PSResource -Name 'Microsoft365DSC' -Version '*' -Prerelease -Repository PSGallery
+          $sameVersion = @($published | Where-Object -FilterScript {
+              $_.Version.Major -eq $version.Major -and
+              $_.Version.Minor -eq $version.Minor -and
+              $_.Version.Build -eq $version.Build
+          })
+
+          if ($requestedPrerelease)
+          {
+              $prerelease = $requestedPrerelease
+          }
+          else
+          {
+              $previewNumbers = $sameVersion | ForEach-Object -Process {
+                  if ($_.Prerelease -match '^preview(\d+)$')
+                  {
+                      [System.Int32] $Matches[1]
+                  }
+              }
+              $prerelease = 'preview{0}' -f (1 + ($previewNumbers | Measure-Object -Maximum).Maximum)
+          }
+
+          if ($sameVersion.Prerelease -contains $prerelease)
+          {
+              throw "Version $version-$prerelease is already published."
+          }
+
+          Write-Host "Publishing Microsoft365DSC $version-$prerelease"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "prerelease=$prerelease" >> $env:GITHUB_OUTPUT
+          "Publishing ``Microsoft365DSC $version-$prerelease`` from ``Dev``." >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Update Module Manifest
+        shell: pwsh
+        env:
+          MODULE_VERSION: ${{ steps.version.outputs.version }}
+          MODULE_PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifestPath = './Modules/Microsoft365DSC/Microsoft365DSC.psd1'
+          $content = Get-Content -Path $manifestPath -Raw
+
+          $replacements = @(
+              @{
+                  Pattern     = "(?m)^([ \t]*)ModuleVersion([ \t]*)=[ \t]*'[^']*'"
+                  Replacement = "`${1}ModuleVersion`${2}= '$env:MODULE_VERSION'"
+              },
+              @{
+                  Pattern     = "(?m)^([ \t]*)#?[ \t]*PreRelease([ \t]*)=[ \t]*'[^']*'"
+                  Replacement = "`${1}PreRelease`${2}= '$env:MODULE_PRERELEASE'"
+              }
+          )
+          foreach ($replacement in $replacements)
+          {
+              $matchCount = [System.Text.RegularExpressions.Regex]::Matches($content, $replacement.Pattern).Count
+              if ($matchCount -ne 1)
+              {
+                  throw "Expected one match for '$($replacement.Pattern)' in $manifestPath but found $matchCount."
+              }
+              $content = [System.Text.RegularExpressions.Regex]::Replace($content, $replacement.Pattern, $replacement.Replacement)
+          }
+          Set-Content -Path $manifestPath -Value $content -NoNewline
+
+          $manifest = Import-PowerShellDataFile -Path $manifestPath
+          if ($manifest.ModuleVersion -ne $env:MODULE_VERSION -or $manifest.PrivateData.PSData.PreRelease -ne $env:MODULE_PRERELEASE)
+          {
+              throw "Manifest holds $($manifest.ModuleVersion)-$($manifest.PrivateData.PSData.PreRelease) instead of $env:MODULE_VERSION-$env:MODULE_PRERELEASE."
+          }
+
+      - name: Install Modules
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dependencies = (Import-PowerShellDataFile ./Modules/Microsoft365DSC/Dependencies/Manifest.psd1).Dependencies
+
+          foreach ($name in @('M365DSC.PSDesiredStateConfiguration', 'DSCParser'))
+          {
+            $dependency = $dependencies | Where-Object ModuleName -EQ $name
+            if ($null -eq $dependency) {
+                throw "$name is missing from Dependencies/Manifest.psd1."
+            }
+            Install-PSResource -Name $dependency.ModuleName -Version $dependency.RequiredVersion -Scope AllUsers -TrustRepository
+          }
+
+          try
+          {
+              Install-PSResource -Name DscResource.Authoring -Scope AllUsers -TrustRepository -ErrorAction Stop
+          }
+          catch
+          {
+              Write-Warning -Message "DscResource.Authoring could not be installed, so the adapted resource manifests are skipped: $($_.Exception.Message)"
+          }
+
+      - name: Build Class Modules
+        shell: pwsh
+        run: |
+          & ./Utilities/Build-Microsoft365DSC.ps1 -SkipSchemaCache -SkipAdaptedManifests
+
+      - name: Build Dll Files
+        shell: pwsh
+        run: |
+          & ./Utilities/Build-DllFiles.ps1 -Configuration Release
+
+      - name: Generate Adapted Resource Manifests
+        shell: pwsh
+        run: |
+          & ./Utilities/New-M365DSCAdaptedResourceManifest.ps1 -WarnOnly
+
+      - name: Trim Build-Only Sources
+        shell: pwsh
+        run: |
+          & ./Utilities/Remove-M365DSCBuildOnlySource.ps1 -Confirm:$false
+
+      - name: Generate Schema Cache
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dependencies = (Import-PowerShellDataFile ./Modules/Microsoft365DSC/Dependencies/Manifest.psd1).Dependencies
+          $engine = $dependencies | Where-Object ModuleName -EQ 'M365DSC.PSDesiredStateConfiguration'
+          if ($null -eq $engine) {
+              throw 'M365DSC.PSDesiredStateConfiguration is missing from Dependencies/Manifest.psd1.'
+          }
+          Install-PSResource -Name $engine.ModuleName -Version $engine.RequiredVersion -Scope AllUsers -Reinstall -TrustRepository
+          & ./Utilities/New-M365DSCDscSchemaCache.ps1
+
+      - name: Validate Module Manifest
+        shell: powershell
+        env:
+          MODULE_VERSION: ${{ steps.version.outputs.version }}
+          MODULE_PRERELEASE: ${{ steps.version.outputs.prerelease }}
+          WHATIF: ${{ inputs.whatif }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Test-ModuleManifest -Path './Modules/Microsoft365DSC/Microsoft365DSC.psd1'
+          $packageVersion = '{0}-{1}' -f $manifest.Version, $manifest.PrivateData.PSData.Prerelease
+          if ($packageVersion -ne "$env:MODULE_VERSION-$env:MODULE_PRERELEASE")
+          {
+              throw "The built manifest holds $packageVersion instead of $env:MODULE_VERSION-$env:MODULE_PRERELEASE."
+          }
+
+          if ($env:WHATIF -eq 'true')
+          {
+              "WhatIf is set. ``Microsoft365DSC $packageVersion`` passed validation. It would have been published." |
+                  Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          }
+
+      - name: Publish
+        if: ${{ !inputs.whatif }}
+        shell: powershell
+        env:
+          PUBLIC_NUGETAPIKEY: ${{ secrets.NugetAPIKey }}
+        run: |
+          Publish-Module -Path "./Modules/Microsoft365DSC/" -NugetAPIKey $env:PUBLIC_NUGETAPIKEY

@@ -1,401 +1,198 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AzureVerifiedIdFaceCheck'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AzureVerifiedIdFaceCheck : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $SubscriptionId,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Id of the Azure subscription.')]
+    [System.String] $SubscriptionId
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ResourceGroupName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Name of the associated resource group.')]
+    [System.String] $ResourceGroupName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $VerifiedIdAuthorityId,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Id of the verified ID authority.')]
+    [System.String] $VerifiedIdAuthorityId
 
-        [Parameter()]
-        [System.Boolean]
-        $FaceCheckEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Represents whether or not FaceCheck is enabled for the authrotiy.')]
+    [System.Nullable[System.Boolean]] $FaceCheckEnabled
 
-        [Parameter()]
-        [System.String]
-        $VerifiedIdAuthorityLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Location of the Verified ID Authority.')]
+    [System.String] $VerifiedIdAuthorityLocation
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Absent', 'Present')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of Azure Verified ID Face Check for Verified ID Authority {$VerifiedIdAuthorityId}"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [AzureVerifiedIdFaceCheck] Get()
     {
-        $null = New-M365DSCConnection -Workload 'Azure' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [AzureVerifiedIdFaceCheck]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration of Azure Verified ID Face Check for Verified ID Authority {$($this.VerifiedIdAuthorityId)}"
+
+        try
+        {
+            $null = $this.Connect('Azure')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            $resourceGroupInstance = Get-AzResourceGroup -Id "/subscriptions/$($this.SubscriptionId)/resourceGroups/$($this.ResourceGroupName)" -ErrorAction SilentlyContinue
+            if ($null -eq $resourceGroupInstance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)$($resourceGroupInstance.ResourceId)/providers/Microsoft.VerifiedId/authorities/$($this.VerifiedIdAuthorityId)?api-version=2024-01-26-preview"
+            $response = Invoke-AzRestMethod -Uri $uri -Method Get
+            $authorities = ConvertFrom-Json $response.Content
+
+            $EnabledValue = $false
+            if ($null -eq $authorities.error -and $null -ne $authorities.id)
+            {
+                $EnabledValue = $true
+            }
+
+            $results = @{
+                SubscriptionId              = $this.SubscriptionId
+                ResourceGroupName           = $this.ResourceGroupName
+                VerifiedIdAuthorityId       = $this.VerifiedIdAuthorityId
+                VerifiedIdAuthorityLocation = $authorities.location
+                FaceCheckEnabled            = $EnabledValue
+                Ensure                      = 'Present'
+                Credential                  = $this.Credential
+                ApplicationId               = $this.ApplicationId
+                TenantId                    = $this.TenantId
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                AccessTokens                = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of Azure Verified ID Face Check for Verified ID Authority {$($this.VerifiedIdAuthorityId)}"
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
-
-        $resourceGroupInstance = Get-AzResourceGroup -Id "/subscriptions/$($SubscriptionId)/resourceGroups/$($ResourceGroupName)" -ErrorAction SilentlyContinue
-        if ($null -eq $resourceGroupInstance)
+        $null = $this.Connect('Azure')
+        if ($this.FaceCheckEnabled)
         {
-            return $nullResult
-        }
-
-        $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)$($resourceGroupInstance.ResourceId)/providers/Microsoft.VerifiedId/authorities/$($VerifiedIdAuthorityId)?api-version=2024-01-26-preview"
-        $response = Invoke-AzRestMethod -Uri $uri -Method Get
-        $authorities = ConvertFrom-Json $response.Content
-
-        $EnabledValue = $false
-        if ($null -eq $authorities.error -and $null -ne $authorities.id)
-        {
-            $EnabledValue = $true
-        }
-
-        $results = @{
-            SubscriptionId              = $SubscriptionId
-            ResourceGroupName           = $ResourceGroupName
-            VerifiedIdAuthorityId       = $VerifiedIdAuthorityId
-            VerifiedIdAuthorityLocation = $authorities.location
-            FaceCheckEnabled            = $EnabledValue
-            Ensure                      = 'Present'
-            Credential                  = $Credential
-            ApplicationId               = $ApplicationId
-            TenantId                    = $TenantId
-            CertificateThumbprint       = $CertificateThumbprint
-            CertificatePath             = $CertificatePath
-            CertificatePassword         = $CertificatePassword
-            ManagedIdentity             = $ManagedIdentity.IsPresent
-            AccessTokens                = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ResourceGroupName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $VerifiedIdAuthorityId,
-
-        [Parameter()]
-        [System.Boolean]
-        $FaceCheckEnabled,
-
-        [Parameter()]
-        [System.String]
-        $VerifiedIdAuthorityLocation,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Azure Verified ID Face Check for Verified ID Authority {$VerifiedIdAuthorityId}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-    if ($FaceCheckEnabled)
-    {
-        Write-Verbose -Message "Enabling FaceCheck on Verified ID Authority {$($VerifiedIDAuthorityId)}"
-        $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)subscriptions/$($SubscriptionId)/resourceGroups/$($ResourceGroupName)/providers/Microsoft.VerifiedId/authorities/$($VerifiedIdAuthorityId)?api-version=2024-01-26-preview"
-        $payload = '{"location": "' + $VerifiedIdAuthorityLocation + '"}'
-        $response = Invoke-AzRestMethod -Uri $uri -Method Put -Payload $payload
-    }
-    else
-    {
-        Write-Verbose -Message "Disabling FaceCheck on Verified ID Authority {$($VerifiedIDAuthorityId)}"
-        $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)subscriptions/$($SubscriptionId)/resourceGroups/$($ResourceGroupName)/providers/Microsoft.VerifiedId/authorities/$($VerifiedIdAuthorityId)?api-version=2024-01-26-preview"
-        $payload = '{"location": null}'
-        $response = Invoke-AzRestMethod -Uri $uri -Method DELETE
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ResourceGroupName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $VerifiedIdAuthorityId,
-
-        [Parameter()]
-        [System.Boolean]
-        $FaceCheckEnabled,
-
-        [Parameter()]
-        [System.String]
-        $VerifiedIdAuthorityLocation,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'AdminAPI' `
-        -InboundParameters $PSBoundParameters
-    $ConnectionMode = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $headers = @{
-            Authorization = (Get-MSCloudLoginConnectionProfile -Workload AdminAPI).AccessToken
-        }
-        $uri = 'https://verifiedid.did.msidentity.com/v1.0/verifiableCredentials/authorities'
-        $response = Invoke-WebRequest -Uri $uri -Method Get -Headers $headers -UseBasicParsing
-        $authorities = ConvertFrom-Json $response.Content
-
-        $resourceGroups = Get-AzResourceGroup -ErrorAction Stop
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($resourceGroups.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            Write-Verbose -Message "Enabling FaceCheck on Verified ID Authority {$($this.VerifiedIDAuthorityId)}"
+            $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)subscriptions/$($this.SubscriptionId)/resourceGroups/$($this.ResourceGroupName)/providers/Microsoft.VerifiedId/authorities/$($this.VerifiedIdAuthorityId)?api-version=2024-01-26-preview"
+            $payload = '{"location": "' + $this.VerifiedIdAuthorityLocation + '"}'
+            $response = Invoke-AzRestMethod -Uri $uri -Method Put -Payload $payload
         }
         else
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            Write-Verbose -Message "Disabling FaceCheck on Verified ID Authority {$($this.VerifiedIDAuthorityId)}"
+            $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)subscriptions/$($this.SubscriptionId)/resourceGroups/$($this.ResourceGroupName)/providers/Microsoft.VerifiedId/authorities/$($this.VerifiedIdAuthorityId)?api-version=2024-01-26-preview"
+            $payload = '{"location": null}'
+            $response = Invoke-AzRestMethod -Uri $uri -Method DELETE
         }
-        $j = 1
-        foreach ($resourceGroup in $resourceGroups)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-            $displayedKey = $resourceGroup.ResourceGroupName
-            Write-M365DSCHost -Message "    |---[$j/$($resourceGroups.Length)] $displayedKey" -DeferWrite
+    }
 
-            if ($authorities.Length -eq 0)
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('AdminAPI')
+        $ConnectionMode = $this.Connect('Azure')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $headers = @{
+                Authorization = (Get-MSCloudLoginConnectionProfile -Workload AdminAPI).AccessToken
+            }
+            $uri = 'https://verifiedid.did.msidentity.com/v1.0/verifiableCredentials/authorities'
+            $response = Invoke-WebRequest -Uri $uri -Method Get -Headers $headers -UseBasicParsing
+            $authorities = ConvertFrom-Json $response.Content
+
+            $resourceGroups = Get-AzResourceGroup -ErrorAction Stop
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($resourceGroups.Length -eq 0)
             {
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
@@ -403,62 +200,91 @@ function Export-TargetResource
             {
                 Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
-
-            $i = 1
-            foreach ($authority in $authorities.value)
+            $j = 1
+            foreach ($resourceGroup in $resourceGroups)
             {
-                $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)$($resourceGroup.ResourceId)/providers/Microsoft.VerifiedId/authorities/$($authority.id)?api-version=2024-01-26-preview"
-                $response = Invoke-AzRestMethod -Uri $uri -Method Get
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+                $displayedKey = $resourceGroup.ResourceGroupName
+                Write-M365DSCHost -Message "    |---[$j/$($resourceGroups.Length)] $displayedKey" -DeferWrite
 
-                $Global:M365DSCExportResourceInstancesCount++
-
-                $displayedKey = $authority.name
-                Write-M365DSCHost -Message "        |---[$i/$($authorities.value.Length)] $displayedKey" -DeferWrite
-
-                $SubscriptionId = $resourceGroup.ResourceId.Split('/')
-                $SubscriptionId = $SubscriptionId[2]
-
-                $params = @{
-                    VerifiedIdAuthorityId = $authority.id
-                    SubscriptionId        = $SubscriptionId
-                    ResourceGroupName     = $resourceGroup.ResourceGroupName
-                    Credential            = $Credential
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    CertificateThumbprint = $CertificateThumbprint
-                    CertificatePath       = $CertificatePath
-                    CertificatePassword   = $CertificatePassword
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    AccessTokens          = $AccessTokens
+                if ($authorities.Length -eq 0)
+                {
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                }
+                else
+                {
+                    Write-M365DSCHost -Message "`r`n" -DeferWrite
                 }
 
-                $Results = Get-TargetResource @Params
+                $i = 1
+                foreach ($authority in $authorities.value)
+                {
+                    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)$($resourceGroup.ResourceId)/providers/Microsoft.VerifiedId/authorities/$($authority.id)?api-version=2024-01-26-preview"
+                    $response = Invoke-AzRestMethod -Uri $uri -Method Get
 
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-                $i++
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $Global:M365DSCExportResourceInstancesCount++
+
+                    $displayedKey = $authority.name
+                    Write-M365DSCHost -Message "        |---[$i/$($authorities.value.Length)] $displayedKey" -DeferWrite
+
+                    $resourceIdParts = $resourceGroup.ResourceId.Split('/')
+
+                    $params = @{
+                        VerifiedIdAuthorityId = $authority.id
+                        SubscriptionId        = $resourceIdParts[2]
+                        ResourceGroupName     = $resourceGroup.ResourceGroupName
+                        Credential            = $this.Credential
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        CertificatePath       = $this.CertificatePath
+                        CertificatePassword   = $this.CertificatePassword
+                        ManagedIdentity       = $this.ManagedIdentity
+                        AccessTokens          = $this.AccessTokens
+                    }
+
+                    $Results = $this.GetForExport($Params)
+
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+                    $i++
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                }
+                $j++
             }
-            $j++
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [AzureVerifiedIdFaceCheck] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AzureVerifiedIdFaceCheck])
+        {
+            return $Values
+        }
+
+        $result = [AzureVerifiedIdFaceCheck]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

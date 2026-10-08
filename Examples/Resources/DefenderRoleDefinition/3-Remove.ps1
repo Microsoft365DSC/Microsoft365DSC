@@ -4,7 +4,8 @@ This example removes a new Defender Role Definition.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,11 +18,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        DefenderRoleDefinition "DefenderRoleDefinitionExample"
+        DefenderRoleDefinition "DefenderRoleDefinition-Example"
         {
             DisplayName           = "MyNewDefinition";
             Ensure                = "Absent";

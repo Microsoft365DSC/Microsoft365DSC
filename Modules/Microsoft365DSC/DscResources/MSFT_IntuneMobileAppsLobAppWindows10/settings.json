@@ -1,5 +1,97 @@
 {
   "resourceName": "IntuneMobileAppsLobAppWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "mobileApp",
+    "odataSubtype": "windowsUniversalAppX",
+    "cmdletNoun": "MgBetaDeviceAppManagementMobileApp",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ApplicableArchitectures",
+      "reason": "Accepted",
+      "note": "Derived from the FileName extension and written only on create"
+    },
+    {
+      "name": "ApplicableDeviceTypes",
+      "reason": "Accepted",
+      "note": "Derived from the FileName extension and written only on create"
+    },
+    {
+      "name": "CommittedContainedApps",
+      "reason": "ReadOnly",
+      "note": "Populated from the supplied package file when the content is committed."
+    },
+    {
+      "name": "DependentAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "IdentityName",
+      "reason": "Accepted",
+      "note": "Set writes a fixed placeholder on create and Get never reads it back"
+    },
+    {
+      "name": "IdentityPublisherHash",
+      "reason": "Accepted",
+      "note": "Set writes a fixed placeholder on create only"
+    },
+    {
+      "name": "IdentityResourceIdentifier",
+      "reason": "ReadOnly",
+      "note": "Parsed from the uploaded appx package."
+    },
+    {
+      "name": "IdentityVersion",
+      "reason": "Accepted",
+      "note": "Set writes a fixed placeholder on create only"
+    },
+    {
+      "name": "IsAssigned",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "IsBundle",
+      "reason": "Accepted",
+      "note": "Derived from the FileName extension and written only on create"
+    },
+    {
+      "name": "PublishingState",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "Relationships",
+      "reason": "NotConfigurable",
+      "note": "Can only be configured for IntuneMobileAppsWin32AppWindows10."
+    },
+    {
+      "name": "Size",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "SupersededAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "SupersedingAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "UploadState",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    }
+  ],
   "description": "This resource configures an Intune Mobile Apps Lob App for Windows10.",
   "permissions": {
     "graph": {
@@ -9,7 +101,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -17,7 +112,10 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -27,7 +125,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -35,14 +136,16 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.DeviceManagement",
     "Microsoft.Graph.Beta.Devices.CorporateManagement",
     "Microsoft.Graph.Groups"
@@ -53,12 +156,6 @@
     "USGov"
   ],
   "commands": [
-    {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
     {
       "module": "Microsoft.Graph.Beta.DeviceManagement",
       "cmdlets": [
@@ -71,7 +168,9 @@
         "Get-MgBetaDeviceAppManagementMobileApp",
         "Get-MgBetaDeviceAppManagementMobileAppAssignment",
         "Get-MgBetaDeviceAppManagementMobileAppCategory",
-        "Remove-MgBetaDeviceAppManagementMobileApp"
+        "New-MgBetaDeviceAppManagementMobileApp",
+        "Remove-MgBetaDeviceAppManagementMobileApp",
+        "Update-MgBetaDeviceAppManagementMobileApp"
       ]
     },
     {

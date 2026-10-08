@@ -1,41 +1,85 @@
 {
   "resourceName": "IntuneWindowsAutopilotDeploymentProfileAzureADJoined",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "windowsAutopilotDeploymentProfile",
+    "odataSubtype": "azureADWindowsAutopilotDeploymentProfile",
+    "cmdletNoun": "MgBetaDeviceManagementWindowsAutopilotDeploymentProfile",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "EnableWhiteGlove",
+      "reason": "Deprecated",
+      "note": "Superseded by preprovisioningAllowed"
+    },
+    {
+      "name": "ExtractHardwareHash",
+      "reason": "Deprecated",
+      "note": "Superseded by hardwareHashExtractionEnabled"
+    },
+    {
+      "name": "Language",
+      "reason": "Deprecated",
+      "note": "Superseded by locale"
+    },
+    {
+      "name": "OutOfBoxExperienceSettings",
+      "reason": "Deprecated",
+      "note": "Superseded by outOfBoxExperienceSetting"
+    }
+  ],
   "description": "This resource configures an Intune Windows Autopilot Deployment Profile Azure AD Joined.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

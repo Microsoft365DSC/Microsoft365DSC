@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,25 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOMigrationEndpoint "EXOMigrationEndpoint-testIMAP"
+        EXOMigrationEndpoint "EXOMigrationEndpoint-Example"
         {
-            AcceptUntrustedCertificates   = $True;
-            Authentication                = "Basic";
-            ApplicationId                 = $ApplicationId
-            TenantId                      = $TenantId
-            CertificateThumbprint         = $CertificateThumbprint
-            EndpointType                  = "IMAP";
-            Ensure                        = "Absent";
-            Identity                      = "testIMAP";
-            MailboxPermission             = "Admin";
-            MaxConcurrentIncrementalSyncs = "10";
-            MaxConcurrentMigrations       = "20";
-            Port                          = 993;
-            RemoteServer                  = "gmail.com";
-            Security                      = "None";
+            Ensure                = "Absent";
+            Identity              = "Gmail IMAP Migration";
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

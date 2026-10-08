@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,30 +19,33 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADIdentityGovernanceLifecycleWorkflow "AADIdentityGovernanceLifecycleWorkflow-Onboard pre-hire employee updated version"
+        AADIdentityGovernanceLifecycleWorkflow "AADIdentityGovernanceLifecycleWorkflow-Example"
         {
-            Category             = "joiner";
-            Description          = "Description the onboard of prehire employee";
-            DisplayName          = "Onboard pre-hire employee updated version";
-            Ensure               = "Present";
-            ExecutionConditions  = MSFT_IdentityGovernanceWorkflowExecutionConditions {
-                ScopeValue = MSFT_IdentityGovernanceScope {
-                    Rule = '(not (country eq ''Brazil''))'
+            AdministrationScopeTargets = @('4f9dc456-0574-4122-9e55-8b4cc494b27d');
+            Category                   = "joiner";
+            Description                = "Description the onboard of prehire employee";
+            DisplayName                = "Onboard pre-hire employee updated version";
+            Ensure                     = "Present";
+            ExecutionConditions        = MSFT_IdentityGovernanceWorkflowExecutionConditions {
+                ScopeValue   = MSFT_IdentityGovernanceScope {
+                    Rule      = '(not (country eq ''Brazil''))'
                     ODataType = '#microsoft.graph.identityGovernance.ruleBasedSubjectSet'
                 }
                 TriggerValue = MSFT_IdentityGovernanceTrigger {
-                    OffsetInDays = 4
+                    OffsetInDays       = 4
                     TimeBasedAttribute = 'employeeHireDate'
-                    ODataType = '#microsoft.graph.identityGovernance.timeBasedAttributeTrigger'
+                    ODataType          = '#microsoft.graph.identityGovernance.timeBasedAttributeTrigger'
                 }
-                ODataType = '#microsoft.graph.identityGovernance.triggerAndScopeBasedConditions'
+                ODataType    = '#microsoft.graph.identityGovernance.triggerAndScopeBasedConditions'
             };
-            IsEnabled            = $True;
-            IsSchedulingEnabled  = $False;
-            Tasks                = @(
+            IsEnabled                  = $True;
+            IsSchedulingEnabled        = $False;
+            Tasks                      = @(
                 MSFT_AADIdentityGovernanceTask {
                     DisplayName       = 'Add user to groups'
                     Description       = 'Add user to selected groups'
@@ -49,7 +53,7 @@ Configuration Example
                     IsEnabled         = $True
                     ExecutionSequence = 1
                     ContinueOnError   = $True
-                    TaskDefinitionId   = '22085229-5809-45e8-97fd-270d28d66910'
+                    TaskDefinitionId  = '22085229-5809-45e8-97fd-270d28d66910'
                     Arguments         = @(
                         MSFT_AADIdentityGovernanceTaskArguments {
                             Name  = 'groupID'
@@ -58,9 +62,9 @@ Configuration Example
                     )
                 }
             );
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId              = $ApplicationId
+            TenantId                   = $TenantId
+            CertificateThumbprint      = $CertificateThumbprint
         }
     }
 }

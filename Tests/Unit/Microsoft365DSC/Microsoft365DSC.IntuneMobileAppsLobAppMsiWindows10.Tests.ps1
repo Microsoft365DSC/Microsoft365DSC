@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -54,7 +54,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceAppManagementMobileApp -MockWith {
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName New-MgBetaDeviceAppManagementMobileApp -MockWith {
                 return @{
                     applicableDeviceTypes = "none"
                     commandLine = "FakeStringValue"
@@ -170,8 +170,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
+            }
+
+            Mock -CommandName Wait-M365DSCIntuneMobileAppPublished -MockWith {
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
@@ -202,19 +205,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneMobileAppsLobAppMsiWindows10 should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppAssignment -Property @{
-                            Id = "12345-12345-12345-12345-12345"
+                    Assignments = @(
+                        ([MSFT_DeviceManagementMobileAppAssignment] @{
                             Intent = "required"
                             DeviceAndAppManagementAssignmentFilterType = "none"
                             GroupId = "26d60dd1-fab6-47bf-8656-358194c1a49d"
                             DataType = "#microsoft.graph.groupAssignmentTarget"
-                        } -ClientOnly)
+                        })
                     )
-                    Categories = [CimInstance[]]@((New-CimInstance -ClassName MSFT_DeviceManagementMobileAppCategory -Property @{
+                    Categories = @(([MSFT_DeviceManagementMobileAppCategory] @{
                         Id = "FakeStringValue"
                         DisplayName = "FakeStringValue"
-                    } -ClientOnly))
+                    }))
                     CommandLine = "FakeStringValue"
                     IgnoreVersionDetection = $True
                     UseDeviceContext = $True
@@ -225,10 +227,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     informationUrl = "FakeStringValue"
                     isFeatured = $True
-                    LargeIcon = (New-CimInstance -ClassName MSFT_MicrosoftGraphmimeContent -Property @{
+                    LargeIcon = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "FakeStringValue"
                         Value = "VGVzdA==" # Base64 encoded string for "Test"
-                    } -ClientOnly)
+                    })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"
                     PrivacyInformationUrl = "FakeStringValue"
@@ -241,35 +243,44 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Mock -CommandName Get-MgBetaDeviceAppManagementMobileApp -MockWith {
                     return $null
                 }
+
+                Mock -CommandName Get-MgBetaDeviceAppManagementMobileApp -ParameterFilter { -not [System.String]::IsNullOrEmpty($Filter) } -MockWith {
+                    return @{
+                        '@odata.type' = '#microsoft.graph.windowsUniversalAppX'
+                        id            = 'FakeStringValue'
+                        displayName   = 'FakeStringValue'
+                    }
+                }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
+                Should -Invoke -CommandName Get-MgBetaDeviceAppManagementMobileApp -ParameterFilter { $Filter -eq "DisplayName eq 'FakeStringValue'" }
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaDeviceAppManagementMobileApp -Exactly 1
+                Should -Invoke -CommandName Wait-M365DSCIntuneMobileAppPublished -Exactly 1
             }
         }
 
         Context -Name "The IntuneMobileAppsLobAppMsiWindows10 exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppAssignment -Property @{
-                            Id = "12345-12345-12345-12345-12345"
+                    Assignments = @(
+                        ([MSFT_DeviceManagementMobileAppAssignment] @{
                             Intent = "required"
                             DeviceAndAppManagementAssignmentFilterType = "none"
                             GroupId = "26d60dd1-fab6-47bf-8656-358194c1a49d"
                             DataType = "#microsoft.graph.groupAssignmentTarget"
-                        } -ClientOnly)
+                        })
                     )
-                    Categories = [CimInstance[]]@((New-CimInstance -ClassName MSFT_DeviceManagementMobileAppCategory -Property @{
+                    Categories = @(([MSFT_DeviceManagementMobileAppCategory] @{
                         Id = "FakeStringValue"
                         DisplayName = "FakeStringValue"
-                    } -ClientOnly))
+                    }))
                     CommandLine = "FakeStringValue"
                     IgnoreVersionDetection = $True
                     UseDeviceContext = $True
@@ -280,10 +291,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     informationUrl = "FakeStringValue"
                     isFeatured = $True
-                    LargeIcon = (New-CimInstance -ClassName MSFT_MicrosoftGraphmimeContent -Property @{
+                    LargeIcon = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "FakeStringValue"
                         Value = "VGVzdA==" # Base64 encoded string for "Test"
-                    } -ClientOnly)
+                    })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"
                     PrivacyInformationUrl = "FakeStringValue"
@@ -295,15 +306,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceAppManagementMobileApp -Exactly 1
             }
         }
@@ -311,19 +322,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneMobileAppsLobAppMsiWindows10 Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppAssignment -Property @{
-                            Id = "12345-12345-12345-12345-12345"
+                    Assignments = @(
+                        ([MSFT_DeviceManagementMobileAppAssignment] @{
                             Intent = "required"
                             DeviceAndAppManagementAssignmentFilterType = "none"
                             GroupId = "26d60dd1-fab6-47bf-8656-358194c1a49d"
                             DataType = "#microsoft.graph.groupAssignmentTarget"
-                        } -ClientOnly)
+                        })
                     )
-                    Categories = [CimInstance[]]@((New-CimInstance -ClassName MSFT_DeviceManagementMobileAppCategory -Property @{
+                    Categories = @(([MSFT_DeviceManagementMobileAppCategory] @{
                         Id = "FakeStringValue"
                         DisplayName = "FakeStringValue"
-                    } -ClientOnly))
+                    }))
                     CommandLine = "FakeStringValue"
                     IgnoreVersionDetection = $True
                     UseDeviceContext = $True
@@ -334,10 +344,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     informationUrl = "FakeStringValue"
                     isFeatured = $True
-                    LargeIcon = (New-CimInstance -ClassName MSFT_MicrosoftGraphmimeContent -Property @{
+                    LargeIcon = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "FakeStringValue"
                         Value = "VGVzdA==" # Base64 encoded string for "Test"
-                    } -ClientOnly)
+                    })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"
                     PrivacyInformationUrl = "FakeStringValue"
@@ -349,26 +359,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The IntuneMobileAppsLobAppMsiWindows10 exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppAssignment -Property @{
-                            Id = "12345-12345-12345-12345-12345"
+                    Assignments = @(
+                        ([MSFT_DeviceManagementMobileAppAssignment] @{
                             Intent = "required"
                             DeviceAndAppManagementAssignmentFilterType = "none"
                             GroupId = "26d60dd1-fab6-47bf-8656-358194c1a49d"
                             DataType = "#microsoft.graph.groupAssignmentTarget"
-                        } -ClientOnly)
+                        })
                     )
-                    Categories = [CimInstance[]]@((New-CimInstance -ClassName MSFT_DeviceManagementMobileAppCategory -Property @{
+                    Categories = @(([MSFT_DeviceManagementMobileAppCategory] @{
                         Id = "FakeStringValue"
                         DisplayName = "FakeStringValue"
-                    } -ClientOnly))
+                    }))
                     CommandLine = "FakeStringValue"
                     IgnoreVersionDetection = $False
                     UseDeviceContext = $True # Drift
@@ -379,10 +388,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     informationUrl = "FakeStringValue"
                     isFeatured = $True
-                    LargeIcon = (New-CimInstance -ClassName MSFT_MicrosoftGraphmimeContent -Property @{
+                    LargeIcon = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "FakeStringValue"
                         Value = "VGVzdA==" # Base64 encoded string for "Test"
-                    } -ClientOnly)
+                    })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"
                     PrivacyInformationUrl = "FakeStringValue"
@@ -394,16 +403,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MgBetaDeviceAppManagementMobileApp -Exactly 1
             }
         }
 
@@ -417,7 +426,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneMobileAppsLobAppMsiWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

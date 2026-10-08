@@ -5,29 +5,51 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCProtectionAlert 'CustomSuspiciousEmailSendingPatternDetected'
+        SCProtectionAlert 'SCProtectionAlert-Example'
         {
-            AggregationType         = "None";
-            Category                = "ThreatManagement";
-            Comment                 = "User has been detected as sending suspicious messages outside the organization and will be restricted if this activity continues. -V1.0.0.1";
-            Credential              = $Credscredential;
-            Disabled                = $False;
-            Ensure                  = "Present";
-            Name                    = "Custom Suspicious email sending patterns detected";
-            NotificationEnabled     = $True;
-            NotifyUser              = @("admin@contoso.com");
-            NotifyUserOnFilterMatch = $False;
-            Operation               = @("CompromisedWarningAccount");
-            Severity                = "Medium";
+            AggregationType                 = "SimpleAggregation";
+            AlertBy                         = @("User");
+            Category                        = "ThreatManagement";
+            Comment                         = "Notifies the security operations team when a user repeatedly sends suspicious messages outside the organisation";
+            Disabled                        = $false;
+            Ensure                          = "Present";
+            Filter                          = "Activity.Operation -eq 'CompromisedWarningAccount'";
+            Name                            = "Custom Suspicious email sending patterns detected";
+            NotificationCulture             = "en-US";
+            NotificationEnabled             = $true;
+            NotifyUser                      = @("AdeleV@$TenantId");
+            NotifyUserOnFilterMatch         = $false;
+            NotifyUserSuppressionExpiryDate = "2026-12-31T00:00:00.0000000Z";
+            NotifyUserThrottleThreshold     = 10;
+            NotifyUserThrottleWindow        = 60;
+            Operation                       = @("CompromisedWarningAccount");
+            Severity                        = "Medium";
+            ThreatType                      = "Activity";
+            Threshold                       = 5;
+            TimeWindow                      = 120;
+            VolumeThreshold                 = 100;
+            ApplicationId                   = $ApplicationId;
+            TenantId                        = $TenantId;
+            CertificateThumbprint           = $CertificateThumbprint;
         }
     }
 }

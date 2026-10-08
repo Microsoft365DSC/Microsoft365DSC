@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,37 +19,53 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWindowsAutopilotDeploymentProfileAzureADJoined 'Example'
+        IntuneWindowsAutopilotDeploymentProfileAzureADJoined 'IntuneWindowsAutopilotDeploymentProfileAzureADJoined-Example'
         {
-            Assignments                = @(
+            Assignments                    = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
-                    deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
+                    dataType                                   = "#microsoft.graph.allDevicesAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName = "Intune Excluded Devices"
                 }
             );
-            Description                = "";
-            DeviceNameTemplate         = "test";
-            DeviceType                 = "windowsPc";
-            DisplayName                = "AAD";
-            EnableWhiteGlove           = $True;
-            Ensure                     = "Present";
-            ExtractHardwareHash        = $True;
-            Language                   = "";
-            OutOfBoxExperienceSettings = MSFT_MicrosoftGraphoutOfBoxExperienceSettings1{
-                HideEULA = $False
-                HideEscapeLink = $True
-                HidePrivacySettings = $True
-                DeviceUsageType = 'singleUser'
-                SkipKeyboardSelectionPage = $True
-                UserType = 'administrator'
+            Description                    = "User-driven provisioning for Entra joined laptops";
+            DeviceNameTemplate             = "CONTOSO-%RAND:6%";
+            DeviceType                     = "windowsPc";
+            DisplayName                    = "AAD";
+            PreprovisioningAllowed               = $true;
+            EnrollmentStatusScreenSettings = MSFT_MicrosoftGraphwindowsEnrollmentStatusScreenSettings{
+                AllowDeviceUseBeforeProfileAndAppInstallComplete = $false
+                AllowDeviceUseOnInstallFailure                   = $true
+                AllowLogCollectionOnInstallFailure               = $true
+                BlockDeviceSetupRetryByUser                      = $false
+                CustomErrorMessage                               = "Setup could not be completed. Please contact the service desk on extension 4500."
+                HideInstallationProgress                         = $false
+                InstallProgressTimeoutInMinutes                  = 60
             };
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            Ensure                         = "Present";
+            HardwareHashExtractionEnabled  = $true;
+            Locale                         = "en-US";
+            ManagementServiceAppId         = "<application-id>";
+            OutOfBoxExperienceSetting     = MSFT_MicrosoftGraphoutOfBoxExperienceSetting{
+                DeviceUsageType           = "singleUser"
+                EulaHidden                  = $false
+                EscapeLinkHidden            = $true
+                PrivacySettingsHidden       = $true
+                KeyboardSelectionPageSkipped = $true
+                UserType                  = "administrator"
+            };
+            RoleScopeTagIds                = @("0");
+            ApplicationId                  = $ApplicationId;
+            TenantId                       = $TenantId;
+            CertificateThumbprint          = $CertificateThumbprint;
         }
     }
 }

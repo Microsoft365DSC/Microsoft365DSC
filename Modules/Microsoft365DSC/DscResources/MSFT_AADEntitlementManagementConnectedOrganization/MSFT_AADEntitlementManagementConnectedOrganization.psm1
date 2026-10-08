@@ -1,816 +1,640 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADEntitlementManagementConnectedOrganization'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADEntitlementManagementConnectedOrganization : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The display name of the connected organization.')]
+    [System.String] $DisplayName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Id of the Connected organization object.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('The description of the connected organization.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $IdentitySources,
+    [DscProperty()]
+    [System.ComponentModel.Description('The identity sources in this connected organization.')]
+    [MSFT_AADEntitlementManagementConnectedOrganizationIdentitySource[]] $IdentitySources
 
-        [Parameter()]
-        [ValidateSet('configured', 'proposed', 'unknownFutureValue')]
-        [System.String]
-        $State,
+    [DscProperty()]
+    [System.ComponentModel.Description('The state of a connected organization defines whether assignment policies with requestor scope type AllConfiguredConnectedOrganizationSubjects are applicable or not.')]
+    [ValidateSet('configured', 'proposed', 'unknownFutureValue')]
+    [System.String] $State
 
-        [Parameter()]
-        [String[]]
-        $ExternalSponsors,
+    [DscProperty()]
+    [System.ComponentModel.Description('Collection of objectID of external sponsors. the sponsor can be a user or a group.')]
+    [System.String[]] $ExternalSponsors
 
-        [Parameter()]
-        [String[]]
-        $InternalSponsors,
+    [DscProperty()]
+    [System.ComponentModel.Description('Collection of objectID of internal sponsors. the sponsor can be a user or a group.')]
+    [System.String[]] $InternalSponsors
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Intune Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of AzureAD Entitlement Management Connected Organization for DisplayName {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [AADEntitlementManagementConnectedOrganization] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Id -ne $Id)
+        $nullResult = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [AADEntitlementManagementConnectedOrganization]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of AzureAD Entitlement Management Connected Organization for DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Id -ne $this.Id)
             {
-                $getValue = Get-MgBetaEntitlementManagementConnectedOrganization -ConnectedOrganizationId $Id `
-                    -ErrorAction SilentlyContinue
+                $null = $this.Connect('MicrosoftGraph')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
+                {
+                    $getValue = Get-MgBetaEntitlementManagementConnectedOrganization -ConnectedOrganizationId $this.Id `
+                        -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $getValue)
+                {
+                    if (-not [System.String]::IsNullOrEmpty($this.Id))
+                    {
+                        Write-Verbose -Message "Entitlement Management Connected Organization with id {$($this.Id)} was not found."
+                    }
+
+                    if (-not [string]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        $getValue = Get-MgBetaEntitlementManagementConnectedOrganization `
+                            -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                            -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+            else
+            {
+                $getValue = $this.ExportedInstance
             }
 
             if ($null -eq $getValue)
             {
-                if (-not [System.String]::IsNullOrEmpty($Id))
-                {
-                    Write-Verbose -Message "Entitlement Management Connected Organization with id {$Id} was not found."
-                }
-
-                if (-not [string]::IsNullOrEmpty($DisplayName))
-                {
-                    $getValue = Get-MgBetaEntitlementManagementConnectedOrganization `
-                        -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                        -ErrorAction SilentlyContinue
-                }
+                Write-Verbose -Message "Entitlement Management Connected Organization with displayName {$($this.DisplayName)} was not found."
+                return $this.AsResult($nullResult)
             }
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
 
-        if ($null -eq $getValue)
-        {
-            Write-Verbose -Message "Entitlement Management Connected Organization with displayName {$DisplayName} was not found."
-            return $nullResult
-        }
+            Write-Verbose -Message "Entitlement Management Connected Organization with id {$($getValue.id)} and displayName {$($getValue.DisplayName)} was found."
+            [Array]$getExternalSponsors = Get-MgBetaEntitlementManagementConnectedOrganizationExternalSponsor -ConnectedOrganizationId $getValue.id
 
-        Write-Verbose -Message "Entitlement Management Connected Organization with id {$($getValue.id)} and displayName {$($getValue.DisplayName)} was found."
-        [Array]$getExternalSponsors = Get-MgBetaEntitlementManagementConnectedOrganizationExternalSponsor -ConnectedOrganizationId $getValue.id
-
-        $ExternalSponsorsValues = @()
-        if ($null -ne $getExternalSponsors -and $getExternalSponsors.Count -gt 0)
-        {
-            foreach ($sponsor in $getExternalSponsors)
+            $ExternalSponsorsValues = @()
+            if ($null -ne $getExternalSponsors -and $getExternalSponsors.Count -gt 0)
             {
-                if ($sponsor.'@odata.type' -eq '#microsoft.graph.user')
+                foreach ($sponsor in $getExternalSponsors)
                 {
-                    $ExternalSponsorsValues += $sponsor.userPrincipalName
-                }
-                elseif ($sponsor.'@odata.type' -eq '#microsoft.graph.group')
-                {
-                    $ExternalSponsorsValues += $sponsor.displayName
-                }
-            }
-        }
-
-        [Array]$getInternalSponsors = Get-MgBetaEntitlementManagementConnectedOrganizationInternalSponsor -ConnectedOrganizationId $getValue.id
-
-        $InternalSponsorsValues = @()
-        if ($null -ne $getInternalSponsors -and $getInternalSponsors.Count -gt 0)
-        {
-            foreach ($sponsor in $getInternalSponsors)
-            {
-                if ($sponsor.'@odata.type' -eq '#microsoft.graph.user')
-                {
-                    $InternalSponsorsValues += $sponsor.userPrincipalName
-                }
-                elseif ($sponsor.'@odata.type' -eq '#microsoft.graph.group')
-                {
-                    $InternalSponsorsValues += $sponsor.displayName
-                }
-            }
-        }
-
-        $getIdentitySources = $null
-        if ($null -ne $getValue.IdentitySources)
-        {
-            $sources = @()
-            foreach ($source in $getValue.IdentitySources)
-            {
-                $formattedSource = @{
-                    odataType = $source.'@odata.type'
-                }
-
-                if (-not [String]::IsNullOrEmpty($source.displayName))
-                {
-                    $formattedSource.Add('DisplayName', $source.displayName)
-                }
-
-                if (-not [String]::IsNullOrEmpty($source.tenantId))
-                {
-                    $formattedSource.Add('ExternalTenantId', $source.tenantId)
-                }
-
-                if (-not [String]::IsNullOrEmpty($source.cloudInstance))
-                {
-                    $formattedSource.Add('CloudInstance', $source.cloudInstance)
-                }
-
-                if (-not [String]::IsNullOrEmpty($source.domainName))
-                {
-                    $formattedSource.Add('DomainName', $source.domainName)
-                }
-
-                if (-not [String]::IsNullOrEmpty($source.issuerUri))
-                {
-                    $formattedSource.Add('IssuerUri', $source.issuerUri)
-                }
-                $sources += $formattedSource
-            }
-            $getIdentitySources = $sources
-        }
-
-        $results = @{
-            Id                    = $getValue.id
-            Description           = $getValue.description
-            DisplayName           = $getValue.displayName
-            ExternalSponsors      = $ExternalSponsorsValues
-            IdentitySources       = $getIdentitySources
-            InternalSponsors      = $InternalSponsorsValues
-            State                 = $getValue.state
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $IdentitySources,
-
-        [Parameter()]
-        [ValidateSet('configured', 'proposed', 'unknownFutureValue')]
-        [System.String]
-        $State,
-
-        [Parameter()]
-        [String[]]
-        $ExternalSponsors,
-
-        [Parameter()]
-        [String[]]
-        $InternalSponsors,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of AzureAD Entitlement Management Connected Organization for DisplayName {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    $keyToRename = @{
-        'odataType'        = '@odata.type'
-        'ExternalTenantId' = 'tenantId'
-    }
-
-    if ($Ensure -eq 'Present')
-    {
-        $ExternalSponsorsValues = @()
-        foreach ($sponsor in $ExternalSponsors)
-        {
-            if (-not [System.Guid]::TryParse($sponsor, [ref][System.Guid]::Empty))
-            {
-                try
-                {
-                    $user = Get-MgUser -UserId $sponsor -ErrorAction SilentlyContinue
-                    if ($null -ne $user)
+                    if ($sponsor.'@odata.type' -eq '#microsoft.graph.user')
                     {
-                        $ExternalSponsorsValues += $user.Id
+                        $ExternalSponsorsValues += $sponsor.userPrincipalName
                     }
-                    else
+                    elseif ($sponsor.'@odata.type' -eq '#microsoft.graph.group')
                     {
-                        $group = Get-MgGroup -Filter "displayName eq '$sponsor'" -ErrorAction SilentlyContinue
-                        if ($null -ne $group)
-                        {
-                            $ExternalSponsorsValues += $group.Id
-                        }
-                        else
-                        {
-                            Write-Verbose -Message "Could not find External Sponsor {$sponsor}"
-                        }
+                        $ExternalSponsorsValues += $sponsor.displayName
                     }
                 }
-                catch
-                {
-                    Write-Verbose -Message "Could not find External Sponsor {$sponsor}"
-                }
             }
-            else
-            {
-                $ExternalSponsorsValues += $sponsor
-            }
-        }
-        $ExternalSponsors = $ExternalSponsorsValues
 
-        $InternalSponsorsValues = @()
-        foreach ($sponsor in $InternalSponsors)
-        {
-            if (-not [System.Guid]::TryParse($sponsor, [ref][System.Guid]::Empty))
+            [Array]$getInternalSponsors = Get-MgBetaEntitlementManagementConnectedOrganizationInternalSponsor -ConnectedOrganizationId $getValue.id
+
+            $InternalSponsorsValues = @()
+            if ($null -ne $getInternalSponsors -and $getInternalSponsors.Count -gt 0)
             {
-                try
+                foreach ($sponsor in $getInternalSponsors)
                 {
-                    $user = Get-MgUser -UserId $sponsor -ErrorAction SilentlyContinue
-                    if ($null -ne $user)
+                    if ($sponsor.'@odata.type' -eq '#microsoft.graph.user')
                     {
-                        $InternalSponsorsValues += $user.Id
+                        $InternalSponsorsValues += $sponsor.userPrincipalName
                     }
-                    else
+                    elseif ($sponsor.'@odata.type' -eq '#microsoft.graph.group')
                     {
-                        $group = Get-MgGroup -Filter "displayName eq '$sponsor'" -ErrorAction SilentlyContinue
-                        if ($null -ne $group)
-                        {
-                            $InternalSponsorsValues += $group.Id
-                        }
-                        else
-                        {
-                            Write-Verbose -Message "Could not find Internal Sponsor {$sponsor}"
-                        }
+                        $InternalSponsorsValues += $sponsor.displayName
                     }
                 }
-                catch
+            }
+
+            $getIdentitySources = $null
+            if ($null -ne $getValue.IdentitySources)
+            {
+                $sources = @()
+                foreach ($source in $getValue.IdentitySources)
                 {
-                    Write-Verbose -Message "Could not find Internal Sponsor {$sponsor}"
+                    $formattedSource = @{
+                        odataType = $source.'@odata.type'
+                    }
+
+                    if (-not [String]::IsNullOrEmpty($source.displayName))
+                    {
+                        $formattedSource.Add('DisplayName', $source.displayName)
+                    }
+
+                    if (-not [String]::IsNullOrEmpty($source.tenantId))
+                    {
+                        $formattedSource.Add('ExternalTenantId', $source.tenantId)
+                    }
+
+                    if (-not [String]::IsNullOrEmpty($source.cloudInstance))
+                    {
+                        $formattedSource.Add('CloudInstance', $source.cloudInstance)
+                    }
+
+                    if (-not [String]::IsNullOrEmpty($source.domainName))
+                    {
+                        $formattedSource.Add('DomainName', $source.domainName)
+                    }
+
+                    if (-not [String]::IsNullOrEmpty($source.issuerUri))
+                    {
+                        $formattedSource.Add('IssuerUri', $source.issuerUri)
+                    }
+                    $sources += $formattedSource
                 }
-            }
-            else
-            {
-                $InternalSponsorsValues += $sponsor
-            }
-        }
-        $InternalSponsors = $InternalSponsorsValues
-    }
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating a new Entitlement Management Connected Organization {$DisplayName}"
-
-        $CreateParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-        $CreateParameters = Rename-M365DSCCimInstanceParameter -Properties $CreateParameters -KeyMapping $keyToRename
-
-        $CreateParameters.Remove('Id') | Out-Null
-        $CreateParameters.Remove('ExternalSponsors') | Out-Null
-        $CreateParameters.Remove('InternalSponsors') | Out-Null
-
-        Write-Verbose -Message "Create Parameters: $(Convert-M365DscHashtableToString -Hashtable $CreateParameters)"
-        $TenantIdValue = $CreateParameters.IdentitySources.TenantId
-        $url = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/tenantRelationships/microsoft.graph.findTenantInformationByTenantId(tenantId='$TenantIdValue')"
-        $DomainName = (Invoke-MgGraphRequest -Method 'GET' -Uri $url).defaultDomainName
-        $newConnectedOrganization = New-MgBetaEntitlementManagementConnectedOrganization -Description $CreateParameters.Description -DisplayName $CreateParameters.DisplayName -State $CreateParameters.State -DomainName $DomainName
-
-        foreach ($sponsor in $ExternalSponsors)
-        {
-            $directoryObject = Get-MgBetaDirectoryObject -DirectoryObjectId $sponsor
-            $directoryObjectType = $directoryObject.'@odata.type'
-            $directoryObjectType = ($directoryObject.'@odata.type').Split('.') | Select-Object -Last 1
-            $directoryObjectRef = @{
-                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/$($directoryObjectType)s/$($sponsor)"
+                $getIdentitySources = $sources
             }
 
-            New-MgBetaEntitlementManagementConnectedOrganizationExternalSponsorByRef `
-                -ConnectedOrganizationId $newConnectedOrganization.id `
-                -BodyParameter $directoryObjectRef
-        }
-
-        foreach ($sponsor in $InternalSponsors)
-        {
-            $directoryObject = Get-MgBetaDirectoryObject -DirectoryObjectId $sponsor
-            $directoryObjectType = ($directoryObject.'@odata.type').Split('.') | Select-Object -Last 1
-            $directoryObjectRef = @{
-                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/$($directoryObjectType)s/$($sponsor)"
-            }
-
-            New-MgBetaEntitlementManagementConnectedOrganizationInternalSponsorByRef `
-                -ConnectedOrganizationId $newConnectedOrganization.id `
-                -BodyParameter $directoryObjectRef
-        }
-
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating a new Entitlement Management Connected Organization {$($currentInstance.Id)}"
-
-        $UpdateParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-        $UpdateParameters = Rename-M365DSCCimInstanceParameter -Properties $UpdateParameters -KeyMapping $keyToRename
-
-        $UpdateParameters.Remove('Id') | Out-Null
-        $UpdateParameters.Remove('ExternalSponsors') | Out-Null
-        $UpdateParameters.Remove('InternalSponsors') | Out-Null
-
-        Update-MgBetaEntitlementManagementConnectedOrganization -BodyParameter $UpdateParameters `
-            -ConnectedOrganizationId $currentInstance.Id
-
-        #region External Sponsors
-        if ($currentInstance.ExternalSponsors)
-        {
-            $currentExternalSponsors = @()
-            foreach ($sponsor in $CurrentInstance.ExternalSponsors)
-            {
-                $user = Get-MgUser -UserId $sponsor -ErrorAction SilentlyContinue
-                if ($user)
-                {
-                    $currentExternalSponsors += $user.Id
-                }
-            }
-            $currentInstance.ExternalSponsors = $currentExternalSponsors
-        }
-        $sponsorsDifferences = Compare-Object -ReferenceObject @($ExternalSponsors | Select-Object) -DifferenceObject @($currentInstance.ExternalSponsors | Select-Object)
-        $sponsorsToAdd = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '<=' }).InputObject
-        $sponsorsToRemove = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '=>' }).InputObject
-        foreach ($sponsor in $sponsorsToAdd)
-        {
-            $directoryObject = Get-MgBetaDirectoryObject -DirectoryObjectId $sponsor
-            $directoryObjectType = $directoryObject.'@odata.type'
-            $directoryObjectType = ($directoryObject.'@odata.type').Split('.') | Select-Object -Last 1
-            $directoryObjectRef = @{
-                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/$($directoryObjectType)s/$($sponsor)"
-            }
-
-            New-MgBetaEntitlementManagementConnectedOrganizationExternalSponsorByRef `
-                -ConnectedOrganizationId $currentInstance.Id `
-                -BodyParameter $directoryObjectRef
-        }
-        foreach ($sponsor in $sponsorsToRemove)
-        {
-            Remove-MgBetaEntitlementManagementConnectedOrganizationExternalSponsorDirectoryObjectByRef `
-                -ConnectedOrganizationId $currentInstance.Id `
-                -DirectoryObjectId $sponsor
-        }
-        #endregion
-
-        #region Internal Sponsors
-        if ($currentInstance.InternalSponsors)
-        {
-            $currentInternalSponsors = @()
-            foreach ($sponsor in $CurrentInstance.InternalSponsors)
-            {
-                $user = Get-MgUser -UserId $sponsor -ErrorAction SilentlyContinue
-                if ($user)
-                {
-                    $currentInternalSponsors += $user.Id
-                }
-            }
-            $currentInstance.InternalSponsors = $currentInternalSponsors
-        }
-        $sponsorsDifferences = Compare-Object -ReferenceObject @($InternalSponsors | Select-Object) -DifferenceObject @($currentInstance.InternalSponsors | Select-Object)
-        $sponsorsToAdd = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '<=' }).InputObject
-        $sponsorsToRemove = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '=>' }).InputObject
-        foreach ($sponsor in $sponsorsToAdd)
-        {
-            $directoryObject = Get-MgBetaDirectoryObject -DirectoryObjectId $sponsor
-            $directoryObjectType = $directoryObject.'@odata.type'
-            $directoryObjectType = ($directoryObject.'@odata.type').Split('.') | Select-Object -Last 1
-            $directoryObjectRef = @{
-                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/$($directoryObjectType)s/$($sponsor)"
-            }
-
-            New-MgBetaEntitlementManagementConnectedOrganizationInternalSponsorByRef `
-                -ConnectedOrganizationId $currentInstance.Id `
-                -BodyParameter $directoryObjectRef
-        }
-        foreach ($sponsor in $sponsorsToRemove)
-        {
-            Remove-MgBetaEntitlementManagementConnectedOrganizationInternalSponsorDirectoryObjectByRef `
-                -ConnectedOrganizationId $currentInstance.Id `
-                -DirectoryObjectId $sponsor
-        }
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing a new Entitlement Management Connected Organization  {$($currentInstance.Id)}"
-        Remove-MgBetaEntitlementManagementConnectedOrganization -ConnectedOrganizationId $currentInstance.Id
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $IdentitySources,
-
-        [Parameter()]
-        [ValidateSet('configured', 'proposed', 'unknownFutureValue')]
-        [System.String]
-        $State,
-
-        [Parameter()]
-        [String[]]
-        $ExternalSponsors,
-
-        [Parameter()]
-        [String[]]
-        $InternalSponsors,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-
-        #region resource generator code
-        [array]$getValue = Get-MgBetaEntitlementManagementConnectedOrganization `
-            -All `
-            -Filter $Filter `
-            -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            $displayedKey = $config.id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
-            {
-                $displayedKey = $config.displayName
-            }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                id                    = $config.id
-                DisplayName           = $displayedKey
+            $results = @{
+                Id                    = $getValue.id
+                Description           = $getValue.description
+                DisplayName           = $getValue.displayName
+                ExternalSponsors      = $ExternalSponsorsValues
+                IdentitySources       = $getIdentitySources
+                InternalSponsors      = $InternalSponsorsValues
+                State                 = $getValue.state
                 Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
             }
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-
-            if ($Results.IdentitySources)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.IdentitySources -CIMInstanceName AADEntitlementManagementConnectedOrganizationIdentitySource
-                if ($complexTypeStringResult)
-                {
-                    $Results.IdentitySources = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('IdentitySources') | Out-Null
-                }
-            }
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('IdentitySources')
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
+        catch
         {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
-            return ''
-        }
-        else
-        {
-            New-M365DSCLogEntry -Message 'Error during Export:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error retrieving data:')
 
             throw
         }
     }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of AzureAD Entitlement Management Connected Organization for DisplayName {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        $keyToRename = @{
+            'odataType'        = '@odata.type'
+            'ExternalTenantId' = 'tenantId'
+        }
+
+        $ExternalSponsorsValues = @()
+        $InternalSponsorsValues = @()
+        if ($this.Ensure -eq 'Present')
+        {
+            foreach ($sponsor in $this.ExternalSponsors)
+            {
+                if (-not [System.Guid]::TryParse($sponsor, [ref][System.Guid]::Empty))
+                {
+                    try
+                    {
+                        $user = Get-MgUser -UserId $sponsor -ErrorAction SilentlyContinue
+                        if ($null -ne $user)
+                        {
+                            $ExternalSponsorsValues += $user.Id
+                        }
+                        else
+                        {
+                            $group = Get-MgGroup -Filter "displayName eq '$sponsor'" -ErrorAction SilentlyContinue
+                            if ($null -ne $group)
+                            {
+                                $ExternalSponsorsValues += $group.Id
+                            }
+                            else
+                            {
+                                Write-Verbose -Message "Could not find External Sponsor {$sponsor}"
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        Write-Verbose -Message "Could not find External Sponsor {$sponsor}"
+                    }
+                }
+                else
+                {
+                    $ExternalSponsorsValues += $sponsor
+                }
+            }
+            foreach ($sponsor in $this.InternalSponsors)
+            {
+                if (-not [System.Guid]::TryParse($sponsor, [ref][System.Guid]::Empty))
+                {
+                    try
+                    {
+                        $user = Get-MgUser -UserId $sponsor -ErrorAction SilentlyContinue
+                        if ($null -ne $user)
+                        {
+                            $InternalSponsorsValues += $user.Id
+                        }
+                        else
+                        {
+                            $group = Get-MgGroup -Filter "displayName eq '$sponsor'" -ErrorAction SilentlyContinue
+                            if ($null -ne $group)
+                            {
+                                $InternalSponsorsValues += $group.Id
+                            }
+                            else
+                            {
+                                Write-Verbose -Message "Could not find Internal Sponsor {$sponsor}"
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        Write-Verbose -Message "Could not find Internal Sponsor {$sponsor}"
+                    }
+                }
+                else
+                {
+                    $InternalSponsorsValues += $sponsor
+                }
+            }
+        }
+
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $boundParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters -KeyMapping $keyToRename
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating a new Entitlement Management Connected Organization {$($this.DisplayName)}"
+
+            $createParameters = $boundParameters
+            $createParameters.Remove('Id') | Out-Null
+            $createParameters.Remove('ExternalSponsors') | Out-Null
+            $createParameters.Remove('InternalSponsors') | Out-Null
+
+            Write-Verbose -Message "Create Parameters: $(Convert-M365DscHashtableToString -Hashtable $createParameters)"
+            $newConnectedOrganization = New-MgBetaEntitlementManagementConnectedOrganization -BodyParameter $createParameters
+
+            foreach ($sponsor in $ExternalSponsorsValues)
+            {
+                $directoryObjectRef = @{
+                    '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/directoryObjects/$($sponsor)"
+                }
+
+                New-MgBetaEntitlementManagementConnectedOrganizationExternalSponsorByRef `
+                    -ConnectedOrganizationId $newConnectedOrganization.id `
+                    -BodyParameter $directoryObjectRef
+            }
+
+            foreach ($sponsor in $InternalSponsorsValues)
+            {
+                $directoryObjectRef = @{
+                    '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/directoryObjects/$($sponsor)"
+                }
+
+                New-MgBetaEntitlementManagementConnectedOrganizationInternalSponsorByRef `
+                    -ConnectedOrganizationId $newConnectedOrganization.id `
+                    -BodyParameter $directoryObjectRef
+            }
+
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating a new Entitlement Management Connected Organization {$($currentInstance.Id)}"
+
+            $updateParameters = $boundParameters
+            $updateParameters.Remove('Id') | Out-Null
+            $updateParameters.Remove('ExternalSponsors') | Out-Null
+            $updateParameters.Remove('InternalSponsors') | Out-Null
+
+            Update-MgBetaEntitlementManagementConnectedOrganization -BodyParameter $updateParameters `
+                -ConnectedOrganizationId $currentInstance.Id
+
+            #region External Sponsors
+            if ($currentInstance.ExternalSponsors)
+            {
+                $currentExternalSponsors = @()
+                foreach ($sponsor in $CurrentInstance.ExternalSponsors)
+                {
+                    $sponsorId = $this.ResolveSponsorId($sponsor)
+                    if ($sponsorId)
+                    {
+                        $currentExternalSponsors += $sponsorId
+                    }
+                }
+                $currentInstance.ExternalSponsors = $currentExternalSponsors
+            }
+            $sponsorsDifferences = Compare-Object -ReferenceObject @($ExternalSponsorsValues | Select-Object) -DifferenceObject @($currentInstance.ExternalSponsors | Select-Object)
+            $sponsorsToAdd = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '<=' }).InputObject
+            $sponsorsToRemove = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '=>' }).InputObject
+            foreach ($sponsor in $sponsorsToAdd)
+            {
+                $directoryObjectRef = @{
+                    '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/directoryObjects/$($sponsor)"
+                }
+
+                New-MgBetaEntitlementManagementConnectedOrganizationExternalSponsorByRef `
+                    -ConnectedOrganizationId $currentInstance.Id `
+                    -BodyParameter $directoryObjectRef
+            }
+            foreach ($sponsor in $sponsorsToRemove)
+            {
+                Remove-MgBetaEntitlementManagementConnectedOrganizationExternalSponsorDirectoryObjectByRef `
+                    -ConnectedOrganizationId $currentInstance.Id `
+                    -DirectoryObjectId $sponsor
+            }
+            #endregion
+
+            #region Internal Sponsors
+            if ($currentInstance.InternalSponsors)
+            {
+                $currentInternalSponsors = @()
+                foreach ($sponsor in $CurrentInstance.InternalSponsors)
+                {
+                    $sponsorId = $this.ResolveSponsorId($sponsor)
+                    if ($sponsorId)
+                    {
+                        $currentInternalSponsors += $sponsorId
+                    }
+                }
+                $currentInstance.InternalSponsors = $currentInternalSponsors
+            }
+            $sponsorsDifferences = Compare-Object -ReferenceObject @($InternalSponsorsValues | Select-Object) -DifferenceObject @($currentInstance.InternalSponsors | Select-Object)
+            $sponsorsToAdd = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '<=' }).InputObject
+            $sponsorsToRemove = ($sponsorsDifferences | Where-Object -FilterScript { $_.SideIndicator -eq '=>' }).InputObject
+            foreach ($sponsor in $sponsorsToAdd)
+            {
+                $directoryObjectRef = @{
+                    '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/directoryObjects/$($sponsor)"
+                }
+
+                New-MgBetaEntitlementManagementConnectedOrganizationInternalSponsorByRef `
+                    -ConnectedOrganizationId $currentInstance.Id `
+                    -BodyParameter $directoryObjectRef
+            }
+            foreach ($sponsor in $sponsorsToRemove)
+            {
+                Remove-MgBetaEntitlementManagementConnectedOrganizationInternalSponsorDirectoryObjectByRef `
+                    -ConnectedOrganizationId $currentInstance.Id `
+                    -DirectoryObjectId $sponsor
+            }
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing a new Entitlement Management Connected Organization  {$($currentInstance.Id)}"
+            Remove-MgBetaEntitlementManagementConnectedOrganization -ConnectedOrganizationId $currentInstance.Id
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+
+            #region resource generator code
+            [array]$getValue = Get-MgBetaEntitlementManagementConnectedOrganization `
+                -All `
+                -Filter $this.Filter `
+                -ErrorAction Stop
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $config.id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
+                {
+                    $displayedKey = $config.displayName
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    id                    = $config.id
+                    DisplayName           = $displayedKey
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+
+                if ($Results.IdentitySources)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.IdentitySources -CIMInstanceName AADEntitlementManagementConnectedOrganizationIdentitySource
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.IdentitySources = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('IdentitySources') | Out-Null
+                    }
+                }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('IdentitySources')
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
+            {
+                Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
+                return ''
+            }
+            else
+            {
+                $this.LogError($_, 'Error during Export:')
+
+                throw
+            }
+        }
+    }
+
+    hidden [System.String] ResolveSponsorId([System.String] $Sponsor)
+    {
+        $user = Get-MgUser -UserId $Sponsor -ErrorAction SilentlyContinue
+        if ($null -ne $user)
+        {
+            return $user.Id
+        }
+
+        $group = Get-MgGroup -Filter "displayName eq '$($Sponsor -replace "'", "''")'" -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $group)
+        {
+            return $group.Id
+        }
+
+        return $null
+    }
+
+    hidden [AADEntitlementManagementConnectedOrganization] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADEntitlementManagementConnectedOrganization])
+        {
+            return $Values
+        }
+
+        $result = [AADEntitlementManagementConnectedOrganization]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
+    }
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_AADEntitlementManagementConnectedOrganizationIdentitySource
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Type of the identity source.')]
+    [ValidateSet('#microsoft.graph.azureActiveDirectoryTenant', '#microsoft.graph.crossCloudAzureActiveDirectoryTenant', '#microsoft.graph.domainIdentitySource', '#microsoft.graph.externalDomainFederation')]
+    [System.String] $odataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the Azure Active Directory tenant.')]
+    [System.String] $DisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The ID of the Azure Active Directory tenant.')]
+    [System.String] $ExternalTenantId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The ID of the cloud where the tenant is located, one of microsoftonline.com, microsoftonline.us or partner.microsoftonline.cn.')]
+    [System.String] $CloudInstance
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The domain name.')]
+    [System.String] $DomainName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The issuerURI of the incoming federation.')]
+    [System.String] $IssuerUri
+}

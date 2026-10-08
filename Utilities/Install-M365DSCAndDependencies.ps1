@@ -30,20 +30,15 @@ try
     }
     Write-Output $message
 
-    if ($IsSDK.IsPresent)
+    if ($isWindowsPlatform)
     {
-        Write-Output "Adding symbolic link from repository folder to module path"
-        $Parameters = @{
-            ItemType = "SymbolicLink"
-            Force    = [Switch]$true
-        }
-        if ($isWindowsPlatform)
+        Write-Output "Installing Microsoft365DSC module dependencies in PowerShell 7"
+        if ($IsSDK.IsPresent)
         {
-            $Parameters.Add("Path", "C:\Program Files\WindowsPowerShell\Modules\Microsoft365DSC")
-            $Parameters.Add("Target", "C:\DSC\Modules\Microsoft365DSC")
-        }
-        else
-        {
+            Update-M365DSCDependencies -Development
+
+            Write-Output "Configuring PowerShell 7 environment"
+            Write-Output "Copying pwrshplugin.dll to PowerShell 7 module path"
             $PSVersion = [System.String]$PSVersionTable.PSVersion
             $SDK = dotnet --list-sdks
             if ($LASTEXITCODE -ne 0)
@@ -51,87 +46,25 @@ try
                 throw "Could not get .NET SDK version"
             }
             $SDKVersion = $SDK.Split(' ')[0].SubString(0, 4)
-            $destinationPath = "/usr/share/powershell/.store/powershell.linux.x64/{0}/powershell.linux.x64/{1}/tools/net{2}/any/Modules/Microsoft365DSC" `
+            $destinationPath = "C:\Program Files\PowerShell\.store\powershell.windows.x64\{0}\powershell.windows.x64\{1}\tools\net{2}\any" `
                 -f $PSVersion, $PSVersion, $SDKVersion
-            $Parameters.Add("Path", $destinationPath)
-            $Parameters.Add("Target", "/DSC/Modules/Microsoft365DSC")
-        }
-        $null = New-Item @Parameters
-    }
+            $path = Join-Path -Path $destinationPath -ChildPath "runtimes\win-x64\native\pwrshplugin.dll"
+            Copy-Item -Path $path -Destination $destinationPath -Force
 
-    Write-Output "Installing Microsoft365DSC module dependencies"
-    Update-M365DSCDependencies
-
-    if ($isWindowsPlatform)
-    {
-        Write-Output "Testing if PowerShell 7 is installed"
-        $pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-        if (-not $pwshPath)
-        {
-            $ProgressPreference = 'SilentlyContinue'
-            Write-Output "PowerShell 7 not found, installing it now"
-            Invoke-WebRequest -Uri "https://github.com/PowerShell/PowerShell/releases/download/v7.6.5/PowerShell-7.6.5-win-x64.zip" -OutFile "PowerShell-7.6.5-win-x64.zip"
-            Unblock-File "PowerShell-7.6.5-win-x64.zip"
-            $null = New-Item -ItemType Directory -Path "C:\Program Files\PowerShell\7" -Force
-            Expand-Archive "PowerShell-7.6.5-win-x64.zip" -DestinationPath "C:\Program Files\PowerShell\7"
-            Remove-Item "PowerShell-7.6.5-win-x64.zip" -Force
-            [System.Environment]::SetEnvironmentVariable('PATH', $env:PATH + ";C:\Program Files\PowerShell\7", [System.EnvironmentVariableTarget]::Machine)
-            $env:PATH += ";C:\Program Files\PowerShell\7"
-        }
-
-        Write-Output "Installing Microsoft365DSC module dependencies in PowerShell 7"
-        & pwsh -Command {
-            Update-M365DSCDependencies
-        }
-        if ($LASTEXITCODE -ne 0)
-        {
-            throw "Could not install Microsoft365DSC module dependencies in PowerShell 7"
-        }
-
-        Write-Output "Configuring Windows PowerShell environment"
-        Set-ExecutionPolicy Unrestricted -Force
-
-        Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
-        $null = New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Client' -Name MaxEnvelopeSizekb -Value 1039440 -PropertyType DWORD -Force
-
-        $computerSystem = Get-CimInstance -ClassName "Win32_ComputerSystem"
-        $totalPhysicalMemory = $computerSystem.TotalPhysicalMemory
-        $quotaConfiguration = Get-CimInstance -Namespace Root -ClassName "__ProviderHostQuotaConfiguration"
-        $quotaConfiguration.MemoryAllHosts = $totalPhysicalMemory # Adjust the memory for all processes combined
-        $quotaConfiguration.MemoryPerHost  = $totalPhysicalMemory # Adjust the memory for a single wmiprvse.exe process
-        Set-CimInstance -InputObject $quotaConfiguration
-
-        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine)
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage" -Name "ACP" -Value 65001 -Force
-        $null = New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
-
-        Write-Output "Configuring PowerShell 7 environment"
-        & pwsh -Command {
-            param(
-                [Parameter()]
-                [System.Boolean]
-                $IsSDK
-            )
-            if ($IsSDK)
-            {
-                Write-Output "Copying pwrshplugin.dll to PowerShell 7 module path"
-                $PSVersion = [System.String]$PSVersionTable.PSVersion
-                $SDK = dotnet --list-sdks
-                if ($LASTEXITCODE -ne 0)
-                {
-                    throw "Could not get .NET SDK version"
-                }
-                $SDKVersion = $SDK.Split(' ')[0].SubString(0, 4)
-                $destinationPath = "C:\Program Files\powershell\.store\powershell.windows.x64\{0}\powershell.windows.x64\{1}\tools\net{2}\any" `
-                    -f $PSVersion, $PSVersion, $SDKVersion
-                $path = Join-Path -Path $destinationPath -ChildPath "runtimes\win-x64\native\pwrshplugin.dll"
-                Copy-Item -Path $path -Destination $destinationPath -Force
-            }
             $null = Enable-PSRemoting -Force -SkipNetworkProfileCheck
-        } -args $IsSDK.IsPresent
-        if ($LASTEXITCODE -ne 0)
+
+            $remotePowerShellConfig = @"
+PSHOMEDIR=C:\Program Files\PowerShell\7
+CORECLRDIR=C:\Program Files\PowerShell\7
+"@
+            $remotePowerShellConfigPath = "C:\Windows\System32\PowerShell\{0}\RemotePowerShellConfig.txt" -f $PSVersion
+            Set-Content -Path $remotePowerShellConfigPath -Value $remotePowerShellConfig -Force
+        }
+        else
         {
-            throw "Could not configure PowerShell 7 environment"
+            Update-M365DSCDependencies
+
+            $null = Enable-PSRemoting -Force -SkipNetworkProfileCheck
         }
 
         $RemoveAliases = @"
@@ -155,37 +88,40 @@ Import-Module PSDesiredStateConfiguration -Force
         }
         Write-Output "Setting `$PROFILE for PowerShell 7"
         Set-Content -Path $profileFilePath -Value $RemoveAliases -Force
+
+        Write-Output "Configuring Windows PowerShell environment"
+        Set-ExecutionPolicy Unrestricted -Force
+
+        Get-ChildItem "C:\Program Files\WindowsPowerShell\Modules" -Recurse | Unblock-File
+        Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 1039440 -Force
+
+        $computerSystem = Get-CimInstance -ClassName "Win32_ComputerSystem"
+        $totalPhysicalMemory = $computerSystem.TotalPhysicalMemory
+        $quotaConfiguration = Get-CimInstance -Namespace Root -ClassName "__ProviderHostQuotaConfiguration"
+        $quotaConfiguration.MemoryAllHosts = $totalPhysicalMemory # Adjust the memory for all processes combined
+        $quotaConfiguration.MemoryPerHost  = $totalPhysicalMemory # Adjust the memory for a single wmiprvse.exe process
+        Set-CimInstance -InputObject $quotaConfiguration
+        # WSMan caps each remote shell below the working set the Microsoft365DSC modules reach during import. A higher cap keeps the remote Test host responsive
+        Set-Item -Path WSMan:\localhost\Plugin\PowerShell.7\Quotas\MaxMemoryPerShellMB -Value 2048 -Force
+
+        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine)
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage" -Name "ACP" -Value 65001 -Force
+        $null = New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
     }
     else
     {
-        Write-Output "Configuring OS environment"
-        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Process)
-
+        Write-Output "Installing Microsoft365DSC module dependencies"
         if ($IsSDK.IsPresent)
         {
-            $moduleBasePath = "/DSC/Modules/Microsoft365DSC"
-
-            Write-Output "Generating SchemaDefinition.json"
-            $M365DSCSchemaHandlerPath = Join-Path -Path $moduleBasePath -ChildPath "Modules/M365DSCSchemaHandler.psm1"
-            Import-Module $M365DSCSchemaHandlerPath
-            New-M365DSCSchemaDefinition
-
-            Write-Output "Building DLL files"
-            & "/DSC/Utilities/Build-DllFiles.ps1" -Configuration Release
-            if ($LASTEXITCODE -ne 0)
-            {
-                throw "Could not build DLL files"
-            }
+            Update-M365DSCDependencies -Development
         }
         else
         {
-            $moduleBasePath = (Get-Module -Name Microsoft365DSC).ModuleBase
-            $DSCResourcesPath = Join-Path -Path $moduleBasePath -ChildPath "DSCResources"
-            if (Test-Path -Path $DSCResourcesPath)
-            {
-                Rename-Item -Path $DSCResourcesPath -NewName "DscResources" -Force
-            }
+            Update-M365DSCDependencies
         }
+
+        Write-Output "Configuring OS environment"
+        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Process)
     }
 }
 catch

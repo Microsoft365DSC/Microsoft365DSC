@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,20 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        TeamsApplicationInstance "TestResourceAccount"
+        TeamsApplicationInstance "TeamsApplicationInstance-Example"
         {
-            ApplicationId         = $ConfigurationData.NonNodeData.ApplicationId;
-            CertificateThumbprint = $ConfigurationData.NonNodeData.CertificateThumbprint;
-            DisplayName           = "JohnRA";
+            DisplayName           = "After Hours Line";
             Ensure                = "Present";
             ResourceAccountType   = "AutoAttendant";
-            TenantId              = $OrganizationName;
-            UserPrincipalName     = "John.Smith@M365x73318397.mail.onmicrosoft.com";
+            UserPrincipalName     = "afterhours@$TenantId";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

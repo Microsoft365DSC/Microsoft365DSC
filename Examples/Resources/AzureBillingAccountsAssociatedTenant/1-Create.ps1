@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,20 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AzureBillingAccountsAssociatedTenant "AzureBillingAccountsAssociatedTenantIntegration Tenant"
+        AzureBillingAccountsAssociatedTenant "AzureBillingAccountsAssociatedTenant-Example"
         {
-            ApplicationId               = $ApplicationId;
             AssociatedTenantId          = "7a575036-2dac-4713-8e23-2963cc2c5f37";
-            BillingAccount              = "My Test Account";
+            BillingAccount              = "Contoso Enterprise Agreement";
             BillingManagementState      = "Active";
-            CertificateThumbprint       = $CertificateThumbprint;
-            DisplayName                 = "Integration Tenant";
+            DisplayName                 = "Contoso Manufacturing";
             Ensure                      = "Present";
             ProvisioningManagementState = "Pending";
+            SubscriptionId              = "<subscription-id>";
+            ApplicationId               = $ApplicationId;
             TenantId                    = $TenantId;
+            CertificateThumbprint       = $CertificateThumbprint;
         }
     }
 }

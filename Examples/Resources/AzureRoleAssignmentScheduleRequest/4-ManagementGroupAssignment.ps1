@@ -6,18 +6,26 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AzureRoleAssignmentScheduleRequest "ManagementGroupReaderAssignment"
+        AzureRoleAssignmentScheduleRequest "AzureRoleAssignmentScheduleRequest-Example"
         {
-            Principal             = "AdeleV@contoso.onmicrosoft.com"
+            Principal             = "AdeleV@$TenantId"
             RoleDefinition        = "Reader"
             DirectoryScopeId      = "/providers/Microsoft.Management/managementGroups/MyManagementGroup"
             PrincipalType         = "User"

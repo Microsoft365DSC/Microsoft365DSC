@@ -1,5 +1,49 @@
 {
   "resourceName": "AADCustomAuthenticationExtension",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "customAuthenticationExtension",
+    "odataSubtype": [
+      "onTokenIssuanceStartCustomExtension",
+      "onAttributeCollectionStartCustomExtension",
+      "onAttributeCollectionSubmitCustomExtension",
+      "onOtpSendCustomExtension",
+      "onPasswordSubmitCustomExtension",
+      "onVerifiedIdClaimValidationCustomExtension"
+    ],
+    "cmdletNoun": "MgBetaIdentityCustomAuthenticationExtension",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AuthenticationConfiguration",
+      "reason": "Accepted",
+      "note": "Flattened into AuthenticationConfigurationType and AuthenticationConfigurationResourceId"
+    },
+    {
+      "name": "AuthenticationConfigurationType",
+      "reason": "Accepted",
+      "note": "Flattened from authenticationConfiguration."
+    },
+    {
+      "name": "BehaviorOnError",
+      "reason": "NotConfigurable",
+      "note": "The complex type declares no members. Nothing to configure."
+    },
+    {
+      "name": "ClientConfiguration",
+      "reason": "Accepted",
+      "note": "Flattened into ClientConfigurationTimeoutInMilliseconds and ClientConfigurationMaximumRetries"
+    },
+    {
+      "name": "CustomAuthenticationExtensionType",
+      "reason": "Accepted",
+      "note": "Selects the extension subtype to create."
+    }
+  ],
   "description": "Custom authentication extensions define interactions with external systems during a user authentication session. ",
   "roles": {
     "read": [

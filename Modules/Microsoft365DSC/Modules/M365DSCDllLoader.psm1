@@ -36,7 +36,7 @@ function Initialize-M365DSCDllLoader
 
     if ($Script:AssembliesInitialized)
     {
-        Write-Verbose "Microsoft365DSC C# dll files are already initialized."
+        Write-Debug -Message 'Microsoft365DSC C# dll files are already initialized.'
         return
     }
 
@@ -68,6 +68,8 @@ function Initialize-M365DSCDllLoader
             'Microsoft365DSC.Converter.dll'
             'Microsoft365DSC.Intune.dll'
             'Microsoft365DSC.Utilities.dll'
+            'Microsoft365DSC.Relations.dll'
+            'Microsoft365DSC.Reporting.dll'
         )
 
         foreach ($dllName in $dllsToLoad)

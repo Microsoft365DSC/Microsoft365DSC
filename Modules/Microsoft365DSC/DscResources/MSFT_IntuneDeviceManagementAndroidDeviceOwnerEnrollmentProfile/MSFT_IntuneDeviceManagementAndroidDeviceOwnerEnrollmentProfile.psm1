@@ -1,609 +1,366 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Display name for the enrollment profile.')]
+    [System.String] $DisplayName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Unique GUID for the enrollment profile. Read-Only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String]
-        $AccountId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Intune AccountId GUID the enrollment profile belongs to.')]
+    [System.String] $AccountId
 
-        [Parameter()]
-        [System.Boolean]
-        $ConfigureWifi,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description for the enrollment profile.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('The enrollment mode of devices that use this enrollment profile.')]
+    [ValidateSet('corporateOwnedDedicatedDevice', 'corporateOwnedFullyManaged', 'corporateOwnedWorkProfile', 'corporateOwnedAOSPUserlessDevice', 'corporateOwnedAOSPUserAssociatedDevice')]
+    [System.String] $EnrollmentMode
 
-        [Parameter()]
-        [ValidateSet('corporateOwnedDedicatedDevice', 'corporateOwnedFullyManaged', 'corporateOwnedWorkProfile', 'corporateOwnedAOSPUserlessDevice', 'corporateOwnedAOSPUserAssociatedDevice')]
-        [System.String]
-        $EnrollmentMode,
+    [DscProperty()]
+    [System.ComponentModel.Description('The enrollment token type for an enrollment profile.')]
+    [ValidateSet('default', 'corporateOwnedDedicatedDeviceWithAzureADSharedMode', 'deviceStaging')]
+    [System.String] $EnrollmentTokenType
 
-        [Parameter()]
-        [ValidateSet('default', 'corporateOwnedDedicatedDeviceWithAzureADSharedMode', 'deviceStaging')]
-        [System.String]
-        $EnrollmentTokenType,
+    [DscProperty()]
+    [System.ComponentModel.Description('Date time the most recently created token will expire.')]
+    [System.String] $TokenExpirationDateTime
 
-        [Parameter()]
-        [System.Boolean]
-        $IsTeamsDeviceProfile,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tags for this Entity instance.')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('Boolean that indicates that the Wi-Fi network should be configured during device provisioning. When set to TRUE, device provisioning will use Wi-Fi related properties to automatically connect to Wi-Fi networks. When set to FALSE or undefined, other Wi-Fi related properties will be ignored. Default value is TRUE. Returned by default.')]
+    [System.Nullable[System.Boolean]] $ConfigureWifi
 
-        [Parameter()]
-        [System.String]
-        $TokenExpirationDateTime,
+    [DscProperty()]
+    [System.ComponentModel.Description('String that contains the wi-fi login ssid')]
+    [System.String] $WifiSsid
 
-        [Parameter()]
-        [System.Boolean]
-        $WifiHidden,
+    [DscProperty()]
+    [System.ComponentModel.Description('String that contains the wi-fi login password. The parameter is a PSCredential object.')]
+    [System.Management.Automation.PSCredential] $WifiPassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $WifiPassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('String that contains the wi-fi security type.')]
+    [ValidateSet('none', 'wpa', 'wep')]
+    [System.String] $WifiSecurityType
 
-        [Parameter()]
-        [ValidateSet('none', 'wpa', 'wep' )]
-        [System.String]
-        $WifiSecurityType,
+    [DscProperty()]
+    [System.ComponentModel.Description('Boolean that indicates if hidden wifi networks are enabled')]
+    [System.Nullable[System.Boolean]] $WifiHidden
 
-        [Parameter()]
-        [System.String]
-        $WifiSsid,
+    [DscProperty()]
+    [System.ComponentModel.Description('Boolean indicating if this profile is an Android AOSP for Teams device profile.')]
+    [System.Nullable[System.Boolean]] $IsTeamsDeviceProfile
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the device name template used for the enrolled Android devices.')]
+    [System.String] $DeviceNameTemplate
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    Write-Verbose -Message "Getting configuration of the Intune Android Device Owner Enrollment Profile with Id {$Id} and DisplayName {$DisplayName}"
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    try
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
+
+    [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of the Intune Android Device Owner Enrollment Profile with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $androidDeviceOwnerEnrollmentProfile = $null
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                Write-Verbose -Message 'Trying to retrieve profile by Id'
-                $androidDeviceOwnerEnrollmentProfile = Get-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile `
-                    -AndroidDeviceOwnerEnrollmentProfileId $Id `
-                    -ErrorAction SilentlyContinue
-            }
+                $null = $this.Connect('MicrosoftGraph')
 
-            if ($null -eq $androidDeviceOwnerEnrollmentProfile)
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $androidDeviceOwnerEnrollmentProfile = $null
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
+                {
+                    Write-Verbose -Message 'Trying to retrieve profile by Id'
+                    $androidDeviceOwnerEnrollmentProfile = Get-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile `
+                        -AndroidDeviceOwnerEnrollmentProfileId $this.Id `
+                        -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $androidDeviceOwnerEnrollmentProfile)
+                {
+                    Write-Verbose -Message 'Trying to retrieve profile by DisplayName'
+                    $androidDeviceOwnerEnrollmentProfile = Get-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile `
+                        -All `
+                        -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                        -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $androidDeviceOwnerEnrollmentProfile)
+                {
+                    Write-Verbose -Message "No AndroidDeviceOwnerEnrollmentProfile with {$($this.Id)} was found."
+                    return $this.AsResult($nullResult)
+                }
+            }
+            else
             {
-                Write-Verbose -Message 'Trying to retrieve profile by DisplayName'
-                $androidDeviceOwnerEnrollmentProfile = Get-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile `
-                    -All `
-                    -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                    -ErrorAction SilentlyContinue
+                $androidDeviceOwnerEnrollmentProfile = $this.ExportedInstance
             }
 
-            if ($null -eq $androidDeviceOwnerEnrollmentProfile)
+            $tokenExpirationDateTimeString = $androidDeviceOwnerEnrollmentProfile.TokenExpirationDateTime
+            if ($tokenExpirationDateTimeString -is [System.DateTime])
             {
-                Write-Verbose -Message "No AndroidDeviceOwnerEnrollmentProfile with {$Id} was found."
-                return $nullResult
+                $tokenExpirationDateTimeString = $tokenExpirationDateTimeString.ToString('yyyy-MM-ddTHH:mm:ssZ')
             }
-        }
-        else
-        {
-            $androidDeviceOwnerEnrollmentProfile = $Script:exportedInstance
-        }
-
-        $tokenExpirationDateTimeString = $androidDeviceOwnerEnrollmentProfile.TokenExpirationDateTime
-        if ($tokenExpirationDateTimeString -is [System.DateTime])
-        {
-            $tokenExpirationDateTimeString = $tokenExpirationDateTimeString.ToString('yyyy-MM-ddTHH:mm:ssZ')
-        }
-        elseif (-not [string]::IsNullOrEmpty($tokenExpirationDateTimeString))
-        {
-            $tokenExpirationDateTimeString = [System.DateTime]::Parse($tokenExpirationDateTimeString).ToString('yyyy-MM-ddTHH:mm:ssZ')
-        }
-
-        $results = @{
-            Id                      = $androidDeviceOwnerEnrollmentProfile.Id
-            DisplayName             = $androidDeviceOwnerEnrollmentProfile.DisplayName
-            AccountId               = $androidDeviceOwnerEnrollmentProfile.AccountId
-            ConfigureWifi           = $androidDeviceOwnerEnrollmentProfile.ConfigureWifi
-            Description             = $androidDeviceOwnerEnrollmentProfile.Description
-            EnrollmentMode          = $androidDeviceOwnerEnrollmentProfile.EnrollmentMode.ToString()
-            EnrollmentTokenType     = $androidDeviceOwnerEnrollmentProfile.EnrollmentTokenType.ToString()
-            IsTeamsDeviceProfile    = $androidDeviceOwnerEnrollmentProfile.IsTeamsDeviceProfile
-            RoleScopeTagIds         = $androidDeviceOwnerEnrollmentProfile.RoleScopeTagIds
-            TokenExpirationDateTime = $tokenExpirationDateTimeString
-            WifiHidden              = $androidDeviceOwnerEnrollmentProfile.WifiHidden
-            WifiPassword            = $androidDeviceOwnerEnrollmentProfile.WifiPassword
-            WifiSecurityType        = $androidDeviceOwnerEnrollmentProfile.WifiSecurityType.ToString()
-            WifiSsid                = $androidDeviceOwnerEnrollmentProfile.WifiSsid
-            Ensure                  = 'Present'
-            Credential              = $Credential
-            ApplicationId           = $ApplicationId
-            TenantId                = $TenantId
-            CertificateThumbprint   = $CertificateThumbprint
-            CertificatePath         = $CertificatePath
-            CertificatePassword     = $CertificatePassword
-            ManagedIdentity         = $ManagedIdentity.IsPresent
-            AccessTokens            = $AccessTokens
-        }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $AccountId,
-
-        [Parameter()]
-        [System.Boolean]
-        $ConfigureWifi,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('corporateOwnedDedicatedDevice', 'corporateOwnedFullyManaged', 'corporateOwnedWorkProfile', 'corporateOwnedAOSPUserlessDevice', 'corporateOwnedAOSPUserAssociatedDevice')]
-        [System.String]
-        $EnrollmentMode,
-
-        [Parameter()]
-        [ValidateSet('default', 'corporateOwnedDedicatedDeviceWithAzureADSharedMode', 'deviceStaging')]
-        [System.String]
-        $EnrollmentTokenType,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsTeamsDeviceProfile,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String]
-        $TokenExpirationDateTime,
-
-        [Parameter()]
-        [System.Boolean]
-        $WifiHidden,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $WifiPassword,
-
-        [Parameter()]
-        [ValidateSet('none', 'wpa', 'wep' )]
-        [System.String]
-        $WifiSecurityType,
-
-        [Parameter()]
-        [System.String]
-        $WifiSsid,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $setParameters = Rename-M365DSCCimInstanceParameter -Properties $setParameters
-
-    # CREATE
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Create AndroidDeviceOwnerEnrollmentProfile: $DisplayName with Enrollment Mode: $EnrollmentMode"
-        $setParameters.Remove('Id') | Out-Null
-        $null = New-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -BodyParameter $setParameters
-    }
-    # UPDATE
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating AndroidDeviceOwnerEnrollmentProfile: $DisplayName"
-        Remove-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -AndroidDeviceOwnerEnrollmentProfileId $currentInstance.Id
-        $null = New-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -BodyParameter $setParameters
-    }
-    # REMOVE
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing AndroidDeviceOwnerEnrollmentProfile: $DisplayName"
-        Remove-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -AndroidDeviceOwnerEnrollmentProfileId $currentInstance.Id
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $AccountId,
-
-        [Parameter()]
-        [System.Boolean]
-        $ConfigureWifi,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('corporateOwnedDedicatedDevice', 'corporateOwnedFullyManaged', 'corporateOwnedWorkProfile', 'corporateOwnedAOSPUserlessDevice', 'corporateOwnedAOSPUserAssociatedDevice')]
-        [System.String]
-        $EnrollmentMode,
-
-        [Parameter()]
-        [ValidateSet('default', 'corporateOwnedDedicatedDeviceWithAzureADSharedMode', 'deviceStaging')]
-        [System.String]
-        $EnrollmentTokenType,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsTeamsDeviceProfile,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String]
-        $TokenExpirationDateTime,
-
-        [Parameter()]
-        [System.Boolean]
-        $WifiHidden,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $WifiPassword,
-
-        [Parameter()]
-        [ValidateSet('none', 'wpa', 'wep' )]
-        [System.String]
-        $WifiSecurityType,
-
-        [Parameter()]
-        [System.String]
-        $WifiSsid,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        # Exclude profiles with Microsoft internal enrollment mode (EnrollmentMode 5) from export
-        # as it cannot be managed. Example is "Default enrollment profile for personally-owned work profile devices"
-        [array] $Script:exportedInstances = Get-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile `
-            -All `
-            -ErrorAction Stop | Where-Object EnrollmentMode -NE 5
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($exportedInstances.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $exportedInstances)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            elseif (-not [string]::IsNullOrEmpty($tokenExpirationDateTimeString))
             {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-            $displayedKey = $config.DisplayName
-            Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+                $tokenExpirationDateTimeString = [System.DateTime]::Parse($tokenExpirationDateTimeString).ToString('yyyy-MM-ddTHH:mm:ssZ')
             }
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
+            $results = @{
+                Id                      = $androidDeviceOwnerEnrollmentProfile.Id
+                DisplayName             = $androidDeviceOwnerEnrollmentProfile.DisplayName
+                AccountId               = $androidDeviceOwnerEnrollmentProfile.AccountId
+                ConfigureWifi           = $androidDeviceOwnerEnrollmentProfile.ConfigureWifi
+                Description             = $androidDeviceOwnerEnrollmentProfile.Description
+                DeviceNameTemplate      = $androidDeviceOwnerEnrollmentProfile.DeviceNameTemplate
+                EnrollmentMode          = $androidDeviceOwnerEnrollmentProfile.EnrollmentMode.ToString()
+                EnrollmentTokenType     = $androidDeviceOwnerEnrollmentProfile.EnrollmentTokenType.ToString()
+                IsTeamsDeviceProfile    = $androidDeviceOwnerEnrollmentProfile.IsTeamsDeviceProfile
+                RoleScopeTagIds         = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $androidDeviceOwnerEnrollmentProfile.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                TokenExpirationDateTime = $tokenExpirationDateTimeString
+                WifiHidden              = $androidDeviceOwnerEnrollmentProfile.WifiHidden
+                WifiPassword            = $androidDeviceOwnerEnrollmentProfile.WifiPassword
+                WifiSecurityType        = $androidDeviceOwnerEnrollmentProfile.WifiSecurityType.ToString()
+                WifiSsid                = $androidDeviceOwnerEnrollmentProfile.WifiSsid
+                Ensure                  = 'Present'
+                Credential              = $this.Credential
+                ApplicationId           = $this.ApplicationId
+                TenantId                = $this.TenantId
+                CertificateThumbprint   = $this.CertificateThumbprint
+                CertificatePath         = $this.CertificatePath
+                CertificatePassword     = $this.CertificatePassword
+                ManagedIdentity         = $this.ManagedIdentity
+                AccessTokens            = $this.AccessTokens
+            }
 
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
     }
-    catch
+
+    [void] Set()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
 
-        throw
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $setParameters = Rename-M365DSCCimInstanceParameter -Properties $setParameters
+        if ($setParameters.ContainsKey('RoleScopeTagIds'))
+        {
+            $setParameters.RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $this.RoleScopeTagIds
+        }
+
+        if (-not [System.String]::IsNullOrEmpty($this.TokenExpirationDateTime))
+        {
+            $setParameters.TokenExpirationDateTime = [M365DSCResourceBase]::FormatDateTime($this.TokenExpirationDateTime)
+        }
+
+        # CREATE
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Create AndroidDeviceOwnerEnrollmentProfile: $($this.DisplayName) with Enrollment Mode: $($this.EnrollmentMode)"
+            $setParameters.Remove('Id') | Out-Null
+            $null = New-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -BodyParameter $setParameters
+        }
+        # UPDATE
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating AndroidDeviceOwnerEnrollmentProfile: $($this.DisplayName)"
+            Remove-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -AndroidDeviceOwnerEnrollmentProfileId $currentInstance.Id
+            $null = New-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -BodyParameter $setParameters
+        }
+        # REMOVE
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing AndroidDeviceOwnerEnrollmentProfile: $($this.DisplayName)"
+            Remove-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile -AndroidDeviceOwnerEnrollmentProfileId $currentInstance.Id
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            # Exclude profiles with Microsoft internal enrollment mode (EnrollmentMode 5) from export
+            # as it cannot be managed. Example is "Default enrollment profile for personally-owned work profile devices"
+            [array] $getValue = Get-MgBetaDeviceManagementAndroidDeviceOwnerEnrollmentProfile `
+                -All `
+                -ErrorAction Stop | Where-Object EnrollmentMode -NE 5
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+                $displayedKey = $config.DisplayName
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.DisplayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            ExcludedProperties = @('AccountId', 'TokenExpirationDateTime', 'WifiPassword')
+        }
+    }
+
+    hidden [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile])
+        {
+            return $Values
+        }
+
+        $result = [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('AccountId', 'TokenExpirationDateTime')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

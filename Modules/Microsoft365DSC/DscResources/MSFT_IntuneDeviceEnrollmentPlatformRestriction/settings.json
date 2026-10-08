@@ -1,41 +1,83 @@
 {
   "resourceName": "IntuneDeviceEnrollmentPlatformRestriction",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceEnrollmentConfiguration",
+    "odataSubtype": [
+      "deviceEnrollmentPlatformRestrictionConfiguration",
+      "deviceEnrollmentPlatformRestrictionsConfiguration"
+    ],
+    "cmdletNoun": "MgBetaDeviceManagementDeviceEnrollmentConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeviceEnrollmentConfigurationType",
+      "reason": "OwnedByOtherResource",
+      "note": "Enum spans subtypes owned by other enrollment configuration resources"
+    },
+    {
+      "name": "PlatformType",
+      "reason": "NotConfigurable",
+      "note": "Derived from whichever platform restriction property is populated"
+    },
+    {
+      "name": "PlatformRestriction",
+      "reason": "NotConfigurable",
+      "note": "Projected onto the six per-platform restriction properties"
+    }
+  ],
   "description": "This resource configures the Intune device platform enrollment restrictions.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementServiceConfig.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

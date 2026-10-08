@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,35 +19,42 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneMobileAppsWebLink "IntuneMobileAppsWebLink-Web App"
+        IntuneMobileAppsWebLink "IntuneMobileAppsWebLink-Example"
         {
             TargetType            = "webApp";
-            Description           = "Web App Description";
+            AppUrl                = "https://selfservice.contoso.com";
+            UseManagedBrowser     = $true;
+            Description           = "Contoso employee self-service portal";
             Developer             = "Contoso";
             DisplayName           = "Web App";
             Ensure                = "Present";
-            InformationUrl        = "";
-            IsFeatured            = $False;
-            Notes                 = "";
-            Owner                 = "";
-            PrivacyInformationUrl = "";
+            InformationUrl        = "https://intranet.contoso.com/apps/self-service";
+            IsFeatured            = $false;
+            LargeIcon             = MSFT_MicrosoftGraphMimeContent{
+                Type  = "image/png"
+                Value = "<base64-encoded-app-icon>"
+            };
+            Notes                 = "Reviewed annually by the mobility team";
+            Owner                 = "Human Resources";
+            PrivacyInformationUrl = "https://www.contoso.com/privacy";
             Publisher             = "Contoso";
-            Assignments          = @(
-                MSFT_DeviceManagementMobileAppAssignment {
-                    groupDisplayName = 'All devices'
+            RoleScopeTagIds       = @("0");
+            Assignments           = @(
+                MSFT_DeviceManagementMobileAppAssignment{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
-                    intent = 'required'
+                    dataType                                   = '#microsoft.graph.groupAssignmentTarget'
+                    groupDisplayName                           = 'Intune Pilot Users'
+                    intent                                     = 'required'
                 }
             );
-            Categories             = @(
+            Categories            = @(
                 MSFT_DeviceManagementMobileAppCategory{
-                    Id = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
-                    DisplayName = "App Category 1"
+                    DisplayName = "Business"
                 }
             );
             ApplicationId         = $ApplicationId;

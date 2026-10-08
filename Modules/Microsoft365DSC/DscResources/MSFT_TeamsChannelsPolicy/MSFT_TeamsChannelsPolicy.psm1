@@ -1,463 +1,325 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_TeamsChannelsPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class TeamsChannelsPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Identity of the Teams Channel Policy.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of the Teams Channel Policy.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowChannelSharingToExternalUser,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether a user is allowed to share a shared channel with an external user. Set this to TRUE to allow. Set this FALSE to prohibit.')]
+    [System.Nullable[System.Boolean]] $AllowChannelSharingToExternalUser
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowOrgWideTeamCreation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether a user is allowed to create an org-wide team. Set this to TRUE to allow. Set this FALSE to prohibit.')]
+    [System.Nullable[System.Boolean]] $AllowOrgWideTeamCreation
 
-        [Parameter()]
-        [System.Boolean]
-        $EnablePrivateTeamDiscovery,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether a user is allowed to discover private teams in suggestions and search results. Set this to TRUE to allow. Set this FALSE to prohibit.')]
+    [System.Nullable[System.Boolean]] $EnablePrivateTeamDiscovery
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowPrivateChannelCreation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether a user is allowed to create a private channel. Set this to TRUE to allow. Set this FALSE to prohibit.')]
+    [System.Nullable[System.Boolean]] $AllowPrivateChannelCreation
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowSharedChannelCreation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether a user is allowed to create a shared channel. Set this to TRUE to allow. Set this FALSE to prohibit.')]
+    [System.Nullable[System.Boolean]] $AllowSharedChannelCreation
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserToParticipateInExternalSharedChannel,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether a user is allowed to participate in a shared channel that has been shared by an external user. Set this to TRUE to allow. Set this FALSE to prohibit.')]
+    [System.Nullable[System.Boolean]] $AllowUserToParticipateInExternalSharedChannel
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables Next Generation Channel creation and editing. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowCreateChannel
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables Classic Channel creation and editing. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowCreateClassicChannel
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables Next Generation Private Channel creation and editing. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowCreatePrivateChannel
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables Next Generation Shared Channel creation and editing. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowCreateSharedChannel
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting sets whether users are able to create Next Generation Shared Channels by default. Possible values: Enabled, Disabled.')]
+    [System.String] $CreateSharedChannelsByDefault
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables whether users from outside the team are allowed in Next Generation Channels. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowUsersFromOutsideTeam
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables whether guests from outside the team are allowed in Next Generation Channels. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowGuestsFromOutsideTeam
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables whether users from outside the team are allowed in Next Generation Private Channels. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowUsersFromOutsideTeamInPrivateChannel
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables whether guests from outside the team are allowed in Next Generation Private Channels. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowGuestsFromOutsideTeamInPrivateChannel
 
-    Write-Verbose -Message "Getting the Teams Channels Policy $($Identity)"
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables sharing Next Generation Channels with Teams in the same organization. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowSharingWithTeamInOrg
 
-    try
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting enables/disables sharing Next Generation Private Channels with Teams in the same organization. Possible values: Enabled, Disabled.')]
+    [System.String] $AllowSharingPrivateChannelWithTeamInOrg
+
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting sets the default channel type that users have available on channel creation. Possible values: Flexible, Private, Standard, Shared.')]
+    [System.String] $DefaultChannelTypeOnCreation
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Teams Admin')]
+    [System.Management.Automation.PSCredential] $Credential
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
+
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter = '*'
+
+    [TeamsChannelsPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        ${$Identity} = $null
+        $nullReturn = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $policy = Get-CsTeamsChannelsPolicy -Identity $Identity `
-                -ErrorAction 'SilentlyContinue'
+            $remote = [TeamsChannelsPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
-        else
+
+        Write-Verbose -Message "Getting the Teams Channels Policy $($this.Identity)"
+
+        try
         {
-            $policy = $Script:exportedInstance
-        }
-
-        if ($null -eq $policy)
-        {
-            Write-Verbose -Message "Could not find Teams Channel Policy ${$Identity}"
-            return $nullReturn
-        }
-
-        Write-Verbose -Message "Found Teams Channel Policy {$Identity}"
-        return @{
-            Identity                                      = $Identity
-            Description                                   = $policy.Description
-            AllowChannelSharingToExternalUser             = $policy.AllowChannelSharingToExternalUser
-            AllowOrgWideTeamCreation                      = $policy.AllowOrgWideTeamCreation
-            EnablePrivateTeamDiscovery                    = $policy.EnablePrivateTeamDiscovery
-            AllowPrivateChannelCreation                   = $policy.AllowPrivateChannelCreation
-            AllowSharedChannelCreation                    = $policy.AllowSharedChannelCreation
-            AllowUserToParticipateInExternalSharedChannel = $policy.AllowUserToParticipateInExternalSharedChannel
-            Ensure                                        = 'Present'
-            Credential                                    = $Credential
-            ApplicationId                                 = $ApplicationId
-            TenantId                                      = $TenantId
-            CertificateThumbprint                         = $CertificateThumbprint
-            CertificatePath                               = $CertificatePath
-            CertificatePassword                           = $CertificatePassword
-            ManagedIdentity                               = $ManagedIdentity.IsPresent
-            AccessTokens                                  = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowChannelSharingToExternalUser,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowOrgWideTeamCreation,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnablePrivateTeamDiscovery,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowPrivateChannelCreation,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowSharedChannelCreation,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserToParticipateInExternalSharedChannel,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting Teams Channel Policy'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentValues = Get-TargetResource @PSBoundParameters
-
-    $SetParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating a new Teams Channel Policy {$Identity}"
-        New-CsTeamsChannelsPolicy @SetParameters
-    }
-    elseif ($Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Present')
-    {
-        # If we get here, it's because the Test-TargetResource detected a drift, therefore we always call
-        # into the Set-CsTeamsChannelsPolicy cmdlet.
-        Write-Verbose -Message "Updating settings for Teams Channel Policy {$Identity}"
-        Set-CsTeamsChannelsPolicy @SetParameters
-    }
-    elseif ($Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing existing Teams Channel Policy {$Identity}"
-        Remove-CsTeamsChannelsPolicy -Identity $Identity -Confirm:$false
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowChannelSharingToExternalUser,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowOrgWideTeamCreation,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnablePrivateTeamDiscovery,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowPrivateChannelCreation,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowSharedChannelCreation,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserToParticipateInExternalSharedChannel,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter = "*",
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $i = 1
-        [array]$policies = Get-CsTeamsChannelsPolicy -Filter $Filter -ErrorAction Stop
-        $dscContent = [System.Text.StringBuilder]::new()
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        foreach ($policy in $policies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $null = $this.Connect('MicrosoftTeams')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $policy = Get-CsTeamsChannelsPolicy -Identity $this.Identity `
+                    -ErrorAction 'SilentlyContinue'
+            }
+            else
+            {
+                $policy = $this.ExportedInstance
             }
 
-            Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
-            $params = @{
-                Identity              = $policy.Identity
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            if ($null -eq $policy)
+            {
+                Write-Verbose -Message "Could not find Teams Channel Policy ${$Identity}"
+                return $this.AsResult($nullReturn)
             }
 
-            $Script:exportedInstance = $policy
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            Write-Verbose -Message "Found Teams Channel Policy {$($this.Identity)}"
+            return $this.AsResult(@{
+                Identity                                      = $this.Identity
+                Description                                   = $policy.Description
+                AllowChannelSharingToExternalUser             = $policy.AllowChannelSharingToExternalUser
+                AllowOrgWideTeamCreation                      = $policy.AllowOrgWideTeamCreation
+                EnablePrivateTeamDiscovery                    = $policy.EnablePrivateTeamDiscovery
+                AllowPrivateChannelCreation                   = $policy.AllowPrivateChannelCreation
+                AllowSharedChannelCreation                    = $policy.AllowSharedChannelCreation
+                AllowUserToParticipateInExternalSharedChannel = $policy.AllowUserToParticipateInExternalSharedChannel
+                AllowCreateChannel                            = $policy.AllowCreateChannel
+                AllowCreateClassicChannel                     = $policy.AllowCreateClassicChannel
+                AllowCreatePrivateChannel                     = $policy.AllowCreatePrivateChannel
+                AllowCreateSharedChannel                      = $policy.AllowCreateSharedChannel
+                CreateSharedChannelsByDefault                 = $policy.CreateSharedChannelsByDefault
+                AllowUsersFromOutsideTeam                     = $policy.AllowUsersFromOutsideTeam
+                AllowGuestsFromOutsideTeam                    = $policy.AllowGuestsFromOutsideTeam
+                AllowUsersFromOutsideTeamInPrivateChannel     = $policy.AllowUsersFromOutsideTeamInPrivateChannel
+                AllowGuestsFromOutsideTeamInPrivateChannel    = $policy.AllowGuestsFromOutsideTeamInPrivateChannel
+                AllowSharingWithTeamInOrg                     = $policy.AllowSharingWithTeamInOrg
+                AllowSharingPrivateChannelWithTeamInOrg       = $policy.AllowSharingPrivateChannelWithTeamInOrg
+                DefaultChannelTypeOnCreation                  = $policy.DefaultChannelTypeOnCreation
+                Ensure                                        = 'Present'
+                Credential                                    = $this.Credential
+                ApplicationId                                 = $this.ApplicationId
+                TenantId                                      = $this.TenantId
+                CertificateThumbprint                         = $this.CertificateThumbprint
+                CertificatePath                               = $this.CertificatePath
+                CertificatePassword                           = $this.CertificatePassword
+                ManagedIdentity                               = $this.ManagedIdentity
+                AccessTokens                                  = $this.AccessTokens
+            })
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
 
-        throw
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Setting Teams Channel Policy'
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentValues = $this.Get().ToHashtable()
+
+        $SetParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating a new Teams Channel Policy {$($this.Identity)}"
+            New-CsTeamsChannelsPolicy @SetParameters
+        }
+        elseif ($this.Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating settings for Teams Channel Policy {$($this.Identity)}"
+            Set-CsTeamsChannelsPolicy @SetParameters
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing existing Teams Channel Policy {$($this.Identity)}"
+            Remove-CsTeamsChannelsPolicy -Identity $this.Identity -Confirm:$false
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftTeams')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $i = 1
+            [array]$policies = Get-CsTeamsChannelsPolicy -Filter $this.Filter -ErrorAction Stop
+            $dscContent = [System.Text.StringBuilder]::new()
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            foreach ($policy in $policies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
+                $params = @{
+                    Identity              = $policy.Identity
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $policy
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [TeamsChannelsPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [TeamsChannelsPolicy])
+        {
+            return $Values
+        }
+
+        $result = [TeamsChannelsPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

@@ -1,5 +1,16 @@
 {
   "resourceName": "AADPasswordRuleSettings",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "directorySetting",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDirectorySetting",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the Azure Active Directory Password Rule Settings.",
   "roles": {
     "read": [],

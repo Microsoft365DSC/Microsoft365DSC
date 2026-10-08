@@ -1,5 +1,16 @@
 {
   "resourceName": "AADPolicyFeatureRolloutPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "featureRolloutPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyFeatureRolloutPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Azure AD Policy Feature Rollout Policy.",
   "permissions": {
     "graph": {

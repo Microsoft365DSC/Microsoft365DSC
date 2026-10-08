@@ -1,41 +1,90 @@
 {
   "resourceName": "IntuneVPNConfigurationPolicyIOS",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceConfiguration",
+    "odataSubtype": "iosVpnConfiguration",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeviceManagementApplicabilityRuleDeviceMode",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "DeviceManagementApplicabilityRuleOsEdition",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "DeviceManagementApplicabilityRuleOsVersion",
+      "reason": "NotConfigurable",
+      "note": "Intune scopes applicability rules to Windows profiles."
+    },
+    {
+      "name": "ExcludeLocalNetworks",
+      "reason": "Deferred",
+      "note": "Announced as in development and absent from the documented update body."
+    },
+    {
+      "name": "IncludeAllNetworks",
+      "reason": "Deferred",
+      "note": "Announced as in development and absent from the documented update body."
+    }
+  ],
   "description": "This resource configures an Intune VPN Configuration Policy for iOS Device.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

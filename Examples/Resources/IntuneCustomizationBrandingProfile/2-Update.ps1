@@ -5,73 +5,82 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneCustomizationBrandingProfile "IntuneCustomizationBrandingProfile-Company"
+        IntuneCustomizationBrandingProfile "IntuneCustomizationBrandingProfile-Example"
         {
-            ApplicationId                  = $ApplicationId;
             Assignments                    = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
-                    dataType = "#microsoft.graph.groupAssignmentTarget"
-                    groupId = "00000000-0000-0000-0000-000000000000"
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
                     deviceAndAppManagementAssignmentFilterType = "none"
-                    groupDisplayName = "Include"
+                    groupDisplayName                           = "Intune Pilot Users"
                 }
             );
-            CertificateThumbprint          = $CertificateThumbprint;
             CompanyPortalBlockedActions    = @(
                 MSFT_MicrosoftGraphcompanyPortalBlockedAction{
-                    Action = "remove"
+                    Action    = "remove"
                     OwnerType = "company"
-                    Platform = "windows10AndLater"
+                    Platform  = "windows10AndLater"
                 }
             );
-            ContactITEmailAddress          = "test@company.com";
-            ContactITName                  = "Contact_Name";
-            ContactITNotes                 = "Additional information";
-            ContactITPhoneNumber           = "+10000000";
-            CustomCanSeePrivacyMessage     = "**Bold subhead example with some *emphasis*** and [a link](http://microsoft.com)";
-            CustomCantSeePrivacyMessage    = "**Bold subhead example with some *emphasis*** and [a link](http://microsoft.com)";
-            DisableDeviceCategorySelection = $False;
-            DisplayName                    = "Company";
+            ContactITEmailAddress          = "servicedesk@contoso.com";
+            ContactITName                  = "Contoso Service Desk";
+            ContactITNotes                 = "Open Monday to Friday, 07:00 - 19:00 CET";
+            ContactITPhoneNumber           = "+1 425 555 0134";
+            CustomCanSeePrivacyMessage     = "**What Contoso IT can see** Device model, serial number and the apps installed by IT. Read the full [privacy notice](https://privacy.contoso.com).";
+            CustomCantSeePrivacyMessage    = "**What Contoso IT cannot see** Your photos, browsing history, text messages and personal files. Read the full [privacy notice](https://privacy.contoso.com).";
+            DisableDeviceCategorySelection = $false;
+            DisplayName                    = "Contoso";
             EnrollmentAvailability         = "availableWithPrompts";
             Ensure                         = "Present";
             LandingPageCustomizedImage     = MSFT_MicrosoftGraphMimeContent{
-                Type = "image/jpeg"
-                Value = "Base64EncodedString"
+                Type  = "image/jpeg"
+                Value = "<base64-encoded-landing-page-image>"
             };
             LightBackgroundLogo            = MSFT_MicrosoftGraphMimeContent{
-                Type = "image/png"
-                Value = "Base64EncodedString"
+                Type  = "image/png"
+                Value = "<base64-encoded-light-background-logo>"
             };
-            OnlineSupportSiteName          = "Website";
-            OnlineSupportSiteUrl           = "https://website.com";
-            PrivacyUrl                     = "https://www.example.com";
-            ProfileDescription             = "";
-            ProfileName                    = "IntuneCustomizationBrandingProfile_1";
+            OnlineSupportSiteName          = "Contoso Support";
+            OnlineSupportSiteUrl           = "https://support.contoso.com";
+            PrivacyUrl                     = "https://privacy.contoso.com";
+            ProfileDescription             = "Company Portal branding shown to employees, refreshed for the 2026 brand guidelines"; # Updated Property
+            ProfileName                    = "Contoso Company Portal";
             RoleScopeTagIds                = @("0");
-            ShowAzureADEnterpriseApps      = $True;
-            ShowConfigurationManagerApps   = $True;
-            ShowDisplayNameNextToLogo      = $True;
-            ShowLogo                       = $True;
-            ShowOfficeWebApps              = $True;
-            TenantId                       = $TenantId;
+            ShowAzureADEnterpriseApps      = $true;
+            ShowConfigurationManagerApps   = $true;
+            ShowDisplayNameNextToLogo      = $true;
+            ShowLogo                       = $true;
+            ShowOfficeWebApps              = $true;
             ThemeColor                     = MSFT_MicrosoftGraphRgbColor{
                 B = 198
                 G = 114
                 R = 0
             };
             ThemeColorLogo                 = MSFT_MicrosoftGraphMimeContent{
-                Type = "image/png"
-                Value = "Base64EncodedString"
+                Type  = "image/png"
+                Value = "<base64-encoded-theme-color-logo>"
             };
+            ApplicationId                  = $ApplicationId;
+            TenantId                       = $TenantId;
+            CertificateThumbprint          = $CertificateThumbprint;
         }
     }
 }

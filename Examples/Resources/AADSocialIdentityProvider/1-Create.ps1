@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,18 +22,18 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADSocialIdentityProvider "AADSocialIdentityProvider-Google"
+        AADSocialIdentityProvider "AADSocialIdentityProvider-Example"
         {
-            ClientId             = "Google-OAUTH";
-            ClientSecret         = "FakeSecret";
+            ClientId              = "Google-OAUTH";
+            ClientSecret          = "<client-secret>";
+            DisplayName           = "My Google Provider";
+            Ensure                = "Present";
+            IdentityProviderType  = "Google";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            DisplayName          = "My Google Provider";
-            Ensure               = "Present";
-            IdentityProviderType = "Google";
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,11 +22,11 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneMobileAppsLobAppiOS "IntuneMobileAppsLobAppiOS-IPA iOS App"
+        IntuneMobileAppsLobAppiOS "IntuneMobileAppsLobAppiOS-Example"
         {
-            DisplayName           = "Example IPA iOS App";
+            DisplayName           = "Contoso Field Service";
             Ensure                = "Absent";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;

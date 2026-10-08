@@ -1,0 +1,192 @@
+name: API Surface Check
+on:
+  schedule:
+    # Night from Friday to Saturday at midnight UTC. Nothing runs nightly.
+    - cron: '0 0 * * 6'
+  workflow_dispatch:
+
+concurrency:
+  group: api-surface-check
+  cancel-in-progress: false
+
+env:
+  DRIFT_ISSUE_TITLE: API surface drift
+  DRIFT_ISSUE_LABEL: api-drift
+
+jobs:
+  api-surface-check:
+    runs-on: windows-latest
+
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+
+    if: github.repository == 'Microsoft365DSC/Microsoft365DSC'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Install Modules
+        shell: pwsh
+        timeout-minutes: 45
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifests = @('./Modules/Microsoft365DSC/Dependencies/Manifest.psd1', './Modules/Microsoft365DSC/Dependencies/DevManifest.psd1')
+          $seen = [System.Collections.Generic.HashSet[System.String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+          foreach ($manifest in $manifests)
+          {
+            foreach ($dependency in (Import-PowerShellDataFile $manifest).Dependencies)
+            {
+              if (-not $seen.Add("$($dependency.ModuleName)/$($dependency.RequiredVersion)"))
+              {
+                continue
+              }
+
+              Install-PSResource -Name $dependency.ModuleName -Version $dependency.RequiredVersion -Scope AllUsers -TrustRepository
+            }
+          }
+
+          Install-PSResource -Name ReverseDSC -Scope AllUsers -TrustRepository
+          [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine);
+
+      - name: Build Class Modules
+        shell: pwsh
+        run: |
+          & ./Utilities/Build-Microsoft365DSC.ps1 -SkipSchemaCache
+
+      - name: Generate Schema Cache
+        shell: pwsh
+        run: |
+          & ./Utilities/New-M365DSCDscSchemaCache.ps1
+
+      - name: Download Previous Drift Report
+        shell: pwsh
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # firstSeen is carried forward from the last successful run. api-drift.json is a run
+          # output and never a committed file. The artifact is the only place it survives.
+          $runs = gh run list --workflow 'API Surface Check.yml' --status success --limit 1 --json databaseId | ConvertFrom-Json
+          if ($runs.Count -eq 0)
+          {
+            Write-Host 'No previous successful run. Every finding is stamped with today.'
+            return
+          }
+
+          gh run download $runs[0].databaseId --name api-drift --dir ./Utilities/ApiSurface
+
+      - name: Read Current Issue Body
+        id: current-issue
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $issues = gh issue list --label $env:DRIFT_ISSUE_LABEL --state open --limit 1 --json number,body | ConvertFrom-Json
+
+          $number = ''
+          $body = ''
+          if ($issues.Count -gt 0)
+          {
+            $number = [System.String] $issues[0].number
+            $body = [System.String] $issues[0].body
+          }
+
+          [System.IO.File]::WriteAllText('current-issue-body.md', $body, [System.Text.UTF8Encoding]::new($false))
+          "issue-number=$number" | Add-Content -Path $env:GITHUB_OUTPUT
+
+      - name: Check Tenant Certificate
+        shell: pwsh
+        run: |
+          $thumbprint = '${{ secrets.RUNNERCERTIFICATETHUMBPRINT }}'
+          if ([System.String]::IsNullOrWhiteSpace($thumbprint) -or -not (Test-Path -Path "Cert:\LocalMachine\My\$thumbprint"))
+          {
+            Write-Warning 'The runner certificate is not installed. Exchange Online and Security and Compliance stay skipped.'
+            'M365DSC_TENANT_CONNECTED=false' | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+          else
+          {
+            'M365DSC_TENANT_CONNECTED=true' | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
+      - name: Run API Surface Check
+        shell: pwsh
+        timeout-minutes: 45
+        env:
+          RUNNER_APP_ID: ${{ secrets.RUNNERAPPID }}
+          RUNNER_TENANT_ID: ${{ secrets.RUNNERTENANTID }}
+          RUNNER_THUMBPRINT: ${{ secrets.RUNNERCERTIFICATETHUMBPRINT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $MaximumFunctionCount = 32767
+          Import-Module ./Utilities/ApiSurface/M365DSCApiSurface.psd1 -Force
+
+          $parameters = @{
+            MarkdownPath         = './Utilities/ApiSurface/api-drift.md'
+            IssueBodyPath        = './issue-body.md'
+            CurrentIssueBodyPath = './current-issue-body.md'
+          }
+
+          # A missing certificate downgrades the run to the offline capture. It never fails the job.
+          if ($env:M365DSC_TENANT_CONNECTED -eq 'true')
+          {
+            $parameters['IncludeTenantConnected'] = $true
+            $parameters['ApplicationId'] = $env:RUNNER_APP_ID
+            $parameters['TenantId'] = $env:RUNNER_TENANT_ID
+            $parameters['CertificateThumbprint'] = $env:RUNNER_THUMBPRINT
+          }
+
+          $result = Invoke-M365DSCApiSurfaceCheck @parameters
+
+          "Findings: $(@($result.Findings).Count)"
+
+      - name: Upload Drift Report
+        uses: actions/upload-artifact@v7
+        with:
+          name: api-drift
+          path: |
+            Utilities/ApiSurface/api-drift.json
+            Utilities/ApiSurface/api-drift.md
+
+      - name: Ensure Label
+        shell: pwsh
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create $env:DRIFT_ISSUE_LABEL --description 'Weekly vendor API surface drift report' --color 'B60205'
+
+      - name: Create Or Update Issue
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.current-issue.outputs.issue-number }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          if ([System.String]::IsNullOrEmpty($env:ISSUE_NUMBER))
+          {
+            gh issue create --title $env:DRIFT_ISSUE_TITLE --label $env:DRIFT_ISSUE_LABEL --body-file ./issue-body.md
+            return
+          }
+
+          gh issue edit $env:ISSUE_NUMBER --body-file ./issue-body.md
+
+      - name: Write Run Summary
+        if: always()
+        shell: pwsh
+        run: |
+          # The run id, the run URL and the timestamp live here. In the Issue body they would
+          # rewrite it on every run.
+          $lines = @(
+            "# API surface check",
+            "",
+            "Run: [$env:GITHUB_RUN_ID]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID)",
+            "Completed: $([System.DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+          )
+
+          $lines -join "`n" | Add-Content -Path $env:GITHUB_STEP_SUMMARY

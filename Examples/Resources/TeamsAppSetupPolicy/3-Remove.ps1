@@ -5,20 +5,32 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsAppSetupPolicy "TeamsAppSetupPolicy-TestPolicy"
+        TeamsAppSetupPolicy "TeamsAppSetupPolicy-Example"
         {
-            Credential           = $Credscredential;
-            Ensure               = "Absent";
-            Identity             = "Test Policy";
+            Ensure                = "Absent";
+            Identity              = "Frontline App Setup";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

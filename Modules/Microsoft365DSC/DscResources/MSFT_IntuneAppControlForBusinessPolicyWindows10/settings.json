@@ -1,41 +1,64 @@
 {
   "resourceName": "IntuneAppControlForBusinessPolicyWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceManagementConfigurationPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementConfigurationPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Intune App Control For Business Policy for Windows10.",
   "permissions": {
     "graph": {
       "delegated": {
-        "read": [
-          {
-            "name": "DeviceManagementConfiguration.Read.All"
-          },
-          {
-            "name": "Group.Read.All"
-          }
-        ],
         "update": [
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
+          }
+        ],
+        "read": [
+          {
+            "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
-        "read": [
-          {
-            "name": "DeviceManagementConfiguration.Read.All"
-          },
-          {
-            "name": "Group.Read.All"
-          }
-        ],
         "update": [
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
+          }
+        ],
+        "read": [
+          {
+            "name": "DeviceManagementConfiguration.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

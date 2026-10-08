@@ -1,5 +1,16 @@
 {
   "resourceName": "CommerceSelfServicePurchase",
+  "generatedFrom": {
+    "workload": "Licensing",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Manages the Self Purchase policies in commerce.",
   "roles": {},
   "permissions": {

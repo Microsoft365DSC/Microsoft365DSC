@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,12 +22,12 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOExternalInOutlook "EXOExternalInOutlook"
+        EXOExternalInOutlook "EXOExternalInOutlook-Example"
         {
             Identity              = "ExternalInOutlook";
-            AllowList             = @("mobile01@contoso.onmicrosoft.com","*contoso.onmicrosoft.com","contoso.com");
+            AllowList             = @("mobile01@$TenantId","*$TenantId","contoso.com");
             Enabled               = $False;
             Ensure                = "Present";
             ApplicationId         = $ApplicationId

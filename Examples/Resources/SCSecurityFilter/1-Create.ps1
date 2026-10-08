@@ -5,25 +5,37 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCSecurityFilter 'ConfigureSecurityLabel'
+        SCSecurityFilter 'SCSecurityFilter-Example'
         {
-            FilterName      = "My Filter Name"
-            Action          = "All"
-            Users           = @("jonh.doe@1234.onmicrosoft.com")
-            Description     = "Demo Security Label description"
-            Filters         = @("Mailbox_CountryCode -eq '124'")
-            Region          = "AUS"
-            Ensure          = "Present"
-            Credential      = $Credscredential
+            FilterName            = "Australia Mailbox Scope"
+            Action                = "All"
+            Users                 = @("PattiF@$TenantId")
+            Description           = "Limits eDiscovery searches to Australian mailboxes"
+            Filters               = @("Mailbox_CountryCode -eq '036'")
+            Region                = "AUS"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

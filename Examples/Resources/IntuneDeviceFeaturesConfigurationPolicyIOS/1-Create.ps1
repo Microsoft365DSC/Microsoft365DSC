@@ -3,7 +3,8 @@ This example creates a new Intune Device Features Configuration Policy for IOS.
 #>
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -16,92 +17,121 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        IntuneDeviceFeaturesConfigurationPolicyIOS "IntuneDeviceFeaturesConfigurationPolicyIOS-FakeStringValue"
+        IntuneDeviceFeaturesConfigurationPolicyIOS "IntuneDeviceFeaturesConfigurationPolicyIOS-Example"
         {
-            ApplicationId            = $ApplicationId;
-            TenantId                 = $TenantId;
-            CertificateThumbprint    = $CertificateThumbprint;
-            AirPrintDestinations     = @(
+            AirPrintDestinations                       = @(
                 MSFT_airPrintDestination{
-                    port = 0
-                    resourcePath = 'printers/xerox_Phase'
-                    forceTls = $False
-                    ipAddress = '1.0.0.1'
+                    port         = 631
+                    resourcePath = "printers/Xerox_Phaser_7600"
+                    forceTls     = $true
+                    ipAddress    = "10.20.30.40"
                 }
             );
-            Assignments              = @();
-            ContentFilterSettings    = @(
+            Assignments                                = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.allDevicesAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName = "Intune Excluded Devices"
+                }
+            );
+            AssetTagTemplate                           = "Contoso IT - Mobile Fleet";
+            ContentFilterSettings                      = @(
                 MSFT_iosWebContentFilterSpecificWebsitesAccess{
-                    allowedUrls = @('www.allowed.com')
-                    dataType = '#microsoft.graph.iosWebContentFilterAutoFilter'
-                    blockedUrls = @('www.blocked.com')
+                    allowedUrls = @("https://intranet.contoso.com")
+                    dataType    = "#microsoft.graph.iosWebContentFilterAutoFilter"
+                    blockedUrls = @("https://downloads.fabrikam.com")
                 }
             );
-            Description              = "FakeStringValue";
-            DisplayName              = "FakeStringValue";
-            Ensure                   = "Present";
-            HomeScreenDockIcons      = @(
+            Description                                = "Corporate iOS device features";
+            DeviceManagementApplicabilityRuleOsVersion = @(
+                MSFT_deviceManagementApplicabilityRuleOsVersion{
+                    Name         = "iPadOS and iOS 16 or later"
+                    MinOSVersion = "16.0"
+                    MaxOSVersion = "18.5"
+                    RuleType     = "include"
+                }
+            );
+            DisplayName                                = "Corporate iOS Device Features";
+            Ensure                                     = "Present";
+            HomeScreenDockIcons                        = @(
                 MSFT_iosHomeScreenApp{
-                    bundleID = 'com.apple.store.Jolly'
-                    displayName = 'Apple Store'
-                    isWebClip = $False
+                    bundleID    = "com.apple.store.Jolly"
+                    displayName = "Apple Store"
+                    isWebClip   = $false
                 }
             );
-            HomeScreenPages          = @(
+            HomeScreenGridHeight                       = 6;
+            HomeScreenGridWidth                        = 4;
+            HomeScreenPages                            = @(
                 MSFT_iosHomeScreenItem{
                     icons = @(
                         MSFT_iosHomeScreenApp{
-                            bundleID = 'com.apple.AppStore'
-                            displayName = 'App Store'
-                            isWebClip = $False
+                            bundleID    = "com.apple.AppStore"
+                            displayName = "App Store"
+                            isWebClip   = $false
                         }
                     )
 
                 }
             );
-            Id                       = "ab915bca-1234-4b11-8acb-719a771139bc";
-            IosSingleSignOnExtension = @(
+            Id                                         = "ab915bca-1234-4b11-8acb-719a771139bc";
+            IosSingleSignOnExtension                   = @(
                 MSFT_iosSingleSignOnExtension{
-                    extensionIdentifier = 'com.example.sso.credential'
-                    dataType = '#microsoft.graph.iosCredentialSingleSignOnExtension'
-                    domains = @('example.com')
-                    teamIdentifier = '4HMSJJRMAD'
-                    realm = 'EXAMPLE.COM'
+                    extensionIdentifier = "com.contoso.sso.credential"
+                    dataType            = "#microsoft.graph.iosCredentialSingleSignOnExtension"
+                    domains             = @("contoso.com")
+                    teamIdentifier      = "4HMSJJRMAD"
+                    realm               = "CONTOSO.COM"
                 }
             );
-            NotificationSettings     = @(
+            LockScreenFootnote                         = "If found, please return to the Contoso service desk.";
+            NotificationSettings                       = @(
                 MSFT_iosNotificationSettings{
-                    alertType = 'banner'
-                    enabled = $True
-                    showOnLockScreen = $True
-                    badgesEnabled = $True
-                    soundsEnabled = $True
-                    publisher = 'fakepublisher'
-                    bundleID = 'app.id'
-                    showInNotificationCenter = $True
-                    previewVisibility = 'hideWhenLocked'
-                    appName = 'fakeapp'
+                    alertType                = "banner"
+                    enabled                  = $true
+                    showOnLockScreen         = $true
+                    badgesEnabled            = $true
+                    soundsEnabled            = $true
+                    publisher                = "Microsoft Corporation"
+                    bundleID                 = "com.microsoft.Office.Outlook"
+                    showInNotificationCenter = $true
+                    previewVisibility        = "hideWhenLocked"
+                    appName                  = "Outlook"
                 }
             );
-            SingleSignOnSettings     = @(
+            RoleScopeTagIds                            = @("0");
+            SingleSignOnSettings                       = @(
                 MSFT_iosSingleSignOnSettings{
-                    allowedAppsList = @(
+                    allowedAppsList       = @(
                         MSFT_appListItem{
-                            appId = 'com.microsoft.companyportal'
-                            name = 'Intune Company Portal'
+                            appId = "com.microsoft.companyportal"
+                            name  = "Intune Company Portal"
                         }
                     )
-                    allowedUrls = @('https://www.fakeurl.com')
-                    kerberosRealm = 'fakerealm.com'
-                    displayName = 'FakeStringValue'
-                    kerberosPrincipalName = 'userPrincipalName'
+                    allowedUrls           = @("https://sso.contoso.com")
+                    kerberosRealm         = "CONTOSO.COM"
+                    displayName           = "Contoso Single Sign-On"
+                    kerberosPrincipalName = "userPrincipalName"
                 }
             );
-            WallpaperDisplayLocation = "notConfigured";
+            WallpaperDisplayLocation                   = "lockAndHomeScreens";
+            WallpaperImage                             = @(
+                MSFT_mimeContent{
+                    type  = "image/png"
+                    value = @("<base64-encoded-wallpaper-image>")
+                }
+            );
+            ApplicationId                              = $ApplicationId;
+            TenantId                                   = $TenantId;
+            CertificateThumbprint                      = $CertificateThumbprint;
         }
     }
 }

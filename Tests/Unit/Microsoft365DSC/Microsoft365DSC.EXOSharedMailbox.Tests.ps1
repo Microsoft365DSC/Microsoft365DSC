@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@contoso.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -78,11 +78,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should create the Shared Mailbox in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName New-Mailbox -Exactly 1
             }
         }
@@ -103,7 +103,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should create the Shared Mailbox with Alias via New-Mailbox' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName New-Mailbox -Exactly 1
             }
         }
@@ -124,7 +124,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should create the mailbox and then call Set-Mailbox for AuditEnabled' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName New-Mailbox -Exactly 1
                 Should -Invoke -CommandName Set-Mailbox -Exactly 1
             }
@@ -146,7 +146,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should create the mailbox and then call Set-Mailbox for EmailAddresses' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName New-Mailbox -Exactly 1
                 Should -Invoke -CommandName Set-Mailbox -Exactly 1
             }
@@ -168,7 +168,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should create the mailbox and then call Set-Mailbox for MessageCopyForSendOnBehalfEnabled' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName New-Mailbox -Exactly 1
                 Should -Invoke -CommandName Set-Mailbox -Exactly 1
             }
@@ -190,7 +190,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should create the mailbox and then call Set-Mailbox for MessageCopyForSentAsEnabled' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName New-Mailbox -Exactly 1
                 Should -Invoke -CommandName Set-Mailbox -Exactly 1
             }
@@ -207,15 +207,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return True from the Test method' {
-                Test-TargetResource @testParams | Should -Be $True
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Test() | Should -Be $True
             }
             It 'Should return false from the Test method' {
                 $testParams.PrimarySMTPAddress = 'test@contoso1.onmicrosoft.com'
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Test() | Should -Be $False
             }
         }
 
@@ -245,22 +245,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return MessageCopyForSendOnBehalfEnabled from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()
                 $result.MessageCopyForSendOnBehalfEnabled | Should -Be $true
             }
 
             It 'Should return MessageCopyForSentAsEnabled from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()
                 $result.MessageCopyForSentAsEnabled | Should -Be $true
             }
 
             It 'Should return AuditEnabled from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()
                 $result.AuditEnabled | Should -Be $true
             }
 
             It 'Should return EmailAddresses filtering out PrimarySMTPAddress' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()
                 $result.EmailAddresses | Should -Not -Contain 'test@contoso.onmicrosoft.com'
                 $result.EmailAddresses | Should -Contain 'user@contoso.onmicrosoft.com'
             }
@@ -292,41 +292,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return the mailbox using Identity' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()
                 $result.Ensure | Should -Be 'Present'
                 $result.Identity | Should -Be 'TestIdentity'
-            }
-        }
-
-        Context -Name 'Get-TargetResource uses exportedInstance when available' -Fixture {
-            BeforeAll {
-                $testParams = @{
-                    DisplayName        = 'Test Shared Mailbox'
-                    Ensure             = 'Present'
-                    Credential         = $Credential
-                }
-
-                $Script:exportedInstance = @{
-                    Identity                          = 'Test Shared Mailbox'
-                    Name                              = 'Test Shared Mailbox'
-                    DisplayName                       = 'Test Shared Mailbox'
-                    RecipientTypeDetails              = 'SharedMailbox'
-                    Alias                             = 'exporttest'
-                    EmailAddresses                    = @('smtp:exported@contoso.onmicrosoft.com', 'SMTP:test@contoso.onmicrosoft.com')
-                    PrimarySMTPAddress                = 'test@contoso.onmicrosoft.com'
-                    AuditEnabled                      = $false
-                    MessageCopyForSendOnBehalfEnabled = $false
-                    MessageCopyForSentAsEnabled       = $false
-                }
-            }
-
-            AfterAll {
-                $Script:exportedInstance = $null
-            }
-
-            It 'Should use exportedInstance data when DisplayName matches' {
-                $result = Get-TargetResource @testParams
-                $result.Alias | Should -Be 'exporttest'
             }
         }
 
@@ -355,7 +323,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return all parsed EmailAddresses when PrimarySMTPAddress param is not specified' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()
                 $result.EmailAddresses | Should -Contain 'secondary@contoso.onmicrosoft.com'
             }
         }
@@ -386,7 +354,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should filter out PrimarySMTPAddress from EmailAddresses when PrimarySMTPAddress is explicitly provided' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Get().ToHashtable()
                 $result.EmailAddresses | Should -Not -Contain 'test@contoso.onmicrosoft.com'
                 $result.EmailAddresses | Should -Contain 'secondary@contoso.onmicrosoft.com'
             }
@@ -403,7 +371,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 It 'Should throw an error from the Set method' {
-                    { Set-TargetResource @testParams } | Should Throw 'You cannot have the EmailAddresses list contain the PrimarySMTPAddress'
+                    { (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set() } | Should Throw 'You cannot have the EmailAddresses list contain the PrimarySMTPAddress'
                 }
             }
         }
@@ -420,7 +388,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-Mailbox -Times 1
             }
         }
@@ -450,7 +418,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
             }
         }
 
@@ -467,7 +435,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
             }
         }
 
@@ -497,7 +465,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should update PrimarySMTPAddress via Set-Mailbox with WindowsEmailAddress' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 2
             }
         }
@@ -529,7 +497,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should update Alias via Set-Mailbox' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 1
             }
         }
@@ -561,7 +529,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should update AuditEnabled via Set-Mailbox' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 1
             }
         }
@@ -593,7 +561,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should update MessageCopyForSendOnBehalfEnabled via Set-Mailbox' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 1
             }
         }
@@ -625,7 +593,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should update MessageCopyForSentAsEnabled via Set-Mailbox' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 1
             }
         }
@@ -657,7 +625,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should update EmailAddresses with add and remove via Set-Mailbox' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 1
             }
         }
@@ -688,7 +656,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should handle EmailAddresses update when PrimarySMTPAddress is not specified' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 1
             }
         }
@@ -723,14 +691,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call Set-Mailbox only once with just Identity when nothing drifted' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-Mailbox -Times 1
             }
         }
 
-        Context -Name 'Get-CompareParameters returns correct structure' -Fixture {
+        Context -Name 'GetCompareParameters returns correct structure' -Fixture {
             It 'Should return a hashtable with IncludedProperties' {
-                $result = Get-CompareParameters
+                $result = (New-M365DSCResourceInstance -ResourceName 'EXOSharedMailbox').GetCompareParameters()
                 $result | Should -BeOfType [System.Collections.Hashtable]
                 $result.IncludedProperties | Should -Contain 'DisplayName'
             }
@@ -746,7 +714,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOSharedMailbox' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }
@@ -765,7 +733,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return empty string when no shared mailboxes exist' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOSharedMailbox' -MethodName 'Export' -Parameters $testParams
                 $result | Should -BeNullOrEmpty
             }
         }

@@ -1,0 +1,8 @@
+{
+    "ignores": [
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        ".github/ISSUE_TEMPLATE/**",
+        "docs/site/**",
+        "node_modules/**"
+    ]
+}

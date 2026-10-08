@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,27 +19,28 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAntivirusExclusionsPolicyMacOS 'myIntuneAntivirusExclusionsPolicyMacOS'
+        IntuneAntivirusExclusionsPolicyMacOS 'IntuneAntivirusExclusionsPolicyMacOS-Example'
         {
-            Assignments = @();
-            Description = "";
-            DisplayName = "Test";
-            Ensure      = "Present";
-            Exclusions  = @(
+            Assignments           = @();
+            Description           = "";
+            DisplayName           = "Mac Endpoints - Antivirus Exclusions";
+            Ensure                = "Present";
+            Exclusions            = @(
                 MSFT_MicrosoftGraphIntuneSettingsCatalogExclusions{
                     Exclusions_item_extension = '.dmg'
-                    Exclusions_item_type = 'excludedFileExtension'
+                    Exclusions_item_type      = 'excludedFileExtension'
                 }
                 MSFT_MicrosoftGraphIntuneSettingsCatalogExclusions{
                     Exclusions_item_name = 'process1'
                     Exclusions_item_type = 'excludedFileName'
                 }
             );
-            RoleScopeTagIds                    = @("0");
+            RoleScopeTagIds       = @("0");
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

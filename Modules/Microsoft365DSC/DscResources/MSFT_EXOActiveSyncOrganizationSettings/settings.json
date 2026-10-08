@@ -1,0 +1,62 @@
+{
+  "resourceName": "EXOActiveSyncOrganizationSettings",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "ActiveSyncOrganizationSettings",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "createOnlyProperties": [],
+    "textPayloadProperties": [],
+    "generatorVersion": "0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AllowAccessForUnSupportedPlatform",
+      "reason": "NotConfigurable",
+      "note": "MS internal only"
+    }
+  ],
+  "description": "This resource configures a EXO Active Sync Organization Settings.",
+  "roles": {
+    "read": [
+      "Global Reader"
+    ],
+    "update": [
+      "Exchange Administrator"
+    ]
+  },
+  "permissions": {
+    "Office 365 Exchange Online": {
+      "application": {
+        "read": [
+          {
+            "name": "Exchange.ManageAsApp"
+          }
+        ],
+        "update": [
+          {
+            "name": "Exchange.ManageAsApp"
+          }
+        ]
+      }
+    }
+  },
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-ActiveSyncOrganizationSettings",
+        "Set-ActiveSyncOrganizationSettings"
+      ]
+    }
+  ]
+}

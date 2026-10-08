@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOCASMailboxPlan 'ConfigureCASMailboxPlan'
+        EXOCASMailboxPlan 'EXOCASMailboxPlan-Example'
         {
-            ActiveSyncEnabled = $True
-            OwaMailboxPolicy  = "OwaMailboxPolicy-Default"
-            PopEnabled        = $False # Updated Property
-            Identity          = 'ExchangeOnlineEnterprise'
-            ImapEnabled       = $True
-            Ensure            = "Present"
+            ActiveSyncEnabled     = $True
+            OwaMailboxPolicy      = "OwaMailboxPolicy-Default"
+            PopEnabled            = $False # Updated Property
+            Identity              = 'ExchangeOnlineEnterprise'
+            ImapEnabled           = $True
+            Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

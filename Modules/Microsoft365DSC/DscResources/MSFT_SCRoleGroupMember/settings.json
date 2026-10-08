@@ -1,5 +1,16 @@
 {
   "resourceName": "SCRoleGroupMember",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "RoleGroupMember",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Role Group Member in Purview.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "purview": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "Role Management"
         ],
@@ -33,7 +44,7 @@
           "Role Management"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Organization Management"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Add-RoleGroupMember",
+        "Get-RoleGroup",
+        "Get-RoleGroupMember",
+        "Remove-RoleGroupMember"
+      ]
+    }
+  ]
 }

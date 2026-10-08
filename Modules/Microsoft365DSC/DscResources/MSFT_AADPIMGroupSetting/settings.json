@@ -1,5 +1,237 @@
 {
   "resourceName": "AADPIMGroupSetting",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleManagementPolicyRule",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyRoleManagementPolicyRule",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ActivateApprover",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyApprovalRule"
+    },
+    {
+      "name": "ActivationMaxDuration",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyExpirationRule"
+    },
+    {
+      "name": "ActivationReqJustification",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "ActivationReqMFA",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "ActivationReqTicket",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "ActiveAlertNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveAlertNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveAlertNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveApproveNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveApproveNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveApproveNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveAssigneeNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveAssigneeNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ActiveAssigneeNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ApprovaltoActivate",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyApprovalRule"
+    },
+    {
+      "name": "AssignmentReqJustification",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "AssignmentReqMFA",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "AuthenticationContextId",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyAuthenticationContextRule"
+    },
+    {
+      "name": "AuthenticationContextName",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyAuthenticationContextRule"
+    },
+    {
+      "name": "AuthenticationContextRequired",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyAuthenticationContextRule"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "Accepted",
+      "note": "Display name of the group the policy applies to"
+    },
+    {
+      "name": "EligibilityAssignmentReqJustification",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "EligibilityAssignmentReqMFA",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "EligibleAlertNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAlertNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAlertNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleApproveNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleApproveNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleApproveNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssigneeNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssigneeNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssigneeNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssignmentAlertNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssignmentAlertNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssignmentAlertNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssignmentAssigneeNotificationAdditionalRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssignmentAssigneeNotificationDefaultRecipient",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "EligibleAssignmentAssigneeNotificationOnlyCritical",
+      "reason": "Accepted",
+      "note": "Flattened from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "ExpireActiveAssignment",
+      "reason": "Accepted",
+      "note": "Flattened from the unifiedRoleManagementPolicyExpirationRule property"
+    },
+    {
+      "name": "ExpireEligibleAssignment",
+      "reason": "Accepted",
+      "note": "Flattened from the unifiedRoleManagementPolicyExpirationRule property"
+    },
+    {
+      "name": "PermanentActiveAssignmentisExpirationRequired",
+      "reason": "Accepted",
+      "note": "Flattened from the unifiedRoleManagementPolicyExpirationRule property"
+    },
+    {
+      "name": "PermanentEligibleAssignmentisExpirationRequired",
+      "reason": "Accepted",
+      "note": "Flattened from the unifiedRoleManagementPolicyExpirationRule property"
+    },
+    {
+      "name": "RoleDefinitionId",
+      "reason": "Accepted",
+      "note": "Names the role definition the policy applies to"
+    },
+    {
+      "name": "Target",
+      "reason": "Accepted",
+      "note": "Set writes a stub and the service derives the target from the rule"
+    }
+  ],
   "description": "This resource configures an PIM Group.",
   "roles": {
     "read": [],
@@ -15,7 +247,10 @@
             "name": "AuthenticationContext.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "PrivilegedAccess.Read.AzureADGroup"
           },
           {
             "name": "RoleManagementPolicy.Read.Directory"
@@ -26,7 +261,10 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "AuthenticationContext.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "RoleManagementPolicy.ReadWrite.Directory"
@@ -39,7 +277,13 @@
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "AuthenticationContext.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "PrivilegedAccess.Read.AzureADGroup"
           },
           {
             "name": "RoleManagementPolicy.Read.Directory"
@@ -50,7 +294,10 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "AuthenticationContext.Read.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "RoleManagementPolicy.ReadWrite.Directory"
@@ -63,6 +310,7 @@
     }
   },
   "requiredModules": [
+    "M365DSC.mgx",
     "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.Identity.SignIns",
     "Microsoft.Graph.Groups",
@@ -75,6 +323,12 @@
   ],
   "mode": "Data",
   "commands": [
+    {
+      "module": "M365DSC.mgx",
+      "cmdlets": [
+        "Invoke-MgxBatchRequest"
+      ]
+    },
     {
       "module": "Microsoft.Graph.Authentication",
       "cmdlets": [

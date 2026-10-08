@@ -1,5 +1,27 @@
 {
   "resourceName": "AADLifecycleWorkflowSettings",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "identityGovernance.lifecycleManagementSettings",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaIdentityGovernanceLifecycleWorkflowSetting",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "EmailSettings",
+      "reason": "Accepted",
+      "note": "Modelled flat as SenderDomain and UseCompanyBranding"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    }
+  ],
   "description": "Update the properties of a lifecycleManagementSettings object.",
   "roles": {
     "read": [],

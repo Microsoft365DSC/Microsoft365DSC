@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,19 +22,34 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOGlobalAddressList 'ConfigureGlobalAddressList'
+        EXOGlobalAddressList 'EXOGlobalAddressList-Example'
         {
             Name                         = "Contoso Human Resources in Washington"
             ConditionalCompany           = "Contoso"
+            ConditionalCustomAttribute1  = @("Payroll")
+            ConditionalCustomAttribute2  = @("Benefits")
+            ConditionalCustomAttribute3  = @("Recruiting")
+            ConditionalCustomAttribute4  = @("Onboarding")
+            ConditionalCustomAttribute5  = @("Training")
+            ConditionalCustomAttribute6  = @("Compensation")
+            ConditionalCustomAttribute7  = @("Compliance")
+            ConditionalCustomAttribute8  = @("Diversity")
+            ConditionalCustomAttribute9  = @("Talent")
+            ConditionalCustomAttribute10 = @("Retention")
+            ConditionalCustomAttribute11 = @("Wellbeing")
+            ConditionalCustomAttribute12 = @("Relocation")
+            ConditionalCustomAttribute13 = @("Contractors")
+            ConditionalCustomAttribute14 = @("Interns")
+            ConditionalCustomAttribute15 = @("Alumni")
             ConditionalDepartment        = "Human Resources"
             ConditionalStateOrProvince   = "Washington"
             IncludedRecipients           = 'AllRecipients'
             Ensure                       = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                = $ApplicationId
+            TenantId                     = $TenantId
+            CertificateThumbprint        = $CertificateThumbprint
         }
     }
 }

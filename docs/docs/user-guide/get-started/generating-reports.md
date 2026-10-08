@@ -40,6 +40,22 @@ Generating an HTML report works slightly differently. The **New-M365DSCReportFro
   <figcaption>Example of HTML report</figcaption>
 </figure>
 
+## Markdown Report
+
+The Markdown report lists every resource instance of a configuration with the properties the configuration sets and their values. By default the whole configuration lands in a single document.
+
+Add the **-SplitByResource** parameter to write one document per resource instance instead. Those documents are placed in a folder per workload below **-OutputPath**.
+
+By default a document carries the name, data type and value of every property the configuration sets. Add the **-IncludeAllInformation** parameter to list every property the resource supports, set or not, together with its attribute, allowed values and description, and the permissions the resource requires.
+
+> **NOTE:** A split report deletes the Markdown files of the workload folders it writes. That keeps instances which no longer exist from lingering. Other files, and Markdown files elsewhere in the folder, are kept. Point **-OutputPath** at a folder that is used for this report only.
+
+```powershell
+New-M365DSCReportFromConfiguration -Type 'Markdown' -ConfigurationPath 'C:\DSC\ConfigName.ps1' -OutputPath 'C:\DSC\M365Report.md'
+
+New-M365DSCReportFromConfiguration -Type 'Markdown' -ConfigurationPath 'C:\DSC\ConfigName.ps1' -OutputPath 'C:\DSC\Report' -SplitByResource -IncludeAllInformation
+```
+
 ## JSON Report
 
 The JSON report is the report type that can be consumed by other applications. It contains all resources and its instances, with all properties that can be interpreted by other apps. While the other report types are made to be human-readable, this report type is intended to be machine-readable. Due to the nature of JSON, it's still easily readable and very similar to the actual configuration.

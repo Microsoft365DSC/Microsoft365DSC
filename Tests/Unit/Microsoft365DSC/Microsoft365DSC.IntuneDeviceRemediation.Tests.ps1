@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -45,7 +45,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Update-DeviceConfigurationPolicyAssignment -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -121,35 +121,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneDeviceRemediation should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_IntuneDeviceRemediationPolicyAssignments -Property @{
-                            RunSchedule = New-CimInstance -ClassName MSFT_IntuneDeviceRemediationRunSchedule -Property @{
+                    Assignments = @(
+                        ([MSFT_IntuneDeviceRemediationPolicyAssignments] @{
+                            RunSchedule = [MSFT_IntuneDeviceRemediationRunSchedule] @{
                                 Date = '2024-01-01'
                                 Time = '01:00:00'
                                 Interval = 1
                                 DataType = '#microsoft.graph.deviceHealthScriptRunOnceSchedule'
                                 UseUtc = $False
-                            } -ClientOnly
+                            }
                             RunRemediationScript = $False
-                            Assignment = New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                            Assignment = [MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                                 deviceAndAppManagementAssignmentFilterId = 'FakeStringValue'
                                 deviceAndAppManagementAssignmentFilterType = 'none'
                                 dataType = '#microsoft.graph.groupAssignmentTarget'
                                 groupId = 'FakeStringValue'
-                            } -ClientOnly
-                        } -ClientOnly)
+                            }
+                        })
                     )
                     Description = "FakeStringValue"
                     DetectionScriptContent = "VGVzdA==" # "Test"
-                    DetectionScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    DetectionScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     DeviceHealthScriptType = "deviceHealthScript"
                     DisplayName = "FakeStringValue"
@@ -157,15 +157,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     Publisher = "FakeStringValue"
                     RemediationScriptContent = "VGVzdA==" # "Test"
-                    RemediationScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    RemediationScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     RoleScopeTagIds = @("FakeStringValue")
                     RunAs32Bit = $True
@@ -179,13 +179,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceHealthScript -Exactly 1
             }
         }
@@ -193,35 +193,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneDeviceRemediation exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_IntuneDeviceRemediationPolicyAssignments -Property @{
-                            RunSchedule = New-CimInstance -ClassName MSFT_IntuneDeviceRemediationRunSchedule -Property @{
+                    Assignments = @(
+                        ([MSFT_IntuneDeviceRemediationPolicyAssignments] @{
+                            RunSchedule = [MSFT_IntuneDeviceRemediationRunSchedule] @{
                                 Date = '2024-01-01'
                                 Time = '01:00:00'
                                 Interval = 1
                                 DataType = '#microsoft.graph.deviceHealthScriptRunOnceSchedule'
                                 UseUtc = $False
-                            } -ClientOnly
+                            }
                             RunRemediationScript = $False
-                            Assignment = New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                            Assignment = [MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                                 deviceAndAppManagementAssignmentFilterId = 'FakeStringValue'
                                 deviceAndAppManagementAssignmentFilterType = 'none'
                                 dataType = '#microsoft.graph.groupAssignmentTarget'
                                 groupId = 'FakeStringValue'
-                            } -ClientOnly
-                        } -ClientOnly)
+                            }
+                        })
                     )
                     Description = "FakeStringValue"
                     DetectionScriptContent = "VGVzdA==" # "Test"
-                    DetectionScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    DetectionScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     DeviceHealthScriptType = "deviceHealthScript"
                     DisplayName = "FakeStringValue"
@@ -229,15 +229,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     Publisher = "FakeStringValue"
                     RemediationScriptContent = "VGVzdA==" # "Test"
-                    RemediationScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    RemediationScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     RoleScopeTagIds = @("FakeStringValue")
                     RunAs32Bit = $True
@@ -248,50 +248,50 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceHealthScript -Exactly 1
             }
         }
         Context -Name "The IntuneDeviceRemediation Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_IntuneDeviceRemediationPolicyAssignments -Property @{
-                            RunSchedule = New-CimInstance -ClassName MSFT_IntuneDeviceRemediationRunSchedule -Property @{
+                    Assignments = @(
+                        ([MSFT_IntuneDeviceRemediationPolicyAssignments] @{
+                            RunSchedule = [MSFT_IntuneDeviceRemediationRunSchedule] @{
                                 Date = '2024-01-01'
                                 Time = '01:00:00'
                                 Interval = 1
                                 DataType = '#microsoft.graph.deviceHealthScriptRunOnceSchedule'
                                 UseUtc = $False
-                            } -ClientOnly
+                            }
                             RunRemediationScript = $False
-                            Assignment = New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                            Assignment = [MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                                 deviceAndAppManagementAssignmentFilterId = 'FakeStringValue'
                                 deviceAndAppManagementAssignmentFilterType = 'none'
                                 dataType = '#microsoft.graph.groupAssignmentTarget'
                                 groupId = 'FakeStringValue'
-                            } -ClientOnly
-                        } -ClientOnly)
+                            }
+                        })
                     )
                     Description = "FakeStringValue"
                     DetectionScriptContent = "VGVzdA==" # "Test"
-                    DetectionScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    DetectionScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     DeviceHealthScriptType = "deviceHealthScript"
                     DisplayName = "FakeStringValue"
@@ -299,15 +299,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     Publisher = "FakeStringValue"
                     RemediationScriptContent = "VGVzdA==" # "Test"
-                    RemediationScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    RemediationScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     RoleScopeTagIds = @("FakeStringValue")
                     RunAs32Bit = $True
@@ -318,42 +318,42 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The IntuneDeviceRemediation exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_IntuneDeviceRemediationPolicyAssignments -Property @{
-                            RunSchedule = New-CimInstance -ClassName MSFT_IntuneDeviceRemediationRunSchedule -Property @{
+                    Assignments = @(
+                        ([MSFT_IntuneDeviceRemediationPolicyAssignments] @{
+                            RunSchedule = [MSFT_IntuneDeviceRemediationRunSchedule] @{
                                 Date = '2024-01-01'
                                 Time = '01:00:00'
                                 Interval = 1
                                 DataType = '#microsoft.graph.deviceHealthScriptRunOnceSchedule'
                                 UseUtc = $False
-                            } -ClientOnly
+                            }
                             RunRemediationScript = $False
-                            Assignment = New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                            Assignment = [MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                                 deviceAndAppManagementAssignmentFilterId = 'FakeStringValue'
                                 deviceAndAppManagementAssignmentFilterType = 'none'
                                 dataType = '#microsoft.graph.groupAssignmentTarget'
                                 groupId = 'FakeStringValue'
-                            } -ClientOnly
-                        } -ClientOnly)
+                            }
+                        })
                     )
                     Description = "FakeStringValue"
                     DetectionScriptContent = "VGVzdA==" # "Test"
-                    DetectionScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    DetectionScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     DeviceHealthScriptType = "deviceHealthScript"
                     DisplayName = "FakeStringValue"
@@ -361,15 +361,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id = "FakeStringValue"
                     Publisher = "FakeStringValue"
                     RemediationScriptContent = "VGVzdA==" # "Test"
-                    RemediationScriptParameters = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphdeviceHealthScriptParameter -Property @{
+                    RemediationScriptParameters = @(
+                        ([MSFT_MicrosoftGraphdeviceHealthScriptParameter] @{
                             DefaultValue = $True
                             IsRequired = $True
                             Description = "FakeStringValue"
                             Name = "FakeStringValue"
                             odataType = "#microsoft.graph.deviceHealthScriptBooleanParameter"
                             ApplyDefaultValueWhenNotAssigned = $True
-                        } -ClientOnly)
+                        })
                     )
                     RoleScopeTagIds = @("FakeStringValue")
                     RunAs32Bit = $True
@@ -380,15 +380,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceRemediation' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceHealthScript -Exactly 1
             }
         }
@@ -402,7 +402,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceRemediation' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

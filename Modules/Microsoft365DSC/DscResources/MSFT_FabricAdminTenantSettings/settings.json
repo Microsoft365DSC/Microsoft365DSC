@@ -1,5 +1,16 @@
 {
   "resourceName": "FabricAdminTenantSettings",
+  "generatedFrom": {
+    "workload": "Fabric",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the tenant settings for Microsoft Fabric.",
   "roles": {
     "read": [

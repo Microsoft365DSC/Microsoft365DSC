@@ -1,5 +1,37 @@
 {
   "resourceName": "IntuneRoleDefinition",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "roleDefinition",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementRoleDefinition",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "IsBuiltInRoleDefinition",
+      "reason": "Accepted",
+      "note": "Duplicate of isBuiltIn, declared as IsBuiltIn"
+    },
+    {
+      "name": "Permissions",
+      "reason": "Accepted",
+      "note": "Same content as rolePermissions, modelled through AllowedResourceActions and NotAllowedResourceActions"
+    },
+    {
+      "name": "PermissionsActions",
+      "reason": "NotConfigurable",
+      "note": "Deprecated predecessor of resourceActions, which AllowedResourceActions carries."
+    },
+    {
+      "name": "RolePermissions",
+      "reason": "Accepted",
+      "note": "Set writes it from AllowedResourceActions and NotAllowedResourceActions"
+    }
+  ],
   "description": "This resource configures an Intune Role Definition.",
   "permissions": {
     "graph": {

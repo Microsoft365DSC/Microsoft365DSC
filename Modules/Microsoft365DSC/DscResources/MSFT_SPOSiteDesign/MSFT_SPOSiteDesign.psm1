@@ -1,532 +1,325 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SPOSiteDesign'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SPOSiteDesign : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Title,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The title of the site design.')]
+    [System.String] $Title
 
-        [Parameter()]
-        [System.String[]]
-        $SiteScriptNames,
+    [DscProperty()]
+    [System.ComponentModel.Description('The names of the site design scripts.')]
+    [System.String[]] $SiteScriptNames
 
-        [Parameter()]
-        [ValidateSet('CommunicationSite', 'TeamSite', 'GrouplessTeamSite')]
-        [System.String]
-        $WebTemplate,
+    [DscProperty()]
+    [System.ComponentModel.Description('Web template to which the site design is applied to when invoked.')]
+    [ValidateSet('CommunicationSite', 'TeamSite', 'GrouplessTeamSite')]
+    [System.String] $WebTemplate
 
-        [Parameter()]
-        [System.Boolean]
-        $IsDefault,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of site design.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String]
-        $PreviewImageAltText,
+    [DscProperty()]
+    [System.ComponentModel.Description('Is site design applied by default to web templates.')]
+    [System.Nullable[System.Boolean]] $IsDefault
 
-        [Parameter()]
-        [System.String]
-        $PreviewImageUrl,
+    [DscProperty()]
+    [System.ComponentModel.Description('Site design alternate preview image text.')]
+    [System.String] $PreviewImageAltText
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Site design preview image url.')]
+    [System.String] $PreviewImageUrl
 
-        [Parameter()]
-        [System.UInt32]
-        $Version,
+    [DscProperty()]
+    [System.ComponentModel.Description('Site design version number.')]
+    [System.Nullable[System.UInt32]] $Version
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Used to add or remove site design.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Office365 Tenant Admin.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for SPO SiteDesign for $Title"
-
-    try
+    [SPOSiteDesign] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Title -ne $Title)
+        $nullReturn = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'PNP' `
-                -InboundParameters $PSBoundParameters
+            $remote = [SPOSiteDesign]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
+
+        Write-Verbose -Message "Getting configuration for SPO SiteDesign for $($this.Title)"
+
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Title -ne $this.Title)
+            {
+                $null = $this.Connect('PNP')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                Write-Verbose -Message "Getting Site Design for $($this.Title)"
+                $siteDesign = Get-PnPSiteDesign -Identity $this.Title -ErrorAction SilentlyContinue
+            }
+            else
+            {
+                $siteDesign = $this.ExportedInstance
+            }
+
+            if ($null -eq $siteDesign)
+            {
+                Write-Verbose -Message "No Site Design found for $($this.Title)"
+                return $this.AsResult($nullReturn)
+            }
+
+            $scriptTitles = @()
+            foreach ($scriptId in $siteDesign.SiteScriptIds)
+            {
+                $siteScript = Get-PnPSiteScript -Identity $scriptId -ErrorAction SilentlyContinue
+
+                if ($null -ne $siteScript)
+                {
+                    $scriptTitles += $siteScript.Title
+                }
+            }
+            ## Todo need to see if we can get this somehow from PNP module instead of hard coded in script
+            ## https://github.com/SharePoint/PnP-PowerShell/blob/master/Commands/Enums/SiteWebTemplate.cs
+            $webtemp = $null
+            if ($siteDesign.WebTemplate -eq '64')
+            {
+                $webtemp = 'TeamSite'
+            }
+            elseif ($siteDesign.WebTemplate -eq '1')
+            {
+                $webtemp = 'GrouplessTeamSite'
+            }
+            else
+            {
+                $webtemp = 'CommunicationSite'
+            }
+
+            return $this.AsResult(@{
+                Title                 = $siteDesign.Title
+                SiteScriptNames       = $scriptTitles
+                WebTemplate           = $webtemp
+                IsDefault             = $siteDesign.IsDefault
+                Description           = $siteDesign.Description
+                PreviewImageAltText   = $siteDesign.PreviewImageAltText
+                PreviewImageUrl       = $siteDesign.PreviewImageUrl
+                Version               = $siteDesign.Version
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            })
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for SPO SiteDesign for $($this.Title)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $curSiteDesign = $this.Get().ToHashtable()
+
+        # Get list of site script names
+        $scriptIds = @()
+        foreach ($siteScriptName in $this.SiteScriptNames)
+        {
+            $siteScript = Get-PnPSiteScript | Where-Object -FilterScript { $_.Title -eq $siteScriptName }
+            $scriptIds += $siteScript.Id
+        }
+
+        $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $CurrentParameters.Remove('SiteScriptNames') | Out-Null
+        $CurrentParameters.Add('SiteScriptIds', $scriptIds)
+
+        if ($curSiteDesign.Ensure -eq 'Absent' -and 'Present' -eq $this.Ensure )
+        {
+            $CurrentParameters.Remove('Version')
+            Write-Verbose -Message "Adding new site design $($this.Title)"
+            Add-PnPSiteDesign @CurrentParameters
+        }
+        elseif (($curSiteDesign.Ensure -eq 'Present' -and 'Present' -eq $this.Ensure))
+        {
+            $siteDesign = Get-PnPSiteDesign -Identity $this.Title -ErrorAction SilentlyContinue
+            if ($null -ne $siteDesign)
+            {
+                Write-Verbose -Message "Updating current site design $($this.Title)"
+                Set-PnPSiteDesign -Identity $siteDesign.Id @CurrentParameters
+            }
+        }
+        elseif (($this.Ensure -eq 'Absent' -and $curSiteDesign.Ensure -eq 'Present'))
+        {
+            $siteDesign = Get-PnPSiteDesign -Identity $this.Title -ErrorAction SilentlyContinue
+            if ($null -ne $siteDesign)
+            {
+                Write-Verbose -Message "Removing site design $($this.Title)"
+                Remove-PnPSiteDesign -Identity $siteDesign.Id -Force
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        try
+        {
+            $ConnectionMode = $this.Connect('PNP')
 
             #Ensure the proper dependencies are installed in the current environment.
             Confirm-M365DSCDependencies
 
             #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
+            $this.AddTelemetry('Export')
             #endregion
 
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
+            $dscContent = [System.Text.StringBuilder]::new()
+            $i = 1
+            [array]$designs = Get-PnPSiteDesign -ErrorAction Stop
 
-            Write-Verbose -Message "Getting Site Design for $Title"
-            $siteDesign = Get-PnPSiteDesign -Identity $Title -ErrorAction SilentlyContinue
-        }
-        else
-        {
-            $siteDesign = $Script:exportedInstance
-        }
-
-        if ($null -eq $siteDesign)
-        {
-            Write-Verbose -Message "No Site Design found for $Title"
-            return $nullReturn
-        }
-
-        $scriptTitles = @()
-        foreach ($scriptId in $siteDesign.SiteScriptIds)
-        {
-            $siteScript = Get-PnPSiteScript -Identity $scriptId -ErrorAction SilentlyContinue
-
-            if ($null -ne $siteScript)
+            if ($designs.Length -eq 0)
             {
-                $scriptTitles += $siteScript.Title
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-        }
-        ## Todo need to see if we can get this somehow from PNP module instead of hard coded in script
-        ## https://github.com/SharePoint/PnP-PowerShell/blob/master/Commands/Enums/SiteWebTemplate.cs
-        $webtemp = $null
-        if ($siteDesign.WebTemplate -eq '64')
-        {
-            $webtemp = 'TeamSite'
-        }
-        elseif ($siteDesign.WebTemplate -eq '1')
-        {
-            $webtemp = 'GrouplessTeamSite'
-        }
-        else
-        {
-            $webtemp = 'CommunicationSite'
-        }
-
-        return @{
-            Title                 = $siteDesign.Title
-            SiteScriptNames       = $scriptTitles
-            WebTemplate           = $webtemp
-            IsDefault             = $siteDesign.IsDefault
-            Description           = $siteDesign.Description
-            PreviewImageAltText   = $siteDesign.PreviewImageAltText
-            PreviewImageUrl       = $siteDesign.PreviewImageUrl
-            Version               = $siteDesign.Version
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Title,
-
-        [Parameter()]
-        [ValidateSet('CommunicationSite', 'TeamSite', 'GrouplessTeamSite')]
-        [System.String]
-        $WebTemplate,
-
-        [Parameter()]
-        [System.String[]]
-        $SiteScriptNames,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsDefault,
-
-        [Parameter()]
-        [System.String]
-        $PreviewImageAltText,
-
-        [Parameter()]
-        [System.String]
-        $PreviewImageUrl,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.UInt32]
-        $Version,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for SPO SiteDesign for $Title"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $curSiteDesign = Get-TargetResource @PSBoundParameters
-
-    # Get list of site script names
-    $scriptIds = @()
-    foreach ($siteScriptName in $SiteScriptNames)
-    {
-        $siteScript = Get-PnPSiteScript | Where-Object -FilterScript { $_.Title -eq $siteScriptName }
-        $scriptIds += $siteScript.Id
-    }
-
-    $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $CurrentParameters.Remove('SiteScriptNames') | Out-Null
-    $CurrentParameters.Add('SiteScriptIds', $scriptIds)
-
-    if ($curSiteDesign.Ensure -eq 'Absent' -and 'Present' -eq $Ensure )
-    {
-        $CurrentParameters.Remove('Version')
-        Write-Verbose -Message "Adding new site design $Title"
-        Add-PnPSiteDesign @CurrentParameters
-    }
-    elseif (($curSiteDesign.Ensure -eq 'Present' -and 'Present' -eq $Ensure))
-    {
-        $siteDesign = Get-PnPSiteDesign -Identity $Title -ErrorAction SilentlyContinue
-        if ($null -ne $siteDesign)
-        {
-            Write-Verbose -Message "Updating current site design $Title"
-            Set-PnPSiteDesign -Identity $siteDesign.Id @CurrentParameters
-        }
-    }
-    elseif (($Ensure -eq 'Absent' -and $curSiteDesign.Ensure -eq 'Present'))
-    {
-        $siteDesign = Get-PnPSiteDesign -Identity $Title -ErrorAction SilentlyContinue
-        if ($null -ne $siteDesign)
-        {
-            Write-Verbose -Message "Removing site design $Title"
-            Remove-PnPSiteDesign -Identity $siteDesign.Id -Force
-        }
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Title,
-
-        [Parameter()]
-        [ValidateSet('CommunicationSite', 'TeamSite', 'GrouplessTeamSite')]
-        [System.String]
-        $WebTemplate,
-
-        [Parameter()]
-        [System.String[]]
-        $SiteScriptNames,
-
-        [Parameter()]
-        [System.Boolean]
-        $isDefault,
-
-        [Parameter()]
-        [System.String]
-        $PreviewImageAltText,
-
-        [Parameter()]
-        [System.String]
-        $PreviewImageUrl,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.UInt32]
-        $Version,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    try
-    {
-        $ConnectionMode = New-M365DSCConnection -Workload 'PNP' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $dscContent = [System.Text.StringBuilder]::new()
-        $i = 1
-        [array]$designs = Get-PnPSiteDesign -ErrorAction Stop
-
-        if ($designs.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-
-        foreach ($design in $designs)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            else
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
 
-            Write-M365DSCHost -Message "    |---[$i/$($designs.Length)] $($design.Title)" -DeferWrite
-            $Params = @{
-                Title                 = $design.Title
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                Credential            = $Credential
-                AccessTokens          = $AccessTokens
+            foreach ($design in $designs)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($designs.Length)] $($design.Title)" -DeferWrite
+                $Params = @{
+                    Title                 = $design.Title
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    Credential            = $this.Credential
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $design
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-
-            $Script:exportedInstance = $design
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [SPOSiteDesign] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SPOSiteDesign])
+        {
+            return $Values
+        }
+
+        $result = [SPOSiteDesign]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

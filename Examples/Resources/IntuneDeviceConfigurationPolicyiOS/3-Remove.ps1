@@ -4,7 +4,8 @@ This example creates a new Device Configuration Policy for iOS.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,14 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationPolicyiOS 'ConfigureDeviceConfigurationPolicyiOS'
+        IntuneDeviceConfigurationPolicyiOS 'IntuneDeviceConfigurationPolicyiOS-Example'
         {
-            DisplayName                                    = 'iOS DSC Policy'
-            Ensure                                         = 'Absent'
+            DisplayName           = 'iOS Device Restrictions'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

@@ -1,687 +1,402 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADEntitlementManagementAccessPackageCatalogResource'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADEntitlementManagementAccessPackageCatalogResource : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The display name of the resource, such as the application name, group name or site name.')]
+    [System.String] $DisplayName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the access package catalog resource.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String]
-        $CatalogId,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique ID or the display name of the access package catalog.')]
+    [System.String] $CatalogId
 
-        [Parameter()]
-        [System.String]
-        $AddedBy,
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the user or application that first added this resource. Read-only.')]
+    [System.String] $AddedBy
 
-        [Parameter()]
-        [System.String]
-        $AddedOn,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z. Read-only.')]
+    [System.String] $AddedOn
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Attributes,
+    [DscProperty()]
+    [System.ComponentModel.Description('Contains information about the attributes to be collected from the requestor and sent to the resource application.')]
+    [MSFT_MicrosoftGraphaccesspackageresourceattribute[]] $Attributes
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('A description for the resource.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.Boolean]
-        $IsPendingOnboarding,
+    [DscProperty()]
+    [System.ComponentModel.Description('True if the resource is not yet available for assignment. Read-only.')]
+    [System.Nullable[System.Boolean]] $IsPendingOnboarding
 
-        [Parameter()]
-        [System.String]
-        $OriginId,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier of the resource in the origin system. In the case of an Azure AD group, this is the identifier of the group.')]
+    [System.String] $OriginId
 
-        [Parameter()]
-        [System.String]
-        $OriginSystem,
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of the resource in the origin system.')]
+    [System.String] $OriginSystem
 
-        [Parameter()]
-        [System.String]
-        $ResourceType,
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of the resource.')]
+    [System.String] $ResourceType
 
-        [Parameter()]
-        [System.String]
-        $Url,
-        #endregion
+    [DscProperty()]
+    [System.ComponentModel.Description('A unique resource locator for the resource, such as the URL for signing a user into an application.')]
+    [System.String] $Url
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Intune Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of AzureAD Entitlement Management Access Package Catalog Resource for DisplayName {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [AADEntitlementManagementAccessPackageCatalogResource] Get()
     {
-        $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
-
-        $getValue = $null
-        $CatalogIdValue = $catalogId
-        if (-not [System.String]::IsNullOrEmpty($CatalogId))
+        if ($this.RequiresPowerShellCore())
         {
-            if (-not [System.Guid]::TryParse($CatalogId, [ref][System.Guid]::Empty))
+            $remote = [AADEntitlementManagementAccessPackageCatalogResource]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
+
+        Write-Verbose -Message "Getting configuration of AzureAD Entitlement Management Access Package Catalog Resource for DisplayName {$($this.DisplayName)}"
+
+        try
+        {
+            $null = $this.Connect('MicrosoftGraph')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            $getValue = $null
+            $CatalogIdValue = $this.catalogId
+            $resolvedCatalogId = $this.CatalogId
+            if (-not [System.String]::IsNullOrEmpty($this.CatalogId))
             {
-                $catalogInstance = Get-MgBetaEntitlementManagementAccessPackageCatalog -Filter "DisplayName eq '$($catalogId -replace "'", "''")'"
-                $CatalogId = $catalogInstance.Id
-                $CatalogIdValue = $catalogInstance.DisplayName
+                if (-not [System.Guid]::TryParse($this.CatalogId, [ref][System.Guid]::Empty))
+                {
+                    $catalogInstance = Get-MgBetaEntitlementManagementAccessPackageCatalog -Filter "DisplayName eq '$($this.catalogId -replace "'", "''")'"
+                    $resolvedCatalogId = $catalogInstance.Id
+                    $CatalogIdValue = $catalogInstance.DisplayName
+                }
+
+                $getValue = Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource `
+                    -AccessPackageCatalogId $resolvedCatalogId `
+                    -Filter "Id eq '$($this.Id)'" -ErrorAction SilentlyContinue
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Retrieving Resource by Display Name {$($this.DisplayName)}"
+                    $getValue = Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource `
+                        -AccessPackageCatalogId $resolvedCatalogId `
+                        -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" -ErrorAction SilentlyContinue
+                }
             }
             else
             {
-                $catalogInstance = Get-MgBetaEntitlementManagementAccessPackageCatalog -AccessPackageCatalogId $CatalogId -ErrorAction SilentlyContinue
-                $catalogIdValue = $catalogInstance.DisplayName
-            }
+                Write-Verbose -Message "No CatalogId was specified. Searching all catalogs for resource {$($this.DisplayName)}."
+                foreach ($catalog in (Get-MgBetaEntitlementManagementAccessPackageCatalog -All -ErrorAction Stop))
+                {
+                    [Array] $catalogMatches = Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource `
+                        -AccessPackageCatalogId $catalog.Id `
+                        -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                        -ErrorAction SilentlyContinue
 
-            $getValue = Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource `
-                -AccessPackageCatalogId $CatalogId `
-                -Filter "Id eq '$Id'" -ErrorAction SilentlyContinue
+                    if ($catalogMatches.Count -eq 0)
+                    {
+                        continue
+                    }
+
+                    if ($null -ne $getValue)
+                    {
+                        throw "The access package resource {$($this.DisplayName)} exists in more than one catalog. Specify the CatalogId."
+                    }
+
+                    $getValue = $catalogMatches[0]
+                    $resolvedCatalogId = $catalog.Id
+                    $CatalogIdValue = $catalog.DisplayName
+                }
+            }
 
             if ($null -eq $getValue)
             {
-                Write-Verbose -Message "Retrieving Resource by Display Name {$DisplayName}"
-                $getValue = Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource `
-                    -AccessPackageCatalogId $CatalogId `
-                    -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" -ErrorAction SilentlyContinue
+                Write-Verbose -Message "The access package resource with id {$($this.id)} was NOT found in catalog {$($resolvedCatalogId)}."
+                return $this.AsResult($nullResult)
             }
-        }
 
-        if ($null -eq $getValue)
-        {
-            Write-Verbose -Message "The access package resource with id {$id} was NOT found in catalog {$CatalogId}."
-            return $nullResult
-        }
-
-        Write-Verbose -Message "The access package resource {$DisplayName} was found in catalog {$CatalogId}."
-        $hashAttributes = @()
-        foreach ($attribute in ([Array]$getValue.attributes))
-        {
-            $hashAttribute = @{
-                AttributeName                  = $attribute.attributeName
-                IsEditable                     = $attribute.isEditable
-                IsPersistedOnAssignmentRemoval = $attribute.isPersistedOnAssignmentRemoval
-                AttributeSource                = @{
-                    odataType = '#microsoft.graph.accessPackageResourceAttributeQuestion'
-                    Question  = @{
-                        odataType               = $attribute.attributeSource.question.'@odata.type'
-                        Id                      = $attribute.attributeSource.question.id
-                        IsRequired              = $attribute.attributeSource.question.isRequired
-                        Sequence                = $attribute.attributeSource.question.sequence
-                        IsSingleLine            = $attribute.attributeSource.question.isSingleLine
-                        QuestionText            = Get-M365DSCDRGComplexTypeToHashtable -ComplexObject ($attribute.attributeSource.question.text)
-                        AllowsMultipleSelection = $attribute.attributeSource.question.allowsMultipleSelection
-                        Choices                 = Get-M365DSCDRGComplexTypeToHashtable -ComplexObject ([Array]$attribute.attributeSource.question.choices)
+            Write-Verbose -Message "The access package resource {$($this.DisplayName)} was found in catalog {$($resolvedCatalogId)}."
+            $hashAttributes = @()
+            foreach ($attribute in ([Array]$getValue.attributes))
+            {
+                $hashAttribute = @{
+                    AttributeName                  = $attribute.attributeName
+                    IsEditable                     = $attribute.isEditable
+                    IsPersistedOnAssignmentRemoval = $attribute.isPersistedOnAssignmentRemoval
+                    AttributeSource                = @{
+                        odataType = '#microsoft.graph.accessPackageResourceAttributeQuestion'
+                        Question  = @{
+                            odataType               = $attribute.attributeSource.question.'@odata.type'
+                            Id                      = $attribute.attributeSource.question.id
+                            IsRequired              = $attribute.attributeSource.question.isRequired
+                            SequencePosition        = $attribute.attributeSource.question.sequence
+                            IsSingleLine            = $attribute.attributeSource.question.isSingleLine
+                            QuestionText            = Get-M365DSCDRGComplexTypeToHashtable -ComplexObject ($attribute.attributeSource.question.text)
+                            AllowsMultipleSelection = $attribute.attributeSource.question.allowsMultipleSelection
+                            Choices                 = Get-M365DSCDRGComplexTypeToHashtable -ComplexObject ([Array]$attribute.attributeSource.question.choices)
+                        }
+                    }
+                    AttributeDestination           = @{
+                        odataType = '#microsoft.graph.accessPackageUserDirectoryAttributeStore'
                     }
                 }
-                AttributeDestination           = @{
-                    odataType = '#microsoft.graph.accessPackageUserDirectoryAttributeStore'
-                }
+                $hashAttributes += $hashAttribute
             }
-            $hashAttributes += $hashAttribute
-        }
 
-        switch ($getValue.OriginSystem)
-        {
-            'AadApplication' {
-                $originId = (Get-MgServicePrincipal -ServicePrincipalId $getValue.OriginId -ErrorAction SilentlyContinue).DisplayName
+            $originIdValue = Get-M365DSCAccessPackageResourceOriginDisplayName -OriginId $getValue.OriginId `
+                -OriginSystem $getValue.OriginSystem
+
+            $results = @{
+                Id                    = $getValue.Id
+                CatalogId             = $CatalogIdValue
+                Attributes            = $hashAttributes
+                AddedBy               = $getValue.addedBy #Read-Only
+                AddedOn               = $getValue.addedOn #Read-Only
+                Description           = $getValue.description
+                DisplayName           = $getValue.displayName
+                IsPendingOnboarding   = $getValue.isPendingOnboarding #Read-Only
+                OriginId              = $originIdValue
+                OriginSystem          = $getValue.originSystem
+                ResourceType          = $getValue.resourceType
+                Url                   = $getValue.url
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
             }
-            'AADGroup' {
-                $originId = (Get-MgGroup -GroupId $getValue.OriginId -ErrorAction SilentlyContinue).DisplayName
+
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of AzureAD Entitlement Management Access Package Catalog Resource for DisplayName {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $boundParameters.Remove('AddedBy') | Out-Null
+        $boundParameters.Remove('AddedOn') | Out-Null
+        $boundParameters.Remove('IsPendingOnboarding') | Out-Null
+
+        $resource = $boundParameters
+        if ($this.OriginSystem -eq 'AADGroup' -and `
+                -not [System.Guid]::TryParse($this.OriginId, [ref][System.Guid]::Empty))
+        {
+            Write-Verbose -Message "The Group reference was provided by name {$($this.OriginId)}. Retrieving associated id."
+            $groupInfo = Get-MgGroup -Filter "DisplayName eq '$($this.OriginId -replace "'", "''")'" -All
+            if ($null -ne $groupInfo)
+            {
+                $resource.OriginId = $groupInfo.Id
             }
-            default {
-                $originId = $getValue.OriginId
+        }
+        if ($this.OriginSystem -eq 'AadApplication' -and `
+                -not [System.Guid]::TryParse($this.OriginId, [ref][System.Guid]::Empty))
+        {
+            Write-Verbose -Message "The Application reference was provided by name {$($this.OriginId)}. Retrieving associated id."
+            $appInfo = Get-MgServicePrincipal -Filter "DisplayName eq '$($this.OriginId -replace "'", "''")'" -All
+            if ($null -ne $appInfo)
+            {
+                $resource.OriginId = $appInfo.Id
             }
         }
 
-        if ($null -eq $originId)
+        $catalogIdValue = $this.CatalogId
+        if ([System.String]::IsNullOrEmpty($catalogIdValue))
         {
-            Write-Warning -Message "The origin id {$($getValue.OriginId)} of OriginSystem {$($getValue.OriginSystem)} could not be resolved to a display name. Returning the id instead."
-            $originId = $getValue.OriginId
+            $catalogIdValue = $currentInstance.CatalogId
         }
 
-        $results = [ordered]@{
-            Id                    = $Id
-            CatalogId             = $CatalogIdValue
-            Attributes            = $hashAttributes
-            AddedBy               = $getValue.addedBy #Read-Only
-            AddedOn               = $getValue.addedOn #Read-Only
-            Description           = $getValue.description
-            DisplayName           = $getValue.displayName
-            IsPendingOnboarding   = $getValue.isPendingOnboarding #Read-Only
-            OriginId              = $originId
-            OriginSystem          = $getValue.originSystem
-            ResourceType          = $getValue.resourceType
-            Url                   = $getValue.url
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $CatalogId,
-
-        [Parameter()]
-        [System.String]
-        $AddedBy,
-
-        [Parameter()]
-        [System.String]
-        $AddedOn,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Attributes,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsPendingOnboarding,
-
-        [Parameter()]
-        [System.String]
-        $OriginId,
-
-        [Parameter()]
-        [System.String]
-        $OriginSystem,
-
-        [Parameter()]
-        [System.String]
-        $ResourceType,
-
-        [Parameter()]
-        [System.String]
-        $Url,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of AzureAD Entitlement Management Access Package Catalog Resource for DisplayName {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $boundParameters.Remove('AddedBy') | Out-Null
-    $boundParameters.Remove('AddedOn') | Out-Null
-    $boundParameters.Remove('IsPendingOnboarding') | Out-Null
-
-    $resource = $boundParameters
-    if ($OriginSystem -eq 'AADGroup' -and `
-            -not [System.Guid]::TryParse($OriginId, [ref][System.Guid]::Empty))
-    {
-        Write-Verbose -Message "The Group reference was provided by name {$OriginId}. Retrieving associated id."
-        $groupInfo = Get-MgGroup -Filter "DisplayName eq '$($OriginId -replace "'", "''")'" -All
-        if ($null -ne $groupInfo)
-        {
-            $resource.OriginId = $groupInfo.Id
-        }
-    }
-    if ($OriginSystem -eq 'AadApplication' -and `
-            -not [System.Guid]::TryParse($OriginId, [ref][System.Guid]::Empty))
-    {
-        Write-Verbose -Message "The Application reference was provided by name {$OriginId}. Retrieving associated id."
-        $appInfo = Get-MgServicePrincipal -Filter "DisplayName eq '$($OriginId -replace "'", "''")'" -All
-        if ($null -ne $appInfo)
-        {
-            $resource.OriginId = $appInfo.Id
-        }
-    }
-
-    if (-not [System.Guid]::TryParse($CatalogId, [ref][System.Guid]::Empty))
-    {
-        Write-Verbose -Message 'Retrieving Catalog by Display Name'
-        $catalogInstance = Get-MgBetaEntitlementManagementAccessPackageCatalog -Filter "DisplayName eq '$($CatalogId -replace "'", "''")'"
-        if ($catalogInstance)
-        {
-            $CatalogId = $catalogInstance.Id
-        }
-    }
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Assigning resource {$DisplayName} to catalog {$CatalogId}"
-
-        $resource.Remove('Id') | Out-Null
-        $resource.Remove('CatalogId') | Out-Null
-
-        $mapping = @{
-            odataType    = '@odata.type'
-            questionText = 'text'
-        }
-        $resource = Rename-M365DSCCimInstanceParameter -Properties $resource `
-            -KeyMapping $mapping
-
-        #Preparing parameter splat
-        $resourceRequest = @{
-            catalogId             = $CatalogId
-            requestType           = 'AdminAdd'
-            accessPackageResource = $resource
-        }
-        #region resource generator code
-        Write-Verbose -Message "Creating a new AAD Entitlement Management Access Package Catalog Resource"
-        New-MgBetaEntitlementManagementAccessPackageResourceRequest -BodyParameter $resourceRequest
-
-        #endregion
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating resource {$DisplayName} in catalog {$CatalogId}"
-
-        $resource = ([Hashtable]$boundParameters).Clone()
-        $resource.Remove('Id') | Out-Null
-        if (-not [System.Guid]::TryParse($CatalogId, [ref][System.Guid]::Empty))
+        $resolvedCatalogId = $catalogIdValue
+        if (-not [System.Guid]::TryParse($catalogIdValue, [ref][System.Guid]::Empty))
         {
             Write-Verbose -Message 'Retrieving Catalog by Display Name'
-            $catalogInstance = Get-MgBetaEntitlementManagementAccessPackageCatalog -Filter "DisplayName eq '$($CatalogId -replace "'", "''")'"
+            $catalogInstance = Get-MgBetaEntitlementManagementAccessPackageCatalog -Filter "DisplayName eq '$($catalogIdValue -replace "'", "''")'"
             if ($catalogInstance)
             {
-                $CatalogId = $catalogInstance.Id
+                $resolvedCatalogId = $catalogInstance.Id
             }
         }
-        $resource.Remove('CatalogId') | Out-Null
 
-        $mapping = @{
-            odataType    = '@odata.type'
-            questionText = 'text'
-        }
-        $resource = Rename-M365DSCCimInstanceParameter -Properties $resource `
-            -KeyMapping $mapping
-
-        #region resource generator code
-        $resourceRequest = @{
-            catalogId             = $CatalogId
-            requestType           = 'AdminUpdate'
-            accessPackageResource = $resource
-        }
-        #region resource generator code
-        New-MgBetaEntitlementManagementAccessPackageResourceRequest -BodyParameter $resourceRequest
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing resource {$DisplayName} from catalog {$CatalogId}"
-        $resource = ([Hashtable]$boundParameters).Clone()
-
-        $resource.Remove('Id') | Out-Null
-        $resource.Remove('CatalogId') | Out-Null
-
-        $mapping = @{
-            odataType    = '@odata.type'
-            questionText = 'text'
-        }
-        $resource = Rename-M365DSCCimInstanceParameter -Properties $resource `
-            -KeyMapping $mapping
-
-        $resourceRequest = @{
-            catalogId             = $CatalogId
-            requestType           = 'AdminRemove'
-            accessPackageResource = $resource
-        }
-        New-MgBetaEntitlementManagementAccessPackageResourceRequest -BodyParameter $resourceRequest
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $CatalogId,
-
-        [Parameter()]
-        [System.String]
-        $AddedBy,
-
-        [Parameter()]
-        [System.String]
-        $AddedOn,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Attributes,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsPendingOnboarding,
-
-        [Parameter()]
-        [System.String]
-        $OriginId,
-
-        [Parameter()]
-        [System.String]
-        $OriginSystem,
-
-        [Parameter()]
-        [System.String]
-        $ResourceType,
-
-        [Parameter()]
-        [System.String]
-        $Url,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        $catalogs = @()
-        $catalogs += Get-MgBetaEntitlementManagementAccessPackageCatalog -All -Filter $Filter -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($catalogs.Length -eq 0)
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
+            Write-Verbose -Message "Assigning resource {$($this.DisplayName)} to catalog {$($resolvedCatalogId)}"
 
-        foreach ($catalog in $catalogs)
-        {
-            $displayedKey = $catalog.id
-            if (-not [String]::IsNullOrEmpty($catalog.displayName))
-            {
-                $displayedKey = $catalog.displayName
+            $resource.Remove('Id') | Out-Null
+            $resource.Remove('CatalogId') | Out-Null
+
+            $mapping = @{
+                odataType    = '@odata.type'
+                questionText = 'text'
+                sequencePosition = 'sequence'
             }
-            Write-M365DSCHost -Message "    |---[$i/$($catalogs.Count)] $displayedKey" -DeferWrite
+            $resource = Rename-M365DSCCimInstanceParameter -Properties $resource `
+                -KeyMapping $mapping
 
-            [array]$resources = Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource -AccessPackageCatalogId $catalog.Id -ErrorAction Stop
+            #Preparing parameter splat
+            $resourceRequest = @{
+                catalogId             = $resolvedCatalogId
+                requestType           = 'AdminAdd'
+                accessPackageResource = $resource
+            }
+            #region resource generator code
+            Write-Verbose -Message "Creating a new AAD Entitlement Management Access Package Catalog Resource"
+            New-MgBetaEntitlementManagementAccessPackageResourceRequest -BodyParameter $resourceRequest
 
-            $j = 1
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating resource {$($this.DisplayName)} in catalog {$($resolvedCatalogId)}"
 
-            if ($resources.Length -eq 0)
+            $updateParameters = $boundParameters
+            $resource = ([Hashtable]$updateParameters).Clone()
+            $resource.Remove('Id') | Out-Null
+            $resource.Remove('CatalogId') | Out-Null
+
+            $mapping = @{
+                odataType    = '@odata.type'
+                questionText = 'text'
+                sequencePosition = 'sequence'
+            }
+            $resource = Rename-M365DSCCimInstanceParameter -Properties $resource `
+                -KeyMapping $mapping
+
+            #region resource generator code
+            $resourceRequest = @{
+                catalogId             = $resolvedCatalogId
+                requestType           = 'AdminUpdate'
+                accessPackageResource = $resource
+            }
+            #region resource generator code
+            New-MgBetaEntitlementManagementAccessPackageResourceRequest -BodyParameter $resourceRequest
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing resource {$($this.DisplayName)} from catalog {$($resolvedCatalogId)}"
+            $resourceRequest = @{
+                catalogId             = $resolvedCatalogId
+                requestType           = 'AdminRemove'
+                accessPackageResource = @{
+                    id = $currentInstance.Id
+                }
+            }
+            New-MgBetaEntitlementManagementAccessPackageResourceRequest -BodyParameter $resourceRequest
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            #region resource generator code
+            $catalogs = @()
+            $catalogs += Get-MgBetaEntitlementManagementAccessPackageCatalog -All -Filter $this.Filter -ErrorAction Stop
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($catalogs.Length -eq 0)
             {
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
@@ -690,126 +405,291 @@ function Export-TargetResource
                 Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
 
-            foreach ($resource in $resources)
+            foreach ($catalog in $catalogs)
             {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                $displayedKey = $catalog.id
+                if (-not [String]::IsNullOrEmpty($catalog.displayName))
                 {
-                    $Global:M365DSCExportResourceInstancesCount++
+                    $displayedKey = $catalog.displayName
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($catalogs.Count)] $displayedKey" -DeferWrite
+
+                [array]$resources = Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource -AccessPackageCatalogId $catalog.Id -ErrorAction Stop
+
+                $j = 1
+
+                if ($resources.Length -eq 0)
+                {
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                }
+                else
+                {
+                    Write-M365DSCHost -Message "`r`n" -DeferWrite
                 }
 
-                Write-M365DSCHost -Message "        |---[$j/$($resources.Count)] $($resource.DisplayName)" -DeferWrite
-
-                $params = @{
-                    Id                    = $resource.id
-                    DisplayName           = $resource.displayName
-                    CatalogId             = $catalog.Id
-                    Ensure                = 'Present'
-                    Credential            = $Credential
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    ApplicationSecret     = $ApplicationSecret
-                    CertificateThumbprint = $CertificateThumbprint
-                    CertificatePath       = $CertificatePath
-                    CertificatePassword   = $CertificatePassword
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    AccessTokens          = $AccessTokens
-                }
-
-                $Results = Get-TargetResource @Params
-                if ($null -ne $Results.Attributes)
+                foreach ($resource in $resources)
                 {
-                    $complexMapping = @(
-                        @{
-                            Name            = 'AttributeDestination'
-                            CimInstanceName = 'MicrosoftGraphaccesspackageresourceattributedestination'
-                        }
-                        @{
-                            Name            = 'AttributeSource'
-                            CimInstanceName = 'MicrosoftGraphaccesspackageresourceattributesource'
-                        }
-                        @{
-                            Name            = 'Question'
-                            CimInstanceName = 'MicrosoftGraphaccessPackageResourceAttributeQuestion'
-                        }
-                        @{
-                            Name            = 'QuestionText'
-                            CimInstanceName = 'MicrosoftGraphaccessPackageLocalizedContent'
-                        }
-                        @{
-                            Name            = 'Choices'
-                            CimInstanceName = 'MicrosoftGraphaccessPackageAnswerChoice'
-                        }
-                        @{
-                            Name            = 'LocalizedTexts'
-                            CimInstanceName = 'MicrosoftGraphaccessPackageLocalizedText'
-                        }
-                        @{
-                            Name            = 'DisplayValue'
-                            CimInstanceName = 'MicrosoftGraphaccessPackageLocalizedContent'
-                        }
-                    )
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject ([Array]$Results.Attributes) `
-                        -CIMInstanceName MicrosoftGraphaccesspackageresourceattribute `
-                        -ComplexTypeMapping $complexMapping
-
-                    $Results.Attributes = $complexTypeStringResult
-
-                    if ([String]::IsNullOrEmpty($complexTypeStringResult))
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
                     {
-                        $Results.Remove('Attributes') | Out-Null
+                        $Global:M365DSCExportResourceInstancesCount++
                     }
+
+                    Write-M365DSCHost -Message "        |---[$j/$($resources.Count)] $($resource.DisplayName)" -DeferWrite
+
+                    $params = @{
+                        Id                    = $resource.id
+                        DisplayName           = $resource.displayName
+                        CatalogId             = $catalog.Id
+                        Ensure                = 'Present'
+                        Credential            = $this.Credential
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        ApplicationSecret     = $this.ApplicationSecret
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        CertificatePath       = $this.CertificatePath
+                        CertificatePassword   = $this.CertificatePassword
+                        ManagedIdentity       = $this.ManagedIdentity
+                        AccessTokens          = $this.AccessTokens
+                    }
+
+                    $Results = $this.GetForExport($Params)
+                    $rawResults = $Results.Clone()
+                    if ($null -ne $Results.Attributes)
+                    {
+                        $complexMapping = @(
+                            @{
+                                Name            = 'AttributeDestination'
+                                CimInstanceName = 'MicrosoftGraphaccesspackageresourceattributedestination'
+                            }
+                            @{
+                                Name            = 'AttributeSource'
+                                CimInstanceName = 'MicrosoftGraphaccesspackageresourceattributesource'
+                            }
+                            @{
+                                Name            = 'Question'
+                                CimInstanceName = 'MicrosoftGraphaccessPackageResourceAttributeQuestion'
+                            }
+                            @{
+                                Name            = 'QuestionText'
+                                CimInstanceName = 'MicrosoftGraphaccessPackageLocalizedContent'
+                            }
+                            @{
+                                Name            = 'Choices'
+                                CimInstanceName = 'MicrosoftGraphaccessPackageAnswerChoice'
+                            }
+                            @{
+                                Name            = 'LocalizedTexts'
+                                CimInstanceName = 'MicrosoftGraphaccessPackageLocalizedText'
+                            }
+                            @{
+                                Name            = 'DisplayValue'
+                                CimInstanceName = 'MicrosoftGraphaccessPackageLocalizedContent'
+                            }
+                        )
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject ([Array]$Results.Attributes) `
+                            -CIMInstanceName MicrosoftGraphaccesspackageresourceattribute `
+                            -ComplexTypeMapping $complexMapping
+
+                        $Results.Attributes = $complexTypeStringResult
+
+                        if ([String]::IsNullOrEmpty($complexTypeStringResult))
+                        {
+                            $Results.Remove('Attributes') | Out-Null
+                        }
+                    }
+
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential `
+                        -NoEscape @('Attributes') `
+                        -RawResults $rawResults
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $j++
                 }
 
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential `
-                    -NoEscape @('Attributes')
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                $j++
+                $i++
             }
 
-            $i++
+            # Removing comma between items in cim instance array
+            $dscContent = $dscContent.Replace("            ,`r`n", '')
+            return $dscContent.ToString()
         }
+        catch
+        {
+            if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
+            {
+                Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
+                return ''
+            }
+            else
+            {
+                $this.LogError($_, 'Error during Export:')
 
-        # Removing comma between items in cim instance array
-        $dscContent = $dscContent.Replace("            ,`r`n", '')
-        return $dscContent.ToString()
+                throw
+            }
+        }
     }
-    catch
+
+    [System.Collections.Hashtable] GetCompareParameters()
     {
-        if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
-        {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
-            return ''
-        }
-        else
-        {
-            New-M365DSCLogEntry -Message 'Error during Export:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+        return @{
+            ExcludedProperties = @('AddedBy', 'AddedOn', 'IsPendingOnboarding')
+            PostProcessing     = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
+                if ([M365DSCResourceBase]::IsReportContext($PostProcessingArgs) -or
+                    [System.String]::IsNullOrEmpty($DesiredValues.OriginId))
+                {
+                    return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+                }
 
-            throw
+                $DesiredValues.OriginId = Get-M365DSCAccessPackageResourceOriginDisplayName -OriginId $DesiredValues.OriginId `
+                    -OriginSystem $DesiredValues.OriginSystem
+
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+            }
         }
+    }
+
+    hidden [AADEntitlementManagementAccessPackageCatalogResource] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADEntitlementManagementAccessPackageCatalogResource])
+        {
+            return $Values
+        }
+
+        $result = [AADEntitlementManagementAccessPackageCatalogResource]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-function Get-CompareParameters
+class MSFT_MicrosoftGraphaccesspackageresourceattribute
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
+    [DscProperty()]
+    [System.ComponentModel.Description('Information about how to set the attribute, currently a accessPackageUserDirectoryAttributeStore object type.')]
+    [MSFT_MicrosoftGraphaccesspackageresourceattributedestination] $AttributeDestination
 
-    return @{
-        ExcludedProperties = @('AddedBy', 'AddedOn', 'IsPendingOnboarding')
-    }
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the attribute in the end system.')]
+    [System.String] $AttributeName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Information about how to populate the attribute value when an accessPackageAssignmentRequest is being fulfilled, currently a accessPackageResourceAttributeQuestion object type.')]
+    [MSFT_MicrosoftGraphaccesspackageresourceattributesource] $AttributeSource
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the access package resource attribute.')]
+    [System.String] $Id
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether or not an existing attribute value can be edited by the requester.')]
+    [System.Nullable[System.Boolean]] $IsEditable
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether the attribute will remain in the end system after an assignment ends.')]
+    [System.Nullable[System.Boolean]] $IsPersistedOnAssignmentRemoval
 }
 
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')
+class MSFT_MicrosoftGraphaccesspackageresourceattributedestination
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Type of the access package resource attribute destination.')]
+    [ValidateSet('#microsoft.graph.accessPackageUserDirectoryAttributeStore')]
+    [System.String] $odataType
+}
+
+class MSFT_MicrosoftGraphaccesspackageresourceattributesource
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Type of the access package resource attribute source.')]
+    [ValidateSet('#microsoft.graph.accessPackageResourceAttributeQuestion')]
+    [System.String] $odataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The question asked in order to get the value of the attribute.')]
+    [MSFT_MicrosoftGraphaccessPackageResourceAttributeQuestion] $Question
+}
+
+class MSFT_MicrosoftGraphaccessPackageResourceAttributeQuestion
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Type of the access package resource attribute question.')]
+    [ValidateSet('#microsoft.graph.accessPackageTextInputQuestion', '#microsoft.graph.accessPackageMultipleChoiceQuestion')]
+    [System.String] $odataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the access package resource attribute question.')]
+    [System.String] $Id
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether the requestor is required to supply an answer or not.')]
+    [System.Nullable[System.Boolean]] $IsRequired
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether the answer will be in single or multiple line format.')]
+    [System.Nullable[System.Boolean]] $IsSingleLine
+
+    [DscProperty()]
+    [System.ComponentModel.Description('This is the regex pattern that the corresponding text answer must follow.')]
+    [System.String] $RegexPattern
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Relative position of this question when displaying a list of questions to the requestor.')]
+    [System.Nullable[System.UInt32]] $SequencePosition
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The text of the question to show to the requestor.')]
+    [MSFT_MicrosoftGraphaccessPackageLocalizedContent] $QuestionText
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether requestor can select multiple choices as their answer.')]
+    [System.Nullable[System.Boolean]] $AllowsMultipleSelection
+
+    [DscProperty()]
+    [System.ComponentModel.Description('List of answer choices.')]
+    [MSFT_MicrosoftGraphaccessPackageAnswerChoice[]] $Choices
+}
+
+class MSFT_MicrosoftGraphaccessPackageLocalizedContent
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The fallback string, which is used when a requested localization is not available. Required.')]
+    [System.String] $DefaultText
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Content represented in a format for a specific locale.')]
+    [MSFT_MicrosoftGraphaccessPackageLocalizedText[]] $LocalizedTexts
+}
+
+class MSFT_MicrosoftGraphaccessPackageAnswerChoice
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The actual value of the selected choice. This is typically a string value which is understandable by applications. Required.')]
+    [System.String] $ActualValue
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The localized display values shown to the requestor and approvers. Required.')]
+    [MSFT_MicrosoftGraphaccessPackageLocalizedContent] $displayValue
+}
+
+class MSFT_MicrosoftGraphaccessPackageLocalizedText
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The text in the specific language. Required.')]
+    [System.String] $Text
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The ISO code for the intended language. Required.')]
+    [System.String] $LanguageCode
+}

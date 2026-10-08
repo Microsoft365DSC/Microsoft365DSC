@@ -1,527 +1,387 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SCCaseHoldPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SCCaseHoldPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Name parameter specifies the unique name of the case hold policy.')]
+    [System.String] $Name
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Case,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Case parameter specifies the eDiscovery case that you want to associate with the case hold policy.')]
+    [System.String] $Case
 
-        [Parameter()]
-        [System.String]
-        $Comment,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Comment parameter specifies an optional comment.')]
+    [System.String] $Comment
 
-        [Parameter()]
-        [System.Boolean]
-        $Enabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Enabled parameter specifies whether the policy is enabled or disabled.')]
+    [System.Nullable[System.Boolean]] $Enabled
 
-        [Parameter()]
-        [System.String[]]
-        $ExchangeLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ExchangeLocation parameter specifies the mailboxes to include in the policy.')]
+    [System.String[]] $ExchangeLocation
 
-        [Parameter()]
-        [System.String[]]
-        $PublicFolderLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('The PublicFolderLocation parameter specifies that you want to include all public folders in the case hold policy. You use the value All for this parameter.')]
+    [System.String[]] $PublicFolderLocation
 
-        [Parameter()]
-        [System.String[]]
-        $SharePointLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SharePointLocation parameter specifies the SharePoint Online and OneDrive for Business sites to include. You identify a site by its URL value.')]
+    [System.String[]] $SharePointLocation
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if this policy should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of SCCaseHoldPolicy for $Name"
-
-    try
+    [SCCaseHoldPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Name -ne $Name)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-                -InboundParameters $PSBoundParameters
+            $remote = [SCCaseHoldPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of SCCaseHoldPolicy for $($this.Name)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-            $PolicyObject = Invoke-M365DSCCommand -ScriptBlock { Get-CaseHoldPolicy -Case $Case -Identity $Name -ErrorAction Stop } -SuppressNotFoundError
-
-            if ($null -eq $PolicyObject)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.Name)
             {
-                Write-Verbose -Message "SCCaseHoldPolicy $Name does not exist."
-                return $nullReturn
+                $null = $this.Connect('SecurityComplianceCenter')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+                $CaseObject = Invoke-M365DSCCommand -ScriptBlock { Get-ComplianceCase -Identity $this.Case -ErrorAction Stop } -SuppressNotFoundError
+                if ($null -eq $CaseObject)
+                {
+                    Write-Verbose -Message "Compliance case $($this.Case) does not exist."
+                    return $this.AsResult($nullReturn)
+                }
+
+                $PolicyObject = Invoke-M365DSCCommand -ScriptBlock { Get-CaseHoldPolicy -Case $this.Case -Identity $this.Name -ErrorAction Stop } -SuppressNotFoundError
+
+                if ($null -eq $PolicyObject -or "$($PolicyObject.Mode)" -eq 'PendingDeletion')
+                {
+                    Write-Verbose -Message "SCCaseHoldPolicy $($this.Name) does not exist."
+                    return $this.AsResult($nullReturn)
+                }
+            }
+            else
+            {
+                $PolicyObject = $this.ExportedInstance
+            }
+
+            Write-Verbose "Found existing SCCaseHoldPolicy $($this.Name)"
+
+            $result = @{
+                Ensure                = 'Present'
+                Name                  = $PolicyObject.Name
+                Case                  = $this.Case
+                Enabled               = $PolicyObject.Enabled
+                Comment               = $PolicyObject.Comment
+                ExchangeLocation      = $PolicyObject.ExchangeLocation.Name
+                PublicFolderLocation  = $PolicyObject.PublicFolderLocation.Name
+                SharePointLocation    = $PolicyObject.SharePointLocation.Name
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of SCCaseHoldPolicy for $($this.Name)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentPolicy = $this.Get().ToHashtable()
+
+        if ($this.Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Absent')
+        {
+            $CreationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+            try
+            {
+                New-CaseHoldPolicy @CreationParams -ErrorAction Stop
+            }
+            catch
+            {
+                [SCCaseHoldPolicy]::ThrowUnlessDeploymentFailure($_)
             }
         }
-        else
+        elseif ($this.Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Present')
         {
-            $PolicyObject = $Script:exportedInstance
+            $CreationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+            $CreationParams.Remove('Name')
+            $CreationParams.Remove('Case')
+
+            $policy = Get-CaseHoldPolicy -Identity $this.Name -Case $this.Case
+            $CreationParams.Add('Identity', $policy.Name)
+
+            # SharePoint Location is specified or already existing, we need to determine
+            # the delta.
+            if ($null -ne $CurrentPolicy.SharePointLocation -or `
+                    $null -ne $this.SharePointLocation)
+            {
+                $ToBeRemoved = $CurrentPolicy.SharePointLocation | `
+                        Where-Object { $this.SharePointLocation -notcontains $_ }
+                if ($null -ne $ToBeRemoved)
+                {
+                    $CreationParams.Add('RemoveSharePointLocation', $ToBeRemoved)
+                }
+
+                $ToBeAdded = $this.SharePointLocation | `
+                        Where-Object { $CurrentPolicy.SharePointLocation -notcontains $_ }
+                if ($null -ne $ToBeAdded)
+                {
+                    $CreationParams.Add('AddSharePointLocation', $ToBeAdded)
+                }
+
+                $CreationParams.Remove('SharePointLocation')
+            }
+
+            # Exchange Location is specified or already existing, we need to determine
+            # the delta.
+            if ($null -ne $CurrentPolicy.ExchangeLocation -or `
+                    $null -ne $this.ExchangeLocation)
+            {
+                $ToBeRemoved = $CurrentPolicy.ExchangeLocation | `
+                        Where-Object { $this.ExchangeLocation -notcontains $_ }
+                if ($null -ne $ToBeRemoved)
+                {
+                    $CreationParams.Add('RemoveExchangeLocation', $ToBeRemoved)
+                }
+
+                $ToBeAdded = $this.ExchangeLocation | `
+                        Where-Object { $CurrentPolicy.ExchangeLocation -notcontains $_ }
+                if ($null -ne $ToBeAdded)
+                {
+                    $CreationParams.Add('AddExchangeLocation', $ToBeAdded)
+                }
+
+                $CreationParams.Remove('ExchangeLocation')
+            }
+
+            # OneDrive Location is specified or already existing, we need to determine
+            # the delta.
+            if ($null -ne $CurrentPolicy.PublicFolderLocation -or `
+                    $null -ne $this.PublicFolderLocation)
+            {
+                $ToBeRemoved = $CurrentPolicy.PublicFolderLocation | `
+                        Where-Object { $this.PublicFolderLocation -notcontains $_ }
+                if ($null -ne $ToBeRemoved)
+                {
+                    $CreationParams.Add('RemovePublicFolderLocation', $ToBeRemoved)
+                }
+
+                $ToBeAdded = $this.PublicFolderLocation | `
+                        Where-Object { $CurrentPolicy.PublicFolderLocation -notcontains $_ }
+                if ($null -ne $ToBeAdded)
+                {
+                    $CreationParams.Add('AddPublicFolderLocation', $ToBeAdded)
+                }
+                $CreationParams.Remove('PublicFolderLocation')
+            }
+
+            Write-Verbose "Updating Policy with values: $(Convert-M365DscHashtableToString -Hashtable $CreationParams)"
+            try
+            {
+                Set-CaseHoldPolicy @CreationParams -ErrorAction Stop
+            }
+            catch
+            {
+                [SCCaseHoldPolicy]::ThrowUnlessDeploymentFailure($_)
+            }
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentPolicy.Ensure -eq 'Present')
+        {
+            # If the Policy exists and it shouldn't, simply remove it;
+            $policy = Get-CaseHoldPolicy -Identity $this.Name -Case $this.Case
+            try
+            {
+                Remove-CaseHoldPolicy -Identity $policy.Name -Confirm:$false -ErrorAction Stop
+            }
+            catch
+            {
+                [SCCaseHoldPolicy]::ThrowUnlessDeploymentFailure($_)
+            }
+
+            foreach ($rule in @(Get-CaseHoldRule -Policy $policy.Name -ErrorAction SilentlyContinue))
+            {
+                Remove-CaseHoldRule -Identity $rule.Name -ForceDeletion -Confirm:$false
+            }
+            try
+            {
+                Remove-CaseHoldPolicy -Identity $policy.Name -ForceDeletion -Confirm:$false -ErrorAction Stop
+            }
+            catch
+            {
+                [SCCaseHoldPolicy]::ThrowUnlessDeploymentFailure($_)
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        Write-Verbose "Found existing SCCaseHoldPolicy $($Name)"
+        $ConnectionMode = $this.Connect('SecurityComplianceCenter')
 
-        $result = @{
-            Ensure                = 'Present'
-            Name                  = $PolicyObject.Name
-            Case                  = $Case
-            Enabled               = $PolicyObject.Enabled
-            Comment               = $PolicyObject.Comment
-            ExchangeLocation      = $PolicyObject.ExchangeLocation.Name
-            PublicFolderLocation  = $PolicyObject.PublicFolderLocation.Name
-            SharePointLocation    = $PolicyObject.SharePointLocation.Name
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$cases = Get-ComplianceCase -ErrorAction Stop
+
+            $dscContent = [System.Text.StringBuilder]::new()
+            $i = 1
+            if ($cases.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($case in $cases)
+            {
+                Write-M365DSCHost -Message "    |---[$i/$($Cases.Count)] Scanning Policies in Case {$($case.Name)}"
+                [array]$policies = Get-CaseHoldPolicy -Case $case.Name
+
+                $j = 1
+                foreach ($policy in $policies)
+                {
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                    {
+                        $Global:M365DSCExportResourceInstancesCount++
+                    }
+
+                    Write-M365DSCHost -Message "        |---[$j/$($policies.Count)] $($policy.Name)" -DeferWrite
+
+                    $this.ExportedInstance = $policy
+                    $Results = $this.GetForExport(@{ Name = $policy.Name; Case = $case.Name })
+                    $rawResults = $Results.Clone()
+
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential `
+                        -RawResults $rawResults
+                    [void]$dscContent.Append($currentDSCBlock)
+
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $j++
+                }
+                $i++
+            }
+
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden static [void] ThrowUnlessDeploymentFailure([System.Management.Automation.ErrorRecord] $ErrorRecord)
+    {
+        if ($ErrorRecord.Exception.Message -notlike '*failed to be deployed*')
+        {
+            throw $ErrorRecord
+        }
+        Write-Warning -Message ($ErrorRecord.Exception.Message -split "`r?`n")[0]
+    }
+
+    hidden [SCCaseHoldPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SCCaseHoldPolicy])
+        {
+            return $Values
+        }
+
+        $result = [SCCaseHoldPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Case,
-
-        [Parameter()]
-        [System.String]
-        $Comment,
-
-        [Parameter()]
-        [System.Boolean]
-        $Enabled,
-
-        [Parameter()]
-        [System.String[]]
-        $ExchangeLocation,
-
-        [Parameter()]
-        [System.String[]]
-        $PublicFolderLocation,
-
-        [Parameter()]
-        [System.String[]]
-        $SharePointLocation,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of SCCaseHoldPolicy for $Name"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentPolicy = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Absent')
-    {
-        $CreationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-        New-CaseHoldPolicy @CreationParams
-    }
-    elseif ($Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Present')
-    {
-        $CreationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-        $CreationParams.Remove('Name')
-        $CreationParams.Remove('Case')
-
-        $policy = Get-CaseHoldPolicy -Identity $Name -Case $Case
-        $CreationParams.Add('Identity', $policy.Name)
-
-        # SharePoint Location is specified or already existing, we need to determine
-        # the delta.
-        if ($null -ne $CurrentPolicy.SharePointLocation -or `
-                $null -ne $SharePointLocation)
-        {
-            $ToBeRemoved = $CurrentPolicy.SharePointLocation | `
-                    Where-Object { $SharePointLocation -notcontains $_ }
-            if ($null -ne $ToBeRemoved)
-            {
-                $CreationParams.Add('RemoveSharePointLocation', $ToBeRemoved)
-            }
-
-            $ToBeAdded = $SharePointLocation | `
-                    Where-Object { $CurrentPolicy.SharePointLocation -notcontains $_ }
-            if ($null -ne $ToBeAdded)
-            {
-                $CreationParams.Add('AddSharePointLocation', $ToBeAdded)
-            }
-
-            $CreationParams.Remove('SharePointLocation')
-        }
-
-        # Exchange Location is specified or already existing, we need to determine
-        # the delta.
-        if ($null -ne $CurrentPolicy.ExchangeLocation -or `
-                $null -ne $ExchangeLocation)
-        {
-            $ToBeRemoved = $CurrentPolicy.ExchangeLocation | `
-                    Where-Object { $ExchangeLocation -notcontains $_ }
-            if ($null -ne $ToBeRemoved)
-            {
-                $CreationParams.Add('RemoveExchangeLocation', $ToBeRemoved)
-            }
-
-            $ToBeAdded = $ExchangeLocation | `
-                    Where-Object { $CurrentPolicy.ExchangeLocation -notcontains $_ }
-            if ($null -ne $ToBeAdded)
-            {
-                $CreationParams.Add('AddExchangeLocation', $ToBeAdded)
-            }
-
-            $CreationParams.Remove('ExchangeLocation')
-        }
-
-        # OneDrive Location is specified or already existing, we need to determine
-        # the delta.
-        if ($null -ne $CurrentPolicy.PublicFolderLocation -or `
-                $null -ne $PublicFolderLocation)
-        {
-            $ToBeRemoved = $CurrentPolicy.PublicFolderLocation | `
-                    Where-Object { $PublicFolderLocation -notcontains $_ }
-            if ($null -ne $ToBeRemoved)
-            {
-                $CreationParams.Add('RemovePublicFolderLocation', $ToBeRemoved)
-            }
-
-            $ToBeAdded = $PublicFolderLocation | `
-                    Where-Object { $CurrentPolicy.PublicFolderLocation -notcontains $_ }
-            if ($null -ne $ToBeAdded)
-            {
-                $CreationParams.Add('AddPublicFolderLocation', $ToBeAdded)
-            }
-            $CreationParams.Remove('PublicFolderLocation')
-        }
-
-        Write-Verbose "Updating Policy with values: $(Convert-M365DscHashtableToString -Hashtable $CreationParams)"
-        Set-CaseHoldPolicy @CreationParams
-    }
-    elseif ($Ensure -eq 'Absent' -and $CurrentPolicy.Ensure -eq 'Present')
-    {
-        # If the Policy exists and it shouldn't, simply remove it;
-        $policy = Get-CaseHoldPolicy -Identity $Name -Case $Case
-        Remove-CaseHoldPolicy -Identity $policy.Name
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Case,
-
-        [Parameter()]
-        [System.String]
-        $Comment,
-
-        [Parameter()]
-        [System.Boolean]
-        $Enabled,
-
-        [Parameter()]
-        [System.String[]]
-        $ExchangeLocation,
-
-        [Parameter()]
-        [System.String[]]
-        $PublicFolderLocation,
-
-        [Parameter()]
-        [System.String[]]
-        $SharePointLocation,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$cases = Get-ComplianceCase -ErrorAction Stop
-
-        $dscContent = [System.Text.StringBuilder]::new()
-        $i = 1
-        if ($cases.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($case in $cases)
-        {
-            Write-M365DSCHost -Message "    |---[$i/$($Cases.Count)] Scanning Policies in Case {$($case.Name)}"
-            [array]$policies = Get-CaseHoldPolicy -Case $case.Name
-
-            $j = 1
-            foreach ($policy in $policies)
-            {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-                {
-                    $Global:M365DSCExportResourceInstancesCount++
-                }
-
-                Write-M365DSCHost -Message "        |---[$j/$($policies.Count)] $($policy.Name)" -DeferWrite
-
-                $Script:exportedInstance = $policy
-                $Results = Get-TargetResource @PSBoundParameters `
-                    -Name $policy.Name `
-                    -Case $case.Name
-
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential
-                [void]$dscContent.Append($currentDSCBlock)
-
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                $j++
-            }
-            $i++
-        }
-
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

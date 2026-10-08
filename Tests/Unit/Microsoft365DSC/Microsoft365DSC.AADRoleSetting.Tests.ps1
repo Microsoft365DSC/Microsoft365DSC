@@ -21,7 +21,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -51,7 +51,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -539,11 +539,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be "Present"
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleSetting' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be "Present"
             }
 
             It 'Should return true from the test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleSetting' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -596,12 +596,72 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be "Present"
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleSetting' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be "Present"
             }
 
             It 'Should call the set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleSetting' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Update-MgBetaPolicyRoleManagementPolicyRule' -Exactly 15
+            }
+        }
+
+        Context -Name 'Only the display name is supplied and values are not in the desired state' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    ActivateApprover                                          = @()
+                    ActivationMaxDuration                                     = 'PT8H'
+                    ActivationReqJustification                                = $False
+                    ActivationReqMFA                                          = $True
+                    ActivationReqTicket                                       = $False
+                    ActiveAlertNotificationAdditionalRecipient                = @()
+                    ActiveAlertNotificationDefaultRecipient                   = $True
+                    ActiveAlertNotificationOnlyCritical                       = $False
+                    ActiveApproveNotificationAdditionalRecipient              = @()
+                    ActiveApproveNotificationDefaultRecipient                 = $True
+                    ActiveApproveNotificationOnlyCritical                     = $False
+                    ActiveAssigneeNotificationAdditionalRecipient             = @()
+                    ActiveAssigneeNotificationDefaultRecipient                = $True
+                    ActiveAssigneeNotificationOnlyCritical                    = $False
+                    ApplicationId                                             = $ConfigurationData.NonNodeData.ApplicationId
+                    ApprovaltoActivate                                        = $False
+                    AssignmentReqJustification                                = $True
+                    AssignmentReqMFA                                          = $False
+                    CertificateThumbprint                                     = $ConfigurationData.NonNodeData.CertificateThumbprint
+                    Displayname                                               = 'User administrator'
+                    EligibilityAssignmentReqJustification                     = $False
+                    EligibilityAssignmentReqMFA                               = $False
+                    EligibleAlertNotificationAdditionalRecipient              = @()
+                    EligibleAlertNotificationDefaultRecipient                 = $True
+                    EligibleAlertNotificationOnlyCritical                     = $False
+                    EligibleApproveNotificationAdditionalRecipient            = @()
+                    EligibleApproveNotificationDefaultRecipient               = $True
+                    EligibleApproveNotificationOnlyCritical                   = $False
+                    EligibleAssigneeNotificationAdditionalRecipient           = @()
+                    EligibleAssigneeNotificationDefaultRecipient              = $True
+                    EligibleAssigneeNotificationOnlyCritical                  = $False
+                    EligibleAssignmentAlertNotificationAdditionalRecipient    = @()
+                    EligibleAssignmentAlertNotificationDefaultRecipient       = $True
+                    EligibleAssignmentAlertNotificationOnlyCritical           = $False
+                    EligibleAssignmentAssigneeNotificationAdditionalRecipient = @()
+                    EligibleAssignmentAssigneeNotificationDefaultRecipient    = $True
+                    EligibleAssignmentAssigneeNotificationOnlyCritical        = $False
+                    ExpireActiveAssignment                                    = 'P180D'
+                    ExpireEligibleAssignment                                  = 'P365D'
+                    PermanentActiveAssignmentisExpirationRequired             = $False
+                    PermanentEligibleAssignmentisExpirationRequired           = $False
+                }
+            }
+
+            It 'Should resolve the role definition from the display name' {
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleSetting' -Property $testParams).Get().ToHashtable()).Id | Should -Be 'fe930be7-5e62-47db-91af-98c3a49a38b1'
+            }
+
+            It 'Should return the current value of the drifted property from the get method' {
+                ((New-M365DSCResourceInstance -ResourceName 'AADRoleSetting' -Property $testParams).Get().ToHashtable()).ActivationReqJustification | Should -Be $true
+            }
+
+            It 'Should return false from the test method' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleSetting' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -613,7 +673,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should reverse engineer resource from the export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADRoleSetting' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -4,25 +4,37 @@ This example adds a new Teams Voice Route.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsVoiceRoute 'ConfigureVoiceRoute'
+        TeamsVoiceRoute 'TeamsVoiceRoute-Example'
         {
-            Identity              = 'NewVoiceRoute'
-            Description           = 'This is a sample Voice Route'
+            Identity              = 'North America SBC Route'
+            Description           = 'Routes North American numbers to the primary SBC pair'
             NumberPattern         = '^\+1(425|206)(\d{7})'
-            OnlinePstnGatewayList = @('sbc1.litwareinc.com', 'sbc2.litwareinc.com')
+            OnlinePstnGatewayList = @("sbc1.$TenantId", "sbc2.$TenantId")
             OnlinePstnUsages      = @('Long Distance', 'Local', 'Internal')
-            Priority              = 10
+            Priority              = 1
             Ensure                = 'Present'
-            Credential            = $Credscredential
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -5,25 +5,37 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SPOStorageEntity 'ConfigureDSCStorageEntity'
+        SPOStorageEntity 'SPOStorageEntity-Example'
         {
-            Key         = "DSCKey"
-            Value       = "Test storage entity"
-            EntityScope = "Tenant"
-            Description = "Description created by DSC"
-            Comment     = "Comment from DSC"
-            SiteUrl     = "https://contoso-admin.sharepoint.com"
-            Ensure      = "Present"
-            Credential  = $Credscredential
+            Key                   = "ContosoHelpDeskUrl"
+            Value                 = "https://contoso.sharepoint.com/sites/helpdesk"
+            EntityScope           = "Tenant"
+            Description           = "Link to the corporate help desk site"
+            Comment               = "Maintained by the intranet team"
+            SiteUrl               = "https://contoso-admin.sharepoint.com"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -4,26 +4,42 @@ This example adds a new Teams Meeting Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $credsCredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsOnlineVoicemailPolicy 'NewOnlineVoicemailPolicy'
+        TeamsOnlineVoicemailPolicy 'TeamsOnlineVoicemailPolicy-Example'
         {
-            Credential                          = $credsCredential;
-            EnableEditingCallAnswerRulesSetting = $True;
-            EnableTranscription                 = $True;
-            EnableTranscriptionProfanityMasking = $False;
-            EnableTranscriptionTranslation      = $True;
+            EnableEditingCallAnswerRulesSetting = $true;
+            EnableTranscription                 = $true;
+            EnableTranscriptionProfanityMasking = $false;
+            EnableTranscriptionTranslation      = $true;
+            EnableVoicemailTriage               = $false;
             Ensure                              = "Present";
-            Identity                            = "MyPolicy";
+            Identity                            = "CorporateVoicemail";
             MaximumRecordingLength              = 600;
+            PreamblePostambleMandatory          = $false;
+            PrimarySystemPromptLanguage         = "en-US";
+            SecondarySystemPromptLanguage       = "fr-FR";
             ShareData                           = "Defer";
+            ApplicationId                       = $ApplicationId;
+            TenantId                            = $TenantId;
+            CertificateThumbprint               = $CertificateThumbprint;
         }
     }
 }

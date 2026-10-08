@@ -1,0 +1,33 @@
+{
+  "resourceName": "TestUninstalledThing",
+  "generatedFrom": {
+    "workload": "PnP",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "PnPTestThing",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Fixture for MSFT_TestUninstalledThing.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "M365DSCApiSurfaceModuleThatIsNotInstalled",
+      "cmdlets": [
+        "Get-PnPTestThing"
+      ]
+    }
+  ]
+}

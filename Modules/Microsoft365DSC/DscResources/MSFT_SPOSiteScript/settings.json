@@ -1,5 +1,16 @@
 {
   "resourceName": "SPOSiteScript",
+  "generatedFrom": {
+    "workload": "PnP",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "PnPSiteScript",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "permissions": {
     "graph": {

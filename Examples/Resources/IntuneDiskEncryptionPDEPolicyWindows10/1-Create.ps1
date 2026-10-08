@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,15 +19,16 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDiskEncryptionPDEPolicyWindows10 "IntuneDiskEncryptionPDEPolicyWindows10"
+        IntuneDiskEncryptionPDEPolicyWindows10 "IntuneDiskEncryptionPDEPolicyWindows10-Example"
         {
             Assignments                  = @();
-            Description                  = "test";
-            DisplayName                  = "test";
+            Description                  = "Enables Personal Data Encryption on corporate laptops";
+            DisplayName                  = "Personal Data Encryption - Windows 11";
             Ensure                       = "Present";
             EnablePersonalDataEncryption = "1";
             ProtectDesktop               = "0";

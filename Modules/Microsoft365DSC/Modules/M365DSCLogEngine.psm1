@@ -124,7 +124,7 @@ function New-M365DSCLogEntry
         $LogFileName = $SessionID + '-M365DSC-ErrorLog.log'
 
         # Build up the Error message to append to our log file;
-        $LogContent = '[' + [System.DateTime]::Now.ToString('yyyy/MM/dd hh:mm:ss') + "]`r`n"
+        $LogContent = '[' + [System.DateTime]::Now.ToString('yyyy/MM/dd HH:mm:ss') + "]`r`n"
         if ($PSBoundParameters.ContainsKey('Exception'))
         {
             $LogContent += '{' + $Exception.CategoryInfo.Category.ToString() + "}`r`n"

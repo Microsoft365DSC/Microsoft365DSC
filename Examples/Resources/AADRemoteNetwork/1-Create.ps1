@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,37 +19,35 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADRemoteNetwork "AADRemoteNetwork-Test Remote Network"
+        AADRemoteNetwork "AADRemoteNetwork-Example"
         {
             Ensure                = "Present";
             ForwardingProfiles    = @("Microsoft 365 traffic forwarding profile");
-            Id                    = "c60c41bb-e512-48e3-8134-c312439a5343";
-            Name                  = "Test Remote Network";
+            Name                  = "Sydney Branch Network";
             Region                = "australiaSouthEast";
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
             DeviceLinks           = @(
                 MSFT_AADRemoteNetworkDeviceLink {
-                    Name                    = 'Test Link'
+                    Name                    = 'Sydney Primary Link'
                     IPAddress               = '1.1.1.1'
                     BandwidthCapacityInMbps = 'mbps500'
                     DeviceVendor            = 'ciscoCatalyst'
                     BgpConfiguration        = MSFT_AADRemoteNetworkDeviceLinkbgpConfiguration {
-                        Asn                 = 82
-                        LocalIPAddress      = '1.1.1.87'
-                        PeerIPAddress       = '1.1.1.2'
+                        Asn            = 82
+                        LocalIPAddress = '1.1.1.87'
+                        PeerIPAddress  = '1.1.1.2'
                     }
                     RedundancyConfiguration = MSFT_AADRemoteNetworkDeviceLinkRedundancyConfiguration {
-                        RedundancyTier      = 'zoneRedundancy'
-                        ZoneLocalIPAddress  = '1.1.1.8'
+                        RedundancyTier     = 'zoneRedundancy'
+                        ZoneLocalIPAddress = '1.1.1.8'
                     }
                     TunnelConfiguration     = MSFT_AADRemoteNetworkDeviceLinkTunnelConfiguration {
-                        PreSharedKey               = 'blah'
-                        ZoneRedundancyPreSharedKey = 'blah'
+                        PreSharedKey               = '<vpn-pre-shared-key>'
+                        ZoneRedundancyPreSharedKey = '<vpn-zone-redundancy-pre-shared-key>'
                         SaLifeTimeSeconds          = 300
                         IPSecEncryption            = 'gcmAes192'
                         IPSecIntegrity             = 'gcmAes192'
@@ -60,6 +59,9 @@ Configuration Example
                     }
                 }
             );
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

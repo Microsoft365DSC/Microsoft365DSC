@@ -1,435 +1,257 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SPOBrowserIdleSignout'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SPOBrowserIdleSignout : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Specifies the resource is a single instance, the value must be ''Yes''')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $Enabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables the browser idle sign-out policy')]
+    [System.Nullable[System.Boolean]] $Enabled
 
-        [Parameter()]
-        [System.String]
-        [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
-        $SignOutAfter,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a time interval of inactivity before the user gets signed out')]
+    [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
+    [System.String] $SignOutAfter
 
-        [Parameter()]
-        [System.String]
-        [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
-        $WarnAfter,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a time interval of inactivity before the user gets a warning about being signed out')]
+    [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
+    [System.String] $WarnAfter
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the SharePoint Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message 'Getting configuration for SPO Browser Idle Signout settings'
-
-    try
+    [SPOBrowserIdleSignout] Get()
     {
-        if ($null -eq $Script:exportedInstance)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'PnP' `
-                -InboundParameters $PSBoundParameters
+            $remote = [SPOBrowserIdleSignout]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
+
+        Write-Verbose -Message 'Getting configuration for SPO Browser Idle Signout settings'
+
+        try
+        {
+            if ($null -eq $this.ExportedInstance)
+            {
+                $null = $this.Connect('PnP')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $BrowserIdleSignout = Get-PnPBrowserIdleSignout -ErrorAction Stop
+            }
+            else
+            {
+                $BrowserIdleSignout = $this.ExportedInstance
+            }
+
+            return $this.AsResult(@{
+                IsSingleInstance      = 'Yes'
+                Enabled               = $BrowserIdleSignout.Enabled
+                SignOutAfter          = $BrowserIdleSignout.SignOutAfter.ToString()
+                WarnAfter             = $BrowserIdleSignout.WarnAfter.ToString()
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            })
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Setting configuration for SPO Browser Idle Signout settings'
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $null = $this.Connect('PnP')
+
+        $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $CurrentParameters.Remove('IsSingleInstance') | Out-Null
+
+        Set-PnPBrowserIdleSignout @CurrentParameters | Out-Null
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        try
+        {
+            $ConnectionMode = $this.Connect('PNP')
 
             #Ensure the proper dependencies are installed in the current environment.
             Confirm-M365DSCDependencies
 
             #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
+            $this.AddTelemetry('Export')
             #endregion
 
-            $BrowserIdleSignout = Get-PnPBrowserIdleSignout -ErrorAction Stop
-        }
-        else
-        {
-            $BrowserIdleSignout = $Script:exportedInstance
-        }
+            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            {
+                $Global:M365DSCExportResourceInstancesCount++
+            }
 
+            $this.ExportedInstance = Get-PnPBrowserIdleSignout -ErrorAction Stop
+
+            $Params = @{
+                IsSingleInstance      = 'Yes'
+                Enabled               = $false
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                Credential            = $this.Credential
+                ApplicationSecret     = $this.ApplicationSecret
+                AccessTokens          = $this.AccessTokens
+            }
+
+            $dscContent = [System.Text.StringBuilder]::new()
+            $Results = $this.GetForExport($Params)
+            if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
+            {
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+            }
+
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
         return @{
-            IsSingleInstance      = 'Yes'
-            Enabled               = $BrowserIdleSignout.Enabled
-            SignOutAfter          = $BrowserIdleSignout.SignOutAfter.ToString()
-            WarnAfter             = $BrowserIdleSignout.WarnAfter.ToString()
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-
-}
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $Enabled,
-
-        [Parameter()]
-        [System.String]
-        [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
-        $SignOutAfter,
-
-        [Parameter()]
-        [System.String]
-        [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
-        $WarnAfter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting configuration for SPO Browser Idle Signout settings'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'PnP' `
-        -InboundParameters $PSBoundParameters
-
-    $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $CurrentParameters.Remove('IsSingleInstance') | Out-Null
-
-    Set-PnPBrowserIdleSignout @CurrentParameters | Out-Null
-}
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter(Mandatory = $true)]
-        [System.Boolean]
-        $Enabled,
-
-        [Parameter()]
-        [System.String]
-        [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
-        $SignOutAfter,
-
-        [Parameter()]
-        [System.String]
-        [ValidatePattern('^([0-9]{0,7}\.?[0-2][0-9]:[0-5][0-9]:[0-5][0-9])$')]
-        $WarnAfter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    try
-    {
-        $ConnectionMode = New-M365DSCConnection -Workload 'PNP' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-        {
-            $Global:M365DSCExportResourceInstancesCount++
-        }
-
-        $Script:exportedInstance = Get-PnPBrowserIdleSignout -ErrorAction Stop
-
-        $Params = @{
-            IsSingleInstance      = 'Yes'
-            Enabled               = $false
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            Credential            = $Credential
-            ApplicationSecret     = $ApplicationSecret
-            AccessTokens          = $AccessTokens
-        }
-
-        $dscContent = [System.Text.StringBuilder]::new()
-        $Results = Get-TargetResource @Params
-        if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
-        {
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
-        }
-
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        PostProcessing = {
-            param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-            if ($null -ne $DesiredValues.SignOutAfter -and $null -ne $CurrentValues.SignOutAfter)
-            {
-                $desiredTimeSpan = [System.TimeSpan]::Parse($DesiredValues.SignOutAfter)
-                $currentTimeSpan = [System.TimeSpan]::Parse($CurrentValues.SignOutAfter)
-                $delta = [System.TimeSpan]::FromSeconds(30)
-                if ([System.TimeSpan]::Compare($desiredTimeSpan, $currentTimeSpan) -ne 0 -and [System.TimeSpan]::Compare(($desiredTimeSpan - $currentTimeSpan).Duration(), $delta) -le 0)
+            PostProcessing = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
+                if ($null -ne $DesiredValues.SignOutAfter -and $null -ne $CurrentValues.SignOutAfter)
                 {
-                    Write-Verbose -Message "Difference between Desired and Current SignOutAfter is less than or equal to 30 seconds. Desired: $desiredTimeSpan, Current: $currentTimeSpan. Treating as equal."
-                    $ValuesToCheck.Remove('SignOutAfter') | Out-Null
+                    $desiredTimeSpan = [System.TimeSpan]::Parse($DesiredValues.SignOutAfter)
+                    $currentTimeSpan = [System.TimeSpan]::Parse($CurrentValues.SignOutAfter)
+                    $delta = [System.TimeSpan]::FromSeconds(30)
+                    if ([System.TimeSpan]::Compare($desiredTimeSpan, $currentTimeSpan) -ne 0 -and [System.TimeSpan]::Compare(($desiredTimeSpan - $currentTimeSpan).Duration(), $delta) -le 0)
+                    {
+                        Write-Verbose -Message "Difference between Desired and Current SignOutAfter is less than or equal to 30 seconds. Desired: $desiredTimeSpan, Current: $currentTimeSpan. Treating as equal."
+                        $ValuesToCheck.Remove('SignOutAfter') | Out-Null
+                    }
                 }
-            }
-            if ($null -ne $DesiredValues.WarnAfter -and $null -ne $CurrentValues.WarnAfter)
-            {
-                $desiredTimeSpan = [System.TimeSpan]::Parse($DesiredValues.WarnAfter)
-                $currentTimeSpan = [System.TimeSpan]::Parse($CurrentValues.WarnAfter)
-                $delta = [System.TimeSpan]::FromSeconds(30)
-                if ([System.TimeSpan]::Compare($desiredTimeSpan, $currentTimeSpan) -ne 0 -and [System.TimeSpan]::Compare(($desiredTimeSpan - $currentTimeSpan).Duration(), $delta) -le 0)
+                if ($null -ne $DesiredValues.WarnAfter -and $null -ne $CurrentValues.WarnAfter)
                 {
-                    Write-Verbose -Message "Difference between Desired and Current WarnAfter is less than or equal to 30 seconds. Desired: $desiredTimeSpan, Current: $currentTimeSpan. Treating as equal."
-                    $ValuesToCheck.Remove('WarnAfter') | Out-Null
+                    $desiredTimeSpan = [System.TimeSpan]::Parse($DesiredValues.WarnAfter)
+                    $currentTimeSpan = [System.TimeSpan]::Parse($CurrentValues.WarnAfter)
+                    $delta = [System.TimeSpan]::FromSeconds(30)
+                    if ([System.TimeSpan]::Compare($desiredTimeSpan, $currentTimeSpan) -ne 0 -and [System.TimeSpan]::Compare(($desiredTimeSpan - $currentTimeSpan).Duration(), $delta) -le 0)
+                    {
+                        Write-Verbose -Message "Difference between Desired and Current WarnAfter is less than or equal to 30 seconds. Desired: $desiredTimeSpan, Current: $currentTimeSpan. Treating as equal."
+                        $ValuesToCheck.Remove('WarnAfter') | Out-Null
+                    }
                 }
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
             }
-            return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
         }
     }
-}
 
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')
+    hidden [SPOBrowserIdleSignout] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SPOBrowserIdleSignout])
+        {
+            return $Values
+        }
+
+        $result = [SPOBrowserIdleSignout]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
+    }
+}

@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsMessagingConfiguration",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTeamsMessagingConfiguration",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "The TeamsMessagingConfiguration determines the messaging settings for users in your tenant.",
   "roles": {
     "read": [

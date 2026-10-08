@@ -5,22 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SPOOrgAssetsLibrary 'ConfigureOrgSiteAssets'
+        SPOOrgAssetsLibrary 'SPOOrgAssetsLibrary-Example'
         {
-            LibraryUrl   = "https://contoso.sharepoint.com/sites/org/Branding"
-            ThumbnailUrl = "https://contoso.sharepoint.com/sites/org/Branding/Logo/Owagroup.png"
-            CdnType      = "Public"
-            Ensure       = "Present"
-            Credential   = $Credscredential
+            LibraryUrl            = "https://contoso.sharepoint.com/sites/BrandGuide/Shared Documents"
+            ThumbnailUrl          = "https://contoso.sharepoint.com/sites/BrandGuide/Shared Documents/Logo/Owagroup.png"
+            CdnType               = "Public"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

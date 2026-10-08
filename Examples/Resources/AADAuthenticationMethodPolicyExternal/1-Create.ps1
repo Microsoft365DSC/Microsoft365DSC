@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,35 +19,36 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADAuthenticationMethodPolicyExternal "AADAuthenticationMethodPolicyExternal-Cisco Duo"
+        AADAuthenticationMethodPolicyExternal "AADAuthenticationMethodPolicyExternal-Example"
         {
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            AppId                 = "e35c54ff-bd24-4c52-921a-4b90a35808eb";
+            AppId                 = "<application-id>";
             DisplayName           = "Cisco Duo";
             Ensure                = "Present";
             ExcludeTargets        = @(
                 MSFT_AADAuthenticationMethodPolicyExternalExcludeTarget{
-                    Id = 'Design'
+                    Id         = 'Design'
                     TargetType = 'group'
                 }
             );
             IncludeTargets        = @(
                 MSFT_AADAuthenticationMethodPolicyExternalIncludeTarget{
-                    Id = 'Contoso'
+                    Id         = 'Contoso'
                     TargetType = 'group'
                 }
             );
             OpenIdConnectSetting  = MSFT_AADAuthenticationMethodPolicyExternalOpenIdConnectSetting{
                 discoveryUrl = 'https://graph.microsoft.com/'
-                clientId = '7698a352-4939-486e-9974-4ea5aff93f74'
+                clientId     = '<client-id>'
             };
             State                 = "disabled";
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -7,22 +7,32 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCAutoSensitivityLabelRule 'TestRule'
+        SCAutoSensitivityLabelRule 'SCAutoSensitivityLabelRule-Example'
         {
-            Credential                          = $Credscredential
-            Ensure                              = 'Absent'
-            Name                                = 'My Test Rule'
-            Policy                              = 'My Test Policy'
-            Workload                            = 'Exchange'
+            Ensure                = 'Absent'
+            Name                  = 'Credit Card Numbers in Exchange'
+            Policy                = 'Highly Confidential Sales Auto-labeling'
+            Workload              = 'Exchange'
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

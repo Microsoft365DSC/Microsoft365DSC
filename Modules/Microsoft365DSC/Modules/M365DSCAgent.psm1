@@ -27,20 +27,12 @@ function Test-M365DSCAgent
     Write-Progress -Activity 'Scanning PowerShell Version...' -PercentComplete (1 / $TotalSteps * 100)
     $CurrentPSVersion = [version]$PSVersionTable.PSVersion
 
-    if ($CurrentPSVersion -lt [version]5.1)
-    {
-        $Recommendations += @{
-            ID      = 'R1'
-            Message = 'We recommend installing PowerShell 5.1. You can download and install it from: ' + `
-                'https://www.microsoft.com/en-us/download/details.aspx?id=54616'
-        }
-    }
-    elseif ($CurrentPSVersion -ge [version]'6.0')
+    if ($PSVersionTable.PSEdition -ne 'Core' -or $CurrentPSVersion -lt [version]'7.6')
     {
         $Issues += @{
             ID      = 'I1'
-            Message = "Microsoft365DSC is not supported with PowerShell Version $CurrentPSVersion. Please install version 5.1 from: " + `
-                'https://www.microsoft.com/en-us/download/details.aspx?id=54616'
+            Message = "Microsoft365DSC requires PowerShell 7.6 or higher. The current session is running PowerShell $CurrentPSVersion " + `
+                "($($PSVersionTable.PSEdition) edition). Please install PowerShell 7 from: https://aka.ms/powershell-release"
         }
     }
     #endregion

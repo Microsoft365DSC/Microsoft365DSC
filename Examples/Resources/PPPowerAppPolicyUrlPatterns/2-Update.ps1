@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,34 +19,36 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        PPPowerAppPolicyUrlPatterns "PPPowerAppPolicyUrlPatterns"
+        PPPowerAppPolicyUrlPatterns "PPPowerAppPolicyUrlPatterns-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
             Ensure                = "Present";
-            PolicyName            = "DSCPolicy";
+            PolicyName            = "Contoso Data Policy";
             PPTenantId            = "e91d4e0e-d5a5-4e3a-be14-2192592a59af";
             RuleSet               = @(
                 MSFT_PPPowerAPpPolicyUrlPatternsRule{
-                    pattern = 'https://contoso.com'
+                    pattern                           = 'https://contoso.com'
                     customConnectorRuleClassification = 'General'
-                    order = 1
+                    order                             = 1
                 }
                 MSFT_PPPowerAPpPolicyUrlPatternsRule{
-                    pattern = 'https://tailspintoys.com' # drift
+                    pattern                           = 'https://tailspintoys.com' # Updated Property
                     customConnectorRuleClassification = 'General'
-                    order = 2
+                    order                             = 2
                 }
                 MSFT_PPPowerAPpPolicyUrlPatternsRule{
-                    pattern = '*'
+                    pattern                           = '*'
                     customConnectorRuleClassification = 'Ignore'
-                    order = 3
+                    order                             = 3
                 }
             );
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

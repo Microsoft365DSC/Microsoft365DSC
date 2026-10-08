@@ -5,20 +5,36 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneRoleScopeTag 'Example'
+        IntuneRoleScopeTag 'IntuneRoleScopeTag-Example'
         {
-            DisplayName           = "MyExistingTag"
-            Id                    = "5"
-            Description           = "My Example Tag"
+            DisplayName           = "Amsterdam Service Desk"
+            Description           = "Devices and applications managed by the Amsterdam service desk" # Updated Property
+            Assignments           = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
+                    groupDisplayName                           = "Intune Pilot Devices"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                }
+            )
             Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

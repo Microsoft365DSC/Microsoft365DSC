@@ -4,7 +4,8 @@ This example creates a new Intune Firewall Policy for Windows10.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,16 +18,17 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneEpmCertificatePolicySetting "IntuneEpmCertificatePolicySetting-IntuneEpmCertificatePolicySetting_1"
+        IntuneEpmCertificatePolicySetting "IntuneEpmCertificatePolicySetting-Example"
         {
-            Description           = "";
-            DisplayName           = "IntuneEpmCertificatePolicySetting_1";
+            Description           = "Code signing certificate trusted for line of business application elevation";
+            DisplayName           = "Contoso Elevation Signing Certificate";
             Ensure                = "Present";
-            CertificateFile       = "<Base64EncodedCertificateContent>";
+            CertificateFile       = "<base64-encoded-certificate>";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

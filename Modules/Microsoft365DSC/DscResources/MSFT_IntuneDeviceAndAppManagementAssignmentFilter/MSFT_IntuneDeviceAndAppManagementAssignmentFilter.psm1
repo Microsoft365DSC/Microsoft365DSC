@@ -1,525 +1,339 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneDeviceAndAppManagementAssignmentFilter'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $True)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('DisplayName of the Assignment Filter.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String]
-        $Identity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Key of the Assignment Filter.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of the Assignment Filter.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [ValidateSet('apps', 'devices')]
-        [System.String]
-        $AssignmentFilterManagementType = 'devices',
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates filter is applied to either ''devices'' or ''apps'' management type. Default is ''devices''.')]
+    [ValidateSet('apps', 'devices')]
+    [System.String] $AssignmentFilterManagementType
 
-        [Parameter()]
-        [ValidateSet('android', 'androidForWork', 'iOS', 'macOS', 'windowsPhone81', 'windows81AndLater', 'windows10AndLater', 'androidWorkProfile', 'unknown', 'androidAOSP', 'androidMobileApplicationManagement', 'iOSMobileApplicationManagement', 'unknownFutureValue')]
-        [System.String]
-        $Platform,
+    [DscProperty()]
+    [System.ComponentModel.Description('Platform type of the devices on which the Assignment Filter will be applicable.')]
+    [ValidateSet('android', 'androidForWork', 'iOS', 'macOS', 'windowsPhone81', 'windows81AndLater', 'windows10AndLater', 'androidWorkProfile', 'unknown', 'androidAOSP', 'androidMobileApplicationManagement', 'iOSMobileApplicationManagement', 'unknownFutureValue', 'windowsMobileApplicationManagement')]
+    [System.String] $Platform
 
-        [Parameter()]
-        [System.String]
-        $Rule,
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates role scope tags assigned for the assignment filter.')]
+    [System.String[]] $RoleScopeTags
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Rule definition of the Assignment Filter.')]
+    [System.String] $Rule
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Intune Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    Write-Verbose -Message "Getting configuration of the Intune Device and App Management Assignment Filter with Id {$Identity} and DisplayName {$DisplayName}"
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    try
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    [IntuneDeviceAndAppManagementAssignmentFilter] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters `
-                -ErrorAction Stop
+            $remote = [IntuneDeviceAndAppManagementAssignmentFilter]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of the Intune Device and App Management Assignment Filter with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = @{
-                DisplayName = $DisplayName
-                Ensure      = 'Absent'
-            }
-
-            if (-not [System.String]::IsNullOrEmpty($Identity))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                Write-Verbose -Message "Checking if filter exists with identity {$Identity}."
-                $assignmentFilter = Get-MgBetaDeviceManagementAssignmentFilter -DeviceAndAppManagementAssignmentFilterId $Identity -ErrorAction 'SilentlyContinue'
-            }
+                $null = $this.Connect('MicrosoftGraph')
 
-            if ($null -eq $assignmentFilter)
-            {
-                Write-Verbose -Message "No assignment filter with Identity {$Identity} was found."
+                Confirm-M365DSCDependencies
 
-                Write-Verbose -Message "Checking if filter exists with DisplayName {$DisplayName}."
-                [array]$assignmentFilter = Get-MgBetaDeviceManagementAssignmentFilter -All | Where-Object -FilterScript { $_.DisplayName -eq $DisplayName }
-                if ($assignmentFilter.Length -gt 2)
-                {
-                    Write-Error -Message "More than one Assignment Filter found with name {$DisplayName}"
+                $this.AddTelemetry('Get')
+
+                $nullResult = @{
+                    DisplayName = $this.DisplayName
+                    Ensure      = 'Absent'
                 }
-                elseif ($assignmentFilter.Length -eq 0)
+
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    Write-Verbose -Message "No assignment filter with name {$DisplayName} was found."
-                    return $nullResult
+                    Write-Verbose -Message "Checking if filter exists with identity {$($this.Id)}."
+                    $assignmentFilter = Get-MgBetaDeviceManagementAssignmentFilter -DeviceAndAppManagementAssignmentFilterId $this.Id -ErrorAction 'SilentlyContinue'
+                }
+
+                if ($null -eq $assignmentFilter)
+                {
+                    Write-Verbose -Message "No assignment filter with Id {$($this.Id)} was found."
+
+                    Write-Verbose -Message "Checking if filter exists with DisplayName {$($this.DisplayName)}."
+                    [array]$assignmentFilter = Get-MgBetaDeviceManagementAssignmentFilter -All | Where-Object -FilterScript { $_.DisplayName -eq $this.DisplayName }
+                    if ($assignmentFilter.Count -gt 1)
+                    {
+                        throw "More than one Assignment Filter with name {$($this.DisplayName)} was found. Please provide the Id parameter."
+                    }
+                    elseif ($assignmentFilter.Count -eq 0)
+                    {
+                        Write-Verbose -Message "No assignment filter with name {$($this.DisplayName)} was found."
+                        return $this.AsResult($nullResult)
+                    }
                 }
             }
-        }
-        else
-        {
-            $assignmentFilter = $Script:exportedInstance
-        }
-
-        Write-Verbose -Message "Found assignment filter {$($assignmentFilter.displayName)}"
-
-        $returnHashtable = @{}
-        $returnHashtable.Add('Identity', $assignmentFilter.Id)
-        $returnHashtable.Add('DisplayName', $assignmentFilter.DisplayName)
-        $returnHashtable.Add('Description', $assignmentFilter.Description)
-        $returnHashtable.Add('AssignmentFilterManagementType', $assignmentFilter.AssignmentFilterManagementType.ToString())
-        $returnHashtable.Add('Platform', $assignmentFilter.Platform.ToString())
-        $returnHashtable.Add('Rule', $assignmentFilter.Rule)
-        $returnHashtable.Add('Ensure', 'Present')
-        $returnHashtable.Add('Credential', $Credential)
-        $returnHashtable.Add('ApplicationId', $ApplicationId)
-        $returnHashtable.Add('TenantId', $TenantId)
-        $returnHashtable.Add('ApplicationSecret', $ApplicationSecret)
-        $returnHashtable.Add('CertificateThumbprint', $CertificateThumbprint)
-        $returnHashtable.Add('ManagedIdentity', $ManagedIdentity.IsPresent)
-        $returnHashtable.Add('AccessTokens', $AccessTokens)
-
-        return $returnHashtable
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $True)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('apps', 'devices')]
-        [System.String]
-        $AssignmentFilterManagementType = 'devices',
-
-        [Parameter()]
-        [ValidateSet('android', 'androidForWork', 'iOS', 'macOS', 'windowsPhone81', 'windows81AndLater', 'windows10AndLater', 'androidWorkProfile', 'unknown', 'androidAOSP', 'androidMobileApplicationManagement', 'iOSMobileApplicationManagement', 'unknownFutureValue')]
-        [System.String]
-        $Platform,
-
-        [Parameter()]
-        [System.String]
-        $Rule,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting the Intune Device and App Management Assignment Filter {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentPolicy = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating new assignment filter {$DisplayName}"
-
-        New-MgBetaDeviceManagementAssignmentFilter `
-            -DisplayName $DisplayName `
-            -Description $Description `
-            -Platform $Platform `
-            -Rule $Rule `
-            -AssignmentFilterManagementType $AssignmentFilterManagementType | Out-Null
-
-    }
-    elseif ($Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating existing assignment filter {$DisplayName}"
-
-        if ($currentPolicy.AssignmentFilterManagementType -ne $AssignmentFilterManagementType)
-        {
-            throw 'Cannot change the AssignmentFilterManagementType of an existing IntuneDeviceAndAppManagementAssignmentFilter. Remove and recreate the filter if you want to change the filter type.'
-        }
-
-        Update-MgBetaDeviceManagementAssignmentFilter `
-            -DeviceAndAppManagementAssignmentFilterId $currentPolicy.Identity `
-            -DisplayName $DisplayName `
-            -Description $Description `
-            -Rule $Rule `
-            -AssignmentFilterManagementType $AssignmentFilterManagementType | Out-Null
-
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing assignment filter {$DisplayName}"
-        Remove-MgBetaDeviceManagementAssignmentFilter -DeviceAndAppManagementAssignmentFilterId $currentPolicy.Identity | Out-Null
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $True)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('apps', 'devices')]
-        [System.String]
-        $AssignmentFilterManagementType = 'devices',
-
-        [Parameter()]
-        [ValidateSet('android', 'androidForWork', 'iOS', 'macOS', 'windowsPhone81', 'windows81AndLater', 'windows10AndLater', 'androidWorkProfile', 'unknown', 'androidAOSP', 'androidMobileApplicationManagement', 'iOSMobileApplicationManagement', 'unknownFutureValue')]
-        [System.String]
-        $Platform,
-
-        [Parameter()]
-        [System.String]
-        $Rule,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $dscContent = [System.Text.StringBuilder]::new()
-    $i = 1
-
-    try
-    {
-        if (-not [string]::IsNullOrEmpty($Filter))
-        {
-            Write-Warning -Message 'Microsoft Graph filter is only supported for the platform on this resource. Other filters are only supported using startswith, endswith and contains and done by best-effort.'
-            $complexFunctions = Get-ComplexFunctionsFromFilterQuery -FilterQuery $Filter
-            $Filter = Remove-ComplexFunctionsFromFilterQuery -FilterQuery $Filter
-        }
-        [array]$assignmentFilters = Get-MgBetaDeviceManagementAssignmentFilter -All -Filter $Filter -ErrorAction Stop
-        $assignmentFilters = Find-GraphDataUsingComplexFunctions -ComplexFunctions $complexFunctions -Policies $assignmentFilters
-
-        if ($policies.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-
-        foreach ($assignmentFilter in $assignmentFilters)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            else
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $assignmentFilter = $this.ExportedInstance
             }
 
-            Write-M365DSCHost -Message "    |---[$i/$($assignmentFilters.Count)] $($assignmentFilter.displayName)" -DeferWrite
+            Write-Verbose -Message "Found assignment filter {$($assignmentFilter.displayName)}"
 
-            $params = @{
-                DisplayName           = $assignmentFilter.DisplayName
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
+            $returnHashtable = @{}
+            $returnHashtable.Add('Id', $assignmentFilter.Id)
+            $returnHashtable.Add('DisplayName', $assignmentFilter.DisplayName)
+            $returnHashtable.Add('Description', $assignmentFilter.Description)
+            $returnHashtable.Add('AssignmentFilterManagementType', $assignmentFilter.AssignmentFilterManagementType)
+            $returnHashtable.Add('Platform', $assignmentFilter.Platform)
+            $returnHashtable.Add('RoleScopeTags', $assignmentFilter.RoleScopeTags)
+            $returnHashtable.Add('Rule', $assignmentFilter.Rule)
+            $returnHashtable.Add('Ensure', 'Present')
+            $returnHashtable.Add('Credential', $this.Credential)
+            $returnHashtable.Add('ApplicationId', $this.ApplicationId)
+            $returnHashtable.Add('TenantId', $this.TenantId)
+            $returnHashtable.Add('ApplicationSecret', $this.ApplicationSecret)
+            $returnHashtable.Add('CertificateThumbprint', $this.CertificateThumbprint)
+            $returnHashtable.Add('ManagedIdentity', $this.ManagedIdentity)
+            $returnHashtable.Add('AccessTokens', $this.AccessTokens)
 
-            $Script:exportedInstance = $assignmentFilter
-            $Results = Get-TargetResource @Params
-
-            if ($Results.Ensure -eq 'Present')
-            {
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                $i++
-            }
+            return $this.AsResult($returnHashtable)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        if ($_.Exception -like '*401*' -or $_.ErrorDetails.Message -like "*`"ErrorCode`":`"Forbidden`"*" -or `
-                $_.Exception -like '*Request not applicable to target tenant*')
+        catch
         {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
-        }
-        else
-        {
-            New-M365DSCLogEntry -Message 'Error during Export:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error retrieving data:')
 
             throw
         }
     }
-}
 
-Export-ModuleMember -Function *-TargetResource, *
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting the Intune Device and App Management Assignment Filter {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentPolicy = $this.Get().ToHashtable()
+
+        if ($this.Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating new assignment filter {$($this.DisplayName)}"
+
+            New-MgBetaDeviceManagementAssignmentFilter `
+                -DisplayName $this.DisplayName `
+                -Description $this.Description `
+                -Platform $this.Platform `
+                -RoleScopeTags $this.RoleScopeTags `
+                -Rule $this.Rule `
+                -AssignmentFilterManagementType $this.AssignmentFilterManagementType | Out-Null
+
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating existing assignment filter {$($this.DisplayName)}"
+
+            if ($currentPolicy.AssignmentFilterManagementType -ne $this.AssignmentFilterManagementType)
+            {
+                throw 'Cannot change the AssignmentFilterManagementType of an existing IntuneDeviceAndAppManagementAssignmentFilter. Remove and recreate the filter if you want to change the filter type.'
+            }
+
+            Update-MgBetaDeviceManagementAssignmentFilter `
+                -DeviceAndAppManagementAssignmentFilterId $currentPolicy.Id `
+                -DisplayName $this.DisplayName `
+                -Description $this.Description `
+                -RoleScopeTags $this.RoleScopeTags `
+                -Rule $this.Rule `
+                -AssignmentFilterManagementType $this.AssignmentFilterManagementType | Out-Null
+
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing assignment filter {$($this.DisplayName)}"
+            Remove-MgBetaDeviceManagementAssignmentFilter -DeviceAndAppManagementAssignmentFilterId $currentPolicy.Id | Out-Null
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        $policies = $null
+        $complexFunctions = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        $dscContent = [System.Text.StringBuilder]::new()
+        $i = 1
+
+        try
+        {
+            $mergedFilter = $this.Filter
+            if (-not [string]::IsNullOrEmpty($this.Filter))
+            {
+                Write-Warning -Message 'Microsoft Graph filter is only supported for the platform on this resource. Other filters are only supported using startswith, endswith and contains and done by best-effort.'
+                $complexFunctions = Get-ComplexFunctionsFromFilterQuery -FilterQuery $this.Filter
+                $mergedFilter = Remove-ComplexFunctionsFromFilterQuery -FilterQuery $this.Filter
+            }
+            [array]$assignmentFilters = Get-MgBetaDeviceManagementAssignmentFilter -All -Filter $mergedFilter -ErrorAction Stop
+            $assignmentFilters = Find-GraphDataUsingComplexFunctions -ComplexFunctions $complexFunctions -Policies $assignmentFilters
+
+            if ($policies.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+
+            foreach ($assignmentFilter in $assignmentFilters)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($assignmentFilters.Count)] $($assignmentFilter.displayName)" -DeferWrite
+
+                $params = @{
+                    DisplayName           = $assignmentFilter.DisplayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $assignmentFilter
+                $Results = $this.GetForExport($Params)
+
+                if ($Results.Ensure -eq 'Present')
+                {
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $i++
+                }
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            if ($_.Exception -like '*401*' -or $_.ErrorDetails.Message -like "*`"ErrorCode`":`"Forbidden`"*" -or `
+                    $_.Exception -like '*Request not applicable to target tenant*')
+            {
+                Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+            }
+            else
+            {
+                $this.LogError($_, 'Error during Export:')
+
+                throw
+            }
+        }
+
+        # Every code path must return in a method with a declared return type.
+        return ''
+    }
+
+    hidden [IntuneDeviceAndAppManagementAssignmentFilter] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneDeviceAndAppManagementAssignmentFilter])
+        {
+            return $Values
+        }
+
+        $result = [IntuneDeviceAndAppManagementAssignmentFilter]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
+    }
+}

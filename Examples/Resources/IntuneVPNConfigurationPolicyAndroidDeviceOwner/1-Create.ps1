@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,59 +19,60 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
         IntuneVPNConfigurationPolicyAndroidDeviceOwner "IntuneVPNConfigurationPolicyAndroidDeviceOwner-Example"
         {
-            ApplicationId                           = $ApplicationId;
-            TenantId                                = $TenantId;
-            CertificateThumbprint                   = $CertificateThumbprint;
-            Assignments                             = @();
-            alwaysOn                                = $False;
-            authenticationMethod                    = "azureAD";
-            connectionName                          = "IntuneVPNConfigurationPolicyAndroidDeviceOwner ConnectionName";
-            connectionType                          = "microsoftProtect";
-            Description                             = "IntuneVPNConfigurationPolicyAndroidDeviceOwner Description";
-            DisplayName                             = "IntuneVPNConfigurationPolicyAndroidDeviceOwner DisplayName";
-            Ensure                                  = "Present";
-            Id                                      = "12345678-1234-abcd-1234-12345678ABCD";
-            customData                              = @(
+            Assignments           = @();
+            alwaysOn              = $true;
+            alwaysOnLockdown      = $false;
+            authenticationMethod  = "azureAD";
+            connectionName        = "Contoso Corporate VPN";
+            connectionType        = "microsoftProtect";
+            Description           = "Always-on VPN for fully managed Android devices";
+            DisplayName           = "Android Fully Managed Corporate VPN";
+            Ensure                = "Present";
+            customData            = @(
                 MSFT_CustomData{
-                    key                             = 'fakeCustomData'
-                    value                           = '[{"key":"fakestring1","type":"int","value":"1"},{"type":"int","key":"fakestring2","value":"0"}]'
+                    key   = 'ContosoVpnSettings'
+                    value = '[{"key":"splitTunnel","type":"int","value":"1"},{"type":"int","key":"compression","value":"0"}]'
                 }
             );
-            customKeyValueData                      = @(
+            customKeyValueData    = @(
                 MSFT_customKeyValueData{
-                    value                           = '[{"key":"fakestring1","type":"int","value":"1"},{"type":"int","key":"fakestring2","value":"0"}]'
-                    name                            = 'fakeCustomKeyValueData'
+                    value = '[{"key":"splitTunnel","type":"int","value":"1"},{"type":"int","key":"compression","value":"0"}]'
+                    name  = 'ContosoVpnSettings'
                 }
             );
-            microsoftTunnelSiteId                   = "12345678-1234-abcd-1234-12345678ABCD";
-            proxyExclusionList                      = @();
-            proxyServer                             = @(
+            proxyExclusionList    = @("intranet.contoso.com", "*.contoso.local");
+            proxyServer           = @(
                 MSFT_MicrosoftvpnProxyServer{
                     port                            = 8080
-                    automaticConfigurationScriptUrl = 'fakestringvalue'
-                    address                         = 'fake-proxy-adress.com'
+                    automaticConfigurationScriptUrl = 'https://proxy.contoso.com/proxy.pac'
+                    address                         = 'proxy.contoso.com'
                 }
             );
-            servers                                 = @(
+            servers               = @(
                 MSFT_MicrosoftGraphvpnServer{
-                    isDefaultServer                 = $True
-                    description                     = 'fakestringvalue'
-                    address                         = 'fake.server.com:8080'
+                    isDefaultServer = $True
+                    description     = 'Primary VPN gateway'
+                    address         = 'vpn.contoso.com:8080'
                 }
             );
-            targetedMobileApps                      = @(
+            targetedMobileApps    = @(
                 MSFT_targetedMobileApps{
-                    name                            = 'fakestringvalue'
-                    publisher                       = 'Fake Corporation'
-                    appId                           = 'com.fake.emmx'
+                    name      = 'Microsoft Edge'
+                    publisher = 'Microsoft Corporation'
+                    appId     = 'com.microsoft.emmx'
                 }
             );
+            targetedPackageIds    = @("com.microsoft.emmx");
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

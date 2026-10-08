@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,18 +22,18 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOManagementScope "EXOManagementScope-Test New DGs"
+        EXOManagementScope "EXOManagementScope-Example"
         {
+            Ensure                     = "Present";
+            Exclusive                  = $False;
+            Identity                   = "New Distribution Groups";
+            Name                       = "New Distribution Groups";
+            RecipientRestrictionFilter = "Name -like 'Sales*'";
             ApplicationId              = $ApplicationId
             TenantId                   = $TenantId
             CertificateThumbprint      = $CertificateThumbprint
-            Ensure                     = "Present";
-            Exclusive                  = $False;
-            Identity                   = "Test New DGs";
-            Name                       = "Test New DGs";
-            RecipientRestrictionFilter = "Name -like 'Test*'";
         }
     }
 }

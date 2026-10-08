@@ -26,7 +26,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -40,7 +40,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-PSSession -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -90,6 +90,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Update-MgBetaDeviceAppManagementMobileAppAssignment -MockWith{}
 
+            Mock -CommandName Wait-M365DSCIntuneMobileAppPublished -MockWith {
+            }
+
             # Mock Write-M365DSCHost to hide output during the tests
             Mock -CommandName Write-M365DSCHost -MockWith {
             }
@@ -109,7 +112,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     InformationUrl        = ""
                     IsFeatured            = $False
                     PrivacyInformationUrl = ""
-                    ExcludedApps          = (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppExcludedApp -Property @{
+                    ExcludedApps          = ([MSFT_DeviceManagementMobileAppExcludedApp] @{
                         teams = $false
                         sharePointDesigner = $true
                         powerPoint = $false
@@ -125,7 +128,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         access = $false
                         infoPath = $true
                         excel = $false
-                    } -ClientOnly)
+                    })
                     RoleScopeTagIds       = @()
                     Notes                 = ""
                     Ensure                = 'Present'
@@ -135,17 +138,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Mock -CommandName Get-MgBetaDeviceAppManagementMobileApp -MockWith {
                     return $null
                 }
+
+                Mock -CommandName Get-MgBetaDeviceAppManagementMobileApp -ParameterFilter { -not [System.String]::IsNullOrEmpty($Filter) } -MockWith {
+                    return @{
+                        '@odata.type' = '#microsoft.graph.macOSOfficeSuiteApp'
+                        id            = 'FakeStringValue'
+                        displayName   = 'Microsoft 365 Apps for Windows 10 and later'
+                    }
+                }
+
+                Mock -CommandName New-MgBetaDeviceAppManagementMobileApp -MockWith {
+                    return @{
+                        Id = 'FakeStringValue'
+                    }
+                }
+
+                Mock -CommandName Update-DeviceAppManagementPolicyAssignment -MockWith {
+                }
             }
 
             It '1.1 Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
+                Should -Invoke -CommandName Get-MgBetaDeviceAppManagementMobileApp -ParameterFilter { $Filter -eq "DisplayName eq 'Microsoft 365 Apps for Windows 10 and later'" }
             }
             It '1.2 Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Test() | Should -Be $false
             }
             It '1.3 Should create a new instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceAppManagementMobileApp -Exactly 1
+                Should -Invoke -CommandName Wait-M365DSCIntuneMobileAppPublished -Exactly 1 -ParameterFilter { $AppId -eq 'FakeStringValue' }
+                Should -Invoke -CommandName Update-DeviceAppManagementPolicyAssignment -Exactly 1 -ParameterFilter { $AppManagementPolicyId -eq 'FakeStringValue' }
             }
         }
 
@@ -158,7 +181,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName           = "Microsoft 365 Apps for Windows 10 and later"
                     InformationUrl        = ""
                     IsFeatured            = $False
-                    ExcludedApps          = (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppExcludedApp -Property @{
+                    ExcludedApps          = ([MSFT_DeviceManagementMobileAppExcludedApp] @{
                         teams = $false
                         sharePointDesigner = $true
                         powerPoint = $false
@@ -174,7 +197,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         access = $false
                         infoPath = $true
                         excel = $false
-                    } -ClientOnly)
+                    })
                     Notes                 = ""
                     PrivacyInformationUrl = ""
                     RoleScopeTagIds       = @()
@@ -184,13 +207,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It '2.1 Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It '2.2 Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Test() | Should -Be $false
             }
             It '2.3 Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceAppManagementMobileApp -Exactly 1
             }
         }
@@ -204,7 +227,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 DisplayName           = "Microsoft 365 Apps for Windows 10 and later"
                 InformationUrl        = ""
                 IsFeatured            = $False
-                ExcludedApps          = (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppExcludedApp -Property @{
+                ExcludedApps          = ([MSFT_DeviceManagementMobileAppExcludedApp] @{
                     teams = $false
                     sharePointDesigner = $true
                     powerPoint = $false
@@ -220,7 +243,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     access = $false
                     infoPath = $true
                     excel = $false
-                } -ClientOnly)
+                })
                 Notes                 = ""
                 PrivacyInformationUrl = ""
                 RoleScopeTagIds       = @()
@@ -230,7 +253,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         }
 
         It '3.0 Should return true from the Test method' {
-            Test-TargetResource @testParams | Should -Be $true
+            (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Test() | Should -Be $true
         }
     }
 
@@ -243,7 +266,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName           = "Microsoft 365 Apps for Windows 10 and later"
                     InformationUrl        = ""
                     IsFeatured            = $False
-                    ExcludedApps          = (New-CimInstance -ClassName MSFT_DeviceManagementMobileAppExcludedApp -Property @{
+                    ExcludedApps          = ([MSFT_DeviceManagementMobileAppExcludedApp] @{
                         teams = $false
                         sharePointDesigner = $false # Updated property
                         powerPoint = $false
@@ -259,7 +282,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         access = $false
                         infoPath = $true
                         excel = $false
-                    } -ClientOnly)
+                    })
                     Notes                 = ""
                     PrivacyInformationUrl = ""
                     RoleScopeTagIds       = @()
@@ -269,13 +292,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It '4.1 Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It '4.2 Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Test() | Should -Be $false
             }
             It '4.3 Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceAppManagementMobileApp -Exactly 1
             }
         }
@@ -290,7 +313,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It '5.0 Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneMobileAppsWindowsOfficeSuiteApp' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

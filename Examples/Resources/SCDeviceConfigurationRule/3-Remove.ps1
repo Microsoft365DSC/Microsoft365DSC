@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        SCDeviceConfigurationRule "MyDeviceConfigurationRule"
+        SCDeviceConfigurationRule "SCDeviceConfigurationRule-Example"
         {
-            ApplicationId             = $ApplicationId;
-            CertificateThumbprint     = $CertificateThumbprint;
-            Ensure                    = "Absent";
-            Name                      = "MyDeviceConfigurationPolicy{2b18}";
-            Policy                    = "MyDeviceConfigurationPolicy";
-            TenantId                  = $TenantId;
+            Ensure                = "Absent";
+            Name                  = "Human Resources Device Settings{2b18}";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

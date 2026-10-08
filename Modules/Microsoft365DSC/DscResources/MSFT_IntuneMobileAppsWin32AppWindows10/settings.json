@@ -1,5 +1,82 @@
 {
   "resourceName": "IntuneMobileAppsWin32AppWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "mobileApp",
+    "odataSubtype": "win32LobApp",
+    "cmdletNoun": "MgBetaDeviceAppManagementMobileApp",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ActiveInstallScript",
+      "reason": "NotConfigurable",
+      "note": "References a content version script the resource does not manage."
+    },
+    {
+      "name": "ActiveUninstallScript",
+      "reason": "NotConfigurable",
+      "note": "References a content version script the resource does not manage."
+    },
+    {
+      "name": "ApplicableArchitectures",
+      "reason": "Accepted",
+      "note": "AllowedArchitectures controls the architecture list. Value is always 'none'."
+    },
+    {
+      "name": "DependentAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "DetectionRules",
+      "reason": "Accepted",
+      "note": "Rules models detection and requirement rules in one collection keyed by RuleType"
+    },
+    {
+      "name": "IsAssigned",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "MinimumSupportedOperatingSystem",
+      "reason": "Accepted",
+      "note": "Configured through the MinimumSupportedWindowsRelease property."
+    },
+    {
+      "name": "PublishingState",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "RequirementRules",
+      "reason": "Accepted",
+      "note": "Rules models detection and requirement rules in one collection keyed by RuleType"
+    },
+    {
+      "name": "Size",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "SupersededAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "SupersedingAppCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "UploadState",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    }
+  ],
   "description": "This resource configures an Intune Mobile Apps Win32 App for Windows10.",
   "permissions": {
     "graph": {
@@ -9,7 +86,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -17,7 +97,10 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -27,7 +110,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -35,14 +121,16 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.DeviceManagement",
     "Microsoft.Graph.Beta.Devices.CorporateManagement",
     "Microsoft.Graph.Groups"
@@ -53,12 +141,6 @@
     "USGov"
   ],
   "commands": [
-    {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
     {
       "module": "Microsoft.Graph.Beta.DeviceManagement",
       "cmdlets": [
@@ -71,7 +153,9 @@
         "Get-MgBetaDeviceAppManagementMobileApp",
         "Get-MgBetaDeviceAppManagementMobileAppAssignment",
         "Get-MgBetaDeviceAppManagementMobileAppCategory",
-        "Remove-MgBetaDeviceAppManagementMobileApp"
+        "New-MgBetaDeviceAppManagementMobileApp",
+        "Remove-MgBetaDeviceAppManagementMobileApp",
+        "Update-MgBetaDeviceAppManagementMobileApp"
       ]
     },
     {

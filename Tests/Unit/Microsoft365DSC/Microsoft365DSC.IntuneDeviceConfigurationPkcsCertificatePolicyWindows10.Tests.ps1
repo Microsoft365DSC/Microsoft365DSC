@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -36,10 +36,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                 return @{
                     subjectAlternativeNameType = "none"
@@ -68,6 +71,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         }
                     )
                     description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.19045.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     displayName = "FakeStringValue"
                     id = "FakeStringValue"
 
@@ -95,19 +114,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     certificateValidityPeriodValue = 25
                     CertificationAuthority = "FakeStringValue"
                     CertificationAuthorityName = "FakeStringValue"
-                    customSubjectAlternativeNames = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcustomSubjectAlternativeName -Property @{
+                    customSubjectAlternativeNames = @(
+                        ([MSFT_MicrosoftGraphcustomSubjectAlternativeName] @{
                             sanType = "none"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.19045.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     displayName = "FakeStringValue"
-                    extendedKeyUsages = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    extendedKeyUsages = @(
+                        ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                             objectIdentifier = "FakeStringValue"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     keyStorageProvider = "useTpmKspOtherwiseUseSoftwareKsp"
@@ -125,13 +160,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -145,19 +180,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     certificateValidityPeriodValue = 25
                     CertificationAuthority = "FakeStringValue"
                     CertificationAuthorityName = "FakeStringValue"
-                    customSubjectAlternativeNames = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcustomSubjectAlternativeName -Property @{
+                    customSubjectAlternativeNames = @(
+                        ([MSFT_MicrosoftGraphcustomSubjectAlternativeName] @{
                             sanType = "none"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.19045.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     displayName = "FakeStringValue"
-                    extendedKeyUsages = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    extendedKeyUsages = @(
+                        ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                             objectIdentifier = "FakeStringValue"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     keyStorageProvider = "useTpmKspOtherwiseUseSoftwareKsp"
@@ -172,15 +223,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -193,19 +244,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     certificateValidityPeriodValue = 25
                     CertificationAuthority = "FakeStringValue"
                     CertificationAuthorityName = "FakeStringValue"
-                    customSubjectAlternativeNames = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcustomSubjectAlternativeName -Property @{
+                    customSubjectAlternativeNames = @(
+                        ([MSFT_MicrosoftGraphcustomSubjectAlternativeName] @{
                             sanType = "none"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.19045.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     displayName = "FakeStringValue"
-                    extendedKeyUsages = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    extendedKeyUsages = @(
+                        ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                             objectIdentifier = "FakeStringValue"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     keyStorageProvider = "useTpmKspOtherwiseUseSoftwareKsp"
@@ -221,7 +288,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -234,19 +301,35 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     certificateValidityPeriodValue = 7 # Updated property
                     CertificationAuthority = "FakeStringValue"
                     CertificationAuthorityName = "FakeStringValue"
-                    customSubjectAlternativeNames = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcustomSubjectAlternativeName -Property @{
+                    customSubjectAlternativeNames = @(
+                        ([MSFT_MicrosoftGraphcustomSubjectAlternativeName] @{
                             sanType = "none"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "sModeConfiguration" # Updated property
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Professional") # Updated property
+                        RuleType = "exclude" # Updated property
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.22621.0" # Updated property
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     displayName = "FakeStringValue"
-                    extendedKeyUsages = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    extendedKeyUsages = @(
+                        ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                             objectIdentifier = "FakeStringValue"
                             name = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     id = "FakeStringValue"
                     keyStorageProvider = "useTpmKspOtherwiseUseSoftwareKsp"
@@ -261,15 +344,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -284,7 +367,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceConfigurationPkcsCertificatePolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,23 +5,35 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsVdiPolicy 'Example'
+        TeamsVdiPolicy 'TeamsVdiPolicy-Example'
         {
-            Credential                          = $Credscredential;
             DisableAudioVideoInCallsAndMeetings = $False;
             DisableCallsAndMeetings             = $False;
             Ensure                              = "Present";
-            Identity                            = "Global";
+            Identity                            = "Virtual Desktop Users";
             VDI2Optimization                    = "Enabled";
+            ApplicationId                       = $ApplicationId;
+            TenantId                            = $TenantId;
+            CertificateThumbprint               = $CertificateThumbprint;
         }
     }
 }

@@ -1,5 +1,140 @@
 {
   "resourceName": "AADConditionalAccessPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "conditionalAccessPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaIdentityConditionalAccessPolicy",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ApplicationsFilter",
+      "reason": "Accepted",
+      "note": "The flattened conditions.applications.applicationFilter.rule property"
+    },
+    {
+      "name": "ApplicationsFilterMode",
+      "reason": "Accepted",
+      "note": "The flattened conditions.applications.applicationFilter.mode property"
+    },
+    {
+      "name": "AuthenticationContexts",
+      "reason": "Accepted",
+      "note": "The flattened conditions.applications.includeAuthenticationContextClassReferences property",
+      "vendorPath": "conditions.applications.includeAuthenticationContextClassReferences"
+    },
+    {
+      "name": "AuthenticationStrength",
+      "reason": "Accepted",
+      "note": "Navigation property grantControls.authenticationStrength"
+    },
+    {
+      "name": "Conditions",
+      "reason": "Accepted",
+      "note": "Configured through the flattened condition properties on the resource. Responsible for when the policy applies."
+    },
+    {
+      "name": "ConditionsAgentIdRiskLevels",
+      "reason": "Deferred",
+      "note": "Preview surface the service does not recognize on a tenant without it."
+    },
+    {
+      "name": "ConditionsClientApplicationsExcludeAgentIdServicePrincipals",
+      "reason": "Deferred",
+      "note": "Targeting agents needs an Agent 365 or Microsoft 365 E7 license."
+    },
+    {
+      "name": "ConditionsClientApplicationsIncludeAgentIdServicePrincipals",
+      "reason": "Deferred",
+      "note": "Targeting agents needs an Agent 365 or Microsoft 365 E7 license."
+    },
+    {
+      "name": "ConditionsDevicesExcludeDevices",
+      "reason": "NotConfigurable",
+      "note": "Retired by the service, which names DeviceFilter as the replacement."
+    },
+    {
+      "name": "ConditionsDevicesExcludeDeviceStates",
+      "reason": "NotConfigurable",
+      "note": "Retired by the service, which names the device lists as the replacement."
+    },
+    {
+      "name": "ConditionsDevicesIncludeDevices",
+      "reason": "NotConfigurable",
+      "note": "Retired by the service, which names DeviceFilter as the replacement."
+    },
+    {
+      "name": "ConditionsDevicesIncludeDeviceStates",
+      "reason": "NotConfigurable",
+      "note": "Retired by the service, which names the device lists as the replacement."
+    },
+    {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "Microsoft Graph documents the property as not used."
+    },
+    {
+      "name": "DisableResilienceDefaultsIsEnabled",
+      "reason": "Accepted",
+      "note": "The flattened sessionControls.disableResilienceDefaults property",
+      "vendorPath": "sessionControls.disableResilienceDefaults"
+    },
+    {
+      "name": "ExcludeExternalTenantsMembers",
+      "reason": "Accepted",
+      "note": "The flattened conditions.users.excludeGuestsOrExternalUsers.externalTenants.members property"
+    },
+    {
+      "name": "ExcludeExternalTenantsMembershipKind",
+      "reason": "Accepted",
+      "note": "Flattened from conditions.users.excludeGuestsOrExternalUsers.externalTenants.membershipKind"
+    },
+    {
+      "name": "ExcludeGuestOrExternalUserTypes",
+      "reason": "Accepted",
+      "note": "Flattened from conditions.users.excludeGuestsOrExternalUsers.guestOrExternalUserTypes"
+    },
+    {
+      "name": "GrantControls",
+      "reason": "Accepted",
+      "note": "Flattened into GrantControlOperator, BuiltInControls, CustomAuthenticationFactors, TermsOfUse and AuthenticationStrength"
+    },
+    {
+      "name": "IncludeExternalTenantsMembers",
+      "reason": "Accepted",
+      "note": "Flattened from conditions.users.includeGuestsOrExternalUsers.externalTenants.members"
+    },
+    {
+      "name": "IncludeExternalTenantsMembershipKind",
+      "reason": "Accepted",
+      "note": "Flattened from conditions.users.includeGuestsOrExternalUsers.externalTenants.membershipKind"
+    },
+    {
+      "name": "IncludeGuestOrExternalUserTypes",
+      "reason": "Accepted",
+      "note": "Flattened from conditions.users.includeGuestsOrExternalUsers.guestOrExternalUserTypes"
+    },
+    {
+      "name": "ProtocolFlows",
+      "reason": "Accepted",
+      "note": "The beta CSDL omits protocolFlows, yet live tenants read and write it."
+    },
+    {
+      "name": "SessionControls",
+      "reason": "Accepted",
+      "note": "Configured through the flattened session control properties on the resource. Responsible for the controls enforced after sign in."
+    },
+    {
+      "name": "SignInFrequencyInterval",
+      "reason": "Accepted",
+      "note": "Flattened from sessionControls.signInFrequency.frequencyInterval",
+      "vendorPath": "sessionControls.signInFrequency.frequencyInterval"
+    }
+  ],
   "description": "This resource configures an Azure Active Directory Conditional Access Policy.",
   "roles": {
     "read": [
@@ -17,7 +152,7 @@
             "name": "Agreement.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.Read.All"
@@ -37,7 +172,7 @@
             "name": "Agreement.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.Read.All"
@@ -65,7 +200,7 @@
             "name": "Application.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.Read.All"
@@ -88,7 +223,7 @@
             "name": "Application.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.Read.All"
@@ -111,13 +246,11 @@
   },
   "requiredModules": [
     "Microsoft.Graph.Applications",
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.Identity.Governance",
     "Microsoft.Graph.Beta.Identity.SignIns",
     "Microsoft.Graph.Groups",
     "Microsoft.Graph.Identity.DirectoryManagement",
-    "Microsoft.Graph.Users",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Users"
   ],
   "supportedEnvironments": [
     "Global",
@@ -129,12 +262,6 @@
       "module": "Microsoft.Graph.Applications",
       "cmdlets": [
         "Get-MgServicePrincipal"
-      ]
-    },
-    {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
       ]
     },
     {
@@ -150,7 +277,9 @@
         "Get-MgBetaIdentityConditionalAccessNamedLocation",
         "Get-MgBetaIdentityConditionalAccessPolicy",
         "Get-MgBetaPolicyAuthenticationStrengthPolicy",
-        "Remove-MgBetaIdentityConditionalAccessPolicy"
+        "New-MgBetaIdentityConditionalAccessPolicy",
+        "Remove-MgBetaIdentityConditionalAccessPolicy",
+        "Update-MgBetaIdentityConditionalAccessPolicy"
       ]
     },
     {
@@ -162,6 +291,7 @@
     {
       "module": "Microsoft.Graph.Identity.DirectoryManagement",
       "cmdlets": [
+        "Get-MgDirectoryCustomSecurityAttributeDefinition",
         "Get-MgDirectoryRoleTemplate"
       ]
     },
@@ -169,12 +299,6 @@
       "module": "Microsoft.Graph.Users",
       "cmdlets": [
         "Get-MgUser"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

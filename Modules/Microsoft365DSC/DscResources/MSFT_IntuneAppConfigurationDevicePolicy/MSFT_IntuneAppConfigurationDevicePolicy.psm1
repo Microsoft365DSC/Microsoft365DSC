@@ -1,801 +1,610 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneAppConfigurationDevicePolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneAppConfigurationDevicePolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.Boolean]
-        $ConnectedAppsEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Setting to specify whether to allow ConnectedApps experience for this Android app.')]
+    [System.Nullable[System.Boolean]] $ConnectedAppsEnabled
 
-        [Parameter()]
-        [System.String]
-        $PackageId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the state of the credential provider role for this Android app. Possible values are: notConfigured, allowed, unknownFutureValue.')]
+    [ValidateSet('notConfigured', 'allowed')]
+    [System.String] $CredentialProviderRoleState
 
-        [Parameter()]
-        [System.String]
-        $PayloadJson,
+    [DscProperty()]
+    [System.ComponentModel.Description('Android Enterprise app configuration package id.')]
+    [System.String] $PackageId
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $PermissionActions,
+    [DscProperty()]
+    [System.ComponentModel.Description('Android Enterprise app configuration JSON payload.')]
+    [System.String] $PayloadJson
 
-        [Parameter()]
-        [ValidateSet('default', 'androidWorkProfile', 'androidDeviceOwner')]
-        [System.String]
-        $ProfileApplicability,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Android app permissions and corresponding permission actions.')]
+    [MSFT_MicrosoftGraphandroidPermissionAction[]] $PermissionActions
 
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [System.String]
-        $EncodedSettingXml,
+    [DscProperty()]
+    [System.ComponentModel.Description('Android Enterprise profile applicability (AndroidWorkProfile, DeviceOwner, or default (applies to both)). Possible values are: default, androidWorkProfile, androidDeviceOwner.')]
+    [ValidateSet('default', 'androidWorkProfile', 'androidDeviceOwner')]
+    [System.String] $ProfileApplicability
 
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Settings,
+    [DscProperty()]
+    [System.ComponentModel.Description('Mdm iOS app configuration Base64 binary. Must not be an empty string if specified.')]
+    [ValidateNotNullOrEmpty()]
+    [System.String] $EncodedSettingXml
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('iOS app configuration setting items. Must not be an empty collection if specified.')]
+    [ValidateNotNullOrEmpty()]
+    [MSFT_MicrosoftGraphappConfigurationSettingItem[]] $Settings
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Admin provided description of the Device Configuration.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Admin provided name of the device configuration.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String[]]
-        $TargetedMobileApps,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tags for this App configuration entity.')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('The associated app.')]
+    [System.String[]] $TargetedMobileApps
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Represents the assignment to the Intune policy.')]
+    [MSFT_DeviceManagementConfigurationPolicyAssignments[]] $Assignments
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    Write-Verbose -Message "Getting configuration of the Intune App Configuration Device Policy with Id {$Id} and DisplayName {$DisplayName}"
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    try
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    [IntuneAppConfigurationDevicePolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneAppConfigurationDevicePolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of the Intune App Configuration Device Policy with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-            #region resource generator code
-            if (-not [string]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                $getValue = Get-MgBetaDeviceAppManagementMobileAppConfiguration -ManagedDeviceMobileAppConfigurationId $Id -ErrorAction SilentlyContinue
+                $null = $this.Connect('MicrosoftGraph')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+                #region resource generator code
+                if (-not [string]::IsNullOrEmpty($this.Id))
+                {
+                    $getValue = Get-MgBetaDeviceAppManagementMobileAppConfiguration -ManagedDeviceMobileAppConfigurationId $this.Id -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune App Configuration Device Policy with Id {$($this.Id)}"
+
+                    if (-not [string]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        $getValue = Get-MgBetaDeviceAppManagementMobileAppConfiguration `
+                            -All `
+                            -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                            -ErrorAction SilentlyContinue
+                    }
+                }
+                #endregion
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune App Configuration Device Policy with DisplayName {$($this.DisplayName)}"
+                    return $this.AsResult($nullResult)
+                }
+            }
+            else
+            {
+                $getValue = $this.ExportedInstance
+            }
+            $policyId = $getValue.Id
+            Write-Verbose -Message "An Intune App Configuration Device Policy with Id {$policyId} and DisplayName {$($this.DisplayName)} was found."
+
+            #region resource generator code
+            $complexPermissionActions = @()
+            foreach ($currentpermissionActions in $getValue.permissionActions)
+            {
+                $mypermissionActions = [ordered]@{}
+                if ($null -ne $currentpermissionActions.action)
+                {
+                    $mypermissionActions.Add('Action', $currentpermissionActions.action)
+                }
+                $mypermissionActions.Add('Permission', $currentpermissionActions.permission)
+                if ($mypermissionActions.values.Where({ $null -ne $_ }).Count -gt 0)
+                {
+                    $complexPermissionActions += $mypermissionActions
+                }
             }
 
-            if ($null -eq $getValue)
+            $complexSettings = @()
+            foreach ($currentsettings in $getValue.settings)
             {
-                Write-Verbose -Message "Could not find an Intune App Configuration Device Policy with Id {$Id}"
-
-                if (-not [string]::IsNullOrEmpty($DisplayName))
+                $mysettings = [ordered]@{}
+                $mysettings.Add('AppConfigKey', $currentsettings.appConfigKey)
+                if ($null -ne $currentsettings.appConfigKeyType)
                 {
-                    $getValue = Get-MgBetaDeviceAppManagementMobileAppConfiguration `
-                        -All `
-                        -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                        -ErrorAction SilentlyContinue
+                    $mysettings.Add('AppConfigKeyType', $currentsettings.appConfigKeyType)
+                }
+                $mysettings.Add('AppConfigKeyValue', $currentsettings.appConfigKeyValue)
+                if ($mysettings.values.Where({ $null -ne $_ }).Count -gt 0)
+                {
+                    $complexSettings += $mysettings
                 }
             }
             #endregion
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune App Configuration Device Policy with DisplayName {$DisplayName}"
-                return $nullResult
-            }
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune App Configuration Device Policy with Id {$Id} and DisplayName {$DisplayName} was found."
 
-        #region resource generator code
-        $complexPermissionActions = @()
-        foreach ($currentpermissionActions in $getValue.permissionActions)
+            $platform = 'android'
+            if ($null -ne $getValue.encodedSettingXml -or $null -ne $getValue.settings)
+            {
+                $platform = 'ios'
+            }
+
+            $targetedApps = @()
+            foreach ($targetedApp in $getValue.TargetedMobileApps)
+            {
+                $app = Get-MgBetaDeviceAppManagementMobileApp -MobileAppId $targetedApp -ErrorAction SilentlyContinue
+                if ($null -eq $app)
+                {
+                    Write-Warning -Message "App [$targetedApp] was not found. Please make sure the targeted app exists."
+                    continue
+                }
+
+                if ($platform -eq 'android')
+                {
+                    $targetedApps += $app.packageId
+                }
+                else
+                {
+                    $targetedApps += $app.bundleId
+                }
+            }
+
+            $payloadJsonValue = $null
+            if (-not [System.String]::IsNullOrEmpty($getValue.payloadJson))
+            {
+                $payloadJsonValue = $this.DecodeTextPayload($getValue.payloadJson)
+            }
+
+            $results = @{
+                #region resource generator code
+                ConnectedAppsEnabled        = $getValue.connectedAppsEnabled
+                CredentialProviderRoleState = $getValue.credentialProviderRoleState
+                PackageId                   = $getValue.packageId
+                PayloadJson                 = $payloadJsonValue
+                PermissionActions           = $complexPermissionActions
+                ProfileApplicability        = $getValue.profileApplicability
+                EncodedSettingXml           = $getValue.encodedSettingXml
+                Settings                    = $complexSettings
+                Description                 = $getValue.Description
+                DisplayName                 = $getValue.DisplayName
+                RoleScopeTagIds             = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                TargetedMobileApps          = $targetedApps
+                Id                          = $getValue.Id
+                Ensure                      = 'Present'
+                Credential                  = $this.Credential
+                ApplicationId               = $this.ApplicationId
+                TenantId                    = $this.TenantId
+                ApplicationSecret           = $this.ApplicationSecret
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                #endregion
+            }
+            if ($platform -ne 'iOS')
+            {
+                $results.Remove('EncodedSettingXml') | Out-Null
+                $results.Remove('Settings') | Out-Null
+            }
+            $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppConfigurationAssignment -ManagedDeviceMobileAppConfigurationId $policyId
+
+            $assignmentResult = @()
+            if ($assignmentsValues.Count -gt 0)
+            {
+                $assignmentResult += ConvertFrom-IntunePolicyAssignment -Assignments $assignmentsValues -IncludeDeviceFilter $true
+            }
+            $results.Add('Assignments', $assignmentResult)
+
+            return $this.AsResult($results)
+        }
+        catch
         {
-            $mypermissionActions = [ordered]@{}
-            if ($null -ne $currentpermissionActions.action)
-            {
-                $mypermissionActions.Add('Action', $currentpermissionActions.action.ToString())
-            }
-            $mypermissionActions.Add('Permission', $currentpermissionActions.permission)
-            if ($mypermissionActions.values.Where({ $null -ne $_ }).Count -gt 0)
-            {
-                $complexPermissionActions += $mypermissionActions
-            }
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        $complexSettings = @()
-        foreach ($currentsettings in $getValue.settings)
-        {
-            $mysettings = [ordered]@{}
-            $mysettings.Add('AppConfigKey', $currentsettings.appConfigKey)
-            if ($null -ne $currentsettings.appConfigKeyType)
-            {
-                $mysettings.Add('AppConfigKeyType', $currentsettings.appConfigKeyType.ToString())
-            }
-            $mysettings.Add('AppConfigKeyValue', $currentsettings.appConfigKeyValue)
-            if ($mysettings.values.Where({ $null -ne $_ }).Count -gt 0)
-            {
-                $complexSettings += $mysettings
-            }
-        }
-        #endregion
+        Confirm-M365DSCDependencies
 
-        #region resource generator code
-        $enumProfileApplicability = $null
-        if ($null -ne $getValue.profileApplicability)
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($boundParameters.ContainsKey('RoleScopeTagIds'))
         {
-            $enumProfileApplicability = $getValue.profileApplicability.ToString()
+            $boundParameters.RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $this.RoleScopeTagIds
         }
-        #endregion
 
         $platform = 'android'
-        if ($null -ne $getValue.encodedSettingXml -or $null -ne $getValue.settings)
+        if ($boundParameters.ContainsKey('EncodedSettingXml') -or $boundParameters.ContainsKey('Settings'))
         {
             $platform = 'ios'
         }
 
-        $targetedApps = @()
-        foreach ($targetedApp in $getValue.TargetedMobileApps)
+        if (-not [System.String]::IsNullOrEmpty($boundParameters.PayloadJson))
         {
-            $app = Get-MgBetaDeviceAppManagementMobileApp -MobileAppId $targetedApp -ErrorAction SilentlyContinue
-            if ($null -eq $app)
-            {
-                Write-Warning -Message "App [$targetedApp] was not found. Please make sure the targeted app exists."
-                continue
+            $boundParameters.PayloadJson = $this.EncodeTextPayload($boundParameters.PayloadJson)
+        }
+
+        $mobileApps = Get-MgBetaDeviceAppManagementMobileApp -All
+        $targetedApps = @()
+        foreach ($targetedApp in $this.TargetedMobileApps)
+        {
+            $app = $mobileApps | Where-Object -FilterScript {
+                ($platform -eq 'android' -and $_.packageId -eq $targetedApp -and $_.'@odata.type' -eq '#microsoft.graph.androidManagedStoreApp') -or `
+                ($platform -eq 'ios' -and $_.bundleId -eq $targetedApp)
             }
 
+            if ($null -eq $app)
+            {
+                throw "Could not find a mobile app with packageId or bundleId {$targetedApp}"
+            }
+            $targetedApps += $app.Id
+        }
+        $boundParameters.TargetedMobileApps = $targetedApps
+
+        $boundParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating an Intune App Configuration Device Policy with DisplayName {$($this.DisplayName)}"
+            $createParameters = $boundParameters
+            $createParameters.Remove('Assignments') | Out-Null
+
+            $createParameters.Remove('Id') | Out-Null
             if ($platform -eq 'android')
             {
-                $targetedApps += $app.packageId
+                $createParameters.Add('@odata.type', '#microsoft.graph.androidManagedStoreAppConfiguration')
+                $createParameters.Add('appSupportsOemConfig', $false)
             }
             else
             {
-                $targetedApps += $app.bundleId
+                $createParameters.Add('@odata.type', '#microsoft.graph.iosMobileAppConfiguration')
             }
-        }
 
-        $payloadJson = $null
-        if (-not [System.String]::IsNullOrEmpty($getValue.payloadJson))
-        {
-            $payloadJson = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($getValue.payloadJson))
-        }
-
-        $results = @{
             #region resource generator code
-            ConnectedAppsEnabled  = $getValue.connectedAppsEnabled
-            PackageId             = $getValue.packageId
-            PayloadJson           = $payloadJson
-            PermissionActions     = $complexPermissionActions
-            ProfileApplicability  = $enumProfileApplicability
-            EncodedSettingXml     = $getValue.encodedSettingXml
-            Settings              = $complexSettings
-            Description           = $getValue.Description
-            DisplayName           = $getValue.DisplayName
-            RoleScopeTagIds       = $getValue.RoleScopeTagIds
-            TargetedMobileApps    = $targetedApps
-            Id                    = $getValue.Id
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
+            $policy = New-MgBetaDeviceAppManagementMobileAppConfiguration -BodyParameter $createParameters
+            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+
+            if ($policy.Id)
+            {
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId "$($policy.Id)/microsoft.graph.managedDeviceMobileAppConfiguration" `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceAppManagement/mobileAppConfigurations'
+            }
             #endregion
         }
-        $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppConfigurationAssignment -ManagedDeviceMobileAppConfigurationId $Id
-
-        $assignmentResult = @()
-        if ($assignmentsValues.Count -gt 0)
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            $assignmentResult += ConvertFrom-IntunePolicyAssignment -Assignments $assignmentsValues -IncludeDeviceFilter $true
-        }
-        $results.Add('Assignments', $assignmentResult)
+            Write-Verbose -Message "Updating the Intune App Configuration Device Policy with Id {$($currentInstance.Id)}"
+            $updateParameters = $boundParameters
+            $updateParameters.Remove('Assignments') | Out-Null
 
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+            $updateParameters.Remove('Id') | Out-Null
 
-        throw
-    }
-}
+            if ($platform -eq 'android')
+            {
+                $updateParameters.Add('@odata.type', '#microsoft.graph.androidManagedStoreAppConfiguration')
+            }
+            else
+            {
+                $updateParameters.Add('@odata.type', '#microsoft.graph.iosMobileAppConfiguration')
+            }
 
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.Boolean]
-        $ConnectedAppsEnabled,
+            #region resource generator code
+            Update-MgBetaDeviceAppManagementMobileAppConfiguration `
+                -ManagedDeviceMobileAppConfigurationId $currentInstance.Id `
+                -BodyParameter $updateParameters
 
-        [Parameter()]
-        [System.String]
-        $PackageId,
-
-        [Parameter()]
-        [System.String]
-        $PayloadJson,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $PermissionActions,
-
-        [Parameter()]
-        [ValidateSet('default', 'androidWorkProfile', 'androidDeviceOwner')]
-        [System.String]
-        $ProfileApplicability,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [System.String]
-        $EncodedSettingXml,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Settings,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String[]]
-        $TargetedMobileApps,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $BoundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $platform = 'android'
-    if ($BoundParameters.ContainsKey('EncodedSettingXml') -or $BoundParameters.ContainsKey('Settings'))
-    {
-        $platform = 'ios'
-    }
-
-    if (-not [System.String]::IsNullOrEmpty($BoundParameters.PayloadJson))
-    {
-        $BoundParameters.PayloadJson = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($BoundParameters.PayloadJson))
-    }
-
-    $mobileApps = Get-MgBetaDeviceAppManagementMobileApp -All
-    $targetedApps = @()
-    foreach ($targetedApp in $TargetedMobileApps)
-    {
-        $app = $mobileApps | Where-Object -FilterScript {
-            ($platform -eq 'android' -and $_.packageId -eq $targetedApp -and $_.'@odata.type' -eq '#microsoft.graph.androidManagedStoreApp') -or `
-            ($platform -eq 'ios' -and $_.bundleId -eq $targetedApp)
-        }
-
-        if ($null -eq $app)
-        {
-            throw "Could not find a mobile app with packageId or bundleId {$targetedApp}"
-        }
-        $targetedApps += $app.Id
-    }
-    $BoundParameters.TargetedMobileApps = $targetedApps
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune App Configuration Device Policy with DisplayName {$DisplayName}"
-        $BoundParameters.Remove('Assignments') | Out-Null
-
-        $CreateParameters = ([Hashtable]$BoundParameters).Clone()
-        $CreateParameters = Rename-M365DSCCimInstanceParameter -Properties $CreateParameters
-        $CreateParameters.Remove('Id') | Out-Null
-        if ($platform -eq 'android')
-        {
-            $CreateParameters.Add('@odata.type', '#microsoft.graph.androidManagedStoreAppConfiguration')
-            $CreateParameters.Add('appSupportsOemConfig', $false)
-        }
-        else
-        {
-            $CreateParameters.Add('@odata.type', '#microsoft.graph.iosMobileAppConfiguration')
-        }
-
-        #region resource generator code
-        $policy = New-MgBetaDeviceAppManagementMobileAppConfiguration -BodyParameter $CreateParameters
-        $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
-
-        if ($policy.Id)
-        {
+            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
             Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId "$($policy.Id)/microsoft.graph.managedDeviceMobileAppConfiguration" `
+                -DeviceConfigurationPolicyId "$($currentInstance.Id)/microsoft.graph.managedDeviceMobileAppConfiguration" `
                 -Targets $assignmentsHash `
                 -Repository 'deviceAppManagement/mobileAppConfigurations'
+            #endregion
         }
-        #endregion
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Intune App Configuration Device Policy with Id {$($currentInstance.Id)}"
-        $BoundParameters.Remove('Assignments') | Out-Null
-
-        $UpdateParameters = ([Hashtable]$BoundParameters).Clone()
-        $UpdateParameters = Rename-M365DSCCimInstanceParameter -Properties $UpdateParameters
-        $UpdateParameters.Remove('Id') | Out-Null
-
-        if ($platform -eq 'android')
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
         {
-            $UpdateParameters.Add('@odata.type', '#microsoft.graph.androidManagedStoreAppConfiguration')
+            Write-Verbose -Message "Removing the Intune App Configuration Device Policy with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaDeviceAppManagementMobileAppConfiguration -ManagedDeviceMobileAppConfigurationId $currentInstance.Id
+            #endregion
         }
-        else
-        {
-            $UpdateParameters.Add('@odata.type', '#microsoft.graph.iosMobileAppConfiguration')
-        }
-
-        #region resource generator code
-        Update-MgBetaDeviceAppManagementMobileAppConfiguration `
-            -ManagedDeviceMobileAppConfigurationId $currentInstance.Id `
-            -BodyParameter $UpdateParameters
-
-        $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
-        Update-DeviceConfigurationPolicyAssignment `
-            -DeviceConfigurationPolicyId "$($currentInstance.Id)/microsoft.graph.managedDeviceMobileAppConfiguration" `
-            -Targets $assignmentsHash `
-            -Repository 'deviceAppManagement/mobileAppConfigurations'
-        #endregion
     }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+
+    [bool] Test()
     {
-        Write-Verbose -Message "Removing the Intune App Configuration Device Policy with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaDeviceAppManagementMobileAppConfiguration -ManagedDeviceMobileAppConfigurationId $currentInstance.Id
-        #endregion
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            #region resource generator code
+            [array]$getValue = Get-MgBetaDeviceAppManagementMobileAppConfiguration `
+                -Filter $this.Filter `
+                -All `
+                -ErrorAction Stop
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
+                {
+                    $displayedKey = $config.displayName
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.DisplayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                if ($null -ne $Results.PermissionActions)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.PermissionActions `
+                        -CIMInstanceName 'MicrosoftGraphandroidPermissionAction'
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.PermissionActions = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('PermissionActions') | Out-Null
+                    }
+                }
+                if ($null -ne $Results.Settings)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.Settings `
+                        -CIMInstanceName 'MicrosoftGraphappConfigurationSettingItem'
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.Settings = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('Settings') | Out-Null
+                    }
+                }
+                if ($Results.Assignments)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.Assignments = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('Assignments') | Out-Null
+                    }
+                }
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('PermissionActions', 'Settings', 'Assignments') `
+                    -RawResults $rawResults
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [IntuneAppConfigurationDevicePolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneAppConfigurationDevicePolicy])
+        {
+            return $Values
+        }
+
+        $result = [IntuneAppConfigurationDevicePolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-function Test-TargetResource
+class MSFT_MicrosoftGraphandroidPermissionAction
 {
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.Boolean]
-        $ConnectedAppsEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Type of Android permission action. Possible values are: prompt, autoGrant, autoDeny.')]
+    [ValidateSet('prompt', 'autoGrant', 'autoDeny')]
+    [System.String] $Action
 
-        [Parameter()]
-        [System.String]
-        $PackageId,
-
-        [Parameter()]
-        [System.String]
-        $PayloadJson,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $PermissionActions,
-
-        [Parameter()]
-        [ValidateSet('default', 'androidWorkProfile', 'androidDeviceOwner')]
-        [System.String]
-        $ProfileApplicability,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [System.String]
-        $EncodedSettingXml,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Settings,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String[]]
-        $TargetedMobileApps,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Android permission string, defined in the official Android documentation.  Example ''android.permission.READ_CONTACTS''.')]
+    [System.String] $Permission
 }
 
-function Export-TargetResource
+class MSFT_MicrosoftGraphappConfigurationSettingItem
 {
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('app configuration key.')]
+    [System.String] $AppConfigKey
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('app configuration key type. Possible values are: stringType, integerType, realType, booleanType, tokenType.')]
+    [ValidateSet('stringType', 'integerType', 'realType', 'booleanType', 'tokenType')]
+    [System.String] $AppConfigKeyType
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        [array]$getValue = Get-MgBetaDeviceAppManagementMobileAppConfiguration `
-            -Filter $Filter `
-            -All `
-            -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
-            {
-                $displayedKey = $config.displayName
-            }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $rawResults = $Results.Clone()
-
-            if ($null -ne $Results.PermissionActions)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.PermissionActions `
-                    -CIMInstanceName 'MicrosoftGraphandroidPermissionAction'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.PermissionActions = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('PermissionActions') | Out-Null
-                }
-            }
-            if ($null -ne $Results.Settings)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.Settings `
-                    -CIMInstanceName 'MicrosoftGraphappConfigurationSettingItem'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.Settings = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('Settings') | Out-Null
-                }
-            }
-            if ($Results.Assignments)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
-                if ($complexTypeStringResult)
-                {
-                    $Results.Assignments = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('Assignments') | Out-Null
-                }
-            }
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('PermissionActions', 'Settings', 'Assignments') `
-                -RawResults $rawResults
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
+    [DscProperty()]
+    [System.ComponentModel.Description('app configuration key value.')]
+    [System.String] $AppConfigKeyValue
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_DeviceManagementConfigurationPolicyAssignments
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The type of the target assignment.')]
+    [ValidateSet('#microsoft.graph.cloudPcManagementGroupAssignmentTarget', '#microsoft.graph.groupAssignmentTarget', '#microsoft.graph.allLicensedUsersAssignmentTarget', '#microsoft.graph.allDevicesAssignmentTarget', '#microsoft.graph.exclusionGroupAssignmentTarget', '#microsoft.graph.configurationManagerCollectionAssignmentTarget')]
+    [System.String] $dataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of filter of the target assignment i.e. Exclude or Include. Possible values are:none, include, exclude.')]
+    [ValidateSet('none', 'include', 'exclude')]
+    [System.String] $deviceAndAppManagementAssignmentFilterType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The Id of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The display name of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Id that is the target of the assignment.')]
+    [System.String] $groupId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Display Name that is the target of the assignment.')]
+    [System.String] $groupDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The collection Id that is the target of the assignment.(ConfigMgr)')]
+    [System.String] $collectionId
+}

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXORoleGroup 'ConfigureRoleGroup'
+        EXORoleGroup 'EXORoleGroup-Example'
         {
-            Name                      = "Contoso Role Group"
-            Description               = "Address Lists Role for Exchange Administrators. Updated" # Updated Property
-            Members                   = @("Exchange Administrator")
-            Roles                     = @("Address Lists")
-            Ensure                    = "Present"
+            Name                  = "Contoso Role Group"
+            Description           = "Manages address lists for the messaging team" # Updated Property
+            Members               = @("Exchange Administrator")
+            Roles                 = @("Address Lists")
+            Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

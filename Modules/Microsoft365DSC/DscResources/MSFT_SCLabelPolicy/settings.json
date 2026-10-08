@@ -1,5 +1,16 @@
 {
   "resourceName": "SCLabelPolicy",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "LabelPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Label Policy in Purview.",
   "roles": {
     "read": [
@@ -30,5 +41,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-Label",
+        "Get-LabelPolicy",
+        "New-LabelPolicy",
+        "Remove-LabelPolicy",
+        "Set-LabelPolicy"
+      ]
+    }
+  ]
 }

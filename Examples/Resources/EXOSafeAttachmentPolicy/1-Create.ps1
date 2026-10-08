@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,21 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOSafeAttachmentPolicy 'ConfigureSafeAttachmentPolicy'
+        EXOSafeAttachmentPolicy 'EXOSafeAttachmentPolicy-Example'
         {
-            Identity             = "Marketing Block Attachments"
-            Enable               = $True
-            Redirect             = $True
-            RedirectAddress      = "admin@$TenantId"
-            Ensure               = "Present"
+            Identity              = "Marketing Block Attachments"
+            Action                = "Block"
+            AdminDisplayName      = "Blocks malicious attachments sent to the marketing department"
+            QuarantineTag         = "AdminOnlyAccessPolicy"
+            Enable                = $True
+            Redirect              = $True
+            RedirectAddress       = "MeganB@$TenantId"
+            Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

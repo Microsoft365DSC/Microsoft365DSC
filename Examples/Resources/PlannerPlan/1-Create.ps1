@@ -4,7 +4,8 @@ This example creates a new Plan in Planner.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,11 +18,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        PlannerPlan 'ContosoPlannerPlan'
+        PlannerPlan 'PlannerPlan-Example'
         {
             Title                 = "Contoso Plan"
             OwnerGroup            = "Contoso Group"

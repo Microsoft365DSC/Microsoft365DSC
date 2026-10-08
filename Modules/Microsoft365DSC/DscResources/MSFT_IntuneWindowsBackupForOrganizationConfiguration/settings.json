@@ -1,5 +1,47 @@
 {
   "resourceName": "IntuneWindowsBackupForOrganizationConfiguration",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceEnrollmentConfiguration",
+    "odataSubtype": "windowsRestoreDeviceEnrollmentConfiguration",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceEnrollmentConfiguration",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "Service supplied on the default enrollment record."
+    },
+    {
+      "name": "DeviceEnrollmentConfigurationType",
+      "reason": "ReadOnly",
+      "note": "Derived from the entity subtype, which this resource pins to windowsRestore"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "NotConfigurable",
+      "note": "Service supplied on the default enrollment record."
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "Priority",
+      "reason": "ReadOnly",
+      "note": "Singleton configuration with no sibling to order against"
+    },
+    {
+      "name": "RoleScopeTagIds",
+      "reason": "NotConfigurable",
+      "note": "Scope tags do not apply to the default enrollment record."
+    }
+  ],
   "description": "This resource configures an Intune Windows Backup For Organization Configuration.",
   "permissions": {
     "graph": {
@@ -30,7 +72,6 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.DeviceManagement.Enrollment"
   ],
   "supportedEnvironments": [
@@ -40,15 +81,10 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
       "cmdlets": [
-        "Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration"
+        "Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration",
+        "Update-MgBetaDeviceManagementDeviceEnrollmentConfiguration"
       ]
     }
   ]

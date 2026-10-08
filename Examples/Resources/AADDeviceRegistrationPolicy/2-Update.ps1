@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,26 +19,35 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADDeviceRegistrationPolicy "MyDeviceRegistrationPolicy"
+        AADDeviceRegistrationPolicy "AADDeviceRegistrationPolicy-Example"
         {
-            ApplicationId                           = $ApplicationId;
             AzureADAllowedToJoin                    = "Selected";
             AzureADAllowedToJoinGroups              = @();
             AzureADAllowedToJoinUsers               = @("AlexW@M365x73318397.OnMicrosoft.com");
             AzureAdJoinLocalAdminsRegisteringGroups = @();
             AzureAdJoinLocalAdminsRegisteringMode   = "Selected";
             AzureAdJoinLocalAdminsRegisteringUsers  = @("AllanD@M365x73318397.OnMicrosoft.com");
-            CertificateThumbprint                   = $CertificateThumbprint;
+            AzureADRegistration                     = MSFT_AzureADRegistrationPolicy{
+                AllowedToRegister   = MSFT_DeviceRegistrationMembership{
+                    Groups    = @()
+                    Users     = @()
+                    odataType = "#microsoft.graph.allDeviceRegistrationMembership"
+                }
+                IsAdminConfigurable = $False
+            };
             IsSingleInstance                        = "Yes";
             LocalAdminPasswordIsEnabled             = $False;
             LocalAdminsEnableGlobalAdmins           = $True;
-            MultiFactorAuthConfiguration            = $False;
-            TenantId                                = $TenantId;
+            MultiFactorAuthConfiguration            = "required";
             UserDeviceQuota                         = 50;
+            ApplicationId                           = $ApplicationId;
+            TenantId                                = $TenantId;
+            CertificateThumbprint                   = $CertificateThumbprint;
         }
     }
 }

@@ -1,5 +1,16 @@
 {
   "resourceName": "SCComplianceSearch",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "ComplianceSearch",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Compliance Search in Purview.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "purview": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "Compliance Search"
         ],
@@ -33,7 +44,7 @@
           "Compliance Search"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Data Investigator"
         ],
@@ -48,5 +59,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-ComplianceCase",
+        "Get-ComplianceSearch",
+        "New-ComplianceSearch",
+        "Remove-ComplianceSearch",
+        "Set-ComplianceSearch"
+      ]
+    }
+  ]
 }

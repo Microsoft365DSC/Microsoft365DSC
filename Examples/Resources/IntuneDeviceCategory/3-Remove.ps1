@@ -4,7 +4,8 @@ This example creates a new Device Category.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,14 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceCategory 'ConfigureDeviceCategory'
+        IntuneDeviceCategory 'IntuneDeviceCategory-Example'
         {
-            DisplayName = 'Contoso'
-            Ensure      = 'Absent'
+            DisplayName           = 'Contoso'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

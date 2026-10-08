@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,14 +65,8 @@ namespace Microsoft365DSC.Intune
     /// Maps raw Graph API response objects (PSObject, Hashtable, or Graph SDK types) to
     /// <see cref="SettingInstanceInfo"/> for use in the exporter.
     /// </summary>
-    public static class SettingInstanceMapper
+    internal static class SettingInstanceMapper
     {
-        private static BindingFlags _publicIgnoreCaseInstanceFlags = BindingFlags.Public | BindingFlags.IgnoreCase | BindingFlags.Instance;
-
-        public static List<SettingInstanceInfo> FromObjects(IEnumerable<object> settingInstances)
-        {
-            return settingInstances.Select(s => FromObject(s)).ToList();
-        }
 
         /// <summary>
         /// Maps a raw setting instance to <see cref="SettingInstanceInfo"/>.
@@ -118,20 +112,20 @@ namespace Microsoft365DSC.Intune
 
         private static void MapSimpleSetting(object instance, SettingInstanceInfo info)
         {
-            object? simpleValue = GetPropertyRaw(instance, "simpleSettingValue");
+            object? simpleValue = SettingDefinitionMapper.TryGetPropertyRaw(instance, "simpleSettingValue");
 
             if (simpleValue is null) return;
 
             info.SimpleSettingValue = new SettingSimpleValue
             {
                 ODataType = GetStringProperty(simpleValue, "@odata.type"),
-                Value = GetPropertyRaw(simpleValue, "value")
+                Value = SettingDefinitionMapper.TryGetPropertyRaw(simpleValue, "value")
             };
         }
 
         private static void MapChoiceSetting(object instance, SettingInstanceInfo info)
         {
-            object? choiceValue = GetPropertyRaw(instance, "choiceSettingValue");
+            object? choiceValue = SettingDefinitionMapper.TryGetPropertyRaw(instance, "choiceSettingValue");
 
             if (choiceValue is null) return;
 
@@ -140,7 +134,7 @@ namespace Microsoft365DSC.Intune
                 Value = GetStringProperty(choiceValue, "value")
             };
 
-            var children = GetPropertyRaw(choiceValue, "children") as IEnumerable;
+            var children = SettingDefinitionMapper.TryGetPropertyRaw(choiceValue, "children") as IEnumerable;
             if (children is not null)
             {
                 foreach (var child in children)
@@ -154,7 +148,7 @@ namespace Microsoft365DSC.Intune
 
         private static void MapChoiceSettingCollection(object instance, SettingInstanceInfo info)
         {
-            object? collectionValue = GetPropertyRaw(instance, "choiceSettingCollectionValue");
+            object? collectionValue = SettingDefinitionMapper.TryGetPropertyRaw(instance, "choiceSettingCollectionValue");
 
             if (collectionValue is null) return;
 
@@ -177,7 +171,7 @@ namespace Microsoft365DSC.Intune
 
         private static void MapGroupSettingCollection(object instance, SettingInstanceInfo info)
         {
-            object? groupValue = GetPropertyRaw(instance, "groupSettingCollectionValue");
+            object? groupValue = SettingDefinitionMapper.TryGetPropertyRaw(instance, "groupSettingCollectionValue");
 
             if (groupValue is null) return;
 
@@ -188,7 +182,7 @@ namespace Microsoft365DSC.Intune
                 foreach (var group in groups)
                 {
                     var groupInfo = new SettingGroupValue();
-                    var children = GetPropertyRaw(group, "children") as IEnumerable;
+                    var children = SettingDefinitionMapper.TryGetPropertyRaw(group, "children") as IEnumerable;
                     if (children is not null)
                     {
                         foreach (var child in children)
@@ -205,7 +199,7 @@ namespace Microsoft365DSC.Intune
 
         private static void MapSimpleSettingCollection(object instance, SettingInstanceInfo info)
         {
-            object? collectionValue = GetPropertyRaw(instance, "simpleSettingCollectionValue");
+            object? collectionValue = SettingDefinitionMapper.TryGetPropertyRaw(instance, "simpleSettingCollectionValue");
 
             if (collectionValue is null) return;
 
@@ -218,7 +212,7 @@ namespace Microsoft365DSC.Intune
                     info.SimpleSettingCollectionValue.Add(new SettingSimpleValue
                     {
                         ODataType = GetStringProperty(item, "@odata.type"),
-                        Value = GetPropertyRaw(item, "value")
+                        Value = SettingDefinitionMapper.TryGetPropertyRaw(item, "value")
                     });
                 }
             }
@@ -228,25 +222,7 @@ namespace Microsoft365DSC.Intune
 
         private static string GetStringProperty(object obj, string propertyName)
         {
-            return GetPropertyRaw(obj, propertyName)?.ToString() ?? string.Empty;
-        }
-
-        private static object? GetPropertyRaw(object obj, string propertyName)
-        {
-            if (obj is null)
-                return null;
-
-            if (obj is PSObject psobject)
-                obj = psobject.BaseObject;
-
-            if (obj is IDictionary<string, object> dict && dict.TryGetValue(propertyName, out object val))
-                return val;
-
-            if (obj is Hashtable ht && ht.ContainsKey(propertyName))
-                return ht[propertyName];
-
-            var prop = obj.GetType().GetProperty(propertyName, _publicIgnoreCaseInstanceFlags);
-            return prop?.GetValue(obj);
+            return SettingDefinitionMapper.TryGetPropertyRaw(obj, propertyName)?.ToString() ?? string.Empty;
         }
 
         #endregion
@@ -303,7 +279,7 @@ namespace Microsoft365DSC.Intune
                 });
             }
 
-            List<SettingDefinitionInfo> convertedAllSettingDefinitions = allSettingDefinitions is not null || allSettingDefinitions?.Count > 0
+            List<SettingDefinitionInfo> convertedAllSettingDefinitions = allSettingDefinitions is not null && allSettingDefinitions.Count > 0
                 ? SettingDefinitionMapper.FromGraphObjects(allSettingDefinitions)
                 : convertedSettings.SelectMany(s => s.SettingDefinitions).ToList();
 
@@ -331,18 +307,22 @@ namespace Microsoft365DSC.Intune
             List<SettingDefinitionInfo> allSettingDefinitions,
             Hashtable returnHashtable)
         {
-            var deviceSettings = settings.Where(s =>
-                s.SettingInstance.SettingDefinitionId?.StartsWith("device_", StringComparison.OrdinalIgnoreCase) == true).ToList();
+            // User scope is always announced through the user_ prefix. Everything else is
+            // device-scoped, including settings whose base URI goes straight to ./Vendor/MSFT
+            // without a device_ prefix (e.g. the firewall settings of the Defender for
+            // Endpoint baseline) - the device context is the CSP default.
             var userSettings = settings.Where(s =>
                 s.SettingInstance.SettingDefinitionId?.StartsWith("user_", StringComparison.OrdinalIgnoreCase) == true).ToList();
-
-            var allDeviceDefs = (allSettingDefinitions?.Count > 0)
-                ? allSettingDefinitions.Where(d => d.Id?.StartsWith("device_", StringComparison.OrdinalIgnoreCase) == true).ToList()
-                : deviceSettings.SelectMany(s => s.SettingDefinitions).ToList();
+            var deviceSettings = settings.Where(s =>
+                s.SettingInstance.SettingDefinitionId?.StartsWith("user_", StringComparison.OrdinalIgnoreCase) != true).ToList();
 
             var allUserDefs = (allSettingDefinitions?.Count > 0)
                 ? allSettingDefinitions.Where(d => d.Id?.StartsWith("user_", StringComparison.OrdinalIgnoreCase) == true).ToList()
                 : userSettings.SelectMany(s => s.SettingDefinitions).ToList();
+
+            var allDeviceDefs = (allSettingDefinitions?.Count > 0)
+                ? allSettingDefinitions.Where(d => d.Id?.StartsWith("user_", StringComparison.OrdinalIgnoreCase) != true).ToList()
+                : deviceSettings.SelectMany(s => s.SettingDefinitions).ToList();
 
             var deviceResult = new Hashtable(StringComparer.OrdinalIgnoreCase);
             foreach (var setting in deviceSettings)
@@ -405,6 +385,7 @@ namespace Microsoft365DSC.Intune
                         settingInstance, settingDefinition, settingDefinitions, allSettingDefinitions, returnHashtable);
                     settingValue = groupResult.Value;
                     addToParameters = groupResult.AddToParameters;
+                    settingName = SettingsCatalogHelper.WithoutDoubledParent(settingName);
                     break;
 
                 case "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance":
@@ -519,6 +500,22 @@ namespace Microsoft365DSC.Intune
             return values.Select(v => v?.ToString()).ToArray();
         }
 
+        private static string GetChildNameFromId(string parentId, string childId)
+        {
+            if (string.IsNullOrEmpty(parentId) || string.IsNullOrEmpty(childId))
+                return string.Empty;
+
+            string prefix = parentId + "_";
+            if (!childId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+
+            string suffix = childId.Substring(prefix.Length);
+            return string.Equals(suffix, "key", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(suffix, "value", StringComparison.OrdinalIgnoreCase)
+                ? suffix
+                : string.Empty;
+        }
+
         private static (object? Value, bool AddToParameters) ExportGroupSettingCollection(
             SettingInstanceInfo instance,
             SettingDefinitionInfo settingDefinition,
@@ -565,7 +562,17 @@ namespace Microsoft365DSC.Intune
                     childHashtable = new Hashtable(StringComparer.OrdinalIgnoreCase);
                     foreach (var child in group.Children)
                     {
-                        ExportSettingInstance(child, settingDefinitions, allSettingDefinitions, childHashtable);
+                        var childEntry = new Hashtable(StringComparer.OrdinalIgnoreCase);
+                        ExportSettingInstance(child, settingDefinitions, allSettingDefinitions, childEntry);
+
+                        string suffix = GetChildNameFromId(settingDefinition.Id, child.SettingDefinitionId);
+                        foreach (DictionaryEntry entry in childEntry)
+                        {
+                            string name = childEntry.Count == 1 && suffix.Length > 0
+                                ? suffix
+                                : entry.Key?.ToString() ?? string.Empty;
+                            childHashtable[name] = entry.Value;
+                        }
                     }
                     childValues.Add(childHashtable);
                 }

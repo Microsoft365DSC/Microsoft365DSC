@@ -5,4 +5,4 @@
 
 Intune Customization Branding Profile
 
-**Attention**: Can only be updated using the delegated `Credentials` authentication method.
+**Please note:** This resource only supports delegated authentication using the `Credentials` authentication method.

@@ -4,7 +4,8 @@ This example updates the Device Management Compliance Settings
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,18 +18,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWindowsDataProcessingSettings 'WindowsDataProcessingSettings'
+        IntuneWindowsDataProcessingSettings 'IntuneWindowsDataProcessingSettings-Example'
         {
-            IsSingleInstance           = "Yes";
+            IsSingleInstance                                 = "Yes";
             AreDataProcessorServiceForWindowsFeaturesEnabled = $true;
-            HasValidWindowsLicense     = $true;
-            ApplicationId              = $ApplicationId;
-            TenantId                   = $TenantId;
-            CertificateThumbprint      = $CertificateThumbprint;
+            HasValidWindowsLicense                           = $true;
+            ApplicationId                                    = $ApplicationId;
+            TenantId                                         = $TenantId;
+            CertificateThumbprint                            = $CertificateThumbprint;
         }
     }
 }

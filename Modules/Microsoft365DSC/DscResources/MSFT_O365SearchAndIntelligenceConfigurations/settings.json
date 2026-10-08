@@ -1,5 +1,16 @@
 {
   "resourceName": "O365SearchAndIntelligenceConfigurations",
+  "generatedFrom": {
+    "workload": null,
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the Search And Intelligence configuration settings.",
   "roles": {
     "read": [
@@ -35,6 +46,13 @@
   ],
   "mode": "Configuration",
   "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-MeetingInsightsSettings",
+        "Set-MeetingInsightsSettings"
+      ]
+    },
     {
       "module": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
       "cmdlets": [

@@ -1,5 +1,47 @@
 {
   "resourceName": "IntuneDeviceManagementEnrollmentAndroidGooglePlay",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "androidManagedStoreAccountEnterpriseSettings",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementAndroidManagedStoreAccountEnterpriseSetting",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "CompanyCodes",
+      "reason": "ReadOnly",
+      "note": "The enrollment service generates these codes and tokens during Google Play binding."
+    },
+    {
+      "name": "LastAppSyncDateTime",
+      "reason": "ReadOnly",
+      "note": "Intune stamps this when it last synchronizes managed Google Play apps."
+    },
+    {
+      "name": "LastAppSyncStatus",
+      "reason": "ReadOnly",
+      "note": "The service writes the outcome of the last managed Google Play sync."
+    },
+    {
+      "name": "ManagedGooglePlayEnterpriseType",
+      "reason": "ReadOnly",
+      "note": "The Google binding flow fixes the enterprise type when it creates the account."
+    },
+    {
+      "name": "TargetGroupIds",
+      "reason": "ReadOnly",
+      "note": "Replaced through TargetGroups with the corresponding display names."
+    },
+    {
+      "name": "TargetGroups",
+      "reason": "ReadOnly",
+      "note": "Display names of targetGroupIds."
+    }
+  ],
   "description": "This resource configures Intune Android enrollment settings.",
   "permissions": {
     "graph": {

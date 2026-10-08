@@ -7,32 +7,40 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADRoleEligibilityScheduleRequest "MyRequest"
+        AADRoleEligibilityScheduleRequest "AADRoleEligibilityScheduleRequest-Example"
         {
+            DirectoryScopeId      = "/";
+            Ensure                = "Present";
+            Principal             = "AdeleV@$TenantId";
+            PrincipalType         = "User";
+            RoleDefinition        = "Teams Communications Administrator";
+            Justification         = "Making the principal eligible for the Teams Communications Administrator role";
+            ScheduleInfo          = MSFT_AADRoleEligibilityScheduleRequestSchedule{
+                expiration = MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration{
+                    duration = "P365D"
+                    type     = "afterDuration"
+                }
+            };
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            DirectoryScopeId     = "/";
-            Ensure               = "Present";
-            Principal            = "AdeleV@$TenantId";
-            RoleDefinition       = "Teams Communications Administrator";
-            ScheduleInfo         = MSFT_AADRoleEligibilityScheduleRequestSchedule {
-                startDateTime             = '2023-09-01T02:40:44Z'
-                expiration                = MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration
-                    {
-                        endDateTime = '2025-10-31T02:40:09Z'
-                        type        = 'afterDateTime'
-                    }
-            };
         }
     }
 }

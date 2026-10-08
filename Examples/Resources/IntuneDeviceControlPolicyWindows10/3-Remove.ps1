@@ -4,7 +4,8 @@ This example removes a Device Control Policy.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,15 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceControlPolicyWindows10 'ConfigureDeviceControlPolicy'
+        IntuneDeviceControlPolicyWindows10 'IntuneDeviceControlPolicyWindows10-Example'
         {
-            Id          = '00000000-0000-0000-0000-000000000000'
-            DisplayName = 'Device Control'
-            Ensure      = 'Absent'
+            DisplayName           = 'Device Control'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

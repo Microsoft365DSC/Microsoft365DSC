@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOSmtpDaneInbound 'SmtpDaneInbound-mydomain.com'
+        EXOSmtpDaneInbound 'EXOSmtpDaneInbound-Example'
         {
-            DomainName           = "mydomain.com"
-            Ensure               = "Present"                 # note: DNSSEC for the domain must be enabled. See resource EXODnssecForVerifiedDomain
+            DomainName            = "contoso.com"
+            Ensure                = "Present"                 # note: DNSSEC for the domain must be enabled. See resource EXODnssecForVerifiedDomain
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

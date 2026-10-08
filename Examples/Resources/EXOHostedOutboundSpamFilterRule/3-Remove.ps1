@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,15 +22,16 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOHostedOutboundSpamFilterRule 'ConfigureHostedOutboundSpamFilterRule'
+        EXOHostedOutboundSpamFilterRule 'EXOHostedOutboundSpamFilterRule-Example'
         {
             Identity                       = "Contoso Executives"
-            Enabled                        = $False # Updated Property
-            HostedOutboundSpamFilterPolicy = "Integration SFP"
+            HostedOutboundSpamFilterPolicy = "Outbound Spam Limits"
             Ensure                         = "Absent"
-            Credential                     = $Credscredential
+            ApplicationId                  = $ApplicationId
+            TenantId                       = $TenantId
+            CertificateThumbprint          = $CertificateThumbprint
         }
     }
 }

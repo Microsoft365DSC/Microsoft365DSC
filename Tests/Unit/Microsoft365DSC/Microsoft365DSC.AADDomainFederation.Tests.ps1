@@ -26,13 +26,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
+            }
+
+            Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
             }
 
             Mock -CommandName Get-MgBetaDomain -MockWith {
@@ -101,15 +104,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create a new instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDomainFederationConfiguration -Exactly 1
             }
         }
@@ -124,15 +127,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDomainFederationConfiguration -Exactly 1
             }
         }
@@ -158,7 +161,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -180,15 +183,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDomainFederationConfiguration -Exactly 1
             }
         }
@@ -219,7 +222,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should throw an error when creating federation on non-Managed domain' {
-                { Set-TargetResource @testParams } | Should -Throw "*must have AuthenticationType 'Managed'*"
+                { (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set() } | Should -Throw "*must have AuthenticationType 'Managed'*"
             }
         }
 
@@ -260,11 +263,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should detect drift when NextSigningCertificate is added' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update configuration with NextSigningCertificate' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDomainFederationConfiguration -Exactly 1
             }
         }
@@ -306,19 +309,19 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return the NextSigningCertificate from the Get method' {
-                (Get-TargetResource @testParams).NextSigningCertificate | Should -Be "MIIDdzCCAl+gAwIBAgIQYZZkFR=="
+                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).NextSigningCertificate | Should -Be "MIIDdzCCAl+gAwIBAgIQYZZkFR=="
             }
 
             It 'Should return true from the Test method when NextSigningCertificate matches' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should not call Update when configuration is in desired state' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDomainFederationConfiguration -Exactly 0
             }
         }
@@ -355,15 +358,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return the PasswordResetUri from the Get method' {
-                (Get-TargetResource @testParams).PasswordResetUri | Should -BeNullOrEmpty
+                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).PasswordResetUri | Should -BeNullOrEmpty
             }
 
             It 'Should return false from the Test method when PasswordResetUri drifts' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method to update PasswordResetUri' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDomainFederationConfiguration -Exactly 1
             }
         }
@@ -403,13 +406,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should retrieve the correct federation configuration by Id' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()
                 $result.Id | Should -Be "87654321-4321-4321-4321-210987654321"
                 $result.DisplayName | Should -Be "Secondary Federation"
             }
 
             It 'Should return true when configuration matches' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -472,12 +475,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should export all federation configurations from all domains' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADDomainFederation' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
 
             It 'Should export correct domain IDs and configuration details' {
-                $exportedContent = Export-TargetResource @testParams
+                $exportedContent = Invoke-M365DSCResourceMethod -ResourceName 'AADDomainFederation' -MethodName 'Export' -Parameters $testParams
 
                 # Verify contoso.com has 2 configurations
                 $exportedContent | Should -Match "contoso.com"
@@ -506,11 +509,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Absent when domain does not exist' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from Test when domain does not exist' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -555,7 +558,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                  = "Present"
                     Credential              = $Credential
                 }
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should detect drift when changing from acceptIfMfaDoneByFederatedIdp to rejectMfaByFederatedIdp' {
@@ -567,7 +570,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                  = "Present"
                     Credential              = $Credential
                 }
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -590,7 +593,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADDomainFederation' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -1,5 +1,16 @@
 {
   "resourceName": "AADAppManagementPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "appManagementPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyAppManagementPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Manages an app management policy that can be assigned to an application or service principal object.",
   "roles": {
     "read": [

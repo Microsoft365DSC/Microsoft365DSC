@@ -1,0 +1,24 @@
+{
+  "resourceName": "AADNetworkAccessFilteringProfile",
+  "description": "Fixture for AADNetworkAccessFilteringProfile.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.NetworkAccess",
+      "cmdlets": [
+        "Get-MgBetaNetworkAccessFilteringProfile",
+        "New-MgBetaNetworkAccessFilteringProfile"
+      ]
+    }
+  ]
+}

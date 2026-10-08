@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOServicePrincipal 'ServicePrincipal'
+        EXOServicePrincipal 'EXOServicePrincipal-Example'
         {
-            AppId                = "c6871074-3ded-4935-a5dc-b8f8d91d7d06";
-            AppName              = "ISV Portal";
-            DisplayName          = "Kartikeya";
-            Ensure               = "Present";
-            Identity             = "00f6b0e4-1d00-427b-9a5b-ce6c43c43fc7";
+            AppId                 = "<application-id>";
+            AppName               = "ISV Portal";
+            DisplayName           = "Kartikeya";
+            Ensure                = "Present";
+            Identity              = "00f6b0e4-1d00-427b-9a5b-ce6c43c43fc7";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

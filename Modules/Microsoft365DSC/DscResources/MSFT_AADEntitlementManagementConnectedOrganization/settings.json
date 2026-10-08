@@ -1,5 +1,16 @@
 {
   "resourceName": "AADEntitlementManagementConnectedOrganization",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "connectedOrganization",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaEntitlementManagementConnectedOrganization",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Azure AD Entitlement Management Connected Organization.",
   "roles": {
     "read": [

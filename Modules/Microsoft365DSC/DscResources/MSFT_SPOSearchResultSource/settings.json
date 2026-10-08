@@ -1,5 +1,16 @@
 {
   "resourceName": "SPOSearchResultSource",
+  "generatedFrom": {
+    "workload": "PnP",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "PnPSearchConfiguration",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "permissions": {
     "graph": {
@@ -56,6 +67,7 @@
     }
   },
   "requiredModules": [
+    "MSCloudLoginAssistant",
     "PnP.PowerShell"
   ],
   "supportedEnvironments": [
@@ -64,6 +76,12 @@
   ],
   "mode": "Configuration",
   "commands": [
+    {
+      "module": "MSCloudLoginAssistant",
+      "cmdlets": [
+        "Get-MSCloudLoginConnectionProfile"
+      ]
+    },
     {
       "module": "PnP.PowerShell",
       "cmdlets": [

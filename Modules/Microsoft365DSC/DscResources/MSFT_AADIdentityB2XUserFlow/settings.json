@@ -1,5 +1,37 @@
 {
   "resourceName": "AADIdentityB2XUserFlow",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "b2xIdentityUserFlow",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaIdentityB2XUserFlow",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Languages",
+      "reason": "ReadOnly",
+      "note": "Microsoft supplies the built-in language set and exposes a list operation only."
+    },
+    {
+      "name": "UserFlowIdentityProviders",
+      "reason": "Accepted",
+      "note": "IdentityProviders is this navigation with the userFlow prefix dropped"
+    },
+    {
+      "name": "UserFlowType",
+      "reason": "Accepted",
+      "note": "Set hardcodes signUpOrSignIn at create time and no update sends it"
+    },
+    {
+      "name": "UserFlowTypeVersion",
+      "reason": "Accepted",
+      "note": "Set hardcodes 1 at create time and no update sends it"
+    }
+  ],
   "description": "This resource configures an Azure AD Identity B2 X User Flow.",
   "permissions": {
     "graph": {

@@ -1,5 +1,67 @@
 {
   "resourceName": "AADDeviceRegistrationPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "deviceRegistrationPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyDeviceRegistrationPolicy",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AzureADAllowedToJoin",
+      "reason": "Accepted",
+      "note": "Flattened from azureADJoin.allowedToJoin"
+    },
+    {
+      "name": "AzureADAllowedToJoinGroups",
+      "reason": "Accepted",
+      "note": "Flattened from azureADJoin.allowedToJoin.groups"
+    },
+    {
+      "name": "AzureADAllowedToJoinUsers",
+      "reason": "Accepted",
+      "note": "Flattened from azureADJoin.allowedToJoin.users"
+    },
+    {
+      "name": "AzureADJoin",
+      "reason": "Accepted",
+      "note": "Flattened onto the AzureADAllowedToJoin and AzureAdJoinLocalAdmins properties"
+    },
+    {
+      "name": "AzureAdJoinLocalAdminsRegisteringGroups",
+      "reason": "Accepted",
+      "note": "Flattened form of azureADJoin.localAdmins.registeringUsers.groups"
+    },
+    {
+      "name": "AzureAdJoinLocalAdminsRegisteringMode",
+      "reason": "Accepted",
+      "note": "Flattened form of azureADJoin.localAdmins.registeringUsers"
+    },
+    {
+      "name": "Description",
+      "reason": "ReadOnly",
+      "note": "The service fixes this text and the update body rejects it"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "ReadOnly",
+      "note": "The service fixes this to Device Registration Policy"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "LocalAdminPassword",
+      "reason": "Accepted",
+      "note": "LocalAdminPasswordIsEnabled covers its only member, isEnabled"
+    }
+  ],
   "description": "Represents the policy scope that controls quota restrictions, additional authentication, and authorization policies to register device identities to your organization.",
   "roles": {
     "read": [
@@ -17,7 +79,7 @@
             "name": "Policy.Read.DeviceConfiguration"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -25,7 +87,7 @@
             "name": "Policy.ReadWrite.DeviceConfiguration"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       },

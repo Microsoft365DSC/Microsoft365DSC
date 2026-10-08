@@ -22,13 +22,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -89,15 +89,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It '[Export]Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Test() | Should -Be $false
             }
 
             It '[Export]Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It '[Export]Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Set()
             }
         }
 
@@ -122,15 +122,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It '[Retention]Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Test() | Should -Be $false
             }
 
             It '[Retention]Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It '[Retention]Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Set()
             }
         }
 
@@ -151,15 +151,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It '[Purge]Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Test() | Should -Be $false
             }
 
             It '[Purge]Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It '[Purge]Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Set()
             }
         }
 
@@ -210,11 +210,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -246,7 +246,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         Results                             = 'Container url:
                         https://gabwedisccan.blob.core.windows.net/267bbbb1-2630-41ba-d56b-08d73612df43;
                         SAS token: <Specify -IncludeCredential parameter to show the SAS token>;
-                        Scenario: RetentionReports; Purge Type: Delete; Scope: IndexedItemsOnly; Scope details:
+                        Scenario: RetentionReports; Purge Type: SoftDelete; Scope: IndexedItemsOnly; Scope details:
                         AllUnindexed; Max unindexed size: 0; File type exclusions for unindexed: <null>;
                         Total sources: 0; Include SharePoint versions: False; Enable dedupe: False;
                         Reference action: "<null>"; Region: ; Started sources: 1; Succeeded sources: 1;
@@ -259,11 +259,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -314,15 +314,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update properties from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Set()
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -373,15 +373,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return False from the Test method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Test() | Should -Be $False
             }
 
             It 'Should delete from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Set()
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCComplianceSearchAction' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -393,7 +393,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential = $Credential
                 }
 
-                                Mock -CommandName Get-ComplianceSearchAction -MockWith {
+                Mock -CommandName Get-ComplianceSearchAction -MockWith {
                     return @{
                         IncludeSharePointDocumentVersions   = $False
                         Action                              = 'Export'
@@ -419,7 +419,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCComplianceSearchAction' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

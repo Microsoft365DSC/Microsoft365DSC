@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,31 +21,37 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        IntuneMobileAppsDefenderForEndpointMacOS "IntuneMobileAppsDefenderForEndpointMacOS-Defender App"
+        IntuneMobileAppsDefenderForEndpointMacOS "IntuneMobileAppsDefenderForEndpointMacOS-Example"
         {
             DisplayName           = "Defender App";
             Description           = "Defender App Description";
             Developer             = "Contoso";
             Ensure                = "Present";
             InformationUrl        = "";
-            IsFeatured            = $True; # Drift
+            IsFeatured            = $True; # Updated Property
             Notes                 = "";
             Owner                 = "";
             PrivacyInformationUrl = "";
             Publisher             = "Contoso";
-            Assignments          = @(
+            Assignments           = @(
                 MSFT_DeviceManagementMobileAppAssignment {
-                    groupDisplayName = 'All devices'
+                    groupDisplayName                           = 'All devices'
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
-                    intent = 'required'
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                    intent                                     = 'required'
+                }
+                MSFT_DeviceManagementMobileAppAssignment{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
+                    intent           = 'required'
                 }
             );
-            Categories             = @(
+            Categories            = @(
                 MSFT_DeviceManagementMobileAppCategory{
-                    Id = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
+                    Id          = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
                     DisplayName = "App Category 1"
                 }
             );

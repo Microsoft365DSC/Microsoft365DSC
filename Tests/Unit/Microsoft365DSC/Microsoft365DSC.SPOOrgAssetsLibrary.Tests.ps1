@@ -22,13 +22,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@contoso.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
             $global:tenantName = $Credential.UserName.Split('@')[1].Split('.')[0]
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -58,10 +58,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-PNPOrgAssetsLibrary -MockWith {
                 return @{
                     LibraryUrl = @{
-                        decodedurl = 'sites/m365dsc/Missing'
+                        decodedurl = 'sites/m365dsc/Branding'
                     }
                     CdnType    = 'Public'
                 }
+            }
+
+            Mock -CommandName Get-PnPTenantCdnOrigin -ParameterFilter { $CdnType -eq 'Public' } -MockWith {
+                return @('SITES/M365DSC/BRANDING (configuration pending)', '*/MASTERPAGE')
+            }
+
+            Mock -CommandName Get-PnPTenantCdnOrigin -ParameterFilter { $CdnType -eq 'Private' } -MockWith {
+                return @()
+            }
+
+            Mock -CommandName Remove-PnPTenantCdnOrigin -MockWith {
             }
 
             Mock -CommandName Start-Sleep -MockWith {
@@ -85,18 +96,23 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Get-PNPOrgAssetsLibrary -MockWith {
-                    return $null
+                    return @{
+                        LibraryUrl = @{
+                            decodedurl = 'sites/m365dsc/Other'
+                        }
+                        CdnType    = 'Public'
+                    }
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
                 Should -Invoke -CommandName 'Get-PNPOrgAssetsLibrary' -Exactly 1
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the site assets org libary from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Add-PNPOrgAssetsLibrary' -Exactly 1
             }
         }
@@ -112,17 +128,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
                 Should -Invoke -CommandName 'Get-PNPOrgAssetsLibrary' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the site assets org library from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Remove-PNPOrgAssetsLibrary' -Exactly 1
+                Should -Invoke -CommandName 'Remove-PnPTenantCdnOrigin' -Exactly 1 -ParameterFilter { $OriginUrl -eq 'sites/m365dsc/Branding' -and $CdnType -eq 'Public' }
             }
         }
         Context -Name 'The site assets org library Exists and Values are already in the desired state' -Fixture {
@@ -136,36 +153,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-PNPOrgAssetsLibrary' -Exactly 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'The site assets org library exists and values are NOT in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    LibraryUrl = 'https://contoso.sharepoint.com/sites/m365dsc/Branding'
-                    CdnType    = 'Private' # Drift
-                    Credential = $Credential
-                    Ensure     = 'Present'
+                    LibraryUrl   = 'https://contoso.sharepoint.com/sites/m365dsc/Branding'
+                    CdnType      = 'Public'
+                    ThumbnailUrl = 'https://contoso.sharepoint.com/sites/m365dsc/Branding/Logo.png' # Drift
+                    Credential   = $Credential
+                    Ensure       = 'Present'
                 }
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-PNPOrgAssetsLibrary' -Exactly 1
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOOrgAssetsLibrary' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Add-PNPOrgAssetsLibrary' -Exactly 1
             }
         }
@@ -180,7 +198,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOOrgAssetsLibrary' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

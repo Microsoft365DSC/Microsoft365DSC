@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,48 +19,69 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 'Example'
+        IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 'IntuneDeviceConfigurationSCEPCertificatePolicyWindows10-Example'
         {
-            Assignments                    = @(
+            Assignments                                 = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allLicensedUsersAssignmentTarget'
+                    dataType                                   = '#microsoft.graph.allLicensedUsersAssignmentTarget'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Users'
                 }
             );
-            CertificateStore               = "user";
-            CertificateValidityPeriodScale = "years";
-            CertificateValidityPeriodValue = 5;
-            CustomSubjectAlternativeNames  = @(
+            CertificateStore                            = "user";
+            CertificateValidityPeriodScale              = "years";
+            CertificateValidityPeriodValue              = 5;
+            CustomSubjectAlternativeNames               = @(
                 MSFT_MicrosoftGraphcustomSubjectAlternativeName{
                     SanType = 'domainNameService'
-                    Name = 'dns'
+                    Name    = 'dns'
                 }
             );
-            DisplayName                    = "SCEP";
-            Ensure                         = "Present";
-            ExtendedKeyUsages              = @(
+            DeviceManagementApplicabilityRuleDeviceMode = MSFT_DeviceManagementApplicabilityRuleDeviceMode{
+                Name       = "Standard configuration devices only"
+                DeviceMode = "standardConfiguration"
+                RuleType   = "include"
+            };
+            DeviceManagementApplicabilityRuleOsEdition  = MSFT_DeviceManagementApplicabilityRuleOsEdition{
+                Name           = "Enterprise and Professional editions only"
+                OsEditionTypes = @("windows10Enterprise", "windows10Professional")
+                RuleType       = "include"
+            };
+            DeviceManagementApplicabilityRuleOsVersion  = MSFT_DeviceManagementApplicabilityRuleOsVersion{
+                Name         = "Windows 10 22H2 or later"
+                MinOSVersion = "10.0.19045.0"
+                MaxOSVersion = "10.0.26100.9999"
+                RuleType     = "include"
+            };
+            DisplayName                                 = "User Authentication Certificate";
+            Ensure                                      = "Present";
+            ExtendedKeyUsages                           = @(
                 MSFT_MicrosoftGraphextendedKeyUsage{
                     ObjectIdentifier = '1.3.6.1.5.5.7.3.2'
-                    Name = 'Client Authentication'
+                    Name             = 'Client Authentication'
                 }
             );
-            HashAlgorithm                  = "sha2";
-            KeySize                        = "size2048";
-            KeyStorageProvider             = "useTpmKspOtherwiseUseSoftwareKsp";
-            KeyUsage                       = @("digitalSignature");
-            RenewalThresholdPercentage     = 30; # Updated Property
-            ScepServerUrls                 = @("https://mydomain.com/certsrv/mscep/mscep.dll");
-            SubjectAlternativeNameType     = "none";
-            SubjectNameFormat              = "custom";
-            SubjectNameFormatString        = "CN={{UserName}},E={{EmailAddress}}";
-            RootCertificateId              = "169bf4fc-5914-40f4-ad33-48c225396183";
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            HashAlgorithm                               = "sha2";
+            KeySize                                     = "size2048";
+            KeyStorageProvider                          = "useTpmKspOtherwiseUseSoftwareKsp";
+            KeyUsage                                    = @("digitalSignature");
+            RenewalThresholdPercentage                  = 30; # Updated Property
+            ScepServerUrls                              = @("https://ndes.contoso.com/certsrv/mscep/mscep.dll");
+            SubjectAlternativeNameType                  = "none";
+            SubjectNameFormat                           = "custom";
+            SubjectNameFormatString                     = "CN={{UserName}},E={{EmailAddress}}";
+            RootCertificateDisplayName                  = "Contoso Root CA Trust";
+            ApplicationId                               = $ApplicationId;
+            TenantId                                    = $TenantId;
+            CertificateThumbprint                       = $CertificateThumbprint;
         }
     }
 }

@@ -22,13 +22,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -47,6 +47,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName New-CaseHoldPolicy -MockWith {
                 return @{
 
+                }
+            }
+
+            Mock -CommandName Get-ComplianceCase -MockWith {
+                return @{
+                    Name     = 'Test Case'
+                    Identity = '11111111-2222-3333-4444-555555555555'
                 }
             }
 
@@ -78,18 +85,24 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Mock -CommandName Get-CaseHoldPolicy -MockWith {
                     return $null
                 }
+
+                Mock -CommandName Get-ComplianceCase -MockWith {
+                    return $null
+                }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
+                Should -Invoke -CommandName Get-CaseHoldPolicy -Exactly 0
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName New-CaseHoldPolicy -Exactly 1
             }
         }
 
@@ -142,15 +155,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Test() | Should -Be $False
             }
 
             It 'Should update from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Set()
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -170,18 +183,34 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         Description = 'This is a test Case'
                     }
                 }
+
+                Mock -CommandName Get-CaseHoldRule -MockWith {
+                    return @{
+                        Name = 'Test Rule'
+                        Mode = 'PendingDeletion'
+                    }
+                }
+
+                Mock -CommandName Remove-CaseHoldRule -MockWith {
+                }
+
+                Mock -CommandName Remove-CaseHoldPolicy -ParameterFilter { -not $ForceDeletion } -MockWith {
+                    throw "Policy '11111111-2222-3333-4444-555555555555' failed to be deployed. To fix this issue, please retry the policy operation after some time."
+                }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Test() | Should -Be $False
             }
 
             It 'Should remove it from the Set method' {
-                Set-TargetResource @testParams
+                { (New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Set() } | Should -Not -Throw
+                Should -Invoke -CommandName Remove-CaseHoldRule -Exactly 1 -ParameterFilter { $ForceDeletion }
+                Should -Invoke -CommandName Remove-CaseHoldPolicy -Exactly 1 -ParameterFilter { $ForceDeletion }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCCaseHoldPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -267,7 +296,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     return @{Name = 'Case1' }
                 }
 
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCCaseHoldPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
 
@@ -276,7 +305,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     return @(@{Name = 'Case1' }, @{Name = 'Case2' })
                 }
 
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCCaseHoldPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

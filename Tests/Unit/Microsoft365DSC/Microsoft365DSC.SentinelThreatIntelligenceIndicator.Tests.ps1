@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -43,13 +43,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName Remove-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
-            }
-
-            Mock -CommandName New-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
-            }
-
-            Mock -CommandName Set-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
+            Mock -CommandName Get-M365DSCAPIEndpoint -MockWith {
+                return @{
+                    AzureManagement = 'https://management.azure.com'
+                }
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
@@ -77,20 +74,23 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential             = $Credential;
                 }
 
-                Mock -CommandName Get-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
-                    return $null
+                Mock -CommandName Invoke-AzRestMethod -MockWith {
+                    return @{
+                        StatusCode = 200
+                        Content    = '{}'
+                    }
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create a new instance from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName New-M365DSCSentinelThreatIntelligenceIndicator -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Set()
+                Should -Invoke -CommandName Invoke-AzRestMethod -ParameterFilter { $Method -eq 'POST' } -Exactly 1
             }
         }
 
@@ -112,8 +112,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential             = $Credential;
                 }
 
-                Mock -CommandName Get-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
-                    return @{
+                Mock -CommandName Invoke-AzRestMethod -MockWith {
+                    $indicator = @{
                         name = '12345-12345-12345-12345-12345'
                         properties = @{
                             displayName            = 'MyIndicator'
@@ -125,24 +125,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             validUntil             = "2024-10-21T19:03:57.24Z";
                         }
                     }
+                    if ($Uri -like '*/indicators/*')
+                    {
+                        return @{
+                            StatusCode = 200
+                            Content    = (ConvertTo-Json $indicator -Depth 10)
+                        }
+                    }
+                    return @{
+                        StatusCode = 200
+                        Content    = (ConvertTo-Json @{ value = @($indicator) } -Depth 10)
+                    }
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Remove-M365DSCSentinelThreatIntelligenceIndicator -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Set()
+                Should -Invoke -CommandName Invoke-AzRestMethod -ParameterFilter { $Method -eq 'DELETE' } -Exactly 1
             }
         }
 
         Context -Name "The instance exists and values are already in the desired state" -Fixture {
             BeforeAll {
+                # The Azure REST payload is JSON, so ConvertFrom-Json materialises the timestamps as DateTime.
+                $timestampValue = (ConvertFrom-Json '"2024-10-21T19:03:57.24Z"').ToString()
                 $testParams = @{
                     DisplayName            = "MyIndicator";
                     Labels                 = @("Tag1", "Tag2");
@@ -152,15 +165,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Source                 = "Microsoft Sentinel";
                     SubscriptionId         = "12345-12345-12345-12345-12345";
                     ThreatIntelligenceTags = @();
-                    ValidFrom              = "2024-10-21T19:03:57.24Z";
-                    ValidUntil             = "2024-10-21T19:03:57.24Z";
+                    ValidFrom              = $timestampValue;
+                    ValidUntil             = $timestampValue;
                     WorkspaceName          = "SentinelWorkspace";
                     Ensure                 = 'Present'
                     Credential             = $Credential;
                 }
 
-                Mock -CommandName Get-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
-                    return @{
+                Mock -CommandName Invoke-AzRestMethod -MockWith {
+                    $indicator = @{
                         name = '12345-12345-12345-12345-12345'
                         properties = @{
                             displayName            = 'MyIndicator'
@@ -173,11 +186,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             source                 = 'Microsoft Sentinel'
                         }
                     }
+                    if ($Uri -like '*/indicators/*')
+                    {
+                        return @{
+                            StatusCode = 200
+                            Content    = (ConvertTo-Json $indicator -Depth 10)
+                        }
+                    }
+                    return @{
+                        StatusCode = 200
+                        Content    = (ConvertTo-Json @{ value = @($indicator) } -Depth 10)
+                    }
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -199,8 +223,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential             = $Credential;
                 }
 
-                Mock -CommandName Get-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
-                    return @{
+                Mock -CommandName Invoke-AzRestMethod -MockWith {
+                    $indicator = @{
                         name = '12345-12345-12345-12345-12345'
                         properties = @{
                             displayName            = 'MyIndicator'
@@ -212,20 +236,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             validUntil             = "2024-10-23T19:03:57.24Z"; #Drift
                         }
                     }
+                    if ($Uri -like '*/indicators/*')
+                    {
+                        return @{
+                            StatusCode = 200
+                            Content    = (ConvertTo-Json $indicator -Depth 10)
+                        }
+                    }
+                    return @{
+                        StatusCode = 200
+                        Content    = (ConvertTo-Json @{ value = @($indicator) } -Depth 10)
+                    }
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Set-M365DSCSentinelThreatIntelligenceIndicator -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'SentinelThreatIntelligenceIndicator' -Property $testParams).Set()
+                Should -Invoke -CommandName Invoke-AzRestMethod -ParameterFilter { $Method -eq 'PUT' } -Exactly 1
             }
         }
 
@@ -237,8 +272,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential  = $Credential;
                 }
 
-                Mock -CommandName Get-M365DSCSentinelThreatIntelligenceIndicator -MockWith {
-                    return @{
+                Mock -CommandName Invoke-AzRestMethod -MockWith {
+                    $indicator = @{
                         name = '12345-12345-12345-12345-12345'
                         properties = @{
                             displayName            = 'MyIndicator'
@@ -251,10 +286,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             source                 = 'Microsoft Sentinel'
                         }
                     }
+                    if ($Uri -like '*/indicators/*')
+                    {
+                        return @{
+                            StatusCode = 200
+                            Content    = (ConvertTo-Json $indicator -Depth 10)
+                        }
+                    }
+                    return @{
+                        StatusCode = 200
+                        Content    = (ConvertTo-Json @{ value = @($indicator) } -Depth 10)
+                    }
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SentinelThreatIntelligenceIndicator' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

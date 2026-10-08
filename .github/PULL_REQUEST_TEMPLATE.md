@@ -25,7 +25,7 @@
 - [ ] Added an entry to the change log under the Unreleased section of the file CHANGELOG.md.
       Entry should say what was changed and how that affects users (if applicable), and
       reference the issue being resolved (if applicable).
-- [ ] Resource parameter descriptions added/updated in the schema.mof.
+- [ ] Resource property descriptions added/updated on the `[DscProperty()]` declarations.
 - [ ] Resource documentation added/updated in README.md.
 - [ ] Resource settings.json file contains all required permissions.
 - [ ] Examples appropriately added/updated.

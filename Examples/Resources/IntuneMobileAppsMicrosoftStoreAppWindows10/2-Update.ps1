@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,9 +21,10 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        IntuneMobileAppsMicrosoftStoreAppWindows10 "IntuneMobileAppsMicrosoftStoreAppWindows10-PowerShell"
+        IntuneMobileAppsMicrosoftStoreAppWindows10 "IntuneMobileAppsMicrosoftStoreAppWindows10-Example"
         {
             Description           = "PowerShell Description";
             Developer             = "";
@@ -31,23 +33,28 @@ Configuration Example
             InstallExperience     = MSFT_MicrosoftGraphWinGetAppInstallExperience{
                 RunAsAccount = "system"
             };
-            IsFeatured            = $True; # Drift
+            IsFeatured            = $True; # Updated Property
             Notes                 = "";
             Owner                 = "";
             PackageIdentifier     = "9MZ1SNWT0N5D";
             PrivacyInformationUrl = "https://github.com/PowerShell/PowerShell#telemetry";
             Publisher             = "Microsoft Corporation";
-            Assignments          = @(
+            Assignments           = @(
                 MSFT_DeviceManagementWingetMobileAppAssignment {
-                    groupDisplayName = 'All devices'
+                    groupDisplayName                           = 'All devices'
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
-                    intent = 'required'
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                    intent                                     = 'required'
+                }
+                MSFT_DeviceManagementWingetMobileAppAssignment{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
+                    intent           = 'required'
                 }
             );
-            Categories             = @(
+            Categories            = @(
                 MSFT_DeviceManagementMobileAppCategory{
-                    Id = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
+                    Id          = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
                     DisplayName = "App Category 1"
                 }
             );

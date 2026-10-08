@@ -5,21 +5,33 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        SCRetentionEventType 'RetentionEventType'
+        SCRetentionEventType 'SCRetentionEventType-Example'
         {
-            Name       = "DemoEventType"
-            Comment    = "Demo event comment"
-            Ensure     = "Present"
-            Credential = $Credscredential
+            Name                  = "Employee Termination"
+            Comment               = "Starts retention when an employee leaves the company"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

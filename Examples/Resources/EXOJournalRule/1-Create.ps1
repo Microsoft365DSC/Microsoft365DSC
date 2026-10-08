@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,15 +22,16 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOJournalRule 'CreateJournalRule'
+        EXOJournalRule 'EXOJournalRule-Example'
         {
-            Enabled              = $True
-            JournalEmailAddress  = "AdeleV@$TenantId"
-            Name                 = "Send to Adele"
-            RuleScope            = "Global"
-            Ensure               = "Present"
+            Enabled               = $True
+            JournalEmailAddress   = "journal@archive.fabrikam.com"
+            Name                  = "Adele Vance Journal Archive"
+            Recipient             = "AdeleV@$TenantId"
+            RuleScope             = "Global"
+            Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

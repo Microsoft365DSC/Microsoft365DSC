@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,7 +33,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -93,16 +93,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                [boolean] $result = Test-TargetResource @testParams
+                [boolean] $result = (New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Test()
                 $result | Should -Be $false
             }
 
             It 'Should return False for the Ensure property from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Create the dial plan Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Set()
                 Should -Invoke -CommandName New-CsTenantDialPlan -Exactly 1
             }
         }
@@ -113,31 +113,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Identity           = 'Test'
                     Description        = 'TestDescription'
                     Ensure             = 'Present'
-                    NormalizationRules = [CimInstance[]]@(New-CimInstance -ClassName MSFT_TeamsVoiceNormalizationRule -Property @{
+                    NormalizationRules = @([MSFT_TeamsVoiceNormalizationRule] @{
                             Pattern             = '^01(\d+)$' # Drift
                             Description         = 'None'
                             Identity            = 'TestNotExisting'
                             Translation         = '+$1'
                             Priority            = 0
                             IsInternalExtension = $False
-                        } -ClientOnly;
+                        };
                     )
                     Credential         = $Credential
                 }
             }
 
             It 'Should return false from the Test method' {
-                [boolean] $result = Test-TargetResource @testParams
+                [boolean] $result = (New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Test()
                 $result | Should -Be $false
             }
 
             It 'Should return True for the Ensure property from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Updates in the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Set-CsTenantDialPlan -Exactly 4
+                (New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-CsTenantDialPlan -Exactly 2
             }
         }
 
@@ -147,33 +147,33 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Identity           = 'Test'
                     Description        = 'TestDescription'
                     Ensure             = 'Present'
-                    NormalizationRules = @(New-CimInstance -ClassName MSFT_TeamsVoiceNormalizationRule -Property @{
+                    NormalizationRules = @([MSFT_TeamsVoiceNormalizationRule] @{
                             Pattern             = '^00(\d+)$'
                             Description         = 'None'
                             Identity            = 'TestNotExisting'
                             Translation         = '+$1'
                             Priority            = 0
                             IsInternalExtension = $False
-                        } -ClientOnly;
-                        New-CimInstance -ClassName MSFT_TeamsVoiceNormalizationRule -Property @{
+                        };
+                        [MSFT_TeamsVoiceNormalizationRule] @{
                             Pattern             = '^00(\d+)$'
                             Description         = 'None'
                             Identity            = 'TestNotExisting2'
                             Translation         = '+$1'
                             Priority            = 0
                             IsInternalExtension = $False
-                        } -ClientOnly)
+                        })
                     Credential         = $Credential
                 }
             }
 
             It 'Should return true from the Test method' {
-                [boolean] $result = Test-TargetResource @testParams
+                [boolean] $result = (New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Test()
                 $result | Should -Be $true
             }
 
             It 'Should return True for the Ensure property from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -188,17 +188,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                [boolean] $result = Test-TargetResource @testParams
+                [boolean] $result = (New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Test()
                 $result | Should -Be $false
             }
 
             It 'Should return True for the Ensure property from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
 
             It 'Remove the dial plan in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsTenantDialPlan' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-CsTenantDialPlan -Exactly 1
             }
         }
@@ -213,7 +213,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsTenantDialPlan' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

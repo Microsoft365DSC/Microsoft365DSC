@@ -1,149 +1,171 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneRoleAssignmentWindows365'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneRoleAssignmentWindows365 : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String[]]
-        $AppScopeIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('Ids of the app specific scopes when the assignment scopes are app specific. The scopes of an assignment determine the set of resources for which the principal has access.')]
+    [System.String[]] $AppScopeIds
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of the role assignment.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String[]]
-        $DirectoryScopes,
+    [DscProperty()]
+    [System.ComponentModel.Description('Display Names of the groups that represent the scopes of the assignment.')]
+    [System.String[]] $DirectoryScopes
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Name of the role assignment. Required.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String[]]
-        $Principals,
+    [DscProperty()]
+    [System.ComponentModel.Description('Display name of the principals to which the assignment is granted.')]
+    [System.String[]] $Principals
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $RoleDefinition,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Display name of the IntuneRoleDefinitionWindows365 the assignment is for.')]
+    [System.String] $RoleDefinition
 
-        [Parameter()]
-        [System.String]
-        $Id,
-        #endregion
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for the Intune Role Assignment Windows365 with Id {$Id} and DisplayName {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [IntuneRoleAssignmentWindows365] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        $nullResult = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneRoleAssignmentWindows365]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for the Intune Role Assignment Windows365 with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-
-            #region resource generator code
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                $getValue = Get-MgBetaRoleManagementCloudPcRoleAssignment -UnifiedRoleAssignmentMultipleId $Id  -ErrorAction SilentlyContinue
-            }
+                $null = $this.Connect('MicrosoftGraph')
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Role Assignment Windows365 with Id {$Id}"
+                Confirm-M365DSCDependencies
 
-                if (-not [System.String]::IsNullOrEmpty($DisplayName))
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+
+                #region resource generator code
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    $getValue = Get-MgBetaRoleManagementCloudPcRoleAssignment `
-                        -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                        -ErrorAction SilentlyContinue
+                    $getValue = Get-MgBetaRoleManagementCloudPcRoleAssignment -UnifiedRoleAssignmentMultipleId $this.Id  -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Role Assignment Windows365 with Id {$($this.Id)}"
+
+                    if (-not [System.String]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        $getValue = Get-MgBetaRoleManagementCloudPcRoleAssignment -All `
+                            -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                            -ErrorAction SilentlyContinue
+                    }
+                }
+                #endregion
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Role Assignment Windows365 with DisplayName {$($this.DisplayName)}."
+                    return $this.AsResult($nullResult)
                 }
             }
-            #endregion
-            if ($null -eq $getValue)
+            else
             {
-                Write-Verbose -Message "Could not find an Intune Role Assignment Windows365 with DisplayName {$DisplayName}."
-                return $nullResult
+                $getValue = $this.ExportedInstance
             }
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Role Assignment Windows365 with Id {$Id} and DisplayName {$DisplayName} was found"
+            $resolvedId = $getValue.Id
+            Write-Verbose -Message "An Intune Role Assignment Windows365 with Id {$($resolvedId)} and DisplayName {$($this.DisplayName)} was found"
 
-        if ($getValue.DirectoryScopeIds -notcontains "0")
-        {
+            if ($getValue.DirectoryScopeIds -notcontains "0")
+            {
+                $batchRequests = @()
+                foreach ($directoryScopeId in $getValue.DirectoryScopeIds)
+                {
+                    $batchRequests += @{
+                        id      = $directoryScopeId
+                        method = 'GET'
+                        url    = "/groups/$($directoryScopeId)?`$select=id,displayName"
+                    }
+                }
+                $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
+                foreach ($response in $batchResponses)
+                {
+                    if ($response.status -ne 200)
+                    {
+                        Write-Warning -Message "The Directory Scope group with Id '$($response.id)' was not found for {$($this.DisplayName)}. It will be skipped for the current configuration."
+                    }
+                }
+                $groupDisplayNames = @($batchResponses.body.displayName | Sort-Object)
+            }
+            else
+            {
+                $groupDisplayNames = @("All Users")
+            }
+
             $batchRequests = @()
-            foreach ($directoryScopeId in $getValue.DirectoryScopeIds)
+            foreach ($principalId in $getValue.PrincipalIds)
             {
                 $batchRequests += @{
-                    id      = $directoryScopeId
+                    id      = $principalId
                     method = 'GET'
-                    url    = "/groups/$($directoryScopeId)?`$select=id,displayName"
+                    url    = "/groups/$($principalId)?`$select=id,displayName"
                 }
             }
             $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
@@ -151,517 +173,290 @@ function Get-TargetResource
             {
                 if ($response.status -ne 200)
                 {
-                    Write-Warning -Message "The Directory Scope group with Id '$($response.id)' was not found for {$DisplayName}. It will be skipped for the current configuration."
+                    Write-Warning -Message "The Principal group with Id '$($response.id)' was not found for {$($this.DisplayName)}. It will be skipped for the current configuration."
                 }
             }
-            $groupDisplayNames = @($batchResponses.body.displayName | Sort-Object)
-        }
-        else
-        {
-            $groupDisplayNames = @("All Users")
-        }
+            $principalDisplayNames = @($batchResponses.body.displayName | Sort-Object)
 
-        $batchRequests = @()
-        foreach ($principalId in $getValue.PrincipalIds)
-        {
-            $batchRequests += @{
-                id      = $principalId
-                method = 'GET'
-                url    = "/groups/$($principalId)?`$select=id,displayName"
-            }
-        }
-        $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
-        foreach ($response in $batchResponses)
-        {
-            if ($response.status -ne 200)
+            if ($null -eq $this.ResourceCache['RoleDefinitionsCache'])
             {
-                Write-Warning -Message "The Principal group with Id '$($response.id)' was not found for {$DisplayName}. It will be skipped for the current configuration."
+                $this.ResourceCache['RoleDefinitionsCache'] = @{}
             }
-        }
-        $principalDisplayNames = @($batchResponses.body.displayName | Sort-Object)
 
-        if ($null -eq $Script:RoleDefinitionsCache)
+            if (-not $this.ResourceCache['RoleDefinitionsCache'].ContainsKey($getValue.RoleDefinitionId))
+            {
+                $roleDef = Get-MgBetaRoleManagementCloudPcRoleDefinition -UnifiedRoleDefinitionId $getValue.RoleDefinitionId
+                $this.ResourceCache['RoleDefinitionsCache'].Add($getValue.RoleDefinitionId, $roleDef.DisplayName)
+            }
+            $roleDefinitionName = $this.ResourceCache['RoleDefinitionsCache'][$getValue.RoleDefinitionId]
+
+            $results = @{
+                #region resource generator code
+                AppScopeIds           = $getValue.AppScopeIds # RoleScopeTagIds
+                Description           = $getValue.Description
+                DirectoryScopes       = $groupDisplayNames
+                DisplayName           = $getValue.DisplayName
+                Principals            = $principalDisplayNames
+                RoleDefinition        = $roleDefinitionName
+                Id                    = $getValue.Id
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                #endregion
+            }
+
+            return $this.AsResult($results)
+        }
+        catch
         {
-            $Script:RoleDefinitionsCache = @{}
-        }
+            $this.LogError($_, 'Error retrieving data:')
 
-        if (-not $Script:RoleDefinitionsCache.ContainsKey($getValue.RoleDefinitionId))
+            return $this.AsResult($nullResult)
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            $roleDef = Get-MgBetaRoleManagementCloudPcRoleDefinition -UnifiedRoleDefinitionId $getValue.RoleDefinitionId
-            $Script:RoleDefinitionsCache.Add($getValue.RoleDefinitionId, $roleDef.DisplayName)
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
-        $roleDefinitionName = $Script:RoleDefinitionsCache[$getValue.RoleDefinitionId]
 
-        $results = @{
+        Write-Verbose -Message "Setting configuration of the Intune Role Assignment Windows365 with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($boundParameters.ContainsKey('RoleDefinition'))
+        {
+            $roleDef = Get-MgBetaRoleManagementCloudPcRoleDefinition -All -Filter "DisplayName eq '$($this.RoleDefinition -replace "'", "''")'" -ErrorAction Stop
+            if ($null -eq $roleDef)
+            {
+                throw "The IntuneRoleDefinitionWindows365 with name '$($this.RoleDefinition)' was not found for {$($this.DisplayName)}."
+            }
+            $boundParameters.RoleDefinitionId = $roleDef.Id
+            $boundParameters.Remove('RoleDefinition') | Out-Null
+        }
+
+        if ($boundParameters.ContainsKey('DirectoryScopes'))
+        {
+            $directoryScopeIds = @()
+            if ($this.DirectoryScopes -contains "All Users")
+            {
+                $directoryScopeIds += "0"
+            }
+            if ($this.DirectoryScopes.Count -gt 0 -and $this.DirectoryScopes -notcontains "All Users")
+            {
+                $batchRequests = @()
+                foreach ($name in $this.DirectoryScopes)
+                {
+                    $batchRequests += @{
+                        id     = $name
+                        method = 'GET'
+                        url    = "/groups?`$filter=displayName eq '$($name -replace "'", "''")'&`$select=id,displayName"
+                    }
+                }
+                $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
+
+                foreach ($resp in $batchResponses)
+                {
+                    if ($resp.status -ne 200 -or $null -eq $resp.body.value -or $resp.body.value.Count -eq 0)
+                    {
+                        throw "The Directory Scope group with name '$($resp.id)' was not found for {$($this.DisplayName)}."
+                    }
+                    $directoryScopeIds += $resp.body.value[0].id
+                }
+            }
+
+            $boundParameters.DirectoryScopeIds = $directoryScopeIds
+            $boundParameters.Remove('DirectoryScopes') | Out-Null
+        }
+
+        if ($boundParameters.ContainsKey('Principals'))
+        {
+            $principalIds = @()
+            if ($this.Principals.Count -gt 0)
+            {
+                $batchRequests = @()
+                foreach ($name in $this.Principals)
+                {
+                    $batchRequests += @{
+                        id     = $name
+                        method = 'GET'
+                        url    = "/groups?`$filter=displayName eq '$($name -replace "'", "''")'&`$select=id,displayName"
+                    }
+                }
+                $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
+
+                foreach ($resp in $batchResponses)
+                {
+                    if ($resp.status -ne 200 -or $null -eq $resp.body.value -or $resp.body.value.Count -eq 0)
+                    {
+                        throw "The Principal group with name '$($resp.id)' was not found for {$($this.DisplayName)}."
+                    }
+                    $principalIds += $resp.body.value[0].id
+                }
+            }
+
+            $boundParameters.PrincipalIds = $principalIds
+            $boundParameters.Remove('Principals') | Out-Null
+        }
+
+        $boundParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating an Intune Role Assignment Windows365 with DisplayName {$($this.DisplayName)}"
+
+            $createParameters = $boundParameters
+            $createParameters.Remove('Id') | Out-Null
+
             #region resource generator code
-            AppScopeIds           = $getValue.AppScopeIds # RoleScopeTagIds
-            Description           = $getValue.Description
-            DirectoryScopes       = $groupDisplayNames
-            DisplayName           = $getValue.DisplayName
-            Principals            = $principalDisplayNames
-            RoleDefinition        = $roleDefinitionName
-            Id                    = $getValue.Id
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
+            $policy = New-MgBetaRoleManagementCloudPcRoleAssignment -BodyParameter $createParameters
             #endregion
         }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        return $nullResult
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String[]]
-        $AppScopeIds,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.String[]]
-        $DirectoryScopes,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $Principals,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $RoleDefinition,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of the Intune Role Assignment Windows365 with Id {$Id} and DisplayName {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($boundParameters.ContainsKey('RoleDefinition'))
-    {
-        $roleDef = Get-MgBetaRoleManagementCloudPcRoleDefinition -Filter "DisplayName eq '$($RoleDefinition -replace "'", "''")'" -ErrorAction Stop
-        if ($null -eq $roleDef)
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            throw "The IntuneRoleDefinitionWindows365 with name '$RoleDefinition' was not found for {$DisplayName}."
+            Write-Verbose -Message "Updating the Intune Role Assignment Windows365 with Id {$($currentInstance.Id)}"
+
+            $updateParameters = $boundParameters
+            $updateParameters.Remove('Id') | Out-Null
+            $updateParameters.Remove('RoleDefinitionId') | Out-Null
+
+            #region resource generator code
+            Update-MgBetaRoleManagementCloudPcRoleAssignment `
+                -UnifiedRoleAssignmentMultipleId $currentInstance.Id `
+                -BodyParameter $updateParameters
+            #endregion
         }
-        $boundParameters.RoleDefinitionId = $roleDef.Id
-        $boundParameters.Remove('RoleDefinition') | Out-Null
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Intune Role Assignment Windows365 with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaRoleManagementCloudPcRoleAssignment -UnifiedRoleAssignmentMultipleId $currentInstance.Id
+            #endregion
+        }
     }
 
-    if ($boundParameters.ContainsKey('DirectoryScopes'))
+    [bool] Test()
     {
-        $directoryScopeIds = @()
-        if ($DirectoryScopes -contains "All Users")
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            $directoryScopeIds += "0"
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        if ($DirectoryScopes.Count -gt 0 -and $DirectoryScopes -notcontains "All Users")
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            $batchRequests = @()
-            foreach ($name in $DirectoryScopes)
+            #region resource generator code
+            [array]$getValue = Get-MgBetaRoleManagementCloudPcRoleAssignment `
+                -Filter $this.Filter `
+                -All `
+                -Top 50 `
+                -ErrorAction Stop
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Count -eq 0)
             {
-                $batchRequests += @{
-                    id     = $name
-                    method = 'GET'
-                    url    = "/groups?`$filter=displayName eq '$($name -replace "'", "''")'&`$select=id,displayName"
-                }
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-            $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
-
-            foreach ($resp in $batchResponses)
+            else
             {
-                if ($resp.status -ne 200 -or $null -eq $resp.body.value -or $resp.body.value.Count -eq 0)
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                $displayedKey = $config.Id
+                if (-not [System.String]::IsNullOrEmpty($config.displayName))
                 {
-                    throw "The Directory Scope group with name '$($resp.id)' was not found for {$DisplayName}."
+                    $displayedKey = $config.displayName
                 }
-                $directoryScopeIds += $resp.body.value[0].id
-            }
-        }
-
-        $boundParameters.DirectoryScopeIds = $directoryScopeIds
-        $boundParameters.Remove('DirectoryScopes') | Out-Null
-    }
-
-    if ($boundParameters.ContainsKey('Principals'))
-    {
-        $principalIds = @()
-        if ($Principals.Count -gt 0)
-        {
-            $batchRequests = @()
-            foreach ($name in $Principals)
-            {
-                $batchRequests += @{
-                    id     = $name
-                    method = 'GET'
-                    url    = "/groups?`$filter=displayName eq '$($name -replace "'", "''")'&`$select=id,displayName"
-                }
-            }
-            $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
-
-            foreach ($resp in $batchResponses)
-            {
-                if ($resp.status -ne 200 -or $null -eq $resp.body.value -or $resp.body.value.Count -eq 0)
+                elseif (-not [System.String]::IsNullOrEmpty($config.name))
                 {
-                    throw "The Principal group with name '$($resp.id)' was not found for {$DisplayName}."
+                    $displayedKey = $config.name
                 }
-                $principalIds += $resp.body.value[0].id
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.DisplayName
+                    RoleDefinition        = $config.RoleDefinitionId
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [IntuneRoleAssignmentWindows365] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneRoleAssignmentWindows365])
+        {
+            return $Values
         }
 
-        $boundParameters.PrincipalIds = $principalIds
-        $boundParameters.Remove('Principals') | Out-Null
-    }
+        $result = [IntuneRoleAssignmentWindows365]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
 
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Role Assignment Windows365 with DisplayName {$DisplayName}"
-
-        $createParameters = ([Hashtable]$boundParameters).Clone()
-        $createParameters = Rename-M365DSCCimInstanceParameter -Properties $createParameters
-        $createParameters.Remove('Id') | Out-Null
-
-        #region resource generator code
-        $policy = New-MgBetaRoleManagementCloudPcRoleAssignment -BodyParameter $createParameters
-        #endregion
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Intune Role Assignment Windows365 with Id {$($currentInstance.Id)}"
-
-        $updateParameters = ([Hashtable]$boundParameters).Clone()
-        $updateParameters = Rename-M365DSCCimInstanceParameter -Properties $updateParameters
-        $updateParameters.Remove('Id') | Out-Null
-        $updateParameters.Remove('RoleDefinitionId') | Out-Null
-
-        #region resource generator code
-        Update-MgBetaRoleManagementCloudPcRoleAssignment `
-            -UnifiedRoleAssignmentMultipleId $currentInstance.Id `
-            -BodyParameter $updateParameters
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Intune Role Assignment Windows365 with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaRoleManagementCloudPcRoleAssignment -UnifiedRoleAssignmentMultipleId $currentInstance.Id
-        #endregion
+        return $result
     }
 }
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String[]]
-        $AppScopeIds,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.String[]]
-        $DirectoryScopes,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $Principals,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $RoleDefinition,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-                                         -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        [array]$getValue = Get-MgBetaRoleManagementCloudPcRoleAssignment `
-            -Filter $Filter `
-            -All `
-            -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Count -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            $displayedKey = $config.Id
-            if (-not [System.String]::IsNullOrEmpty($config.displayName))
-            {
-                $displayedKey = $config.displayName
-            }
-            elseif (-not [System.String]::IsNullOrEmpty($config.name))
-            {
-                $displayedKey = $config.name
-            }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                RoleDefinition        = $config.RoleDefinitionId
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $rawResults = $Results.Clone()
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
-
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

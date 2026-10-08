@@ -1,5 +1,16 @@
 {
   "resourceName": "AADAuthenticationMethodPolicyQRCodeImage",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "authenticationMethodConfiguration",
+    "odataSubtype": "qrCodePinAuthenticationMethodConfiguration",
+    "cmdletNoun": "MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Azure AD Authentication Method Policy QR Code Image.",
   "roles": {
     "read": [
@@ -17,7 +28,7 @@
             "name": "Policy.Read.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -25,7 +36,7 @@
             "name": "Policy.ReadWrite.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       },
@@ -35,7 +46,7 @@
             "name": "Policy.Read.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -43,7 +54,7 @@
             "name": "Policy.ReadWrite.AuthenticationMethod"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       }
@@ -61,14 +72,9 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.Identity.SignIns",
       "cmdlets": [
+        "Get-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration",
         "Remove-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration",
         "Update-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration"
       ]

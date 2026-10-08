@@ -1,1136 +1,582 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOHostedContentFilterPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOHostedContentFilterPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Identity parameter specifies the name of the Hosted Content Filter Policy that you want to modify.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $AddXHeaderValue,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AddXHeaderValue parameter specifies the X-header value to add to spam messages when an action parameter is set to the value AddXHeader.')]
+    [System.String] $AddXHeaderValue
 
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AdminDisplayName parameter specifies a description for the policy.')]
+    [System.String] $AdminDisplayName
 
-        [Parameter()]
-        [System.String[]]
-        $AllowedSenderDomains = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The AllowedSenderDomains parameter specifies trusted domains that aren''t processed by the spam filter.')]
+    [System.String[]] $AllowedSenderDomains
 
-        [Parameter()]
-        [System.String[]]
-        $AllowedSenders = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The AllowedSenders parameter specifies a list of trusted senders that aren''t processed by the spam filter.')]
+    [System.String[]] $AllowedSenders
 
-        [Parameter()]
-        [System.String[]]
-        $BlockedSenderDomains = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The BlockedSenderDomains parameter specifies domains that are always marked as spam sources.')]
+    [System.String[]] $BlockedSenderDomains
 
-        [Parameter()]
-        [System.String[]]
-        $BlockedSenders = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The BlockedSenders parameter specifies senders that are always marked as spam sources.')]
+    [System.String[]] $BlockedSenders
 
-        [Parameter()]
-        [System.String]
-        $BulkQuarantineTag,
+    [DscProperty()]
+    [System.ComponentModel.Description('The BulkQuarantineTag parameter specifies the quarantine policy that''s used on messages that are quarantined as bulk email.')]
+    [System.String] $BulkQuarantineTag
 
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $BulkSpamAction = 'MoveToJmf',
+    [DscProperty()]
+    [System.ComponentModel.Description('The BulkSpamAction parameter specifies the action to take on messages that are classified as bulk email.')]
+    [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
+    [System.String] $BulkSpamAction
 
-        [Parameter()]
-        [ValidateRange(1, 9)]
-        [uint32]
-        $BulkThreshold = 7,
+    [DscProperty()]
+    [System.ComponentModel.Description('The BulkThreshold parameter specifies the Bulk Complaint Level (BCL) threshold setting. Valid values are from 1 - 9, where 1 marks most bulk email as spam, and 9 allows the most bulk email to be delivered. The default value is 7.')]
+    [ValidateRange(1, 9)]
+    [System.Nullable[System.UInt32]] $BulkThreshold
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableLanguageBlockList = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EnableLanguageBlockList parameter enables or disables blocking email messages that are written in specific languages, regardless of the message contents. Valid input for this parameter is $true or $false. The default value is $false.')]
+    [System.Nullable[System.Boolean]] $EnableLanguageBlockList
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableRegionBlockList = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EnableRegionBlockList parameter enables or disables blocking email messages that are sent from specific countries or regions, regardless of the message contents. Valid input for this parameter is $true or $false. The default value is $false.')]
+    [System.Nullable[System.Boolean]] $EnableRegionBlockList
 
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'Redirect', 'Quarantine')]
-        [System.String]
-        $HighConfidencePhishAction = 'Quarantine',
+    [DscProperty()]
+    [System.ComponentModel.Description('The HighConfidencePhishAction parameter specifies the action to take on messages that are marked as high confidence phishing')]
+    [ValidateSet('MoveToJmf', 'Redirect', 'Quarantine')]
+    [System.String] $HighConfidencePhishAction
 
-        [Parameter()]
-        [System.String]
-        $HighConfidencePhishQuarantineTag,
+    [DscProperty()]
+    [System.ComponentModel.Description('The HighConfidencePhishQuarantineTag parameter specifies the quarantine policy that''s used on messages that are quarantined as high confidence phishing.')]
+    [System.String] $HighConfidencePhishQuarantineTag
 
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $HighConfidenceSpamAction = 'MoveToJmf',
+    [DscProperty()]
+    [System.ComponentModel.Description('The HighConfidenceSpamAction parameter specifies the action to take on messages that are classified as high confidence spam.')]
+    [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
+    [System.String] $HighConfidenceSpamAction
 
-        [Parameter()]
-        [System.String]
-        $HighConfidenceSpamQuarantineTag,
+    [DscProperty()]
+    [System.ComponentModel.Description('The HighConfidenceSpamQuarantineTag parameter specifies the quarantine policy that''s used on messages that are quarantined as high confidence spam.')]
+    [System.String] $HighConfidenceSpamQuarantineTag
 
-        [Parameter()]
-        [System.Boolean]
-        $InlineSafetyTipsEnabled = $true,
+    [DscProperty()]
+    [System.ComponentModel.Description('The IncreaseScoreWithBizOrInfoUrls parameter increases the spam score of messages that contain links to .biz or .info domains. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $IncreaseScoreWithBizOrInfoUrls
 
-        [Parameter()]
-        [ValidateSet('Default', 'HighConfidencePhish', 'Phish', 'HighConfidenceSpam', 'Spam', 'Disabled')]
-        [System.String]
-        $IntraOrgFilterState = 'Default',
+    [DscProperty()]
+    [System.ComponentModel.Description('The IncreaseScoreWithImageLinks parameter increases the spam score of messages that contain image links to remote websites. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $IncreaseScoreWithImageLinks
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithBizOrInfoUrls = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The IncreaseScoreWithNumericIps parameter increases the spam score of messages that contain links to IP addresses. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $IncreaseScoreWithNumericIps
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithImageLinks = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The IncreaseScoreWithRedirectToOtherPort parameter increases the spam score of messages that contain links that redirect to other TCP ports. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $IncreaseScoreWithRedirectToOtherPort
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithNumericIps = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The InlineSafetyTipsEnabled parameter specifies whether to enable or disable safety tips that are shown to recipients in messages. The default is $true')]
+    [System.Nullable[System.Boolean]] $InlineSafetyTipsEnabled
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithRedirectToOtherPort = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The IntraOrgFilterState parameter specifies whether to enable anti-spam filtering for messages sent between internal users (users in the same organization).')]
+    [ValidateSet('Default', 'HighConfidencePhish', 'Phish', 'HighConfidenceSpam', 'Spam', 'Disabled')]
+    [System.String] $IntraOrgFilterState
 
-        [Parameter()]
-        [System.String[]]
-        $LanguageBlockList = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The LanguageBlockList parameter specifies the languages to block when messages are blocked based on their language. Valid input for this parameter is a supported ISO 639-1 lowercase two-letter language code. You can specify multiple values separated by commas. This parameter is only use when the EnableRegionBlockList parameter is set to $true.')]
+    [System.String[]] $LanguageBlockList
 
-        [Parameter()]
-        [System.Boolean]
-        $MakeDefault = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The MakeDefault parameter makes the specified content filter policy the default content filter policy. The default value is $false')]
+    [System.Nullable[System.Boolean]] $MakeDefault
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamBulkMail = 'On',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamBulkMail parameter classifies the message as spam when the message is identified as a bulk email message. Valid values for this parameter are Off, On or Test. The default value is On.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamBulkMail
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamEmbedTagsInHtml = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamEmbedTagsInHtml parameter classifies the message as spam when the message contains HTML <embed> tags. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamEmbedTagsInHtml
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamEmptyMessages = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamEmptyMessages parameter classifies the message as spam when the message is empty. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamEmptyMessages
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFormTagsInHtml = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamFormTagsInHtml parameter classifies the message as spam when the message contains HTML <form> tags. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamFormTagsInHtml
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFramesInHtml = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamFramesInHtml parameter classifies the message as spam when the message contains HTML <frame> or <iframe> tags. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamFramesInHtml
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFromAddressAuthFail = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamFromAddressAuthFail parameter classifies the message as spam when Sender ID filtering encounters a hard fail. Valid values for this parameter are Off or On. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamFromAddressAuthFail
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamJavaScriptInHtml = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamJavaScriptInHtml parameter classifies the message as spam when the message contains JavaScript or VBScript. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamJavaScriptInHtml
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamNdrBackscatter = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamNdrBackscatter parameter classifies the message as spam when the message is a non-delivery report (NDR) to a forged sender. Valid values for this parameter are Off or On. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamNdrBackscatter
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamObjectTagsInHtml = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamObjectTagsInHtml parameter classifies the message as spam when the message contains HTML <object> tags. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamObjectTagsInHtml
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamSensitiveWordList = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamSensitiveWordList parameter classifies the message as spam when the message contains words from the sensitive words list. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamSensitiveWordList
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamSpfRecordHardFail = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamSpfRecordHardFail parameter classifies the message as spam when Sender Policy Framework (SPF) record checking encounters a hard fail. Valid values for this parameter are Off or On. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamSpfRecordHardFail
 
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamWebBugsInHtml = 'Off',
+    [DscProperty()]
+    [System.ComponentModel.Description('The MarkAsSpamWebBugsInHtml parameter classifies the message as spam when the message contains web bugs. Valid values for this parameter are Off, On or Test. The default value is Off.')]
+    [ValidateSet('Off', 'On', 'Test')]
+    [System.String] $MarkAsSpamWebBugsInHtml
 
-        [Parameter()]
-        [System.String]
-        $ModifySubjectValue,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ModifySubjectValue parameter specifies the text to prepend to the existing subject of spam messages when an action parameter is set to the value ModifySubject.')]
+    [System.String] $ModifySubjectValue
 
-        [Parameter()]
-        [System.String]
-        $PhishQuarantineTag,
+    [DscProperty()]
+    [System.ComponentModel.Description('The PhishSpamAction parameter specifies the action to take on messages that are classified as phishing')]
+    [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
+    [System.String] $PhishSpamAction
 
-        [Parameter()]
-        [System.String]
-        $SpamQuarantineTag,
+    [DscProperty()]
+    [System.ComponentModel.Description('The PhishQuarantineTag parameter specifies the quarantine policy that''s used on messages that are quarantined as phishing.')]
+    [System.String] $PhishQuarantineTag
 
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $PhishSpamAction = 'MoveToJmf',
+    [DscProperty()]
+    [System.ComponentModel.Description('The SpamQuarantineTag parameter specifies the quarantine policy that''s used on messages that are quarantined as spam.')]
+    [System.String] $SpamQuarantineTag
 
-        [Parameter()]
-        [ValidateRange(1, 30)]
-        [uint32]
-        $QuarantineRetentionPeriod = 15,
+    [DscProperty()]
+    [System.ComponentModel.Description('The QuarantineRetentionPeriod parameter specifies the length of time in days that spam messages remain in the quarantine. Valid input for this parameter is an integer between 1 and 30. The default value is 15.')]
+    [ValidateRange(1, 30)]
+    [System.Nullable[System.UInt32]] $QuarantineRetentionPeriod
 
-        [Parameter()]
-        [System.String[]]
-        $RedirectToRecipients = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The RedirectToRecipients parameter specifies the replacement recipients in spam messages when an action parameter is set to the value Redirect. The action parameters that use the value of RedirectToRecipients are BulkSpamAction, HighConfidencePhishAction, HighConfidenceSpamAction, PhishSpamAction and SpamAction.')]
+    [System.String[]] $RedirectToRecipients
 
-        [Parameter()]
-        [System.String[]]
-        $RegionBlockList = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The RegionBlockList parameter specifies the region to block when messages are blocked based on their source region. Valid input for this parameter is a supported ISO 3166-1 uppercase two-letter country code. You can specify multiple values separated by commas. This parameter is only used when the EnableRegionBlockList parameter is set to $true.')]
+    [System.String[]] $RegionBlockList
 
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $SpamAction = 'MoveToJmf',
+    [DscProperty()]
+    [System.ComponentModel.Description('The SpamAction parameter specifies the action to take on messages that are classified as spam (not high confidence spam, bulk email, or phishing). ')]
+    [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
+    [System.String] $SpamAction
 
-        [Parameter()]
-        [ValidateSet('None', 'AddXHeader', 'BccMessage')]
-        [System.String]
-        $TestModeAction = 'None',
+    [DscProperty()]
+    [System.ComponentModel.Description('The TestModeAction parameter specifies the additional action to take on messages that match any of the IncreaseScoreWith or MarkAsSpam parameters that are set to the value Test. ')]
+    [ValidateSet('None', 'AddXHeader', 'BccMessage')]
+    [System.String] $TestModeAction
 
-        [Parameter()]
-        [System.String[]]
-        $TestModeBccToRecipients = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The TestModeBccToRecipients parameter specifies the blind carbon copy recipients to add to spam messages when the TestModeAction action parameter is set to the value BccMessage.')]
+    [System.String[]] $TestModeBccToRecipients
 
-        [Parameter()]
-        [System.Boolean]
-        $PhishZapEnabled = $true,
+    [DscProperty()]
+    [System.ComponentModel.Description('The PhishZapEnabled parameter enables or disables zero-hour auto purge (ZAP) to detect phishing messages in delivered messages in Exchange Online mailboxes.')]
+    [System.Nullable[System.Boolean]] $PhishZapEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $SpamZapEnabled = $true,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SpamZapEnabled parameter enables or disables zero-hour auto purge (ZAP) to detect spam in delivered messages in Exchange Online mailboxes.')]
+    [System.Nullable[System.Boolean]] $SpamZapEnabled
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if this policy should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of HostedContentFilterPolicy for $Identity"
-
-    try
+    [EXOHostedContentFilterPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOHostedContentFilterPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of HostedContentFilterPolicy for $($this.Identity)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $HostedContentFilterPolicy = Get-HostedContentFilterPolicy -Identity $Identity -ErrorAction SilentlyContinue
-            if ($null -eq $HostedContentFilterPolicy)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                Write-Verbose -Message "HostedContentFilterPolicy $($Identity) does not exist."
-                return $nullReturn
+                $null = $this.Connect('ExchangeOnline')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $HostedContentFilterPolicy = Get-HostedContentFilterPolicy -Identity $this.Identity -ErrorAction SilentlyContinue
+                if ($null -eq $HostedContentFilterPolicy)
+                {
+                    Write-Verbose -Message "HostedContentFilterPolicy $($this.Identity) does not exist."
+                    return $this.AsResult($nullReturn)
+                }
+            }
+            else
+            {
+                $HostedContentFilterPolicy = $this.ExportedInstance
+            }
+
+            [System.String[]]$AllowedSendersValues = $HostedContentFilterPolicy.AllowedSenders
+            [System.String[]]$BlockedSendersValues = $HostedContentFilterPolicy.BlockedSenders
+            # Check if the values are null and assign them an empty string array if they are
+            if ($null -eq $AllowedSendersValues)
+            {
+                $AllowedSendersValues = @()
+            }
+            if ($null -eq $BlockedSendersValues)
+            {
+                $BlockedSendersValues = @()
+            }
+
+            [System.String[]]$AllowedSenderDomainsValues = $HostedContentFilterPolicy.AllowedSenderDomains
+            [System.String[]]$BlockedSenderDomainsValues = $HostedContentFilterPolicy.BlockedSenderDomains
+            # Check if the values are null and assign them an empty string array if they are
+            if ($null -eq $AllowedSenderDomainsValues)
+            {
+                $AllowedSenderDomainsValues = @()
+            }
+            if ($null -eq $BlockedSenderDomainsValues)
+            {
+                $BlockedSenderDomainsValues = @()
+            }
+
+            Write-Verbose -Message "Found HostedContentFilterPolicy $($this.Identity)"
+
+            $result = @{
+                Ensure                               = 'Present'
+                Identity                             = $this.Identity
+                AddXHeaderValue                      = $HostedContentFilterPolicy.AddXHeaderValue
+                AdminDisplayName                     = $HostedContentFilterPolicy.AdminDisplayName
+                AllowedSenderDomains                 = $AllowedSenderDomainsValues
+                AllowedSenders                       = $AllowedSendersValues
+                BlockedSenderDomains                 = $BlockedSenderDomainsValues
+                BlockedSenders                       = $BlockedSendersValues
+                BulkQuarantineTag                    = $HostedContentFilterPolicy.BulkQuarantineTag
+                BulkSpamAction                       = $HostedContentFilterPolicy.BulkSpamAction
+                BulkThreshold                        = $HostedContentFilterPolicy.BulkThreshold
+                EnableLanguageBlockList              = $HostedContentFilterPolicy.EnableLanguageBlockList
+                EnableRegionBlockList                = $HostedContentFilterPolicy.EnableRegionBlockList
+                HighConfidencePhishAction            = $HostedContentFilterPolicy.HighConfidencePhishAction
+                HighConfidencePhishQuarantineTag     = $HostedContentFilterPolicy.HighConfidencePhishQuarantineTag
+                HighConfidenceSpamAction             = $HostedContentFilterPolicy.HighConfidenceSpamAction
+                HighConfidenceSpamQuarantineTag      = $HostedContentFilterPolicy.HighConfidenceSpamQuarantineTag
+                InlineSafetyTipsEnabled              = $HostedContentFilterPolicy.InlineSafetyTipsEnabled
+                IntraOrgFilterState                  = $HostedContentFilterPolicy.IntraOrgFilterState
+                IncreaseScoreWithBizOrInfoUrls       = $HostedContentFilterPolicy.IncreaseScoreWithBizOrInfoUrls
+                IncreaseScoreWithImageLinks          = $HostedContentFilterPolicy.IncreaseScoreWithImageLinks
+                IncreaseScoreWithNumericIps          = $HostedContentFilterPolicy.IncreaseScoreWithNumericIps
+                IncreaseScoreWithRedirectToOtherPort = $HostedContentFilterPolicy.IncreaseScoreWithRedirectToOtherPort
+                LanguageBlockList                    = $HostedContentFilterPolicy.LanguageBlockList
+                MakeDefault                          = $HostedContentFilterPolicy.IsDefault
+                MarkAsSpamBulkMail                   = $HostedContentFilterPolicy.MarkAsSpamBulkMail
+                MarkAsSpamEmbedTagsInHtml            = $HostedContentFilterPolicy.MarkAsSpamEmbedTagsInHtml
+                MarkAsSpamEmptyMessages              = $HostedContentFilterPolicy.MarkAsSpamEmptyMessages
+                MarkAsSpamFormTagsInHtml             = $HostedContentFilterPolicy.MarkAsSpamFormTagsInHtml
+                MarkAsSpamFramesInHtml               = $HostedContentFilterPolicy.MarkAsSpamFramesInHtml
+                MarkAsSpamFromAddressAuthFail        = $HostedContentFilterPolicy.MarkAsSpamFromAddressAuthFail
+                MarkAsSpamJavaScriptInHtml           = $HostedContentFilterPolicy.MarkAsSpamJavaScriptInHtml
+                MarkAsSpamNdrBackscatter             = $HostedContentFilterPolicy.MarkAsSpamNdrBackscatter
+                MarkAsSpamObjectTagsInHtml           = $HostedContentFilterPolicy.MarkAsSpamObjectTagsInHtml
+                MarkAsSpamSensitiveWordList          = $HostedContentFilterPolicy.MarkAsSpamSensitiveWordList
+                MarkAsSpamSpfRecordHardFail          = $HostedContentFilterPolicy.MarkAsSpamSpfRecordHardFail
+                MarkAsSpamWebBugsInHtml              = $HostedContentFilterPolicy.MarkAsSpamWebBugsInHtml
+                ModifySubjectValue                   = $HostedContentFilterPolicy.ModifySubjectValue
+                PhishSpamAction                      = $HostedContentFilterPolicy.PhishSpamAction
+                PhishQuarantineTag                   = $HostedContentFilterPolicy.PhishQuarantineTag
+                SpamQuarantineTag                    = $HostedContentFilterPolicy.SpamQuarantineTag
+                QuarantineRetentionPeriod            = $HostedContentFilterPolicy.QuarantineRetentionPeriod
+                RedirectToRecipients                 = $HostedContentFilterPolicy.RedirectToRecipients
+                RegionBlockList                      = $HostedContentFilterPolicy.RegionBlockList
+                SpamAction                           = $HostedContentFilterPolicy.SpamAction
+                TestModeAction                       = $HostedContentFilterPolicy.TestModeAction
+                TestModeBccToRecipients              = $HostedContentFilterPolicy.TestModeBccToRecipients
+                PhishZapEnabled                      = $HostedContentFilterPolicy.PhishZapEnabled
+                SpamZapEnabled                       = $HostedContentFilterPolicy.SpamZapEnabled
+                Credential                           = $this.Credential
+                ApplicationId                        = $this.ApplicationId
+                CertificateThumbprint                = $this.CertificateThumbprint
+                CertificatePath                      = $this.CertificatePath
+                CertificatePassword                  = $this.CertificatePassword
+                ManagedIdentity                      = $this.ManagedIdentity
+                TenantId                             = $this.TenantId
+                AccessTokens                         = $this.AccessTokens
+            }
+
+            if ($HostedContentFilterPolicy.IsDefault)
+            {
+                $result.MakeDefault = $true
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of HostedContentFilterPolicy for $($this.Identity)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $null = $this.Connect('ExchangeOnline')
+
+        Write-Verbose (Get-HostedContentFilterPolicy | Out-String)
+        $HostedContentFilterPolicy = Get-HostedContentFilterPolicy -Identity $this.Identity -ErrorAction SilentlyContinue
+        $HostedContentFilterPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.IntraOrgFilterState -eq 'Default')
+        {
+            $HostedContentFilterPolicyParams.IntraOrgFilterState = 'HighConfidencePhish'
+        }
+
+        if ($this.Ensure -eq 'Present' -and $null -eq $HostedContentFilterPolicy)
+        {
+            $HostedContentFilterPolicyParams += @{
+                Name = $HostedContentFilterPolicyParams.Identity
+            }
+            $HostedContentFilterPolicyParams.Remove('Identity') | Out-Null
+            $HostedContentFilterPolicyParams.Remove('MakeDefault') | Out-Null
+            Write-Verbose -Message "Creating HostedContentFilterPolicy $($this.Identity) with values: $(Convert-M365DscHashtableToString -Hashtable $HostedContentFilterPolicyParams)"
+            New-HostedContentFilterPolicy @HostedContentFilterPolicyParams
+            if ($this.GetBoundParameters().MakeDefault)
+            {
+                Write-Verbose -Message 'Updating Policy as default'
+                $attempt = 1
+                while ($true)
+                {
+                    try
+                    {
+                        Set-HostedContentFilterPolicy -Identity $this.Identity -MakeDefault -Confirm:$false -ErrorAction Stop
+                        break
+                    }
+                    catch
+                    {
+                        if ($attempt -ge 5 -or -not (Test-M365DSCNotFoundError -ErrorRecord $_))
+                        {
+                            throw
+                        }
+
+                        $attempt++
+                        Start-Sleep -Seconds 5
+                    }
+                }
             }
         }
-        else
+        elseif ($this.Ensure -eq 'Present' -and $null -ne $HostedContentFilterPolicy)
         {
-            $HostedContentFilterPolicy = $Script:exportedInstance
+            Write-Verbose -Message "Setting HostedContentFilterPolicy $($this.Identity) with values: $(Convert-M365DscHashtableToString -Hashtable $HostedContentFilterPolicyParams)."
+            if ($this.GetBoundParameters().MakeDefault)
+            {
+                Write-Verbose -Message 'Updating Policy as default'
+                $HostedContentFilterPolicyParams.Remove('MakeDefault') | Out-Null
+                Set-HostedContentFilterPolicy @HostedContentFilterPolicyParams -MakeDefault -Confirm:$false
+            }
+            else
+            {
+                Set-HostedContentFilterPolicy @HostedContentFilterPolicyParams -Confirm:$false
+            }
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $null -ne $HostedContentFilterPolicy)
+        {
+            Write-Verbose -Message "Removing HostedContentFilterPolicy $($this.Identity) "
+            Remove-HostedContentFilterPolicy -Identity $this.Identity -Confirm:$false
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        [System.String[]]$AllowedSendersValues = $HostedContentFilterPolicy.AllowedSenders
-        [System.String[]]$BlockedSendersValues = $HostedContentFilterPolicy.BlockedSenders
-        # Check if the values are null and assign them an empty string array if they are
-        if ($null -eq $AllowedSendersValues)
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            $AllowedSendersValues = @()
+            [array]$HostedContentFilterPolicies = Get-HostedContentFilterPolicy -ErrorAction Stop
+            $dscContent = [System.Text.StringBuilder]::new()
+
+            if ($HostedContentFilterPolicies.Count -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            $i = 1
+            foreach ($HostedContentFilterPolicy in $HostedContentFilterPolicies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $Params = @{
+                    Credential            = $this.Credential
+                    Identity              = $HostedContentFilterPolicy.Identity
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    CertificatePath       = $this.CertificatePath
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $HostedContentFilterPolicy
+                Write-M365DSCHost -Message "    |---[$i/$($HostedContentFilterPolicies.Length)] $($HostedContentFilterPolicy.Identity)" -DeferWrite
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
         }
-        if ($null -eq $BlockedSendersValues)
+        catch
         {
-            $BlockedSendersValues = @()
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            PostProcessing = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
+                if ($CurrentValues.IntraOrgFilterState -ne $DesiredValues.IntraOrgFilterState -and $DesiredValues.IntraOrgFilterState -eq 'Default')
+                {
+                    $ValuesToCheck.IntraOrgFilterState = 'HighConfidencePhish'
+                }
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+            }
+        }
+    }
+
+    hidden [EXOHostedContentFilterPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOHostedContentFilterPolicy])
+        {
+            return $Values
         }
 
-        [System.String[]]$AllowedSenderDomains = $HostedContentFilterPolicy.AllowedSenderDomains
-        [System.String[]]$BlockedSenderDomains = $HostedContentFilterPolicy.BlockedSenderDomains
-        # Check if the values are null and assign them an empty string array if they are
-        if ($null -eq $AllowedSenderDomains)
+        $result = [EXOHostedContentFilterPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
         {
-            $AllowedSenderDomains = @()
-        }
-        if ($null -eq $BlockedSenderDomains)
-        {
-            $BlockedSenderDomains = @()
-        }
-
-        Write-Verbose -Message "Found HostedContentFilterPolicy $($Identity)"
-
-        $result = @{
-            Ensure                               = 'Present'
-            Identity                             = $Identity
-            AddXHeaderValue                      = $HostedContentFilterPolicy.AddXHeaderValue
-            AdminDisplayName                     = $HostedContentFilterPolicy.AdminDisplayName
-            AllowedSenderDomains                 = $AllowedSenderDomains
-            AllowedSenders                       = $AllowedSendersValues
-            BlockedSenderDomains                 = $BlockedSenderDomains
-            BlockedSenders                       = $BlockedSendersValues
-            BulkQuarantineTag                    = $HostedContentFilterPolicy.BulkQuarantineTag
-            BulkSpamAction                       = $HostedContentFilterPolicy.BulkSpamAction
-            BulkThreshold                        = $HostedContentFilterPolicy.BulkThreshold
-            EnableLanguageBlockList              = $HostedContentFilterPolicy.EnableLanguageBlockList
-            EnableRegionBlockList                = $HostedContentFilterPolicy.EnableRegionBlockList
-            HighConfidencePhishAction            = $HostedContentFilterPolicy.HighConfidencePhishAction
-            HighConfidencePhishQuarantineTag     = $HostedContentFilterPolicy.HighConfidencePhishQuarantineTag
-            HighConfidenceSpamAction             = $HostedContentFilterPolicy.HighConfidenceSpamAction
-            HighConfidenceSpamQuarantineTag      = $HostedContentFilterPolicy.HighConfidenceSpamQuarantineTag
-            InlineSafetyTipsEnabled              = $HostedContentFilterPolicy.InlineSafetyTipsEnabled
-            IntraOrgFilterState                  = $HostedContentFilterPolicy.IntraOrgFilterState
-            IncreaseScoreWithBizOrInfoUrls       = $HostedContentFilterPolicy.IncreaseScoreWithBizOrInfoUrls
-            IncreaseScoreWithImageLinks          = $HostedContentFilterPolicy.IncreaseScoreWithImageLinks
-            IncreaseScoreWithNumericIps          = $HostedContentFilterPolicy.IncreaseScoreWithNumericIps
-            IncreaseScoreWithRedirectToOtherPort = $HostedContentFilterPolicy.IncreaseScoreWithRedirectToOtherPort
-            LanguageBlockList                    = $HostedContentFilterPolicy.LanguageBlockList
-            MakeDefault                          = $HostedContentFilterPolicy.IsDefault
-            MarkAsSpamBulkMail                   = $HostedContentFilterPolicy.MarkAsSpamBulkMail
-            MarkAsSpamEmbedTagsInHtml            = $HostedContentFilterPolicy.MarkAsSpamEmbedTagsInHtml
-            MarkAsSpamEmptyMessages              = $HostedContentFilterPolicy.MarkAsSpamEmptyMessages
-            MarkAsSpamFormTagsInHtml             = $HostedContentFilterPolicy.MarkAsSpamFormTagsInHtml
-            MarkAsSpamFramesInHtml               = $HostedContentFilterPolicy.MarkAsSpamFramesInHtml
-            MarkAsSpamFromAddressAuthFail        = $HostedContentFilterPolicy.MarkAsSpamFromAddressAuthFail
-            MarkAsSpamJavaScriptInHtml           = $HostedContentFilterPolicy.MarkAsSpamJavaScriptInHtml
-            MarkAsSpamNdrBackscatter             = $HostedContentFilterPolicy.MarkAsSpamNdrBackscatter
-            MarkAsSpamObjectTagsInHtml           = $HostedContentFilterPolicy.MarkAsSpamObjectTagsInHtml
-            MarkAsSpamSensitiveWordList          = $HostedContentFilterPolicy.MarkAsSpamSensitiveWordList
-            MarkAsSpamSpfRecordHardFail          = $HostedContentFilterPolicy.MarkAsSpamSpfRecordHardFail
-            MarkAsSpamWebBugsInHtml              = $HostedContentFilterPolicy.MarkAsSpamWebBugsInHtml
-            ModifySubjectValue                   = $HostedContentFilterPolicy.ModifySubjectValue
-            PhishSpamAction                      = $HostedContentFilterPolicy.PhishSpamAction
-            PhishQuarantineTag                   = $HostedContentFilterPolicy.PhishQuarantineTag
-            SpamQuarantineTag                    = $HostedContentFilterPolicy.SpamQuarantineTag
-            QuarantineRetentionPeriod            = $HostedContentFilterPolicy.QuarantineRetentionPeriod
-            RedirectToRecipients                 = $HostedContentFilterPolicy.RedirectToRecipients
-            RegionBlockList                      = $HostedContentFilterPolicy.RegionBlockList
-            SpamAction                           = $HostedContentFilterPolicy.SpamAction
-            TestModeAction                       = $HostedContentFilterPolicy.TestModeAction
-            TestModeBccToRecipients              = $HostedContentFilterPolicy.TestModeBccToRecipients
-            PhishZapEnabled                      = $HostedContentFilterPolicy.PhishZapEnabled
-            SpamZapEnabled                       = $HostedContentFilterPolicy.SpamZapEnabled
-            Credential                           = $Credential
-            ApplicationId                        = $ApplicationId
-            CertificateThumbprint                = $CertificateThumbprint
-            CertificatePath                      = $CertificatePath
-            CertificatePassword                  = $CertificatePassword
-            ManagedIdentity                      = $ManagedIdentity.IsPresent
-            TenantId                             = $TenantId
-            AccessTokens                         = $AccessTokens
-        }
-
-        if ($HostedContentFilterPolicy.IsDefault)
-        {
-            $result.MakeDefault = $true
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $AddXHeaderValue,
-
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $AllowedSenderDomains = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $AllowedSenders = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $BlockedSenderDomains = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $BlockedSenders = @(),
-
-        [Parameter()]
-        [System.String]
-        $BulkQuarantineTag,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $BulkSpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [ValidateRange(1, 9)]
-        [uint32]
-        $BulkThreshold = 7,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableLanguageBlockList = $false,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableRegionBlockList = $false,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'Redirect', 'Quarantine')]
-        [System.String]
-        $HighConfidencePhishAction = 'Quarantine',
-
-        [Parameter()]
-        [System.String]
-        $HighConfidencePhishQuarantineTag,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $HighConfidenceSpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [System.String]
-        $HighConfidenceSpamQuarantineTag,
-
-        [Parameter()]
-        [System.Boolean]
-        $InlineSafetyTipsEnabled = $true,
-
-        [Parameter()]
-        [ValidateSet('Default', 'HighConfidencePhish', 'Phish', 'HighConfidenceSpam', 'Spam', 'Disabled')]
-        [System.String]
-        $IntraOrgFilterState = 'Default',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithBizOrInfoUrls = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithImageLinks = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithNumericIps = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithRedirectToOtherPort = 'Off',
-
-        [Parameter()]
-        [System.String[]]
-        $LanguageBlockList = @(),
-
-        [Parameter()]
-        [System.Boolean]
-        $MakeDefault = $false,
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamBulkMail = 'On',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamEmbedTagsInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamEmptyMessages = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFormTagsInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFramesInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFromAddressAuthFail = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamJavaScriptInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamNdrBackscatter = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamObjectTagsInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamSensitiveWordList = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamSpfRecordHardFail = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamWebBugsInHtml = 'Off',
-
-        [Parameter()]
-        [System.String]
-        $ModifySubjectValue,
-
-        [Parameter()]
-        [System.String]
-        $PhishQuarantineTag,
-
-        [Parameter()]
-        [System.String]
-        $SpamQuarantineTag,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $PhishSpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [ValidateRange(1, 30)]
-        [uint32]
-        $QuarantineRetentionPeriod = 15,
-
-        [Parameter()]
-        [System.String[]]
-        $RedirectToRecipients = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $RegionBlockList = @(),
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $SpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [ValidateSet('None', 'AddXHeader', 'BccMessage')]
-        [System.String]
-        $TestModeAction = 'None',
-
-        [Parameter()]
-        [System.String[]]
-        $TestModeBccToRecipients = @(),
-
-        [Parameter()]
-        [System.Boolean]
-        $PhishZapEnabled = $true,
-
-        [Parameter()]
-        [System.Boolean]
-        $SpamZapEnabled = $true,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of HostedContentFilterPolicy for $Identity"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    Write-Verbose (Get-HostedContentFilterPolicy | Out-String)
-    $HostedContentFilterPolicy = Get-HostedContentFilterPolicy -Identity $Identity -ErrorAction SilentlyContinue
-    $HostedContentFilterPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($IntraOrgFilterState -eq 'Default')
-    {
-        $HostedContentFilterPolicyParams.IntraOrgFilterState = 'HighConfidencePhish'
-    }
-
-    if ($Ensure -eq 'Present' -and $null -eq $HostedContentFilterPolicy)
-    {
-        $HostedContentFilterPolicyParams += @{
-            Name = $HostedContentFilterPolicyParams.Identity
-        }
-        $HostedContentFilterPolicyParams.Remove('Identity') | Out-Null
-        $HostedContentFilterPolicyParams.Remove('MakeDefault') | Out-Null
-        Write-Verbose -Message "Creating HostedContentFilterPolicy $($Identity) with values: $(Convert-M365DscHashtableToString -Hashtable $HostedContentFilterPolicyParams)"
-        New-HostedContentFilterPolicy @HostedContentFilterPolicyParams
-        if ($PSBoundParameters.MakeDefault)
-        {
-            Write-Verbose -Message 'Updating Policy as default'
-            Set-HostedContentFilterPolicy @HostedContentFilterPolicyParams -MakeDefault -Confirm:$false
-        }
-    }
-    elseif ($Ensure -eq 'Present' -and $null -ne $HostedContentFilterPolicy)
-    {
-        Write-Verbose -Message "Setting HostedContentFilterPolicy $($Identity) with values: $(Convert-M365DscHashtableToString -Hashtable $HostedContentFilterPolicyParams)."
-        if ($PSBoundParameters.MakeDefault)
-        {
-            Write-Verbose -Message 'Updating Policy as default'
-            $HostedContentFilterPolicyParams.Remove('MakeDefault') | Out-Null
-            Set-HostedContentFilterPolicy @HostedContentFilterPolicyParams -MakeDefault -Confirm:$false
-        }
-        else
-        {
-            Set-HostedContentFilterPolicy @HostedContentFilterPolicyParams -Confirm:$false
-        }
-    }
-    elseif ($Ensure -eq 'Absent' -and $null -ne $HostedContentFilterPolicy)
-    {
-        Write-Verbose -Message "Removing HostedContentFilterPolicy $($Identity) "
-        Remove-HostedContentFilterPolicy -Identity $Identity -Confirm:$false
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $AddXHeaderValue,
-
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $AllowedSenderDomains = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $AllowedSenders = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $BlockedSenderDomains = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $BlockedSenders = @(),
-
-        [Parameter()]
-        [System.String]
-        $BulkQuarantineTag,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $BulkSpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [ValidateRange(1, 9)]
-        [uint32]
-        $BulkThreshold = 7,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableLanguageBlockList = $false,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableRegionBlockList = $false,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'Redirect', 'Quarantine')]
-        [System.String]
-        $HighConfidencePhishAction = 'Quarantine',
-
-        [Parameter()]
-        [System.String]
-        $HighConfidencePhishQuarantineTag,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $HighConfidenceSpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [System.String]
-        $HighConfidenceSpamQuarantineTag,
-
-        [Parameter()]
-        [System.Boolean]
-        $InlineSafetyTipsEnabled = $true,
-
-        [Parameter()]
-        [ValidateSet('Default', 'HighConfidencePhish', 'Phish', 'HighConfidenceSpam', 'Spam', 'Disabled')]
-        [System.String]
-        $IntraOrgFilterState = 'Default',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithBizOrInfoUrls = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithImageLinks = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithNumericIps = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $IncreaseScoreWithRedirectToOtherPort = 'Off',
-
-        [Parameter()]
-        [System.String[]]
-        $LanguageBlockList = @(),
-
-        [Parameter()]
-        [System.Boolean]
-        $MakeDefault = $false,
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamBulkMail = 'On',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamEmbedTagsInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamEmptyMessages = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFormTagsInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFramesInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamFromAddressAuthFail = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamJavaScriptInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamNdrBackscatter = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamObjectTagsInHtml = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamSensitiveWordList = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamSpfRecordHardFail = 'Off',
-
-        [Parameter()]
-        [ValidateSet('Off', 'On', 'Test')]
-        [System.String]
-        $MarkAsSpamWebBugsInHtml = 'Off',
-
-        [Parameter()]
-        [System.String]
-        $ModifySubjectValue,
-
-        [Parameter()]
-        [System.String]
-        $PhishQuarantineTag,
-
-        [Parameter()]
-        [System.String]
-        $SpamQuarantineTag,
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $PhishSpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [ValidateRange(1, 30)]
-        [uint32]
-        $QuarantineRetentionPeriod = 15,
-
-        [Parameter()]
-        [System.String[]]
-        $RedirectToRecipients = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $RegionBlockList = @(),
-
-        [Parameter()]
-        [ValidateSet('MoveToJmf', 'AddXHeader', 'ModifySubject', 'Redirect', 'Delete', 'Quarantine', 'NoAction')]
-        [System.String]
-        $SpamAction = 'MoveToJmf',
-
-        [Parameter()]
-        [ValidateSet('None', 'AddXHeader', 'BccMessage')]
-        [System.String]
-        $TestModeAction = 'None',
-
-        [Parameter()]
-        [System.String[]]
-        $TestModeBccToRecipients = @(),
-
-        [Parameter()]
-        [System.Boolean]
-        $PhishZapEnabled = $true,
-
-        [Parameter()]
-        [System.Boolean]
-        $SpamZapEnabled = $true,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$HostedContentFilterPolicies = Get-HostedContentFilterPolicy -ErrorAction Stop
-        $dscContent = [System.Text.StringBuilder]::new()
-
-        if ($HostedContentFilterPolicies.Count -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        $i = 1
-        foreach ($HostedContentFilterPolicy in $HostedContentFilterPolicies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            $Params = @{
-                Credential            = $Credential
-                Identity              = $HostedContentFilterPolicy.Identity
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                CertificatePath       = $CertificatePath
-                AccessTokens          = $AccessTokens
-            }
-            $Script:exportedInstance = $HostedContentFilterPolicy
-            Write-M365DSCHost -Message "    |---[$i/$($HostedContentFilterPolicies.Length)] $($HostedContentFilterPolicy.Identity)" -DeferWrite
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        PostProcessing = {
-            param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-            if ($CurrentValues.IntraOrgFilterState -ne $DesiredValues.IntraOrgFilterState -and $DesiredValues.IntraOrgFilterState -eq 'Default')
-            {
-                $ValuesToCheck.IntraOrgFilterState = 'HighConfidencePhish'
-            }
-            return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-        }
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

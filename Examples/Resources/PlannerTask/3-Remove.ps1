@@ -4,7 +4,8 @@ This example creates a new Planner Task in a Plan.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,17 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        PlannerTask 'ContosoPlannerTask'
+        PlannerTask 'PlannerTask-Example'
         {
-            PlanId                = "1234567890"
+            PlanId                = "<planner-plan-id>"
             Title                 = "Contoso Task"
-            StartDateTime         = "2020-06-09"
-            Priority              = 7
-            PercentComplete       = 75
             Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

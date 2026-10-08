@@ -1,5 +1,16 @@
 {
   "resourceName": "PPPowerAppsEnvironment",
+  "generatedFrom": {
+    "workload": "PowerPlatformREST",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "permissions": {
     "powerAppsService": {
@@ -29,9 +40,14 @@
       }
     },
     "powerPlatform": {
-      "requiredRoles": [
-        "System Administrator"
-      ]
+      "requiredRoles": {
+        "read": [
+          "System Administrator"
+        ],
+        "update": [
+          "System Administrator"
+        ]
+      }
     }
   },
   "requiredModules": [

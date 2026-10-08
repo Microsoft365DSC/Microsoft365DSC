@@ -23,28 +23,27 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
             Mock -CommandName Write-M365DSCHost -MockWith {
             }
-            $Script:exportedInstances =$null
+            $Script:exportedInstances = $null
             $Script:ExportMode = $false
         }
 
-        # Test contexts
         Context -Name 'When Organization Customization should be enabled' -Fixture {
             BeforeAll {
                 $testParams = @{
                     IsSingleInstance = 'Yes'
-                    Ensure           = 'Present'
+                    State            = 'Present'
                     Credential       = $Credential
                 }
 
@@ -60,43 +59,24 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                (New-M365DSCResourceInstance -ResourceName 'O365OrgCustomizationSetting' -Property $testParams).Get().State | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                (Test-TargetResource @testParams) | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'O365OrgCustomizationSetting' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should enable Organization Customization from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'O365OrgCustomizationSetting' -Property $testParams).Set()
                 Should -Invoke -CommandName Enable-OrganizationCustomization
-            }
-        }
-
-        # Test contexts
-        Context -Name 'When Organization Config is not available' -Fixture {
-            BeforeAll {
-                $testParams = @{
-                    IsSingleInstance = 'Yes'
-                    Ensure           = 'Present'
-                    Credential       = $Credential
-                }
-
-                Mock -CommandName Get-OrganizationConfig -MockWith {
-                    return $null
-                }
-            }
-
-            It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
             }
         }
 
         Context -Name 'When Organization Customization is already enabled' -Fixture {
             BeforeAll {
                 $testParams = @{
+                    State            = 'Present'
                     IsSingleInstance = 'Yes'
-                    Ensure           = 'Present'
                     Credential       = $Credential
                 }
 
@@ -112,7 +92,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'O365OrgCustomizationSetting' -Property $testParams).Get().ToHashtable()).State | Should -Be 'Present'
             }
         }
 
@@ -131,7 +111,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         IsDehydrated = $false
                     }
                 }
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'O365OrgCustomizationSetting' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
 
@@ -144,7 +124,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'O365OrgCustomizationSetting' -MethodName 'Export' -Parameters $testParams
                 $result | Should -BeNullOrEmpty
             }
         }

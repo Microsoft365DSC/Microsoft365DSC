@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,38 +19,49 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOAntiPhishPolicy 'ConfigureAntiphishPolicy'
+        EXOAntiPhishPolicy 'EXOAntiPhishPolicy-Example'
         {
-            Identity                              = "Our Rule"
-            MakeDefault                           = $null
-            PhishThresholdLevel                   = 2 # Updated Property
-            EnableTargetedDomainsProtection       = $null
-            Enabled                               = $null
-            TargetedDomainsToProtect              = $null
-            EnableSimilarUsersSafetyTips          = $null
-            ExcludedDomains                       = $null
-            TargetedDomainActionRecipients        = $null
-            EnableMailboxIntelligence             = $null
-            EnableSimilarDomainsSafetyTips        = $null
-            AdminDisplayName                      = ""
-            AuthenticationFailAction              = "MoveToJmf"
-            TargetedUserProtectionAction          = "NoAction"
-            TargetedUsersToProtect                = $null
-            EnableTargetedUserProtection          = $null
-            ExcludedSenders                       = $null
-            EnableOrganizationDomainsProtection   = $null
-            EnableUnusualCharactersSafetyTips     = $null
-            TargetedUserActionRecipients          = $null
-            Ensure                                = "Present"
-            DmarcQuarantineAction                 = "Quarantine"
-            DmarcRejectAction                     = "Reject"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            Identity                                      = "Our Rule"
+            MakeDefault                                   = $false
+            PhishThresholdLevel                           = 2 # Updated Property
+            EnableTargetedDomainsProtection               = $true
+            Enabled                                       = $true
+            TargetedDomainsToProtect                      = @("northwindtraders.com")
+            EnableSimilarUsersSafetyTips                  = $true
+            ExcludedDomains                               = @("fabrikam.com")
+            TargetedDomainActionRecipients                = @("MeganB@$TenantId")
+            EnableMailboxIntelligence                     = $true
+            EnableSimilarDomainsSafetyTips                = $true
+            AdminDisplayName                              = "Impersonation and spoof protection for the finance team"
+            AuthenticationFailAction                      = "MoveToJmf"
+            TargetedUserProtectionAction                  = "BccMessage"
+            TargetedUsersToProtect                        = @("Diego Siciliani;diego.siciliani@northwindtraders.com")
+            EnableTargetedUserProtection                  = $true
+            ExcludedSenders                               = @("newsletter@fabrikam.com")
+            EnableOrganizationDomainsProtection           = $true
+            EnableUnusualCharactersSafetyTips             = $true
+            TargetedUserActionRecipients                  = @("MeganB@$TenantId")
+            EnableFirstContactSafetyTips                  = $true
+            EnableMailboxIntelligenceProtection           = $true
+            EnableSpoofIntelligence                       = $true
+            EnableUnauthenticatedSender                   = $true
+            EnableViaTag                                  = $true
+            HonorDmarcPolicy                              = $true
+            ImpersonationProtectionState                  = "Manual"
+            MailboxIntelligenceProtectionAction           = "BccMessage"
+            MailboxIntelligenceProtectionActionRecipients = @("MeganB@$TenantId")
+            TargetedDomainProtectionAction                = "BccMessage"
+            Ensure                                        = "Present"
+            DmarcQuarantineAction                         = "Quarantine"
+            DmarcRejectAction                             = "Reject"
+            ApplicationId                                 = $ApplicationId
+            TenantId                                      = $TenantId
+            CertificateThumbprint                         = $CertificateThumbprint
         }
     }
 }

@@ -1,5 +1,27 @@
 {
   "resourceName": "AADEntitlementManagementAccessPackageCatalog",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "accessPackageCatalog",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaEntitlementManagementAccessPackageCatalog",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "PrivilegeLevel",
+      "reason": "NotConfigurable",
+      "note": "Entra derives the value from the contents of the catalog."
+    },
+    {
+      "name": "UniqueName",
+      "reason": "Deferred",
+      "note": "Accepted on create and immutable afterwards."
+    }
+  ],
   "description": "This resource configures an Azure AD Entitlement Management Access Package Catalog.",
   "roles": {
     "read": [

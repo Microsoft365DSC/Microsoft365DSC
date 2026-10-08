@@ -4,7 +4,8 @@ This example removes a Intune Firewall Rules Policy for Windows10 Configuration 
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,15 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneFirewallRulesPolicyWindows10ConfigMgr 'myIntuneFirewallRulesPolicyWindows10ConfigMgr'
+        IntuneFirewallRulesPolicyWindows10ConfigMgr 'IntuneFirewallRulesPolicyWindows10ConfigMgr-Example'
         {
-            Id          = '00000000-0000-0000-0000-000000000000'
-            DisplayName = 'Intune Firewall Rules Policy Windows10 ConfigMgr'
-            Ensure      = 'Absent'
+            DisplayName           = 'Intune Firewall Rules Policy Windows10 ConfigMgr'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

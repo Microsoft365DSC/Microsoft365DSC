@@ -1,12 +1,194 @@
 {
   "resourceName": "IntuneDeviceManagementComplianceSettings",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceManagement",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagement",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AccountMoveCompletionDateTime",
+      "reason": "ReadOnly",
+      "note": "The service stamps this timestamp when it moves the account between scale units"
+    },
+    {
+      "name": "AdminConsent",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only."
+    },
+    {
+      "name": "AndroidDeviceAdministratorEnrollmentEnabled",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "ConnectorStatus",
+      "reason": "ReadOnly",
+      "note": "The service reports the health and last event time of each connector"
+    },
+    {
+      "name": "DataProcessorServiceForWindowsFeaturesOnboarding",
+      "reason": "OwnedByOtherResource",
+      "note": "IntuneWindowsDataProcessingSettings owns this setting and patches the same endpoint"
+    },
+    {
+      "name": "DerivedCredentialProvider",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "DerivedCredentialUrl",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "DeviceComplianceCheckinThresholdDays",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "DeviceComplianceReportSummarizationDateTime",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "DeviceInactivityBeforeRetirementInDay",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "DeviceProtectionOverview",
+      "reason": "ReadOnly",
+      "note": "The service computes these device protection counts from reporting data"
+    },
+    {
+      "name": "EnableAutopilotDiagnostics",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "EnableDeviceGroupMembershipReport",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "EnableEnhancedTroubleshootingExperience",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "EnableLogCollection",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "EnhancedJailBreak",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "IgnoreDevicesForUnsupportedSettingsEnabled",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "IntuneAccountId",
+      "reason": "ReadOnly",
+      "note": "The service assigns the Intune account identifier for the tenant"
+    },
+    {
+      "name": "IntuneBrand",
+      "reason": "OwnedByOtherResource",
+      "note": "IntuneCustomizationBrandingProfile owns Company Portal branding"
+    },
+    {
+      "name": "IsScheduledActionEnabled",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "LastReportAggregationDateTime",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "LegacyPcManangementEnabled",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "M365AppDiagnosticsEnabled",
+      "reason": "Accepted",
+      "note": "The resource targets the compliance section of the portal only"
+    },
+    {
+      "name": "ManagedDeviceCleanupSettings",
+      "reason": "OwnedByOtherResource",
+      "note": "IntuneDeviceCleanupRuleV2 owns the device cleanup inactivity threshold"
+    },
+    {
+      "name": "MaximumDepTokens",
+      "reason": "ReadOnly",
+      "note": "The service enforces the tenant maximum of Apple DEP tokens"
+    },
+    {
+      "name": "SamsungEFotaFirmwareVersions",
+      "reason": "ReadOnly",
+      "note": "The service returns firmware versions published by the Samsung E-FOTA service"
+    },
+    {
+      "name": "Settings",
+      "reason": "Accepted",
+      "note": "Configured through the SecureByDefault and DeviceComplianceCheckinThresholdDays properties on the resource."
+    },
+    {
+      "name": "Subscriptions",
+      "reason": "ReadOnly",
+      "note": "The service derives the Intune subscriptions from tenant licensing"
+    },
+    {
+      "name": "SubscriptionState",
+      "reason": "ReadOnly",
+      "note": "The service reports the state of the tenant Intune subscription"
+    },
+    {
+      "name": "UnlicensedAdminstratorsEnabled",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "UserExperienceAnalyticsAnomalySeverityOverview",
+      "reason": "ReadOnly",
+      "note": "The service computes these anomaly counts from endpoint analytics data"
+    },
+    {
+      "name": "UserExperienceAnalyticsSettings",
+      "reason": "ReadOnly",
+      "note": "The service syncs the on-premises Configuration Manager tenant attach state"
+    },
+    {
+      "name": "WindowsMalwareOverview",
+      "reason": "ReadOnly",
+      "note": "The service computes these malware counts from device reporting"
+    }
+  ],
   "description": "This resource configures the settings of Windows 10 compliance policies in your cloud-based organization.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
@@ -15,13 +197,16 @@
         "update": [
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
@@ -30,6 +215,9 @@
         "update": [
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "GroupMember.Read.All"
           }
         ]
       }

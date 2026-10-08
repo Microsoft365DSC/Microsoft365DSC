@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOArcConfig "EXOArcConfig-Test"
+        EXOArcConfig "EXOArcConfig-Example"
         {
-            ArcTrustedSealers                        = "contoso.com";
-            IsSingleInstance                         = "Yes";
-            TenantId                                 = $TenantId;
-            CertificateThumbprint                    = $CertificateThumbprint;
-            ApplicationId                            = $ApplicationId;
+            ArcTrustedSealers     = "contoso.com";
+            IsSingleInstance      = "Yes";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

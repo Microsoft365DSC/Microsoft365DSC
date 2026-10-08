@@ -1,5 +1,16 @@
 {
   "resourceName": "M365DSCGraphAPIRuleEvaluation",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource monitors Graph API endpoints against the defined rules.",
   "roles": {
     "read": [],

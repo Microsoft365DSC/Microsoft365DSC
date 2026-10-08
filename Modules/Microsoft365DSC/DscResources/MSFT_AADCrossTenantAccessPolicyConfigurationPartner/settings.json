@@ -1,6 +1,43 @@
 {
   "resourceName": "AADCrossTenantAccessPolicyConfigurationPartner",
-  "description": "This resource configures an Azure AD Authentication Method Policy Configuration Partner.",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "crossTenantAccessPolicyConfigurationPartner",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyCrossTenantAccessPolicyPartner",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "IsInMultiTenantOrganization",
+      "reason": "ReadOnly",
+      "note": "The service derives this from partner multitenant-organization membership and accepts no value."
+    },
+    {
+      "name": "IsServiceProvider",
+      "reason": "Deferred",
+      "note": "Absent from the documented update body."
+    },
+    {
+      "name": "M365Capabilities",
+      "reason": "Deferred",
+      "note": "Written through its own endpoints under the partner configuration."
+    },
+    {
+      "name": "PartnerTenantId",
+      "reason": "Accepted",
+      "note": "Renamed from tenantId to avoid the authentication TenantId."
+    },
+    {
+      "name": "ServiceProviderConstraints",
+      "reason": "Deferred",
+      "note": "The schema declares no members to send."
+    }
+  ],
+  "description": "This resource configures an Azure AD Cross Tenant Access Policy Configuration Partner.",
   "roles": {
     "read": [
       "Global Reader"
@@ -61,6 +98,7 @@
         "Get-MgBetaPolicyCrossTenantAccessPolicyPartner",
         "New-MgBetaPolicyCrossTenantAccessPolicyPartner",
         "Remove-MgBetaPolicyCrossTenantAccessPolicyPartner",
+        "Set-MgBetaPolicyCrossTenantAccessPolicyPartnerIdentitySynchronization",
         "Update-MgBetaPolicyCrossTenantAccessPolicyPartner"
       ]
     },

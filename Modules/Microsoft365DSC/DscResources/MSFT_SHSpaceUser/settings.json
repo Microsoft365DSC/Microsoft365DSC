@@ -1,5 +1,16 @@
 {
   "resourceName": "SHSpaceUser",
+  "generatedFrom": {
+    "workload": "EngageHub",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Represents a Services Hub space user.",
   "roles": {
     "read": [

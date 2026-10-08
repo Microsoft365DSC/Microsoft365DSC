@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneEndpointDetectionAndResponsePolicyWindows10 'myEDRPolicy'
+        IntuneEndpointDetectionAndResponsePolicyWindows10 'IntuneEndpointDetectionAndResponsePolicyWindows10-Example'
         {
-            DisplayName = 'Edr Policy'
-            Assignments = @()
-            Description = 'My revised description'
-            Ensure      = 'Present'
+            DisplayName           = 'Edr Policy'
+            Assignments           = @()
+            Description           = 'My revised description'
+            Ensure                = 'Present'
+            ConfigurationBlob     = "<onboarding-blob>"
+            ConfigurationType     = "onboard"
+            SampleSharing         = 1
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;
-            ConfigurationBlob = "Blob"
-            ConfigurationType = "onboard"
-            SampleSharing = 1
         }
     }
 }

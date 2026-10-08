@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -36,8 +36,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
+            }
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
             }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                 return @{
@@ -147,6 +150,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     '@odata.type' = "#microsoft.graph.windows10VpnConfiguration"
                     enableSplitTunneling = $True
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsEdition = @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsVersion = @{
+                        name = "FakeStringValue"
+                        minOSVersion = "FakeStringValue"
+                        maxOSVersion = "FakeStringValue"
+                        ruleType = "include"
+                    }
                     displayName = "FakeStringValue"
                     id = "FakeStringValue"
 
@@ -168,33 +187,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneDeviceConfigurationVpnPolicyWindows10 should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    associatedApps = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AssociatedApps -Property @{
+                    associatedApps = @(
+                        ([MSFT_MicrosoftGraphwindows10AssociatedApps] @{
                             identifier = "FakeStringValue"
                             appType = "desktop"
-                        } -ClientOnly)
+                        })
                     )
                     authenticationMethod = "certificate"
                     connectionName = "FakeStringValue"
                     connectionType = "pulseSecure"
-                    cryptographySuite = (New-CimInstance -ClassName MSFT_MicrosoftGraphcryptographySuite -Property @{
+                    cryptographySuite = ([MSFT_MicrosoftGraphcryptographySuite] @{
                         cipherTransformConstants = "aes256"
                         encryptionMethod = "aes256"
                         pfsGroup = "pfs1"
                         dhGroup = "group1"
                         integrityCheckMethod = "sha2_256"
                         authenticationTransformConstants = "md5_96"
-                    } -ClientOnly)
+                    })
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        name = "FakeStringValue"
+                        minOSVersion = "FakeStringValue"
+                        maxOSVersion = "FakeStringValue"
+                        ruleType = "include"
+                    })
                     displayName = "FakeStringValue"
-                    dnsRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnDnsRule -Property @{
+                    dnsRules = @(
+                        ([MSFT_MicrosoftGraphvpnDnsRule] @{
                             servers = @("FakeStringValue")
                             proxyServerUri = "FakeStringValue"
                             name = "FakeStringValue"
                             persistent = $True
                             autoTrigger = $True
-                        } -ClientOnly)
+                        })
                     )
                     dnsSuffixes = @("FakeStringValue")
                     enableAlwaysOn = $True
@@ -207,71 +242,71 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     microsoftTunnelSiteId = "FakeStringValue"
                     onlyAssociatedAppsCanUseConnection = $True
                     profileTarget = "user"
-                    proxyServer = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10VpnProxyServer -Property @{
+                    proxyServer = ([MSFT_MicrosoftGraphwindows10VpnProxyServer] @{
                         bypassProxyServerForLocalAddress = $True
                         address = "FakeStringValue"
                         automaticConfigurationScriptUrl = "FakeStringValue"
                         automaticallyDetectProxySettings = $True
                         port = 25
                         odataType = "#microsoft.graph.windows10VpnProxyServer"
-                    } -ClientOnly)
+                    })
                     rememberUserCredentials = $True
-                    routes = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnRoute -Property @{
+                    routes = @(
+                        ([MSFT_MicrosoftGraphvpnRoute] @{
                             prefixSize = 25
                             destinationPrefix = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    serverCollection = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnServer -Property @{
+                    servers = @(
+                        ([MSFT_MicrosoftGraphvpnServer] @{
                             isDefaultServer = $True
                             description = "FakeStringValue"
                             address = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    singleSignOnEku = (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    singleSignOnEku = ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                         objectIdentifier = "FakeStringValue"
                         name = "FakeStringValue"
-                    } -ClientOnly)
+                    })
                     singleSignOnIssuerHash = "FakeStringValue"
-                    trafficRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnTrafficRule -Property @{
-                            remotePortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                    trafficRules = @(
+                        ([MSFT_MicrosoftGraphvpnTrafficRule] @{
+                            remotePortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             name = "FakeStringValue"
                             appId = "FakeStringValue"
-                            localPortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                            localPortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             appType = "none"
-                            localAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            localAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
-                            remoteAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            remoteAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
                             claims = "FakeStringValue"
                             protocols = 25
                             routingPolicyType = "none"
                             vpnTrafficDirection = "outbound"
-                        } -ClientOnly)
+                        })
                     )
                     trustedNetworkDomains = @("FakeStringValue")
                     windowsInformationProtectionDomain = "FakeStringValue"
@@ -284,13 +319,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -298,33 +333,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneDeviceConfigurationVpnPolicyWindows10 exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    associatedApps = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AssociatedApps -Property @{
+                    associatedApps = @(
+                        ([MSFT_MicrosoftGraphwindows10AssociatedApps] @{
                             identifier = "FakeStringValue"
                             appType = "desktop"
-                        } -ClientOnly)
+                        })
                     )
                     authenticationMethod = "certificate"
                     connectionName = "FakeStringValue"
                     connectionType = "pulseSecure"
-                    cryptographySuite = (New-CimInstance -ClassName MSFT_MicrosoftGraphcryptographySuite -Property @{
+                    cryptographySuite = ([MSFT_MicrosoftGraphcryptographySuite] @{
                         cipherTransformConstants = "aes256"
                         encryptionMethod = "aes256"
                         pfsGroup = "pfs1"
                         dhGroup = "group1"
                         integrityCheckMethod = "sha2_256"
                         authenticationTransformConstants = "md5_96"
-                    } -ClientOnly)
+                    })
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        name = "FakeStringValue"
+                        minOSVersion = "FakeStringValue"
+                        maxOSVersion = "FakeStringValue"
+                        ruleType = "include"
+                    })
                     displayName = "FakeStringValue"
-                    dnsRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnDnsRule -Property @{
+                    dnsRules = @(
+                        ([MSFT_MicrosoftGraphvpnDnsRule] @{
                             servers = @("FakeStringValue")
                             proxyServerUri = "FakeStringValue"
                             name = "FakeStringValue"
                             persistent = $True
                             autoTrigger = $True
-                        } -ClientOnly)
+                        })
                     )
                     dnsSuffixes = @("FakeStringValue")
                     enableAlwaysOn = $True
@@ -337,71 +388,71 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     microsoftTunnelSiteId = "FakeStringValue"
                     onlyAssociatedAppsCanUseConnection = $True
                     profileTarget = "user"
-                    proxyServer = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10VpnProxyServer -Property @{
+                    proxyServer = ([MSFT_MicrosoftGraphwindows10VpnProxyServer] @{
                         bypassProxyServerForLocalAddress = $True
                         address = "FakeStringValue"
                         automaticConfigurationScriptUrl = "FakeStringValue"
                         automaticallyDetectProxySettings = $True
                         port = 25
                         odataType = "#microsoft.graph.windows10VpnProxyServer"
-                    } -ClientOnly)
+                    })
                     rememberUserCredentials = $True
-                    routes = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnRoute -Property @{
+                    routes = @(
+                        ([MSFT_MicrosoftGraphvpnRoute] @{
                             prefixSize = 25
                             destinationPrefix = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    serverCollection = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnServer -Property @{
+                    servers = @(
+                        ([MSFT_MicrosoftGraphvpnServer] @{
                             isDefaultServer = $True
                             description = "FakeStringValue"
                             address = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    singleSignOnEku = (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    singleSignOnEku = ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                         objectIdentifier = "FakeStringValue"
                         name = "FakeStringValue"
-                    } -ClientOnly)
+                    })
                     singleSignOnIssuerHash = "FakeStringValue"
-                    trafficRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnTrafficRule -Property @{
-                            remotePortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                    trafficRules = @(
+                        ([MSFT_MicrosoftGraphvpnTrafficRule] @{
+                            remotePortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             name = "FakeStringValue"
                             appId = "FakeStringValue"
-                            localPortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                            localPortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             appType = "none"
-                            localAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            localAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
-                            remoteAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            remoteAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
                             claims = "FakeStringValue"
                             protocols = 25
                             routingPolicyType = "none"
                             vpnTrafficDirection = "outbound"
-                        } -ClientOnly)
+                        })
                     )
                     trustedNetworkDomains = @("FakeStringValue")
                     windowsInformationProtectionDomain = "FakeStringValue"
@@ -411,48 +462,64 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
         Context -Name "The IntuneDeviceConfigurationVpnPolicyWindows10 Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    associatedApps = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AssociatedApps -Property @{
+                    associatedApps = @(
+                        ([MSFT_MicrosoftGraphwindows10AssociatedApps] @{
                             identifier = "FakeStringValue"
                             appType = "desktop"
-                        } -ClientOnly)
+                        })
                     )
                     authenticationMethod = "certificate"
                     connectionName = "FakeStringValue"
                     connectionType = "pulseSecure"
-                    cryptographySuite = (New-CimInstance -ClassName MSFT_MicrosoftGraphcryptographySuite -Property @{
+                    cryptographySuite = ([MSFT_MicrosoftGraphcryptographySuite] @{
                         cipherTransformConstants = "aes256"
                         encryptionMethod = "aes256"
                         pfsGroup = "pfs1"
                         dhGroup = "group1"
                         integrityCheckMethod = "sha2_256"
                         authenticationTransformConstants = "md5_96"
-                    } -ClientOnly)
+                    })
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        name = "FakeStringValue"
+                        minOSVersion = "FakeStringValue"
+                        maxOSVersion = "FakeStringValue"
+                        ruleType = "include"
+                    })
                     displayName = "FakeStringValue"
-                    dnsRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnDnsRule -Property @{
+                    dnsRules = @(
+                        ([MSFT_MicrosoftGraphvpnDnsRule] @{
                             servers = @("FakeStringValue")
                             proxyServerUri = "FakeStringValue"
                             name = "FakeStringValue"
                             persistent = $True
                             autoTrigger = $True
-                        } -ClientOnly)
+                        })
                     )
                     dnsSuffixes = @("FakeStringValue")
                     enableAlwaysOn = $True
@@ -465,71 +532,71 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     microsoftTunnelSiteId = "FakeStringValue"
                     onlyAssociatedAppsCanUseConnection = $True
                     profileTarget = "user"
-                    proxyServer = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10VpnProxyServer -Property @{
+                    proxyServer = ([MSFT_MicrosoftGraphwindows10VpnProxyServer] @{
                         bypassProxyServerForLocalAddress = $True
                         address = "FakeStringValue"
                         automaticConfigurationScriptUrl = "FakeStringValue"
                         automaticallyDetectProxySettings = $True
                         port = 25
                         odataType = "#microsoft.graph.windows10VpnProxyServer"
-                    } -ClientOnly)
+                    })
                     rememberUserCredentials = $True
-                    routes = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnRoute -Property @{
+                    routes = @(
+                        ([MSFT_MicrosoftGraphvpnRoute] @{
                             prefixSize = 25
                             destinationPrefix = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    serverCollection = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnServer -Property @{
+                    servers = @(
+                        ([MSFT_MicrosoftGraphvpnServer] @{
                             isDefaultServer = $True
                             description = "FakeStringValue"
                             address = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    singleSignOnEku = (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    singleSignOnEku = ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                         objectIdentifier = "FakeStringValue"
                         name = "FakeStringValue"
-                    } -ClientOnly)
+                    })
                     singleSignOnIssuerHash = "FakeStringValue"
-                    trafficRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnTrafficRule -Property @{
-                            remotePortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                    trafficRules = @(
+                        ([MSFT_MicrosoftGraphvpnTrafficRule] @{
+                            remotePortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             name = "FakeStringValue"
                             appId = "FakeStringValue"
-                            localPortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                            localPortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             appType = "none"
-                            localAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            localAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
-                            remoteAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            remoteAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
                             claims = "FakeStringValue"
                             protocols = 25
                             routingPolicyType = "none"
                             vpnTrafficDirection = "outbound"
-                        } -ClientOnly)
+                        })
                     )
                     trustedNetworkDomains = @("FakeStringValue")
                     windowsInformationProtectionDomain = "FakeStringValue"
@@ -540,40 +607,56 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The IntuneDeviceConfigurationVpnPolicyWindows10 exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    associatedApps = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10AssociatedApps -Property @{
+                    associatedApps = @(
+                        ([MSFT_MicrosoftGraphwindows10AssociatedApps] @{
                             identifier = "FakeStringValue"
                             appType = "desktop"
-                        } -ClientOnly)
+                        })
                     )
                     authenticationMethod = "certificate"
                     connectionName = "FakeStringValue"
                     connectionType = "pulseSecure"
-                    cryptographySuite = (New-CimInstance -ClassName MSFT_MicrosoftGraphcryptographySuite -Property @{
-                        cipherTransformConstants = "aes512" # Updated property
-                        encryptionMethod = "aes512" # Updated property
+                    cryptographySuite = ([MSFT_MicrosoftGraphcryptographySuite] @{
+                        cipherTransformConstants = "aes128" # Updated property
+                        encryptionMethod = "aes128" # Updated property
                         pfsGroup = "pfs1"
                         dhGroup = "group1"
                         integrityCheckMethod = "sha2_256"
                         authenticationTransformConstants = "md5_96"
-                    } -ClientOnly)
+                    })
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = ([MSFT_DeviceManagementApplicabilityRuleDeviceMode] @{
+                        name = "FakeStringValue"
+                        deviceMode = "sModeConfiguration" # Updated property
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsEdition = ([MSFT_DeviceManagementApplicabilityRuleOsEdition] @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Professional") # Updated property
+                        ruleType = "include"
+                    })
+                    deviceManagementApplicabilityRuleOsVersion = ([MSFT_DeviceManagementApplicabilityRuleOsVersion] @{
+                        name = "FakeStringValue"
+                        minOSVersion = "FakeStringValue"
+                        maxOSVersion = "FakeStringValue"
+                        ruleType = "exclude" # Updated property
+                    })
                     displayName = "FakeStringValue"
-                    dnsRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnDnsRule -Property @{
+                    dnsRules = @(
+                        ([MSFT_MicrosoftGraphvpnDnsRule] @{
                             servers = @("FakeStringValue")
                             proxyServerUri = "FakeStringValue"
                             name = "FakeStringValue"
                             persistent = $True
                             autoTrigger = $True
-                        } -ClientOnly)
+                        })
                     )
                     dnsSuffixes = @("FakeStringValue")
                     enableAlwaysOn = $True
@@ -586,71 +669,71 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     microsoftTunnelSiteId = "FakeStringValue"
                     onlyAssociatedAppsCanUseConnection = $True
                     profileTarget = "user"
-                    proxyServer = (New-CimInstance -ClassName MSFT_MicrosoftGraphwindows10VpnProxyServer -Property @{
+                    proxyServer = ([MSFT_MicrosoftGraphwindows10VpnProxyServer] @{
                         bypassProxyServerForLocalAddress = $True
                         address = "FakeStringValue"
                         automaticConfigurationScriptUrl = "FakeStringValue"
                         automaticallyDetectProxySettings = $True
                         port = 25
                         odataType = "#microsoft.graph.windows10VpnProxyServer"
-                    } -ClientOnly)
+                    })
                     rememberUserCredentials = $True
-                    routes = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnRoute -Property @{
+                    routes = @(
+                        ([MSFT_MicrosoftGraphvpnRoute] @{
                             prefixSize = 25
                             destinationPrefix = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    serverCollection = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnServer -Property @{
+                    servers = @(
+                        ([MSFT_MicrosoftGraphvpnServer] @{
                             isDefaultServer = $True
                             description = "FakeStringValue"
                             address = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
-                    singleSignOnEku = (New-CimInstance -ClassName MSFT_MicrosoftGraphextendedKeyUsage -Property @{
+                    singleSignOnEku = ([MSFT_MicrosoftGraphextendedKeyUsage] @{
                         objectIdentifier = "FakeStringValue"
                         name = "FakeStringValue"
-                    } -ClientOnly)
+                    })
                     singleSignOnIssuerHash = "FakeStringValue"
-                    trafficRules = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphvpnTrafficRule -Property @{
-                            remotePortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                    trafficRules = @(
+                        ([MSFT_MicrosoftGraphvpnTrafficRule] @{
+                            remotePortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             name = "FakeStringValue"
                             appId = "FakeStringValue"
-                            localPortRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphnumberRange -Property @{
+                            localPortRanges = @(
+                                ([MSFT_MicrosoftGraphNumberRange] @{
                                     lowerNumber = 25
                                     upperNumber = 25
-                                } -ClientOnly)
+                                })
                             )
                             appType = "none"
-                            localAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            localAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
-                            remoteAddressRanges = [CimInstance[]]@(
-                                (New-CimInstance -ClassName MSFT_MicrosoftGraphiPv4Range -Property @{
+                            remoteAddressRanges = @(
+                                ([MSFT_MicrosoftGraphIPv4Range] @{
                                     cidrAddress = "FakeStringValue"
                                     upperAddress = "FakeStringValue"
                                     lowerAddress = "FakeStringValue"
                                     odataType = "#microsoft.graph.iPv4CidrRange"
-                                } -ClientOnly)
+                                })
                             )
                             claims = "FakeStringValue"
                             protocols = 25
                             routingPolicyType = "none"
                             vpnTrafficDirection = "outbound"
-                        } -ClientOnly)
+                        })
                     )
                     trustedNetworkDomains = @("FakeStringValue")
                     windowsInformationProtectionDomain = "FakeStringValue"
@@ -660,15 +743,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -683,7 +766,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceConfigurationVpnPolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

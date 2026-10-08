@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,19 +19,25 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AzureRoleDefinition "AzureRoleDefinition-CustomRoleName"
+        AzureRoleDefinition "AzureRoleDefinition-Example"
         {
             Actions               = @("Microsoft.Compute/virtualMachines/read","Microsoft.Compute/virtualMachines/start/action","Microsoft.Compute/virtualMachines/restart/action","Microsoft.Compute/virtualMachines/deallocate/action");
-            ApplicationId         = $ApplicationId;
-            AssignableScopes      = @("/subscriptions/00000000-0000-0000-0000-000000000000");
-            CertificateThumbprint = $CertificateThumbprint;
-            CustomRoleName        = "My Custom Role";
-            Description           = "An updated custom role for managing virtual machines."; #Drift
+            AssignableScopes      = @("<subscription-scope>");
+            CustomRoleName        = "Virtual Machine Operator";
+            DataActions           = @("Microsoft.Compute/virtualMachines/login/action");
+            Description           = "Allows the platform team to start, restart and deallocate virtual machines."; # Updated Property
             Ensure                = "Present";
+            NotActions            = @("Microsoft.Compute/virtualMachines/delete", "Microsoft.Compute/virtualMachines/write");
+            NotDataActions        = @("Microsoft.Compute/virtualMachines/loginAsAdmin/action");
+            SubscriptionId        = "<subscription-id>";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

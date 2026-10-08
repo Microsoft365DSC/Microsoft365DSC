@@ -6,7 +6,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -22,13 +23,13 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXORecipientPermission 'AddSendAs'
+        EXORecipientPermission 'EXORecipientPermission-Example'
         {
             Identity              = "AlexW@$TenantId"
-            Trustee               = "AdeleV@$TenantId" # Drift
-            AccessRights          = 'SendAs'
+            Trustee               = "MeganB@$TenantId"
+            AccessRights          = @('SendAs')
             Ensure                = 'Present'
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

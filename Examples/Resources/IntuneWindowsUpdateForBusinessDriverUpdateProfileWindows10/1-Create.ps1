@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,28 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10 'Example'
+        IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10 'IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10-Example'
         {
-            DisplayName  = 'Driver Update Example'
-            Assignments  = @()
-            Description  = 'test 2'
-            approvalType = 'manual'
-            Ensure       = 'Present'
+            DisplayName           = "Driver Updates - Manual Approval";
+            ApprovalType          = "manual";
+            Assignments           = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.allDevicesAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName = "Intune Excluded Devices"
+                }
+            );
+            Description           = "Manually approved driver updates for corporate laptops";
+            RoleScopeTagIds       = @("0");
+            Ensure                = "Present";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

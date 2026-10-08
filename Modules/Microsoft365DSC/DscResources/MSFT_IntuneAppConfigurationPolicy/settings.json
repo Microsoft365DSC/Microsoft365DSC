@@ -1,41 +1,85 @@
 {
   "resourceName": "IntuneAppConfigurationPolicy",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "targetedManagedAppConfiguration",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceAppManagementTargetedManagedAppConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeployedAppCount",
+      "reason": "ReadOnly",
+      "note": "Computed from the targeted apps, which Apps manages"
+    },
+    {
+      "name": "DeploymentSummary",
+      "reason": "ReadOnly",
+      "note": "Service maintained deployment status rollup"
+    },
+    {
+      "name": "IsAssigned",
+      "reason": "ReadOnly",
+      "note": "Derived from the assignments that Assignments manages"
+    },
+    {
+      "name": "Settings",
+      "reason": "NotConfigurable",
+      "note": "The settings catalog surface, written through its own endpoint."
+    }
+  ],
   "description": "This resource configures the Intune App configuration policies.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementApps.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementApps.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementApps.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementApps.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

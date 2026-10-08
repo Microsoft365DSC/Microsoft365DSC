@@ -1,668 +1,583 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_O365Group'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class O365Group : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $MailNickName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The display name for the group.')]
+    [System.String] $DisplayName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The group''s Internal Name.')]
+    [System.String] $MailNickName
 
-        [Parameter()]
-        [System.String[]]
-        $ManagedBy,
+    [DscProperty()]
+    [System.ComponentModel.Description('The group''s owner user principal.')]
+    [System.String[]] $ManagedBy
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('The group''s description.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String[]]
-        $Members,
+    [DscProperty()]
+    [System.ComponentModel.Description('Members of the group.')]
+    [System.String[]] $Members
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a Microsoft 365 group''s color theme. Possible values are Teal, Purple, Green, Blue, Pink, Orange or Red. Returned by default.')]
+    [ValidateSet('Teal', 'Purple', 'Green', 'Blue', 'Pink', 'Orange', 'Red')]
+    [System.String] $Theme
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the group exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    Write-Verbose -Message "Getting configuration of Office 365 Group $DisplayName"
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    try
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    [O365Group] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        $nullReturn = $null
+        $newMemberList = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            Write-Verbose -Message "Retrieving AzureADGroup by MailNickName {$MailNickName}"
-            [array]$ADGroup = Get-MgGroup -All | Where-Object -FilterScript { $_.MailNickName -eq $MailNickName }
-            if ($null -eq $ADGroup)
-            {
-                Write-Verbose -Message "Retrieving AzureADGroup by DisplayName {$DisplayName}"
-                [array]$ADGroup = Get-MgGroup -All | Where-Object -FilterScript { $_.DisplayName -eq $DisplayName }
-                if ($null -eq $ADGroup)
-                {
-                    Write-Verbose -Message "Office 365 Group {$DisplayName} was not found."
-                    return $nullReturn
-                }
-            }
-            if ($ADGroup.Length -gt 1)
-            {
-                $Message = "Multiple O365 groups were found with DisplayName {$DisplayName}. Please specify the MailNickName parameter to uniquely identify the group."
-                New-M365DSCLogEntry -Message $Message `
-                    -Exception $_ `
-                    -Source $MyInvocation.MyCommand.ModuleName
-            }
-            $ADGroup = $ADGroup[0]
+            $remote = [O365Group]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
-        else
-        {
-            $ADGroup = $Script:exportedInstance
-        }
-        Write-Verbose -Message "Found Existing Instance of Group {$($ADGroup.DisplayName)}"
+
+        Write-Verbose -Message "Getting configuration of Office 365 Group $($this.DisplayName)"
 
         try
         {
-            $membersList = Get-MgGroupMember -GroupId $ADGroup.Id
-            Write-Verbose -Message "Found Members for Group {$($ADGroup.DisplayName)}"
-            $owners = Get-MgGroupOwner -GroupId $ADGroup.Id
-            Write-Verbose -Message "Found Owners for Group {$($ADGroup.DisplayName)}"
-            $ownersUPN = @()
-            if ($null -ne $owners)
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                # Need to cast as an array for the test to properly compare cases with
-                # a single owner;
-                $ownersUPN = [System.String[]]$owners.userPrincipalName
+                $null = $this.Connect('MicrosoftGraph')
 
-                # Also need to remove the owners from the members list for Test
-                # to handle the validation properly;
-                $newMemberList = @()
+                Confirm-M365DSCDependencies
 
-                foreach ($member in $membersList)
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                Write-Verbose -Message "Retrieving AzureADGroup by MailNickName {$($this.MailNickName)}"
+                [array]$ADGroup = Get-MgGroup -All | Where-Object -FilterScript { $_.MailNickName -eq $this.MailNickName }
+                if ($null -eq $ADGroup)
                 {
-                    if ($null -ne $ownersUPN -and $ownersUPN.Length -ge 1 -and `
-                            -not [System.String]::IsNullOrEmpty($member.userPrincipalName) -and `
-                            -not $ownersUPN.Contains($member.sserPrincipalName))
+                    Write-Verbose -Message "Retrieving AzureADGroup by DisplayName {$($this.DisplayName)}"
+                    [array]$ADGroup = Get-MgGroup -All | Where-Object -FilterScript { $_.DisplayName -eq $this.DisplayName }
+                    if ($null -eq $ADGroup)
                     {
-                        $newMemberList += $member.userPrincipalName
+                        Write-Verbose -Message "Office 365 Group {$($this.DisplayName)} was not found."
+                        return $this.AsResult($nullReturn)
                     }
                 }
+                if ($ADGroup.Length -gt 1)
+                {
+                    $Message = "Multiple O365 groups were found with DisplayName {$($this.DisplayName)}. Please specify the MailNickName parameter to uniquely identify the group."
+                    $this.LogError($_, $Message)
+                }
+                $ADGroup = $ADGroup[0]
             }
-
-            $description = ''
-            if ($null -ne $ADGroup.Description)
+            else
             {
-                $description = $ADGroup.Description.ToString()
+                $ADGroup = $this.ExportedInstance
             }
+            Write-Verbose -Message "Found Existing Instance of Group {$($ADGroup.DisplayName)}"
 
-            $returnValue = @{
-                DisplayName           = $ADGroup.DisplayName
-                MailNickName          = $ADGroup.MailNickName
-                Members               = $newMemberList
-                ManagedBy             = $ownersUPN
-                Description           = $description
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                ApplicationSecret     = $ApplicationSecret
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                Ensure                = 'Present'
-                AccessTokens          = $AccessTokens
+            try
+            {
+                $membersList = Get-MgGroupMember -GroupId $ADGroup.Id
+                Write-Verbose -Message "Found Members for Group {$($ADGroup.DisplayName)}"
+                $owners = Get-MgGroupOwner -GroupId $ADGroup.Id
+                Write-Verbose -Message "Found Owners for Group {$($ADGroup.DisplayName)}"
+                $ownersUPN = @()
+                if ($null -ne $owners)
+                {
+                    $ownersUPN = [System.String[]]$owners.userPrincipalName
+                    $newMemberList = @()
+
+                    foreach ($member in $membersList)
+                    {
+                        if ($null -ne $ownersUPN -and $ownersUPN.Length -ge 1 -and `
+                                -not [System.String]::IsNullOrEmpty($member.userPrincipalName) -and `
+                                -not $ownersUPN.Contains($member.userPrincipalName))
+                        {
+                            $newMemberList += $member.userPrincipalName
+                        }
+                    }
+                }
+
+                $currentDescription = ''
+                if ($null -ne $ADGroup.Description)
+                {
+                    $currentDescription = $ADGroup.Description.ToString()
+                }
+
+                $returnValue = @{
+                    DisplayName           = $ADGroup.DisplayName
+                    MailNickName          = $ADGroup.MailNickName
+                    Members               = $newMemberList
+                    ManagedBy             = $ownersUPN
+                    Description           = $currentDescription
+                    Theme                 = $ADGroup.Theme
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    ManagedIdentity       = $this.ManagedIdentity
+                    Ensure                = 'Present'
+                    AccessTokens          = $this.AccessTokens
+                }
+                return $this.AsResult($returnValue)
             }
-            return $returnValue
+            catch
+            {
+                $Message = "An error occured retrieving info for Group $($this.DisplayName)"
+                $this.LogError($_, $Message)
+            }
+            return $this.AsResult($nullReturn)
         }
         catch
         {
-            $Message = "An error occured retrieving info for Group $DisplayName"
-            New-M365DSCLogEntry -Message $Message `
-                -Exception $_ `
-                -Source $MyInvocation.MyCommand.ModuleName
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
         }
-        return $nullReturn
     }
-    catch
+
+    [void] Set()
     {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $MailNickName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $ManagedBy,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Office 365 Group $DisplayName"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentGroup = Get-TargetResource @PSBoundParameters
-
-    if ($Ensure -eq 'Present')
-    {
-        $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-        if ($currentGroup.Ensure -eq 'Absent')
+        $ADGroup = $null
+        $groupCreated = $false
+        $newGroup = $null
+        if ($this.RequiresPowerShellCore())
         {
-            Write-Verbose -Message "Creating Office 365 Group {$DisplayName}"
-            $groupParams = @{
-                DisplayName     = $DisplayName
-                Description     = $Description
-                MailEnabled     = $true
-                SecurityEnabled = $true
-            }
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
 
-            if ('' -ne $MailNickName)
+        Write-Verbose -Message "Setting configuration of Office 365 Group $($this.DisplayName)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentGroup = $this.Get().ToHashtable()
+
+        if ($this.Ensure -eq 'Present')
+        {
+            $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+            if ($currentGroup.Ensure -eq 'Absent')
             {
-                $groupParams.Add('mailNickName', $MailNickName)
-            }
-            Write-Verbose -Message 'Initiating Group Creation'
-            Write-Verbose -Message "Owner = $($groupParams.Owners)"
-            Write-Verbose -Message "Creating New Group with values: $(Convert-M365DscHashtableToString -Hashtable $groupParams)"
-            $groupParams.Add('GroupTypes', @('Unified'))
-            New-MgGroup -BodyParameter $groupParams | Out-Null
-            Write-Verbose -Message 'Group Created'
-        }
+                Write-Verbose -Message "Creating Office 365 Group {$($this.DisplayName)}"
+                $groupParams = @{
+                    DisplayName     = $this.DisplayName
+                    Description     = $this.Description
+                    MailEnabled     = $true
+                    SecurityEnabled = $true
+                }
 
-        [array]$ADGroup = Get-MgGroup -All | Where-Object -FilterScript { $_.MailNickName -eq $MailNickName }
-        if ($null -eq $ADGroup)
-        {
-            Write-Verbose -Message "Retrieving AzureADGroup by DisplayName {$DisplayName}"
-            [array]$ADGroup = Get-MgGroup -All | Where-Object -FilterScript { $_.DisplayName -eq $DisplayName }
+                if ('' -ne $this.MailNickName)
+                {
+                    $groupParams.Add('mailNickName', $this.MailNickName)
+                }
+                if (-not [System.String]::IsNullOrEmpty($this.Theme))
+                {
+                    $groupParams.Add('theme', $this.Theme)
+                }
+
+                $directoryObjectsUrl = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)v1.0/directoryObjects/"
+                $ownerReferences = @()
+                foreach ($owner in $this.ManagedBy)
+                {
+                    if (-not [System.String]::IsNullOrEmpty($owner))
+                    {
+                        $ownerReferences += $directoryObjectsUrl + (Get-MgUser -UserId $owner -ErrorAction Stop).Id
+                    }
+                }
+
+                $memberReferences = @()
+                foreach ($member in $this.Members)
+                {
+                    if (-not [System.String]::IsNullOrEmpty($member))
+                    {
+                        $memberReferences += $directoryObjectsUrl + (Get-MgUser -UserId $member -ErrorAction Stop).Id
+                    }
+                }
+
+                $bindOnCreation = ($ownerReferences.Count + $memberReferences.Count) -le 20
+                if ($bindOnCreation -and $ownerReferences.Count -gt 0)
+                {
+                    $groupParams.Add('owners@odata.bind', [System.String[]] $ownerReferences)
+                }
+
+                if ($bindOnCreation -and $memberReferences.Count -gt 0)
+                {
+                    $groupParams.Add('members@odata.bind', [System.String[]] $memberReferences)
+                }
+
+                Write-Verbose -Message 'Initiating Group Creation'
+                Write-Verbose -Message "Creating New Group with values: $(Convert-M365DscHashtableToString -Hashtable $groupParams)"
+                $groupParams.Add('GroupTypes', @('Unified'))
+                $newGroup = New-MgGroup -BodyParameter $groupParams
+
+                Write-Verbose -Message 'Group Created'
+                if ($bindOnCreation)
+                {
+                    return
+                }
+                $groupCreated = $true
+            }
+
+            [array]$ADGroup = @()
+            if ($groupCreated -and $null -ne $newGroup.Id)
+            {
+                $ADGroup = @($newGroup)
+            }
+            else
+            {
+                $ADGroup = $this.FindGroups()
+            }
+
             if ($null -eq $ADGroup)
             {
-                Write-Verbose -Message "Office 365 Group {$DisplayName} was not found."
-                return $nullReturn
+                Write-Verbose -Message "Office 365 Group {$($this.DisplayName)} was not found."
+                return
             }
             elseif ($ADGroup.Length -gt 1)
             {
-                $Message = "Multiple O365 groups were found with DisplayName {$DisplayName}. Please specify the MailNickName parameter to uniquely identify the group."
-                New-M365DSCLogEntry -Message $Message `
-                    -Exception $_ `
-                    -Source $MyInvocation.MyCommand.ModuleName
+                $Message = "Multiple O365 groups were found with DisplayName {$($this.DisplayName)}. Please specify the MailNickName parameter to uniquely identify the group."
+                $this.LogError($_, $Message)
             }
-        }
-        Write-Verbose -Message "Found Existing Instance of Group {$($ADGroup.DisplayName)}"
 
-        #region Members
-        $membersList = Get-MgGroupMember -GroupId $ADGroup[0].Id
+            Write-Verbose -Message "Found Existing Instance of Group {$($ADGroup.DisplayName)}"
 
-        $curMembers = @()
-        foreach ($member in $membersList)
-        {
-            $curMembers += $member.userPrincipalName
-        }
-
-        if ($null -ne $CurrentParameters.Members)
-        {
-            Write-Verbose -Message "Current Members: $($curMembers | Out-String)"
-            Write-Verbose -Message "Desired Members: $($CurrentParameters.Members | Out-String)"
-            $difference = Compare-Object -ReferenceObject $curMembers -DifferenceObject $CurrentParameters.Members
-
-            if ($null -ne $difference.InputObject)
+            $groupUpdate = @{}
+            if ($currentGroup.Ensure -eq 'Present' -and $this.DisplayName -ne $ADGroup[0].DisplayName)
             {
-                Write-Verbose -Message 'Detected a difference in the current list of members and the desired one'
-                $membersToRemove = @()
-                $membersToAdd = @()
-                foreach ($diff in $difference)
+                $groupUpdate.displayName = $this.DisplayName
+            }
+            if ($currentGroup.Ensure -eq 'Present' -and $null -ne $this.Description -and $this.Description -ne $ADGroup[0].Description)
+            {
+                $groupUpdate.description = $this.Description
+            }
+            if ($groupUpdate.Count -gt 0)
+            {
+                Write-Verbose -Message "Updating Group {$($ADGroup[0].DisplayName)} with $(Convert-M365DscHashtableToString -Hashtable $groupUpdate)"
+                Invoke-M365DSCGraphRequest -Method PATCH -Uri "/v1.0/groups/$($ADGroup[0].Id)" -Body $groupUpdate | Out-Null
+            }
+
+            #region Theme
+            if (-not [System.String]::IsNullOrEmpty($this.Theme) -and $this.Theme -ne $currentGroup.Theme)
+            {
+                Write-Verbose -Message "Updating the theme of Group {$($ADGroup.DisplayName)} to {$($this.Theme)}"
+                $url = "/v1.0/groups/$($ADGroup[0].Id)"
+                Invoke-M365DSCGraphRequest -Method PATCH -Uri $url -Body @{ theme = $this.Theme } | Out-Null
+            }
+            #endregion
+
+            #region Members
+            $membersList = $null
+            for ($attempt = 1; $attempt -le 6; $attempt++)
+            {
+                try
                 {
-                    if (-not $ManagedBy.Contains($diff.InputObject))
+                    $membersList = Get-MgGroupMember -GroupId $ADGroup[0].Id -ErrorAction Stop
+                    break
+                }
+                catch
+                {
+                    if (-not $groupCreated -or $attempt -ge 6 -or -not (Test-M365DSCNotFoundError -ErrorRecord $_))
                     {
-                        if ($diff.SideIndicator -eq '<=' -and $diff.InputObject -ne $ManagedBy.Split('@')[0])
+                        throw
+                    }
+                    Start-Sleep -Seconds 5
+                }
+            }
+
+            $curMembers = @()
+            foreach ($member in $membersList)
+            {
+                $curMembers += $member.userPrincipalName
+            }
+
+            if ($null -ne $CurrentParameters.Members)
+            {
+                Write-Verbose -Message "Current Members: $($curMembers | Out-String)"
+                Write-Verbose -Message "Desired Members: $($CurrentParameters.Members | Out-String)"
+                $difference = Compare-Object -ReferenceObject $curMembers -DifferenceObject $CurrentParameters.Members
+
+                if ($null -ne $difference.InputObject)
+                {
+                    Write-Verbose -Message 'Detected a difference in the current list of members and the desired one'
+                    $membersToRemove = @()
+                    $membersToAdd = @()
+                    foreach ($diff in $difference)
+                    {
+                        if ($null -eq $this.ManagedBy -or -not $this.ManagedBy.Contains($diff.InputObject))
+                        {
+                            if ($diff.SideIndicator -eq '<=')
+                            {
+                                Write-Verbose "Will be removing Member: {$($diff.InputObject)}"
+                                $membersToRemove += $diff.InputObject
+                            }
+                            elseif ($diff.SideIndicator -eq '=>')
+                            {
+                                Write-Verbose "Will be adding Member: {$($diff.InputObject)}"
+                                $membersToAdd += $diff.InputObject
+                            }
+                        }
+                    }
+
+                    foreach ($member in $membersToAdd)
+                    {
+                        Write-Verbose "Adding members {$member}"
+                        $userId = (Get-MgUser -UserId $member).Id
+                        New-MgGroupMemberByRef -GroupId $ADGroup[0].Id -BodyParameter @{
+                            '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/$userId"
+                        } | Out-Null
+                    }
+
+                    foreach ($member in $membersToRemove)
+                    {
+                        Write-Verbose "Removing members {$member}"
+                        $userId = (Get-MgUser -UserId $member).Id
+
+                        # There are no cmldet to remove members from group available at the time of writing this resource (March 8th 2022)
+                        $url = "/v1.0/groups/$($ADGroup[0].Id)/members/$userId/`$ref"
+                        Invoke-M365DSCGraphRequest -Method DELETE -Uri $url | Out-Null
+                    }
+                }
+            }
+            #endregion
+
+            #region Owners
+            $ownersList = Get-MgGroupOwner -GroupId $ADGroup[0].Id
+
+            $curOwners = @()
+            foreach ($owner in $ownersList)
+            {
+                $curOwners += $owner.userPrincipalName
+            }
+
+            if ($null -ne $CurrentParameters.ManagedBy)
+            {
+                Write-Verbose -Message "Current Owners: $($curOwners | Out-String)"
+                Write-Verbose -Message "Desired Owners: $($CurrentParameters.ManagedBy | Out-String)"
+                $difference = Compare-Object -ReferenceObject $curOwners -DifferenceObject $CurrentParameters.ManagedBy
+
+                if ($null -ne $difference.InputObject)
+                {
+                    Write-Verbose -Message 'Detected a difference in the current list of members and the desired one'
+                    $ownersToRemove = @()
+                    $ownersToAdd = @()
+                    foreach ($diff in $difference)
+                    {
+                        if ($diff.SideIndicator -eq '<=')
                         {
                             Write-Verbose "Will be removing Member: {$($diff.InputObject)}"
-                            $membersToRemove += $diff.InputObject
+                            $ownersToRemove += $diff.InputObject
                         }
                         elseif ($diff.SideIndicator -eq '=>')
                         {
-                            Write-Verbose "Will be adding Member: {$($diff.InputObject)}"
-                            $membersToAdd += $diff.InputObject
+                            Write-Verbose "Will be adding Owner: {$($diff.InputObject)}"
+                            $ownersToAdd += $diff.InputObject
                         }
                     }
-                }
 
-                foreach ($member in $membersToAdd)
-                {
-                    Write-Verbose "Adding members {$member}"
-                    $userId = (Get-MgUser -UserId $member).Id
-                    New-MgGroupMemberByRef -GroupId $ADGroup[0].Id -BodyParameter @{
-                        '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/$userId"
-                    } | Out-Null
-                }
-
-                foreach ($member in $membersToRemove)
-                {
-                    Write-Verbose "Removing members {$member}"
-                    $userId = (Get-MgUser -UserId $member).Id
-
-                    # There are no cmldet to remove members from group available at the time of writing this resource (March 8th 2022)
-                    $url = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)v1.0/groups/$($ADGroup[0].Id)/members/$userId/`$ref"
-                    Invoke-MgGraphRequest -Method DELETE -Uri $url | Out-Null
-                }
-            }
-        }
-        #endregion
-
-        #region Owners
-        $ownersList = Get-MgGroupOwner -GroupId $ADGroup[0].Id
-
-        $curOwners = @()
-        foreach ($owner in $ownersList)
-        {
-            $curOwners += $owner.userPrincipalName
-        }
-
-        if ($null -ne $CurrentParameters.ManagedBy)
-        {
-            Write-Verbose -Message "Current Owners: $($curOwners | Out-String)"
-            Write-Verbose -Message "Desired Owners: $($CurrentParameters.ManagedBy | Out-String)"
-            $difference = Compare-Object -ReferenceObject $curOwners -DifferenceObject $CurrentParameters.ManagedBy
-
-            if ($null -ne $difference.InputObject)
-            {
-                Write-Verbose -Message 'Detected a difference in the current list of members and the desired one'
-                $ownersToRemove = @()
-                $ownersToAdd = @()
-                foreach ($diff in $difference)
-                {
-                    if ($diff.SideIndicator -eq '<=')
+                    foreach ($owner in $ownersToAdd)
                     {
-                        Write-Verbose "Will be removing Member: {$($diff.InputObject)}"
-                        $ownersToRemove += $diff.InputObject
+                        Write-Verbose -Message "Adding Owner {$owner}"
+                        $userId = (Get-MgUser -UserId $owner).Id
+                        $newGroupOwner = @{
+                            '@odata.id' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)v1.0/directoryObjects/$userId"
+                        }
+
+                        New-MgGroupOwnerByRef -GroupId $ADGroup[0].Id -BodyParameter $newGroupOwner
                     }
-                    elseif ($diff.SideIndicator -eq '=>')
+
+                    foreach ($owner in $ownersToRemove)
                     {
-                        Write-Verbose "Will be adding Owner: {$($diff.InputObject)}"
-                        $ownersToAdd += $diff.InputObject
+                        Write-Verbose "Removing owner {$owner}"
+                        $userId = (Get-MgUser -UserId $owner).Id
+
+                        # There are no cmldet to remove members from group available at the time of writing this resource (March 8th 2022)
+                        $url = "/v1.0/groups/$($ADGroup[0].Id)/owners/$userId/`$ref"
+                        Invoke-M365DSCGraphRequest -Method DELETE -Uri $url | Out-Null
                     }
-                }
-
-                foreach ($owner in $ownersToAdd)
-                {
-                    Write-Verbose -Message "Adding Owner {$owner}"
-                    $userId = (Get-MgUser -UserId $owner).Id
-                    $newGroupOwner = @{
-                        '@odata.id' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)v1.0/users/{$userId}"
-                    }
-
-                    New-MgGroupOwnerByRef -GroupId $ADGroup[0].Id -BodyParameter $newGroupOwner
-                }
-
-                foreach ($owner in $ownersToRemove)
-                {
-                    Write-Verbose "Removing owner {$owner}"
-                    $userId = (Get-MgUser -UserId $owner).Id
-
-                    # There are no cmldet to remove members from group available at the time of writing this resource (March 8th 2022)
-                    $url = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)v1.0/groups/$($ADGroup[0].Id)/owners/$userId/`$ref"
-                    Invoke-MgGraphRequest -Method DELETE -Uri $url | Out-Null
                 }
             }
+            #endregion
         }
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent')
-    {
-        if ($ADGroup.Length -eq 1)
+        elseif ($this.Ensure -eq 'Absent')
         {
-            Write-Verbose -Message "Removing O365Group $($existingO365Group.Name)"
-            Remove-MgGroup -GroupId $ADGroup[0].Id | Out-Null
-        }
-        else
-        {
-            Write-Verbose -Message "There was more than one group identified with the name $($currentGroup.MailNickName)."
-            Write-Verbose -Message 'No action taken. Please remove the group manually.'
-        }
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $MailNickName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $ManagedBy,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $dscContent = [System.Text.StringBuilder]::new()
-        $ExportParameters = @{
-            Filter      = $Filter
-            All         = [switch]$true
-            ErrorAction = 'Stop'
-        }
-        if ( ($Filter -like '*endsWith*') -or ($Filter -like '*not*') )
-        {
-            $ExportParameters.Add('CountVariable', 'count')
-            $ExportParameters.Add('ConsistencyLevel', 'eventual')
-        }
-        $groups = Get-MgGroup @ExportParameters | Where-Object -FilterScript {
-            $_.MailNickName -ne '00000000-0000-0000-0000-000000000000'
-        }
-
-        $i = 1
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        foreach ($group in $groups)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            [array]$ADGroup = $this.FindGroups()
+            if ($null -eq $ADGroup -or $ADGroup.Count -eq 0)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                Write-Verbose -Message "Office 365 Group {$($this.DisplayName)} was not found."
             }
-
-            Write-M365DSCHost -Message "    |---[$i/$($groups.Length)] $($group.DisplayName)" -DeferWrite
-            $Params = @{
-                DisplayName           = $group.DisplayName
-                ManagedBy             = 'DummyUser'
-                MailNickName          = $group.MailNickName
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            elseif ($ADGroup.Count -eq 1)
+            {
+                Write-Verbose -Message "Removing O365Group $($ADGroup[0].DisplayName)"
+                Remove-MgGroup -GroupId $ADGroup[0].Id | Out-Null
             }
-            $Script:exportedInstance = $group
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
+            else
+            {
+                Write-Verbose -Message "There was more than one group identified with the name $($currentGroup.MailNickName)."
+                Write-Verbose -Message 'No action taken. Please remove the group manually.'
+            }
         }
-        return $dscContent.ToString()
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
 
-        throw
+    hidden [System.Object[]] FindGroups()
+    {
+        [array]$groups = Get-MgGroup -All | Where-Object -Property MailNickName -EQ $this.MailNickName
+        if ($null -eq $groups)
+        {
+            Write-Verbose -Message "Retrieving AzureADGroup by DisplayName {$($this.DisplayName)}"
+            [array]$groups = Get-MgGroup -All | Where-Object -FilterScript { $_.DisplayName -eq $this.DisplayName }
+        }
+        return $groups
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $dscContent = [System.Text.StringBuilder]::new()
+            $ExportParameters = @{
+                Filter      = $this.Filter
+                All         = [switch]$true
+                ErrorAction = 'Stop'
+            }
+            if ( ($this.Filter -like '*endsWith*') -or ($this.Filter -like '*not*') )
+            {
+                $ExportParameters.Add('CountVariable', 'count')
+                $ExportParameters.Add('ConsistencyLevel', 'eventual')
+            }
+            $groups = Get-MgGroup @ExportParameters | Where-Object -Property MailNickName -NE '00000000-0000-0000-0000-000000000000'
+
+            $i = 1
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            foreach ($group in $groups)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($groups.Length)] $($group.DisplayName)" -DeferWrite
+                $Params = @{
+                    DisplayName           = $group.DisplayName
+                    ManagedBy             = 'DummyUser'
+                    MailNickName          = $group.MailNickName
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $group
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [O365Group] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [O365Group])
+        {
+            return $Values
+        }
+
+        $result = [O365Group]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

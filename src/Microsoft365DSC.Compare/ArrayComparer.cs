@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft365DSC.Compare
 {
-    internal class ArrayComparer
+    internal static class ArrayComparer
     {
-        public static List<CompareObjectModel> CompareArrays(Array currentArray, Array desiredArray, bool passThru = false)
+        public static List<CompareObjectModel> CompareArrays(Array currentArray, Array desiredArray)
         {
             List<CompareObjectModel> compareResults = [];
 
@@ -15,54 +15,38 @@ namespace Microsoft365DSC.Compare
                 throw new ArgumentException("Both currentValue and desiredValue must be of type Array and cannot be null.");
             }
 
-            IEnumerable<object> currentObjects = Utilities.Utilities.UnwrapArray(currentArray).Cast<object>();
-            IEnumerable<object> desiredObjects = Utilities.Utilities.UnwrapArray(desiredArray).Cast<object>();
+            object[] currentObjects = (object[])Utilities.Utilities.UnwrapArray(currentArray);
+            object[] desiredObjects = (object[])Utilities.Utilities.UnwrapArray(desiredArray);
 
-            if (!currentObjects.Any() && !desiredObjects.Any())
+            if (currentObjects.Length == 0 && desiredObjects.Length == 0)
             {
-                return compareResults; // Both arrays are empty, return empty results
+                return compareResults;
             }
 
+            HashSet<string> currentKeys = ToKeySet(currentObjects);
+            HashSet<string> desiredKeys = ToKeySet(desiredObjects);
+
             // Find items in desired but not in current
-            foreach (var item in desiredObjects)
+            foreach (object item in desiredObjects)
             {
-                if (!ContainsItem(currentObjects, item))
+                if (!currentKeys.Contains(ToKey(item)))
                 {
                     compareResults.Add(new CompareObjectModel
                     {
                         SideIndicator = "<=",
                         InputObject = item
                     });
-                    continue;
-                }
-
-                if (passThru)
-                {
-                    compareResults.Add(new CompareObjectModel
-                    {
-                        SideIndicator = "==",
-                        InputObject = item
-                    });
                 }
             }
+
             // Find items in current but not in desired
-            foreach (var item in currentObjects)
+            foreach (object item in currentObjects)
             {
-                if (!ContainsItem(desiredObjects, item))
+                if (!desiredKeys.Contains(ToKey(item)))
                 {
                     compareResults.Add(new CompareObjectModel
                     {
                         SideIndicator = "=>",
-                        InputObject = item
-                    });
-                    continue;
-                }
-
-                if (passThru)
-                {
-                    compareResults.Add(new CompareObjectModel
-                    {
-                        SideIndicator = "==",
                         InputObject = item
                     });
                 }
@@ -71,9 +55,29 @@ namespace Microsoft365DSC.Compare
             return compareResults;
         }
 
-        private static bool ContainsItem(IEnumerable<object> collection, object item)
+        public static string FormatValues(Array values)
         {
-            return collection.Any(x => string.Equals(x.ToString(), item.ToString(), StringComparison.OrdinalIgnoreCase));
+            return string.Join(", ", Utilities.Utilities.UnwrapArrayToStrings(values));
+        }
+
+        public static string FormatDelta(List<CompareObjectModel> differences)
+        {
+            return string.Join("; ", differences.Select(difference => $"{difference.SideIndicator} {difference.InputObject}"));
+        }
+
+        private static HashSet<string> ToKeySet(object[] items)
+        {
+            HashSet<string> keys = new(StringComparer.OrdinalIgnoreCase);
+            foreach (object item in items)
+            {
+                _ = keys.Add(ToKey(item));
+            }
+            return keys;
+        }
+
+        private static string ToKey(object item)
+        {
+            return item?.ToString() ?? string.Empty;
         }
     }
 }

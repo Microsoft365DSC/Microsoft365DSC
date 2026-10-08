@@ -4,7 +4,8 @@ This example updates a new Intune Custom Configuration Policy for iOs devices
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,21 +18,30 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName 'Microsoft365DSC'
 
     Node localhost
     {
-        IntuneDeviceConfigurationCustomPolicyiOS "ConfigureIntuneDeviceConfigurationCustomPolicyiOS"
+        IntuneDeviceConfigurationCustomPolicyiOS "IntuneDeviceConfigurationCustomPolicyiOS-Example"
         {
-            Description            = "IntuneDeviceConfigurationCustomPolicyiOS Description - NEW VALUE";
-            DisplayName            = "IntuneDeviceConfigurationCustomPolicyiOS DisplayName";
-            Ensure                 = "Present";
-            Payload                = "PHJvb3Q+PC9yb290Pg==";
-            PayloadFileName        = "simple.xml";
-            PayloadName            = "IntuneDeviceConfigurationCustomPolicyiOS DisplayName";
-            ApplicationId          = $ApplicationId;
-            TenantId               = $TenantId;
-            CertificateThumbprint  = $CertificateThumbprint;
+            Assignments           = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                    groupDisplayName                           = "Intune Pilot Devices"
+                }
+            );
+            Description           = "Delivers the corporate Wi-Fi profile to company owned iPhones and iPads"; # Updated Property
+            DisplayName           = "iOS Wi-Fi Payload";
+            Ensure                = "Present";
+            Payload               = "<base64-encoded-mobileconfig>";
+            PayloadFileName       = "corporate-wifi.mobileconfig";
+            PayloadName           = "Corporate Wi-Fi";
+            RoleScopeTagIds       = @("0");
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

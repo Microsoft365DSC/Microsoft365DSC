@@ -1,5 +1,192 @@
 <#
 .SYNOPSIS
+    Loads the Intune RoleScopeTag cache from Graph.
+
+.DESCRIPTION
+    Reads every role scope tag of the tenant once and hands them to the cache the resolve functions
+    read from. A tenant that does not grant the permission to read them is recorded as such, so the
+    rest of the run passes role scope tags through untouched instead of repeating a call that has
+    already failed.
+
+.PARAMETER Force
+    Reloads the tags even when they have already been read.
+
+.EXAMPLE
+    Initialize-M365DSCIntuneRoleScopeTagCache
+#>
+function Initialize-M365DSCIntuneRoleScopeTagCache
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [switch]
+        $Force
+    )
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    if ($Force)
+    {
+        [Microsoft365DSC.Intune.RoleScopeTagCache]::Reset()
+    }
+    elseif ([Microsoft365DSC.Intune.RoleScopeTagCache]::IsPopulated)
+    {
+        return
+    }
+
+    Write-Verbose -Message 'Refreshing Intune RoleScopeTag cache from Graph'
+
+    try
+    {
+        $tags = Get-MgBetaDeviceManagementRoleScopeTag -All -ErrorAction Stop
+    }
+    catch
+    {
+        [Microsoft365DSC.Intune.RoleScopeTagCache]::MarkUnavailable()
+        Write-Warning -Message "Unable to read the Intune role scope tags. $($_.Exception.Message) They are reported and written as their raw ids for the rest of this run."
+        return
+    }
+
+    [Microsoft365DSC.Intune.RoleScopeTagCache]::Populate(
+        [System.Object[]]@($tags),
+        [System.Func[System.Object, System.String]] { param($tag) [System.String]$tag.Id },
+        [System.Func[System.Object, System.String]] { param($tag) [System.String]$tag.DisplayName })
+}
+
+<#
+.SYNOPSIS
+    Resolves Intune RoleScopeTag Names to their Id.
+
+.DESCRIPTION
+    Resolves RoleScopeTag Names into their corresponding Ids.
+    If a tag has been deleted, this will return the raw name and emit a warning.
+
+.PARAMETER RoleScopeTagIds
+    One or more RoleScopeTag Names to resolve into Ids.
+
+.EXAMPLE
+    Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds @('Default', 'Second')
+#>
+function Resolve-M365DSCIntuneRoleScopeTagIds
+{
+    [CmdletBinding()]
+    [OutputType([System.String[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        [System.String[]]
+        $RoleScopeTagIds
+    )
+
+    if ($RoleScopeTagIds.Count -eq 0)
+    {
+        return ,@()
+    }
+
+    Initialize-M365DSCIntuneRoleScopeTagCache
+
+    if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable)
+    {
+        return ,([System.String[]]$RoleScopeTagIds)
+    }
+
+    $ids = @()
+    foreach ($id in $RoleScopeTagIds)
+    {
+        $resolvedIds = $null
+        if ([Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetIds($id, [ref]$resolvedIds))
+        {
+            $ids += $resolvedIds
+            continue
+        }
+
+        $resolvedName = $null
+        if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName))
+        {
+            Write-Warning "RoleScopeTag with Name or Id {$id} not found in the directory. It may have been deleted or renamed. Skipping it."
+            continue
+        }
+
+        # Already an id, return it as-is
+        $ids += $id
+    }
+
+    return ,$ids
+}
+
+<#
+.SYNOPSIS
+    Resolves Intune RoleScopeTag Ids to their current DisplayNames.
+
+.DESCRIPTION
+    Resolves RoleScopeTag Ids returned by Graph into their current DisplayNames.
+    If a tag has been renamed since the Id was retrieved, this will return the new name.
+    If a tag has been deleted, this will return the raw Id and emit a warning.
+
+.PARAMETER CurrentValues
+    One or more current RoleScopeTagIds as returned by Graph.
+
+.PARAMETER DesiredValues
+    One or more bound RoleScopeTagIds that should be excluded from the resolution and returned as-is.
+
+.EXAMPLE
+    Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues @('0', '4') -DesiredValues @('0')
+#>
+function Resolve-M365DSCIntuneRoleScopeTagNames
+{
+    [CmdletBinding()]
+    [OutputType([System.String[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        [System.String[]]
+        $CurrentValues,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        [System.String[]]
+        $DesiredValues
+    )
+
+    if ($CurrentValues.Count -eq 0)
+    {
+        return ,@()
+    }
+
+    Initialize-M365DSCIntuneRoleScopeTagCache
+
+    if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable)
+    {
+        return ,([System.String[]]$CurrentValues)
+    }
+
+    $names = @()
+    foreach ($id in $CurrentValues)
+    {
+        if ($DesiredValues -contains $id)
+        {
+            $names += $id
+            continue
+        }
+
+        $resolvedName = $null
+        if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName))
+        {
+            Write-Warning "RoleScopeTag with Id {$id} not found in the directory. It may have been deleted or renamed."
+            $resolvedName = $id
+        }
+
+        $names += $resolvedName
+    }
+
+    return ,$names
+}
+
+<#
+.SYNOPSIS
     Converts Microsoft Graph Intune policy assignments into DSC-friendly hashtables.
 
 .DESCRIPTION
@@ -42,6 +229,12 @@ function ConvertFrom-IntunePolicyAssignment
     $assignmentResult = @()
     foreach ($assignment in $Assignments)
     {
+        if (-not [System.String]::IsNullOrEmpty($assignment.source) -and $assignment.source -ne 'direct')
+        {
+            continue
+        }
+
+        $groupDisplayName = $null
         $hashAssignment = [ordered]@{}
         if ($null -ne $assignment.Target.'@odata.type')
         {
@@ -75,7 +268,7 @@ function ConvertFrom-IntunePolicyAssignment
         {
             $hashAssignment.Add('groupId', $groupId)
 
-            $group = Get-MgGroup -GroupId ($groupId) -ErrorAction SilentlyContinue
+            $group = Get-M365DSCIntuneGroup -GroupId $groupId
             if ($null -ne $group)
             {
                 $groupDisplayName = $group.DisplayName
@@ -199,12 +392,11 @@ function ConvertTo-IntunePolicyAssignment
             $group = $null
             if (-not [System.String]::IsNullOrEmpty($assignment.groupId))
             {
-                $group = Get-MgGroup -GroupId ($assignment.groupId) -ErrorAction SilentlyContinue
+                $group = Get-M365DSCIntuneGroup -GroupId $assignment.groupId
             }
             if ($null -eq $group -and -not [System.String]::IsNullOrEmpty($assignment.groupDisplayName))
             {
-                $escapedName = $assignment.groupDisplayName -replace "'", "''"
-                [array]$group = Get-MgGroup -Filter "DisplayName eq '$escapedName'" -All -ErrorAction SilentlyContinue
+                [array]$group = Get-M365DSCIntuneGroup -DisplayName $assignment.groupDisplayName
                 if ($null -eq $group -or $group.Count -eq 0)
                 {
                     Write-Warning "Skipping assignment: groupDisplayName '{$($assignment.groupDisplayName)}' not found."
@@ -283,6 +475,7 @@ function ConvertFrom-IntuneMobileAppAssignment
     $assignmentResult = @()
     foreach ($assignment in $Assignments)
     {
+        $groupDisplayName = $null
         $hashAssignment = @{}
         if ($null -ne $assignment.Target.'@odata.type')
         {
@@ -307,7 +500,7 @@ function ConvertFrom-IntuneMobileAppAssignment
         {
             $hashAssignment.Add('groupId', $groupId)
 
-            $group = Get-MgGroup -GroupId ($groupId) -ErrorAction SilentlyContinue
+            $group = Get-M365DSCIntuneGroup -GroupId $groupId
             if ($null -ne $group)
             {
                 $groupDisplayName = $group.DisplayName
@@ -346,6 +539,12 @@ function ConvertFrom-IntuneMobileAppAssignment
         if ($null -ne $assignment.settings -and $assignment.settings.Count -gt 0)
         {
             $settings = (Convert-M365DSCDRGComplexTypeToHashtable -ComplexObject $assignment.settings)
+            if ($settings.Contains('@odata.type'))
+            {
+                $settings['odataType'] = $settings['@odata.type']
+                $settings.Remove('@odata.type')
+            }
+
             $hashAssignment.Add('assignmentSettings', $settings)
         }
 
@@ -442,13 +641,12 @@ function ConvertTo-IntuneMobileAppAssignment
             $group = $null
             if (-not [System.String]::IsNullOrEmpty($assignment.groupId))
             {
-                $group = Get-MgGroup -GroupId $assignment.groupId -ErrorAction SilentlyContinue
+                $group = Get-M365DSCIntuneGroup -GroupId $assignment.groupId
             }
             # If groupId lookup failed, try by display name
             if ($null -eq $group -and -not [System.String]::IsNullOrEmpty($assignment.groupDisplayName))
             {
-                $escapedName = $assignment.groupDisplayName -replace "'", "''"
-                [array]$group = Get-MgGroup -Filter "DisplayName eq '$escapedName'" -All -ErrorAction SilentlyContinue
+                [array]$group = Get-M365DSCIntuneGroup -DisplayName $assignment.groupDisplayName
                 if ($null -eq $group -or $group.Count -eq 0)
                 {
                     Write-Warning "Skipping assignment: groupDisplayName '{$($assignment.groupDisplayName)}' not found."
@@ -536,12 +734,134 @@ function Get-M365DSCExportCachedConfigurationPolicies
     {
         return Get-MgBetaDeviceManagementConfigurationPolicy -All `
             -Filter $Filter `
+            -ExpandProperty 'assignments' `
             -ErrorAction Stop
     }
 
     return Get-MgBetaDeviceManagementConfigurationPolicy -All `
         -Filter "templateReference/TemplateId eq '$TemplateId'" `
+        -ExpandProperty 'assignments' `
         -ErrorAction Stop
+}
+
+
+<#
+.SYNOPSIS
+    Returns the assignments expanded on a Graph item, or $null when they must be fetched.
+
+.DESCRIPTION
+    Reads the 'assignments' navigation property of an item returned with $expand=assignments. Returns
+    $null when the item carries no expanded assignments or when Graph truncated them.
+
+.PARAMETER Instance
+    Specifies the Graph item, as a hashtable or object.
+
+.OUTPUTS
+    System.Object[]
+#>
+function Get-M365DSCIntuneExpandedAssignments
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [System.Object]
+        $Instance
+    )
+
+    if ($null -eq $Instance)
+    {
+        return $null
+    }
+
+    if ($Instance -is [System.Collections.IDictionary])
+    {
+        if ($Instance.Contains('assignments@odata.nextLink') -or -not $Instance.Contains('assignments'))
+        {
+            return $null
+        }
+
+        return , [System.Object[]]@($Instance['assignments'] | Where-Object -FilterScript { $null -ne $_ })
+    }
+
+    $properties = $Instance.PSObject.Properties
+    if ($null -ne $properties['assignments@odata.nextLink'])
+    {
+        return $null
+    }
+
+    $property = $properties['assignments']
+    if ($null -eq $property)
+    {
+        return $null
+    }
+
+    return , [System.Object[]]@($property.Value | Where-Object -FilterScript { $null -ne $_ })
+}
+
+<#
+.SYNOPSIS
+    Resolves an Entra group by identifier or display name.
+
+.DESCRIPTION
+    Looks a group up by id or by an exact display name match and returns its id and display name.
+    Results are served from the export group cache while an export session is active.
+
+.PARAMETER GroupId
+    Specifies the group identifier. Returns a single group, or $null when not found.
+
+.PARAMETER DisplayName
+    Specifies the exact display name. Returns the matching groups as an array, empty when none match.
+
+.OUTPUTS
+    System.Object
+#>
+function Get-M365DSCIntuneGroup
+{
+    [CmdletBinding(DefaultParameterSetName = 'ById')]
+    param (
+        [Parameter(Mandatory = $true, ParameterSetName = 'ById')]
+        [System.String]
+        $GroupId,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'ByDisplayName')]
+        [System.String]
+        $DisplayName
+    )
+
+    $cacheAvailable = $null -ne ('Microsoft365DSC.Intune.IntuneGroupCache' -as [System.Type]) -and
+        [Microsoft365DSC.Intune.IntuneGroupCache]::IsEnabled
+
+    if ($PSCmdlet.ParameterSetName -eq 'ById')
+    {
+        $group = $null
+        if ($cacheAvailable -and [Microsoft365DSC.Intune.IntuneGroupCache]::TryGetById($GroupId, [ref] $group))
+        {
+            return $group
+        }
+
+        $group = Get-MgGroup -GroupId $GroupId -Property 'id,displayName' -ErrorAction SilentlyContinue
+        if ($cacheAvailable)
+        {
+            [Microsoft365DSC.Intune.IntuneGroupCache]::SetById($GroupId, $group)
+        }
+        return $group
+    }
+
+    $groups = $null
+    if ($cacheAvailable -and [Microsoft365DSC.Intune.IntuneGroupCache]::TryGetByName($DisplayName, [ref] $groups))
+    {
+        return , [System.Object[]]$groups
+    }
+
+    $escapedName = $DisplayName -replace "'", "''"
+    [System.Object[]]$groups = @(Get-MgGroup -Filter "displayName eq '$escapedName'" -Property 'id,displayName' -All -ErrorAction SilentlyContinue | Where-Object -FilterScript { $null -ne $_ })
+    if ($cacheAvailable)
+    {
+        [Microsoft365DSC.Intune.IntuneGroupCache]::SetByName($DisplayName, $groups)
+    }
+    return , $groups
 }
 
 <#
@@ -551,6 +871,7 @@ function Get-M365DSCExportCachedConfigurationPolicies
 .DESCRIPTION
     Builds and submits assignment payloads for a device configuration policy.
     It resolves groups when needed and posts the final assignment set to the selected Graph endpoint.
+    Throws when Graph rejects the assignments.
 
 .PARAMETER DeviceConfigurationPolicyId
     Specifies the identifier of the device configuration policy to update.
@@ -624,12 +945,12 @@ function Update-DeviceConfigurationPolicyAssignment
             }
             if ($target.groupId)
             {
-                $group = Get-MgGroup -GroupId ($target.groupId) -ErrorAction SilentlyContinue
+                $group = Get-M365DSCIntuneGroup -GroupId $target.groupId
                 if ($null -eq $group)
                 {
                     if ($target.groupDisplayName)
                     {
-                        [array]$group = Get-MgGroup -Filter "DisplayName eq '$($target.groupDisplayName -replace "'", "''")'" -All -ErrorAction SilentlyContinue
+                        [array]$group = Get-M365DSCIntuneGroup -DisplayName $target.groupDisplayName
                         if ($null -eq $group -or $group.Count -eq 0)
                         {
                             $message = "Skipping assignment for the group with DisplayName {$($target.groupDisplayName)} as it could not be found in the directory.`r`n"
@@ -682,13 +1003,14 @@ function Update-DeviceConfigurationPolicyAssignment
     }
     catch
     {
-        New-M365DSCLogEntry -Message 'Error updating data:' `
+        $message = "Failed to update the assignments of policy {$DeviceConfigurationPolicyId}: $($_.ToString())"
+        New-M365DSCLogEntry -Message $message `
             -Exception $_ `
             -Source $($MyInvocation.MyCommand.Source) `
             -TenantId $TenantId `
             -Credential $Credential
 
-        return $null
+        throw $message
     }
 }
 
@@ -699,6 +1021,7 @@ function Update-DeviceConfigurationPolicyAssignment
 .DESCRIPTION
     Creates and submits mobile app assignment payloads for the target app policy.
     The function resolves assignment groups and filter settings before posting the payload to Graph.
+    Throws when Graph rejects the assignments.
 
 .PARAMETER AppManagementPolicyId
     Specifies the identifier of the app management policy to update.
@@ -773,12 +1096,12 @@ function Update-DeviceAppManagementPolicyAssignment
             }
             if ($target.groupId)
             {
-                $group = Get-MgGroup -GroupId ($target.groupId) -ErrorAction SilentlyContinue
+                $group = Get-M365DSCIntuneGroup -GroupId $target.groupId
                 if ($null -eq $group)
                 {
                     if ($target.groupDisplayName)
                     {
-                        [array]$group = Get-MgGroup -Filter "DisplayName eq '$($target.groupDisplayName -replace "'", "''")'" -All -ErrorAction SilentlyContinue
+                        [array]$group = Get-M365DSCIntuneGroup -DisplayName $target.groupDisplayName
                         if ($null -eq $group -or $group.Count -eq 0)
                         {
                             $message = "Skipping assignment for the group with DisplayName {$($target.groupDisplayName)} as it could not be found in the directory.`r`n"
@@ -827,14 +1150,58 @@ function Update-DeviceAppManagementPolicyAssignment
     }
     catch
     {
-        New-M365DSCLogEntry -Message 'Error updating data:' `
+        $message = "Failed to update the assignments of policy {$AppManagementPolicyId}: $($_.ToString())"
+        New-M365DSCLogEntry -Message $message `
             -Exception $_ `
             -Source $($MyInvocation.MyCommand.Source) `
             -TenantId $TenantId `
             -Credential $Credential
 
-        return $null
+        throw $message
     }
+}
+
+<#
+.SYNOPSIS
+    Waits until an Intune mobile app is published.
+
+.DESCRIPTION
+    Reads the publishing state of the app until it is published or the attempts are used up.
+    Graph accepts assignments only for a published app. Returns after one read when the app is already published.
+
+.PARAMETER AppId
+    Specifies the identifier of the mobile app.
+
+.PARAMETER MaxAttempts
+    Specifies the maximum number of reads. Default is 6.
+
+.PARAMETER RetryDelayInSeconds
+    Specifies the delay between reads. Default is 3 seconds.
+#>
+function Wait-M365DSCIntuneMobileAppPublished
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $AppId,
+
+        [Parameter()]
+        [System.Int32]
+        $MaxAttempts = 6,
+
+        [Parameter()]
+        [System.Int32]
+        $RetryDelayInSeconds = 3
+    )
+
+    $uri = "/beta/deviceAppManagement/mobileApps/$($AppId)?`$select=publishingState"
+    $null = Wait-M365DSCCondition -Description "the publishing of mobile app {$AppId}" `
+        -MaxAttempts $MaxAttempts `
+        -RetryDelayInSeconds $RetryDelayInSeconds `
+        -ScriptBlock {
+            (Invoke-MgGraphRequest -Method GET -Uri $uri -ErrorAction Stop).publishingState -eq 'published'
+        }
 }
 
 <#
@@ -1188,11 +1555,7 @@ function Get-IntuneSettingCatalogPolicySetting
 
     if ($PSCmdlet.ParameterSetName -eq 'Start')
     {
-        # Prepare setting definitions mapping
-        $SettingTemplates = Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate `
-            -DeviceManagementConfigurationPolicyTemplateId $TemplateId `
-            -ExpandProperty 'SettingDefinitions' `
-            -All
+        $SettingTemplates = Get-M365DSCSettingCatalogTemplate -TemplateId $TemplateId
     }
 
     Initialize-M365DSCDllLoader -ErrorAction Stop
@@ -1201,6 +1564,111 @@ function Get-IntuneSettingCatalogPolicySetting
         [System.Collections.Generic.List[object]]@($SettingTemplates),
         $DSCParams,
         $ContainsDeviceAndUserSettings.IsPresent)
+}
+
+<#
+.SYNOPSIS
+    Returns the setting templates of a Settings Catalog template, with their setting definitions.
+
+.DESCRIPTION
+    Fetches the template once per process and serves every later request for the same template id
+    from the cache. The payload of a security baseline runs to several megabytes, and every Set of
+    every instance would otherwise download it again.
+
+.PARAMETER TemplateId
+    Specifies the configuration policy template id, including its version suffix.
+
+.EXAMPLE
+    Get-M365DSCSettingCatalogTemplate -TemplateId '66df8dce-0166-4b82-92f7-1f74e3ca17a3_4'
+
+.OUTPUTS
+    System.Object[]
+#>
+function Get-M365DSCSettingCatalogTemplate
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $TemplateId
+    )
+
+    $templates = Get-M365DSCCachedSettingCatalogTemplate -TemplateId $TemplateId
+    if ($null -ne $templates)
+    {
+        return , $templates
+    }
+
+    $templates = [System.Object[]] @(Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate `
+            -DeviceManagementConfigurationPolicyTemplateId $TemplateId `
+            -ExpandProperty 'settingDefinitions' `
+            -All `
+            -ErrorAction Stop)
+    Set-M365DSCCachedSettingCatalogTemplate -TemplateId $TemplateId -Templates $templates
+
+    return , $templates
+}
+
+<#
+.SYNOPSIS
+    Returns the cached setting templates of a Settings Catalog template, or null on a miss.
+
+.PARAMETER TemplateId
+    Specifies the configuration policy template id, including its version suffix.
+
+.OUTPUTS
+    System.Object[]
+#>
+function Get-M365DSCCachedSettingCatalogTemplate
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $TemplateId
+    )
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    $templates = $null
+    if ([Microsoft365DSC.Intune.SettingTemplateCache]::TryGet($TemplateId, [ref] $templates))
+    {
+        return , $templates
+    }
+
+    return $null
+}
+
+<#
+.SYNOPSIS
+    Stores the setting templates of a Settings Catalog template for the rest of the process.
+
+.PARAMETER TemplateId
+    Specifies the configuration policy template id, including its version suffix.
+
+.PARAMETER Templates
+    Specifies the setting templates, each carrying its setting definitions.
+#>
+function Set-M365DSCCachedSettingCatalogTemplate
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $TemplateId,
+
+        [Parameter(Mandatory = $true)]
+        [System.Object[]]
+        $Templates
+    )
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    [Microsoft365DSC.Intune.SettingTemplateCache]::Set($TemplateId, $Templates)
 }
 
 <#
@@ -1743,7 +2211,24 @@ function Wait-ForFileProcessing
     $file
 }
 
+<#
+.SYNOPSIS
+    Clears the cached Intune assignment filters.
+
+.DESCRIPTION
+    Removes the assignment filters cached by the assignment conversion functions. The next
+    conversion reads them from the tenant again.
+#>
+function Clear-M365DSCIntuneAssignmentFilterCache
+{
+    [CmdletBinding()]
+    param ()
+
+    $Script:IntuneAssignmentFilters = $null
+}
+
 Export-ModuleMember -Function @(
+    'Clear-M365DSCIntuneAssignmentFilterCache',
     'Compare-M365DSCIntunePolicyAssignment',
     'ConvertFrom-IntuneMobileAppAssignment',
     'ConvertFrom-IntunePolicyAssignment',
@@ -1754,13 +2239,21 @@ Export-ModuleMember -Function @(
     'Get-ComplexFunctionsFromFilterQuery',
     'Get-IntuneSettingCatalogPolicySetting',
     'Get-M365DSCExportCachedConfigurationPolicies',
+    'Get-M365DSCCachedSettingCatalogTemplate',
+    'Get-M365DSCSettingCatalogTemplate',
+    'Set-M365DSCCachedSettingCatalogTemplate',
     'Get-M365DSCIntuneDeviceConfigurationSettings',
+    'Get-M365DSCIntuneExpandedAssignments',
+    'Get-M365DSCIntuneGroup',
     'Get-OmaSettingPlainTextValue',
     'Invoke-M365DSCIntuneMobileAppInitialUpload',
     'Remove-ComplexFunctionsFromFilterQuery',
+    'Resolve-M365DSCIntuneRoleScopeTagIds',
+    'Resolve-M365DSCIntuneRoleScopeTagNames',
     'Update-DeviceAppManagementAppCategory',
     'Update-DeviceAppManagementPolicyAssignment',
     'Update-DeviceConfigurationPolicyAssignment',
     'Update-IntuneDeviceConfigurationPolicy',
-    'Wait-ForFileProcessing'
+    'Wait-ForFileProcessing',
+    'Wait-M365DSCIntuneMobileAppPublished'
 )

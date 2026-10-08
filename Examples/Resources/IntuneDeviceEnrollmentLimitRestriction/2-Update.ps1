@@ -4,7 +4,8 @@ This example creates a new Device Enrollment Limit Restriction.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,18 +18,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceEnrollmentLimitRestriction 'DeviceEnrollmentLimitRestriction'
+        IntuneDeviceEnrollmentLimitRestriction 'IntuneDeviceEnrollmentLimitRestriction-Example'
         {
-            Assignments = @()
-            DisplayName = 'My DSC Limit'
-            Description = 'My Restriction'
-            Limit       = 11 # Updated Property
-            Priority    = 1
-            Ensure      = 'Present'
+            Assignments           = @()
+            DisplayName           = 'Standard Enrollment Limit'
+            Description           = 'Maximum number of devices a standard employee may enroll'
+            Limit                 = 11 # Updated Property
+            Priority              = 1
+            Ensure                = 'Present'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

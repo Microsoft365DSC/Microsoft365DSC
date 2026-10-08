@@ -1,5 +1,16 @@
 {
   "resourceName": "AADFilteringPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "networkaccess.filteringPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaNetworkAccessFilteringPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures filtering policies in Entra Id.",
   "roles": {
     "read": [],

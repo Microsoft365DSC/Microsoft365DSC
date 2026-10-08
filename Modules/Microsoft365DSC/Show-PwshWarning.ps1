@@ -1,8 +1,16 @@
-if ($PSVersionTable.PSEdition -eq 'Core' -and $PSVersionTable.PSVersion -ge [version]'7.6')
+$minimumVersion = [Version]'7.6'
+
+if ($PSVersionTable.PSEdition -eq 'Core')
 {
+    if ($PSVersionTable.PSVersion -lt $minimumVersion)
+    {
+        Write-Warning -Message "Microsoft365DSC requires PowerShell $minimumVersion or higher. The current session is running PowerShell $($PSVersionTable.PSVersion)."
+        Write-Warning -Message 'Please upgrade PowerShell. You can download the latest release from: https://aka.ms/powershell-release'
+    }
+
     return
 }
 
-Write-Warning -Message 'Starting October 2026, PowerShell 7.6 will be required to be installed when using Microsoft365DSC.'
-Write-Warning -Message 'It is recommended to start planning for this new requirement and ensure that PowerShell 7.6 is installed and configured properly on your systems.'
-Write-Warning -Message 'Please note: Windows PowerShell 5.1 will continue to work, but some features will require PowerShell 7.6 to function properly.'
+Write-Warning -Message "Microsoft365DSC requires PowerShell $minimumVersion or higher installed alongside Windows PowerShell. The current session is running Windows PowerShell $($PSVersionTable.PSVersion)."
+Write-Warning -Message 'Windows PowerShell is only supported to compile a configuration (Invoke-M365DSCConfigurationBuild) and to run [Get|Start|Test]-DscConfiguration. In that case, the Local Configuration Manager relays the execution of every resource to PowerShell 7.'
+Write-Warning -Message 'All other cmdlets, such as Export-M365DSCConfiguration, have to be run from PowerShell 7. You can download the latest release from: https://aka.ms/powershell-release'

@@ -1,5 +1,82 @@
 {
   "resourceName": "AADApplication",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "application",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaApplication",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ApplicationTemplateId",
+      "reason": "Accepted",
+      "note": "The beta application CSDL omits it and only template instantiation uses it."
+    },
+    {
+      "name": "Certification",
+      "reason": "ReadOnly",
+      "note": "The app compliance program stamps these values."
+    },
+    {
+      "name": "DisabledByMicrosoftStatus",
+      "reason": "ReadOnly",
+      "note": "Microsoft sets this status when it disables a registration."
+    },
+    {
+      "name": "ExtensionProperties",
+      "reason": "Accepted",
+      "note": "Directory extension definitions are separate entities with their own endpoints."
+    },
+    {
+      "name": "FederatedIdentityCredentials",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplicationFederatedIdentityCredential manages these credentials per application."
+    },
+    {
+      "name": "Homepage",
+      "reason": "Accepted",
+      "note": "The flattened web.homePageUrl property"
+    },
+    {
+      "name": "Id",
+      "reason": "Accepted",
+      "note": "ObjectId carries the vendor id and comparison skips both."
+    },
+    {
+      "name": "ManagerApplications",
+      "reason": "NotConfigurable",
+      "note": "The service answers that the Application feature is not supported."
+    },
+    {
+      "name": "ObjectId",
+      "reason": "NotConfigurable",
+      "note": "ObjectId echoes the service-assigned application id."
+    },
+    {
+      "name": "PublisherDomain",
+      "reason": "ReadOnly",
+      "note": "The service refuses any value other than the one it already holds."
+    },
+    {
+      "name": "ReplyURLs",
+      "reason": "Accepted",
+      "note": "The flattened web.redirectUris property"
+    },
+    {
+      "name": "Synchronization",
+      "reason": "Accepted",
+      "note": "Provisioning jobs, schemas and templates are a product area of their own."
+    },
+    {
+      "name": "UniqueName",
+      "reason": "Deferred",
+      "note": "Accepted on create and immutable afterwards."
+    }
+  ],
   "description": "This resource configures an Azure Active Directory Application.",
   "roles": {
     "read": [
@@ -24,6 +101,9 @@
           },
           {
             "name": "User.Read.All"
+          },
+          {
+            "name": "Policy.Read.All"
           }
         ]
       },
@@ -42,6 +122,9 @@
           },
           {
             "name": "User.Read.All"
+          },
+          {
+            "name": "Policy.Read.All"
           }
         ]
       }
@@ -65,15 +148,11 @@
     {
       "module": "Microsoft.Graph.Applications",
       "cmdlets": [
-        "Get-MgApplication",
         "Get-MgServicePrincipal",
-        "New-MgApplication",
         "New-MgApplicationOwnerByRef",
         "New-MgApplicationTokenLifetimePolicyByRef",
-        "Remove-MgApplication",
         "Remove-MgApplicationOwnerDirectoryObjectByRef",
-        "Remove-MgApplicationTokenLifetimePolicyTokenLifetimePolicyByRef",
-        "Update-MgApplication"
+        "Remove-MgApplicationTokenLifetimePolicyTokenLifetimePolicyByRef"
       ]
     },
     {
@@ -87,6 +166,8 @@
       "cmdlets": [
         "Get-MgBetaApplication",
         "Invoke-MgBetaInstantiateApplicationTemplate",
+        "New-MgBetaApplication",
+        "Remove-MgBetaApplication",
         "Update-MgBetaApplication"
       ]
     },

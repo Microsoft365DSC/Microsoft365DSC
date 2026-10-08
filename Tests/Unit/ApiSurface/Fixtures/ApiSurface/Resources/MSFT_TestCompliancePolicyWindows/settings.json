@@ -1,0 +1,33 @@
+{
+  "resourceName": "TestCompliancePolicyWindows",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "testCompliancePolicy",
+    "odataSubtype": "testWindowsCompliancePolicy",
+    "cmdletNoun": "MgBetaTestCompliancePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Fixture for MSFT_TestCompliancePolicyWindows.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Test",
+      "cmdlets": [
+        "Get-MgBetaTestCompliancePolicy"
+      ]
+    }
+  ]
+}

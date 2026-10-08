@@ -1,5 +1,16 @@
 {
   "resourceName": "IntuneAppCategory",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "mobileAppCategory",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceAppManagementMobileAppCategory",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures a resource for navigation property for Intune mobile app categories.",
   "permissions": {
     "graph": {

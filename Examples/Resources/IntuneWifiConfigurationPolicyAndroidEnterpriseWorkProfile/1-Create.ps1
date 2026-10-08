@@ -19,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile 'myWifiConfigAndroidWorkProfilePolicy'
+        IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile 'IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile-Example'
         {
             DisplayName                    = 'wifi - android BYOD'
             Assignments                    = @(
@@ -32,16 +33,25 @@ Configuration Example
                     deviceAndAppManagementAssignmentFilterType = 'none'
                     dataType                                   = '#microsoft.graph.allLicensedUsersAssignmentTarget'
                 }
+                MSFT_DeviceManagementConfigurationPolicyAssignments
+                {
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Users'
+                }
             )
             ConnectAutomatically           = $False
             ConnectWhenNetworkNameIsHidden = $False
             NetworkName                    = 'f8b79489-84fc-4434-b964-2a18dfe08f88'
+            PreSharedKey                   = '<wifi-pre-shared-key>'
+            PreSharedKeyIsSet              = $True
+            ProxyAutomaticConfigurationUrl = 'http://proxy.contoso.com/proxy.pac'
+            ProxySettings                  = 'automatic'
             Ssid                           = 'MySSID'
             WiFiSecurityType               = 'open'
             Ensure                         = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                  = $ApplicationId;
+            TenantId                       = $TenantId;
+            CertificateThumbprint          = $CertificateThumbprint;
         }
     }
 }

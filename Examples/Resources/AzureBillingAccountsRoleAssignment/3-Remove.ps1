@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,20 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AzureBillingAccountsRoleAssignment "AzureBillingAccountsRoleAssignment"
+        AzureBillingAccountsRoleAssignment "AzureBillingAccountsRoleAssignment-Example"
         {
-            ApplicationId         = $ApplicationId;
-            BillingAccount        = "MyTestAccount";
-            CertificateThumbprint = $CertificateThumbprint;
             Ensure                = "Absent";
-            PrincipalName         = "John.Smith@contoso.onmicrosoft.com";
-            PrincipalType         = "User";
-            PrincipalTenantId     = '9c888910-6b3b-4c17-8cff-844fefb026d4'
+            PrincipalName         = "John.Smith@$TenantId";
             RoleDefinition        = "Billing account owner";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

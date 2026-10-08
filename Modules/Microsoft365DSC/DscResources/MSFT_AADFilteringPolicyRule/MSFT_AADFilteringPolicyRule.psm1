@@ -1,475 +1,268 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADFilteringPolicyRule'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADFilteringPolicyRule : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Name of the rule.')]
+    [System.String] $Name
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Policy,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Name of the associated policy.')]
+    [System.String] $Policy
 
-        [Parameter()]
-        [System.String]
-        $RuleType,
+    [DscProperty()]
+    [System.ComponentModel.Description('Unique Id for the rule.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('Type of rule.')]
+    [System.String] $RuleType
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Destinations,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of associated destinations with the rule.')]
+    [MSFT_AADFilteringPolicyRuleDestination[]] $Destinations
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Absent', 'Present')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for the Azure AD Filtering Policy Rule with Id {$Id} and Name {$Name}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [AADFilteringPolicyRule] Get()
     {
-        $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
-
-        $policyInstance = Get-MgBetaNetworkAccessFilteringPolicy | Where-Object -Filter { $_.Name -eq $Policy }
-        if ($null -ne $policyInstance)
+        $instance = $null
+        if ($this.RequiresPowerShellCore())
         {
-            Write-Verbose -Message "Found existing Policy {$Policy}"
+            $remote = [AADFilteringPolicyRule]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            $instance = $null
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        Write-Verbose -Message "Getting configuration for the Azure AD Filtering Policy Rule with Id {$($this.Id)} and Name {$($this.Name)}"
+
+        try
+        {
+            $null = $this.Connect('MicrosoftGraph')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            $policyInstance = Get-MgBetaNetworkAccessFilteringPolicy | Where-Object -Filter { $_.Name -eq $this.Policy }
+            if ($null -ne $policyInstance)
             {
-                Write-Verbose -Message "Retrieving Filtering Policy Rule by Id {$Id}"
-                $instance = Get-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
-                    -PolicyRuleId $Id -ErrorAction SilentlyContinue
+                Write-Verbose -Message "Found existing Policy {$($this.Policy)}"
+
+                $instance = $null
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
+                {
+                    Write-Verbose -Message "Retrieving Filtering Policy Rule by Id {$($this.Id)}"
+                    $instance = Get-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
+                        -PolicyRuleId $this.Id -ErrorAction SilentlyContinue
+                }
+                if ($null -eq $instance)
+                {
+                    Write-Verbose -Message "Retrieving Filtering Policy Rule by Name {$($this.Name)}"
+                    $instance = Get-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id | Where-Object -FilterScript { $_.Name -eq $this.Name }
+                }
             }
             if ($null -eq $instance)
             {
-                Write-Verbose -Message "Retrieving Filtering Policy Rule by Name {$Name}"
-                $instance = Get-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id | Where-Object -FilterScript { $_.Name -eq $Name }
+                return $this.AsResult($nullResult)
             }
-        }
-        if ($null -eq $instance)
-        {
-            return $nullResult
-        }
 
-        $DestinationsValue = @()
-        foreach ($destination in $instance.destinations)
-        {
-            if ($instance.ruleType -eq 'fqdn')
+            $DestinationsValue = @()
+            foreach ($destination in $instance.destinations)
             {
-                $DestinationsValue += @{
-                    value = $destination.value
+                if ($instance.ruleType -eq 'fqdn')
+                {
+                    $DestinationsValue += @{
+                        value = $destination.value
+                    }
+                }
+                elseif ($instance.ruleType -eq 'webCategory')
+                {
+                    $DestinationsValue += @{
+                        name = $destination.name
+                    }
                 }
             }
-            elseif ($instance.ruleType -eq 'webCategory')
+
+            $results = @{
+                Name                  = $instance.Name
+                Policy                = $this.Policy
+                Id                    = $instance.Id
+                RuleType              = $instance.ruleType
+                Destinations          = $DestinationsValue
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        $instanceParams = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for the Azure AD Filtering Policy Rule with Id {$($this.Id)} and Name {$($this.Name)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $policyInstance = Get-MgBetaNetworkAccessFilteringPolicy | Where-Object -Filter { $_.Name -eq $this.Policy }
+
+        if ($this.RuleType -eq 'webCategory')
+        {
+            $instanceParams = @{
+                '@odata.type' = '#microsoft.graph.networkaccess.webCategoryFilteringRule'
+                name          = $this.Name
+                ruleType      = $this.RuleType
+                destinations  = @()
+            }
+
+            foreach ($destination in $this.Destinations)
             {
-                $DestinationsValue += @{
-                    name = $destination.name
+                $instanceParams.destinations += @{
+                    '@odata.type' = '#microsoft.graph.networkaccess.webCategory'
+                    name          = $destination.name
+                }
+            }
+        }
+        elseif ($this.RuleType -eq 'fqdn')
+        {
+            $instanceParams = @{
+                '@odata.type' = '#microsoft.graph.networkaccess.fqdnFilteringRule'
+                name          = $this.Name
+                ruleType      = $this.RuleType
+                destinations  = @()
+            }
+
+            foreach ($destination in $this.Destinations)
+            {
+                $instanceParams.destinations += @{
+                    '@odata.type' = '#microsoft.graph.networkaccess.fqdn'
+                    value         = $destination.value
                 }
             }
         }
 
-        $results = @{
-            Name                  = $instance.Name
-            Policy                = $Policy
-            Id                    = $instance.Id
-            RuleType              = $instance.ruleType
-            Destinations          = $DestinationsValue
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Policy,
-
-        [Parameter()]
-        [System.String]
-        $RuleType,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Destinations,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Entering the Set-TargetResource function'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $policyInstance = Get-MgBetaNetworkAccessFilteringPolicy | Where-Object -Filter { $_.Name -eq $Policy }
-
-    if ($RuleType -eq 'webCategory')
-    {
-        $instanceParams = @{
-            '@odata.type' = '#microsoft.graph.networkaccess.webCategoryFilteringRule'
-            name          = $Name
-            ruleType      = $RuleType
-            destinations  = @()
-        }
-
-        foreach ($destination in $Destinations)
+        # CREATE
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
         {
-            $instanceParams.destinations += @{
-                '@odata.type' = '#microsoft.graph.networkaccess.webCategory'
-                name          = $destination.name
-            }
+            Write-Verbose -Message "Creating new Filtering Policy Rule {$($this.Name)} with:`r`n$(ConvertTo-Json $instanceParams -Depth 10)"
+            New-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
+                -BodyParameter $instanceParams
         }
-    }
-    elseif ($RuleType -eq 'fqdn')
-    {
-        $instanceParams = @{
-            '@odata.type' = '#microsoft.graph.networkaccess.fqdnFilteringRule'
-            name          = $Name
-            ruleType      = $RuleType
-            destinations  = @()
-        }
-
-        foreach ($destination in $Destinations)
+        # UPDATE
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            $instanceParams.destinations += @{
-                '@odata.type' = '#microsoft.graph.networkaccess.fqdn'
-                value         = $destination.value
-            }
+            $instanceParams.Remove('ruleType') | Out-Null
+            Write-Verbose -Message "Updating Filtering Policy Rule {$($this.Name)} with:`r`n$(ConvertTo-Json $instanceParams -Depth 10)"
+            Update-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
+                -PolicyRuleId $currentInstance.Id `
+                -BodyParameter $instanceParams
+        }
+        # REMOVE
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing Filtering Policy Rule {$($this.Name)}"
+            Remove-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
+                -PolicyRuleId $currentInstance.Id
         }
     }
 
-    # CREATE
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+    [bool] Test()
     {
-        Write-Verbose -Message "Creating new Filtering Policy Rule {$Name} with:`r`n$(ConvertTo-Json $instanceParams -Depth 10)"
-        New-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
-            -BodyParameter $instanceParams
+        return ([M365DSCResourceBase] $this).Test()
     }
-    # UPDATE
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+
+    [string] Export()
     {
-        $instanceParams.Remove('ruleType') | Out-Null
-        Write-Verbose -Message "Updating Filtering Policy Rule {$Name} with:`r`n$(ConvertTo-Json $instanceParams -Depth 10)"
-        Update-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
-            -PolicyRuleId $currentInstance.Id `
-            -BodyParameter $instanceParams
-    }
-    # REMOVE
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing Filtering Policy Rule {$Name}"
-        Remove-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policyInstance.Id `
-            -PolicyRuleId $currentInstance.Id
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Policy,
-
-        [Parameter()]
-        [System.String]
-        $RuleType,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Destinations,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$policies = Get-MgBetaNetworkAccessFilteringPolicy -All -Filter $Filter -ErrorAction Stop
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($policies.Length -eq 0)
+        if ($this.RequiresPowerShellCore())
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        else
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($policy in $policies)
-        {
-            $displayedKey = $policy.Name
-            Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $displayedKey" -DeferWrite
-            [array]$rules = Get-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policy.Id `
-                -ErrorAction SilentlyContinue
-            if ($rules.Length -eq 0)
+            [array]$policies = Get-MgBetaNetworkAccessFilteringPolicy -All -Filter $this.Filter -ExpandProperty 'policyRules' -ErrorAction Stop
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($policies.Length -eq 0)
             {
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
@@ -477,72 +270,115 @@ function Export-TargetResource
             {
                 Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
-            $j = 1
-            foreach ($rule in $rules)
+            foreach ($policy in $policies)
             {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                $displayedKey = $policy.Name
+                Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $displayedKey" -DeferWrite
+                [array]$rules = $this.ResolveExpandedNavigation($policy, 'PolicyRules')
+                if ($null -eq $rules)
                 {
-                    $Global:M365DSCExportResourceInstancesCount++
+                    [array]$rules = Get-MgBetaNetworkAccessFilteringPolicyRule -FilteringPolicyId $policy.Id `
+                        -ErrorAction SilentlyContinue
                 }
-
-                $displayedKey = $rule.Name
-                Write-M365DSCHost -Message "        |---[$j/$($rules.Count)] $displayedKey" -DeferWrite
-                $params = @{
-                    Name                  = $rule.Name
-                    Policy                = $policy.Name
-                    Id                    = $rule.Id
-                    Credential            = $Credential
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    ApplicationSecret     = $ApplicationSecret
-                    CertificateThumbprint = $CertificateThumbprint
-                    CertificatePath       = $CertificatePath
-                    CertificatePassword   = $CertificatePassword
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    AccessTokens          = $AccessTokens
-                }
-
-                $Results = Get-TargetResource @Params
-
-                if ($Results.Destinations)
+                if ($rules.Length -eq 0)
                 {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Destinations -CIMInstanceName 'AADFilteringPolicyRuleDestination'
-                    if ($complexTypeStringResult)
-                    {
-                        $Results.Destinations = $complexTypeStringResult
-                    }
-                    else
-                    {
-                        $Results.Remove('Destinations') | Out-Null
-                    }
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 }
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential `
-                    -NoEscape @('Destinations')
+                else
+                {
+                    Write-M365DSCHost -Message "`r`n" -DeferWrite
+                }
+                $j = 1
+                foreach ($rule in $rules)
+                {
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                    {
+                        $Global:M365DSCExportResourceInstancesCount++
+                    }
 
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-                $j++
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $displayedKey = $rule.Name
+                    Write-M365DSCHost -Message "        |---[$j/$($rules.Count)] $displayedKey" -DeferWrite
+                    $params = @{
+                        Name                  = $rule.Name
+                        Policy                = $policy.Name
+                        Id                    = $rule.Id
+                        Credential            = $this.Credential
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        ApplicationSecret     = $this.ApplicationSecret
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        CertificatePath       = $this.CertificatePath
+                        CertificatePassword   = $this.CertificatePassword
+                        ManagedIdentity       = $this.ManagedIdentity
+                        AccessTokens          = $this.AccessTokens
+                    }
+
+                    $Results = $this.GetForExport($Params)
+                    $rawResults = $Results.Clone()
+
+                    if ($Results.Destinations)
+                    {
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Destinations -CIMInstanceName 'AADFilteringPolicyRuleDestination'
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.Destinations = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('Destinations') | Out-Null
+                        }
+                    }
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential `
+                        -NoEscape @('Destinations') `
+                        -RawResults $rawResults
+
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+                    $j++
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                }
+                $i++
             }
-            $i++
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [AADFilteringPolicyRule] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADFilteringPolicyRule])
+        {
+            return $Values
+        }
+
+        $result = [AADFilteringPolicyRule]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_AADFilteringPolicyRuleDestination
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the destination.')]
+    [System.String] $name
+
+    [DscProperty()]
+    [System.ComponentModel.Description('FQDN value for the destination.')]
+    [System.String] $value
+}

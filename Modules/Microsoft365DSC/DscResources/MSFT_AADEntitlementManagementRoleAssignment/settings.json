@@ -1,5 +1,52 @@
 {
   "resourceName": "AADEntitlementManagementRoleAssignment",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleAssignment",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaRoleManagementEntitlementManagementRoleAssignment",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AppScope",
+      "reason": "Accepted",
+      "note": "AppScopeId carries the identifier the create request binds to"
+    },
+    {
+      "name": "Condition",
+      "reason": "Deferred",
+      "note": "The endpoint carries no update handler."
+    },
+    {
+      "name": "DirectoryScope",
+      "reason": "Accepted",
+      "note": "Modeled through DirectoryScopeId, the identifier the create request binds to"
+    },
+    {
+      "name": "PrincipalId",
+      "reason": "Accepted",
+      "note": "Renamed to the key property Principal, which resolves to an object id"
+    },
+    {
+      "name": "PrincipalOrganizationId",
+      "reason": "ReadOnly",
+      "note": "The service derives it from the home tenant of the assigned principal"
+    },
+    {
+      "name": "ResourceScope",
+      "reason": "Deprecated",
+      "note": "Microsoft marks it DO NOT USE. Scope comes from the directory or app scope identifier"
+    },
+    {
+      "name": "RoleDefinitionId",
+      "reason": "Accepted",
+      "note": "Renamed to the key property RoleDefinition, which resolves the display name"
+    }
+  ],
   "description": "This resource configures an Azure AD Entitlement Management Role Assignments.",
   "roles": {
     "read": [

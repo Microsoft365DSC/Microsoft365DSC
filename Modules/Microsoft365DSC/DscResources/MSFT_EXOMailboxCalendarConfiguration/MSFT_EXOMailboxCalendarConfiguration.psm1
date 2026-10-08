@@ -1,899 +1,425 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOMailboxCalendarConfiguration'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOMailboxCalendarConfiguration : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.Boolean]
-        $AgendaMailIntroductionEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Boolean]
-        $AutoDeclineWhenBusy,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsPreferredLanguage,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsPreferredRegion,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsRootPageId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.Boolean]
-        $ConversationalSchedulingEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.Boolean]
-        $CreateEventsFromEmailAsPrivate,
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-        [Parameter()]
-        [System.Int32]
-        $DefaultMinutesToReduceLongEventsBy,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Specifies the mailbox identity.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.Int32]
-        $DefaultMinutesToReduceShortEventsBy,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables agenda mail introduction.')]
+    [System.Nullable[System.Boolean]] $AgendaMailIntroductionEnabled
 
-        [Parameter()]
-        [System.String]
-        $DefaultOnlineMeetingProvider,
+    [DscProperty()]
+    [System.ComponentModel.Description('Automatically declines meeting requests when the user is busy.')]
+    [System.Nullable[System.Boolean]] $AutoDeclineWhenBusy
 
-        [Parameter()]
-        [System.TimeSpan]
-        $DefaultReminderTime,
+    [DscProperty()]
+    [System.ComponentModel.Description('Preferred language for calendar feeds.')]
+    [System.String] $CalendarFeedsPreferredLanguage
 
-        [Parameter()]
-        [System.Boolean]
-        $DeleteMeetingRequestOnRespond,
+    [DscProperty()]
+    [System.ComponentModel.Description('Preferred region for calendar feeds.')]
+    [System.String] $CalendarFeedsPreferredRegion
 
-        [Parameter()]
-        [System.Boolean]
-        $DiningEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Root page ID for calendar feeds.')]
+    [System.String] $CalendarFeedsRootPageId
 
-        [Parameter()]
-        [System.Boolean]
-        $EntertainmentEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables conversational scheduling.')]
+    [System.Nullable[System.Boolean]] $ConversationalSchedulingEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $EventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Creates events from email as private.')]
+    [System.Nullable[System.Boolean]] $CreateEventsFromEmailAsPrivate
 
-        [Parameter()]
-        [System.String]
-        $FirstWeekOfYear,
+    [DscProperty()]
+    [System.ComponentModel.Description('Default minutes to reduce long events by.')]
+    [System.Nullable[System.UInt32]] $DefaultMinutesToReduceLongEventsBy
 
-        [Parameter()]
-        [System.Boolean]
-        $FlightEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Default minutes to reduce short events by.')]
+    [System.Nullable[System.UInt32]] $DefaultMinutesToReduceShortEventsBy
 
-        [Parameter()]
-        [System.Boolean]
-        $HotelEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Default online meeting provider.')]
+    [System.String] $DefaultOnlineMeetingProvider
 
-        [Parameter()]
-        [System.Boolean]
-        $InvoiceEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Default reminder time.')]
+    [System.String] $DefaultReminderTime
 
-        [Parameter()]
-        [System.String]
-        $LocationDetailsInFreeBusy,
+    [DscProperty()]
+    [System.ComponentModel.Description('Deletes meeting request on respond.')]
+    [System.Nullable[System.Boolean]] $DeleteMeetingRequestOnRespond
 
-        [Parameter()]
-        [System.String]
-        $MailboxLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables dining events from email.')]
+    [System.Nullable[System.Boolean]] $DiningEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $OnlineMeetingsByDefaultEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables entertainment events from email.')]
+    [System.Nullable[System.Boolean]] $EntertainmentEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $PackageDeliveryEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables events from email.')]
+    [System.Nullable[System.Boolean]] $EventsFromEmailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $PreserveDeclinedMeetings,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the first week of the year.')]
+    [System.String] $FirstWeekOfYear
 
-        [Parameter()]
-        [System.Boolean]
-        $RemindersEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables flight events from email.')]
+    [System.Nullable[System.Boolean]] $FlightEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $ReminderSoundEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables hotel events from email.')]
+    [System.Nullable[System.Boolean]] $HotelEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $RentalCarEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables invoice events from email.')]
+    [System.Nullable[System.Boolean]] $InvoiceEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $ServiceAppointmentEventsFromEmailEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies location details in free/busy information.')]
+    [System.String] $LocationDetailsInFreeBusy
 
-        [Parameter()]
-        [System.String]
-        $ShortenEventScopeDefault,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the mailbox location.')]
+    [System.String] $MailboxLocation
 
-        [Parameter()]
-        [System.Boolean]
-        $ShowWeekNumbers,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables online meetings by default.')]
+    [System.Nullable[System.Boolean]] $OnlineMeetingsByDefaultEnabled
 
-        [Parameter()]
-        [System.String]
-        $TimeIncrement,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables package delivery events from email.')]
+    [System.Nullable[System.Boolean]] $PackageDeliveryEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $UseBrightCalendarColorThemeInOwa,
+    [DscProperty()]
+    [System.ComponentModel.Description('Preserves declined meetings.')]
+    [System.Nullable[System.Boolean]] $PreserveDeclinedMeetings
 
-        [Parameter()]
-        [System.String]
-        $WeatherEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables reminders.')]
+    [System.Nullable[System.Boolean]] $RemindersEnabled
 
-        [Parameter()]
-        [System.Int32]
-        $WeatherLocationBookmark,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables reminder sound.')]
+    [System.Nullable[System.Boolean]] $ReminderSoundEnabled
 
-        [Parameter()]
-        [System.String[]]
-        $WeatherLocations,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables rental car events from email.')]
+    [System.Nullable[System.Boolean]] $RentalCarEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.String]
-        $WeatherUnit,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables service appointment events from email.')]
+    [System.Nullable[System.Boolean]] $ServiceAppointmentEventsFromEmailEnabled
 
-        [Parameter()]
-        [System.String]
-        $WeekStartDay,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the default scope for shortening events.')]
+    [System.String] $ShortenEventScopeDefault
 
-        [Parameter()]
-        [System.String]
-        $WorkDays,
+    [DscProperty()]
+    [System.ComponentModel.Description('Shows or hides week numbers.')]
+    [System.Nullable[System.Boolean]] $ShowWeekNumbers
 
-        [Parameter()]
-        [System.TimeSpan]
-        $WorkingHoursEndTime,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the time increment for calendar events.')]
+    [System.String] $TimeIncrement
 
-        [Parameter()]
-        [System.TimeSpan]
-        $WorkingHoursStartTime,
+    [DscProperty()]
+    [System.ComponentModel.Description('Uses a bright calendar color theme in Outlook on the web.')]
+    [System.Nullable[System.Boolean]] $UseBrightCalendarColorThemeInOwa
 
-        [Parameter()]
-        [System.String]
-        $WorkingHoursTimeZone,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables weather information.')]
+    [System.String] $WeatherEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $WorkspaceUserEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the weather location bookmark.')]
+    [System.Nullable[System.UInt32]] $WeatherLocationBookmark
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the weather locations.')]
+    [System.String[]] $WeatherLocations
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the weather unit.')]
+    [System.String] $WeatherUnit
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the start day of the week.')]
+    [System.String] $WeekStartDay
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the work days.')]
+    [System.String] $WorkDays
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the end time of working hours.')]
+    [System.String] $WorkingHoursEndTime
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the start time of working hours.')]
+    [System.String] $WorkingHoursStartTime
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the time zone for working hours.')]
+    [System.String] $WorkingHoursTimeZone
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables workspace user.')]
+    [System.Nullable[System.Boolean]] $WorkspaceUserEnabled
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Ensures the presence or absence of the configuration.')]
+    [System.String] $Ensure
 
-    Write-Verbose -Message "Getting configuration of Mailbox Calendar Configuration with Identity $Identity"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [EXOMailboxCalendarConfiguration] Get()
     {
-        $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [EXOMailboxCalendarConfiguration]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration of Mailbox Calendar Configuration with Identity $($this.Identity)"
+
+        try
+        {
+            $null = $this.Connect('ExchangeOnline')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            # The cmdlet will show the warning "Events from Email parameters of this cmdlet are deprecated. Use Get-EventsFromEmailConfiguration instead."
+            # However, the new cmdlet does not work and throws an Internal Server Error exception
+            # Keep using Get-MailboxCalendarConfiguration for now
+            $config = Get-MailboxCalendarConfiguration -Identity $this.Identity -ErrorAction SilentlyContinue
+
+            if ($null -eq $config)
+            {
+                Write-Verbose -Message "Mailbox Calendar Configuration with Identity $($this.Identity) not found"
+                return $this.AsResult($nullResult)
+            }
+
+            Write-Verbose -Message "Found Mailbox Calendar Configuration for $($this.Identity)"
+
+            $results = @{
+                Ensure                                   = 'Present'
+                Identity                                 = $this.Identity
+                AgendaMailIntroductionEnabled            = $config.AgendaMailIntroductionEnabled
+                AutoDeclineWhenBusy                      = $config.AutoDeclineWhenBusy
+                CalendarFeedsPreferredLanguage           = $config.CalendarFeedsPreferredLanguage
+                CalendarFeedsPreferredRegion             = $config.CalendarFeedsPreferredRegion
+                CalendarFeedsRootPageId                  = $config.CalendarFeedsRootPageId
+                ConversationalSchedulingEnabled          = $config.ConversationalSchedulingEnabled
+                CreateEventsFromEmailAsPrivate           = $config.CreateEventsFromEmailAsPrivate
+                DefaultMinutesToReduceLongEventsBy       = $config.DefaultMinutesToReduceLongEventsBy
+                DefaultMinutesToReduceShortEventsBy      = $config.DefaultMinutesToReduceShortEventsBy
+                DefaultOnlineMeetingProvider             = $config.DefaultOnlineMeetingProvider
+                DefaultReminderTime                      = $config.DefaultReminderTime
+                DeleteMeetingRequestOnRespond            = $config.DeleteMeetingRequestOnRespond
+                DiningEventsFromEmailEnabled             = $config.DiningEventsFromEmailEnabled
+                EntertainmentEventsFromEmailEnabled      = $config.EntertainmentEventsFromEmailEnabled
+                EventsFromEmailEnabled                   = $config.EventsFromEmailEnabled
+                FirstWeekOfYear                          = $config.FirstWeekOfYear
+                FlightEventsFromEmailEnabled             = $config.FlightEventsFromEmailEnabled
+                HotelEventsFromEmailEnabled              = $config.HotelEventsFromEmailEnabled
+                InvoiceEventsFromEmailEnabled            = $config.InvoiceEventsFromEmailEnabled
+                LocationDetailsInFreeBusy                = $config.LocationDetailsInFreeBusy
+                MailboxLocation                          = $config.MailboxLocation
+                OnlineMeetingsByDefaultEnabled           = $config.OnlineMeetingsByDefaultEnabled
+                PackageDeliveryEventsFromEmailEnabled    = $config.PackageDeliveryEventsFromEmailEnabled
+                PreserveDeclinedMeetings                 = $config.PreserveDeclinedMeetings
+                RemindersEnabled                         = $config.RemindersEnabled
+                ReminderSoundEnabled                     = $config.ReminderSoundEnabled
+                RentalCarEventsFromEmailEnabled          = $config.RentalCarEventsFromEmailEnabled
+                ServiceAppointmentEventsFromEmailEnabled = $config.ServiceAppointmentEventsFromEmailEnabled
+                ShortenEventScopeDefault                 = $config.ShortenEventScopeDefault
+                ShowWeekNumbers                          = $config.ShowWeekNumbers
+                TimeIncrement                            = $config.TimeIncrement
+                UseBrightCalendarColorThemeInOwa         = $config.UseBrightCalendarColorThemeInOwa
+                WeatherEnabled                           = $config.WeatherEnabled
+                WeatherLocationBookmark                  = $config.WeatherLocationBookmark
+                WeatherLocations                         = [System.String[]]$config.WeatherLocations
+                WeatherUnit                              = $config.WeatherUnit
+                WeekStartDay                             = $config.WeekStartDay
+                WorkDays                                 = $config.WorkDays
+                WorkingHoursEndTime                      = $config.WorkingHoursEndTime
+                WorkingHoursStartTime                    = $config.WorkingHoursStartTime
+                WorkingHoursTimeZone                     = $config.WorkingHoursTimeZone
+                WorkspaceUserEnabled                     = $config.WorkspaceUserEnabled
+                Credential                               = $this.Credential
+                ApplicationId                            = $this.ApplicationId
+                TenantId                                 = $this.TenantId
+                CertificateThumbprint                    = $this.CertificateThumbprint
+                CertificatePath                          = $this.CertificatePath
+                CertificatePassword                      = $this.CertificatePassword
+                ManagedIdentity                          = $this.ManagedIdentity
+                AccessTokens                             = $this.AccessTokens
+            }
+
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of Mailbox Calendar Configuration with Identity $($this.Identity)"
+
+        $null = $this.Connect('ExchangeOnline')
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
-
-        # The cmdlet will show the warning "Events from Email parameters of this cmdlet are deprecated. Use Get-EventsFromEmailConfiguration instead."
-        # However, the new cmdlet does not work and throws an Internal Server Error exception
-        # Keep using Get-MailboxCalendarConfiguration for now
-        $config = Get-MailboxCalendarConfiguration -Identity $Identity -ErrorAction SilentlyContinue
-
-        if ($null -eq $config)
-        {
-            Write-Verbose -Message "Mailbox Calendar Configuration with Identity $Identity not found"
-            return $nullResult
-        }
-
-        Write-Verbose -Message "Found Mailbox Calendar Configuration for $($Identity)"
-
-        $results = @{
-            Ensure                                   = 'Present'
-            Identity                                 = $Identity
-            AgendaMailIntroductionEnabled            = $config.AgendaMailIntroductionEnabled
-            AutoDeclineWhenBusy                      = $config.AutoDeclineWhenBusy
-            CalendarFeedsPreferredLanguage           = $config.CalendarFeedsPreferredLanguage
-            CalendarFeedsPreferredRegion             = $config.CalendarFeedsPreferredRegion
-            CalendarFeedsRootPageId                  = $config.CalendarFeedsRootPageId
-            ConversationalSchedulingEnabled          = $config.ConversationalSchedulingEnabled
-            CreateEventsFromEmailAsPrivate           = $config.CreateEventsFromEmailAsPrivate
-            DefaultMinutesToReduceLongEventsBy       = $config.DefaultMinutesToReduceLongEventsBy
-            DefaultMinutesToReduceShortEventsBy      = $config.DefaultMinutesToReduceShortEventsBy
-            DefaultOnlineMeetingProvider             = $config.DefaultOnlineMeetingProvider
-            DefaultReminderTime                      = $config.DefaultReminderTime
-            DeleteMeetingRequestOnRespond            = $config.DeleteMeetingRequestOnRespond
-            DiningEventsFromEmailEnabled             = $config.DiningEventsFromEmailEnabled
-            EntertainmentEventsFromEmailEnabled      = $config.EntertainmentEventsFromEmailEnabled
-            EventsFromEmailEnabled                   = $config.EventsFromEmailEnabled
-            FirstWeekOfYear                          = $config.FirstWeekOfYear
-            FlightEventsFromEmailEnabled             = $config.FlightEventsFromEmailEnabled
-            HotelEventsFromEmailEnabled              = $config.HotelEventsFromEmailEnabled
-            InvoiceEventsFromEmailEnabled            = $config.InvoiceEventsFromEmailEnabled
-            LocationDetailsInFreeBusy                = $config.LocationDetailsInFreeBusy
-            MailboxLocation                          = $config.MailboxLocation
-            OnlineMeetingsByDefaultEnabled           = $config.OnlineMeetingsByDefaultEnabled
-            PackageDeliveryEventsFromEmailEnabled    = $config.PackageDeliveryEventsFromEmailEnabled
-            PreserveDeclinedMeetings                 = $config.PreserveDeclinedMeetings
-            RemindersEnabled                         = $config.RemindersEnabled
-            ReminderSoundEnabled                     = $config.ReminderSoundEnabled
-            RentalCarEventsFromEmailEnabled          = $config.RentalCarEventsFromEmailEnabled
-            ServiceAppointmentEventsFromEmailEnabled = $config.ServiceAppointmentEventsFromEmailEnabled
-            ShortenEventScopeDefault                 = $config.ShortenEventScopeDefault
-            ShowWeekNumbers                          = $config.ShowWeekNumbers
-            TimeIncrement                            = $config.TimeIncrement
-            UseBrightCalendarColorThemeInOwa         = $config.UseBrightCalendarColorThemeInOwa
-            WeatherEnabled                           = $config.WeatherEnabled
-            WeatherLocationBookmark                  = $config.WeatherLocationBookmark
-            WeatherLocations                         = [System.String[]]$config.WeatherLocations
-            WeatherUnit                              = $config.WeatherUnit
-            WeekStartDay                             = $config.WeekStartDay
-            WorkDays                                 = $config.WorkDays
-            WorkingHoursEndTime                      = $config.WorkingHoursEndTime
-            WorkingHoursStartTime                    = $config.WorkingHoursStartTime
-            WorkingHoursTimeZone                     = $config.WorkingHoursTimeZone
-            WorkspaceUserEnabled                     = $config.WorkspaceUserEnabled
-            Credential                               = $Credential
-            ApplicationId                            = $ApplicationId
-            TenantId                                 = $TenantId
-            CertificateThumbprint                    = $CertificateThumbprint
-            CertificatePath                          = $CertificatePath
-            CertificatePassword                      = $CertificatePassword
-            ManagedIdentity                          = $ManagedIdentity.IsPresent
-            AccessTokens                             = $AccessTokens
-        }
-
-        return $results
+        $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        Set-MailboxCalendarConfiguration @SetParameters
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
 
-        throw
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
     }
-}
 
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.Boolean]
-        $AgendaMailIntroductionEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $AutoDeclineWhenBusy,
-
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsPreferredLanguage,
-
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsPreferredRegion,
-
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsRootPageId,
-
-        [Parameter()]
-        [System.Boolean]
-        $ConversationalSchedulingEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $CreateEventsFromEmailAsPrivate,
-
-        [Parameter()]
-        [System.Int32]
-        $DefaultMinutesToReduceLongEventsBy,
-
-        [Parameter()]
-        [System.Int32]
-        $DefaultMinutesToReduceShortEventsBy,
-
-        [Parameter()]
-        [System.String]
-        $DefaultOnlineMeetingProvider,
-
-        [Parameter()]
-        [System.TimeSpan]
-        $DefaultReminderTime,
-
-        [Parameter()]
-        [System.Boolean]
-        $DeleteMeetingRequestOnRespond,
-
-        [Parameter()]
-        [System.Boolean]
-        $DiningEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EntertainmentEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.String]
-        $FirstWeekOfYear,
-
-        [Parameter()]
-        [System.Boolean]
-        $FlightEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $HotelEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $InvoiceEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.String]
-        $LocationDetailsInFreeBusy,
-
-        [Parameter()]
-        [System.String]
-        $MailboxLocation,
-
-        [Parameter()]
-        [System.Boolean]
-        $OnlineMeetingsByDefaultEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $PackageDeliveryEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $PreserveDeclinedMeetings,
-
-        [Parameter()]
-        [System.Boolean]
-        $RemindersEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $ReminderSoundEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $RentalCarEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $ServiceAppointmentEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.String]
-        $ShortenEventScopeDefault,
-
-        [Parameter()]
-        [System.Boolean]
-        $ShowWeekNumbers,
-
-        [Parameter()]
-        [System.String]
-        $TimeIncrement,
-
-        [Parameter()]
-        [System.Boolean]
-        $UseBrightCalendarColorThemeInOwa,
-
-        [Parameter()]
-        [System.String]
-        $WeatherEnabled,
-
-        [Parameter()]
-        [System.Int32]
-        $WeatherLocationBookmark,
-
-        [Parameter()]
-        [System.String[]]
-        $WeatherLocations,
-
-        [Parameter()]
-        [System.String]
-        $WeatherUnit,
-
-        [Parameter()]
-        [System.String]
-        $WeekStartDay,
-
-        [Parameter()]
-        [System.String]
-        $WorkDays,
-
-        [Parameter()]
-        [System.TimeSpan]
-        $WorkingHoursEndTime,
-
-        [Parameter()]
-        [System.TimeSpan]
-        $WorkingHoursStartTime,
-
-        [Parameter()]
-        [System.String]
-        $WorkingHoursTimeZone,
-
-        [Parameter()]
-        [System.Boolean]
-        $WorkspaceUserEnabled,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Mailbox Calendar Configuration with Identity $Identity"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    Set-MailboxCalendarConfiguration @SetParameters
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.Boolean]
-        $AgendaMailIntroductionEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $AutoDeclineWhenBusy,
-
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsPreferredLanguage,
-
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsPreferredRegion,
-
-        [Parameter()]
-        [System.String]
-        $CalendarFeedsRootPageId,
-
-        [Parameter()]
-        [System.Boolean]
-        $ConversationalSchedulingEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $CreateEventsFromEmailAsPrivate,
-
-        [Parameter()]
-        [System.Int32]
-        $DefaultMinutesToReduceLongEventsBy,
-
-        [Parameter()]
-        [System.Int32]
-        $DefaultMinutesToReduceShortEventsBy,
-
-        [Parameter()]
-        [System.String]
-        $DefaultOnlineMeetingProvider,
-
-        [Parameter()]
-        [System.TimeSpan]
-        $DefaultReminderTime,
-
-        [Parameter()]
-        [System.Boolean]
-        $DeleteMeetingRequestOnRespond,
-
-        [Parameter()]
-        [System.Boolean]
-        $DiningEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EntertainmentEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.String]
-        $FirstWeekOfYear,
-
-        [Parameter()]
-        [System.Boolean]
-        $FlightEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $HotelEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $InvoiceEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.String]
-        $LocationDetailsInFreeBusy,
-
-        [Parameter()]
-        [System.String]
-        $MailboxLocation,
-
-        [Parameter()]
-        [System.Boolean]
-        $OnlineMeetingsByDefaultEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $PackageDeliveryEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $PreserveDeclinedMeetings,
-
-        [Parameter()]
-        [System.Boolean]
-        $RemindersEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $ReminderSoundEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $RentalCarEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $ServiceAppointmentEventsFromEmailEnabled,
-
-        [Parameter()]
-        [System.String]
-        $ShortenEventScopeDefault,
-
-        [Parameter()]
-        [System.Boolean]
-        $ShowWeekNumbers,
-
-        [Parameter()]
-        [System.String]
-        $TimeIncrement,
-
-        [Parameter()]
-        [System.Boolean]
-        $UseBrightCalendarColorThemeInOwa,
-
-        [Parameter()]
-        [System.String]
-        $WeatherEnabled,
-
-        [Parameter()]
-        [System.Int32]
-        $WeatherLocationBookmark,
-
-        [Parameter()]
-        [System.String[]]
-        $WeatherLocations,
-
-        [Parameter()]
-        [System.String]
-        $WeatherUnit,
-
-        [Parameter()]
-        [System.String]
-        $WeekStartDay,
-
-        [Parameter()]
-        [System.String]
-        $WorkDays,
-
-        [Parameter()]
-        [System.TimeSpan]
-        $WorkingHoursEndTime,
-
-        [Parameter()]
-        [System.TimeSpan]
-        $WorkingHoursStartTime,
-
-        [Parameter()]
-        [System.String]
-        $WorkingHoursTimeZone,
-
-        [Parameter()]
-        [System.Boolean]
-        $WorkspaceUserEnabled,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
+    [string] Export()
     {
-        [array]$mailboxes = Get-Mailbox -ResultSize 'Unlimited' -ErrorAction Stop
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
 
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($mailboxes.Length -eq 0)
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $mailboxes)
-        {
-            $displayedKey = $config.UserPrincipalName
-            Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Identity              = $config.UserPrincipalName
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            [array]$mailboxes = Get-M365DSCExportCachedCollection -Collection 'exoMailboxes'
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($mailboxes.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-            $Results = Get-TargetResource @params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $mailboxes)
+            {
+                $displayedKey = $config.UserPrincipalName
+                Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Identity              = $config.UserPrincipalName
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+                $Results = $this.GetForExport($params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [EXOMailboxCalendarConfiguration] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOMailboxCalendarConfiguration])
+        {
+            return $Values
+        }
+
+        $result = [EXOMailboxCalendarConfiguration]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

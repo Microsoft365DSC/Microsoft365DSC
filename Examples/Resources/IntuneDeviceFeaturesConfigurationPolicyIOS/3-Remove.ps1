@@ -3,7 +3,8 @@ This example creates a new Intune Device Features Configuration Policy for IOS.
 #>
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -16,17 +17,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        IntuneDeviceFeaturesConfigurationPolicyIOS "IntuneDeviceFeaturesConfigurationPolicyIOS-FakeStringValue"
+        IntuneDeviceFeaturesConfigurationPolicyIOS "IntuneDeviceFeaturesConfigurationPolicyIOS-Example"
         {
-            DisplayName              = "FakeStringValue";
-            ApplicationId            = $ApplicationId;
-            TenantId                 = $TenantId;
-            CertificateThumbprint    = $CertificateThumbprint;
-            Ensure                   = 'Absent'
+            DisplayName           = "Corporate iOS Device Features";
+            Ensure                = 'Absent'
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

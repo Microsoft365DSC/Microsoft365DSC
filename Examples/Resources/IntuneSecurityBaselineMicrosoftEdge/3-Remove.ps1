@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,13 +19,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneSecurityBaselineMicrosoftEdge 'mySecurityBaselineMicrosoftEdge'
+        IntuneSecurityBaselineMicrosoftEdge 'IntuneSecurityBaselineMicrosoftEdge-Example'
         {
-            DisplayName           = 'test'
+            DisplayName           = 'Microsoft Edge Baseline'
             Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;

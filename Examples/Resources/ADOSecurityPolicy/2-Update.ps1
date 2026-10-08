@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,24 +19,26 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        ADOSecurityPolicy "ADOPolicy"
+        ADOSecurityPolicy "ADOSecurityPolicy-Example"
         {
             AllowAnonymousAccess                    = $True;
             AllowRequestAccessToken                 = $False;
             AllowTeamAdminsInvitationsAccessToken   = $True;
-            ApplicationId                           = $ApplicationId;
             ArtifactsExternalPackageProtectionToken = $False;
-            CertificateThumbprint                   = $CertificateThumbprint;
             DisallowAadGuestUserAccess              = $True;
             DisallowOAuthAuthentication             = $True;
             DisallowSecureShell                     = $False;
             EnforceAADConditionalAccess             = $False;
             LogAuditEvents                          = $True;
-            OrganizationName                        = "O365DSC-Dev";
+            OrganizationName                        = "Contoso-Dev";
+            ApplicationId                           = $ApplicationId;
             TenantId                                = $TenantId;
+            CertificateThumbprint                   = $CertificateThumbprint;
         }
     }
 }

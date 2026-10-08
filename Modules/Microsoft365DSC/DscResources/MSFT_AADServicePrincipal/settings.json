@@ -1,5 +1,122 @@
 {
   "resourceName": "AADServicePrincipal",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "servicePrincipal",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaServicePrincipal",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AppDescription",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplication writes it through Description"
+    },
+    {
+      "name": "AppDisplayName",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplication writes it through DisplayName"
+    },
+    {
+      "name": "ApplicationTemplateId",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplication selects the gallery template through ApplicationTemplateId"
+    },
+    {
+      "name": "AppOwnerOrganizationId",
+      "reason": "ReadOnly",
+      "note": "The service records the tenant where the linked application is registered"
+    },
+    {
+      "name": "AppRoles",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplication writes them through AppRoles"
+    },
+    {
+      "name": "CreatedObjects",
+      "reason": "ReadOnly",
+      "note": "Graph documents this collection of created directory objects as read only"
+    },
+    {
+      "name": "DisabledByMicrosoftStatus",
+      "reason": "ReadOnly",
+      "note": "Microsoft sets this when it disables the registered application"
+    },
+    {
+      "name": "Endpoints",
+      "reason": "ReadOnly",
+      "note": "Services such as SharePoint populate tenant specific discovery endpoints"
+    },
+    {
+      "name": "Id",
+      "reason": "Accepted",
+      "note": "ObjectID carries the same service principal id"
+    },
+    {
+      "name": "Info",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplication writes the marketing, support, terms and privacy URLs through Info"
+    },
+    {
+      "name": "IsDisabled",
+      "reason": "NotConfigurable",
+      "note": "Derived from the application. The portal toggle writes AccountEnabled."
+    },
+    {
+      "name": "LicenseDetails",
+      "reason": "ReadOnly",
+      "note": "The service reports assigned licenses as read only"
+    },
+    {
+      "name": "MemberOf",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroup writes membership through Members and Graph marks this side read only"
+    },
+    {
+      "name": "ObjectID",
+      "reason": "NotConfigurable",
+      "note": "Echoes the service assigned service principal id"
+    },
+    {
+      "name": "OwnedObjects",
+      "reason": "ReadOnly",
+      "note": "Graph documents this collection of owned directory objects as read only"
+    },
+    {
+      "name": "PreferredTokenSigningKeyEndDateTime",
+      "reason": "ReadOnly",
+      "note": "Echoes the token signing key credential expiry and Graph rejects updates"
+    },
+    {
+      "name": "PublishedPermissionScopes",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplication writes these scopes through Api.Oauth2PermissionScopes"
+    },
+    {
+      "name": "SignInAudience",
+      "reason": "OwnedByOtherResource",
+      "note": "AADApplication writes it through its own SignInAudience property"
+    },
+    {
+      "name": "Synchronization",
+      "reason": "Accepted",
+      "note": "Provisioning jobs, schema and templates sit behind their own sub-API."
+    },
+    {
+      "name": "TransitiveMemberOf",
+      "reason": "ReadOnly",
+      "note": "Computed transitive group membership assigned on the group"
+    },
+    {
+      "name": "VerifiedPublisher",
+      "reason": "ReadOnly",
+      "note": "Recorded on the linked application after publisher verification"
+    }
+  ],
   "description": "This resource configures an Azure Active Directory ServicePrincipal.",
   "roles": {
     "read": [],
@@ -15,7 +132,7 @@
             "name": "Application.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "User.Read.All"
@@ -26,7 +143,7 @@
             "name": "Application.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "User.Read.All"
@@ -39,7 +156,7 @@
             "name": "Application.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "User.Read.All"
@@ -50,7 +167,7 @@
             "name": "Application.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "User.Read.All"
@@ -62,6 +179,7 @@
   "requiredModules": [
     "Microsoft.Graph.Applications",
     "Microsoft.Graph.Authentication",
+    "Microsoft.Graph.Beta.Applications",
     "Microsoft.Graph.Groups",
     "Microsoft.Graph.Users",
     "MSCloudLoginAssistant"
@@ -76,22 +194,31 @@
       "module": "Microsoft.Graph.Applications",
       "cmdlets": [
         "Get-MgApplication",
-        "Get-MgServicePrincipal",
-        "Get-MgServicePrincipalAppRoleAssignedTo",
-        "New-MgServicePrincipal",
-        "New-MgServicePrincipalAppRoleAssignedTo",
-        "New-MgServicePrincipalOwnerByRef",
-        "Remove-MgServicePrincipal",
-        "Remove-MgServicePrincipalAppRoleAssignedTo",
-        "Remove-MgServicePrincipalOwnerDirectoryObjectByRef",
-        "Update-MgApplication",
-        "Update-MgServicePrincipal"
+        "Update-MgApplication"
       ]
     },
     {
       "module": "Microsoft.Graph.Authentication",
       "cmdlets": [
         "Invoke-MgGraphRequest"
+      ]
+    },
+    {
+      "module": "Microsoft.Graph.Beta.Applications",
+      "cmdlets": [
+        "Get-MgBetaServicePrincipal",
+        "Get-MgBetaServicePrincipalAppRoleAssignedTo",
+        "Get-MgBetaServicePrincipalDelegatedPermissionClassification",
+        "New-MgBetaServicePrincipal",
+        "New-MgBetaServicePrincipalAppRoleAssignedTo",
+        "New-MgBetaServicePrincipalDelegatedPermissionClassification",
+        "New-MgBetaServicePrincipalOwnerByRef",
+        "Remove-MgBetaServicePrincipal",
+        "Remove-MgBetaServicePrincipalAppRoleAssignedTo",
+        "Remove-MgBetaServicePrincipalDelegatedPermissionClassification",
+        "Remove-MgBetaServicePrincipalOwnerDirectoryObjectByRef",
+        "Set-MgBetaServicePrincipalClaimPolicy",
+        "Update-MgBetaServicePrincipal"
       ]
     },
     {

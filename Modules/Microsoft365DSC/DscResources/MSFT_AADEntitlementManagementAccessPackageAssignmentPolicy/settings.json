@@ -1,5 +1,32 @@
 {
   "resourceName": "AADEntitlementManagementAccessPackageAssignmentPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "accessPackageAssignmentPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaEntitlementManagementAccessPackageAssignmentPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AccessPackage",
+      "reason": "OwnedByOtherResource",
+      "note": "AADEntitlementManagementAccessPackage owns it, linked here through AccessPackageId"
+    },
+    {
+      "name": "AccessPackageCatalog",
+      "reason": "OwnedByOtherResource",
+      "note": "AADEntitlementManagementAccessPackageCatalog owns it and the policy inherits it from its access package"
+    },
+    {
+      "name": "CustomExtensionStageSettings",
+      "reason": "Accepted",
+      "note": "Configured through the CustomExtensionHandlers property on the resource. Responsible for the stages where workflow extensions run."
+    }
+  ],
   "description": "This resource configures an Azure AD Entitlement Management Access Package Assignment Policy.",
   "roles": {
     "read": [

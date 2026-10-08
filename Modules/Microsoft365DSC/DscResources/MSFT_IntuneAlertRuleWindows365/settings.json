@@ -1,5 +1,42 @@
 {
   "resourceName": "IntuneAlertRuleWindows365",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceManagement.alertRule",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementMonitoringAlertRule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "Accepted",
+      "note": "The resource carries the existing rule description into the update body"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "Accepted",
+      "note": "Rules are addressed by template and the existing name is carried forward"
+    },
+    {
+      "name": "Id",
+      "reason": "Accepted",
+      "note": "Looked up from the tenant and written into the update call"
+    },
+    {
+      "name": "IsSystemRule",
+      "reason": "Accepted",
+      "note": "Always sent as true"
+    },
+    {
+      "name": "Threshold",
+      "reason": "Accepted",
+      "note": "Derived from the template and tunable through Conditions"
+    }
+  ],
   "description": "This resource configures an Intune Alert Rule Windows365.",
   "permissions": {
     "graph": {

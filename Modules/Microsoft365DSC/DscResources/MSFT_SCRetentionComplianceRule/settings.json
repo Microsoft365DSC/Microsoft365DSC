@@ -1,5 +1,16 @@
 {
   "resourceName": "SCRetentionComplianceRule",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "RetentionComplianceRule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Retention Compliance Rule in Purview.",
   "roles": {
     "read": [
@@ -25,14 +36,22 @@
       }
     },
     "purview": {
-      "requiredroles": [
-        "Retention Management",
-        "View-Only Retention Management"
-      ],
-      "requiredrolegroups": [
-        "Records Management",
-        "Global Reader"
-      ]
+      "requiredRoles": {
+        "read": [
+          "View-Only Retention Management"
+        ],
+        "update": [
+          "Retention Management"
+        ]
+      },
+      "requiredRoleGroups": {
+        "read": [
+          "Global Reader"
+        ],
+        "update": [
+          "Records Management"
+        ]
+      }
     }
   },
   "requiredModules": [],
@@ -40,5 +59,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-RetentionCompliancePolicy",
+        "Get-RetentionComplianceRule",
+        "New-RetentionComplianceRule",
+        "Remove-RetentionComplianceRule",
+        "Set-RetentionComplianceRule"
+      ]
+    }
+  ]
 }

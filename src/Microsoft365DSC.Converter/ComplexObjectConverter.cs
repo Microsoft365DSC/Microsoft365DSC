@@ -1,6 +1,8 @@
 using Microsoft.Management.Infrastructure;
+using Microsoft365DSC.Utilities;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
@@ -15,9 +17,29 @@ namespace Microsoft365DSC.Converter
     /// </summary>
     public static class ComplexObjectConverter
     {
-        private static readonly Dictionary<string, PropertyInfo[]> _propertyCache =
-            new(StringComparer.OrdinalIgnoreCase);
-        private static readonly object _cacheLock = new();
+        private const string ClassNamePrefix = "MSFT_";
+        private const string EntityItemProperty = "EntityItem";
+        private const string GraphModelNamespacePrefix = "Microsoft.Graph.PowerShell.Models.";
+        private const string GraphAdditionalPropertiesName = "Microsoft.Graph.Beta.PowerShell.Runtime.IAssociativeArray<System.Object>.AdditionalProperties";
+        private const string AdditionalPropertiesKey = "AdditionalProperties";
+        private const char RightSingleQuotationMark = (char)0x2019;
+
+        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> ClrProperties = new();
+        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> GraphProperties = new();
+        private static readonly ConcurrentDictionary<Type, DscPropertySet> DscProperties = new();
+
+        private sealed class DscPropertySet
+        {
+            public DscPropertySet(List<string> sortedNames, Dictionary<string, PropertyInfo> byName)
+            {
+                SortedNames = sortedNames;
+                ByName = byName;
+            }
+
+            public List<string> SortedNames { get; }
+
+            public Dictionary<string, PropertyInfo> ByName { get; }
+        }
 
         /// <summary>
         /// Converts a CIM instance or object to a hashtable with cached property reflection.
@@ -27,36 +49,38 @@ namespace Microsoft365DSC.Converter
         public static Hashtable? ToHashtable(object complexObject)
         {
             if (complexObject is null)
+            {
                 return null;
+            }
 
-            if (complexObject is PSObject psObject && psObject.BaseObject is not null)
-                complexObject = psObject.BaseObject;
+            complexObject = MemberAccessor.Unwrap(complexObject)!;
 
-            if (complexObject is PSObject psObject2)
+            if (complexObject is PSObject psObject)
             {
                 var result = new Hashtable(StringComparer.OrdinalIgnoreCase);
-                foreach (PSPropertyInfo prop in psObject2.Properties)
+                foreach (PSPropertyInfo prop in psObject.Properties)
                 {
-                    // Skip computed properties; only take NoteProperty and Property
                     if (prop.MemberType != PSMemberTypes.NoteProperty &&
                         prop.MemberType != PSMemberTypes.Property)
+                    {
                         continue;
+                    }
 
                     try
                     {
-                        result[prop.Name] = ToHashtable(prop.Value);
+                        result[prop.Name] = GetValueFromObject(prop.Value);
                     }
                     catch
                     {
-                        // Some properties may throw on access (ParameterizedProperty etc.)
-                        // Skip them silently
                     }
                 }
                 return result;
             }
 
             if (complexObject is Hashtable hashtable)
+            {
                 return hashtable;
+            }
 
             if (complexObject is IDictionary dictionary)
             {
@@ -74,18 +98,52 @@ namespace Microsoft365DSC.Converter
                 foreach (var property in cimInstance.CimInstanceProperties)
                 {
                     if (property.Name.Equals("PSComputerName", StringComparison.OrdinalIgnoreCase) || !property.IsValueModified)
+                    {
                         continue;
+                    }
 
                     cimResult[property.Name] = GetValueFromObject(property.Value);
                 }
                 return cimResult;
             }
-            else if (complexObject.GetType().FullName.Contains("Microsoft.Graph."))
+
+            if (ValueClassifier.IsGraphModel(complexObject.GetType()))
             {
                 return GetValueFromGraphObject(complexObject);
             }
 
-            return new(StringComparer.OrdinalIgnoreCase);
+            return GetValueFromClrObject(complexObject);
+        }
+
+        private static Hashtable GetValueFromClrObject(object complexObject)
+        {
+            PropertyInfo[] properties = ClrProperties.GetOrAdd(complexObject.GetType(), static type =>
+                type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(property => property.CanRead && property.GetIndexParameters().Length == 0)
+                    .ToArray());
+
+            var result = new Hashtable(StringComparer.OrdinalIgnoreCase);
+            foreach (var property in properties)
+            {
+                object? value;
+                try
+                {
+                    value = property.GetValue(complexObject);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (value is null)
+                {
+                    continue;
+                }
+
+                result[property.Name] = GetValueFromObject(value);
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -104,11 +162,6 @@ namespace Microsoft365DSC.Converter
             return result;
         }
 
-        /// <summary>
-        /// Converts an array, handling nested CIM instances and complex objects.
-        /// </summary>
-        /// <param name="source">The source array to convert.</param>
-        /// <returns>A new array with the converted values.</returns>
         private static Array ConvertArray(Array source)
         {
             var result = new object?[source.Length];
@@ -118,73 +171,46 @@ namespace Microsoft365DSC.Converter
                 var item = source.GetValue(i);
 
                 if (item is null)
+                {
                     result[i] = null;
+                }
                 else if (item is Array nestedArray)
+                {
                     result[i] = ConvertArray(nestedArray);
+                }
                 else if (item is Hashtable)
+                {
                     result[i] = item;
-                else if (IsCimLikeObject(item))
+                }
+                else if (ValueClassifier.HasReflectableProperties(item))
+                {
                     result[i] = ToHashtable(item);
+                }
                 else
+                {
                     result[i] = item;
+                }
             }
 
             return result;
         }
 
-        /// <summary>
-        /// Determines if an object is a CIM-like complex object (not a primitive or common .NET type).
-        /// </summary>
-        /// <param name="obj">The object to check.</param>
-        /// <returns>True if the object is CIM-like, false otherwise.</returns>
-        private static bool IsCimLikeObject(object obj)
+        private static bool EndsWithNewLine(StringBuilder builder)
         {
-            if (obj is null)
-            {
-                return false;
-            }
-
-            var type = obj.GetType();
-            var typeName = type.FullName ?? string.Empty;
-
-            // Check for CIM instance types
-            // Because .Contains with a StringComparison is not available, we use IndexOf
-            if (typeName.IndexOf("CimInstance", StringComparison.OrdinalIgnoreCase) > -1)
-            {
-                return true;
-            }
-
-            // Check for Microsoft Graph model types
-            if (typeName.StartsWith("Microsoft.Graph.", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Exclude primitive types and common .NET types
-            if (type.IsPrimitive || type == typeof(string) || type == typeof(DateTime) ||
-                type == typeof(decimal) || type == typeof(Guid))
-            {
-                return false;
-            }
-
-            // Check if it's a complex object with properties
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            return properties.Length > 0;
+            return builder.Length >= 2 && builder[builder.Length - 2] == '\r' && builder[builder.Length - 1] == '\n';
         }
 
-        /// <summary>
-        /// Gets a value from an object, handling various types.
-        /// </summary>
-        /// <param name="value">The object to get the value from.</param>
-        /// <returns>The extracted value.</returns>
         private static object? GetValueFromObject(object? value)
         {
-            if (value is PSObject psObject)
-                value = psObject.BaseObject;
+            value = MemberAccessor.Unwrap(value);
 
             if (value is null)
             {
                 return null;
+            }
+            else if (value is PSObject)
+            {
+                return ToHashtable(value);
             }
             else if (value is Array array)
             {
@@ -194,52 +220,34 @@ namespace Microsoft365DSC.Converter
             {
                 return hashValue;
             }
-            else if (IsCimLikeObject(value))
+            else if (ValueClassifier.HasReflectableProperties(value))
             {
                 return ToHashtable(value);
             }
             else
             {
-                // Primitive types
                 return value;
             }
         }
 
-        /// <summary>
-        /// Creates a hashtable representation of the public and selected non-public properties of the specified complex
-        /// object.
-        /// </summary>
-        /// <remarks>Properties named "EntityItem" are excluded from the result. Non-public properties
-        /// containing "AdditionalProperties" in their name are also included. The method uses a cache to improve
-        /// performance when processing objects of the same type.</remarks>
-        /// <param name="complexObject">The object whose properties are to be extracted and represented in the resulting hashtable. Cannot be null.</param>
-        /// <returns>A hashtable containing the names and values of the object's properties. Property names are used as keys, and
-        /// their corresponding values are recursively processed. The hashtable is case-insensitive with respect to
-        /// keys.</returns>
         private static Hashtable GetValueFromGraphObject(object complexObject)
         {
-            var type = complexObject.GetType();
-            PropertyInfo[] properties;
-            lock (_cacheLock)
+            PropertyInfo[] properties = GraphProperties.GetOrAdd(complexObject.GetType(), static type =>
             {
-                if (!_propertyCache.TryGetValue(type.FullName!, out properties))
-                {
-                    // Exclude "EntityItem" property because it is a ParameterizedProperty and is not required
-                    properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                        .Where(property => !property.Name.Equals("EntityItem")).ToArray();
-                    var additionalProperties = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Where(property => property.Name.Contains("AdditionalProperties")).ToArray();
-                    _propertyCache[type.FullName!] = properties.Concat(additionalProperties).ToArray();
-                }
-            }
+                PropertyInfo[] publicProperties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(property => !property.Name.Equals(EntityItemProperty)).ToArray();
+                PropertyInfo[] additionalProperties = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Where(property => property.Name.Contains(AdditionalPropertiesKey)).ToArray();
+                return publicProperties.Concat(additionalProperties).ToArray();
+            });
 
             var graphResult = new Hashtable(StringComparer.OrdinalIgnoreCase);
             foreach (var property in properties)
             {
                 var value = property.GetValue(complexObject);
-                if (property.Name.Equals("Microsoft.Graph.Beta.PowerShell.Runtime.IAssociativeArray<System.Object>.AdditionalProperties"))
+                if (property.Name.Equals(GraphAdditionalPropertiesName))
                 {
-                    graphResult["AdditionalProperties"] = GetValueFromObject(value);
+                    graphResult[AdditionalPropertiesKey] = GetValueFromObject(value);
                 }
                 else
                 {
@@ -250,24 +258,12 @@ namespace Microsoft365DSC.Converter
             return graphResult;
         }
 
-
-        /// <summary>
-        /// Clears the property reflection cache (primarily for testing purposes).
-        /// </summary>
-        public static void ClearCache()
-        {
-            lock (_cacheLock)
-            {
-                _propertyCache.Clear();
-            }
-        }
-
         /// <summary>
         /// Converts a complex object to its DSC configuration string representation.
         /// </summary>
         /// <param name="complexObject">The complex object to convert (can be null, object, or array)</param>
         /// <param name="cimInstanceName">The name of the CIM instance type</param>
-        /// <param name="complexTypeMapping">Optional mapping of complex type properties (not implemented yet)</param>
+        /// <param name="complexTypeMapping">Optional mapping of complex type properties</param>
         /// <param name="whitespace">Optional whitespace for formatting</param>
         /// <param name="indentLevel">The indentation level (default is 3)</param>
         /// <param name="isArray">Indicates if the object is part of an array</param>
@@ -285,16 +281,46 @@ namespace Microsoft365DSC.Converter
                 return string.Empty;
             }
 
+            complexTypeMapping ??= [];
+
+            Dictionary<string, ComplexTypeMapping> mappingByName = new(complexTypeMapping.Count, StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, ComplexTypeMapping> mappingByExactName = new(complexTypeMapping.Count, StringComparer.Ordinal);
+            foreach (ComplexTypeMapping mapping in complexTypeMapping)
+            {
+                if (!mappingByName.ContainsKey(mapping.Name))
+                {
+                    mappingByName[mapping.Name] = mapping;
+                }
+
+                if (!mappingByExactName.ContainsKey(mapping.Name))
+                {
+                    mappingByExactName[mapping.Name] = mapping;
+                }
+            }
+
+            return ToDscStringCore(complexObject, cimInstanceName, mappingByName, mappingByExactName, indentLevel, isArray);
+        }
+
+        private static object ToDscStringCore(
+            object complexObject,
+            string cimInstanceName,
+            Dictionary<string, ComplexTypeMapping> mappingByName,
+            Dictionary<string, ComplexTypeMapping> mappingByExactName,
+            uint indentLevel,
+            bool isArray)
+        {
+            if (complexObject is null)
+            {
+                return string.Empty;
+            }
+
             if (complexObject is PSObject psObject)
             {
                 complexObject = psObject.BaseObject;
             }
 
-            complexTypeMapping ??= [];
-
             var indent = new string(' ', (int)indentLevel * 4);
 
-            // If ComplexObject is an Array
             if (complexObject is IEnumerable enumerable and not string and not IDictionary)
             {
                 List<object> currentProperty = [];
@@ -302,18 +328,10 @@ namespace Microsoft365DSC.Converter
 
                 foreach (var item in enumerable)
                 {
-                    var itemResult = ToDscString(
-                        item,
-                        cimInstanceName,
-                        complexTypeMapping,
-                        whitespace,
-                        indentLevel,
-                        true);
-
+                    var itemResult = ToDscStringCore(item, cimInstanceName, mappingByName, mappingByExactName, indentLevel, true);
                     currentProperty.Add((string)itemResult);
                 }
 
-                // Add an indented new line after the last item in the array
                 if (currentProperty.Count > 0)
                 {
                     int lastIndex = currentProperty.Count - 1;
@@ -330,28 +348,29 @@ namespace Microsoft365DSC.Converter
                 currentPropertyBuilder.Append(indent);
             }
 
-            // Remove MSFT_ prefix if present
-            cimInstanceName = cimInstanceName.Replace("MSFT_", string.Empty);
-            _ = currentPropertyBuilder.Append($"MSFT_{cimInstanceName}{{");
+            cimInstanceName = cimInstanceName.Replace(ClassNamePrefix, string.Empty);
+            _ = currentPropertyBuilder.Append(ClassNamePrefix).Append(cimInstanceName).Append('{');
             _ = currentPropertyBuilder.AppendLine();
+            int contentStart = currentPropertyBuilder.Length;
 
             indentLevel++;
             indent = new string(' ', (int)indentLevel * 4);
 
-            // Get keys from the object
             IEnumerable<string> keys;
             IDictionary? dict = null;
             CimInstance? cimInstance = null;
+            DscPropertySet? propertySet = null;
 
             if (complexObject is IDictionary dictionary)
             {
                 dict = dictionary;
-                var keyList = new List<string>();
+                var keyList = new List<string>(dictionary.Count);
                 foreach (var key in dictionary.Keys)
                 {
                     keyList.Add(key.ToString());
                 }
-                keys = keyList.OrderBy(k => k);
+                keyList.Sort();
+                keys = keyList;
             }
             else if (complexObject is CimInstance instance)
             {
@@ -362,19 +381,31 @@ namespace Microsoft365DSC.Converter
             }
             else
             {
-                // Handle objects with properties
-                var properties = complexObject.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-                if (complexObject.GetType().FullName!.Contains("Microsoft.Graph."))
+                propertySet = DscProperties.GetOrAdd(complexObject.GetType(), static type =>
                 {
-                    properties = complexObject.GetType()
-                        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                        .Where(property => !property.Name.Equals("EntityItem")).ToArray();
-                }
-                if (properties.Length == 0)
+                    IEnumerable<PropertyInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    if (ValueClassifier.IsGraphModel(type))
+                    {
+                        properties = properties.Where(property => !property.Name.Equals(EntityItemProperty));
+                    }
+
+                    Dictionary<string, PropertyInfo> byName = new(StringComparer.Ordinal);
+                    foreach (PropertyInfo property in properties)
+                    {
+                        byName[property.Name] = property;
+                    }
+
+                    List<string> sortedNames = [.. byName.Keys];
+                    sortedNames.Sort();
+                    return new DscPropertySet(sortedNames, byName);
+                });
+
+                if (propertySet.SortedNames.Count == 0)
                 {
                     return string.Empty;
                 }
-                keys = properties.Select(p => p.Name).OrderBy(k => k);
+
+                keys = propertySet.SortedNames;
             }
 
             foreach (var key in keys)
@@ -390,8 +421,7 @@ namespace Microsoft365DSC.Converter
                 }
                 else
                 {
-                    var property = complexObject.GetType().GetProperty(key);
-                    value = property?.GetValue(complexObject);
+                    value = propertySet!.ByName[key].GetValue(complexObject);
                 }
 
                 if (value is not null)
@@ -408,43 +438,40 @@ namespace Microsoft365DSC.Converter
                     var valueType = value.GetType();
                     var valueTypeName = valueType.FullName ?? valueType.Name;
 
-                    // Check if value is a complex type (Graph model or CIM instance)
-                    if (valueTypeName.StartsWith("Microsoft.Graph.PowerShell.Models.", StringComparison.Ordinal) ||
-                        complexTypeMapping.Any(ctm => ctm.Name.Equals(key, StringComparison.OrdinalIgnoreCase)))
+                    bool hasMapping = mappingByName.TryGetValue(key, out ComplexTypeMapping mappedType);
+                    if (valueTypeName.StartsWith(GraphModelNamespacePrefix, StringComparison.Ordinal) || hasMapping)
                     {
-                        // Handle complex nested types recursively
                         var itemValue = value;
                         var hashPropertyType = valueType.Name.ToLower();
 
                         bool isNestedArray = value is Array;
 
-                        if (complexTypeMapping.Any(ctm => ctm.Name.Equals(key, StringComparison.OrdinalIgnoreCase)))
+                        if (hasMapping)
                         {
-                            hashPropertyType = complexTypeMapping.First(ctm => ctm.Name.Equals(key, StringComparison.OrdinalIgnoreCase)).CimInstanceName;
+                            hashPropertyType = mappedType.CimInstanceName;
                         }
 
-                        if (isNestedArray && complexTypeMapping.Any(ctm => ctm.Name.Equals(key, StringComparison.OrdinalIgnoreCase)))
+                        if (isNestedArray && hasMapping)
                         {
                             if (itemValue is Array)
                             {
-                                _ = currentPropertyBuilder.Append($"{indent}{key} = @(");
+                                _ = currentPropertyBuilder.Append(indent).Append(key).Append(" = @(");
                             }
                         }
 
                         if (isNestedArray)
                         {
-                            // Handle array of complex types
                             indentLevel++;
                             var arrayItems = (Array)value;
                             for (int i = 0; i < arrayItems.Length; i++)
                             {
                                 object item = arrayItems.GetValue(i);
                                 var itemHash = ToHashtable(item);
-                                var nestedPropertyString = (string)ToDscString(
-                                    itemHash,
+                                var nestedPropertyString = (string)ToDscStringCore(
+                                    itemHash!,
                                     hashPropertyType,
-                                    complexTypeMapping,
-                                    whitespace,
+                                    mappingByName,
+                                    mappingByExactName,
                                     indentLevel,
                                     true);
 
@@ -458,7 +485,7 @@ namespace Microsoft365DSC.Converter
                                     nestedPropertyString = nestedPropertyString.Substring(2);
                                 }
                                 _ = currentPropertyBuilder.Append(nestedPropertyString);
-                                if (!currentPropertyBuilder.ToString().EndsWith("\r\n"))
+                                if (!EndsWithNewLine(currentPropertyBuilder))
                                 {
                                     _ = currentPropertyBuilder.AppendLine();
                                 }
@@ -466,19 +493,18 @@ namespace Microsoft365DSC.Converter
                             indentLevel--;
 
                             _ = arrayItems.Length > 0
-                                ? currentPropertyBuilder.Append($"{indent})").AppendLine()
-                                : currentPropertyBuilder.Append($")").AppendLine();
+                                ? currentPropertyBuilder.Append(indent).Append(')').AppendLine()
+                                : currentPropertyBuilder.Append(')').AppendLine();
                         }
                         else
                         {
-                            // Get hashtable representation
                             Hashtable hashProperty = ToHashtable(itemValue)!;
-                            _ = currentPropertyBuilder.Append($"{indent}{key} = ");
-                            var nestedPropertyString = ToDscString(
+                            _ = currentPropertyBuilder.Append(indent).Append(key).Append(" = ");
+                            var nestedPropertyString = ToDscStringCore(
                                 hashProperty,
                                 hashPropertyType,
-                                complexTypeMapping,
-                                whitespace,
+                                mappingByName,
+                                mappingByExactName,
                                 indentLevel,
                                 false);
 
@@ -491,42 +517,49 @@ namespace Microsoft365DSC.Converter
                     }
                     else
                     {
-                        // Handle simple types using SimpleObjectConverter
                         var currentValue = value;
 
                         if (currentValue is not null && !currentValue.GetType().Name.Contains("Dictionary"))
                         {
                             if (currentValue is string stringValue)
                             {
-                                // Replace special character (right single quotation mark)
-                                stringValue = stringValue.Replace("�", "''");
-                                currentValue = stringValue;
+                                currentValue = stringValue.IndexOf(RightSingleQuotationMark) < 0
+                                    ? stringValue
+                                    : stringValue.Replace(RightSingleQuotationMark.ToString(), "''");
                             }
                             _ = currentPropertyBuilder.Append(SimpleObjectConverter.ToDscString(key, currentValue, indent));
                         }
                     }
                 }
-                else
+                else if (mappingByExactName.TryGetValue(key, out ComplexTypeMapping mappedKey) && mappedKey.IsRequired)
                 {
-                    var mappedKey = complexTypeMapping.Where(ctm => ctm.Name.Equals(key)).FirstOrDefault();
-                    if (mappedKey is not null && mappedKey.IsRequired)
-                    {
-                        _ = mappedKey.IsArray
-                            ? currentPropertyBuilder.Append($"{indent}{key} = @()").AppendLine()
-                            : currentPropertyBuilder.Append($"{indent}{key} = $null").AppendLine();
-                    }
+                    _ = mappedKey.IsArray
+                        ? currentPropertyBuilder.Append(indent).Append(key).Append(" = @()").AppendLine()
+                        : currentPropertyBuilder.Append(indent).Append(key).Append(" = $null").AppendLine();
                 }
             }
 
+            int contentEnd = currentPropertyBuilder.Length;
             indent = new string(' ', (int)(indentLevel - 1) * 4);
-            _ = currentPropertyBuilder.Append($"{indent}}}");
+            _ = currentPropertyBuilder.Append(indent).Append('}');
 
-            var result = currentPropertyBuilder.ToString();
-            var emptyCIM = result.Replace(" ", "").Replace("\r\n", "");
+            return HasContent(currentPropertyBuilder, contentStart, contentEnd)
+                ? currentPropertyBuilder.ToString()
+                : string.Empty;
+        }
 
-            return emptyCIM.Equals($"MSFT_{cimInstanceName}{{}}")
-                ? string.Empty
-                : result;
+        private static bool HasContent(StringBuilder builder, int start, int end)
+        {
+            for (int i = start; i < end; i++)
+            {
+                char current = builder[i];
+                if (current != ' ' && current != '\r' && current != '\n')
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

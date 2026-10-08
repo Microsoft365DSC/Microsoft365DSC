@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,15 +22,15 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDiskEncryptionFileVaultPolicyMacOS "IntuneDiskEncryptionFileVaultPolicyMacOS-IntuneDiskEncryptionFileVaultPolicyMacOS_1"
+        IntuneDiskEncryptionFileVaultPolicyMacOS "IntuneDiskEncryptionFileVaultPolicyMacOS-Example"
         {
-            ApplicationId                          = $ApplicationId;
-            CertificateThumbprint                  = $CertificateThumbprint;
-            Ensure                                 = "Absent";
-            DisplayName                            = "IntuneDiskEncryptionFileVaultPolicyMacOS_1";
-            TenantId                               = $TenantId;
+            Ensure                = "Absent";
+            DisplayName           = "IntuneDiskEncryptionFileVaultPolicyMacOS_1";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

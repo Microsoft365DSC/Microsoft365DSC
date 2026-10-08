@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -51,78 +51,78 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     AdvancedClassificationEnabled           = $True;
                     AuditFileActivity                       = $True;
                     BandwidthLimitEnabled                   = $False;
-                    BusinessJustificationList               = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                    BusinessJustificationList               = @(
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification1'
                             Enable            = $True
                             justificationText = 'default:Were'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification2'
                             Enable            = $True
                             justificationText = 'default:Not'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification3'
                             Enable            = $True
                             justificationText = 'default:Going'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification4'
                             Enable            = $True
                             justificationText = 'default:To'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification5'
                             Enable            = $True
                             justificationText = 'default:Take It'
-                        } -ClientOnly)
+                        })
                     );
                     CloudAppMode                            = "Block";
                     CloudAppRestrictionList                 = @("contoso.net","contoso.com");
                     CustomBusinessJustificationNotification = 3;
                     DailyBandwidthLimitInMB                 = 1000;
                     DLPAppGroups                            = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPAppGroups -Property @{
+                        ([MSFT_PolicyConfigDLPAppGroups] @{
                             Name        = 'Maracas'
                             Description = 'Lacucaracha'
-                            Apps = [CimInstance[]](New-CimInstance -ClassName MSFT_PolicyConfigDLPApp -Property @{
+                            Apps = ([MSFT_PolicyConfigDLPApp] @{
                                     ExecutableName    = 'toc.exe'
                                     Name              = 'toctoctoc'
                                     Quarantine        = $False
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
-                    DLPNetworkShareGroups                   = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPNetworkShareGroups -Property @{
+                    DLPNetworkShareGroups                   = @(
+                        ([MSFT_PolicyConfigDLPNetworkShareGroups] @{
                             groupName    = 'Network Share Group'
                             networkPaths = @('\\share2','\\share')
-                        } -ClientOnly)
+                        })
                     );
-                    DLPPrinterGroups                        = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPPrinterGroups -Property @{
+                    DLPPrinterGroups                        = @(
+                        ([MSFT_PolicyConfigDLPPrinterGroups] @{
                             groupName    = 'MyGroup'
-                            printers = [CimInstance[]](New-CimInstance -ClassName MSFT_PolicyConfigPrinter -Property @{
+                            printers = ([MSFT_PolicyConfigPrinter] @{
                                     universalPrinter = $False
                                     usbPrinter       = $True
                                     usbPrinterId     = ''
                                     name             = 'asdf'
                                     alias            = 'aasdf'
                                     usbPrinterVID    = ''
-                                    ipRange          = (New-CimInstance -ClassName MSFT_PolicyConfigIPRange -Property @{
+                                    ipRange          = ([MSFT_PolicyConfigIPRange] @{
                                             fromAddress = ''
                                             toAddress   = ''
-                                        } -ClientOnly)
+                                        })
                                     corporatePrinter = $False
                                     printToLocal     = $False
                                     printToFile      = $False
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
                     DLPRemovableMediaGroups                 = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPRemovableMediaGroups -Property @{
+                        ([MSFT_PolicyConfigDLPRemovableMediaGroups] @{
                             groupName = 'My Removable USB device group'
-                            removableMedia    = [CimInstance[]](New-CimInstance -ClassName MSFT_PolicyConfigRemovableMedia -Property @{
+                            removableMedia    = ([MSFT_PolicyConfigRemovableMedia] @{
                                     deviceId          = 'Nik'
                                     removableMediaVID = 'bob'
                                     name              = 'MaCles'
@@ -131,20 +131,20 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                     instancePathId    = 'instance path'
                                     serialNumberId    = 'asdf'
                                     hardwareId        = 'hardware'
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
-                    EvidenceStoreSettings                   = (New-CimInstance -ClassName MSFT_PolicyConfigEvidenceStoreSettings -Property @{
+                    EvidenceStoreSettings                   = ([MSFT_PolicyConfigEvidenceStoreSettings] @{
                             FileEvidenceIsEnabled = $True
                             NumberOfDaysToRetain  = 7
-                            StorageAccounts       = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_PolicyConfigStorageAccount -Property @{
+                            StorageAccounts       = @(
+                            ([MSFT_PolicyConfigStorageAccount] @{
                                     Name    = 'My storage'
                                     BlobUri = 'https://contoso.com'
-                                } -ClientOnly)
+                                })
                             )
                             Store                 = 'CustomerManaged'
-                        } -ClientOnly);
+                        });
                     IncludePredefinedUnallowedBluetoothApps = $True;
                     IsSingleInstance                        = "Yes";
                     MacDefaultPathExclusionsEnabled         = $True;
@@ -152,49 +152,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     NetworkPathEnforcementEnabled           = $True;
                     NetworkPathExclusion                    = "\\MyFirstPath:\\MySecondPath:\\MythirdPAth";
                     PathExclusion                           = @("\\includemenot","\\excludemeWindows","\\excludeme3");
-                    QuarantineParameters                    = (New-CimInstance -ClassName MSFT_PolicyConfigQuarantineParameters -Property @{
+                    QuarantineParameters                    = ([MSFT_PolicyConfigQuarantineParameters] @{
                             EnableQuarantineForCloudSyncApps = $False
                             QuarantinePath                   = '%homedrive%%homepath%\Microsoft DLP\Quarantine'
                             MacQuarantinePath                = '/System/Applications/Microsoft DLP/QuarantineMA'
                             ShouldReplaceFile                = $True
                             FileReplacementText              = 'Gargamel'
-                        } -ClientOnly)
+                        })
                     serverDlpEnabled                        = $True;
                     SiteGroups                              = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPSiteGroups -Property @{
+                        ([MSFT_PolicyConfigDLPSiteGroups] @{
                             Name      = 'Whatever'
-                            Addresses = [CimInstance[]]@(New-CimInstance -ClassName MSFT_PolicyConfigSiteGroupAddress -Property @{
+                            Addresses = @([MSFT_PolicyConfigSiteGroupAddress] @{
                                     MatchType    = 'UrlMatch'
                                     Url          = 'Karakette.com'
                                     AddressLower = ''
                                     AddressUpper = ''
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
                     TenantId                                = $OrganizationName;
                     UnallowedApp                            = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'Caramel'
                             Executable   = 'cara.exe'
-                        } -ClientOnly)
+                        })
                     );
                     UnallowedBluetoothApp                   = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'bluetooth'
                             Executable   = 'micase.exe'
-                        } -ClientOnly)
+                        })
                     );
                     UnallowedBrowser                        = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'UC Browser'
                             Executable   = 'ucbrowser.exe'
-                        } -ClientOnly)
+                        })
                     );
                     UnallowedCloudSyncApp                   = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'ikochou'
                             Executable   = 'gillex.msi'
-                        } -ClientOnly)
+                        })
                     );
                     VPNSettings                             = @("MyVPNAddress","MySecondVPNAddress");
                     Credential          = $Credential;
@@ -213,7 +213,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCPolicyConfig' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -223,78 +223,78 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     AdvancedClassificationEnabled           = $True;
                     AuditFileActivity                       = $True; #Drift
                     BandwidthLimitEnabled                   = $False;
-                    BusinessJustificationList               = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                    BusinessJustificationList               = @(
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification1'
                             Enable            = $True
                             justificationText = 'default:Were'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification2'
                             Enable            = $True
                             justificationText = 'default:Not'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification3'
                             Enable            = $True
                             justificationText = 'default:Going'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification4'
                             Enable            = $True
                             justificationText = 'default:To'
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PolicyConfigBusinessJustificationList -Property @{
+                        })
+                        ([MSFT_PolicyConfigBusinessJustificationList] @{
                             Id                = 'businessJustification5'
                             Enable            = $True
                             justificationText = 'default:Take It'
-                        } -ClientOnly)
+                        })
                     );
                     CloudAppMode                            = "Block";
                     CloudAppRestrictionList                 = @("contoso.net","contoso.com");
                     CustomBusinessJustificationNotification = 3;
                     DailyBandwidthLimitInMB                 = 1000;
                     DLPAppGroups                            = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPAppGroups -Property @{
+                        ([MSFT_PolicyConfigDLPAppGroups] @{
                             Name        = 'Maracas'
                             Description = 'Lacucaracha'
-                            Apps = [CimInstance[]](New-CimInstance -ClassName MSFT_PolicyConfigDLPApp -Property @{
+                            Apps = ([MSFT_PolicyConfigDLPApp] @{
                                     ExecutableName    = 'toc.exe'
                                     Name              = 'toctoctoc'
                                     Quarantine        = $False
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
-                    DLPNetworkShareGroups                   = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPNetworkShareGroups -Property @{
+                    DLPNetworkShareGroups                   = @(
+                        ([MSFT_PolicyConfigDLPNetworkShareGroups] @{
                             groupName    = 'Network Share Group'
                             networkPaths = @('\\share2','\\share')
-                        } -ClientOnly)
+                        })
                     );
-                    DLPPrinterGroups                        = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPPrinterGroups -Property @{
+                    DLPPrinterGroups                        = @(
+                        ([MSFT_PolicyConfigDLPPrinterGroups] @{
                             groupName    = 'MyGroup'
-                            printers = [CimInstance[]](New-CimInstance -ClassName MSFT_PolicyConfigPrinter -Property @{
+                            printers = ([MSFT_PolicyConfigPrinter] @{
                                     universalPrinter = $False
                                     usbPrinter       = $True
                                     usbPrinterId     = ''
                                     name             = 'asdf'
                                     alias            = 'aasdf'
                                     usbPrinterVID    = ''
-                                    ipRange          = (New-CimInstance -ClassName MSFT_PolicyConfigIPRange -Property @{
+                                    ipRange          = ([MSFT_PolicyConfigIPRange] @{
                                             fromAddress = ''
                                             toAddress   = ''
-                                        } -ClientOnly)
+                                        })
                                     corporatePrinter = $False
                                     printToLocal     = $False
                                     printToFile      = $False
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
                     DLPRemovableMediaGroups                 = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPRemovableMediaGroups -Property @{
+                        ([MSFT_PolicyConfigDLPRemovableMediaGroups] @{
                             groupName = 'My Removable USB device group'
-                            removableMedia    = [CimInstance[]](New-CimInstance -ClassName MSFT_PolicyConfigRemovableMedia -Property @{
+                            removableMedia    = ([MSFT_PolicyConfigRemovableMedia] @{
                                     deviceId          = 'Nik'
                                     removableMediaVID = 'bob'
                                     name              = 'MaCles'
@@ -303,22 +303,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                     instancePathId    = 'instance path'
                                     serialNumberId    = 'asdf'
                                     hardwareId        = 'hardware'
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
                     EnableLabelCoauth                       = $False;
                     EnableSpoAipMigration                   = $False;
-                    EvidenceStoreSettings                   = (New-CimInstance -ClassName MSFT_PolicyConfigEvidenceStoreSettings -Property @{
+                    EvidenceStoreSettings                   = ([MSFT_PolicyConfigEvidenceStoreSettings] @{
                             FileEvidenceIsEnabled = $True
                             NumberOfDaysToRetain  = 7
-                            StorageAccounts       = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_PolicyConfigStorageAccount -Property @{
+                            StorageAccounts       = @(
+                            ([MSFT_PolicyConfigStorageAccount] @{
                                     Name    = 'My storage'
                                     BlobUri = 'https://contoso.com'
-                                } -ClientOnly)
+                                })
                             )
                             Store                 = 'CustomerManaged'
-                        } -ClientOnly);
+                        });
                     IncludePredefinedUnallowedBluetoothApps = $True;
                     IsSingleInstance                        = "Yes";
                     MacDefaultPathExclusionsEnabled         = $True;
@@ -326,49 +326,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     NetworkPathEnforcementEnabled           = $True;
                     NetworkPathExclusion                    = "\\MyFirstPath:\\MySecondPath:\\MythirdPAth";
                     PathExclusion                           = @("\\includemenot","\\excludemeWindows","\\excludeme3");
-                    QuarantineParameters                    = (New-CimInstance -ClassName MSFT_PolicyConfigQuarantineParameters -Property @{
+                    QuarantineParameters                    = ([MSFT_PolicyConfigQuarantineParameters] @{
                             EnableQuarantineForCloudSyncApps = $False
                             QuarantinePath                   = '%homedrive%%homepath%\Microsoft DLP\Quarantine'
                             MacQuarantinePath                = '/System/Applications/Microsoft DLP/QuarantineMA'
                             ShouldReplaceFile                = $True
                             FileReplacementText              = 'Gargamel'
-                        } -ClientOnly)
+                        })
                     serverDlpEnabled                        = $True;
                     SiteGroups                              = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigDLPSiteGroups -Property @{
+                        ([MSFT_PolicyConfigDLPSiteGroups] @{
                             Name      = 'Whatever'
-                            Addresses = (New-CimInstance -ClassName MSFT_PolicyConfigSiteGroupAddress -Property @{
+                            Addresses = ([MSFT_PolicyConfigSiteGroupAddress] @{
                                     MatchType    = 'UrlMatch'
                                     Url          = 'Karakette.com'
                                     AddressLower = ''
                                     AddressUpper = ''
-                                } -ClientOnly)
-                        } -ClientOnly)
+                                })
+                        })
                     );
                     TenantId                                = $OrganizationName;
                     UnallowedApp                            = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'Caramel'
                             Executable   = 'cara.exe'
-                        } -ClientOnly)
+                        })
                     );
                     UnallowedBluetoothApp                   = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'bluetooth'
                             Executable   = 'micase.exe'
-                        } -ClientOnly)
+                        })
                     );
                     UnallowedBrowser                        = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'UC Browser'
                             Executable   = 'ucbrowser.exe'
-                        } -ClientOnly)
+                        })
                     );
                     UnallowedCloudSyncApp                   = @(
-                        (New-CimInstance -ClassName MSFT_PolicyConfigApp -Property @{
+                        ([MSFT_PolicyConfigApp] @{
                             Value        = 'ikochou'
                             Executable   = 'gillex.msi'
-                        } -ClientOnly)
+                        })
                     );
                     VPNSettings                             = @("MyVPNAddress","MySecondVPNAddress");
                     Credential          = $Credential;
@@ -387,11 +387,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCPolicyConfig' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCPolicyConfig' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-PolicyConfig -Exactly 1
             }
         }
@@ -416,7 +416,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCPolicyConfig' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

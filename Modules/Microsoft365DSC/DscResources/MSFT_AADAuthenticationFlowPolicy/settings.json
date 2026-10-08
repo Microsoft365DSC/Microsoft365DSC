@@ -1,5 +1,27 @@
 {
   "resourceName": "AADAuthenticationFlowPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "authenticationFlowsPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyAuthenticationFlowPolicy",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "SelfServiceSignUp",
+      "reason": "Accepted",
+      "note": "Flattened into SelfServiceSignUpEnabled, its only member"
+    },
+    {
+      "name": "SelfServiceSignUpEnabled",
+      "reason": "Accepted",
+      "note": "The flattened selfServiceSignUp.isEnabled property"
+    }
+  ],
   "description": "Represents the policy configuration of self-service sign-up experience at a tenant level that lets external users request to sign up for approval. It contains information, such as the identifier, display name, and description, and indicates whether self-service sign-up is enabled for the policy.",
   "roles": {
     "read": [

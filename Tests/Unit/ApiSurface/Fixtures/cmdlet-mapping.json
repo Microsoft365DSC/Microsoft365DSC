@@ -1,0 +1,175 @@
+{
+  "Get-MgBetaDirectoryAttributeSet": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/directory/attributeSets/{attributeSet-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/directory/attributeSets",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaDirectoryAttributeSet": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/directory/attributeSets",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaDirectoryUnknownThing": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/directory/unknownThings",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgGroup": {
+    "SourceModule": "Microsoft.Graph.Groups",
+    "ApiVersion": "v1.0",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/groups/{group-id}",
+        "ApiVersion": "v1.0"
+      },
+      {
+        "Method": "GET",
+        "URI": "/groups",
+        "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Get-MgUser": {
+    "SourceModule": "Microsoft.Graph.Users",
+    "ApiVersion": "v1.0",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/users",
+        "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Get-MgBetaDeviceManagementDeviceCompliancePolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/deviceManagement/deviceCompliancePolicies",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaDeviceManagementDeviceCategory": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/deviceManagement/deviceCategories",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaIdentityConditionalAccessPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/identity/conditionalAccess/policies",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaIdentityConditionalAccessNamedLocation": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/identity/conditionalAccess/namedLocations",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaNetworkAccessFilteringProfile": {
+    "SourceModule": "Microsoft.Graph.Beta.NetworkAccess",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/networkAccess/filteringProfiles",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaSplitEntity": {
+    "SourceModule": "Microsoft.Graph.Beta.Groups",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/groups",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/directory/attributeSets",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaIdentityConditionalAccessNamedLocationExact": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/identity/conditionalAccess/namedLocations",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaGroup": {
+    "SourceModule": "Microsoft.Graph.Beta.Groups",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/groups/{group-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/groups",
+        "ApiVersion": "beta"
+      }
+    ]
+  }
+}

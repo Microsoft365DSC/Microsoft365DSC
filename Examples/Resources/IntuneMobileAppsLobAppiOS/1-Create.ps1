@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,44 +19,49 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneMobileAppsLobAppiOS "IntuneMobileAppsLobAppiOS-IPA iOS App"
+        IntuneMobileAppsLobAppiOS "IntuneMobileAppsLobAppiOS-Example"
         {
-            ApplicableDeviceType            = MSFT_MicrosoftGraphIosDeviceType{
-                IPad = $True
+            AppleDeviceAppDeliveryProtocolType = "mobileDeviceManagement";
+            ApplicableDeviceType               = MSFT_MicrosoftGraphIosDeviceType{
+                IPad          = $True
                 IPhoneAndIPod = $True
             };
-            ApplicationId                   = $ApplicationId;
-            Assignments                     = @(
+            Assignments                        = @(
                 MSFT_DeviceManagementLobAppiOSAssignment{
-                    groupDisplayName = 'All devices'
+                    groupDisplayName                           = 'All devices'
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
-                    intent = 'required'
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                    intent                                     = 'required'
+                }
+                MSFT_DeviceManagementLobAppiOSAssignment{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
+                    intent           = 'required'
                 }
             );
-            BuildNumber                     = "1";
-            BundleId                        = "com.microsoft.azureauthenticator";
-            Categories                      = @(
+            BuildNumber                        = "1";
+            BundleId                           = "com.contoso.fieldservice";
+            Categories                         = @(
                 MSFT_DeviceManagementMobileAppCategory{
-                    Id = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
+                    Id          = "2185c6bf-1b3d-4daa-a0bc-79cb4fad9c87"
                     DisplayName = "App Category 1"
                 }
             );
-            CertificateThumbprint           = $CertificateThumbprint;
-            Description                     = "Example IPA iOS App";
-            Developer                       = "";
-            DisplayName                     = "Example IPA iOS App";
-            Ensure                          = "Present";
-            FileName                        = "Example.ipa";
-            Id                              = "63271b78-0fa4-46b8-9ac0-d4b777555dde";
-            IsFeatured                      = $False;
-            MinimumSupportedOperatingSystem = MSFT_MicrosoftGraphIosMinimumOperatingSystem{
-                V8_0 = $False
-                V9_0 = $False
+            Description                        = "Line-of-business iOS application";
+            Developer                          = "";
+            DisplayName                        = "Contoso Field Service";
+            Ensure                             = "Present";
+            FileName                           = "ContosoFieldService.ipa";
+            Id                                 = "63271b78-0fa4-46b8-9ac0-d4b777555dde";
+            IsFeatured                         = $False;
+            MinimumSupportedOperatingSystem    = MSFT_MicrosoftGraphIosMinimumOperatingSystem{
+                V8_0  = $False
+                V9_0  = $False
                 V10_0 = $False
                 V11_0 = $False
                 V12_0 = $False
@@ -66,12 +72,14 @@ Configuration Example
                 V17_0 = $False
                 V18_0 = $False
             };
-            Notes                           = "";
-            Owner                           = "";
-            Publisher                       = "Microsoft";
-            RoleScopeTagIds                 = @("0");
-            TenantId                        = $TenantId;
-            VersionNumber                   = "6.8.26";
+            Notes                              = "";
+            Owner                              = "";
+            Publisher                          = "Contoso";
+            RoleScopeTagIds                    = @("0");
+            VersionNumber                      = "6.8.26";
+            ApplicationId                      = $ApplicationId;
+            TenantId                           = $TenantId;
+            CertificateThumbprint              = $CertificateThumbprint;
         }
     }
 }

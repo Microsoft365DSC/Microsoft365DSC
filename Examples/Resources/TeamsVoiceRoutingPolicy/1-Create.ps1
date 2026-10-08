@@ -4,22 +4,34 @@ This example adds a new Teams Voice Routing Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsVoiceRoutingPolicy 'ConfigureVoiceRoutingPolicy'
+        TeamsVoiceRoutingPolicy 'TeamsVoiceRoutingPolicy-Example'
         {
-            Identity         = 'NewVoiceRoutingPolicy'
-            OnlinePstnUsages = @('Long Distance', 'Local', 'Internal')
-            Description      = 'This is a sample Voice Routing Policy'
-            Ensure           = 'Present'
-            Credential       = $Credscredential
+            Identity              = 'Corporate Voice Routing'
+            OnlinePstnUsages      = @('Long Distance', 'Local', 'Internal')
+            Description           = 'Grants long distance and local calling to corporate users'
+            Ensure                = 'Present'
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

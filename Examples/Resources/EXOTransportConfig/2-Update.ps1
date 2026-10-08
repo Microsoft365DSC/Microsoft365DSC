@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOTransportConfig  'EXOTransportConfig '
+        EXOTransportConfig 'EXOTransportConfig-Example'
         {
             IsSingleInstance                        = "Yes";
             AddressBookPolicyRoutingEnabled         = $True;
@@ -46,9 +48,9 @@ Configuration Example
             ReplyAllStormProtectionEnabled          = $True;
             Rfc2231EncodingEnabled                  = $False;
             SmtpClientAuthenticationDisabled        = $True;
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                           = $ApplicationId
+            TenantId                                = $TenantId
+            CertificateThumbprint                   = $CertificateThumbprint
         }
     }
 }

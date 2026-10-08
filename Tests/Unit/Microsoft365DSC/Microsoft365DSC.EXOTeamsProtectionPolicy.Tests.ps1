@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,7 +33,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -77,7 +77,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                $result = (Get-TargetResource @testParams)
+                $result = ((New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Get().ToHashtable())
                 $result.AdminDisplayName | Should -BeNullOrEmpty
                 $result.HighConfidencePhishQuarantineTag | Should -BeNullOrEmpty
                 $result.MalwareQuarantineTag | Should -BeNullOrEmpty
@@ -85,11 +85,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-TeamsProtectionPolicy' -Exactly 1
                 Should -Invoke -CommandName 'Set-TeamsProtectionPolicy' -Exactly 1
             }
@@ -108,7 +108,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                $result = (Get-TargetResource @testParams)
+                $result = ((New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Get().ToHashtable())
                 $result.AdminDisplayName | Should -Be $testParams.AdminDisplayName
                 $result.HighConfidencePhishQuarantineTag | Should -Be $testParams.HighConfidencePhishQuarantineTag
                 $result.MalwareQuarantineTag | Should -Be $testParams.MalwareQuarantineTag
@@ -116,7 +116,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -142,7 +142,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                $result = (Get-TargetResource @testParams)
+                $result = ((New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Get().ToHashtable())
                 $result.AdminDisplayName | Should -BeNullOrEmpty
                 $result.HighConfidencePhishQuarantineTag | Should -Be "AdminOnlyAccessPolicy"
                 $result.MalwareQuarantineTag | Should -Be "AdminOnlyAccessPolicy"
@@ -150,11 +150,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOTeamsProtectionPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Set-TeamsProtectionPolicy' -Exactly 1
             }
         }
@@ -167,7 +167,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOTeamsProtectionPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

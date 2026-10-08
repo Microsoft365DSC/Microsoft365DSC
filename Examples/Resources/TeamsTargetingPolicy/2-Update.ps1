@@ -22,18 +22,20 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsTargetingPolicy 'Example'
+        TeamsTargetingPolicy 'TeamsTargetingPolicy-Example'
         {
-            ApplicationId                      = $ApplicationId;
-            CertificateThumbprint              = $CertificateThumbprint;
             CustomTagsMode                     = "Disabled";
+            Description                        = "Limits tags to the preset roles used on the retail floor";
             IsSingleInstance                   = "Yes";
             ManageTagsPermissionMode           = "MicrosoftDefault";
             ShiftBackedTagsMode                = "Disabled";
+            SuggestedPresetTags                = "Manager,Cashier,Pharmacist";
             TeamOwnersEditWhoCanManageTagsMode = "Enabled";
+            ApplicationId                      = $ApplicationId;
             TenantId                           = $TenantId;
+            CertificateThumbprint              = $CertificateThumbprint;
         }
     }
 }

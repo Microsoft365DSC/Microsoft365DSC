@@ -4,7 +4,8 @@ This example updates an existing Azure AD Permission Grant Policy by modifying i
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,27 +21,27 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADPermissionGrantPolicy 'CustomConsentPolicy'
+        AADPermissionGrantPolicy 'AADPermissionGrantPolicy-Example'
         {
-            Id           = "my-custom-consent-policy"
-            DisplayName  = "My Custom Consent Policy - Updated"
-            Description  = "Updated policy with new conditions"
-            Includes     = @(
+            Id                                = "low-risk-delegated-consent"
+            DisplayName                       = "Low Risk Delegated Consent"
+            Description                       = "Allows users to consent to low risk delegated permissions except application permissions" # Updated Property
+            Includes                          = @(
                 MSFT_AADPermissionGrantConditionSet {
-                    Id                              = "include-low-risk-delegated"
-                    PermissionType                  = "delegated"
-                    PermissionClassification        = "low"
-                    ClientApplicationIds            = @("all")
-                    ClientApplicationTenantIds      = @($TenantId)
-                    ClientApplicationPublisherIds   = @("all")
+                    Id                                          = "include-low-risk-delegated"
+                    PermissionType                              = "delegated"
+                    PermissionClassification                    = "low"
+                    ClientApplicationIds                        = @("all")
+                    ClientApplicationTenantIds                  = @("all")
+                    ClientApplicationPublisherIds               = @("all")
                     ClientApplicationsFromVerifiedPublisherOnly = $false
-                    ResourceApplication             = "00000003-0000-0000-c000-000000000000"
-                    Permissions                     = @("User.Read", "User.ReadBasic.All", "openid", "profile")
+                    ResourceApplication                         = "00000003-0000-0000-c000-000000000000"
+                    Permissions                                 = @("User.Read", "User.ReadBasic.All", "openid", "profile") # Updated Property
                 }
             )
-            Excludes     = @(
+            Excludes                          = @(
                 MSFT_AADPermissionGrantConditionSet {
                     Id                       = "exclude-high-risk-permissions"
                     PermissionType           = "delegated"
@@ -50,17 +51,19 @@ Configuration Example
                     Permissions              = @("all")
                 }
                 MSFT_AADPermissionGrantConditionSet {
-                    Id                       = "exclude-application-permissions"
-                    PermissionType           = "application"
-                    ClientApplicationIds     = @("all")
-                    ResourceApplication      = "any"
-                    Permissions              = @("all")
+                    Id                   = "exclude-application-permissions"
+                    PermissionType       = "application"
+                    ClientApplicationIds = @("all")
+                    ResourceApplication  = "any"
+                    Permissions          = @("all")
                 }
             )
-            Ensure                = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            IncludeAllPreApprovedApplications = $true # Updated Property
+            ResourceScopeType                 = "tenant"
+            Ensure                            = "Present"
+            ApplicationId                     = $ApplicationId
+            TenantId                          = $TenantId
+            CertificateThumbprint             = $CertificateThumbprint
         }
     }
 }

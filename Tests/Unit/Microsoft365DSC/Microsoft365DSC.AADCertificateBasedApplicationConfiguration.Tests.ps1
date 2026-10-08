@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -58,10 +58,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return @{ Id = "new-12345" }
             }
 
-            Mock -Command Invoke-MgGraphRequest -MockWith {
-                return @{ Id = "new-12345" }
-            }
-
             Mock -Command Update-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfiguration -MockWith {
             }
 
@@ -79,7 +75,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Write-M365DSCHost -MockWith {
             }
-            
+
             $Script:exportedInstances =$null
             $Script:ExportMode = $false
 
@@ -93,14 +89,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 )
 
                 return [pscustomobject]@{
-                    Certificate                = $CertificateBytes
+                    Certificate                = [System.Convert]::ToBase64String($CertificateBytes)
                     IsRootAuthority            = $IsRoot
                     Issuer                     = $Issuer
                     IssuerSubjectKeyIdentifier = $IssuerSubjectKeyIdentifier
                 }
             }
         }
-        
+
         # Test contexts
         Context -Name "The instance should exist but it DOES NOT" -Fixture {
             BeforeAll {
@@ -115,18 +111,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     return $null
                 }
             }
-            
+
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
-            
+
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create a new instance from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter { $Method -eq 'POST' }
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfiguration -Exactly 1
             }
         }
 
@@ -148,13 +144,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should send certificate data to the trusted CA creation command' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
-                    $bodyObj = ($Body | ConvertFrom-Json)
-                    $Method -eq 'POST' -and
-                    $bodyObj.trustedCertificateAuthorities.Count -eq 1 -and
-                    $bodyObj.trustedCertificateAuthorities[0].certificate -eq $script:expectedCert -and
-                    $bodyObj.trustedCertificateAuthorities[0].isRootAuthority -eq $true
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfiguration -Exactly 1 -ParameterFilter {
+                    $BodyParameter.trustedCertificateAuthorities.Count -eq 1 -and
+                    $BodyParameter.trustedCertificateAuthorities[0].certificate -eq $script:expectedCert -and
+                    $BodyParameter.trustedCertificateAuthorities[0].isRootAuthority -eq $true
                 }
             }
         }
@@ -168,17 +162,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential = $Credential
                 }
             }
-            
+
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfiguration -Exactly 1
             }
         }
@@ -194,7 +188,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -220,7 +214,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return base64 encoded certificate and root flag from Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Get().ToHashtable()
                 $result.TrustedCertificateAuthorities | Should -Not -BeNullOrEmpty
                 $result.TrustedCertificateAuthorities[0].Certificate | Should -Be ([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("publickeydata")))
                 $result.TrustedCertificateAuthorities[0].IsRootAuthority | Should -Be $true
@@ -238,15 +232,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfiguration -Exactly 1
             }
         }
@@ -287,7 +281,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call update for trusted CA with certificate payload' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADCertificateBasedApplicationConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfigurationTrustedCertificateAuthority -Exactly 1 -ParameterFilter {
                     $BodyParameter.Certificate -eq $script:expectedCertUpdate -and
                     $BodyParameter.IsRootAuthority -eq $false
@@ -340,7 +334,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result = $null
                 try
                 {
-                    $result = Export-TargetResource @testParams -ErrorAction Stop
+                    $result = Invoke-M365DSCResourceMethod -ResourceName 'AADCertificateBasedApplicationConfiguration' -MethodName 'Export' -Parameters $testParams
                 }
                 catch
                 {

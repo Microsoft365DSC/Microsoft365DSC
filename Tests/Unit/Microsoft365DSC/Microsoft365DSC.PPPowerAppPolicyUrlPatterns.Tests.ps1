@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -57,16 +57,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PolicyName            = "DSCPolicy";
                     PPTenantId            = "xxxxxxx";
                     RuleSet               = @(
-                        (New-CimInstance -ClassName MSFT_PPPowerAPpPolicyUrlPatternsRule -Property @{
+                        ([MSFT_PPPowerAppPolicyUrlPatternsRule] @{
                             pattern = 'https://contoso.com'
                             customConnectorRuleClassification = 'General'
                             order = 1
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PPPowerAPpPolicyUrlPatternsRule -Property @{
+                        })
+                        ([MSFT_PPPowerAppPolicyUrlPatternsRule] @{
                             pattern = 'https://fabrikam.com'
                             customConnectorRuleClassification = 'General'
                             order = 2
-                        } -ClientOnly)
+                        })
                     )
                     Ensure              = 'Absent'
                     Credential          = $Credential;
@@ -126,16 +126,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             It 'Should return Values from the Get method' {
                 $Global:count = 1
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PPPowerAppPolicyUrlPatterns' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
                 $Global:count = 1
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PPPowerAppPolicyUrlPatterns' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
                 $Global:count = 1
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PPPowerAppPolicyUrlPatterns' -Property $testParams).Set()
                 Should -Invoke -CommandName Invoke-M365DSCPowerPlatformRESTWebRequest -Exactly 2
             }
         }
@@ -146,16 +146,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PolicyName            = "DSCPolicy";
                     PPTenantId            = "xxxxxxx";
                     RuleSet               = @(
-                        (New-CimInstance -ClassName MSFT_PPPowerAPpPolicyUrlPatternsRule -Property @{
+                        ([MSFT_PPPowerAppPolicyUrlPatternsRule] @{
                             pattern = 'https://contoso.com'
                             customConnectorRuleClassification = 'General'
                             order = 1
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PPPowerAPpPolicyUrlPatternsRule -Property @{
+                        })
+                        ([MSFT_PPPowerAppPolicyUrlPatternsRule] @{
                             pattern = 'https://fabrikam.com'
                             customConnectorRuleClassification = 'General'
                             order = 2
-                        } -ClientOnly)
+                        })
                     )
                     Ensure              = 'Present'
                     Credential          = $Credential;
@@ -216,7 +216,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return true from the Test method' {
                 $Global:count = 1
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'PPPowerAppPolicyUrlPatterns' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -226,16 +226,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PolicyName            = "DSCPolicy";
                     PPTenantId            = "xxxxxxx";
                     RuleSet               = @(
-                        (New-CimInstance -ClassName MSFT_PPPowerAPpPolicyUrlPatternsRule -Property @{
+                        ([MSFT_PPPowerAppPolicyUrlPatternsRule] @{
                             pattern = 'https://contoso.com'
                             customConnectorRuleClassification = 'General'
                             order = 1
-                        } -ClientOnly)
-                        (New-CimInstance -ClassName MSFT_PPPowerAPpPolicyUrlPatternsRule -Property @{
+                        })
+                        ([MSFT_PPPowerAppPolicyUrlPatternsRule] @{
                             pattern = 'https://tailspintoys.com' #drift
                             customConnectorRuleClassification = 'General'
                             order = 2
-                        } -ClientOnly)
+                        })
                     )
                     Ensure              = 'Present'
                     Credential          = $Credential;
@@ -296,17 +296,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return Values from the Get method' {
                 $Global:count = 1
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PPPowerAppPolicyUrlPatterns' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
                 $Global:count = 1
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PPPowerAppPolicyUrlPatterns' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
                 $Global:count = 1
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PPPowerAppPolicyUrlPatterns' -Property $testParams).Set()
                 Should -Invoke -CommandName Invoke-M365DSCPowerPlatformRESTWebRequest -Exactly 2
             }
         }
@@ -379,7 +379,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             It 'Should Reverse Engineer resource from the Export method' {
                 $Global:count = 1
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'PPPowerAppPolicyUrlPatterns' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

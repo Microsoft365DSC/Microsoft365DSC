@@ -1,0 +1,48 @@
+[
+  {
+    "RoleScopeTagIds": [
+      "0"
+    ],
+    "ApplicationId": "$IntuneApplicationId",
+    "Assignments": [
+      {
+        "groupId": "053dc89a-be83-411a-bad3-909904b7239e",
+        "deviceAndAppManagementAssignmentFilterType": "none",
+        "CIMInstance": "MSFT_DeviceManagementConfigurationPolicyAssignments",
+        "groupDisplayName": "DummyGroupExclude",
+        "dataType": "#microsoft.graph.exclusionGroupAssignmentTarget"
+      },
+      {
+        "groupId": "b0b8fd3f-af2a-453b-be57-80182d599f02",
+        "deviceAndAppManagementAssignmentFilterType": "none",
+        "CIMInstance": "MSFT_DeviceManagementConfigurationPolicyAssignments",
+        "groupDisplayName": "DummyGroupInclude",
+        "dataType": "#microsoft.graph.groupAssignmentTarget"
+      }
+    ],
+    "Settings": [
+      {
+        "SettingInstance": {
+          "SettingDefinitionId": "device_vendor_msft_policy_config_updatev83diff~policy~cat_edgeupdate~cat_applications_pol_defaultcreatedesktopshortcut",
+          "choiceSettingValue": {
+            "CIMInstance": "MSFT_MicrosoftGraphDeviceManagementConfigurationChoiceSettingValue",
+            "Value": "device_vendor_msft_policy_config_updatev83diff~policy~cat_edgeupdate~cat_applications_pol_defaultcreatedesktopshortcut_0"
+          },
+          "CIMInstance": "MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance",
+          "odataType": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance"
+        },
+        "CIMInstance": "MSFT_MicrosoftGraphdeviceManagementConfigurationSetting"
+      }
+    ],
+    "Description": "IntuneSettingCatalogCustomPolicyWindows10_1",
+    "CertificateThumbprint": "$IntuneCertThumbprint",
+    "Platforms": "windows10",
+    "Ensure": "Present",
+    "ResourceInstanceName": "IntuneSettingCatalogCustomPolicyWindows10-IntuneSettingCatalogCustomPolicyWindows10_1",
+    "ResourceName": "IntuneSettingCatalogCustomPolicyWindows10",
+    "Id": "495a239d-4367-474f-86e8-225d9f6bbe11",
+    "Name": "IntuneSettingCatalogCustomPolicyWindows10_1",
+    "TenantId": "$OrganizationName",
+    "Technologies": "mdm"
+  }
+]

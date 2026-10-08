@@ -1,629 +1,576 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneDeviceConfigurationHealthMonitoringPolicyWindows10'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneDeviceConfigurationHealthMonitoringPolicyWindows10 : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [ValidateSet('notConfigured', 'enabled', 'disabled')]
-        [System.String]
-        $AllowDeviceHealthMonitoring,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables device health monitoring on the device. Possible values are: notConfigured, enabled, disabled.')]
+    [ValidateSet('notConfigured', 'enabled', 'disabled')]
+    [System.String] $AllowDeviceHealthMonitoring
 
-        [Parameter()]
-        [System.String]
-        $ConfigDeviceHealthMonitoringCustomScope,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies custom set of events collected from the device where health monitoring is enabled')]
+    [System.String] $ConfigDeviceHealthMonitoringCustomScope
 
-        [Parameter()]
-        [ValidateSet('undefined', 'healthMonitoring', 'bootPerformance', 'windowsUpdates', 'privilegeManagement')]
-        [System.String[]]
-        $ConfigDeviceHealthMonitoringScope,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies set of events collected from the device where health monitoring is enabled. Possible values are: undefined, healthMonitoring, bootPerformance, windowsUpdates, privilegeManagement.')]
+    [ValidateSet('undefined', 'healthMonitoring', 'bootPerformance', 'windowsUpdates', 'privilegeManagement')]
+    [System.String[]] $ConfigDeviceHealthMonitoringScope
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Admin provided description of the Device Configuration.')]
+    [System.String] $Description
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The device mode applicability rule for this Policy.')]
+    [MSFT_DeviceManagementApplicabilityRuleDeviceMode] $DeviceManagementApplicabilityRuleDeviceMode
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('The OS edition applicability for this Policy.')]
+    [MSFT_DeviceManagementApplicabilityRuleOsEdition] $DeviceManagementApplicabilityRuleOsEdition
 
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('The OS version applicability rule for this Policy.')]
+    [MSFT_DeviceManagementApplicabilityRuleOsVersion] $DeviceManagementApplicabilityRuleOsVersion
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Admin provided name of the device configuration.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tags for this Entity instance.')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Represents the assignment to the Intune policy.')]
+    [MSFT_DeviceManagementConfigurationPolicyAssignments[]] $Assignments
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-    Write-Verbose -Message "Getting configuration of the Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$Id} and DisplayName {$DisplayName}"
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-    try
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
+
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    [IntuneDeviceConfigurationHealthMonitoringPolicyWindows10] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneDeviceConfigurationHealthMonitoringPolicyWindows10]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of the Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
+            {
+                $null = $this.Connect('MicrosoftGraph')
 
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
+                Confirm-M365DSCDependencies
 
-            $getValue = $null
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+                #region resource generator code
+                if (-not [string]::IsNullOrEmpty($this.Id))
+                {
+                    $getValue = Get-MgBetaDeviceManagementDeviceConfiguration -All -Filter "Id eq '$($this.Id)'" -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$($this.Id)}"
+
+                    if (-not [string]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        $getValue = Get-MgBetaDeviceManagementDeviceConfiguration `
+                            -All `
+                            -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                            -ErrorAction SilentlyContinue
+                    }
+                }
+                #endregion
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with DisplayName {$($this.DisplayName)}"
+                    return $this.AsResult($nullResult)
+                }
+            }
+            else
+            {
+                $getValue = $this.ExportedInstance
+            }
+            $resolvedId = $getValue.Id
+            Write-Verbose -Message "An Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$($resolvedId)} and DisplayName {$($this.DisplayName)} was found."
+
             #region resource generator code
-            if (-not [string]::IsNullOrEmpty($Id))
+            $enumConfigDeviceHealthMonitoringScope = @()
+            if ($null -ne $getValue.configDeviceHealthMonitoringScope)
             {
-                $getValue = Get-MgBetaDeviceManagementDeviceConfiguration -All -Filter "Id eq '$Id'" -ErrorAction SilentlyContinue
-            }
+                $enumConfigDeviceHealthMonitoringScope = $getValue.configDeviceHealthMonitoringScope.Split(',')
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$Id}"
-
-                if (-not [string]::IsNullOrEmpty($DisplayName))
-                {
-                    $getValue = Get-MgBetaDeviceManagementDeviceConfiguration `
-                        -All `
-                        -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                        -ErrorAction SilentlyContinue
-                }
             }
             #endregion
-            if ($null -eq $getValue)
+
+            $complexDeviceManagementApplicabilityRuleDeviceMode = [ordered]@{}
+            $complexDeviceManagementApplicabilityRuleDeviceMode.Add('DeviceMode', $getValue.DeviceManagementApplicabilityRuleDeviceMode.DeviceMode)
+            $complexDeviceManagementApplicabilityRuleDeviceMode.Add('Name', $getValue.DeviceManagementApplicabilityRuleDeviceMode.Name)
+            $complexDeviceManagementApplicabilityRuleDeviceMode.Add('RuleType', $getValue.DeviceManagementApplicabilityRuleDeviceMode.RuleType)
+            if ($complexDeviceManagementApplicabilityRuleDeviceMode.values.Where({ $null -ne $_ }).Count -eq 0)
             {
-                Write-Verbose -Message "Could not find an Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with DisplayName {$DisplayName}"
-                return $nullResult
+                $complexDeviceManagementApplicabilityRuleDeviceMode = $null
             }
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$Id} and DisplayName {$DisplayName} was found."
 
-        #region resource generator code
-        $enumAllowDeviceHealthMonitoring = $null
-        if ($null -ne $getValue.allowDeviceHealthMonitoring)
-        {
-            $enumAllowDeviceHealthMonitoring = $getValue.allowDeviceHealthMonitoring.ToString()
-        }
-
-        $enumConfigDeviceHealthMonitoringScope = @()
-        if ($null -ne $getValue.configDeviceHealthMonitoringScope)
-        {
-            $enumConfigDeviceHealthMonitoringScope = $getValue.configDeviceHealthMonitoringScope.ToString().Split(',')
-
-        }
-        #endregion
-
-        $results = @{
-            #region resource generator code
-            AllowDeviceHealthMonitoring             = $enumAllowDeviceHealthMonitoring
-            ConfigDeviceHealthMonitoringCustomScope = $getValue.configDeviceHealthMonitoringCustomScope
-            ConfigDeviceHealthMonitoringScope       = $enumConfigDeviceHealthMonitoringScope
-            Description                             = $getValue.Description
-            DisplayName                             = $getValue.DisplayName
-            Id                                      = $getValue.Id
-            RoleScopeTagIds                         = $getValue.RoleScopeTagIds
-            Ensure                                  = 'Present'
-            Credential                              = $Credential
-            ApplicationId                           = $ApplicationId
-            TenantId                                = $TenantId
-            ApplicationSecret                       = $ApplicationSecret
-            CertificateThumbprint                   = $CertificateThumbprint
-            CertificatePath                         = $CertificatePath
-            CertificatePassword                     = $CertificatePassword
-            ManagedIdentity                         = $ManagedIdentity.IsPresent
-            AccessTokens                            = $AccessTokens
-            #endregion
-        }
-
-        $assignmentsValues = Get-MgBetaDeviceManagementDeviceConfigurationAssignment -DeviceConfigurationId $Id
-        $assignmentResult = @()
-        if ($assignmentsValues.Count -gt 0)
-        {
-            $assignmentResult += ConvertFrom-IntunePolicyAssignment `
-                -IncludeDeviceFilter:$true `
-                -Assignments ($assignmentsValues)
-        }
-        $results.Add('Assignments', $assignmentResult)
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [ValidateSet('notConfigured', 'enabled', 'disabled')]
-        [System.String]
-        $AllowDeviceHealthMonitoring,
-
-        [Parameter()]
-        [System.String]
-        $ConfigDeviceHealthMonitoringCustomScope,
-
-        [Parameter()]
-        [ValidateSet('undefined', 'healthMonitoring', 'bootPerformance', 'windowsUpdates', 'privilegeManagement')]
-        [System.String[]]
-        $ConfigDeviceHealthMonitoringScope,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with DisplayName {$DisplayName}"
-        $boundParameters.Remove('Assignments') | Out-Null
-
-        $createParameters = ([Hashtable]$boundParameters).Clone()
-        $createParameters = Rename-M365DSCCimInstanceParameter -Properties $createParameters
-        $createParameters.Remove('Id') | Out-Null
-
-        if ($createParameters.ContainsKey('configDeviceHealthMonitoringScope'))
-        {
-            $createParameters['configDeviceHealthMonitoringScope'] = ($createParameters['configDeviceHealthMonitoringScope'] -join ',')
-        }
-        #region resource generator code
-        $createParameters.Add('@odata.type', '#microsoft.graph.windowsHealthMonitoringConfiguration')
-        $policy = New-MgBetaDeviceManagementDeviceConfiguration -BodyParameter $createParameters
-        $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
-
-        if ($policy.id)
-        {
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $policy.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceConfigurations'
-        }
-        #endregion
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$($currentInstance.Id)}"
-        $boundParameters.Remove('Assignments') | Out-Null
-
-        $UpdateParameters = ([Hashtable]$boundParameters).Clone()
-        $UpdateParameters = Rename-M365DSCCimInstanceParameter -Properties $UpdateParameters
-        $UpdateParameters.Remove('Id') | Out-Null
-
-        if ($UpdateParameters.ContainsKey('configDeviceHealthMonitoringScope'))
-        {
-            $UpdateParameters['configDeviceHealthMonitoringScope'] = ($UpdateParameters['configDeviceHealthMonitoringScope'] -join ',')
-        }
-        #region resource generator code
-        $UpdateParameters.Add('@odata.type', '#microsoft.graph.windowsHealthMonitoringConfiguration')
-        Update-MgBetaDeviceManagementDeviceConfiguration `
-            -DeviceConfigurationId $currentInstance.Id `
-            -BodyParameter $UpdateParameters
-
-        $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
-        Update-DeviceConfigurationPolicyAssignment `
-            -DeviceConfigurationPolicyId $currentInstance.id `
-            -Targets $assignmentsHash `
-            -Repository 'deviceManagement/deviceConfigurations'
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaDeviceManagementDeviceConfiguration -DeviceConfigurationId $currentInstance.Id
-        #endregion
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [ValidateSet('notConfigured', 'enabled', 'disabled')]
-        [System.String]
-        $AllowDeviceHealthMonitoring,
-
-        [Parameter()]
-        [System.String]
-        $ConfigDeviceHealthMonitoringCustomScope,
-
-        [Parameter()]
-        [ValidateSet('undefined', 'healthMonitoring', 'bootPerformance', 'windowsUpdates', 'privilegeManagement')]
-        [System.String[]]
-        $ConfigDeviceHealthMonitoringScope,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        $baseFilter = "isof('microsoft.graph.windowsHealthMonitoringConfiguration')"
-        if (-not [string]::IsNullOrEmpty($Filter))
-        {
-            $Filter = "($baseFilter) and ($Filter)"
-        }
-        else
-        {
-            $Filter = $baseFilter
-        }
-        [array]$getValue = Get-MgBetaDeviceManagementDeviceConfiguration -Filter $Filter -All -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            $complexDeviceManagementApplicabilityRuleOsEdition = [ordered]@{}
+            $complexDeviceManagementApplicabilityRuleOsEdition.Add('Name', $getValue.DeviceManagementApplicabilityRuleOSEdition.Name)
+            $complexDeviceManagementApplicabilityRuleOsEdition.Add('OsEditionTypes', [string[]]$getValue.DeviceManagementApplicabilityRuleOSEdition.OsEditionTypes)
+            $complexDeviceManagementApplicabilityRuleOsEdition.Add('RuleType', $getValue.DeviceManagementApplicabilityRuleOSEdition.RuleType)
+            if ($complexDeviceManagementApplicabilityRuleOsEdition.values.Where({ $null -ne $_ }).Count -eq 0)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $complexDeviceManagementApplicabilityRuleOsEdition = $null
             }
 
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
+            $complexDeviceManagementApplicabilityRuleOsVersion = [ordered]@{}
+            $complexDeviceManagementApplicabilityRuleOsVersion.Add('MaxOSVersion', $getValue.DeviceManagementApplicabilityRuleOSVersion.MaxOSVersion)
+            $complexDeviceManagementApplicabilityRuleOsVersion.Add('MinOSVersion', $getValue.DeviceManagementApplicabilityRuleOSVersion.MinOSVersion)
+            $complexDeviceManagementApplicabilityRuleOsVersion.Add('Name', $getValue.DeviceManagementApplicabilityRuleOSVersion.Name)
+            $complexDeviceManagementApplicabilityRuleOsVersion.Add('RuleType', $getValue.DeviceManagementApplicabilityRuleOSVersion.RuleType)
+            if ($complexDeviceManagementApplicabilityRuleOsVersion.values.Where({ $null -ne $_ }).Count -eq 0)
             {
-                $displayedKey = $config.displayName
-            }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+                $complexDeviceManagementApplicabilityRuleOsVersion = $null
             }
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $rawResults = $Results.Clone()
+            $results = @{
+                #region resource generator code
+                AllowDeviceHealthMonitoring                 = $getValue.allowDeviceHealthMonitoring
+                ConfigDeviceHealthMonitoringCustomScope     = $getValue.configDeviceHealthMonitoringCustomScope
+                ConfigDeviceHealthMonitoringScope           = $enumConfigDeviceHealthMonitoringScope
+                Description                                 = $getValue.Description
+                DeviceManagementApplicabilityRuleDeviceMode = $complexDeviceManagementApplicabilityRuleDeviceMode
+                DeviceManagementApplicabilityRuleOsEdition  = $complexDeviceManagementApplicabilityRuleOsEdition
+                DeviceManagementApplicabilityRuleOsVersion  = $complexDeviceManagementApplicabilityRuleOsVersion
+                DisplayName                                 = $getValue.DisplayName
+                Id                                          = $getValue.Id
+                RoleScopeTagIds                             = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Ensure                                      = 'Present'
+                Credential                                  = $this.Credential
+                ApplicationId                               = $this.ApplicationId
+                TenantId                                    = $this.TenantId
+                ApplicationSecret                           = $this.ApplicationSecret
+                CertificateThumbprint                       = $this.CertificateThumbprint
+                CertificatePath                             = $this.CertificatePath
+                CertificatePassword                         = $this.CertificatePassword
+                ManagedIdentity                             = $this.ManagedIdentity
+                AccessTokens                                = $this.AccessTokens
+                #endregion
+            }
 
-            if ($Results.Assignments)
+            $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
+            if ($null -eq $assignmentsValues)
             {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
-                if ($complexTypeStringResult)
-                {
-                    $Results.Assignments = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('Assignments') | Out-Null
-                }
+                $assignmentsValues = Get-MgBetaDeviceManagementDeviceConfigurationAssignment -DeviceConfigurationId $resolvedId
             }
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('Assignments') `
-                -RawResults $rawResults
+            $assignmentResult = @()
+            if ($assignmentsValues.Count -gt 0)
+            {
+                $assignmentResult += ConvertFrom-IntunePolicyAssignment `
+                    -IncludeDeviceFilter:$true `
+                    -Assignments ($assignmentsValues)
+            }
+            $results.Add('Assignments', $assignmentResult)
 
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        if ($_.Exception -like '*401*' -or $_.ErrorDetails.Message -like "*`"ErrorCode`":`"Forbidden`"*" -or `
-                $_.Exception -like '*Request not applicable to target tenant*')
+        catch
         {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
-        }
-        else
-        {
-            New-M365DSCLogEntry -Message 'Error during Export:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error retrieving data:')
 
             throw
         }
     }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($boundParameters.ContainsKey('RoleScopeTagIds'))
+        {
+            $boundParameters.RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $this.RoleScopeTagIds
+        }
+
+        $boundParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating an Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with DisplayName {$($this.DisplayName)}"
+            $createParameters = $boundParameters
+            $createParameters.Remove('Assignments') | Out-Null
+
+            $createParameters.Remove('Id') | Out-Null
+
+            if ($createParameters.ContainsKey('configDeviceHealthMonitoringScope'))
+            {
+                $createParameters['configDeviceHealthMonitoringScope'] = ($createParameters['configDeviceHealthMonitoringScope'] -join ',')
+            }
+            #region resource generator code
+            $createParameters.Add('@odata.type', '#microsoft.graph.windowsHealthMonitoringConfiguration')
+            $policy = New-MgBetaDeviceManagementDeviceConfiguration -BodyParameter $createParameters
+            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+
+            if ($policy.id)
+            {
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $policy.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceConfigurations'
+            }
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$($currentInstance.Id)}"
+            $updateParameters = $boundParameters
+            $updateParameters.Remove('Assignments') | Out-Null
+
+            $updateParameters.Remove('Id') | Out-Null
+
+            if ($updateParameters.ContainsKey('configDeviceHealthMonitoringScope'))
+            {
+                $updateParameters['configDeviceHealthMonitoringScope'] = ($updateParameters['configDeviceHealthMonitoringScope'] -join ',')
+            }
+            #region resource generator code
+            $updateParameters.Add('@odata.type', '#microsoft.graph.windowsHealthMonitoringConfiguration')
+            Update-MgBetaDeviceManagementDeviceConfiguration `
+                -DeviceConfigurationId $currentInstance.Id `
+                -BodyParameter $updateParameters
+
+            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+            Update-DeviceConfigurationPolicyAssignment `
+                -DeviceConfigurationPolicyId $currentInstance.id `
+                -Targets $assignmentsHash `
+                -Repository 'deviceManagement/deviceConfigurations'
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Intune Device Configuration Health Monitoring Configuration Policy for Windows10 with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaDeviceManagementDeviceConfiguration -DeviceConfigurationId $currentInstance.Id
+            #endregion
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            #region resource generator code
+            [array]$getValue = Get-M365DSCExportCachedCollection -Collection 'deviceConfigurations' `
+                -ODataType 'microsoft.graph.windowsHealthMonitoringConfiguration' `
+                -Filter $this.Filter
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
+                {
+                    $displayedKey = $config.displayName
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.DisplayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                if ($Results.DeviceManagementApplicabilityRuleDeviceMode)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.DeviceManagementApplicabilityRuleDeviceMode -CIMInstanceName DeviceManagementApplicabilityRuleDeviceMode
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.DeviceManagementApplicabilityRuleDeviceMode = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('DeviceManagementApplicabilityRuleDeviceMode') | Out-Null
+                    }
+                }
+
+                if ($Results.DeviceManagementApplicabilityRuleOsEdition)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.DeviceManagementApplicabilityRuleOsEdition -CIMInstanceName DeviceManagementApplicabilityRuleOsEdition
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.DeviceManagementApplicabilityRuleOsEdition = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('DeviceManagementApplicabilityRuleOsEdition') | Out-Null
+                    }
+                }
+
+                if ($Results.DeviceManagementApplicabilityRuleOsVersion)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.DeviceManagementApplicabilityRuleOsVersion -CIMInstanceName DeviceManagementApplicabilityRuleOsVersion
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.DeviceManagementApplicabilityRuleOsVersion = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('DeviceManagementApplicabilityRuleOsVersion') | Out-Null
+                    }
+                }
+
+                if ($Results.Assignments)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.Assignments = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('Assignments') | Out-Null
+                    }
+                }
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('Assignments', 'DeviceManagementApplicabilityRuleDeviceMode', 'DeviceManagementApplicabilityRuleOsEdition', 'DeviceManagementApplicabilityRuleOsVersion') `
+                    -RawResults $rawResults
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            if ($_.Exception -like '*401*' -or $_.ErrorDetails.Message -like "*`"ErrorCode`":`"Forbidden`"*" -or `
+                    $_.Exception -like '*Request not applicable to target tenant*')
+            {
+                Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+            }
+            else
+            {
+                $this.LogError($_, 'Error during Export:')
+
+                throw
+            }
+        }
+
+        # Every code path must return in a method with a declared return type.
+        return ''
+    }
+
+    hidden [IntuneDeviceConfigurationHealthMonitoringPolicyWindows10] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneDeviceConfigurationHealthMonitoringPolicyWindows10])
+        {
+            return $Values
+        }
+
+        $result = [IntuneDeviceConfigurationHealthMonitoringPolicyWindows10]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
+    }
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_DeviceManagementApplicabilityRuleDeviceMode
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Name for object')]
+    [System.String] $Name
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Applicability rule for device mode')]
+    [ValidateSet('standardConfiguration', 'sModeConfiguration')]
+    [System.String] $DeviceMode
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Applicability Rule type')]
+    [ValidateSet('include', 'exclude')]
+    [System.String] $RuleType
+}
+
+class MSFT_DeviceManagementApplicabilityRuleOsEdition
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Name for object')]
+    [System.String] $Name
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Applicability rule OS edition type')]
+    [System.String[]] $OsEditionTypes
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Applicability Rule type')]
+    [ValidateSet('include', 'exclude')]
+    [System.String] $RuleType
+}
+
+class MSFT_DeviceManagementApplicabilityRuleOsVersion
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Name for object')]
+    [System.String] $Name
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Min OS version for Applicability Rule')]
+    [System.String] $MinOSVersion
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Max OS version for Applicability Rule')]
+    [System.String] $MaxOSVersion
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Applicability Rule type')]
+    [ValidateSet('include', 'exclude')]
+    [System.String] $RuleType
+}
+
+class MSFT_DeviceManagementConfigurationPolicyAssignments
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The type of the target assignment.')]
+    [ValidateSet('#microsoft.graph.cloudPcManagementGroupAssignmentTarget', '#microsoft.graph.groupAssignmentTarget', '#microsoft.graph.allLicensedUsersAssignmentTarget', '#microsoft.graph.allDevicesAssignmentTarget', '#microsoft.graph.exclusionGroupAssignmentTarget', '#microsoft.graph.configurationManagerCollectionAssignmentTarget')]
+    [System.String] $dataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of filter of the target assignment i.e. Exclude or Include. Possible values are:none, include, exclude.')]
+    [ValidateSet('none', 'include', 'exclude')]
+    [System.String] $deviceAndAppManagementAssignmentFilterType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The Id of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The display name of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Id that is the target of the assignment.')]
+    [System.String] $groupId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Display Name that is the target of the assignment.')]
+    [System.String] $groupDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The collection Id that is the target of the assignment.(ConfigMgr)')]
+    [System.String] $collectionId
+}

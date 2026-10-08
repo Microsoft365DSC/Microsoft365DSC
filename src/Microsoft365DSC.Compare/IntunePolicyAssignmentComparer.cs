@@ -1,4 +1,5 @@
 ﻿using Microsoft365DSC.Converter;
+using Microsoft365DSC.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace Microsoft365DSC.Compare
         /// <param name="target">The target array of assignments (current state)</param>
         /// <param name="drifts">List to collect drift information</param>
         /// <returns>True if assignments match, false otherwise</returns>
-        public static bool Compare(Array source, Array target, List<Dictionary<string, object>> drifts)
+        public static bool Compare(Array source, Array target, List<Hashtable> drifts)
         {
             if (source is null || target is null)
             {
@@ -28,13 +29,17 @@ namespace Microsoft365DSC.Compare
 
             if (!testResult)
             {
-                drifts.Add(new Dictionary<string, object>
-                {
-                    { "PropertyName", "Assignments.Count" },
-                    { "CurrentValue", target.Length },
-                    { "DesiredValue", source.Length }
-                });
+                drifts.Add(DriftRecord.Create("Assignments.Count", target.Length, source.Length));
                 return false;
+            }
+
+            // Every lookup below scans the whole target array, so convert it once instead of
+            // re-converting each element on every probe.
+            Hashtable?[] targetHashtables = new Hashtable?[target.Length];
+            for (int t = 0; t < target.Length; t++)
+            {
+                object? targetItem = target.GetValue(t);
+                targetHashtables[t] = targetItem is null ? null : ComplexObjectConverter.ToHashtable(targetItem);
             }
 
             // Compare each assignment in source array
@@ -65,19 +70,19 @@ namespace Microsoft365DSC.Compare
                     if (dataType.Equals("#microsoft.graph.allDevicesAssignmentTarget", StringComparison.OrdinalIgnoreCase)
                         || dataType.Equals("#microsoft.graph.allLicensedUsersAssignmentTarget", StringComparison.OrdinalIgnoreCase))
                     {
-                        assignmentTarget = FindAssignmentTarget(target, "dataType", dataType);
+                        assignmentTarget = FindAssignmentTarget(targetHashtables, "dataType", dataType);
                     }
 
                     // Find matching assignment target by dataType and groupId
                     if (assignmentTarget is null && assignmentGroupId is not null)
                     {
-                        assignmentTarget = FindAssignmentTarget(target, "groupId", assignmentGroupId);
+                        assignmentTarget = FindAssignmentTarget(targetHashtables, "groupId", assignmentGroupId);
                         testResult = assignmentTarget is not null;
                     }
 
                     if (assignmentTarget is null && assignmentCollectionId is not null)
                     {
-                        assignmentTarget = FindAssignmentTarget(target, "collectionId", assignmentCollectionId);
+                        assignmentTarget = FindAssignmentTarget(targetHashtables, "collectionId", assignmentCollectionId);
                         testResult = assignmentTarget is not null;
                     }
 
@@ -85,17 +90,12 @@ namespace Microsoft365DSC.Compare
                     if (!testResult || (testResult && assignmentTarget is null))
                     {
                         var assignmentGroupDisplayName = GetPropertyValue<string>(assignment, "groupDisplayName");
-                        assignmentTarget = FindAssignmentTarget(target, "groupDisplayName", assignmentGroupDisplayName);
+                        assignmentTarget = FindAssignmentTarget(targetHashtables, "groupDisplayName", assignmentGroupDisplayName);
                         testResult = assignmentTarget is not null;
 
                         if (!testResult)
                         {
-                            drifts.Add(new Dictionary<string, object>
-                            {
-                                { "PropertyName", $"Assignments[{i}].groupDisplayName" },
-                                { "CurrentValue", GetPropertyValue<string>(ComplexObjectConverter.ToHashtable(target.GetValue(i)), "groupDisplayName") ?? string.Empty },
-                                { "DesiredValue", assignmentGroupDisplayName }
-                            });
+                            drifts.Add(DriftRecord.Create($"Assignments[{i}].groupDisplayName", GetPropertyValue<string>(targetHashtables[i], "groupDisplayName") ?? string.Empty, assignmentGroupDisplayName));
                         }
                     }
 
@@ -112,12 +112,7 @@ namespace Microsoft365DSC.Compare
                         testResult = dataType.Equals(assignmentTargetDataType, StringComparison.OrdinalIgnoreCase);
                         if (!testResult)
                         {
-                            drifts.Add(new Dictionary<string, object>
-                            {
-                                { "PropertyName", $"Assignments[{i}].dataType" },
-                                { "CurrentValue", dataType },
-                                { "DesiredValue", assignmentTargetDataType }
-                            });
+                            drifts.Add(DriftRecord.Create($"Assignments[{i}].dataType", dataType, assignmentTargetDataType));
                         }
                     }
 
@@ -131,12 +126,12 @@ namespace Microsoft365DSC.Compare
                 {
                     // For non-AssignmentTarget types, just check if dataType exists in target
                     bool found = false;
-                    foreach (var targetItem in target)
+                    foreach (var targetItem in targetHashtables)
                     {
                         if (targetItem is null)
                             continue;
 
-                        assignmentTarget = ComplexObjectConverter.ToHashtable(targetItem);
+                        assignmentTarget = targetItem;
                         var targetDataType = GetPropertyValue<string>(assignmentTarget, "dataType");
 
                         if (string.Equals(dataType, targetDataType, StringComparison.OrdinalIgnoreCase))
@@ -150,12 +145,7 @@ namespace Microsoft365DSC.Compare
 
                     if (!testResult)
                     {
-                        drifts.Add(new Dictionary<string, object>
-                        {
-                            { "PropertyName", $"Assignments[{i}].dataType" },
-                            { "CurrentValue", dataType },
-                            { "DesiredValue", null }
-                        });
+                        drifts.Add(DriftRecord.Create($"Assignments[{i}].dataType", dataType, null));
                     }
                 }
 
@@ -166,14 +156,9 @@ namespace Microsoft365DSC.Compare
                     if (assignmentSettings is not null)
                     {
                         var targetAssignmentSettings = GetPropertyValue<Hashtable>(assignmentTarget, "assignmentSettings");
-                        var compareResult = ComplexObjectComparer.Compare(assignmentSettings, targetAssignmentSettings, $"Assignments[{i}].assignmentSettings", []);
-                        if (!compareResult.Item2)
+                        if (!ComplexObjectComparer.CompareInto(assignmentSettings, targetAssignmentSettings, $"Assignments[{i}].assignmentSettings", null, drifts, null))
                         {
                             testResult = false;
-                            foreach (var drift in compareResult.Item1)
-                            {
-                                drifts.Add(drift);
-                            }
                         }
                     }
                 }
@@ -191,7 +176,7 @@ namespace Microsoft365DSC.Compare
         /// <summary>
         /// Compares filter settings between source and target assignments.
         /// </summary>
-        private static bool CompareFilters(Hashtable assignment, Hashtable assignmentTarget, int index, List<Dictionary<string, object>> drifts)
+        private static bool CompareFilters(Hashtable assignment, Hashtable assignmentTarget, int index, List<Hashtable> drifts)
         {
             var assignmentFilterType = GetPropertyValue<string>(assignment, "deviceAndAppManagementAssignmentFilterType");
             var targetFilterType = GetPropertyValue<string>(assignmentTarget, "deviceAndAppManagementAssignmentFilterType");
@@ -228,12 +213,7 @@ namespace Microsoft365DSC.Compare
 
             if (!testResult)
             {
-                drifts.Add(new Dictionary<string, object>
-                {
-                    { "PropertyName", $"Assignments[{index}].Filters" },
-                    { "CurrentValue", assignmentFilterType },
-                    { "DesiredValue", targetFilterType }
-                });
+                drifts.Add(DriftRecord.Create($"Assignments[{index}].Filters", assignmentFilterType, targetFilterType));
             }
 
             return testResult;
@@ -242,13 +222,12 @@ namespace Microsoft365DSC.Compare
         /// <summary>
         /// Finds an assignment target in the array by property value
         /// </summary>
-        private static Hashtable? FindAssignmentTarget(Array targetArray, string key, string value)
+        private static Hashtable? FindAssignmentTarget(Hashtable?[] targetHashtables, string key, string value)
         {
-            foreach (var item in targetArray)
+            foreach (var hashtable in targetHashtables)
             {
-                if (item is null) continue;
+                if (hashtable is null) continue;
 
-                var hashtable = ComplexObjectConverter.ToHashtable(item);
                 var itemValue = GetPropertyValue<string>(hashtable, key);
 
                 if (string.Equals(value, itemValue, StringComparison.OrdinalIgnoreCase))

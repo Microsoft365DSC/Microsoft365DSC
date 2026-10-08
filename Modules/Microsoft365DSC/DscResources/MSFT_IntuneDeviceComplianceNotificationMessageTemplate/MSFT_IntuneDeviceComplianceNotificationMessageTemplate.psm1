@@ -1,617 +1,440 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneDeviceComplianceNotificationMessageTemplate'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneDeviceComplianceNotificationMessageTemplate : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [ValidateSet('none', 'includeCompanyLogo', 'includeCompanyName', 'includeContactInformation', 'includeCompanyPortalLink', 'includeDeviceDetails')]
-        [System.String[]]
-        $BrandingOptions,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Message Template Branding Options. Branding is defined in the Intune Admin Console. Possible values are: none, includeCompanyLogo, includeCompanyName, includeContactInformation, includeCompanyPortalLink, includeDeviceDetails')]
+    [ValidateSet('none', 'includeCompanyLogo', 'includeCompanyName', 'includeContactInformation', 'includeCompanyPortalLink', 'includeDeviceDetails')]
+    [System.String[]] $BrandingOptions
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('The localized notification message templates.')]
+    [MSFT_DeviceManagementNotificationMessageTemplate[]] $LocalizedNotificationMessages
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Display name for the Notification Message Template.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CIMInstance[]]
-        $LocalizedNotificationMessages,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Display name for the Notification Message Template.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tags for this Entity instance.')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter()]
-        [System.String]
-        $Id,
-        #endregion
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for the Intune Device Compliance Notification Message Template with Id {$Id} and DisplayName {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [IntuneDeviceComplianceNotificationMessageTemplate] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
+            $remote = [IntuneDeviceComplianceNotificationMessageTemplate]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+        Write-Verbose -Message "Getting configuration for the Intune Device Compliance Notification Message Template with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-
-            #region resource generator code
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                $getValue = Get-MgBetaDeviceManagementNotificationMessageTemplate -NotificationMessageTemplateId $Id `
-                    -ExpandProperty 'localizedNotificationMessages' `
-                    -ErrorAction SilentlyContinue
-            }
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Device Compliance Notification Message Template with Id {$Id}"
+                $null = $this.Connect('MicrosoftGraph')
 
-                if (-not [System.String]::IsNullOrEmpty($DisplayName))
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+
+                #region resource generator code
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    $getValue = Get-MgBetaDeviceManagementNotificationMessageTemplate `
-                        -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
+                    $getValue = Get-MgBetaDeviceManagementNotificationMessageTemplate -NotificationMessageTemplateId $this.Id `
                         -ExpandProperty 'localizedNotificationMessages' `
                         -ErrorAction SilentlyContinue
                 }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Device Compliance Notification Message Template with Id {$($this.Id)}"
+
+                    if (-not [System.String]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        $getValue = Get-MgBetaDeviceManagementNotificationMessageTemplate -All `
+                            -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                            -ExpandProperty 'localizedNotificationMessages' `
+                            -ErrorAction SilentlyContinue
+                    }
+                }
+                #endregion
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Device Compliance Notification Message Template with DisplayName {$($this.DisplayName)}."
+                    return $this.AsResult($nullResult)
+                }
             }
-            #endregion
-            if ($null -eq $getValue)
+            else
             {
-                Write-Verbose -Message "Could not find an Intune Device Compliance Notification Message Template with DisplayName {$DisplayName}."
-                return $nullResult
+                $getValue = $this.ExportedInstance
             }
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Device Compliance Notification Message Template with Id {$Id} and DisplayName {$DisplayName} was found"
+            $resolvedId = $getValue.Id
+            Write-Verbose -Message "An Intune Device Compliance Notification Message Template with Id {$($resolvedId)} and DisplayName {$($this.DisplayName)} was found"
 
-        #region resource generator code
-        $enumBrandingOptions = $null
-        if ($null -ne $getValue.BrandingOptions)
-        {
-            $enumBrandingOptions = $getValue.BrandingOptions.ToString().Split(',')
-        }
-
-        $messages = @()
-        foreach ($message in $getValue.LocalizedNotificationMessages)
-        {
-            $messages += @{
-                IsDefault       = $message.IsDefault
-                Locale          = $message.Locale
-                MessageTemplate = $message.MessageTemplate
-                Subject         = $message.Subject
-            }
-        }
-        #endregion
-
-        $results = @{
             #region resource generator code
-            BrandingOptions               = $enumBrandingOptions
-            Description                   = $getValue.Description
-            DisplayName                   = $getValue.DisplayName
-            LocalizedNotificationMessages = $messages
-            RoleScopeTagIds               = $getValue.RoleScopeTagIds
-            Id                            = $getValue.Id
-            Ensure                        = 'Present'
-            Credential                    = $Credential
-            ApplicationId                 = $ApplicationId
-            TenantId                      = $TenantId
-            ApplicationSecret             = $ApplicationSecret
-            CertificateThumbprint         = $CertificateThumbprint
-            CertificatePath               = $CertificatePath
-            CertificatePassword           = $CertificatePassword
-            ManagedIdentity               = $ManagedIdentity.IsPresent
+            $enumBrandingOptions = $null
+            if ($null -ne $getValue.BrandingOptions)
+            {
+                $enumBrandingOptions = $getValue.BrandingOptions.Split(',')
+            }
+
+            $messages = @()
+            foreach ($message in $getValue.LocalizedNotificationMessages)
+            {
+                $messages += @{
+                    IsDefault       = $message.IsDefault
+                    Locale          = $message.Locale
+                    MessageTemplate = $message.MessageTemplate
+                    Subject         = $message.Subject
+                }
+            }
+            #endregion
+
+            $results = @{
+                #region resource generator code
+                BrandingOptions               = $enumBrandingOptions
+                Description                   = $getValue.Description
+                DisplayName                   = $getValue.DisplayName
+                LocalizedNotificationMessages = $messages
+                RoleScopeTagIds               = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Id                            = $getValue.Id
+                Ensure                        = 'Present'
+                Credential                    = $this.Credential
+                ApplicationId                 = $this.ApplicationId
+                TenantId                      = $this.TenantId
+                ApplicationSecret             = $this.ApplicationSecret
+                CertificateThumbprint         = $this.CertificateThumbprint
+                CertificatePath               = $this.CertificatePath
+                CertificatePassword           = $this.CertificatePassword
+                ManagedIdentity               = $this.ManagedIdentity
+                #endregion
+            }
+
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of the Intune Device Compliance Notification Message Template with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($boundParameters.ContainsKey('RoleScopeTagIds'))
+        {
+            $boundParameters.RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $this.RoleScopeTagIds
+        }
+
+        if ($boundParameters.ContainsKey('BrandingOptions'))
+        {
+            $boundParameters.BrandingOptions = $boundParameters.BrandingOptions -join ','
+        }
+
+        $boundParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating an Intune Device Compliance Notification Message Template with DisplayName {$($this.DisplayName)}"
+
+            $createParameters = $boundParameters
+            $createParameters.Remove('Id') | Out-Null
+
+            $localizedNotificationMessagesConverted = $createParameters.LocalizedNotificationMessages
+            $createParameters.Remove('LocalizedNotificationMessages') | Out-Null
+            #region resource generator code
+            $policy = New-MgBetaDeviceManagementNotificationMessageTemplate -BodyParameter $createParameters
+            #endregion
+
+            foreach ($messageTemplate in $localizedNotificationMessagesConverted)
+            {
+                New-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
+                    -NotificationMessageTemplateId $policy.Id `
+                    -BodyParameter $messageTemplate
+            }
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
+
+            $updateParameters = $boundParameters
+            $updateParameters.Remove('Id') | Out-Null
+            $localizedNotificationMessagesConverted = $updateParameters.LocalizedNotificationMessages
+            $updateParameters.Remove('LocalizedNotificationMessages') | Out-Null
+
+            #region resource generator code
+            Update-MgBetaDeviceManagementNotificationMessageTemplate `
+                -NotificationMessageTemplateId $currentInstance.Id `
+                -BodyParameter $updateParameters
+
+            $comparison = Compare-Object -ReferenceObject $localizedNotificationMessagesConverted.Locale -DifferenceObject $currentInstance.LocalizedNotificationMessages.Locale -IncludeEqual
+            foreach ($compare in $comparison)
+            {
+                if ($compare.SideIndicator -eq '=>')
+                {
+                    Write-Verbose -Message "Removing the Localized Notification Message with Locale {$($compare.InputObject)} from the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
+                    Remove-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
+                        -NotificationMessageTemplateId $currentInstance.Id `
+                        -LocalizedNotificationMessageId "$($currentInstance.Id)_$($compare.InputObject)"
+                }
+                elseif ($compare.SideIndicator -eq '<=')
+                {
+                    Write-Verbose -Message "Adding the Localized Notification Message with Locale {$($compare.InputObject)} to the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
+                    $messageTemplate = $localizedNotificationMessagesConverted | Where-Object { $_.locale -eq $compare.InputObject }
+                    New-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
+                        -NotificationMessageTemplateId $currentInstance.Id `
+                        -BodyParameter $messageTemplate
+                }
+                elseif ($compare.SideIndicator -eq '==')
+                {
+                    Write-Verbose -Message "Updating the Localized Notification Message with Locale {$($compare.InputObject)} in the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
+                    $messageTemplate = $localizedNotificationMessagesConverted | Where-Object { $_.locale -eq $compare.InputObject }
+                    $messageTemplate.Remove('locale') | Out-Null
+                    if (-not $messageTemplate.isDefault)
+                    {
+                        $messageTemplate.Remove('isDefault') | Out-Null
+                    }
+                    Update-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
+                        -NotificationMessageTemplateId $currentInstance.Id `
+                        -LocalizedNotificationMessageId "$($currentInstance.Id)_$($compare.InputObject)" `
+                        -BodyParameter $messageTemplate
+                }
+            }
             #endregion
         }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [ValidateSet('none', 'includeCompanyLogo', 'includeCompanyName', 'includeContactInformation', 'includeCompanyPortalLink', 'includeDeviceDetails')]
-        [System.String[]]
-        $BrandingOptions,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CIMInstance[]]
-        $LocalizedNotificationMessages,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of the Intune Device Compliance Notification Message Template with Id {$Id} and DisplayName {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $BoundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    if ($boundParameters.ContainsKey('BrandingOptions'))
-    {
-        $boundParameters.BrandingOptions = $boundParameters.BrandingOptions -join ','
-    }
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Device Compliance Notification Message Template with DisplayName {$DisplayName}"
-
-        $createParameters = ([Hashtable]$boundParameters).Clone()
-        $createParameters = Rename-M365DSCCimInstanceParameter -Properties $createParameters
-        $createParameters.Remove('Id') | Out-Null
-
-        $localizedNotificationMessagesConverted = $createParameters.LocalizedNotificationMessages
-        $createParameters.Remove('LocalizedNotificationMessages') | Out-Null
-        #region resource generator code
-        $policy = New-MgBetaDeviceManagementNotificationMessageTemplate -BodyParameter $createParameters
-        #endregion
-
-        foreach ($messageTemplate in $localizedNotificationMessagesConverted)
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
         {
-            New-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
-                -NotificationMessageTemplateId $policy.Id `
-                -BodyParameter $messageTemplate
+            Write-Verbose -Message "Removing the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaDeviceManagementNotificationMessageTemplate -NotificationMessageTemplateId $currentInstance.Id
+            #endregion
         }
     }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+
+    [bool] Test()
     {
-        Write-Verbose -Message "Updating the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
+        return ([M365DSCResourceBase] $this).Test()
+    }
 
-        $updateParameters = ([Hashtable]$boundParameters).Clone()
-        $updateParameters = Rename-M365DSCCimInstanceParameter -Properties $updateParameters
-        $updateParameters.Remove('Id') | Out-Null
-        $localizedNotificationMessagesConverted = $updateParameters.LocalizedNotificationMessages
-        $updateParameters.Remove('LocalizedNotificationMessages') | Out-Null
-
-        #region resource generator code
-        Update-MgBetaDeviceManagementNotificationMessageTemplate `
-            -NotificationMessageTemplateId $currentInstance.Id `
-            -BodyParameter $updateParameters
-
-        $comparison = Compare-Object -ReferenceObject $localizedNotificationMessagesConverted.Locale -DifferenceObject $currentInstance.LocalizedNotificationMessages.Locale -IncludeEqual
-        foreach ($compare in $comparison)
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            if ($compare.SideIndicator -eq '=>')
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            #region resource generator code
+            $baseFilter = "displayName ne 'EnrollmentNotificationInternalMEO'"
+            $mergedFilter = $baseFilter
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
             {
-                Write-Verbose -Message "Removing the Localized Notification Message with Locale {$($compare.InputObject)} from the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
-                Remove-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
-                    -NotificationMessageTemplateId $currentInstance.Id `
-                    -LocalizedNotificationMessageId "$($currentInstance.Id)_$($compare.InputObject)"
+                $mergedFilter = "($($this.Filter)) and ($baseFilter)"
             }
-            elseif ($compare.SideIndicator -eq '<=')
+            [array]$getValue = Get-MgBetaDeviceManagementNotificationMessageTemplate `
+                -ExpandProperty 'localizedNotificationMessages' `
+                -Filter $mergedFilter `
+                -All `
+                -ErrorAction Stop
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
             {
-                Write-Verbose -Message "Adding the Localized Notification Message with Locale {$($compare.InputObject)} to the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
-                $messageTemplate = $localizedNotificationMessagesConverted | Where-Object { $_.locale -eq $compare.InputObject }
-                New-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
-                    -NotificationMessageTemplateId $currentInstance.Id `
-                    -BodyParameter $messageTemplate
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-            elseif ($compare.SideIndicator -eq '==')
+            else
             {
-                Write-Verbose -Message "Updating the Localized Notification Message with Locale {$($compare.InputObject)} in the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
-                $messageTemplate = $localizedNotificationMessagesConverted | Where-Object { $_.locale -eq $compare.InputObject }
-                $messageTemplate.Remove('locale') | Out-Null
-                if (-not $messageTemplate.isDefault)
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
                 {
-                    $messageTemplate.Remove('isDefault') | Out-Null
+                    $displayedKey = $config.displayName
                 }
-                Update-MgBetaDeviceManagementNotificationMessageTemplateLocalizedNotificationMessage `
-                    -NotificationMessageTemplateId $currentInstance.Id `
-                    -LocalizedNotificationMessageId "$($currentInstance.Id)_$($compare.InputObject)" `
-                    -BodyParameter $messageTemplate
-            }
-        }
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Intune Device Compliance Notification Message Template with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaDeviceManagementNotificationMessageTemplate -NotificationMessageTemplateId $currentInstance.Id
-        #endregion
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [ValidateSet('none', 'includeCompanyLogo', 'includeCompanyName', 'includeContactInformation', 'includeCompanyPortalLink', 'includeDeviceDetails')]
-        [System.String[]]
-        $BrandingOptions,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CIMInstance[]]
-        $LocalizedNotificationMessages,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        $baseFilter = "displayName ne 'EnrollmentNotificationInternalMEO'"
-        if (-not [System.String]::IsNullOrEmpty($Filter))
-        {
-            $Filter = "($Filter) and ($baseFilter)"
-        }
-        else
-        {
-            $Filter = $baseFilter
-        }
-        [array]$getValue = Get-MgBetaDeviceManagementNotificationMessageTemplate `
-            -ExpandProperty 'localizedNotificationMessages' `
-            -Filter $Filter `
-            -All `
-            -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
-            {
-                $displayedKey = $config.displayName
-            }
-            elseif (-not [string]::IsNullOrEmpty($config.name))
-            {
-                $displayedKey = $config.name
-            }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-
-            if ($Results.LocalizedNotificationMessages)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject ([Array]$Results.LocalizedNotificationMessages) -CIMInstanceName DeviceManagementNotificationMessageTemplate
-
-                if ($complexTypeStringResult)
+                elseif (-not [string]::IsNullOrEmpty($config.name))
                 {
-                    $Results.LocalizedNotificationMessages = $complexTypeStringResult
+                    $displayedKey = $config.name
                 }
-                else
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.DisplayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                if ($Results.LocalizedNotificationMessages)
                 {
-                    $Results.Remove('LocalizedNotificationMessages') | Out-Null
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject ([Array]$Results.LocalizedNotificationMessages) -CIMInstanceName DeviceManagementNotificationMessageTemplate
+
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.LocalizedNotificationMessages = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('LocalizedNotificationMessages') | Out-Null
+                    }
                 }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('LocalizedNotificationMessages') `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('LocalizedNotificationMessages')
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [IntuneDeviceComplianceNotificationMessageTemplate] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneDeviceComplianceNotificationMessageTemplate])
+        {
+            return $Values
+        }
+
+        $result = [IntuneDeviceComplianceNotificationMessageTemplate]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_DeviceManagementNotificationMessageTemplate
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('If this is the default message template.')]
+    [System.Nullable[System.Boolean]] $IsDefault
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The locale of the message template.')]
+    [ValidateSet('ar-sa', 'bg-bg', 'cs-cz', 'da-dk', 'de-de', 'el-gr', 'en-gb', 'en-us', 'es-es', 'es-mx', 'et-ee', 'fi-fi', 'fr-ca', 'fr-fr', 'he-il', 'hr-hr', 'hu-hu', 'it-it', 'ja-jp', 'ko-kr', 'lt-lt', 'lv-lv', 'nb-no', 'nl-nl', 'pl-pl', 'pt-br', 'pt-pt', 'ro-ro', 'sk-sk', 'sl-si', 'ru-ru', 'sr-Latn-rs', 'sv-se', 'th-th', 'tr-tr', 'uk-ua', 'zh-cn', 'zh-tw')]
+    [System.String] $Locale
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The body of the message template')]
+    [System.String] $MessageTemplate
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The subject of the message template.')]
+    [System.String] $Subject
+}

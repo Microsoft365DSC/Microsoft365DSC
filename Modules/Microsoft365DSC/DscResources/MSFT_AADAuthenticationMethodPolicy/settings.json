@@ -1,5 +1,47 @@
 {
   "resourceName": "AADAuthenticationMethodPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "authenticationMethodsPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyAuthenticationMethodPolicy",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "ReadOnly",
+      "note": "The service assigns a fixed description to the singleton policy"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "ReadOnly",
+      "note": "The service assigns the singleton policy name"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "MicrosoftAuthenticatorPlatformSettings",
+      "reason": "NotConfigurable",
+      "note": "The service takes the write and reads the value back as null."
+    },
+    {
+      "name": "PolicyMigrationState",
+      "reason": "Deprecated",
+      "note": "Administrators change the migration state in the Entra admin center."
+    },
+    {
+      "name": "PolicyVersion",
+      "reason": "ReadOnly",
+      "note": "The service stamps the policy version"
+    }
+  ],
   "description": "This resource configures an Azure AD Authentication Method Policy.",
   "roles": {
     "read": [

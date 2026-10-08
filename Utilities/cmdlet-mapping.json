@@ -1,4 +1,26 @@
 {
+  "Add-MgBetaApplicationPassword": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/applications/{application-id}/addPassword",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Add-MgBetaDeviceManagementAndroidManagedStoreAccountEnterpriseSettingApp": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/deviceManagement/androidManagedStoreAccountEnterpriseSettings/addApps",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Add-MgBetaGroupToLifecyclePolicy": {
     "SourceModule": "Microsoft.Graph.Beta.Groups",
     "ApiVersion": "beta",
@@ -61,6 +83,17 @@
         "Method": "GET",
         "URI": "/applications/{application-id}/federatedIdentityCredentials",
         "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Get-MgBetaAdminReportSetting": {
+    "SourceModule": "Microsoft.Graph.Beta.Reports",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/admin/reportSettings",
+        "ApiVersion": "beta"
       }
     ]
   },
@@ -523,7 +556,7 @@
     "ApiVersion": "beta",
     "Variants": [
       {
-        "Method": "GET",
+        "Method": "POST",
         "URI": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}/retrieveEnrollmentTimeDeviceMembershipTarget",
         "ApiVersion": "beta"
       }
@@ -828,50 +861,18 @@
       }
     ]
   },
-  "Get-MgBetaDeviceManagementIntent": {
-    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
+  "Get-MgBetaDeviceManagementImportedDeviceIdentity": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
     "ApiVersion": "beta",
     "Variants": [
       {
         "Method": "GET",
-        "URI": "/deviceManagement/intents/{deviceManagementIntent-id}",
+        "URI": "/deviceManagement/importedDeviceIdentities/{importedDeviceIdentity-id}",
         "ApiVersion": "beta"
       },
       {
         "Method": "GET",
-        "URI": "/deviceManagement/intents",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
-  "Get-MgBetaDeviceManagementIntentAssignment": {
-    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "GET",
-        "URI": "/deviceManagement/intents/{deviceManagementIntent-id}/assignments/{deviceManagementIntentAssignment-id}",
-        "ApiVersion": "beta"
-      },
-      {
-        "Method": "GET",
-        "URI": "/deviceManagement/intents/{deviceManagementIntent-id}/assignments",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
-  "Get-MgBetaDeviceManagementIntentSetting": {
-    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "GET",
-        "URI": "/deviceManagement/intents/{deviceManagementIntent-id}/settings/{deviceManagementSettingInstance-id}",
-        "ApiVersion": "beta"
-      },
-      {
-        "Method": "GET",
-        "URI": "/deviceManagement/intents/{deviceManagementIntent-id}/settings",
+        "URI": "/deviceManagement/importedDeviceIdentities",
         "ApiVersion": "beta"
       }
     ]
@@ -1352,6 +1353,22 @@
       {
         "Method": "GET",
         "URI": "/directory/deletedItems/application",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaDirectoryDeletedItemAsGroup": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/directory/deletedItems/{directoryObject-id}/group",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/directory/deletedItems/group",
         "ApiVersion": "beta"
       }
     ]
@@ -2576,22 +2593,6 @@
       }
     ]
   },
-  "Get-MgBetaProgram": {
-    "SourceModule": "Microsoft.Graph.Beta.Identity.Governance",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "GET",
-        "URI": "/programs/{program-id}",
-        "ApiVersion": "beta"
-      },
-      {
-        "Method": "GET",
-        "URI": "/programs",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
   "Get-MgBetaRoleManagementCloudPcRoleAssignment": {
     "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
     "ApiVersion": "beta",
@@ -2720,6 +2721,54 @@
       }
     ]
   },
+  "Get-MgBetaServicePrincipal": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/servicePrincipals/{servicePrincipal-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/servicePrincipals",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaServicePrincipalAppRoleAssignedTo": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo/{appRoleAssignment-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaServicePrincipalDelegatedPermissionClassification": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/delegatedPermissionClassifications/{delegatedPermissionClassification-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/delegatedPermissionClassifications",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Get-MgBetaSubscribedSku": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
     "ApiVersion": "beta",
@@ -2780,6 +2829,17 @@
       {
         "Method": "GET",
         "URI": "/teams/{team-id}/channels/{channel-id}/tabs",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaUserAuthenticationRequirement": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/users/{user-id}/authentication/requirements",
         "ApiVersion": "beta"
       }
     ]
@@ -2871,6 +2931,22 @@
       {
         "Method": "GET",
         "URI": "/directory/administrativeUnits/{administrativeUnit-id}/scopedRoleMembers",
+        "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Get-MgDirectoryCustomSecurityAttributeDefinition": {
+    "SourceModule": "Microsoft.Graph.Identity.DirectoryManagement",
+    "ApiVersion": "v1.0",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/directory/customSecurityAttributeDefinitions/{customSecurityAttributeDefinition-id}",
+        "ApiVersion": "v1.0"
+      },
+      {
+        "Method": "GET",
+        "URI": "/directory/customSecurityAttributeDefinitions",
         "ApiVersion": "v1.0"
       }
     ]
@@ -3069,22 +3145,6 @@
       }
     ]
   },
-  "Get-MgServicePrincipalAppRoleAssignedTo": {
-    "SourceModule": "Microsoft.Graph.Applications",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "GET",
-        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo/{appRoleAssignment-id}",
-        "ApiVersion": "v1.0"
-      },
-      {
-        "Method": "GET",
-        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
   "Get-MgUser": {
     "SourceModule": "Microsoft.Graph.Users",
     "ApiVersion": "v1.0",
@@ -3098,6 +3158,17 @@
         "Method": "GET",
         "URI": "/users",
         "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Import-MgBetaDeviceManagementImportedDeviceIdentityList": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/deviceManagement/importedDeviceIdentities/importDeviceIdentityList",
+        "ApiVersion": "beta"
       }
     ]
   },
@@ -3119,6 +3190,17 @@
       {
         "Method": "POST",
         "URI": "/applicationTemplates/{applicationTemplate-id}/instantiate",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Invoke-MgBetaScheduleDeviceManagementDeviceCompliancePolicyActionForRule": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/scheduleActionsForRules",
         "ApiVersion": "beta"
       }
     ]
@@ -3175,6 +3257,28 @@
         "Method": "POST",
         "URI": "/applications/{application-id}/tokenLifetimePolicies/$ref",
         "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "New-MgBetaAgreement": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.Governance",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/agreements",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaApplication": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/applications",
+        "ApiVersion": "beta"
       }
     ]
   },
@@ -3409,17 +3513,6 @@
       }
     ]
   },
-  "New-MgBetaDeviceManagementIntent": {
-    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "POST",
-        "URI": "/deviceManagement/intents",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
   "New-MgBetaDeviceManagementIntuneBrandingProfile": {
     "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Administration",
     "ApiVersion": "beta",
@@ -3640,6 +3733,17 @@
       }
     ]
   },
+  "New-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfiguration": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/directory/certificateAuthorities/certificateBasedApplicationConfigurations",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "New-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfigurationTrustedCertificateAuthority": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
     "ApiVersion": "beta",
@@ -3827,6 +3931,17 @@
       }
     ]
   },
+  "New-MgBetaGroup": {
+    "SourceModule": "Microsoft.Graph.Beta.Groups",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/groups",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "New-MgBetaGroupMemberByRef": {
     "SourceModule": "Microsoft.Graph.Beta.Groups",
     "ApiVersion": "beta",
@@ -3889,6 +4004,28 @@
       {
         "Method": "POST",
         "URI": "/identity/conditionalAccess/authenticationContextClassReferences",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaIdentityConditionalAccessNamedLocation": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/identity/conditionalAccess/namedLocations",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaIdentityConditionalAccessPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/identity/conditionalAccess/policies",
         "ApiVersion": "beta"
       }
     ]
@@ -4058,6 +4195,17 @@
       }
     ]
   },
+  "New-MgBetaOrganizationCertificateBasedAuthConfiguration": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/organization/{organization-id}/certificateBasedAuthConfiguration",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "New-MgBetaPolicyActivityBasedTimeoutPolicy": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
     "ApiVersion": "beta",
@@ -4223,17 +4371,6 @@
       }
     ]
   },
-  "New-MgBetaProgram": {
-    "SourceModule": "Microsoft.Graph.Beta.Identity.Governance",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "POST",
-        "URI": "/programs",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
   "New-MgBetaRoleManagementCloudPcRoleAssignment": {
     "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
     "ApiVersion": "beta",
@@ -4307,6 +4444,50 @@
       {
         "Method": "POST",
         "URI": "/roleManagement/entitlementManagement/roleAssignments",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaServicePrincipal": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/servicePrincipals",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaServicePrincipalAppRoleAssignedTo": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaServicePrincipalDelegatedPermissionClassification": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/delegatedPermissionClassifications",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaServicePrincipalOwnerByRef": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/owners/$ref",
         "ApiVersion": "beta"
       }
     ]
@@ -4454,28 +4635,6 @@
       }
     ]
   },
-  "New-MgServicePrincipalAppRoleAssignedTo": {
-    "SourceModule": "Microsoft.Graph.Applications",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "POST",
-        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
-  "New-MgServicePrincipalOwnerByRef": {
-    "SourceModule": "Microsoft.Graph.Applications",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "POST",
-        "URI": "/servicePrincipals/{servicePrincipal-id}/owners/$ref",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
   "New-MgUser": {
     "SourceModule": "Microsoft.Graph.Users",
     "ApiVersion": "v1.0",
@@ -4483,17 +4642,6 @@
       {
         "Method": "POST",
         "URI": "/users",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
-  "Remove-MgApplication": {
-    "SourceModule": "Microsoft.Graph.Applications",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "DELETE",
-        "URI": "/applications/{application-id}",
         "ApiVersion": "v1.0"
       }
     ]
@@ -4538,6 +4686,17 @@
       {
         "Method": "DELETE",
         "URI": "/agreements/{agreement-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Remove-MgBetaApplication": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/applications/{application-id}",
         "ApiVersion": "beta"
       }
     ]
@@ -4773,13 +4932,13 @@
       }
     ]
   },
-  "Remove-MgBetaDeviceManagementIntent": {
-    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
+  "Remove-MgBetaDeviceManagementImportedDeviceIdentity": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
     "ApiVersion": "beta",
     "Variants": [
       {
         "Method": "DELETE",
-        "URI": "/deviceManagement/intents/{deviceManagementIntent-id}",
+        "URI": "/deviceManagement/importedDeviceIdentities/{importedDeviceIdentity-id}",
         "ApiVersion": "beta"
       }
     ]
@@ -5136,6 +5295,17 @@
       }
     ]
   },
+  "Remove-MgBetaGroup": {
+    "SourceModule": "Microsoft.Graph.Beta.Groups",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/groups/{group-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Remove-MgBetaGroupFromLifecyclePolicy": {
     "SourceModule": "Microsoft.Graph.Beta.Groups",
     "ApiVersion": "beta",
@@ -5378,6 +5548,17 @@
       }
     ]
   },
+  "Remove-MgBetaOrganizationCertificateBasedAuthConfiguration": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/organization/{organization-id}/certificateBasedAuthConfiguration/{certificateBasedAuthConfiguration-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Remove-MgBetaPolicyActivityBasedTimeoutPolicy": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
     "ApiVersion": "beta",
@@ -5543,17 +5724,6 @@
       }
     ]
   },
-  "Remove-MgBetaProgram": {
-    "SourceModule": "Microsoft.Graph.Beta.Identity.Governance",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "DELETE",
-        "URI": "/programs/{program-id}",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
   "Remove-MgBetaRoleManagementCloudPcRoleAssignment": {
     "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
     "ApiVersion": "beta",
@@ -5605,6 +5775,50 @@
       {
         "Method": "DELETE",
         "URI": "/roleManagement/entitlementManagement/roleAssignments/{unifiedRoleAssignment-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Remove-MgBetaServicePrincipal": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/servicePrincipals/{servicePrincipal-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Remove-MgBetaServicePrincipalAppRoleAssignedTo": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo/{appRoleAssignment-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Remove-MgBetaServicePrincipalDelegatedPermissionClassification": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/delegatedPermissionClassifications/{delegatedPermissionClassification-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Remove-MgBetaServicePrincipalOwnerDirectoryObjectByRef": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/owners/{directoryObject-id}/$ref",
         "ApiVersion": "beta"
       }
     ]
@@ -5708,39 +5922,6 @@
       }
     ]
   },
-  "Remove-MgServicePrincipal": {
-    "SourceModule": "Microsoft.Graph.Applications",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "DELETE",
-        "URI": "/servicePrincipals/{servicePrincipal-id}",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
-  "Remove-MgServicePrincipalAppRoleAssignedTo": {
-    "SourceModule": "Microsoft.Graph.Applications",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "DELETE",
-        "URI": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo/{appRoleAssignment-id}",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
-  "Remove-MgServicePrincipalOwnerDirectoryObjectByRef": {
-    "SourceModule": "Microsoft.Graph.Applications",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "DELETE",
-        "URI": "/servicePrincipals/{servicePrincipal-id}/owners/{directoryObject-id}/$ref",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
   "Remove-MgUser": {
     "SourceModule": "Microsoft.Graph.Users",
     "ApiVersion": "v1.0",
@@ -5770,6 +5951,28 @@
       {
         "Method": "POST",
         "URI": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}/setEnrollmentTimeDeviceMembershipTarget",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Set-MgBetaDeviceManagementDeviceEnrollmentConfiguration": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/deviceManagement/deviceEnrollmentConfigurations/{deviceEnrollmentConfiguration-id}/assign",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Set-MgBetaDeviceManagementDeviceEnrollmentConfigurationPriority": {
+    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/deviceManagement/deviceEnrollmentConfigurations/{deviceEnrollmentConfiguration-id}/setPriority",
         "ApiVersion": "beta"
       }
     ]
@@ -5829,6 +6032,17 @@
       }
     ]
   },
+  "Set-MgBetaServicePrincipalClaimPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PUT",
+        "URI": "/servicePrincipals/{servicePrincipal-id}/claimsPolicy",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Set-MgGroupLicense": {
     "SourceModule": "Microsoft.Graph.Groups",
     "ApiVersion": "v1.0",
@@ -5881,6 +6095,28 @@
         "Method": "PATCH",
         "URI": "/applications/{application-id}/federatedIdentityCredentials/{federatedIdentityCredential-id}",
         "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Update-MgBetaAdminReportSetting": {
+    "SourceModule": "Microsoft.Graph.Beta.Reports",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/admin/reportSettings",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Update-MgBetaAgreement": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.Governance",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/agreements/{agreement-id}",
+        "ApiVersion": "beta"
       }
     ]
   },
@@ -5957,6 +6193,17 @@
       {
         "Method": "PATCH",
         "URI": "/deviceAppManagement/mobileAppConfigurations/{managedDeviceMobileAppConfiguration-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Update-MgBetaDeviceAppManagementMultiplePolicySet": {
+    "SourceModule": "Microsoft.Graph.Beta.Devices.CorporateManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/deviceAppManagement/policySets/{policySet-id}/update",
         "ApiVersion": "beta"
       }
     ]
@@ -6100,17 +6347,6 @@
       {
         "Method": "PATCH",
         "URI": "/deviceManagement/groupPolicyConfigurations/{groupPolicyConfiguration-id}",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
-  "Update-MgBetaDeviceManagementIntent": {
-    "SourceModule": "Microsoft.Graph.Beta.DeviceManagement",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "PATCH",
-        "URI": "/deviceManagement/intents/{deviceManagementIntent-id}",
         "ApiVersion": "beta"
       }
     ]
@@ -6346,6 +6582,17 @@
       }
     ]
   },
+  "Update-MgBetaDirectoryCustomSecurityAttributeDefinitionAllowedValue": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/directory/customSecurityAttributeDefinitions/{customSecurityAttributeDefinition-id}/allowedValues/{allowedValue-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Update-MgBetaDirectorySetting": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
     "ApiVersion": "beta",
@@ -6434,6 +6681,17 @@
       }
     ]
   },
+  "Update-MgBetaGroup": {
+    "SourceModule": "Microsoft.Graph.Beta.Groups",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/groups/{group-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Update-MgBetaIdentityApiConnector": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
     "ApiVersion": "beta",
@@ -6463,6 +6721,28 @@
       {
         "Method": "PATCH",
         "URI": "/identity/conditionalAccess/authenticationContextClassReferences/{authenticationContextClassReference-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Update-MgBetaIdentityConditionalAccessNamedLocation": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/identity/conditionalAccess/namedLocations/{namedLocation-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Update-MgBetaIdentityConditionalAccessPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
         "ApiVersion": "beta"
       }
     ]
@@ -6775,6 +7055,17 @@
       }
     ]
   },
+  "Update-MgBetaPolicyCrossTenantAccessPolicyDefault": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/policies/crossTenantAccessPolicy/default",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Update-MgBetaPolicyCrossTenantAccessPolicyPartner": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
     "ApiVersion": "beta",
@@ -6852,6 +7143,28 @@
       }
     ]
   },
+  "Update-MgBetaPolicyMobileAppManagementPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/policies/mobileAppManagementPolicies/{mobileAppManagementPolicy-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Update-MgBetaPolicyMobileDeviceManagementPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/policies/mobileDeviceManagementPolicies/{mobileDeviceManagementPolicy-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Update-MgBetaPolicyPermissionGrantPolicy": {
     "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
     "ApiVersion": "beta",
@@ -6896,17 +7209,6 @@
       }
     ]
   },
-  "Update-MgBetaProgram": {
-    "SourceModule": "Microsoft.Graph.Beta.Identity.Governance",
-    "ApiVersion": "beta",
-    "Variants": [
-      {
-        "Method": "PATCH",
-        "URI": "/programs/{program-id}",
-        "ApiVersion": "beta"
-      }
-    ]
-  },
   "Update-MgBetaRoleManagementCloudPcRoleAssignment": {
     "SourceModule": "Microsoft.Graph.Beta.DeviceManagement.Enrollment",
     "ApiVersion": "beta",
@@ -6940,6 +7242,17 @@
       }
     ]
   },
+  "Update-MgBetaServicePrincipal": {
+    "SourceModule": "Microsoft.Graph.Beta.Applications",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/servicePrincipals/{servicePrincipal-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Update-MgBetaTeamChannelTab": {
     "SourceModule": "Microsoft.Graph.Beta.Teams",
     "ApiVersion": "beta",
@@ -6951,6 +7264,17 @@
       }
     ]
   },
+  "Update-MgBetaUserAuthenticationRequirement": {
+    "SourceModule": "Microsoft.Graph.Beta.Identity.SignIns",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/users/{user-id}/authentication/requirements",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
   "Update-MgDirectoryAdministrativeUnit": {
     "SourceModule": "Microsoft.Graph.Identity.DirectoryManagement",
     "ApiVersion": "v1.0",
@@ -6958,17 +7282,6 @@
       {
         "Method": "PATCH",
         "URI": "/directory/administrativeUnits/{administrativeUnit-id}",
-        "ApiVersion": "v1.0"
-      }
-    ]
-  },
-  "Update-MgGroup": {
-    "SourceModule": "Microsoft.Graph.Groups",
-    "ApiVersion": "v1.0",
-    "Variants": [
-      {
-        "Method": "PATCH",
-        "URI": "/groups/{group-id}",
         "ApiVersion": "v1.0"
       }
     ]
@@ -6991,6 +7304,28 @@
       {
         "Method": "PATCH",
         "URI": "/planner/plans/{plannerPlan-id}",
+        "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Update-MgPlannerTask": {
+    "SourceModule": "Microsoft.Graph.Planner",
+    "ApiVersion": "v1.0",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/planner/tasks/{plannerTask-id}",
+        "ApiVersion": "v1.0"
+      }
+    ]
+  },
+  "Update-MgPlannerTaskDetail": {
+    "SourceModule": "Microsoft.Graph.Planner",
+    "ApiVersion": "v1.0",
+    "Variants": [
+      {
+        "Method": "PATCH",
+        "URI": "/planner/tasks/{plannerTask-id}/details",
         "ApiVersion": "v1.0"
       }
     ]

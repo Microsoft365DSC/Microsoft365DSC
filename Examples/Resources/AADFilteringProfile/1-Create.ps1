@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,33 +19,29 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADFilteringProfile "AADFilteringProfile-My Profile"
+        AADFilteringProfile "AADFilteringProfile-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            Description           = "Description of profile";
+            Description           = "Applies the corporate web content filtering policies";
             Ensure                = "Present";
-            Name                  = "My PRofile";
+            Name                  = "Corporate Web Filtering";
             Policies              = @(
                 MSFT_AADFilteringProfilePolicyLink{
-                    Priority = 100
+                    Priority     = 100
                     LoggingState = 'enabled'
-                    PolicyName = 'MyPolicyChoseBine'
-                    State = 'enabled'
-                }
-                MSFT_AADFilteringProfilePolicyLink{
-                    Priority = 200
-                    LoggingState = 'enabled'
-                    PolicyName = 'MyTopPolicy'
-                    State = 'enabled'
+                    PolicyName   = 'MyPolicy'
+                    State        = 'enabled'
                 }
             );
             Priority              = 130;
             State                 = "enabled";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

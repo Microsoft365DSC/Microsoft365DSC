@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,21 +19,38 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOAddressList 'HRUsersAddressList'
+        EXOAddressList 'EXOAddressList-Example'
         {
-            Name                       = "HR Users"
-            ConditionalCompany         = "Contoso"
-            ConditionalDepartment      = "HR"
-            ConditionalStateOrProvince = "US"
-            IncludedRecipients         = "AllRecipients"
-            Ensure                     = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            Name                         = "HR Users"
+            ConditionalCompany           = "Contoso"
+            ConditionalCustomAttribute1  = @("Payroll")
+            ConditionalCustomAttribute2  = @("Benefits")
+            ConditionalCustomAttribute3  = @("Recruiting")
+            ConditionalCustomAttribute4  = @("Onboarding")
+            ConditionalCustomAttribute5  = @("Training")
+            ConditionalCustomAttribute6  = @("Compensation")
+            ConditionalCustomAttribute7  = @("Compliance")
+            ConditionalCustomAttribute8  = @("Diversity")
+            ConditionalCustomAttribute9  = @("Talent")
+            ConditionalCustomAttribute10 = @("Retention")
+            ConditionalCustomAttribute11 = @("Wellbeing")
+            ConditionalCustomAttribute12 = @("Relocation")
+            ConditionalCustomAttribute13 = @("Contractors")
+            ConditionalCustomAttribute14 = @("Interns")
+            ConditionalCustomAttribute15 = @("Alumni")
+            ConditionalDepartment        = "HR"
+            ConditionalStateOrProvince   = "US"
+            DisplayName                  = "HR Users"
+            IncludedRecipients           = "AllRecipients"
+            Ensure                       = "Present"
+            ApplicationId                = $ApplicationId
+            TenantId                     = $TenantId
+            CertificateThumbprint        = $CertificateThumbprint
         }
     }
 }

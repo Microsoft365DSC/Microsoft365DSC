@@ -1,0 +1,45 @@
+[
+  {
+    "CertificateThumbprint": "$IntuneCertThumbprint",
+    "RoleScopeTagIds": [
+      "0"
+    ],
+    "ApplicationId": "$IntuneApplicationId",
+    "Assignments": [
+      {
+        "groupId": "053dc89a-be83-411a-bad3-909904b7239e",
+        "deviceAndAppManagementAssignmentFilterType": "none",
+        "dataType": "#microsoft.graph.exclusionGroupAssignmentTarget",
+        "CIMInstance": "MSFT_IntuneAccountProtectionLocalUserGroupMembershipPolicyAssignments",
+        "groupDisplayName": "DummyGroupExclude"
+      },
+      {
+        "groupId": "b0b8fd3f-af2a-453b-be57-80182d599f02",
+        "deviceAndAppManagementAssignmentFilterType": "none",
+        "dataType": "#microsoft.graph.groupAssignmentTarget",
+        "CIMInstance": "MSFT_IntuneAccountProtectionLocalUserGroupMembershipPolicyAssignments",
+        "groupDisplayName": "DummyGroupInclude"
+      }
+    ],
+    "TenantId": "$OrganizationName",
+    "Ensure": "Present",
+    "ResourceInstanceName": "IntuneAccountProtectionLocalUserGroupMembershipPolicy-IntuneAccountProtectionLocalUserGroupMembershipPolicy_1",
+    "Description": "IntuneAccountProtectionLocalUserGroupMembershipPolicy_1",
+    "accessgroup": [
+      {
+        "member": [
+          "AzureAD\\test1@contoso.com"
+        ],
+        "userselectiontype": "users",
+        "desc": [
+          "administrators"
+        ],
+        "CIMInstance": "MSFT_MicrosoftGraphIntuneSettingsCatalogAccessGroup",
+        "action": "AddUpdate"
+      }
+    ],
+    "ResourceName": "IntuneAccountProtectionLocalUserGroupMembershipPolicy",
+    "Identity": "2e465409-0054-4ac5-bbed-8f3d3b9adde4",
+    "DisplayName": "IntuneAccountProtectionLocalUserGroupMembershipPolicy_1"
+  }
+]

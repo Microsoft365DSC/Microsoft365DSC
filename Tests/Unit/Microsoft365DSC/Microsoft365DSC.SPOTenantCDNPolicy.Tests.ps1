@@ -23,12 +23,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -54,23 +54,23 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-PnPTenantCDNPolicies -MockWith {
                     return @{
-                        @{ Value = 'CDNType' }                              = 'Public'
-                        @{ Value = 'ExcludeRestrictedSiteClassifications' } = 'Secured'
-                        @{ Value = 'IncludeFileExtensions' }                = '.php'
+                        CDNType                              = 'Public'
+                        ExcludeRestrictedSiteClassifications = 'Secured'
+                        IncludeFileExtensions                = '.php'
                     }
                 }
             }
 
             It "Should return $false for the ExcludeIfNoScriptDisabled for the  from the Get method" {
-                (Get-TargetResource @testParams).ExcludeRestrictedSiteClassifications | Should -Be @('Secured')
+                ((New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Get().ToHashtable()).ExcludeRestrictedSiteClassifications | Should -Be @('Secured')
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the policies from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Set()
             }
         }
 
@@ -85,24 +85,24 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-PnPTenantCDNPolicies -MockWith {
                     return @{
-                        @{ Value = 'CDNType' }                              = 'Private'
-                        @{ Value = 'ExcludeIfNoScriptDisabled' }            = $false
-                        @{ Value = 'ExcludeRestrictedSiteClassifications' } = 'Secured'
-                        @{ Value = 'IncludeFileExtensions' }                = '.php'
+                        CDNType                              = 'Private'
+                        ExcludeIfNoScriptDisabled            = $false
+                        ExcludeRestrictedSiteClassifications = 'Secured'
+                        IncludeFileExtensions                = '.php'
                     }
                 }
             }
 
             It "Should return $false for the ExcludeIfNoScriptDisabled for the  from the Get method" {
-                (Get-TargetResource @testParams).ExcludeRestrictedSiteClassifications | Should -Be @('Secured')
+                ((New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Get().ToHashtable()).ExcludeRestrictedSiteClassifications | Should -Be @('Secured')
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the policies from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Set()
             }
         }
 
@@ -117,20 +117,20 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-PnPTenantCDNPolicies -MockWith {
                     return @{
-                        @{ Value = 'CDNType' }                              = 'Public'
-                        @{ Value = 'ExcludeIfNoScriptDisabled' }            = $false
-                        @{ Value = 'ExcludeRestrictedSiteClassifications' } = 'Secured'
-                        @{ Value = 'IncludeFileExtensions' }                = '.php'
+                        CDNType                              = 'Public'
+                        ExcludeIfNoScriptDisabled            = $false
+                        ExcludeRestrictedSiteClassifications = 'Secured'
+                        IncludeFileExtensions                = '.php'
                     }
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should not update the policies from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOTenantCdnPolicy' -Property $testParams).Set()
             }
         }
 
@@ -144,16 +144,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-PnPTenantCDNPolicies -MockWith {
                     return @{
-                        @{ Value = 'CDNType' }                              = 'Public'
-                        @{ Value = 'ExcludeIfNoScriptDisabled' }            = $false
-                        @{ Value = 'ExcludeRestrictedSiteClassifications' } = 'Secured'
-                        @{ Value = 'IncludeFileExtensions' }                = '.php'
+                        CDNType                              = 'Public'
+                        ExcludeIfNoScriptDisabled            = $false
+                        ExcludeRestrictedSiteClassifications = 'Secured'
+                        IncludeFileExtensions                = '.php'
                     }
                 }
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOTenantCdnPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

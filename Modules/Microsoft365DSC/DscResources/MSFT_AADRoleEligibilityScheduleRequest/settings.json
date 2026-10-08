@@ -1,5 +1,87 @@
 {
   "resourceName": "AADRoleEligibilityScheduleRequest",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleEligibilityScheduleRequest",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaRoleManagementDirectoryRoleEligibilityScheduleRequest",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Action",
+      "reason": "Accepted",
+      "note": "Set derives AdminAssign, AdminUpdate or AdminRemove from Ensure and current state"
+    },
+    {
+      "name": "ApprovalId",
+      "reason": "ReadOnly",
+      "note": "Privileged Identity Management creates the approval object and stamps its identifier"
+    },
+    {
+      "name": "AppScope",
+      "reason": "ReadOnly",
+      "note": "Read-only expansion of the declared appScopeId"
+    },
+    {
+      "name": "CompletedDateTime",
+      "reason": "ReadOnly",
+      "note": "The service stamps it when processing finishes"
+    },
+    {
+      "name": "CustomData",
+      "reason": "NotConfigurable",
+      "note": "Microsoft Graph documents the property as not used."
+    },
+    {
+      "name": "DirectoryScope",
+      "reason": "ReadOnly",
+      "note": "Read-only expansion of the object named by the DirectoryScopeId key"
+    },
+    {
+      "name": "IsValidationOnly",
+      "reason": "NotConfigurable",
+      "note": "Turns the request into a dry run that changes nothing."
+    },
+    {
+      "name": "PrincipalId",
+      "reason": "Accepted",
+      "note": "Modelled as the Principal key, resolved to the object id"
+    },
+    {
+      "name": "PrincipalType",
+      "reason": "NotConfigurable",
+      "note": "DSC-only selector for how Principal resolves, never sent in the request"
+    },
+    {
+      "name": "RoleDefinitionId",
+      "reason": "Accepted",
+      "note": "Modelled as the RoleDefinition key holding the role display name"
+    },
+    {
+      "name": "Status",
+      "reason": "ReadOnly",
+      "note": "Privileged Identity Management drives request status through its own lifecycle."
+    },
+    {
+      "name": "TargetSchedule",
+      "reason": "ReadOnly",
+      "note": "Read-only expansion of the schedule created from an accepted request"
+    },
+    {
+      "name": "TargetScheduleId",
+      "reason": "Accepted",
+      "note": "Modelled as the Id property holding the eligibility schedule identifier"
+    },
+    {
+      "name": "TicketInfo",
+      "reason": "Deferred",
+      "note": "Carried on the request, but the schedule the resource reads never returns it."
+    }
+  ],
   "description": "This resource configures an Azure Active Directory Privilege Identity Management eligibility request.",
   "roles": {
     "read": [

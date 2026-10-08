@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,17 +21,16 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
         AADAccessReviewDefinition "AADAccessReviewDefinition-Example"
         {
-            DescriptionForAdmins    = "description for admins";
-            DescriptionForReviewers = "description for reviewers";
-            DisplayName             = "Test Access Review Definition";
-            Ensure                  = "Absent";
-            ApplicationId           = $ApplicationId
-            TenantId                = $TenantId
-            CertificateThumbprint   = $CertificateThumbprint
+            DisplayName           = "Review guest access across Microsoft 365 groups";
+            Ensure                = "Absent";
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADVerifiedIdAuthority 'AADVerifiedIdAuthority-Contoso'
+        AADVerifiedIdAuthority 'AADVerifiedIdAuthority-Example'
         {
-            DidMethod            = "web";
-            Ensure               = "Present";
-            KeyVaultMetadata     = MSFT_AADVerifiedIdAuthorityKeyVaultMetadata{
-                SubscriptionId = '2ff65b89-ab22-4489-b84d-e60d1dc30a62'
-                ResourceName = 'xtakeyvault'
-                ResourceUrl = 'https://xtakeyvault.vault.azure.net/'
-                ResourceGroup = 'TBD'
+            DidMethod             = "web";
+            Ensure                = "Present";
+            KeyVaultMetadata      = MSFT_AADVerifiedIdAuthorityKeyVaultMetadata{
+                SubscriptionId = "<subscription-id>"
+                ResourceName   = "<key-vault-name>"
+                ResourceUrl    = "<key-vault-uri>"
+                ResourceGroup  = "<resource-group-name>"
             };
-            LinkedDomainUrl      = "https://nik-charlebois.com/";
-            Name                 = "Contoso 2"; # drift
+            LinkedDomainUrl       = "https://$TenantId/";
+            Name                  = "Contoso Identity Verification"; # Updated Property
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

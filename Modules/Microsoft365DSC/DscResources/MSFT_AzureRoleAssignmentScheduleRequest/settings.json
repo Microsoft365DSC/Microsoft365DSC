@@ -1,5 +1,16 @@
 {
   "resourceName": "AzureRoleAssignmentScheduleRequest",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource manages Azure PIM role assignment schedule requests for Azure RBAC roles at all scope levels (subscription, management group, resource group, and resource-specific).",
   "roles": {
     "read": [
@@ -47,8 +58,8 @@
       "cmdlets": [
         "Connect-AzAccount",
         "Get-AzSubscription",
-        "Register-AzModule",
-        "Set-AzContext"
+        "Invoke-AzRestMethod",
+        "Register-AzModule"
       ]
     },
     {
@@ -58,7 +69,6 @@
         "Get-AzADServicePrincipal",
         "Get-AzADUser",
         "Get-AzManagementGroup",
-        "Get-AzResourceGroup",
         "Get-AzRoleAssignmentSchedule",
         "Get-AzRoleDefinition",
         "New-AzRoleAssignmentScheduleRequest"

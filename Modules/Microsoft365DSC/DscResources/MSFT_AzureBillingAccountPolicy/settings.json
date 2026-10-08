@@ -1,5 +1,16 @@
 {
   "resourceName": "AzureBillingAccountPolicy",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures policies settings for an Azure billing account.",
   "roles": {
     "read": [],
@@ -25,9 +36,14 @@
       }
     },
     "azure": {
-      "requiredRoles": [
-        "Billing Reader"
-      ]
+      "requiredRoles": {
+        "read": [
+          "Billing Reader"
+        ],
+        "update": [
+          "Billing Reader"
+        ]
+      }
     }
   },
   "requiredModules": [

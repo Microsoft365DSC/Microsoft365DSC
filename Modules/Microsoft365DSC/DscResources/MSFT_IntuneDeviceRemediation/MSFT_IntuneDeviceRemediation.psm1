@@ -1,918 +1,733 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneDeviceRemediation'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneDeviceRemediation : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of the device health script')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String]
-        $DetectionScriptContent,
+    [DscProperty()]
+    [System.ComponentModel.Description('The entire content of the detection powershell script')]
+    [System.String] $DetectionScriptContent
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $DetectionScriptParameters,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of ComplexType DetectionScriptParameters objects.')]
+    [MSFT_MicrosoftGraphdeviceHealthScriptParameter[]] $DetectionScriptParameters
 
-        [Parameter()]
-        [ValidateSet('deviceHealthScript', 'managedInstallerScript')]
-        [System.String]
-        $DeviceHealthScriptType,
+    [DscProperty()]
+    [System.ComponentModel.Description('DeviceHealthScriptType for the script policy. Possible values are: deviceHealthScript, managedInstallerScript.')]
+    [ValidateSet('deviceHealthScript', 'managedInstallerScript')]
+    [System.String] $DeviceHealthScriptType
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Name of the device health script')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.Boolean]
-        $EnforceSignatureCheck,
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether the script signature needs be checked')]
+    [System.Nullable[System.Boolean]] $EnforceSignatureCheck
 
-        [Parameter()]
-        [System.Boolean]
-        $IsGlobalScript,
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether the script is a global script provided by Microsoft')]
+    [System.Nullable[System.Boolean]] $IsGlobalScript
 
-        [Parameter()]
-        [System.String]
-        $Publisher,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the device health script publisher')]
+    [System.String] $Publisher
 
-        [Parameter()]
-        [System.String]
-        $RemediationScriptContent,
+    [DscProperty()]
+    [System.ComponentModel.Description('The entire content of the remediation powershell script')]
+    [System.String] $RemediationScriptContent
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $RemediationScriptParameters,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of ComplexType RemediationScriptParameters objects.')]
+    [MSFT_MicrosoftGraphdeviceHealthScriptParameter[]] $RemediationScriptParameters
 
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tag IDs for the device health script')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter()]
-        [System.Boolean]
-        $RunAs32Bit,
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicate whether PowerShell script(s) should run as 32-bit')]
+    [System.Nullable[System.Boolean]] $RunAs32Bit
 
-        [Parameter()]
-        [ValidateSet('system', 'user')]
-        [System.String]
-        $RunAsAccount,
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the type of execution context. Possible values are: system, user.')]
+    [ValidateSet('system', 'user')]
+    [System.String] $RunAsAccount
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
+    [DscProperty()]
+    [System.ComponentModel.Description('Represents the assignment to the Intune policy.')]
+    [MSFT_IntuneDeviceRemediationPolicyAssignments[]] $Assignments
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of the Intune Device Remediation with Id {$Id} and DisplayName {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [IntuneDeviceRemediation] Get()
     {
-        $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [IntuneDeviceRemediation]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration of the Intune Device Remediation with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
+
+        try
+        {
+            $null = $this.Connect('MicrosoftGraph')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            $getValue = $null
+            #region resource generator code
+            if (-not [string]::IsNullOrEmpty($this.Id))
+            {
+                $getValue = Get-MgBetaDeviceManagementDeviceHealthScript -DeviceHealthScriptId $this.Id -ErrorAction SilentlyContinue
+            }
+
+            if ($null -eq $getValue)
+            {
+                if (-not [string]::IsNullOrEmpty($this.Id))
+                {
+                    Write-Verbose -Message "Could not find an Intune Device Remediation with Id {$($this.Id)}"
+                }
+
+                if (-not [string]::IsNullOrEmpty($this.DisplayName))
+                {
+                    $matchingScripts = Get-MgBetaDeviceManagementDeviceHealthScript `
+                        -All `
+                        -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" `
+                        -ErrorAction SilentlyContinue | Where-Object `
+                        -FilterScript {
+                            $_.DeviceHealthScriptType -eq 'deviceHealthScript' `
+                    }
+
+                    if ($null -ne $matchingScripts)
+                    {
+                        if ($matchingScripts -is [array] -and $matchingScripts.Count -gt 1)
+                        {
+                            throw "Multiple Intune Device Remediation scripts found with DisplayName '$($this.DisplayName)'. Please specify the Id parameter to identify which script to manage. Found scripts: $($matchingScripts.Id -join ', ')"
+                        }
+                        $getValue = Get-MgBetaDeviceManagementDeviceHealthScript -DeviceHealthScriptId $matchingScripts.Id
+                    }
+                }
+            }
+            #endregion
+            if ($null -eq $getValue)
+            {
+                Write-Verbose -Message "Could not find an Intune Device Remediation with DisplayName {$($this.DisplayName)}"
+                return $this.AsResult($nullResult)
+            }
+            $resolvedId = $getValue.Id
+            Write-Verbose -Message "An Intune Device Remediation with Id {$($resolvedId)} and DisplayName {$($this.DisplayName)} was found."
+
+            #region resource generator code
+            $complexDetectionScriptParameters = @()
+            foreach ($currentDetectionScriptParameters in $getValue.detectionScriptParameters)
+            {
+                $myDetectionScriptParameters = [ordered]@{}
+                $myDetectionScriptParameters.Add('ApplyDefaultValueWhenNotAssigned', $currentDetectionScriptParameters.applyDefaultValueWhenNotAssigned)
+                $myDetectionScriptParameters.Add('Description', $currentDetectionScriptParameters.description)
+                $myDetectionScriptParameters.Add('IsRequired', $currentDetectionScriptParameters.isRequired)
+                $myDetectionScriptParameters.Add('Name', $currentDetectionScriptParameters.name)
+                $myDetectionScriptParameters.Add('DefaultValue', $currentDetectionScriptParameters.defaultValue)
+                if ($null -ne $currentDetectionScriptParameters.'@odata.type')
+                {
+                    $myDetectionScriptParameters.Add('odataType', $currentDetectionScriptParameters.'@odata.type')
+                }
+                if ($myDetectionScriptParameters.values.Where({ $null -ne $_ }).Count -gt 0)
+                {
+                    $complexDetectionScriptParameters += $myDetectionScriptParameters
+                }
+            }
+
+            $complexRemediationScriptParameters = @()
+            foreach ($currentRemediationScriptParameters in $getValue.remediationScriptParameters)
+            {
+                $myRemediationScriptParameters = [ordered]@{}
+                $myRemediationScriptParameters.Add('ApplyDefaultValueWhenNotAssigned', $currentRemediationScriptParameters.applyDefaultValueWhenNotAssigned)
+                $myRemediationScriptParameters.Add('Description', $currentRemediationScriptParameters.description)
+                $myRemediationScriptParameters.Add('IsRequired', $currentRemediationScriptParameters.isRequired)
+                $myRemediationScriptParameters.Add('Name', $currentRemediationScriptParameters.name)
+                $myRemediationScriptParameters.Add('DefaultValue', $currentRemediationScriptParameters.defaultValue)
+                if ($null -ne $currentRemediationScriptParameters.'@odata.type')
+                {
+                    $myRemediationScriptParameters.Add('odataType', $currentRemediationScriptParameters.'@odata.type')
+                }
+                if ($myRemediationScriptParameters.values.Where({ $null -ne $_ }).Count -gt 0)
+                {
+                    $complexRemediationScriptParameters += $myRemediationScriptParameters
+                }
+            }
+            #endregion
+
+            $results = @{
+                #region resource generator code
+                Description                 = $getValue.Description
+                DetectionScriptContent      = $getValue.DetectionScriptContent
+                DetectionScriptParameters   = $complexDetectionScriptParameters
+                DeviceHealthScriptType      = $getValue.DeviceHealthScriptType
+                DisplayName                 = $getValue.DisplayName
+                EnforceSignatureCheck       = $getValue.EnforceSignatureCheck
+                IsGlobalScript              = $getValue.IsGlobalScript
+                Publisher                   = $getValue.Publisher
+                RemediationScriptContent    = $getValue.RemediationScriptContent
+                RemediationScriptParameters = $complexRemediationScriptParameters
+                RoleScopeTagIds             = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                RunAs32Bit                  = $getValue.RunAs32Bit
+                RunAsAccount                = $getValue.RunAsAccount
+                Id                          = $getValue.Id
+                Ensure                      = 'Present'
+                Credential                  = $this.Credential
+                ApplicationId               = $this.ApplicationId
+                TenantId                    = $this.TenantId
+                ApplicationSecret           = $this.ApplicationSecret
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                AccessTokens                = $this.AccessTokens
+                #endregion
+            }
+
+            $assignmentsValues = Get-MgBetaDeviceManagementDeviceHealthScriptAssignment -DeviceHealthScriptId $resolvedId
+            $assignmentResult = @()
+            foreach ($assignment in $assignmentsValues)
+            {
+                if (-not [System.String]::IsNullOrEmpty($assignment.RunSchedule.time))
+                {
+                    $time = Get-Date -Format 'HH:mm:ss' -Date $assignment.RunSchedule.time
+                }
+                else
+                {
+                    $time = $null
+                }
+
+                $assignmentResult += [ordered]@{
+                    Assignment           = (ConvertFrom-IntunePolicyAssignment `
+                            -IncludeDeviceFilter:$true `
+                            -Assignments $assignment) | Select-Object -First 1
+                    RunRemediationScript = $assignment.runRemediationScript
+                    RunSchedule          = [ordered]@{
+                        DataType = $assignment.RunSchedule.'@odata.type'
+                        Date     = $assignment.RunSchedule.date
+                        Interval = $assignment.RunSchedule.Interval
+                        Time     = $time
+                        UseUtc   = $assignment.RunSchedule.useUtc
+                    }
+                }
+            }
+            $results.Add('Assignments', $assignmentResult)
+
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
-        $getValue = $null
-        #region resource generator code
-        if (-not [string]::IsNullOrEmpty($Id))
+        $resolvedRoleScopeTagIds = $this.RoleScopeTagIds
+        if ($boundParameters.ContainsKey('RoleScopeTagIds'))
         {
-            $getValue = Get-MgBetaDeviceManagementDeviceHealthScript -DeviceHealthScriptId $Id -ErrorAction SilentlyContinue
+            $resolvedRoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $this.RoleScopeTagIds
         }
 
-        if ($null -eq $getValue)
+        $boundParameters.Remove('IsGlobalScript') | Out-Null
+
+        $boundParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
         {
-            if (-not [string]::IsNullOrEmpty($Id))
-            {
-                Write-Verbose -Message "Could not find an Intune Device Remediation with Id {$Id}"
-            }
+            Write-Verbose -Message "Creating an Intune Device Remediation with DisplayName {$($this.DisplayName)}"
+            $createParameters = $boundParameters
+            $createParameters.Remove('Assignments') | Out-Null
 
-            if (-not [string]::IsNullOrEmpty($DisplayName))
-            {
-                $matchingScripts = Get-MgBetaDeviceManagementDeviceHealthScript `
-                    -All `
-                    -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                    -ErrorAction SilentlyContinue | Where-Object `
-                    -FilterScript {
-                        $_.DeviceHealthScriptType -eq 'deviceHealthScript' `
-                }
+            $createParameters.Remove('Id') | Out-Null
 
-                if ($null -ne $matchingScripts)
-                {
-                    if ($matchingScripts -is [array] -and $matchingScripts.Count -gt 1)
-                    {
-                        throw "Multiple Intune Device Remediation scripts found with DisplayName '$DisplayName'. Please specify the Id parameter to identify which script to manage. Found scripts: $($matchingScripts.Id -join ', ')"
-                    }
-                    $getValue = Get-MgBetaDeviceManagementDeviceHealthScript -DeviceHealthScriptId $matchingScripts.Id
-                }
-            }
-        }
-        #endregion
-        if ($null -eq $getValue)
-        {
-            Write-Verbose -Message "Could not find an Intune Device Remediation with DisplayName {$DisplayName}"
-            return $nullResult
-        }
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Device Remediation with Id {$Id} and DisplayName {$DisplayName} was found."
-
-        #region resource generator code
-        $complexDetectionScriptParameters = @()
-        foreach ($currentDetectionScriptParameters in $getValue.detectionScriptParameters)
-        {
-            $myDetectionScriptParameters = [ordered]@{}
-            $myDetectionScriptParameters.Add('ApplyDefaultValueWhenNotAssigned', $currentDetectionScriptParameters.applyDefaultValueWhenNotAssigned)
-            $myDetectionScriptParameters.Add('Description', $currentDetectionScriptParameters.description)
-            $myDetectionScriptParameters.Add('IsRequired', $currentDetectionScriptParameters.isRequired)
-            $myDetectionScriptParameters.Add('Name', $currentDetectionScriptParameters.name)
-            $myDetectionScriptParameters.Add('DefaultValue', $currentDetectionScriptParameters.defaultValue)
-            if ($null -ne $currentDetectionScriptParameters.'@odata.type')
-            {
-                $myDetectionScriptParameters.Add('odataType', $currentDetectionScriptParameters.'@odata.type'.ToString())
-            }
-            if ($myDetectionScriptParameters.values.Where({ $null -ne $_ }).Count -gt 0)
-            {
-                $complexDetectionScriptParameters += $myDetectionScriptParameters
-            }
-        }
-
-        $complexRemediationScriptParameters = @()
-        foreach ($currentRemediationScriptParameters in $getValue.remediationScriptParameters)
-        {
-            $myRemediationScriptParameters = [ordered]@{}
-            $myRemediationScriptParameters.Add('ApplyDefaultValueWhenNotAssigned', $currentRemediationScriptParameters.applyDefaultValueWhenNotAssigned)
-            $myRemediationScriptParameters.Add('Description', $currentRemediationScriptParameters.description)
-            $myRemediationScriptParameters.Add('IsRequired', $currentRemediationScriptParameters.isRequired)
-            $myRemediationScriptParameters.Add('Name', $currentRemediationScriptParameters.name)
-            $myRemediationScriptParameters.Add('DefaultValue', $currentRemediationScriptParameters.defaultValue)
-            if ($null -ne $currentRemediationScriptParameters.'@odata.type')
-            {
-                $myRemediationScriptParameters.Add('odataType', $currentRemediationScriptParameters.'@odata.type'.ToString())
-            }
-            if ($myRemediationScriptParameters.values.Where({ $null -ne $_ }).Count -gt 0)
-            {
-                $complexRemediationScriptParameters += $myRemediationScriptParameters
-            }
-        }
-        #endregion
-
-        #region resource generator code
-        $enumDeviceHealthScriptType = $null
-        if ($null -ne $getValue.DeviceHealthScriptType)
-        {
-            $enumDeviceHealthScriptType = $getValue.DeviceHealthScriptType.ToString()
-        }
-
-        $enumRunAsAccount = $null
-        if ($null -ne $getValue.RunAsAccount)
-        {
-            $enumRunAsAccount = $getValue.RunAsAccount.ToString()
-        }
-        #endregion
-
-        $results = @{
             #region resource generator code
-            Description                 = $getValue.Description
-            DetectionScriptContent      = $getValue.DetectionScriptContent
-            DetectionScriptParameters   = $complexDetectionScriptParameters
-            DeviceHealthScriptType      = $enumDeviceHealthScriptType
-            DisplayName                 = $getValue.DisplayName
-            EnforceSignatureCheck       = $getValue.EnforceSignatureCheck
-            IsGlobalScript              = $getValue.IsGlobalScript
-            Publisher                   = $getValue.Publisher
-            RemediationScriptContent    = $getValue.RemediationScriptContent
-            RemediationScriptParameters = $complexRemediationScriptParameters
-            RoleScopeTagIds             = $getValue.RoleScopeTagIds
-            RunAs32Bit                  = $getValue.RunAs32Bit
-            RunAsAccount                = $enumRunAsAccount
-            Id                          = $getValue.Id
-            Ensure                      = 'Present'
-            Credential                  = $Credential
-            ApplicationId               = $ApplicationId
-            TenantId                    = $TenantId
-            ApplicationSecret           = $ApplicationSecret
-            CertificateThumbprint       = $CertificateThumbprint
-            CertificatePath             = $CertificatePath
-            CertificatePassword         = $CertificatePassword
-            ManagedIdentity             = $ManagedIdentity.IsPresent
-            AccessTokens                = $AccessTokens
+            $policy = New-MgBetaDeviceManagementDeviceHealthScript -BodyParameter $createParameters
+            $assignmentsHash = @()
+            foreach ($assignment in $this.Assignments)
+            {
+                $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment.Assignment
+                $runSchedule = $null
+                if ($null -ne $assignment.RunSchedule.DataType)
+                {
+                    $runSchedule = @{
+                        '@odata.type' = $assignment.RunSchedule.DataType
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Date))
+                    {
+                        $runSchedule.Add('date', $assignment.RunSchedule.Date)
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Interval))
+                    {
+                        $runSchedule.Add('interval', $assignment.RunSchedule.Interval)
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Time))
+                    {
+                        $runSchedule.Add('time', $assignment.RunSchedule.Time)
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.UseUtc))
+                    {
+                        $runSchedule.Add('useUtc', $assignment.RunSchedule.UseUtc)
+                    }
+                }
+                $assignmentsHash += @{
+                    runRemediationScript = $true
+                    runSchedule          = $runSchedule
+                    target               = $assignmentTarget.target
+                }
+            }
+
+            if ($policy.Id)
+            {
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $policy.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceHealthScripts' `
+                    -RootIdentifier 'deviceHealthScriptAssignments'
+            }
             #endregion
         }
-
-        $assignmentsValues = Get-MgBetaDeviceManagementDeviceHealthScriptAssignment -DeviceHealthScriptId $Id
-        $assignmentResult = @()
-        foreach ($assignment in $assignmentsValues)
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            if (-not [System.String]::IsNullOrEmpty($assignment.RunSchedule.time))
+            Write-Verbose -Message "Updating the Intune Device Remediation with Id {$($currentInstance.Id)}"
+            $updateParameters = $boundParameters
+            $updateParameters.Remove('Assignments') | Out-Null
+
+            $updateParameters.Remove('DeviceHealthScriptType') | Out-Null
+            $updateParameters.Remove('Id') | Out-Null
+
+            if ($currentInstance.IsGlobalScript)
             {
-                $time = Get-Date -Format 'HH:mm:ss' -Date $assignment.RunSchedule.time
+                Write-Warning -Message "The Intune Device Remediation with Id {$($currentInstance.Id)} is a global script and only few properties can be updated."
+                $updateParameters = @{
+                    Id              = $currentInstance.Id
+                    RoleScopeTagIds = $resolvedRoleScopeTagIds
+                    RunAs32Bit      = $this.RunAs32Bit
+                    RunAsAccount    = $this.RunAsAccount
+                }
             }
-            else
+
+            #region resource generator code
+            Update-MgBetaDeviceManagementDeviceHealthScript `
+                -DeviceHealthScriptId $currentInstance.Id `
+                -BodyParameter $updateParameters
+
+            $assignmentsHash = @()
+            foreach ($assignment in $this.Assignments)
             {
-                $time = $null
-            }
-
-            $assignmentResult += [ordered]@{
-                Assignment           = (ConvertFrom-IntunePolicyAssignment `
-                        -IncludeDeviceFilter:$true `
-                        -Assignments $assignment) | Select-Object -First 1
-                RunRemediationScript = $assignment.runRemediationScript
-                RunSchedule          = [ordered]@{
-                    DataType = $assignment.RunSchedule.'@odata.type'
-                    Date     = $assignment.RunSchedule.date
-                    Interval = $assignment.RunSchedule.Interval
-                    Time     = $time
-                    UseUtc   = $assignment.RunSchedule.useUtc
-                }
-            }
-        }
-        $results.Add('Assignments', $assignmentResult)
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.String]
-        $DetectionScriptContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $DetectionScriptParameters,
-
-        [Parameter()]
-        [ValidateSet('deviceHealthScript', 'managedInstallerScript')]
-        [System.String]
-        $DeviceHealthScriptType,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnforceSignatureCheck,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsGlobalScript,
-
-        [Parameter()]
-        [System.String]
-        $Publisher,
-
-        [Parameter()]
-        [System.String]
-        $RemediationScriptContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $RemediationScriptParameters,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.Boolean]
-        $RunAs32Bit,
-
-        [Parameter()]
-        [ValidateSet('system', 'user')]
-        [System.String]
-        $RunAsAccount,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $BoundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $BoundParameters.Remove('IsGlobalScript') | Out-Null
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Device Remediation with DisplayName {$DisplayName}"
-        $BoundParameters.Remove('Assignments') | Out-Null
-
-        $CreateParameters = ([Hashtable]$BoundParameters).Clone()
-        $CreateParameters = Rename-M365DSCCimInstanceParameter -Properties $CreateParameters
-        $CreateParameters.Remove('Id') | Out-Null
-
-        #region resource generator code
-        $policy = New-MgBetaDeviceManagementDeviceHealthScript -BodyParameter $CreateParameters
-        $assignmentsHash = @()
-        foreach ($assignment in $Assignments)
-        {
-            $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment.Assignment
-            $runSchedule = $null
-            if ($null -ne $assignment.RunSchedule.DataType)
-            {
-                $runSchedule = @{
-                    '@odata.type' = $assignment.RunSchedule.DataType
-                }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Date))
+                $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment.Assignment
+                $runSchedule = $null
+                if ($null -ne $assignment.RunSchedule.DataType)
                 {
-                    $runSchedule.Add('date', $assignment.RunSchedule.Date)
+                    $runSchedule = @{
+                        '@odata.type' = $assignment.RunSchedule.DataType
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Date))
+                    {
+                        $runSchedule.Add('date', $assignment.RunSchedule.Date)
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Interval))
+                    {
+                        $runSchedule.Add('interval', $assignment.RunSchedule.Interval)
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Time))
+                    {
+                        $runSchedule.Add('time', $assignment.RunSchedule.Time)
+                    }
+                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.UseUtc))
+                    {
+                        $runSchedule.Add('useUtc', $assignment.RunSchedule.UseUtc)
+                    }
                 }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Interval))
-                {
-                    $runSchedule.Add('interval', $assignment.RunSchedule.Interval)
-                }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Time))
-                {
-                    $runSchedule.Add('time', $assignment.RunSchedule.Time)
-                }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.UseUtc))
-                {
-                    $runSchedule.Add('useUtc', $assignment.RunSchedule.UseUtc)
+                $assignmentsHash += @{
+                    runRemediationScript = $true
+                    runSchedule          = $runSchedule
+                    target               = $assignmentTarget.target
                 }
             }
-            $assignmentsHash += @{
-                runRemediationScript = $true
-                runSchedule          = $runSchedule
-                target               = $assignmentTarget.target
-            }
-        }
-
-        if ($policy.Id)
-        {
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $policy.Id `
+            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.Id `
                 -Targets $assignmentsHash `
                 -Repository 'deviceManagement/deviceHealthScripts' `
                 -RootIdentifier 'deviceHealthScriptAssignments'
+            #endregion
         }
-        #endregion
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            if ($currentInstance.IsGlobalScript)
+            {
+                throw "The Intune Device Remediation with Id {$($currentInstance.Id)} is a global script and cannot be removed."
+            }
+            Write-Verbose -Message "Removing the Intune Device Remediation with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaDeviceManagementDeviceHealthScript -DeviceHealthScriptId $currentInstance.Id
+            #endregion
+        }
     }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+
+    [bool] Test()
     {
-        Write-Verbose -Message "Updating the Intune Device Remediation with Id {$($currentInstance.Id)}"
-        $BoundParameters.Remove('Assignments') | Out-Null
-
-        $UpdateParameters = ([Hashtable]$BoundParameters).Clone()
-        $UpdateParameters = Rename-M365DSCCimInstanceParameter -Properties $UpdateParameters
-        $UpdateParameters.Remove('DeviceHealthScriptType') | Out-Null
-        $UpdateParameters.Remove('Id') | Out-Null
-
-        if ($currentInstance.IsGlobalScript)
-        {
-            Write-Warning -Message "The Intune Device Remediation with Id {$($currentInstance.Id)} is a global script and only few properties can be updated."
-            $UpdateParameters = @{
-                Id              = $currentInstance.Id
-                RoleScopeTagIds = $RoleScopeTagIds
-                RunAs32Bit      = $RunAs32Bit
-                RunAsAccount    = $RunAsAccount
-            }
-        }
-
-        #region resource generator code
-        Update-MgBetaDeviceManagementDeviceHealthScript `
-            -DeviceHealthScriptId $currentInstance.Id `
-            -BodyParameter $UpdateParameters
-
-        $assignmentsHash = @()
-        foreach ($assignment in $Assignments)
-        {
-            $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment.Assignment
-            $runSchedule = $null
-            if ($null -ne $assignment.RunSchedule.DataType)
-            {
-                $runSchedule = @{
-                    '@odata.type' = $assignment.RunSchedule.DataType
-                }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Date))
-                {
-                    $runSchedule.Add('date', $assignment.RunSchedule.Date)
-                }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Interval))
-                {
-                    $runSchedule.Add('interval', $assignment.RunSchedule.Interval)
-                }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Time))
-                {
-                    $runSchedule.Add('time', $assignment.RunSchedule.Time)
-                }
-                if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.UseUtc))
-                {
-                    $runSchedule.Add('useUtc', $assignment.RunSchedule.UseUtc)
-                }
-            }
-            $assignmentsHash += @{
-                runRemediationScript = $true
-                runSchedule          = $runSchedule
-                target               = $assignmentTarget.target
-            }
-        }
-        Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.Id `
-            -Targets $assignmentsHash `
-            -Repository 'deviceManagement/deviceHealthScripts' `
-            -RootIdentifier 'deviceHealthScriptAssignments'
-        #endregion
+        return ([M365DSCResourceBase] $this).Test()
     }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+
+    [string] Export()
     {
-        if ($currentInstance.IsGlobalScript)
+        if ($this.RequiresPowerShellCore())
         {
-            throw "The Intune Device Remediation with Id {$($currentInstance.Id)} is a global script and cannot be removed."
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        Write-Verbose -Message "Removing the Intune Device Remediation with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaDeviceManagementDeviceHealthScript -DeviceHealthScriptId $currentInstance.Id
-        #endregion
-    }
-}
 
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
 
-        [Parameter()]
-        [System.String]
-        $DetectionScriptContent,
+        Confirm-M365DSCDependencies
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $DetectionScriptParameters,
+        $this.AddTelemetry('Export')
 
-        [Parameter()]
-        [ValidateSet('deviceHealthScript', 'managedInstallerScript')]
-        [System.String]
-        $DeviceHealthScriptType,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnforceSignatureCheck,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsGlobalScript,
-
-        [Parameter()]
-        [System.String]
-        $Publisher,
-
-        [Parameter()]
-        [System.String]
-        $RemediationScriptContent,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $RemediationScriptParameters,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.Boolean]
-        $RunAs32Bit,
-
-        [Parameter()]
-        [ValidateSet('system', 'user')]
-        [System.String]
-        $RunAsAccount,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        # Only export scripts that are not from Microsoft
-        [array]$getValue = Get-MgBetaDeviceManagementDeviceHealthScript `
-            -Filter $Filter `
-            -All `
-            -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
+        try
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
+            #region resource generator code
+            # Only export scripts that are not from Microsoft
+            [array]$getValue = Get-MgBetaDeviceManagementDeviceHealthScript `
+                -Filter $this.Filter `
+                -All `
+                -ErrorAction Stop
+            #endregion
 
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.DisplayName))
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
             {
-                $displayedKey = $config.DisplayName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
+            foreach ($config in $getValue)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
 
-            $Results = Get-TargetResource @Params
-            $rawResults = $Results.Clone()
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.DisplayName))
+                {
+                    $displayedKey = $config.DisplayName
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.DisplayName
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
 
-            if ($null -ne $Results.DetectionScriptParameters)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.DetectionScriptParameters `
-                    -CIMInstanceName 'MicrosoftGraphdeviceHealthScriptParameter'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                if ($null -ne $Results.DetectionScriptParameters)
                 {
-                    $Results.DetectionScriptParameters = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('DetectionScriptParameters') | Out-Null
-                }
-            }
-            if ($null -ne $Results.RemediationScriptParameters)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.RemediationScriptParameters `
-                    -CIMInstanceName 'MicrosoftGraphdeviceHealthScriptParameter'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.RemediationScriptParameters = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('RemediationScriptParameters') | Out-Null
-                }
-            }
-            if ($Results.Assignments)
-            {
-                $complexMapping = @(
-                    @{
-                        Name            = 'RunSchedule'
-                        CimInstanceName = 'IntuneDeviceRemediationRunSchedule'
-                        IsRequired      = $false
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.DetectionScriptParameters `
+                        -CIMInstanceName 'MicrosoftGraphdeviceHealthScriptParameter'
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.DetectionScriptParameters = $complexTypeStringResult
                     }
-                    @{
-                        Name            = 'Assignment'
-                        CimInstanceName = 'DeviceManagementConfigurationPolicyAssignments'
-                        IsRequired      = $true
+                    else
+                    {
+                        $Results.Remove('DetectionScriptParameters') | Out-Null
                     }
-                )
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.Assignments `
-                    -CIMInstanceName 'MSFT_IntuneDeviceRemediationPolicyAssignments' `
-                    -ComplexTypeMapping $complexMapping
+                }
+                if ($null -ne $Results.RemediationScriptParameters)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.RemediationScriptParameters `
+                        -CIMInstanceName 'MicrosoftGraphdeviceHealthScriptParameter'
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.RemediationScriptParameters = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('RemediationScriptParameters') | Out-Null
+                    }
+                }
+                if ($Results.Assignments)
+                {
+                    $complexMapping = @(
+                        @{
+                            Name            = 'RunSchedule'
+                            CimInstanceName = 'IntuneDeviceRemediationRunSchedule'
+                            IsRequired      = $false
+                        }
+                        @{
+                            Name            = 'Assignment'
+                            CimInstanceName = 'DeviceManagementConfigurationPolicyAssignments'
+                            IsRequired      = $true
+                        }
+                    )
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.Assignments `
+                        -CIMInstanceName 'MSFT_IntuneDeviceRemediationPolicyAssignments' `
+                        -ComplexTypeMapping $complexMapping
 
-                if (-not [string]::IsNullOrEmpty($complexTypeStringResult))
-                {
-                    $Results.Assignments = $complexTypeStringResult
+                    if (-not [string]::IsNullOrEmpty($complexTypeStringResult))
+                    {
+                        $Results.Assignments = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('Assignments') | Out-Null
+                    }
                 }
-                else
-                {
-                    $Results.Remove('Assignments') | Out-Null
-                }
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('DetectionScriptParameters', 'RemediationScriptParameters', 'Assignments') `
+                    -RawResults $rawResults
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('DetectionScriptParameters', 'RemediationScriptParameters', 'Assignments') `
-                -RawResults $rawResults
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
     }
-    catch
+
+    [System.Collections.Hashtable] GetCompareParameters()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        return @{
+            ExcludedProperties = @('IsGlobalScript')
+            PostProcessing     = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
+                if ($CurrentValues.IsGlobalScript)
+                {
+                    Write-Verbose -Message 'Detected a global script, removing read-only properties from the comparison'
+                    $ValuesToCheck.Remove('DetectionScriptContent') | Out-Null
+                    $ValuesToCheck.Remove('RemediationScriptContent') | Out-Null
+                    $ValuesToCheck.Remove('DetectionScriptParameters') | Out-Null
+                    $ValuesToCheck.Remove('RemediationScriptParameters') | Out-Null
+                    $ValuesToCheck.Remove('DeviceHealthScriptType') | Out-Null
+                    $ValuesToCheck.Remove('Publisher') | Out-Null
+                    $ValuesToCheck.Remove('EnforceSignatureCheck') | Out-Null
+                    $ValuesToCheck.Remove('DisplayName') | Out-Null
+                    $ValuesToCheck.Remove('Description') | Out-Null
+                }
 
-        throw
-    }
-}
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('IsGlobalScript')
-        PostProcessing     = {
-            param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-            if ($CurrentValues.IsGlobalScript)
-            {
-                Write-Verbose -Message 'Detected a global script, removing read-only properties from the comparison'
-                $ValuesToCheck.Remove('DetectionScriptContent') | Out-Null
-                $ValuesToCheck.Remove('RemediationScriptContent') | Out-Null
-                $ValuesToCheck.Remove('DetectionScriptParameters') | Out-Null
-                $ValuesToCheck.Remove('RemediationScriptParameters') | Out-Null
-                $ValuesToCheck.Remove('DeviceHealthScriptType') | Out-Null
-                $ValuesToCheck.Remove('Publisher') | Out-Null
-                $ValuesToCheck.Remove('EnforceSignatureCheck') | Out-Null
-                $ValuesToCheck.Remove('DisplayName') | Out-Null
-                $ValuesToCheck.Remove('Description') | Out-Null
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
             }
-
-            return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
         }
     }
+
+    hidden [IntuneDeviceRemediation] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneDeviceRemediation])
+        {
+            return $Values
+        }
+
+        $result = [IntuneDeviceRemediation]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
+    }
 }
 
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')
+class MSFT_MicrosoftGraphdeviceHealthScriptParameter
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Whether Apply DefaultValue When Not Assigned')]
+    [System.Nullable[System.Boolean]] $ApplyDefaultValueWhenNotAssigned
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The description of the param')]
+    [System.String] $Description
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Whether the param is required')]
+    [System.Nullable[System.Boolean]] $IsRequired
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the param')]
+    [System.String] $Name
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The default value of boolean param')]
+    [System.Nullable[System.Boolean]] $DefaultValue
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of the entity.')]
+    [ValidateSet('#microsoft.graph.deviceHealthScriptBooleanParameter', '#microsoft.graph.deviceHealthScriptIntegerParameter', '#microsoft.graph.deviceHealthScriptStringParameter')]
+    [System.String] $odataType
+}
+
+class MSFT_IntuneDeviceRemediationPolicyAssignments
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('If the remediation script should be run.')]
+    [System.Nullable[System.Boolean]] $RunRemediationScript
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The run schedule of the remediation.')]
+    [MSFT_IntuneDeviceRemediationRunSchedule] $RunSchedule
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Represents the assignment of the schedule.')]
+    [MSFT_DeviceManagementConfigurationPolicyAssignments] $Assignment
+}
+
+class MSFT_IntuneDeviceRemediationRunSchedule
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of the schedule.')]
+    [ValidateSet('#microsoft.graph.deviceHealthScriptRunOnceSchedule', '#microsoft.graph.deviceHealthScriptHourlySchedule', '#microsoft.graph.deviceHealthScriptDailySchedule')]
+    [System.String] $dataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The date when to run the schedule. Only applicable when the odataType is a run once schedule. Format: 2024-01-01')]
+    [System.String] $Date
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The interval of the schedule. Must be 1 in case of a run once schedule.')]
+    [System.Nullable[System.UInt32]] $Interval
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The time when to run the schedule. Only applicable when the dataType is not an hourly schedule. Format: 01:00:00')]
+    [System.String] $Time
+
+    [DscProperty()]
+    [System.ComponentModel.Description('If to use UTC as the time source. Only applicable when the dataType is not an hourly schedule.')]
+    [System.Nullable[System.Boolean]] $UseUtc
+}
+
+class MSFT_DeviceManagementConfigurationPolicyAssignments
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The type of the target assignment.')]
+    [ValidateSet('#microsoft.graph.cloudPcManagementGroupAssignmentTarget', '#microsoft.graph.groupAssignmentTarget', '#microsoft.graph.allLicensedUsersAssignmentTarget', '#microsoft.graph.allDevicesAssignmentTarget', '#microsoft.graph.exclusionGroupAssignmentTarget', '#microsoft.graph.configurationManagerCollectionAssignmentTarget')]
+    [System.String] $dataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of filter of the target assignment i.e. Exclude or Include. Possible values are:none, include, exclude.')]
+    [ValidateSet('none', 'include', 'exclude')]
+    [System.String] $deviceAndAppManagementAssignmentFilterType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The Id of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The display name of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Id that is the target of the assignment.')]
+    [System.String] $groupId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Display Name that is the target of the assignment.')]
+    [System.String] $groupDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The collection Id that is the target of the assignment.(ConfigMgr)')]
+    [System.String] $collectionId
+}

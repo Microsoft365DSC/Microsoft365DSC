@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,18 +22,18 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADAuthenticationContextClassReference "AADAuthenticationContextClassReference-Test"
+        AADAuthenticationContextClassReference "AADAuthenticationContextClassReference-Example"
         {
+            Description           = "Requires step-up authentication for finance and payroll applications"; # Updated Property
+            DisplayName           = "My Context";
+            Ensure                = "Present";
+            Id                    = "c3";
+            IsAvailable           = $False;
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            Description          = "Context test Updated"; # Updated Property
-            DisplayName          = "My Context";
-            Ensure               = "Present";
-            Id                   = "c3";
-            IsAvailable          = $False; # Updated Property
         }
     }
 }

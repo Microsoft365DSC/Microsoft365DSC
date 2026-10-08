@@ -1,5 +1,16 @@
 {
   "resourceName": "IntuneWindowsUpdateForBusinessHotpatchProfileWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "windowsQualityUpdatePolicy",
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Intune Windows Update For Business Hotpatch Profile for Windows10.",
   "permissions": {
     "graph": {
@@ -9,7 +20,10 @@
             "name": "DeviceManagementConfiguration.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
@@ -17,7 +31,10 @@
             "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -27,7 +44,10 @@
             "name": "DeviceManagementConfiguration.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
@@ -35,7 +55,10 @@
             "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

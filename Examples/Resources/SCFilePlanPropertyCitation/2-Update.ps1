@@ -1,0 +1,38 @@
+<#
+This example is used to test new resources and showcase the usage of new resources being worked on.
+It is not meant to use as a production baseline.
+#>
+
+Configuration Example
+{
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
+    )
+
+    Import-DscResource -ModuleName Microsoft365DSC
+
+    Node localhost
+    {
+        SCFilePlanPropertyCitation 'SCFilePlanPropertyCitation-Example'
+        {
+            Name                  = "Sarbanes-Oxley Act"
+            CitationURL           = "https://www.congress.gov/bill/107th-congress/house-bill/3763"
+            CitationJurisdiction  = "United States Federal" # Updated Property
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
+        }
+    }
+}

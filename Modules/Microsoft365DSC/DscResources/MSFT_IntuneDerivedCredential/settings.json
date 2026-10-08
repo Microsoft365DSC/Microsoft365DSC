@@ -1,5 +1,16 @@
 {
   "resourceName": "IntuneDerivedCredential",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceManagementDerivedCredentialSettings",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementDerivedCredential",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Use this resource to create new navigation property to derivedCredentials for device Management in Intune.",
   "permissions": {
     "graph": {

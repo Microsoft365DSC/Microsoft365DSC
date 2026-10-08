@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationPolicyWindows10 'Example'
+        IntuneDeviceConfigurationPolicyWindows10 'IntuneDeviceConfigurationPolicyWindows10-Example'
         {
             AccountsBlockAddingNonMicrosoftAccountEmail          = $False;
             ActivateAppsWithVoice                                = "notConfigured";
@@ -35,7 +37,11 @@ Configuration Example
             Assignments                                          = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
                 }
             );
             AuthenticationAllowSecondaryDevice                   = $False;
@@ -82,6 +88,22 @@ Configuration Example
             DefenderScheduleScanEnableLowCpuPriority             = $False;
             DefenderSystemScanSchedule                           = "userDefined";
             DeveloperUnlockSetting                               = "notConfigured";
+            DeviceManagementApplicabilityRuleDeviceMode          = MSFT_DeviceManagementApplicabilityRuleDeviceMode{
+                Name       = 'S mode devices only'
+                DeviceMode = 'sModeConfiguration'
+                RuleType   = 'include'
+            };
+            DeviceManagementApplicabilityRuleOsEdition           = MSFT_DeviceManagementApplicabilityRuleOsEdition{
+                Name           = 'Enterprise and Professional editions only'
+                OsEditionTypes = @('windows10Enterprise', 'windows10Professional')
+                RuleType       = 'include'
+            };
+            DeviceManagementApplicabilityRuleOsVersion           = MSFT_DeviceManagementApplicabilityRuleOsVersion{
+                Name         = 'Windows 11 23H2 and later'
+                MinOSVersion = '10.0.22631.0'
+                MaxOSVersion = '10.0.26200.9999'
+                RuleType     = 'include'
+            };
             DeviceManagementBlockFactoryResetOnMobile            = $False;
             DeviceManagementBlockManualUnenroll                  = $False;
             DiagnosticsDataSubmissionMode                        = "userDefined";
@@ -157,8 +179,8 @@ Configuration Example
             NetworkProxyDisableAutoDetect                        = $True;
             NetworkProxyServer                                   = MSFT_MicrosoftGraphwindows10NetworkProxyServer{
                 UseForLocalAddresses = $True
-                Exceptions = @('*.domain2.com')
-                Address = 'proxy.domain.com:8080'
+                Exceptions           = @('*.domain2.com')
+                Address              = 'proxy.domain.com:8080'
             };
             NfcBlocked                                           = $False;
             OneDriveDisableFileSync                              = $False;
@@ -273,9 +295,9 @@ Configuration Example
             WirelessDisplayBlockProjectionToThisDevice           = $False;
             WirelessDisplayBlockUserInputFromReceiver            = $False;
             WirelessDisplayRequirePinForPairing                  = $False;
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                                        = $ApplicationId;
+            TenantId                                             = $TenantId;
+            CertificateThumbprint                                = $CertificateThumbprint;
         }
     }
 }

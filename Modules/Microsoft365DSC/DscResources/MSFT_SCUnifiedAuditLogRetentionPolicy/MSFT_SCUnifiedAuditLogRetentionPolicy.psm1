@@ -1,512 +1,314 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SCUnifiedAuditLogRetentionPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SCUnifiedAuditLogRetentionPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('The description for the audit log retention policy')]
+    [System.String] $Description
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Unique name for the audit log retention policy')]
+    [System.String] $Name
 
-        [Parameter()]
-        [System.Int32]
-        $Priority,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the audit log operations that are retained by the policy')]
+    [System.String[]] $Operations
 
-        [Parameter()]
-        [System.String[]]
-        $RecordTypes,
+    [DscProperty()]
+    [System.ComponentModel.Description('Priority value for the policy that determines the order of policy processing.')]
+    [System.Nullable[System.UInt32]] $Priority
 
-        [Parameter()]
-        [ValidateSet('SevenDays', 'OneMonth', 'ThreeMonths', 'SixMonths', 'NineMonths', 'TwelveMonths', 'ThreeYears', 'FiveYears', 'SevenYears', 'TenYears')]
-        [System.String]
-        $RetentionDuration,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the audit logs of a specific record type that are retained by the policy.')]
+    [System.String[]] $RecordTypes
 
-        [Parameter()]
-        [System.String[]]
-        $UserIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('How long audit log records are kept')]
+    [ValidateSet('SevenDays', 'OneMonth', 'ThreeMonths', 'SixMonths', 'NineMonths', 'TwelveMonths', 'ThreeYears', 'FiveYears', 'SevenYears', 'TenYears')]
+    [System.String] $RetentionDuration
 
-        [Parameter()]
-        [System.String[]]
-        $Operations,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the audit logs that are retained by the policy based on the ID of the user who performed the action')]
+    [System.String[]] $UserIds
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access tokens used for authentication in scenarios requiring multiple tokens.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of SC Unified Audit Log Retention Policy for $Name"
-
-    try
+    [SCUnifiedAuditLogRetentionPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Name -ne $Name)
+        $nullResult = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-                -InboundParameters $PSBoundParameters
+            $remote = [SCUnifiedAuditLogRetentionPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of SC Unified Audit Log Retention Policy for $($this.Name)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            [array]$instances = @(Invoke-M365DSCCommand -ScriptBlock { Get-UnifiedAuditLogRetentionPolicy -ErrorAction Stop | Where-Object { $_.Mode -ne 'PendingDeletion' } } -SuppressNotFoundError)
-            if ($null -eq $instances)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.Name)
             {
-                return $nullResult
+                $null = $this.Connect('SecurityComplianceCenter')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                [array]$instances = @(Invoke-M365DSCCommand -ScriptBlock { Get-UnifiedAuditLogRetentionPolicy -ErrorAction Stop | Where-Object { $_.Mode -ne 'PendingDeletion' } } -SuppressNotFoundError)
+                if ($null -eq $instances)
+                {
+                    return $this.AsResult($nullResult)
+                }
+
+                $instance = $instances | Where-Object { $_.Name -eq $this.Name } | Select-Object -First 1
+            }
+            else
+            {
+                $instance = $this.ExportedInstance
             }
 
-            $instance = $instances | Where-Object { $_.Name -eq $Name } | Select-Object -First 1
-        }
-        else
-        {
-            $instance = $Script:exportedInstance
-        }
-
-        if ($null -eq $instance)
-        {
-            return $nullResult
-        }
-
-        Write-Verbose -Message "Found an SC Unified Audit Log Retention Policy with Name {$Name}"
-        $results = @{
-            Identity              = $instance.Identity
-            Description           = $instance.Description
-            Name                  = $instance.Name
-            Operations            = $instance.Operations
-            Priority              = $instance.Priority
-            RecordTypes           = $instance.RecordTypes
-            RetentionDuration     = $instance.RetentionDuration
-            UserIds               = $instance.UserIds
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.String[]]
-        $Operations,
-
-        [Parameter(Mandatory = $true)]
-        [System.Int32]
-        $Priority,
-
-        [Parameter()]
-        [System.String[]]
-        $RecordTypes,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('SevenDays', 'OneMonth', 'ThreeMonths', 'SixMonths', 'NineMonths', 'TwelveMonths', 'ThreeYears', 'FiveYears', 'SevenYears', 'TenYears')]
-        [System.String]
-        $RetentionDuration,
-
-        [Parameter()]
-        [System.String[]]
-        $UserIds,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of SC Unified Audit Log Retention Policy for $Name"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $GetParameters = ([Hashtable]$PSBoundParameters).Clone()
-    $GetParameters.Remove('Description') | Out-Null
-    $GetParameters.Remove('Operations') | Out-Null
-    $GetParameters.Remove('RecordTypes') | Out-Null
-    $GetParameters.Remove('UserIds') | Out-Null
-
-    $currentInstance = Get-TargetResource @GetParameters
-    $BoundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        $CreateParameters = ([Hashtable]$BoundParameters).Clone()
-        Write-Verbose -Message "Creating a Unified Audit Log Retention Policy with Name {$Name}"
-        New-UnifiedAuditLogRetentionPolicy @CreateParameters | Out-Null
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Unified Audit Log Retention Policy with Name {$Name}"
-
-        $UpdateParameters = ([Hashtable]$BoundParameters).Clone()
-        $UpdateParameters.Remove('Name') | Out-Null
-        $UpdateParameters.Add('Identity', $currentInstance.Identity) | Out-Null
-        Set-UnifiedAuditLogRetentionPolicy @UpdateParameters | Out-Null
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Unified Audit Log Retention Policy with Name {$Name}"
-        Remove-UnifiedAuditLogRetentionPolicy -Identity $currentInstance.Identity
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.String[]]
-        $Operations,
-
-        [Parameter(Mandatory = $true)]
-        [System.UInt32]
-        $Priority,
-
-        [Parameter()]
-        [System.String[]]
-        $RecordTypes,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('SevenDays', 'OneMonth', 'ThreeMonths', 'SixMonths', 'NineMonths', 'TwelveMonths', 'ThreeYears', 'FiveYears', 'SevenYears', 'TenYears')]
-        [System.String]
-        $RetentionDuration,
-
-        [Parameter()]
-        [System.String[]]
-        $UserIds,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'SecurityComplianceCenter' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$getValue = @(Get-UnifiedAuditLogRetentionPolicy -ErrorAction Stop | Where-Object { $_.Mode -ne 'PendingDeletion' })
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            if ($null -eq $instance)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                return $this.AsResult($nullResult)
             }
 
-            $displayedKey = $config.Name
-            if (-not [String]::IsNullOrEmpty($config.displayName))
-            {
-                $displayedKey = $config.displayName
-            }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Name                  = $config.Name
-                Priority              = $config.Priority
-                RetentionDuration     = $config.RetentionDuration
+            Write-Verbose -Message "Found an SC Unified Audit Log Retention Policy with Name {$($this.Name)}"
+            $results = @{
+                Identity              = $instance.Identity
+                Description           = $instance.Description
+                Name                  = $instance.Name
+                Operations            = $instance.Operations
+                Priority              = $instance.Priority
+                RecordTypes           = $instance.RecordTypes
+                RetentionDuration     = $instance.RetentionDuration
+                UserIds               = $instance.UserIds
                 Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of SC Unified Audit Log Retention Policy for $($this.Name)"
+
+        $null = $this.Connect('SecurityComplianceCenter')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $GetParameters = ([Hashtable]$this.GetBoundParameters()).Clone()
+        $GetParameters.Remove('Description') | Out-Null
+        $GetParameters.Remove('Operations') | Out-Null
+        $GetParameters.Remove('RecordTypes') | Out-Null
+        $GetParameters.Remove('UserIds') | Out-Null
+
+        $currentInstance = $this.GetForExport($GetParameters)
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            $pendingDeletion = Get-UnifiedAuditLogRetentionPolicy -ErrorAction Stop | Where-Object -FilterScript { $_.Name -eq $this.Name -and $_.Mode -eq 'PendingDeletion' }
+            if ($null -ne $pendingDeletion)
+            {
+                Write-Verbose -Message "Completing the pending deletion of the Unified Audit Log Retention Policy with Name {$($this.Name)}"
+                Remove-UnifiedAuditLogRetentionPolicy -Identity $this.Name -ForceDeletion -Confirm:$false
             }
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $Results.Remove('Identity') | Out-Null
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            $createParameters = ([Hashtable]$boundParameters).Clone()
+            Write-Verbose -Message "Creating a Unified Audit Log Retention Policy with Name {$($this.Name)}"
+            New-UnifiedAuditLogRetentionPolicy @createParameters | Out-Null
         }
-        return $dscContent.ToString()
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Unified Audit Log Retention Policy with Name {$($this.Name)}"
+
+            $updateParameters = ([Hashtable]$boundParameters).Clone()
+            $updateParameters.Remove('Name') | Out-Null
+            $updateParameters.Add('Identity', $this.Name) | Out-Null
+            Set-UnifiedAuditLogRetentionPolicy @updateParameters | Out-Null
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Unified Audit Log Retention Policy with Name {$($this.Name)}"
+            Remove-UnifiedAuditLogRetentionPolicy -Identity $this.Name -Confirm:$false
+            Remove-UnifiedAuditLogRetentionPolicy -Identity $this.Name -ForceDeletion -Confirm:$false
+        }
     }
-    catch
+
+    [bool] Test()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        return ([M365DSCResourceBase] $this).Test()
+    }
 
-        throw
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('SecurityComplianceCenter')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$getValue = @(Get-UnifiedAuditLogRetentionPolicy -ErrorAction Stop | Where-Object { $_.Mode -ne 'PendingDeletion' })
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $config.Name
+                if (-not [String]::IsNullOrEmpty($config.displayName))
+                {
+                    $displayedKey = $config.displayName
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Name                  = $config.Name
+                    Priority              = $config.Priority
+                    RetentionDuration     = $config.RetentionDuration
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $Results.Remove('Identity') | Out-Null
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            ExcludedProperties = @('Name')
+        }
+    }
+
+    hidden [SCUnifiedAuditLogRetentionPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SCUnifiedAuditLogRetentionPolicy])
+        {
+            return $Values
+        }
+
+        $result = [SCUnifiedAuditLogRetentionPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('Name')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

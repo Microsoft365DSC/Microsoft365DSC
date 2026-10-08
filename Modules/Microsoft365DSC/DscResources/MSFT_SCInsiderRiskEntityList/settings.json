@@ -1,5 +1,16 @@
 {
   "resourceName": "SCInsiderRiskEntityList",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "InsiderRiskEntityList",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures settings for Insider Risk in Purview.",
   "roles": {
     "read": [
@@ -30,5 +41,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-DLPSensitiveInformationType",
+        "Get-InsiderRiskEntityList",
+        "New-InsiderRiskEntityList",
+        "Remove-InsiderRiskEntityList",
+        "Set-InsiderRiskEntityList"
+      ]
+    }
+  ]
 }

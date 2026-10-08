@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOMailboxPlan 'ConfigureMailboxPlan'
+        EXOMailboxPlan 'EXOMailboxPlan-Example'
         {
             Ensure                   = "Present";
             Identity                 = "ExchangeOnlineEssentials";
@@ -33,9 +35,9 @@ Configuration Example
             ProhibitSendReceiveQuota = "15 GB (16,106,127,360 bytes)"; # Updated Property
             RetainDeletedItemsFor    = "14.00:00:00";
             RoleAssignmentPolicy     = "Default Role Assignment Policy";
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId            = $ApplicationId
+            TenantId                 = $TenantId
+            CertificateThumbprint    = $CertificateThumbprint
         }
     }
 }

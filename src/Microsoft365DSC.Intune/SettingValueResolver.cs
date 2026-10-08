@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,6 +55,11 @@ namespace Microsoft365DSC.Intune
 
             settingValueType ??= string.Empty;
 
+            if (settingValueType.Length == 0)
+            {
+                settingValueType = settingDefinition.ODataType ?? string.Empty;
+            }
+
             // Resolve the setting name using the already-ported C# helper
             string key = SettingsCatalogHelper.GetSettingName(settingDefinition, allSettingDefinitions);
 
@@ -106,26 +111,6 @@ namespace Microsoft365DSC.Intune
         }
 
         /// <summary>
-        /// Overload that accepts Graph objects directly (for callers that haven't pre-mapped).
-        /// Maps the objects internally using <see cref="SettingDefinitionMapper"/>.
-        ///
-        /// This overload incurs the cost of reflection-based mapping. For bulk operations,
-        /// prefer pre-mapping via <see cref="SettingDefinitionMapper.FromGraphObjects"/> and
-        /// calling the <see cref="Resolve(string, SettingDefinitionInfo, List{SettingDefinitionInfo}, Hashtable)"/>
-        /// overload.
-        /// </summary>
-        public static SettingDSCValueResult ResolveFromGraph(
-            string settingValueType,
-            object settingDefinitionGraph,
-            List<object> allSettingDefinitionsGraph,
-            Hashtable dscParams)
-        {
-            var settingDefinition = SettingDefinitionMapper.FromGraphObject(settingDefinitionGraph);
-            var allSettingDefinitions = SettingDefinitionMapper.FromGraphObjects(allSettingDefinitionsGraph);
-            return Resolve(settingValueType, settingDefinition, allSettingDefinitions, dscParams);
-        }
-
-        /// <summary>
         /// Resolves Simple setting values (string, int, or arrays thereof).
         /// </summary>
         private static SettingDSCValueResult ResolveSimpleSettingValue(
@@ -133,44 +118,35 @@ namespace Microsoft365DSC.Intune
             SettingDefinitionInfo settingDefinition,
             object dscValue)
         {
-            string resolvedType = settingValueType;
-            if (dscValue is string)
-            {
-                resolvedType = StringSettingValueType;
-            }
-            else if (dscValue is int)
-            {
-                resolvedType = IntegerSettingValueType;
-            }
-            else if (dscValue is string[])
-            {
-                resolvedType = StringSettingValueType;
-            }
-            else if (dscValue is int[])
-            {
-                resolvedType = IntegerSettingValueType;
-            }
-            else if (dscValue is object[] objArray)
-            {
-                // PowerShell arrays may come as object[]
-                if (objArray.Length > 0)
-                {
-                    if (objArray[0] is string)
-                    {
-                        resolvedType = StringSettingValueType;
-                    }
-                    else if (objArray[0] is int)
-                    {
-                        resolvedType = IntegerSettingValueType;
-                    }
-                }
-            }
+            string resolvedType = GetConcreteSimpleValueType(settingDefinition, dscValue) ?? settingValueType;
 
             return new SettingDSCValueResult
             {
                 SettingDefinition = settingDefinition,
                 SettingValueType = resolvedType,
                 Value = dscValue
+            };
+        }
+
+        private static string? GetConcreteSimpleValueType(SettingDefinitionInfo settingDefinition, object dscValue)
+        {
+            string declared = settingDefinition?.ValueDefinition?.ODataType ?? string.Empty;
+            if (declared.IndexOf("IntegerSettingValueDefinition", StringComparison.OrdinalIgnoreCase) >= 0)
+                return IntegerSettingValueType;
+            if (declared.IndexOf("StringSettingValueDefinition", StringComparison.OrdinalIgnoreCase) >= 0)
+                return StringSettingValueType;
+
+            object? value = dscValue;
+            if (value is not string && value is IEnumerable items)
+            {
+                value = items.Cast<object>().FirstOrDefault(item => item is not null);
+            }
+
+            return value switch
+            {
+                string => StringSettingValueType,
+                sbyte or byte or short or ushort or int or uint or long or ulong => IntegerSettingValueType,
+                _ => null,
             };
         }
 
@@ -257,6 +233,11 @@ namespace Microsoft365DSC.Intune
         /// </summary>
         private static string? FindKeyIgnoreCase(Hashtable hashtable, string key)
         {
+            if (hashtable.ContainsKey(key))
+            {
+                return key;
+            }
+
             foreach (var k in hashtable.Keys)
             {
                 if (string.Equals(k?.ToString(), key, StringComparison.OrdinalIgnoreCase))

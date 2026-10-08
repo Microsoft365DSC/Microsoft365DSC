@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,15 +19,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr "IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr-Windows ConfigMgr - Windows Security experience"
+        IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr "IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr-Example"
         {
-            ApplicationId                              = $ApplicationId;
             Assignments                                = @();
-            CertificateThumbprint                      = $CertificateThumbprint;
             CompanyName                                = "contoso";
             Description                                = "";
             DisableAccountProtectionUI                 = "0";
@@ -41,15 +41,17 @@ Configuration Example
             DisableTpmFirmwareUpdateWarning            = "0";
             DisableVirusUI                             = "0";
             DisplayName                                = "Windows ConfigMgr - Windows Security experience";
-            Email                                      = "dummy@contoso.com";
+            Email                                      = "servicedesk@contoso.com";
             Ensure                                     = "Present";
             HideRansomwareDataRecovery                 = "0";
             HideWindowsSecurityNotificationAreaControl = "1";
-            Phone                                      = "asdf";
+            Phone                                      = "+1 425 555 0134";
             RoleScopeTagIds                            = @("0");
             TamperProtection                           = "1";
+            URL                                        = "https://support.contoso.com";
+            ApplicationId                              = $ApplicationId;
             TenantId                                   = $TenantId;
-            URL                                        = "http://asdf";
+            CertificateThumbprint                      = $CertificateThumbprint;
         }
     }
 }

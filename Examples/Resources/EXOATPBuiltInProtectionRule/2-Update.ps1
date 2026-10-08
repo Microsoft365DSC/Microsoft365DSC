@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,22 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOATPBuiltInProtectionRule "EXOATPBuiltInProtectionRule"
+        EXOATPBuiltInProtectionRule "EXOATPBuiltInProtectionRule-Example"
         {
-            ApplicationId             = $ApplicationId;
-            CertificateThumbprint     = $CertificateThumbprint;
+            Comments                  = "Excludes the security awareness team and partner domains from built-in protection";
+            Ensure                    = "Present";
             ExceptIfRecipientDomainIs = @("contoso.com","fabrikam.com");
+            ExceptIfSentTo            = @("AlexW@$TenantId");
+            ExceptIfSentToMemberOf    = @("Executives@$TenantId");
             Identity                  = "ATP Built-In Protection Rule";
+            ApplicationId             = $ApplicationId;
             TenantId                  = $TenantId;
+            CertificateThumbprint     = $CertificateThumbprint;
         }
     }
 }

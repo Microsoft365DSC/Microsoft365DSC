@@ -4,7 +4,8 @@ This example creates a new App Configuration Policy.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,15 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAppConfigurationPolicy 'AddAppConfigPolicy'
+        IntuneAppConfigurationPolicy 'IntuneAppConfigurationPolicy-Example'
         {
-            DisplayName = 'ContosoNew'
-            Description = 'New Contoso Policy'
-            Ensure      = 'Absent'
+            DisplayName           = 'Mobile Workforce App Settings'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

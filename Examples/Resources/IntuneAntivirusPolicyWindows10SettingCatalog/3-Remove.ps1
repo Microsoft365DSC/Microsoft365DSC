@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAntivirusPolicyWindows10SettingCatalog 'myAVWindows10Policy'
+        IntuneAntivirusPolicyWindows10SettingCatalog 'IntuneAntivirusPolicyWindows10SettingCatalog-Example'
         {
-            DisplayName        = 'av exclusions'
-            Ensure             = 'Absent'
+            DisplayName           = 'Defender Antivirus Baseline'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

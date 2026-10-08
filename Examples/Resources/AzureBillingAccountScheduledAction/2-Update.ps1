@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,33 +19,35 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AzureBillingAccountScheduledAction "AzureBillingAccountScheduledAction-MyAction"
+        AzureBillingAccountScheduledAction "AzureBillingAccountScheduledAction-Example"
         {
-            ApplicationId         = $ApplicationId;
-            BillingAccount        = "1e5b9e50-a1ea-581e-fb3a-778b93a06854:6487d5cf-0a7b-42e6-9549-23cavvvvvvv_2019-05-31";
-            CertificateThumbprint = $CertificateThumbprint;
+            BillingAccount        = "<billing-account-id>";
             DisplayName           = "MyAction";
             Ensure                = "Present";
             Notification          = MSFT_AzureBillingAccountScheduledActionNotification{
                 subject = 'Cost Alert'
-                message = 'This is my demo message!'
-                to = @('john.smith@contoso.com')
+                message = 'Weekly accumulated cost summary for the finance team.'
+                to      = @('john.smith@contoso.com')
             };
             NotificationEmail     = "alert@contoso.com";
             Schedule              = MSFT_AzureBillingAccountScheduledActionSchedule{
                 daysOfWeek = @('Wednesday')
-                startDate = '2024-11-06T13:00:00Z'
-                endDate = '2025-11-06T05:00:00Z'
-                frequency = 'Weekly'
-                dayOfMonth = 0
-                hourOfDay = 13
+                startDate  = '2026-11-04T13:00:00Z'
+                endDate    = '2027-11-03T13:00:00Z'
+                frequency  = 'Weekly'
+                hourOfDay  = 13
             };
-            Status                = "Disabled"; # Drift
+            Status                = "Disabled"; # Updated Property
+            SubscriptionId        = "<subscription-id>";
+            View                  = "/providers/Microsoft.Billing/billingAccounts/<billing-account-id>/providers/Microsoft.CostManagement/views/ms:AccumulatedCosts";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
-            View                  = "/providers/Microsoft.Billing/billingAccounts/xxxxx:xxxxx_xxxxx/providers/Microsoft.CostManagement/views/ms:AccumulatedCosts";
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

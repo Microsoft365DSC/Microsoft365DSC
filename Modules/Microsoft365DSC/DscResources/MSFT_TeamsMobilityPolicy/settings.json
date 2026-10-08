@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsMobilityPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTeamsMobilityPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an The TeamsMobilityPolicy allows Admins to control Teams mobile usage for users.",
   "roles": {
     "read": [

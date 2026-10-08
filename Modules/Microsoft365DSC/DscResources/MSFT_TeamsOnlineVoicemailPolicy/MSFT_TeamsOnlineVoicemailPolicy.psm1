@@ -1,518 +1,295 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_TeamsOnlineVoicemailPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class TeamsOnlineVoicemailPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Identity of the Teams Online Voicemail Policy.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableEditingCallAnswerRulesSetting,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls if editing call answer rule settings are enabled or disabled for a user. Possible values are $true or $false.')]
+    [System.Nullable[System.Boolean]] $EnableEditingCallAnswerRulesSetting
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscription,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allows you to disable or enable voicemail transcription. Possible values are $true or $false.')]
+    [System.Nullable[System.Boolean]] $EnableTranscription
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscriptionProfanityMasking,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allows you to disable or enable profanity masking for the voicemail transcriptions. Possible values are $true or $false.')]
+    [System.Nullable[System.Boolean]] $EnableTranscriptionProfanityMasking
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscriptionTranslation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allows you to disable or enable translation for the voicemail transcriptions. Possible values are $true or $false.')]
+    [System.Nullable[System.Boolean]] $EnableTranscriptionTranslation
 
-        [Parameter()]
-        [System.Int32]
-        $MaximumRecordingLength,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether AI-powered voicemail triage is enabled. Possible values are $true or $false.')]
+    [System.Nullable[System.Boolean]] $EnableVoicemailTriage
 
-        [Parameter()]
-        [System.String]
-        $PostAmbleAudioFile,
+    [DscProperty()]
+    [System.ComponentModel.Description('A duration of voicemail maximum recording length. The length should be between 30 seconds to 600 seconds.')]
+    [System.Nullable[System.Int32]] $MaximumRecordingLength
 
-        [Parameter()]
-        [System.String]
-        $PreambleAudioFile,
+    [DscProperty()]
+    [System.ComponentModel.Description('The audio file to play to the caller after the user''s voicemail greeting has played and before the caller is allowed to leave a voicemail message.')]
+    [System.String] $PostambleAudioFile
 
-        [Parameter()]
-        [System.Boolean]
-        $PreamblePostambleMandatory,
+    [DscProperty()]
+    [System.ComponentModel.Description('The audio file to play to the caller before the user''s voicemail greeting is played.')]
+    [System.String] $PreambleAudioFile
 
-        [Parameter()]
-        [System.String]
-        $PrimarySystemPromptLanguage,
+    [DscProperty()]
+    [System.ComponentModel.Description('Is playing the Pre- or Post-amble mandatory before the caller can leave a message. Possible values are $true or $false.')]
+    [System.Nullable[System.Boolean]] $PreamblePostambleMandatory
 
-        [Parameter()]
-        [System.String]
-        $SecondarySystemPromptLanguage,
+    [DscProperty()]
+    [System.ComponentModel.Description('The primary (or first) language that voicemail system prompts will be presented in. Must also set SecondarySystemPromptLanguage. When set, this overrides the user language choice.')]
+    [System.String] $PrimarySystemPromptLanguage
 
-        [Parameter()]
-        [System.String]
-        $ShareData,
+    [DscProperty()]
+    [System.ComponentModel.Description('The secondary language that voicemail system prompts will be presented in. Must also set PrimarySystemPromptLanguage and may not be the same value as PrimarySystemPromptanguage. When set, this overrides the user language choice. ')]
+    [System.String] $SecondarySystemPromptLanguage
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether voicemail and transcription data are shared with the service for training and improving accuracy. Possible values are Defer and Deny.')]
+    [System.String] $ShareData
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Teams Global Admin.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    Write-Verbose -Message "Getting the Teams Online Voicemail Policy $($Identity)"
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    try
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter = '*'
+
+    [TeamsOnlineVoicemailPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        $nullReturn = $null
+        ${$Identity} = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $policy = Get-CsOnlineVoicemailPolicy -Identity $Identity `
-                -ErrorAction 'SilentlyContinue'
-        }
-        else
-        {
-            $policy = $Script:exportedInstance
+            $remote = [TeamsOnlineVoicemailPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
 
-        if ($null -eq $policy)
+        Write-Verbose -Message "Getting the Teams Online Voicemail Policy $($this.Identity)"
+
+        try
         {
-            Write-Verbose -Message "Could not find Teams Online Voicemail Policy ${$Identity}"
-            return $nullReturn
-        }
-
-        Write-Verbose -Message "Found Teams Online Voicemail Policy {$Identity}"
-        return @{
-            Identity                            = $policy.Identity.Replace('Tag:', '')
-            EnableEditingCallAnswerRulesSetting = $policy.EnableEditingCallAnswerRulesSetting
-            EnableTranscription                 = $policy.EnableTranscription
-            EnableTranscriptionProfanityMasking = $policy.EnableTranscriptionProfanityMasking
-            EnableTranscriptionTranslation      = $policy.EnableTranscriptionTranslation
-            MaximumRecordingLength              = $policy.MaximumRecordingLength.TotalSeconds
-            PostambleAudioFile                  = $policy.PostambleAudioFile
-            PreambleAudioFile                   = $policy.PreambleAudioFile
-            PreamblePostambleMandatory          = $policy.PreamblePostambleMandatory
-            PrimarySystemPromptLanguage         = $policy.PrimarySystemPromptLanguage
-            SecondarySystemPromptLanguage       = $policy.SecondarySystemPromptLanguage
-            ShareData                           = $policy.ShareData
-            Ensure                              = 'Present'
-            Credential                          = $Credential
-            ApplicationId                       = $ApplicationId
-            TenantId                            = $TenantId
-            CertificateThumbprint               = $CertificateThumbprint
-            CertificatePath                     = $CertificatePath
-            CertificatePassword                 = $CertificatePassword
-            ManagedIdentity                     = $ManagedIdentity.IsPresent
-            AccessTokens                        = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableEditingCallAnswerRulesSetting,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscription,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscriptionProfanityMasking,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscriptionTranslation,
-
-        [Parameter()]
-        [System.Int32]
-        $MaximumRecordingLength,
-
-        [Parameter()]
-        [System.String]
-        $PostAmbleAudioFile,
-
-        [Parameter()]
-        [System.String]
-        $PreambleAudioFile,
-
-        [Parameter()]
-        [System.Boolean]
-        $PreamblePostambleMandatory,
-
-        [Parameter()]
-        [System.String]
-        $PrimarySystemPromptLanguage,
-
-        [Parameter()]
-        [System.String]
-        $SecondarySystemPromptLanguage,
-
-        [Parameter()]
-        [System.String]
-        $ShareData,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting Teams Online Voicemail Policy'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentValues = Get-TargetResource @PSBoundParameters
-    $SetParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    # Convert recording length in seconds to a TimeSpan value expected by Teams cmdlets.
-    if ($PSBoundParameters.ContainsKey('MaximumRecordingLength'))
-    {
-        $SetParameters.MaximumRecordingLength = New-TimeSpan -Seconds $MaximumRecordingLength
-    }
-
-    if ($Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating a new Teams Online Voicemail Policy {$Identity}"
-        New-CsOnlineVoicemailPolicy @SetParameters
-    }
-    elseif ($Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Teams Online Voicemail Policy with Identity {$Identity}"
-        Set-CsOnlineVoicemailPolicy @SetParameters
-    }
-    elseif ($Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Teams Online Voicemail Policy with Identity {$Identity}"
-        Remove-CsOnlineVoicemailPolicy -Identity $Identity
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableEditingCallAnswerRulesSetting,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscription,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscriptionProfanityMasking,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableTranscriptionTranslation,
-
-        [Parameter()]
-        [System.Int32]
-        $MaximumRecordingLength,
-
-        [Parameter()]
-        [System.String]
-        $PostAmbleAudioFile,
-
-        [Parameter()]
-        [System.String]
-        $PreambleAudioFile,
-
-        [Parameter()]
-        [System.Boolean]
-        $PreamblePostambleMandatory,
-
-        [Parameter()]
-        [System.String]
-        $PrimarySystemPromptLanguage,
-
-        [Parameter()]
-        [System.String]
-        $SecondarySystemPromptLanguage,
-
-        [Parameter()]
-        [System.String]
-        $ShareData,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter = "*",
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $i = 1
-        [array]$policies = Get-CsOnlineVoicemailPolicy -Filter $Filter -ErrorAction Stop
-        $dscContent = [System.Text.StringBuilder]::new()
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        foreach ($policy in $policies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $null = $this.Connect('MicrosoftTeams')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $policy = Get-CsOnlineVoicemailPolicy -Identity $this.Identity `
+                    -ErrorAction 'SilentlyContinue'
+            }
+            else
+            {
+                $policy = $this.ExportedInstance
             }
 
-            Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
-            $params = @{
-                Identity              = $policy.Identity
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            if ($null -eq $policy)
+            {
+                Write-Verbose -Message "Could not find Teams Online Voicemail Policy ${$Identity}"
+                return $this.AsResult($nullReturn)
             }
 
-            $Script:exportedInstance = $policy
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
+            Write-Verbose -Message "Found Teams Online Voicemail Policy {$($this.Identity)}"
+            return $this.AsResult(@{
+                Identity                            = $policy.Identity.Replace('Tag:', '')
+                EnableEditingCallAnswerRulesSetting = $policy.EnableEditingCallAnswerRulesSetting
+                EnableTranscription                 = $policy.EnableTranscription
+                EnableTranscriptionProfanityMasking = $policy.EnableTranscriptionProfanityMasking
+                EnableTranscriptionTranslation      = $policy.EnableTranscriptionTranslation
+                EnableVoicemailTriage               = $policy.EnableVoicemailTriage
+                MaximumRecordingLength              = $policy.MaximumRecordingLength.TotalSeconds
+                PostambleAudioFile                  = $policy.PostambleAudioFile
+                PreambleAudioFile                   = $policy.PreambleAudioFile
+                PreamblePostambleMandatory          = $policy.PreamblePostambleMandatory
+                PrimarySystemPromptLanguage         = $policy.PrimarySystemPromptLanguage
+                SecondarySystemPromptLanguage       = $policy.SecondarySystemPromptLanguage
+                ShareData                           = $policy.ShareData
+                Ensure                              = 'Present'
+                Credential                          = $this.Credential
+                ApplicationId                       = $this.ApplicationId
+                TenantId                            = $this.TenantId
+                CertificateThumbprint               = $this.CertificateThumbprint
+                CertificatePath                     = $this.CertificatePath
+                CertificatePassword                 = $this.CertificatePassword
+                ManagedIdentity                     = $this.ManagedIdentity
+                AccessTokens                        = $this.AccessTokens
+            })
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
 
-        throw
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Setting Teams Online Voicemail Policy'
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentValues = $this.Get().ToHashtable()
+        $SetParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        # Convert recording length in seconds to a TimeSpan value expected by Teams cmdlets.
+        if ($this.GetBoundParameters().ContainsKey('MaximumRecordingLength'))
+        {
+            $SetParameters.MaximumRecordingLength = New-TimeSpan -Seconds $this.MaximumRecordingLength
+        }
+
+        if ($this.Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating a new Teams Online Voicemail Policy {$($this.Identity)}"
+            New-CsOnlineVoicemailPolicy @SetParameters
+        }
+        elseif ($this.Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Teams Online Voicemail Policy with Identity {$($this.Identity)}"
+            Set-CsOnlineVoicemailPolicy @SetParameters
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Teams Online Voicemail Policy with Identity {$($this.Identity)}"
+            Remove-CsOnlineVoicemailPolicy -Identity $this.Identity
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftTeams')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $i = 1
+            [array]$policies = Get-CsOnlineVoicemailPolicy -Filter $this.Filter -ErrorAction Stop
+            $dscContent = [System.Text.StringBuilder]::new()
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            foreach ($policy in $policies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
+                $params = @{
+                    Identity              = $policy.Identity
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $policy
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [TeamsOnlineVoicemailPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [TeamsOnlineVoicemailPolicy])
+        {
+            return $Values
+        }
+
+        $result = [TeamsOnlineVoicemailPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

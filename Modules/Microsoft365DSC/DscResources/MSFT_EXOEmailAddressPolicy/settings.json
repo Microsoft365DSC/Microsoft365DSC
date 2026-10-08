@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOEmailAddressPolicy",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "EmailAddressPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "E-Mail Address Policies"
         ],
@@ -33,7 +44,7 @@
           "E-Mail Address Policies"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Recipient Management"
         ],
@@ -48,5 +59,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-EmailAddressPolicy",
+        "New-EmailAddressPolicy",
+        "Remove-EmailAddressPolicy",
+        "Set-EmailAddressPolicy"
+      ]
+    }
+  ]
 }

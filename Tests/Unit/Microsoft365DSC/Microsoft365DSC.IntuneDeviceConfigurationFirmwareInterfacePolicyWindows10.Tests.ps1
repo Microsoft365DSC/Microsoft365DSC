@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -42,10 +42,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                 return @{
                     wakeOnPower = "notConfigured"
@@ -71,6 +74,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     bluetooth = "notConfigured"
                     cameras = "notConfigured"
                     Description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.17763.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                 }
@@ -97,6 +116,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Cameras = "notConfigured"
                     ChangeUefiSettingsPermission = "notConfiguredOnly"
                     Description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.17763.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     DisplayName = "FakeStringValue"
                     FrontCamera = "notConfigured"
                     Id = "FakeStringValue"
@@ -124,13 +159,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -144,6 +179,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Cameras = "notConfigured"
                     ChangeUefiSettingsPermission = "notConfiguredOnly"
                     Description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.17763.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     DisplayName = "FakeStringValue"
                     FrontCamera = "notConfigured"
                     Id = "FakeStringValue"
@@ -168,15 +219,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -189,6 +240,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Cameras = "notConfigured"
                     ChangeUefiSettingsPermission = "notConfiguredOnly"
                     Description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "standardConfiguration"
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Enterprise")
+                        RuleType = "include"
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.17763.0"
+                        MaxOSVersion = "10.0.26100.9999"
+                        RuleType = "include"
+                    }
                     DisplayName = "FakeStringValue"
                     FrontCamera = "notConfigured"
                     Id = "FakeStringValue"
@@ -214,7 +281,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -227,6 +294,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Cameras = "notConfigured"
                     ChangeUefiSettingsPermission = "notConfiguredOnly"
                     Description = "FakeStringValue"
+                    DeviceManagementApplicabilityRuleDeviceMode = @{
+                        Name = "FakeStringValue"
+                        DeviceMode = "sModeConfiguration" # Updated property
+                        RuleType = "exclude" # Updated property
+                    }
+                    DeviceManagementApplicabilityRuleOsEdition = @{
+                        Name = "FakeStringValue"
+                        OsEditionTypes = @("windows10Professional") # Updated property
+                        RuleType = "exclude" # Updated property
+                    }
+                    DeviceManagementApplicabilityRuleOsVersion = @{
+                        Name = "FakeStringValue"
+                        MinOSVersion = "10.0.17763.0"
+                        MaxOSVersion = "10.0.22631.9999" # Updated property
+                        RuleType = "include"
+                    }
                     DisplayName = "FakeStringValue"
                     FrontCamera = "notConfigured"
                     Id = "FakeStringValue"
@@ -251,15 +334,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -274,7 +357,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

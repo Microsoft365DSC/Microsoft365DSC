@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOOfflineAddressBook",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "OfflineAddressBook",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "Address Lists"
         ],
@@ -33,7 +44,7 @@
           "Address Lists"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [],
         "update": []
       }
@@ -44,5 +55,16 @@
     "Global",
     "USGov"
   ],
-  "mode": "Data"
+  "mode": "Data",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-OfflineAddressBook",
+        "New-OfflineAddressBook",
+        "Remove-OfflineAddressBook",
+        "Set-OfflineAddressBook"
+      ]
+    }
+  ]
 }

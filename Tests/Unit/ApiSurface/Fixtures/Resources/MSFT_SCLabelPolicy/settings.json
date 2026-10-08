@@ -1,0 +1,27 @@
+{
+  "resourceName": "SCLabelPolicy",
+  "description": "Fixture for SCLabelPolicy.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-LabelPolicy",
+        "New-LabelPolicy",
+        "Remove-LabelPolicy",
+        "Set-LabelPolicy",
+        "Get-Label"
+      ]
+    }
+  ]
+}

@@ -2,5 +2,5 @@
 
 ## Description
 
-This resource allows users to manage resource to modify SecOps
-override rules to bypass Exchange Online Protection filtering.
+This resource manages the tenant's single SecOps mailbox override rule of the
+advanced delivery policy, which delivers unfiltered messages to SecOps mailboxes.

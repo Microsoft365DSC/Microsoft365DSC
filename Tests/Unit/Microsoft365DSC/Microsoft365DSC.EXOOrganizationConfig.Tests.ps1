@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -95,11 +95,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXOOrganizationConfig' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).IsSingleInstance | Should -Be 'Yes'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOOrganizationConfig' -Property $testParams).Get().ToHashtable()).IsSingleInstance | Should -Be 'Yes'
             }
         }
 
@@ -127,16 +127,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOOrganizationConfig' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOOrganizationConfig' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Set-OrganizationConfig' -Exactly 1
             }
 
             It 'Should return Values from the Get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOOrganizationConfig' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-OrganizationConfig'
             }
         }
@@ -167,7 +167,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call the Set method' {
-                { Set-TargetResource @testParams } | Should -Throw "You can't specify both EWSAllowList and EWSBlockList properties."
+                { (New-M365DSCResourceInstance -ResourceName 'EXOOrganizationConfig' -Property $testParams).Set() } | Should -Throw "You can't specify both EWSAllowList and EWSBlockList properties."
             }
         }
 
@@ -181,7 +181,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOOrganizationConfig' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

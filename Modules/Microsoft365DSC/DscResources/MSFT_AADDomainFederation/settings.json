@@ -1,5 +1,42 @@
 {
   "resourceName": "AADDomainFederation",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "internalDomainFederation",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDomainFederationConfiguration",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DefaultInteractiveAuthenticationMethod",
+      "reason": "Deferred",
+      "note": "Present in the beta metadata only, with no description and no documentation."
+    },
+    {
+      "name": "DomainId",
+      "reason": "Accepted",
+      "note": "Parent domain of the federation configuration. Held as the key."
+    },
+    {
+      "name": "OpenIdConnectDiscoveryEndpoint",
+      "reason": "Deferred",
+      "note": "Present in the beta metadata only, with no description and no documentation."
+    },
+    {
+      "name": "PasswordChangeUri",
+      "reason": "Deferred",
+      "note": "Present in the beta metadata only, with no description and no documentation."
+    },
+    {
+      "name": "SigningCertificateUpdateStatus",
+      "reason": "ReadOnly",
+      "note": "Rollover result, with the certificates in SigningCertificate and NextSigningCertificate"
+    }
+  ],
   "description": "Manages Azure Active Directory Domain Federation configurations including SAML/WS-Fed settings, signing certificates, and authentication protocols for federated domains.",
   "roles": {
     "read": [

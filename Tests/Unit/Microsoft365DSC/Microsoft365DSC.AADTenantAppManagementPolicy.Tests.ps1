@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -95,7 +95,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -110,7 +110,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return maxLifetime in ISO 8601 format from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Get().ToHashtable()
                 $result.IsSingleInstance | Should -Be 'Yes'
                 $result.ApplicationRestrictions.passwordCredentials | Should -HaveCount 4
                 $lifetimeCred = $result.ApplicationRestrictions.passwordCredentials | Where-Object { $_.restrictionType -eq 'passwordLifetime' }
@@ -126,46 +126,51 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Description         = "MyDescription"
                     IsEnabled           = $true
                     IsSingleInstance    = 'Yes'
-                    ApplicationRestrictions          = (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictions -Property @{
-                        passwordCredentials = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictionsCredential -Property @{
+                    ApplicationRestrictions          = ([MSFT_AADTenantAppManagementPolicyRestrictions] @{
+                        passwordCredentials = @(
+                            ([MSFT_AADTenantAppManagementPolicyRestrictionsCredential] @{
                                 restrictForAppsCreatedAfterDateTime = "1/1/0001 5:00:00 AM"
                                 restrictionType = "passwordAddition"
                                 state = "enabled"
-                            } -ClientOnly);
-                            (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictionsCredential -Property @{
+                            });
+                            ([MSFT_AADTenantAppManagementPolicyRestrictionsCredential] @{
                                 maxLifetime = "P90D"
                                 restrictForAppsCreatedAfterDateTime = "1/1/0001 5:00:00 AM"
                                 restrictionType = "passwordLifetime"
                                 state = "enabled"
-                            } -ClientOnly);
-                            (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictionsCredential -Property @{
+                            });
+                            ([MSFT_AADTenantAppManagementPolicyRestrictionsCredential] @{
                                 restrictForAppsCreatedAfterDateTime = "1/1/0001 5:00:00 AM"
                                 restrictionType = "symmetricKeyAddition"
                                 state = "enabled"
-                            } -ClientOnly);
-                            (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictionsCredential -Property @{
+                            });
+                            ([MSFT_AADTenantAppManagementPolicyRestrictionsCredential] @{
                                 maxLifetime = "P90D"
                                 restrictForAppsCreatedAfterDateTime = "1/1/0001 5:00:00 AM"
                                 restrictionType = "symmetricKeyLifetime"
                                 state = "enabled"
-                            } -ClientOnly);
+                            });
                         )
-                    } -ClientOnly);
+                    });
                     Credential          = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).IsSingleInstance | Should -Be 'Yes'
+                ((New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Get().ToHashtable()).IsSingleInstance | Should -Be 'Yes'
+
+                Mock -CommandName Get-MgBetaPolicyDefaultAppManagementPolicy -MockWith {
+                    return $null
+                }
+                { (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Get() } | Should -Throw '*Could not find the tenant app management policy.*'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaPolicyDefaultAppManagementPolicy -Exactly 1
             }
         }
@@ -176,22 +181,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName         = "MyPolicy"
                     Description         = "MyDescription"
                     IsEnabled           = $true
-                    ApplicationRestrictions = (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictions -Property @{
-                        keyCredentials = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictionsCredential -Property @{
+                    ApplicationRestrictions = ([MSFT_AADTenantAppManagementPolicyRestrictions] @{
+                        keyCredentials = @(
+                            ([MSFT_AADTenantAppManagementPolicyRestrictionsCredential] @{
                                 maxLifetime = "P30D"
                                 restrictForAppsCreatedAfterDateTime = "0001-01-01T00:00:00.0000000"
                                 restrictionType = "asymmetricKeyLifetime"
                                 state = "enabled"
-                            } -ClientOnly);
-                            (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictionsCredential -Property @{
+                            });
+                            ([MSFT_AADTenantAppManagementPolicyRestrictionsCredential] @{
                                 certificateBasedApplicationConfigurationIds = [System.String[]]@("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
                                 restrictForAppsCreatedAfterDateTime = "0001-01-01T00:00:00.0000000"
                                 restrictionType = "trustedCertificateAuthority"
                                 state = "enabled"
-                            } -ClientOnly);
+                            });
                         )
-                    } -ClientOnly);
+                    });
                     IsSingleInstance = 'Yes'
                     Credential          = $Credential;
                 }
@@ -223,7 +228,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Get().ToHashtable()
                 $result.IsSingleInstance | Should -Be 'Yes'
                 $result.ApplicationRestrictions.keyCredentials | Should -HaveCount 2
                 $trustedCACred = $result.ApplicationRestrictions.keyCredentials | Where-Object { $_.restrictionType -eq 'trustedCertificateAuthority' }
@@ -232,7 +237,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -242,15 +247,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName         = "MyPolicy"
                     Description         = "MyDescription"
                     IsEnabled           = $true
-                    ServicePrincipalRestrictions = (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictions -Property @{
-                        passwordCredentials = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_AADTenantAppManagementPolicyRestrictionsCredential -Property @{
+                    ServicePrincipalRestrictions = ([MSFT_AADTenantAppManagementPolicyRestrictions] @{
+                        passwordCredentials = @(
+                            ([MSFT_AADTenantAppManagementPolicyRestrictionsCredential] @{
                                 restrictForAppsCreatedAfterDateTime = "0001-01-01T00:00:00.0000000"
                                 restrictionType = "passwordAddition"
                                 state = "enabled"
-                            } -ClientOnly);
+                            });
                         )
-                    } -ClientOnly);
+                    });
                     IsSingleInstance    = 'Yes'
                     Credential          = $Credential;
                 }
@@ -275,13 +280,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Get().ToHashtable()
                 $result.IsSingleInstance | Should -Be 'Yes'
                 $result.ServicePrincipalRestrictions.passwordCredentials | Should -HaveCount 1
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADTenantAppManagementPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -294,7 +299,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADTenantAppManagementPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -19,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile 'myWifiConfigAndroidWorkProfilePolicy'
+        IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile 'IntuneWifiConfigurationPolicyAndroidEnterpriseWorkProfile-Example'
         {
-            DisplayName                    = 'wifi - android BYOD'
-            Ensure                         = 'Absent'
+            DisplayName           = 'wifi - android BYOD'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

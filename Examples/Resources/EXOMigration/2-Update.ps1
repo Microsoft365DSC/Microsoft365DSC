@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,23 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOMigration "EXOMigration-test"
+        EXOMigration "EXOMigration-Example"
         {
-            AddUsers             = $True;  #Updated Property
-            BadItemLimit         = "";
-            CompleteAfter        = "12/31/9999 11:59:59 PM";
-            Ensure               = "Present";
-            Identity             = "test";
-            LargeItemLimit       = "";
-            MoveOptions          = @();
-            NotificationEmails   = @("eac_admin@bellred.org");
-            SkipMerging          = @();
-            Status               = "Completed";
-            Update               = $False;
+            AddUsers              = $True; # Updated Property
+            CompleteAfter         = "12/31/9999 11:59:59 PM";
+            Ensure                = "Present";
+            Identity              = "Mailbox Batch 1";
+            MigrationUsers        = @("AdeleV@$TenantId", "AlexW@$TenantId");
+            MoveOptions           = @();
+            NotificationEmails    = @("MeganB@$TenantId");
+            SkipMerging           = @();
+            Status                = "Completed";
+            Update                = $False;
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

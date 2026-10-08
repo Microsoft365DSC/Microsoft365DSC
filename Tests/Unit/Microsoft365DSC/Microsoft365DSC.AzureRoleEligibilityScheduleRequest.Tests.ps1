@@ -23,16 +23,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
             $Global:CurrentModeIsExport = $false
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
             $Script:exportedInstances = $null
             $Script:ExportMode = $null
-            Mock -CommandName Add-M365DSCTelemetryEvent -MockWith {
+            Mock -CommandName Add-M365DSCTelemetryEvent -ModuleName '_Shared' -MockWith {
             }
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -86,13 +86,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Principal            = "John.Smith@contoso.com";
                     PrincipalType        = "User"
                     RoleDefinition       = "Owner";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
                         startDateTime             = '2023-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             endDateTime = '2025-10-31T02:40:09Z'
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
@@ -102,13 +102,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-AzRoleEligibilityScheduleRequest -Exactly 1
             }
         }
@@ -123,26 +123,26 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Owner";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-AzRoleEligibilityScheduleRequest -Exactly 1
             }
         }
@@ -157,22 +157,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Owner";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $true
             }
         }
         Context -Name 'The instance Exists and specified Values are NOT in the desired state' -Fixture {
@@ -185,32 +185,32 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Owner";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
                         startDateTime = '2023-01-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             endDateTime = (Get-Date).AddYears(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set to Update the instance' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-AzRoleEligibilityScheduleRequest -Exactly 1
             }
         }
-        Context -Name 'Set-TargetResource should throw when Role Definition is not found' -Fixture {
+        Context -Name 'Set() should throw when Role Definition is not found' -Fixture {
             BeforeAll {
                 $Script:RoleDefinitions = $null
                 $Script:AllSchedules = $null
@@ -220,13 +220,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Principal            = "John.Smith@contoso.com";
                     PrincipalType        = "User"
                     RoleDefinition       = "NonExistentRole";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
                         startDateTime = '2023-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             endDateTime = '2025-10-31T02:40:09Z'
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
@@ -241,11 +241,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should throw when Role Definition lookup fails' {
-                { Set-TargetResource @testParams } | Should -Throw -ExpectedMessage "*Couldn't find Role Definition*"
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Set() } | Should -Throw -ExpectedMessage "*Couldn't find Role Definition*"
             }
         }
 
-        Context -Name 'Set-TargetResource should throw when Principal is not found' -Fixture {
+        Context -Name 'Set() should throw when Principal is not found' -Fixture {
             BeforeAll {
                 $Script:RoleDefinitions = $null
                 $Script:AllSchedules = $null
@@ -255,13 +255,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Principal            = "NonExistent@contoso.com";
                     PrincipalType        = "User"
                     RoleDefinition       = "Owner";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
                         startDateTime   = '2023-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             endDateTime = '2025-10-31T02:40:09Z'
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
@@ -276,7 +276,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should throw when Principal lookup fails' {
-                { Set-TargetResource @testParams } | Should -Throw -ExpectedMessage "*Couldn't find Principal*"
+                { (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Set() } | Should -Throw -ExpectedMessage "*Couldn't find Principal*"
             }
         }
 
@@ -290,13 +290,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Principal            = "John.Smith@contoso.com";
                     PrincipalType        = "User"
                     RoleDefinition       = "Reader";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
                         startDateTime   = '2023-09-01T02:40:44Z'
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             endDateTime = (Get-Date).AddYears(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
@@ -306,13 +306,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-AzRoleEligibilityScheduleRequest -Exactly 1
             }
         }
@@ -327,11 +327,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Owner";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             type        = 'afterDateTime'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
@@ -350,11 +350,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -368,12 +368,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Principal            = "SecurityGroup";
                     PrincipalType        = "Group"
                     RoleDefinition       = "Contributor";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
                         startDateTime = '2024-01-01T00:00:00Z'
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             type = 'noExpiration'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
@@ -398,15 +398,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Create the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-AzRoleEligibilityScheduleRequest -Exactly 1
             }
         }
@@ -421,11 +421,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PrincipalType        = "User"
                     Principal            = "John.Smith@contoso.com";
                     RoleDefinition       = "Owner";
-                    ScheduleInfo         = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestSchedule -Property @{
-                        expiration = New-CimInstance -ClassName MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration -Property @{
+                    ScheduleInfo         = [MSFT_AzureRoleEligibilityScheduleRequestSchedule] @{
+                        expiration = [MSFT_AzureRoleEligibilityScheduleRequestScheduleExpiration] @{
                             type = 'noExpiration'
-                        } -ClientOnly
-                    } -ClientOnly
+                        }
+                    }
                     SubscriptionId       = "00000000-0000-0000-0000-000000000000"
                     Credential           = $Credential
                 }
@@ -444,15 +444,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should format PM StartDateTime with 24-hour format' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AzureRoleEligibilityScheduleRequest' -Property $testParams).Get().ToHashtable()
                 $result.ScheduleInfo.StartDateTime | Should -Be '2021-09-01T14:30:00Z'
             }
         }
@@ -494,38 +494,38 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
 
             It 'Should not call Get-AzRoleEligibilitySchedule with Scope /' {
-                Export-TargetResource @testParams
+                Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 Should -Invoke -CommandName Get-AzRoleEligibilitySchedule -ParameterFilter {
                     $Scope -eq '/'
                 } -Exactly 0
             }
 
             It 'Should call Get-AzRoleEligibilitySchedule with root management group scope' {
-                Export-TargetResource @testParams
+                Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 Should -Invoke -CommandName Get-AzRoleEligibilitySchedule -ParameterFilter {
                     $Scope -eq '/providers/Microsoft.Management/managementGroups/rootTenantGroupId'
                 } -Exactly 1
             }
 
             It 'Should call Get-AzRoleEligibilitySchedule with child management group scope' {
-                Export-TargetResource @testParams
+                Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 Should -Invoke -CommandName Get-AzRoleEligibilitySchedule -ParameterFilter {
                     $Scope -eq '/providers/Microsoft.Management/managementGroups/childMgGroup'
                 } -Exactly 1
             }
 
             It 'Should call Get-AzTenant to discover root management group' {
-                Export-TargetResource @testParams
+                Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 Should -Invoke -CommandName Get-AzTenant -Exactly 1
             }
 
             It 'Should call Get-AzManagementGroup with root group ID for recursive expansion' {
-                Export-TargetResource @testParams
+                Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 Should -Invoke -CommandName Get-AzManagementGroup -ParameterFilter {
                     $GroupName -eq 'rootTenantGroupId' -and $Expand -eq $true -and $Recurse -eq $true
                 } -Exactly 1
@@ -560,16 +560,104 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Set-AzContext -MockWith {}
 
-                Mock -CommandName Get-AzResourceGroup -MockWith {
-                    return @()
+                Mock -CommandName Invoke-AzRestMethod -MockWith {
+                    return @{ StatusCode = 200; Content = '{"value":[]}' }
                 }
             }
 
             It 'Should call Get-AzRoleEligibilitySchedule without -Filter parameter when Filter is empty' {
-                Export-TargetResource @testParams
+                Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
                 Should -Invoke -CommandName Get-AzRoleEligibilitySchedule -ParameterFilter {
                     $null -eq $Filter
                 }
+            }
+        }
+
+        Context -Name 'ReverseDSC Tests - Resource groups of all subscriptions' -Fixture {
+            BeforeAll {
+                $Script:RoleDefinitions = $null
+                $Script:AllSchedules = $null
+                $Global:CurrentModeIsExport = $true
+                $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
+                $testParams = @{
+                    SubscriptionId = "00000000-0000-0000-0000-000000000000"
+                    Credential     = $Credential
+                }
+
+                Mock -CommandName Get-AzTenant -MockWith {
+                    return $null
+                }
+
+                Mock -CommandName Get-AzManagementGroup -MockWith {
+                    return @()
+                }
+
+                Mock -CommandName Get-AzSubscription -MockWith {
+                    return @(
+                        @{ Id = 'sub-001' }
+                    )
+                }
+
+                Mock -CommandName Set-AzContext -MockWith {}
+
+                Mock -CommandName Invoke-AzRestMethod -ParameterFilter { $Path -eq '/subscriptions/sub-001/resourcegroups?api-version=2021-04-01' } -MockWith {
+                    return @{ StatusCode = 200; Content = '{"value":[{"name":"rg-001"}],"nextLink":"https://management.azure.com/next"}' }
+                }
+
+                Mock -CommandName Invoke-AzRestMethod -ParameterFilter { $Uri -eq 'https://management.azure.com/next' } -MockWith {
+                    return @{ StatusCode = 200; Content = '{"value":[{"name":"rg-002"}]}' }
+                }
+            }
+
+            It 'Should query the resource groups of every page without changing the Azure context' {
+                Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
+                Should -Invoke -CommandName Get-AzRoleEligibilitySchedule -ParameterFilter {
+                    $Scope -eq '/subscriptions/sub-001/resourceGroups/rg-001'
+                } -Exactly 1
+                Should -Invoke -CommandName Get-AzRoleEligibilitySchedule -ParameterFilter {
+                    $Scope -eq '/subscriptions/sub-001/resourceGroups/rg-002'
+                } -Exactly 1
+                Should -Invoke -CommandName Set-AzContext -Exactly 0
+            }
+        }
+
+        Context -Name 'ReverseDSC Tests - Unresolved principal' -Fixture {
+            BeforeAll {
+                $Script:RoleDefinitions = $null
+                $Script:AllSchedules = $null
+                $Global:CurrentModeIsExport = $true
+                $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
+                $testParams = @{
+                    SubscriptionId = "00000000-0000-0000-0000-000000000000"
+                    Credential     = $Credential
+                }
+
+                Mock -CommandName Get-AzTenant -MockWith {
+                    return @{
+                        TenantRootGroupId = 'rootTenantGroupId'
+                    }
+                }
+
+                Mock -CommandName Get-AzManagementGroup -MockWith {
+                    return @{
+                        Name     = 'rootTenantGroupId'
+                        Type     = '/providers/Microsoft.Management/managementGroups'
+                        Children = @()
+                    }
+                }
+
+                Mock -CommandName Get-AzSubscription -MockWith {
+                    return @()
+                }
+
+                Mock -CommandName Get-AzADUser -MockWith {
+                    return $null
+                }
+            }
+
+            It 'Should skip the instance instead of failing' {
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureRoleEligibilityScheduleRequest' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Not -BeLike '*12345-12345-12345-12345-12345*'
             }
         }
     }

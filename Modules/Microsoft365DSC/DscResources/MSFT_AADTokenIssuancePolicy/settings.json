@@ -1,5 +1,16 @@
 {
   "resourceName": "AADTokenIssuancePolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "tokenIssuancePolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyTokenIssuancePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Represents the policy to specify the characteristics of SAML tokens issued by Microsoft Entra ID.",
   "roles": {
     "read": [],

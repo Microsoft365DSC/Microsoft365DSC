@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10 'Example'
+        IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10 'IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10-Example'
         {
             Assignments                      = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments
                 {
                     deviceAndAppManagementAssignmentFilterType = 'none'
                     dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments
+                {
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
                 }
             )
             DefinitionValues                 = @(
@@ -145,9 +152,9 @@ Configuration Example
             DisplayName                      = 'admin template'
             Ensure                           = 'Present'
             PolicyConfigurationIngestionType = 'unknown'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                    = $ApplicationId;
+            TenantId                         = $TenantId;
+            CertificateThumbprint            = $CertificateThumbprint;
         }
     }
 }

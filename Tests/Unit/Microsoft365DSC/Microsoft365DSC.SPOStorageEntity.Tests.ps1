@@ -23,9 +23,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -36,7 +36,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -75,7 +75,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     SiteUrl     = 'https://contoso-admin.sharepoint.com'
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
@@ -85,11 +85,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -106,7 +106,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential  = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
@@ -122,11 +122,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -142,7 +142,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     SiteUrl     = 'https://contoso-admin.sharepoint.com'
                     Credential  = $Credential
                 }
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
@@ -168,15 +168,51 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Updates storage entity in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Set()
+            }
+        }
+
+        Context -Name 'Adding a tenant storage entity is denied' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Key         = 'DSCKey'
+                    Value       = 'Test storage entity'
+                    EntityScope = 'Tenant'
+                    Ensure      = 'Present'
+                    SiteUrl     = 'https://contoso-admin.sharepoint.com'
+                    Credential  = $Credential
+                }
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
+                    return 'Credentials'
+                }
+
+                Mock -CommandName Get-PnPStorageEntity -MockWith {
+                    return $null
+                }
+
+                Mock -CommandName Get-PnPTenantAppCatalogUrl -MockWith {
+                    return 'https://contoso.sharepoint.com/sites/appcatalog'
+                }
+
+                Mock -CommandName Set-PnPStorageEntity -MockWith {
+                    throw 'Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))'
+                }
+            }
+
+            It 'Names the app catalog and its custom script setting, and restores the setting' {
+                { (New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Set() } |
+                    Should -Throw -ExpectedMessage '*https://contoso.sharepoint.com/sites/appcatalog*DenyAddAndCustomizePages was {Enabled}*'
+                Should -Invoke -CommandName Set-PnPTenantSite -Exactly -Times 1 -ParameterFilter {
+                    $Identity -eq 'https://contoso.sharepoint.com/sites/appcatalog' -and $NoScriptSite -eq $true
+                }
             }
         }
 
@@ -193,7 +229,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential  = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
@@ -213,15 +249,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Remove storage entity in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOStorageEntity' -Property $testParams).Set()
+                Should -Invoke -CommandName Remove-PnPStorageEntity -Exactly 1 -ParameterFilter { $Key -eq 'DSCKey' -and $Scope -eq 'Site' }
+                Should -Invoke -CommandName Set-PnPTenantSite -Exactly 1 -ParameterFilter { $NoScriptSite -eq $false }
+                Should -Invoke -CommandName Set-PnPTenantSite -Exactly 1 -ParameterFilter { $NoScriptSite -eq $true }
             }
         }
 
@@ -233,7 +272,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential = $Credential
                 }
 
-                Mock -CommandName New-M365DSCConnection -MockWith {
+                Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                     return 'Credentials'
                 }
 
@@ -252,7 +291,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOStorageEntity' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

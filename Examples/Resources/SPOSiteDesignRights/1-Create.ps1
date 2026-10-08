@@ -5,22 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SPOSiteDesignRights 'ConfigureSiteDesignRights'
+        SPOSiteDesignRights 'SPOSiteDesignRights-Example'
         {
-            SiteDesignTitle = "Customer List"
-            UserPrincipals  = "jdoe@contoso.onmicrosoft.com"
-            Rights          = "View"
-            Ensure          = "Present"
-            Credential      = $Credscredential
+            SiteDesignTitle       = "Contoso Team Site Design"
+            UserPrincipals        = @("AdeleV@$TenantId")
+            Rights                = "View"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

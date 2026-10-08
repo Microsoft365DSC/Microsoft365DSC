@@ -1,5 +1,25 @@
 {
   "resourceName": "AADFilteringPolicyRule",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "networkaccess.policyRule",
+    "odataSubtype": [
+      "networkaccess.webCategoryFilteringRule",
+      "networkaccess.fqdnFilteringRule"
+    ],
+    "cmdletNoun": "MgBetaNetworkAccessFilteringPolicyRule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Policy",
+      "reason": "Accepted",
+      "note": "Names the parent filtering policy that owns the rule."
+    }
+  ],
   "description": "Configures filtering rules in Entra Id.",
   "roles": {
     "read": [],

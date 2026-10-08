@@ -1,5 +1,37 @@
 {
   "resourceName": "PlannerPlan",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "v1.0",
+    "entityType": "plannerPlan",
+    "odataSubtype": null,
+    "cmdletNoun": "MgPlannerPlan",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Container",
+      "reason": "ReadOnly",
+      "note": "Set when the plan is created and never updatable afterwards."
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on title and owning group."
+    },
+    {
+      "name": "Owner",
+      "reason": "Accepted",
+      "note": "Declared as OwnerGroup and written into the vendor owner property"
+    },
+    {
+      "name": "OwnerGroup",
+      "reason": "Accepted",
+      "note": "Accepts the id or the display name of the owning group and resolves it to the group id"
+    }
+  ],
   "description": "",
   "permissions": {
     "graph": {
@@ -9,7 +41,7 @@
             "name": "Group.Read.All"
           },
           {
-            "name": "Tasks.Read.All"
+            "name": "Tasks.Read"
           }
         ],
         "update": [
@@ -17,7 +49,7 @@
             "name": "Group.Read.All"
           },
           {
-            "name": "Tasks.ReadWrite.All"
+            "name": "Tasks.ReadWrite"
           }
         ]
       },

@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,7 +33,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -82,6 +82,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Grant-CsTeamsMessagingPolicy -MockWith {
             }
             Mock -CommandName Grant-CsTeamsMobilityPolicy -MockWith {
+            }
+            Mock -CommandName Grant-CsTeamsPersonalAttendantPolicy -MockWith {
             }
             Mock -CommandName Grant-CsTeamsUpdateManagementPolicy -MockWith {
             }
@@ -169,6 +171,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             PolicyName = "Test";
                         },
                         @{
+                            PolicyType = "TeamsPersonalAttendantPolicy"
+                            PolicyName = "Test";
+                        },
+                        @{
                             PolicyType = "TeamsUpdateManagementPolicy"
                             PolicyName = "Test";
                         },
@@ -214,6 +220,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     TeamsMeetingPolicy              = "Test";
                     TeamsMessagingPolicy            = "Test";
                     TeamsMobilityPolicy             = "Test";
+                    TeamsPersonalAttendantPolicy    = "Test";
                     TeamsUpdateManagementPolicy     = "Test";
                     TeamsUpgradePolicy              = "Test";
                     TenantDialPlan                  = "Test";
@@ -222,7 +229,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUserPolicyAssignment' -Property $testParams).Test() | Should -Be $true
+            }
+
+            It 'Should return Global without assignments and nothing for a missing user from the Get method' {
+                Mock -CommandName Get-CsUserPolicyAssignment -MockWith {
+                }
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUserPolicyAssignment' -Property $testParams).Get().ToHashtable().TeamsPersonalAttendantPolicy | Should -Be 'Global'
+
+                Mock -CommandName Get-CsUserPolicyAssignment -MockWith {
+                    Write-Error -Message 'User does not exist'
+                }
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUserPolicyAssignment' -Property $testParams).Get().ToHashtable().User | Should -BeNullOrEmpty
             }
         }
 
@@ -249,6 +267,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     TeamsMeetingPolicy              = "Test";
                     TeamsMessagingPolicy            = "Test";
                     TeamsMobilityPolicy             = "Test";
+                    TeamsPersonalAttendantPolicy    = "Test";
                     TeamsUpdateManagementPolicy     = "Test";
                     TeamsUpgradePolicy              = "Test";
                     TenantDialPlan                  = "DemTestPlan";
@@ -257,11 +276,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUserPolicyAssignment' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUserPolicyAssignment' -Property $testParams).Set()
                 Should -Invoke -CommandName Grant-CsOnlineVoiceRoutingPolicy -Exactly 1
             }
         }
@@ -276,7 +295,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsUserPolicyAssignment' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

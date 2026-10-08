@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationIdentityProtectionPolicyWindows10 'Example'
+        IntuneDeviceConfigurationIdentityProtectionPolicyWindows10 'IntuneDeviceConfigurationIdentityProtectionPolicyWindows10-Example'
         {
-            DisplayName                                  = "identity protection";
-            Ensure                                       = "Absent";
+            DisplayName           = "identity protection";
+            Ensure                = "Absent";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

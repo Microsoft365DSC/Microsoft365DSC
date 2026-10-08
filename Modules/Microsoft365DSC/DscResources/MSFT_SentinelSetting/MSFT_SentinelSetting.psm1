@@ -1,510 +1,328 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SentinelSetting'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SentinelSetting : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ResourceGroupName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Resource Group Name')]
+    [System.String] $ResourceGroupName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $WorkspaceName,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The name of the workspace.')]
+    [System.String] $WorkspaceName
 
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Gets subscription credentials which uniquely identify Microsoft Azure subscription. The subscription ID forms part of the URI for every service call.')]
+    [System.String] $SubscriptionId
 
-        [Parameter()]
-        [System.Boolean]
-        $AnomaliesIsEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specififies if Anomaly detection should be enabled or not.')]
+    [System.Nullable[System.Boolean]] $AnomaliesIsEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $EntityAnalyticsIsEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specififies if Entity Analyticsshould be enabled or not.')]
+    [System.Nullable[System.Boolean]] $EntityAnalyticsIsEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $EyesOnIsEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specififies if Auditing and Health Monitoring should be enabled or not.')]
+    [System.Nullable[System.Boolean]] $EyesOnIsEnabled
 
-        [Parameter()]
-        [System.String[]]
-        $UebaDataSource,
+    [DscProperty()]
+    [System.ComponentModel.Description('The list of Data sources associated with the UEBA.')]
+    [System.String[]] $UebaDataSource
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for Sentinel Settings for Resource Group: $ResourceGroupName, Workspace: $WorkspaceName"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [SentinelSetting] Get()
     {
-        $null = New-M365DSCConnection -Workload 'Azure' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [SentinelSetting]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration for Sentinel Settings for Resource Group: $($this.ResourceGroupName), Workspace: $($this.WorkspaceName)"
+
+        try
+        {
+            $null = $this.Connect('Azure')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $ResourceGroupNameValue = $this.ResourceGroupName
+            $WorkspaceNameValue = $this.WorkspaceName
+            if ($null -ne $this.ResourceCache['exportedInstances'] -and $this.ResourceCache['ExportMode'])
+            {
+                $entry = $this.ResourceCache['exportedInstances'] | Where-Object -FilterScript { $_.Name -eq $this.WorkspaceName }
+                $instance = Get-AzSentinelSetting -ResourceGroupName $entry.ResourceGroupName `
+                    -WorkspaceName $entry.Name `
+                    -SubscriptionId $this.SubscriptionId `
+                    -ErrorAction SilentlyContinue
+                $ResourceGroupNameValue = $entry.ResourceGroupName
+                $WorkspaceNameValue = $entry.Name
+            }
+            else
+            {
+                Write-Verbose -Message "Retrieving Sentinel Settings for {$($this.WorkspaceName)}"
+                $instance = Get-AzSentinelSetting -ResourceGroupName $this.ResourceGroupName `
+                    -WorkspaceName $this.WorkspaceName `
+                    -ErrorAction SilentlyContinue `
+                    -SubscriptionId $this.SubscriptionId
+            }
+
+            if ($null -eq $instance)
+            {
+                throw "Failed to get configuration for Sentinel Workspace {$($this.WorkspaceName)} in Resource Group {$($this.ResourceGroupName)}"
+            }
+
+            Write-Verbose -Message "Found an instance of Sentinel Workspace {$($this.WorkspaceName)}"
+            $Anomalies = $instance | Where-Object -FilterScript { $_.Name -eq 'Anomalies' }
+            $AnomaliesIsEnabledValue = $false
+            if ($null -ne $Anomalies)
+            {
+                Write-Verbose -Message 'Anomalies instance found.'
+                $AnomaliesIsEnabledValue = $Anomalies.IsEnabled
+            }
+
+            $EntityAnalytics = $instance | Where-Object -FilterScript { $_.Name -eq 'EntityAnalytics' }
+            $EntityAnalyticsIsEnabledValue = $false
+            if ($null -ne $EntityAnalytics)
+            {
+                Write-Verbose -Message 'EntityAnalytics instance found.'
+                $EntityAnalyticsIsEnabledValue = $EntityAnalytics.IsEnabled
+            }
+
+            $EyesOn = $instance | Where-Object -FilterScript { $_.Name -eq 'EyesOn' }
+            $EyesOnIsEnabledValue = $false
+            if ($null -ne $EyesOn)
+            {
+                Write-Verbose -Message 'EyesOn instance found.'
+                $EyesOnIsEnabledValue = $EyesOn.IsEnabled
+            }
+
+            $Ueba = $instance | Where-Object -FilterScript { $_.Name -eq 'Ueba' }
+            $UebaDataSourceValue = $null
+            if ($null -ne $Ueba)
+            {
+                Write-Verbose -Message 'UEBA Data source instance found.'
+                $UebaDataSourceValue = $Ueba.DataSource
+            }
+
+            $results = @{
+                AnomaliesIsEnabled       = [Boolean]$AnomaliesIsEnabledValue
+                EntityAnalyticsIsEnabled = [Boolean]$EntityAnalyticsIsEnabledValue
+                EyesOnIsEnabled          = [Boolean]$EyesOnIsEnabledValue
+                UebaDataSource           = $UebaDataSourceValue
+                ResourceGroupName        = $ResourceGroupNameValue
+                WorkspaceName            = $WorkspaceNameValue
+                SubscriptionId           = $this.SubscriptionId
+                Credential               = $this.Credential
+                ApplicationId            = $this.ApplicationId
+                TenantId                 = $this.TenantId
+                CertificateThumbprint    = $this.CertificateThumbprint
+                CertificatePath          = $this.CertificatePath
+                CertificatePassword      = $this.CertificatePassword
+                ManagedIdentity          = $this.ManagedIdentity
+                AccessTokens             = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for Sentinel Settings for Resource Group: $($this.ResourceGroupName), Workspace: $($this.WorkspaceName)"
+
+        $null = $this.Connect('Azure')
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $ResourceGroupNameValue = $ResourceGroupName
-        $WorkspaceNameValue = $WorkspaceName
-        if ($null -ne $Script:exportedInstances -and $Script:ExportMode)
+        if ($this.GetBoundParameters().ContainsKey('AnomaliesIsEnabled'))
         {
-            $entry = $Script:exportedInstances | Where-Object -FilterScript { $_.Name -eq $WorkspaceName }
-            $instance = Get-AzSentinelSetting -ResourceGroupName $entry.ResourceGroupName `
-                -WorkspaceName $entry.Name `
-                -SubscriptionId $SubscriptionId `
-                -ErrorAction SilentlyContinue
-            $ResourceGroupNameValue = $entry.ResourceGroupName
-            $WorkspaceNameValue = $entry.Name
+            Write-Verbose -Message "Updating Anomalies IsEnabled value to {$($this.AnomaliesIsEnabled)}"
+            Update-AzSentinelSetting -ResourceGroupName $this.ResourceGroupName `
+                -WorkspaceName $this.WorkspaceName `
+                -SettingsName 'Anomalies' `
+                -Enabled $this.AnomaliesIsEnabled | Out-Null
         }
-        else
+        if ($this.GetBoundParameters().ContainsKey('EntityAnalyticsIsEnabled'))
         {
-            Write-Verbose -Message "Retrieving Sentinel Settings for {$WorkspaceName}"
-            $instance = Get-AzSentinelSetting -ResourceGroupName $ResourceGroupName `
-                -WorkspaceName $WorkspaceName `
-                -ErrorAction SilentlyContinue `
-                -SubscriptionId $SubscriptionId
+            Write-Verbose -Message "Updating Entity Analytics IsEnabled value to {$($this.EntityAnalyticsIsEnabled)}"
+            Update-AzSentinelSetting -ResourceGroupName $this.ResourceGroupName `
+                -WorkspaceName $this.WorkspaceName `
+                -SettingsName 'EntityAnalytics' `
+                -Enabled $this.EntityAnalyticsIsEnabled | Out-Null
         }
-
-        if ($null -eq $instance)
+        if ($this.GetBoundParameters().ContainsKey('EyesOnIsEnabled'))
         {
-            throw "Failed to get configuration for Sentinel Workspace {$WorkspaceName} in Resource Group {$ResourceGroupName}"
+            Write-Verbose -Message "Updating Eyes On IsEnabled value to {$($this.EyesOnIsEnabled)}"
+            Update-AzSentinelSetting -ResourceGroupName $this.ResourceGroupName `
+                -WorkspaceName $this.WorkspaceName `
+                -SettingsName 'EyesOn' `
+                -Enabled $this.EyesOnIsEnabled | Out-Null
         }
-
-        Write-Verbose -Message "Found an instance of Sentinel Workspace {$WorkspaceName}"
-        $Anomalies = $instance | Where-Object -FilterScript { $_.Name -eq 'Anomalies' }
-        $AnomaliesIsEnabledValue = $false
-        if ($null -ne $Anomalies)
+        if ($this.GetBoundParameters().ContainsKey('UebaDataSource'))
         {
-            Write-Verbose -Message 'Anomalies instance found.'
-            $AnomaliesIsEnabledValue = $Anomalies.IsEnabled
+            Write-Verbose -Message "Updating UEBA Data Source value to {$($this.UebaDataSource)}"
+            Update-AzSentinelSetting -ResourceGroupName $this.ResourceGroupName `
+                -WorkspaceName $this.WorkspaceName `
+                -SettingsName 'Ueba' `
+                -DataSource $this.UebaDataSource | Out-Null
         }
-
-        $EntityAnalytics = $instance | Where-Object -FilterScript { $_.Name -eq 'EntityAnalytics' }
-        $EntityAnalyticsIsEnabledValue = $false
-        if ($null -ne $EntityAnalytics)
-        {
-            Write-Verbose -Message 'EntityAnalytics instance found.'
-            $EntityAnalyticsIsEnabledValue = $EntityAnalytics.IsEnabled
-        }
-
-        $EyesOn = $instance | Where-Object -FilterScript { $_.Name -eq 'EyesOn' }
-        $EyesOnIsEnabledValue = $false
-        if ($null -ne $EyesOn)
-        {
-            Write-Verbose -Message 'EyesOn instance found.'
-            $EyesOnIsEnabledValue = $EyesOn.IsEnabled
-        }
-
-        $Ueba = $instance | Where-Object -FilterScript { $_.Name -eq 'Ueba' }
-        $UebaDataSourceValue = $null
-        if ($null -ne $Ueba)
-        {
-            Write-Verbose -Message 'UEBA Data source instance found.'
-            $UebaDataSourceValue = $Ueba.DataSource
-        }
-
-        $results = @{
-            AnomaliesIsEnabled       = [Boolean]$AnomaliesIsEnabledValue
-            EntityAnalyticsIsEnabled = [Boolean]$EntityAnalyticsIsEnabledValue
-            EyesOnIsEnabled          = [Boolean]$EyesOnIsEnabledValue
-            UebaDataSource           = $UebaDataSourceValue
-            ResourceGroupName        = $ResourceGroupNameValue
-            WorkspaceName            = $WorkspaceNameValue
-            SubscriptionId           = $SubscriptionId
-            Credential               = $Credential
-            ApplicationId            = $ApplicationId
-            TenantId                 = $TenantId
-            CertificateThumbprint    = $CertificateThumbprint
-            CertificatePath          = $CertificatePath
-            CertificatePassword      = $CertificatePassword
-            ManagedIdentity          = $ManagedIdentity.IsPresent
-            AccessTokens             = $AccessTokens
-        }
-        return $results
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
 
-        throw
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
     }
-}
 
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ResourceGroupName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $WorkspaceName,
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Boolean]
-        $AnomaliesIsEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EntityAnalyticsIsEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EyesOnIsEnabled,
-
-        [Parameter()]
-        [System.String[]]
-        $UebaDataSource,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Sentinel Settings for Resource Group: $ResourceGroupName, Workspace: $WorkspaceName"
-
-    $null = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    if ($PSBoundParameters.ContainsKey('AnomaliesIsEnabled'))
+    [string] Export()
     {
-        Write-Verbose -Message "Updating Anomalies IsEnabled value to {$AnomaliesIsEnabled}"
-        Update-AzSentinelSetting -ResourceGroupName $ResourceGroupName `
-            -WorkspaceName $WorkspaceName `
-            -SettingsName 'Anomalies' `
-            -Enabled $AnomaliesIsEnabled | Out-Null
-    }
-    if ($PSBoundParameters.ContainsKey('EntityAnalyticsIsEnabled'))
-    {
-        Write-Verbose -Message "Updating Entity Analytics IsEnabled value to {$EntityAnalyticsIsEnabled}"
-        Update-AzSentinelSetting -ResourceGroupName $ResourceGroupName `
-            -WorkspaceName $WorkspaceName `
-            -SettingsName 'EntityAnalytics' `
-            -Enabled $EntityAnalyticsIsEnabled | Out-Null
-    }
-    if ($PSBoundParameters.ContainsKey('EyesOnIsEnabled'))
-    {
-        Write-Verbose -Message "Updating Eyes On IsEnabled value to {$EyesOnIsEnabled}"
-        Update-AzSentinelSetting -ResourceGroupName $ResourceGroupName `
-            -WorkspaceName $WorkspaceName `
-            -SettingsName 'EyesOn' `
-            -Enabled $EyesOnIsEnabled | Out-Null
-    }
-    if ($PSBoundParameters.ContainsKey('UebaDataSource'))
-    {
-        Write-Verbose -Message "Updating UEBA Data Source value to {$UebaDataSource}"
-        Update-AzSentinelSetting -ResourceGroupName $ResourceGroupName `
-            -WorkspaceName $WorkspaceName `
-            -SettingsName 'Ueba' `
-            -DataSource $UebaDataSource | Out-Null
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $ResourceGroupName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $WorkspaceName,
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Boolean]
-        $AnomaliesIsEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EntityAnalyticsIsEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $EyesOnIsEnabled,
-
-        [Parameter()]
-        [System.String[]]
-        $UebaDataSource,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $Script:ExportMode = $true
-        $sentinelInstances = Get-AzResource -ResourceType 'Microsoft.OperationsManagement/solutions'
-        $sentinelNames = @()
-        foreach ($instance in $sentinelInstances)
+        if ($this.RequiresPowerShellCore())
         {
-            $sentinelNames += $instance.Name.Replace('SecurityInsights(', '').Replace(')', '')
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        [array] $Script:exportedInstances = Get-AzResource -ResourceType 'Microsoft.OperationalInsights/workspaces' | Where-Object Name -in $sentinelNames
 
-        $dscContent = [System.Text.StringBuilder]::new()
-        $i = 1
-        if ($Script:exportedInstances.Length -eq 0)
+        $ConnectionMode = $this.Connect('Azure')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $Script:exportedInstances)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            $this.ResourceCache['ExportMode'] = $true
+            $sentinelInstances = Get-AzResource -ResourceType 'Microsoft.OperationsManagement/solutions'
+            $sentinelNames = @()
+            foreach ($instance in $sentinelInstances)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $sentinelNames += $instance.Name.Replace('SecurityInsights(', '').Replace(')', '')
             }
-            $displayedKey = $config.Name
-            Write-M365DSCHost -Message "    |---[$i/$($Script:exportedInstances.Count)] $displayedKey" -DeferWrite
-            $SubscriptionId = $config.ResourceId.Split('/')[2]
-            $params = @{
-                ResourceGroupName     = $config.ResourceGroupName
-                WorkspaceName         = $config.Name
-                SubscriptionId        = $SubscriptionId
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            [array] $this.ResourceCache['exportedInstances'] = Get-AzResource -ResourceType 'Microsoft.OperationalInsights/workspaces' | Where-Object Name -in $sentinelNames
+
+            $dscContent = [System.Text.StringBuilder]::new()
+            $i = 1
+            if ($this.ResourceCache['exportedInstances'].Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $this.ResourceCache['exportedInstances'])
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+                $displayedKey = $config.Name
+                Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $displayedKey" -DeferWrite
+                $subscriptionIdValue = $config.ResourceId.Split('/')[2]
+                $params = @{
+                    ResourceGroupName     = $config.ResourceGroupName
+                    WorkspaceName         = $config.Name
+                    SubscriptionId        = $subscriptionIdValue
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
 
-            $Results = Get-TargetResource @Params
+                $Results = $this.GetForExport($Params)
 
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [SentinelSetting] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SentinelSetting])
+        {
+            return $Values
+        }
+
+        $result = [SentinelSetting]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,17 +22,15 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOPlace 'TestPlace'
+        EXOPlace 'EXOPlace-Example'
         {
-            AudioDeviceName        = "MyAudioDevice";
+            Ensure                = 'Absent'
+            Identity              = "Hood@$TenantId";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            DisplayDeviceName      = "DisplayDeviceName";
-            Ensure                 = 'Absent'
-            Identity               = "Hood@$TenantId";
         }
     }
 }

@@ -242,6 +242,12 @@ or
 Update-M365DSCAzureAdApplication -ApplicationName 'Microsoft365DSC' -Permissions @(@{Api='SharePoint';PermissionName='Sites.FullControl.All'}) -AdminConsent -Type Certificate -CreateSelfSignedCertificate -CertificatePath c:\Temp\M365DSC.cer -Credential (Get-Credential)
 ```
 
+The same cmdlet assigns the permissions to an existing managed identity when **-Type** is set to **ManagedIdentity**. The **-ApplicationName** parameter then takes the display name, object id or client id of the managed identity. No application, consent or credential is created, and the permissions take effect right away.
+
+```powershell
+Update-M365DSCAzureAdApplication -ApplicationName 'm365dsc-automation' -Permissions @(@{Api='SharePoint';PermissionName='Sites.FullControl.All'}) -Type ManagedIdentity -Credential (Get-Credential)
+```
+
 ## SharePoint PnP PowerShell Permissions
 
 All SharePoint Online resources are using the [SharePoint PnP PowerShell](https://github.com/pnp/powershell) module. Just like the Graph module, you can use the default PnP PowerShell app registration or create your own app registration.

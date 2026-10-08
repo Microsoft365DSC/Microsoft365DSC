@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,15 +22,15 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOIntraOrganizationConnector 'ConfigureIntraOrganizationConnector'
+        EXOIntraOrganizationConnector 'EXOIntraOrganizationConnector-Example'
         {
-            Identity             = "MainCloudConnector"
-            DiscoveryEndpoint    = "https://ExternalDiscovery.Contoso.com/"
-            TargetAddressDomains = "Cloud1.contoso.com","Cloud2.contoso.com"
-            Enabled              = $True
-            Ensure               = "Present"
+            Identity              = "MainCloudConnector"
+            DiscoveryEndpoint     = "https://ExternalDiscovery.Contoso.com/"
+            TargetAddressDomains  = "Cloud1.contoso.com","Cloud2.contoso.com"
+            Enabled               = $True
+            Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

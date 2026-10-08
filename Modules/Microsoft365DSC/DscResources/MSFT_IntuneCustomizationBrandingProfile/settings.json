@@ -1,5 +1,42 @@
 {
   "resourceName": "IntuneCustomizationBrandingProfile",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "intuneBrandingProfile",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementIntuneBrandingProfile",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "CustomPrivacyMessage",
+      "reason": "Accepted",
+      "note": "CustomCanSeePrivacyMessage and CustomCantSeePrivacyMessage carry the privacy text"
+    },
+    {
+      "name": "DisableClientTelemetry",
+      "reason": "NotConfigurable",
+      "note": "The service computes it as false and the Intune console cannot change it."
+    },
+    {
+      "name": "IsDefaultProfile",
+      "reason": "ReadOnly",
+      "note": "Intune flags the tenant's single default customization policy"
+    },
+    {
+      "name": "IsFactoryResetDisabled",
+      "reason": "Accepted",
+      "note": "CompanyPortalBlockedActions writes the reset block per platform"
+    },
+    {
+      "name": "IsRemoveDeviceDisabled",
+      "reason": "Accepted",
+      "note": "CompanyPortalBlockedActions writes the remove block per platform"
+    }
+  ],
   "description": "This resource configures an Intune Customization Branding Profile.",
   "permissions": {
     "graph": {
@@ -9,7 +46,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -17,7 +57,10 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
@@ -27,7 +70,10 @@
             "name": "DeviceManagementApps.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "read": [
@@ -35,7 +81,10 @@
             "name": "DeviceManagementApps.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }

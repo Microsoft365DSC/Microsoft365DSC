@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,23 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOSweepRule 'MyRule'
+        EXOSweepRule 'EXOSweepRule-Example'
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            DestinationFolder     = "Test2:\Deleted Items";
-            Enabled               = $True;
+            Enabled               = $true;
             Ensure                = "Present";
             KeepLatest            = 11;
-            Mailbox               = "Test2";
+            Mailbox               = "AdeleV@$TenantId";
             Name                  = "From Michelle";
             Provider              = "Exchange16";
             SenderName            = "michelle@fabrikam.com";
-            SourceFolder          = "Test2:\Inbox";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

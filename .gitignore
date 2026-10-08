@@ -1,4 +1,4 @@
-*.suo
+﻿*.suo
 *.user
 *.coverage
 .vs
@@ -10,6 +10,7 @@ Modules/Microsoft365DSC/Dependencies/Assemblies/*.xml
 Modules/Microsoft365DSC/DscResource.Tests
 Modules/Microsoft365DSC/DscResource.Tests/*
 Modules/Microsoft365DSC/SchemaDefinition.json
+Modules/Microsoft365DSC/Classes/
 node_modules
 node_modules/*
 markdownissues.txt
@@ -24,8 +25,20 @@ Modules/Microsoft365DSC/DscResources/MSFT_EXOAvailabilityAddressSpace/Add-Availa
 DscResource.Tests/*
 CodeCov.xml
 site
+coverage.xml
 
 # generated docs
 docs/site
 # Added by code-review-graph
 .code-review-graph/
+
+Modules/Microsoft365DSC/DscSchemaCache.json
+Utilities/ApiSurface/api-drift.json
+Utilities/ApiSurface/api-drift.md
+Modules/Microsoft365DSC/ResourcePermissions.json
+Modules/Microsoft365DSC/Microsoft365DSC.dsc.manifests.json
+
+# NuGet packages produced by dotnet pack
+artifacts/
+*.nupkg
+*.snupkg

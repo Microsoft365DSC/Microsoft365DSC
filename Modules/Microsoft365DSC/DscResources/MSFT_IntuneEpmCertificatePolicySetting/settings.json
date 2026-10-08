@@ -1,5 +1,37 @@
 {
   "resourceName": "IntuneEpmCertificatePolicySetting",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceManagementReusablePolicySetting",
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "CertificateFile",
+      "reason": "Accepted",
+      "note": "Flattened from the settingInstance property"
+    },
+    {
+      "name": "ReferencingConfigurationPolicyCount",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "SettingDefinitionId",
+      "reason": "Accepted",
+      "note": "The constant identifies this resource as the EPM certificate-file reusable setting."
+    },
+    {
+      "name": "SettingInstance",
+      "reason": "Accepted",
+      "note": "Set builds the envelope from fixed odata types, binding only CertificateFile."
+    }
+  ],
   "description": "This resource configures an Intune Endpoint Privilege Management Certificate Policy Setting.",
   "permissions": {
     "graph": {

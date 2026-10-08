@@ -27,7 +27,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -38,6 +38,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             Mock -CommandName Remove-JournalRule -MockWith {
+            }
+
+            Mock -CommandName Enable-JournalRule -MockWith {
+            }
+
+            Mock -CommandName Disable-JournalRule -MockWith {
             }
 
             Mock -CommandName Get-JournalRule -MockWith {
@@ -76,11 +82,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return False from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOJournalRule' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should call the New-JournalRule cmdlet' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOJournalRule' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-JournalRule' -Exactly 1
             }
         }
@@ -99,12 +105,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return False from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOJournalRule' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should set Call into the Set-JournalRule command exactly once' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOJournalRule' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Set-JournalRule' -Exactly 1
+                Should -Invoke -CommandName 'Enable-JournalRule' -Exactly 1 -ParameterFilter { $PesterBoundParameters.ContainsKey('Confirm') -and -not $Confirm }
             }
         }
 
@@ -119,12 +126,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return present from the Get-TargetResource function' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOJournalRule' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should call into the Remove-JournalRule cmdlet once' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName 'Remove-JournalRule' -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'EXOJournalRule' -Property $testParams).Set()
+                Should -Invoke -CommandName 'Remove-JournalRule' -Exactly 1 -ParameterFilter { $PesterBoundParameters.ContainsKey('Confirm') -and -not $Confirm }
             }
         }
 
@@ -138,7 +145,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOJournalRule' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }
@@ -146,3 +153,4 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 }
 
 Invoke-Command -ScriptBlock $Global:DscHelper.CleanupScript -NoNewScope
+

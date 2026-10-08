@@ -1,1362 +1,778 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneAntivirusPolicyWindows10ConfigMgr'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneAntivirusPolicyWindows10ConfigMgr : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Policy description')]
+    [System.String] $Description
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Policy name')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tags for this Entity instance.')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowArchiveScanning,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Archive Scanning (0: Not allowed. Turns off scanning on archived files., 1: Allowed. Scans the archive files.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowArchiveScanning
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowBehaviorMonitoring,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Behavior Monitoring (0: Not allowed. Turns off behavior monitoring., 1: Allowed. Turns on real-time behavior monitoring.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowBehaviorMonitoring
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowCloudProtection,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Cloud Protection (0: Not allowed. Turns off the Microsoft Active Protection Service., 1: Allowed. Turns on the Microsoft Active Protection Service.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowCloudProtection
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowEmailScanning,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Email Scanning (0: Not allowed. Turns off email scanning., 1: Allowed. Turns on email scanning.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowEmailScanning
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowFullScanOnMappedNetworkDrives,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Full Scan On Mapped Network Drives (0: Not allowed. Disables scanning on mapped network drives., 1: Allowed. Scans mapped network drives.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowFullScanOnMappedNetworkDrives
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowFullScanRemovableDriveScanning,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Full Scan Removable Drive Scanning (0: Not allowed. Turns off scanning on removable drives., 1: Allowed. Scans removable drives.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowFullScanRemovableDriveScanning
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowIntrusionPreventionSystem,
+    [DscProperty()]
+    [System.ComponentModel.Description('[Deprecated] Allow Intrusion Prevention System (0: Not allowed., 1: Allowed.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowIntrusionPreventionSystem
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowIOAVProtection,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow scanning of all downloaded files and attachments (0: Not allowed., 1: Allowed.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowIOAVProtection
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowRealtimeMonitoring,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Realtime Monitoring (0: Not allowed. Turns off the real-time monitoring service., 1: Allowed. Turns on and runs the real-time monitoring service.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowRealtimeMonitoring
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowScanningNetworkFiles,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Scanning Network Files (0: Not allowed. Turns off scanning of network files., 1: Allowed. Scans network files.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowScanningNetworkFiles
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowScriptScanning,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow Script Scanning (0: Not allowed., 1: Allowed.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowScriptScanning
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowUserUIAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow User UI Access (0: Not allowed. Prevents users from accessing UI., 1: Allowed. Lets users access UI.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowUserUIAccess
 
-        [Parameter()]
-        [ValidateRange(0, 100)]
-        [System.Int32]
-        $AvgCPULoadFactor,
+    [DscProperty()]
+    [System.ComponentModel.Description('Avg CPU Load Factor')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $AvgCPULoadFactor
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $CheckForSignaturesBeforeRunningScan,
+    [DscProperty()]
+    [System.ComponentModel.Description('Check For Signatures Before Running Scan (0: Disabled, 1: Enabled)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $CheckForSignaturesBeforeRunningScan
 
-        [Parameter()]
-        [ValidateSet(0, 2, 4, 6)]
-        [System.Int32]
-        $CloudBlockLevel,
+    [DscProperty()]
+    [System.ComponentModel.Description('Cloud Block Level (0: NotConfigured, 2: High, 4: HighPlus, 6: ZeroTolerance)')]
+    [ValidateSet('0', '2', '4', '6')]
+    [System.Nullable[System.Int32]] $CloudBlockLevel
 
-        [Parameter()]
-        [ValidateRange(0, 50)]
-        [System.Int32]
-        $CloudExtendedTimeout,
+    [DscProperty()]
+    [System.ComponentModel.Description('Cloud Extended Timeout')]
+    [ValidateRange(0, 50)]
+    [System.Nullable[System.Int32]] $CloudExtendedTimeout
 
-        [Parameter()]
-        [ValidateRange(0, 90)]
-        [System.Int32]
-        $DaysToRetainCleanedMalware,
+    [DscProperty()]
+    [System.ComponentModel.Description('Days To Retain Cleaned Malware')]
+    [ValidateRange(0, 90)]
+    [System.Nullable[System.Int32]] $DaysToRetainCleanedMalware
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableCatchupFullScan,
+    [DscProperty()]
+    [System.ComponentModel.Description('Disable Catchup Full Scan (0: Enabled, 1: Disabled)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $DisableCatchupFullScan
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableCatchupQuickScan,
+    [DscProperty()]
+    [System.ComponentModel.Description('Disable Catchup Quick Scan (0: Enabled, 1: Disabled)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $DisableCatchupQuickScan
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $EnableLowCPUPriority,
+    [DscProperty()]
+    [System.ComponentModel.Description('Enable Low CPU Priority (0: Disabled, 1: Enabled)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $EnableLowCPUPriority
 
-        [Parameter()]
-        [System.String[]]
-        $ExcludedExtensions,
+    [DscProperty()]
+    [System.ComponentModel.Description('Excluded Extensions')]
+    [System.String[]] $ExcludedExtensions
 
-        [Parameter()]
-        [System.String[]]
-        $ExcludedPaths,
+    [DscProperty()]
+    [System.ComponentModel.Description('Excluded Paths')]
+    [System.String[]] $ExcludedPaths
 
-        [Parameter()]
-        [System.String[]]
-        $ExcludedProcesses,
+    [DscProperty()]
+    [System.ComponentModel.Description('Excluded Processes')]
+    [System.String[]] $ExcludedProcesses
 
-        [Parameter()]
-        [ValidateSet(0, 1, 2)]
-        [System.Int32]
-        $PUAProtection,
+    [DscProperty()]
+    [System.ComponentModel.Description('PUA Protection (0: PUA Protection off. Windows Defender will not protect against potentially unwanted applications., 1: PUA Protection on. Detected items are blocked. They will show in history along with other threats., 2: Audit mode. Windows Defender will detect potentially unwanted applications, but take no action. You can review information about the applications Windows Defender would have taken action against by searching for events created by Windows Defender in the Event Viewer.)')]
+    [ValidateSet('0', '1', '2')]
+    [System.Nullable[System.Int32]] $PUAProtection
 
-        [Parameter()]
-        [ValidateSet(0, 1, 2)]
-        [System.Int32]
-        $RealTimeScanDirection,
+    [DscProperty()]
+    [System.ComponentModel.Description('Real Time Scan Direction (0: Monitor all files (bi-directional)., 1: Monitor incoming files., 2: Monitor outgoing files.)')]
+    [ValidateSet('0', '1', '2')]
+    [System.Nullable[System.Int32]] $RealTimeScanDirection
 
-        [Parameter()]
-        [ValidateSet(1, 2)]
-        [System.Int32]
-        $ScanParameter,
+    [DscProperty()]
+    [System.ComponentModel.Description('Scan Parameter (1: Quick scan, 2: Full scan)')]
+    [ValidateSet('1', '2')]
+    [System.Nullable[System.Int32]] $ScanParameter
 
-        [Parameter()]
-        [ValidateRange(0, 1380)]
-        [System.Int32]
-        $ScheduleQuickScanTime,
+    [DscProperty()]
+    [System.ComponentModel.Description('Schedule Quick Scan Time')]
+    [ValidateRange(0, 1380)]
+    [System.Nullable[System.Int32]] $ScheduleQuickScanTime
 
-        [Parameter()]
-        [ValidateSet(0, 1, 2, 3, 4, 5, 6, 7, 8)]
-        [System.Int32]
-        $ScheduleScanDay,
+    [DscProperty()]
+    [System.ComponentModel.Description('Schedule Scan Day (0: Every day, 1: Sunday, 2: Monday, 3: Tuesday, 4: Wednesday, 5: Thursday, 6: Friday, 7: Saturday, 8: No scheduled scan)')]
+    [ValidateSet('0', '1', '2', '3', '4', '5', '6', '7', '8')]
+    [System.Nullable[System.Int32]] $ScheduleScanDay
 
-        [Parameter()]
-        [ValidateRange(0, 1380)]
-        [System.Int32]
-        $ScheduleScanTime,
+    [DscProperty()]
+    [System.ComponentModel.Description('Schedule Scan Time')]
+    [ValidateRange(0, 1380)]
+    [System.Nullable[System.Int32]] $ScheduleScanTime
 
-        [Parameter()]
-        [System.String[]]
-        $SignatureUpdateFallbackOrder,
+    [DscProperty()]
+    [System.ComponentModel.Description('Signature Update Fallback Order')]
+    [System.String[]] $SignatureUpdateFallbackOrder
 
-        [Parameter()]
-        [System.String[]]
-        $SignatureUpdateFileSharesSources,
+    [DscProperty()]
+    [System.ComponentModel.Description('Signature Update File Shares Sources')]
+    [System.String[]] $SignatureUpdateFileSharesSources
 
-        [Parameter()]
-        [ValidateRange(0, 24)]
-        [System.Int32]
-        $SignatureUpdateInterval,
+    [DscProperty()]
+    [System.ComponentModel.Description('Signature Update Interval')]
+    [ValidateRange(0, 24)]
+    [System.Nullable[System.Int32]] $SignatureUpdateInterval
 
-        [Parameter()]
-        [ValidateSet(0, 1, 2, 3)]
-        [System.Int32]
-        $SubmitSamplesConsent,
+    [DscProperty()]
+    [System.ComponentModel.Description('Submit Samples Consent (0: Always prompt., 1: Send safe samples automatically., 2: Never send., 3: Send all samples automatically.)')]
+    [ValidateSet('0', '1', '2', '3')]
+    [System.Nullable[System.Int32]] $SubmitSamplesConsent
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowOnAccessProtection,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow On Access Protection (0: Not allowed., 1: Allowed.)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $AllowOnAccessProtection
 
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $HighSeverityThreatDefaultAction,
+    [DscProperty()]
+    [System.ComponentModel.Description('Remediation action for High severity threats - Depends on ThreatSeverityDefaultAction (clean: Clean, quarantine: Quarantine, remove: Remove, allow: Allow, userdefined: UserDefined, block: Block)')]
+    [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
+    [System.String] $HighSeverityThreatDefaultAction
 
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $SevereThreatDefaultAction,
+    [DscProperty()]
+    [System.ComponentModel.Description('Remediation action for Severe threats - Depends on ThreatSeverityDefaultAction (clean: Clean, quarantine: Quarantine, remove: Remove, allow: Allow, userdefined: UserDefined, block: Block)')]
+    [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
+    [System.String] $SevereThreatDefaultAction
 
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $LowSeverityThreatDefaultAction,
+    [DscProperty()]
+    [System.ComponentModel.Description('Remediation action for Low severity threats - Depends on ThreatSeverityDefaultAction (clean: Clean, quarantine: Quarantine, remove: Remove, allow: Allow, userdefined: UserDefined, block: Block)')]
+    [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
+    [System.String] $LowSeverityThreatDefaultAction
 
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $ModerateSeverityThreatDefaultAction,
+    [DscProperty()]
+    [System.ComponentModel.Description('Remediation action for Moderate severity threats - Depends on ThreatSeverityDefaultAction (clean: Clean, quarantine: Quarantine, remove: Remove, allow: Allow, userdefined: UserDefined, block: Block)')]
+    [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
+    [System.String] $ModerateSeverityThreatDefaultAction
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableRestorePoint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Allow users to view the full History results (0: No, 1: Yes)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $DisablePrivacyMode
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $RandomizeScheduleTaskTimes,
+    [DscProperty()]
+    [System.ComponentModel.Description('Create a system restore point before computers are cleaned. (0: No, 1: Yes)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $DisableRestorePoint
 
-        [Parameter()]
-        [System.String]
-        $SecurityIntelligenceLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('Randomize scheduled scan and security intelligence update start times. (0: No, 1: Yes)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $RandomizeScheduleTaskTimes
 
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisablePrivacyMode,
+    [DscProperty()]
+    [System.ComponentModel.Description('Security Intelligence Location')]
+    [System.String] $SecurityIntelligenceLocation
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
+    [DscProperty()]
+    [System.ComponentModel.Description('Represents the assignment to the Intune policy.')]
+    [MSFT_DeviceManagementConfigurationPolicyAssignments[]] $Assignments
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for the Intune Antivirus Policy for Windows10 Config Mgr with Id {$Id} and DisplayName {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
 
-    try
+    [IntuneAntivirusPolicyWindows10ConfigMgr] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Name -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneAntivirusPolicyWindows10ConfigMgr]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for the Intune Antivirus Policy for Windows10 Config Mgr with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-
-            #region resource generator code
-            if (-not [System.String]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.DisplayName)
             {
-                $getValue = Get-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId $Id -ErrorAction SilentlyContinue `
-                    -ExpandProperty 'settings($expand=settingDefinitions)'
-                $settings = $getValue.settings
-            }
+                $null = $this.Connect('MicrosoftGraph')
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Antivirus Policy for Windows10 Config Mgr with Id {$Id}"
+                Confirm-M365DSCDependencies
 
-                if (-not [System.String]::IsNullOrEmpty($DisplayName))
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+
+                #region resource generator code
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    $getValue = Get-MgBetaDeviceManagementConfigurationPolicy `
-                        -All `
-                        -Filter "Name eq '$($DisplayName -replace "'", "''")' and creationSource eq 'SccmAV' and technologies eq 'configManager'" `
-                        -ErrorAction SilentlyContinue
+                    $getValue = Get-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId $this.Id -ErrorAction SilentlyContinue `
+                        -ExpandProperty 'settings($expand=settingDefinitions)'
+                    $settings = $getValue.settings
+                }
+
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Antivirus Policy for Windows10 Config Mgr with Id {$($this.Id)}"
+
+                    if (-not [System.String]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        $getValue = Get-MgBetaDeviceManagementConfigurationPolicy `
+                            -All `
+                            -Filter "Name eq '$($this.DisplayName -replace "'", "''")' and creationSource eq 'SccmAV' and technologies eq 'configManager'" `
+                            -ErrorAction SilentlyContinue
+                    }
+                }
+                #endregion
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Antivirus Policy for Windows10 Config Mgr with DisplayName {$($this.DisplayName)}."
+                    return $this.AsResult($nullResult)
                 }
             }
-            #endregion
-            if ($null -eq $getValue)
+            else
             {
-                Write-Verbose -Message "Could not find an Intune Antivirus Policy for Windows10 Config Mgr with DisplayName {$DisplayName}."
-                return $nullResult
+                $getValue = $this.ExportedInstance
             }
+            $resolvedId = $getValue.Id
+            Write-Verbose -Message "An Intune Antivirus Policy for Windows10 Config Mgr with Id {$($resolvedId)} and DisplayName {$($this.DisplayName)} was found"
+
+            # Retrieve policy specific settings
+            if ($null -eq $settings)
+            {
+                [array]$settings = Get-MgBetaDeviceManagementConfigurationPolicySetting `
+                    -DeviceManagementConfigurationPolicyId $resolvedId `
+                    -ExpandProperty 'settingDefinitions' `
+                    -All `
+                    -ErrorAction Stop
+            }
+
+            $policySettings = @{}
+            $policySettings = Export-IntuneSettingCatalogPolicySettings -Settings $settings -ReturnHashtable $policySettings
+
+            $disableRestorePointInstance = $settings | Where-Object { $_.SettingInstance.SettingDefinitionId -like '*_disablerestorepoint' }
+            if ($null -ne $disableRestorePointInstance)
+            {
+                $policySettings.DisableRestorePoint = [int]$disableRestorePointInstance.SettingInstance.choiceSettingValue.value.Split('_')[-1]
+            }
+
+            $results = @{
+                #region resource generator code
+                Description           = $getValue.Description
+                DisplayName           = $getValue.Name
+                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Id                    = $getValue.Id
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                #endregion
+            }
+            $results += $policySettings
+
+            $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
+            if ($null -eq $assignmentsValues)
+            {
+                $assignmentsValues = Get-MgBetaDeviceManagementConfigurationPolicyAssignment -DeviceManagementConfigurationPolicyId $resolvedId
+            }
+            $assignmentResult = @()
+            if ($assignmentsValues.Count -gt 0)
+            {
+                $assignmentResult += ConvertFrom-IntunePolicyAssignment -Assignments $assignmentsValues -IncludeDeviceFilter $true
+            }
+            $results.Add('Assignments', $assignmentResult)
+
+            return $this.AsResult($results)
         }
-        else
+        catch
         {
-            $getValue = $Script:exportedInstance
-        }
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Antivirus Policy for Windows10 Config Mgr with Id {$Id} and DisplayName {$DisplayName} was found"
+            $this.LogError($_, 'Error retrieving data:')
 
-        # Retrieve policy specific settings
-        if ($null -eq $settings)
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            [array]$settings = Get-MgBetaDeviceManagementConfigurationPolicySetting `
-                -DeviceManagementConfigurationPolicyId $Id `
-                -ExpandProperty 'settingDefinitions' `
-                -All `
-                -ErrorAction Stop
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        $policySettings = @{}
-        $policySettings = Export-IntuneSettingCatalogPolicySettings -Settings $settings -ReturnHashtable $policySettings
+        Write-Verbose -Message "Setting configuration of the Intune Antivirus Policy for Windows10 Config Mgr with Id {$($this.Id)} and DisplayName {$($this.DisplayName)}"
 
-        $disableRestorePointInstance = $settings | Where-Object { $_.SettingInstance.SettingDefinitionId -like '*_disablerestorepoint' }
-        if ($null -ne $disableRestorePointInstance)
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        $resolvedRoleScopeTagIds = $this.RoleScopeTagIds
+        if ($boundParameters.ContainsKey('RoleScopeTagIds'))
         {
-            $policySettings.DisableRestorePoint = [int]$disableRestorePointInstance.SettingInstance.choiceSettingValue.value.Split('_')[-1]
+            $resolvedRoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $this.RoleScopeTagIds
         }
 
-        $results = @{
+        $boundParameters.Remove('RandomizeScheduleTaskTimes') | Out-Null
+
+        $templateReferenceId = '804339ad-1553-4478-a742-138fb5807418_1'
+        $platforms = 'windows10'
+        $technologies = 'configManager'
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating an Intune Antivirus Policy for Windows10 Config Mgr with DisplayName {$($this.DisplayName)}"
+            $boundParameters.Remove('Assignments') | Out-Null
+
+            [array]$settings = Get-IntuneSettingCatalogPolicySetting `
+                -DSCParams ([System.Collections.Hashtable]$boundParameters) `
+                -TemplateId $templateReferenceId
+
+            if ($this.GetBoundParameters().ContainsKey('DisableRestorePoint'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                        choiceSettingValue  = @{
+                            children = @()
+                            value    = "defender_disablerestorepoint_$($this.DisableRestorePoint)"
+                        }
+                        settingDefinitionId = 'defender_disablerestorepoint'
+                    }
+                }
+            }
+
+            if ($this.GetBoundParameters().ContainsKey('RandomizeScheduleTaskTimes'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                        choiceSettingValue  = @{
+                            children = @()
+                            value    = "defender_randomizescheduletasktimes_$($this.RandomizeScheduleTaskTimes)"
+                        }
+                        settingDefinitionId = 'defender_randomizescheduletasktimes'
+                    }
+                }
+            }
+
+            if ($this.GetBoundParameters().ContainsKey('SecurityIntelligenceLocation'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                        simpleSettingValue  = @{
+                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                            value         = "$($this.SecurityIntelligenceLocation)"
+                        }
+                        settingDefinitionId = 'device_vendor_msft_policy_config_defender_securityintelligencelocation'
+                    }
+                }
+            }
+
+            if ($this.GetBoundParameters().ContainsKey('DisablePrivacyMode'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                        choiceSettingValue  = @{
+                            children = @()
+                            value    = "defender_disableprivacymode_$($this.DisablePrivacyMode)"
+                        }
+                        settingDefinitionId = 'defender_disableprivacymode'
+                    }
+                }
+            }
+
+            $createParameters = @{
+                name            = $this.DisplayName
+                description     = $this.Description
+                creationSource  = 'SccmAV'
+                platforms       = $platforms
+                technologies    = $technologies
+                settings        = $settings
+                roleScopeTagIds = $resolvedRoleScopeTagIds
+            }
+
             #region resource generator code
-            Description           = $getValue.Description
-            DisplayName           = $getValue.Name
-            RoleScopeTagIds       = $getValue.RoleScopeTagIds
-            Id                    = $getValue.Id
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
+            $policy = New-MgBetaDeviceManagementConfigurationPolicy -BodyParameter $createParameters
+
+            if ($policy.Id)
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $policy.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/configurationPolicies'
+            }
             #endregion
         }
-        $results += $policySettings
-
-        $assignmentsValues = Get-MgBetaDeviceManagementConfigurationPolicyAssignment -DeviceManagementConfigurationPolicyId $Id
-        $assignmentResult = @()
-        if ($assignmentsValues.Count -gt 0)
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            $assignmentResult += ConvertFrom-IntunePolicyAssignment -Assignments $assignmentsValues -IncludeDeviceFilter $true
-        }
-        $results.Add('Assignments', $assignmentResult)
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowArchiveScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowBehaviorMonitoring,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowCloudProtection,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowEmailScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowFullScanOnMappedNetworkDrives,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowFullScanRemovableDriveScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowIntrusionPreventionSystem,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowIOAVProtection,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowRealtimeMonitoring,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowScanningNetworkFiles,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowScriptScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowUserUIAccess,
-
-        [Parameter()]
-        [ValidateRange(0, 100)]
-        [System.Int32]
-        $AvgCPULoadFactor,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $CheckForSignaturesBeforeRunningScan,
-
-        [Parameter()]
-        [ValidateSet(0, 2, 4, 6)]
-        [System.Int32]
-        $CloudBlockLevel,
-
-        [Parameter()]
-        [ValidateRange(0, 50)]
-        [System.Int32]
-        $CloudExtendedTimeout,
-
-        [Parameter()]
-        [ValidateRange(0, 90)]
-        [System.Int32]
-        $DaysToRetainCleanedMalware,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableCatchupFullScan,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableCatchupQuickScan,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $EnableLowCPUPriority,
-
-        [Parameter()]
-        [System.String[]]
-        $ExcludedExtensions,
-
-        [Parameter()]
-        [System.String[]]
-        $ExcludedPaths,
-
-        [Parameter()]
-        [System.String[]]
-        $ExcludedProcesses,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2)]
-        [System.Int32]
-        $PUAProtection,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2)]
-        [System.Int32]
-        $RealTimeScanDirection,
-
-        [Parameter()]
-        [ValidateSet(1, 2)]
-        [System.Int32]
-        $ScanParameter,
-
-        [Parameter()]
-        [ValidateRange(0, 1380)]
-        [System.Int32]
-        $ScheduleQuickScanTime,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2, 3, 4, 5, 6, 7, 8)]
-        [System.Int32]
-        $ScheduleScanDay,
-
-        [Parameter()]
-        [ValidateRange(0, 1380)]
-        [System.Int32]
-        $ScheduleScanTime,
-
-        [Parameter()]
-        [System.String[]]
-        $SignatureUpdateFallbackOrder,
-
-        [Parameter()]
-        [System.String[]]
-        $SignatureUpdateFileSharesSources,
-
-        [Parameter()]
-        [ValidateRange(0, 24)]
-        [System.Int32]
-        $SignatureUpdateInterval,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2, 3)]
-        [System.Int32]
-        $SubmitSamplesConsent,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowOnAccessProtection,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $HighSeverityThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $SevereThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $LowSeverityThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $ModerateSeverityThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableRestorePoint,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $RandomizeScheduleTaskTimes,
-
-        [Parameter()]
-        [System.String]
-        $SecurityIntelligenceLocation,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisablePrivacyMode,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of the Intune Antivirus Policy for Windows10 Config Mgr with Id {$Id} and DisplayName {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $BoundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $boundParameters.Remove('RandomizeScheduleTaskTimes') | Out-Null
-
-    $templateReferenceId = '804339ad-1553-4478-a742-138fb5807418_1'
-    $platforms = 'windows10'
-    $technologies = 'configManager'
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Antivirus Policy for Windows10 Config Mgr with DisplayName {$DisplayName}"
-        $boundParameters.Remove('Assignments') | Out-Null
-
-        [array]$settings = Get-IntuneSettingCatalogPolicySetting `
-            -DSCParams ([System.Collections.Hashtable]$boundParameters) `
-            -TemplateId $templateReferenceId
-
-        if ($PSBoundParameters.ContainsKey('DisableRestorePoint'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                    choiceSettingValue  = @{
-                        children = @()
-                        value    = "defender_disablerestorepoint_$DisableRestorePoint"
+            Write-Verbose -Message "Updating the Intune Antivirus Policy for Windows10 Config Mgr with Id {$($currentInstance.Id)}"
+            $boundParameters.Remove('Assignments') | Out-Null
+
+            [array]$settings = Get-IntuneSettingCatalogPolicySetting `
+                -DSCParams ([System.Collections.Hashtable]$boundParameters) `
+                -TemplateId $templateReferenceId
+
+            if ($this.GetBoundParameters().ContainsKey('DisableRestorePoint'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                        choiceSettingValue  = @{
+                            children = @()
+                            value    = "defender_disablerestorepoint_$($this.DisableRestorePoint)"
+                        }
+                        settingDefinitionId = 'defender_disablerestorepoint'
                     }
-                    settingDefinitionId = 'defender_disablerestorepoint'
                 }
             }
-        }
 
-        if ($PSBoundParameters.ContainsKey('RandomizeScheduleTaskTimes'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                    choiceSettingValue  = @{
-                        children = @()
-                        value    = "defender_randomizescheduletasktimes_$RandomizeScheduleTaskTimes"
+            if ($this.GetBoundParameters().ContainsKey('RandomizeScheduleTaskTimes'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                        choiceSettingValue  = @{
+                            children = @()
+                            value    = "defender_randomizescheduletasktimes_$($this.RandomizeScheduleTaskTimes)"
+                        }
+                        settingDefinitionId = 'defender_randomizescheduletasktimes'
                     }
-                    settingDefinitionId = 'defender_randomizescheduletasktimes'
                 }
             }
-        }
 
-        if ($PSBoundParameters.ContainsKey('SecurityIntelligenceLocation'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                    simpleSettingValue  = @{
-                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                        value         = "$SecurityIntelligenceLocation"
+            if ($this.GetBoundParameters().ContainsKey('SecurityIntelligenceLocation'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
+                        simpleSettingValue  = @{
+                            '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
+                            value         = "$($this.SecurityIntelligenceLocation)"
+                        }
+                        settingDefinitionId = 'device_vendor_msft_policy_config_defender_securityintelligencelocation'
                     }
-                    settingDefinitionId = 'device_vendor_msft_policy_config_defender_securityintelligencelocation'
                 }
             }
-        }
 
-        if ($PSBoundParameters.ContainsKey('DisablePrivacyMode'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                    choiceSettingValue  = @{
-                        children = @()
-                        value    = "defender_disableprivacymode_$DisablePrivacyMode"
+            if ($this.GetBoundParameters().ContainsKey('DisablePrivacyMode'))
+            {
+                $settings += @{
+                    '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
+                    settingInstance = @{
+                        '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
+                        choiceSettingValue  = @{
+                            children = @()
+                            value    = "defender_disableprivacymode_$($this.DisablePrivacyMode)"
+                        }
+                        settingDefinitionId = 'defender_disableprivacymode'
                     }
-                    settingDefinitionId = 'defender_disableprivacymode'
                 }
             }
-        }
 
-        $createParameters = @{
-            name            = $DisplayName
-            description     = $Description
-            creationSource  = 'SccmAV'
-            platforms       = $platforms
-            technologies    = $technologies
-            settings        = $settings
-            roleScopeTagIds = $RoleScopeTagIds
-        }
+            Update-IntuneDeviceConfigurationPolicy `
+                -DeviceConfigurationPolicyId $currentInstance.Id `
+                -Name $this.DisplayName `
+                -Description $this.Description `
+                -CreationSource 'SccmAV' `
+                -Platforms $platforms `
+                -Technologies $technologies `
+                -Settings $settings `
+                -RoleScopeTagIds $resolvedRoleScopeTagIds
 
-        #region resource generator code
-        $policy = New-MgBetaDeviceManagementConfigurationPolicy -BodyParameter $createParameters
+            #region resource generator code
 
-        if ($policy.Id)
-        {
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
+            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
             Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $policy.Id `
+                -DeviceConfigurationPolicyId $currentInstance.Id `
                 -Targets $assignmentsHash `
                 -Repository 'deviceManagement/configurationPolicies'
+            #endregion
         }
-        #endregion
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Intune Antivirus Policy for Windows10 Config Mgr with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId $currentInstance.Id
+            #endregion
+        }
     }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+
+    [bool] Test()
     {
-        Write-Verbose -Message "Updating the Intune Antivirus Policy for Windows10 Config Mgr with Id {$($currentInstance.Id)}"
-        $boundParameters.Remove('Assignments') | Out-Null
-
-        [array]$settings = Get-IntuneSettingCatalogPolicySetting `
-            -DSCParams ([System.Collections.Hashtable]$boundParameters) `
-            -TemplateId $templateReferenceId
-
-        if ($PSBoundParameters.ContainsKey('DisableRestorePoint'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                    choiceSettingValue  = @{
-                        children = @()
-                        value    = "defender_disablerestorepoint_$DisableRestorePoint"
-                    }
-                    settingDefinitionId = 'defender_disablerestorepoint'
-                }
-            }
-        }
-
-        if ($PSBoundParameters.ContainsKey('RandomizeScheduleTaskTimes'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                    choiceSettingValue  = @{
-                        children = @()
-                        value    = "defender_randomizescheduletasktimes_$RandomizeScheduleTaskTimes"
-                    }
-                    settingDefinitionId = 'defender_randomizescheduletasktimes'
-                }
-            }
-        }
-
-        if ($PSBoundParameters.ContainsKey('SecurityIntelligenceLocation'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance'
-                    simpleSettingValue  = @{
-                        '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'
-                        value         = "$SecurityIntelligenceLocation"
-                    }
-                    settingDefinitionId = 'device_vendor_msft_policy_config_defender_securityintelligencelocation'
-                }
-            }
-        }
-
-        if ($PSBoundParameters.ContainsKey('DisablePrivacyMode'))
-        {
-            $settings += @{
-                '@odata.type'   = '#microsoft.graph.deviceManagementConfigurationSetting'
-                settingInstance = @{
-                    '@odata.type'       = '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance'
-                    choiceSettingValue  = @{
-                        children = @()
-                        value    = "defender_disableprivacymode_$DisablePrivacyMode"
-                    }
-                    settingDefinitionId = 'defender_disableprivacymode'
-                }
-            }
-        }
-
-        Update-IntuneDeviceConfigurationPolicy `
-            -DeviceConfigurationPolicyId $currentInstance.Id `
-            -Name $DisplayName `
-            -Description $Description `
-            -CreationSource 'SccmAV' `
-            -Platforms $platforms `
-            -Technologies $technologies `
-            -Settings $settings `
-            -RoleScopeTagIds $RoleScopeTagIds
-
-        #region resource generator code
-
-        $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
-        Update-DeviceConfigurationPolicyAssignment `
-            -DeviceConfigurationPolicyId $currentInstance.Id `
-            -Targets $assignmentsHash `
-            -Repository 'deviceManagement/configurationPolicies'
-        #endregion
+        return ([M365DSCResourceBase] $this).Test()
     }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+
+    [string] Export()
     {
-        Write-Verbose -Message "Removing the Intune Antivirus Policy for Windows10 Config Mgr with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId $currentInstance.Id
-        #endregion
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowArchiveScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowBehaviorMonitoring,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowCloudProtection,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowEmailScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowFullScanOnMappedNetworkDrives,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowFullScanRemovableDriveScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowIntrusionPreventionSystem,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowIOAVProtection,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowRealtimeMonitoring,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowScanningNetworkFiles,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowScriptScanning,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowUserUIAccess,
-
-        [Parameter()]
-        [ValidateRange(0, 100)]
-        [System.Int32]
-        $AvgCPULoadFactor,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $CheckForSignaturesBeforeRunningScan,
-
-        [Parameter()]
-        [ValidateSet(0, 2, 4, 6)]
-        [System.Int32]
-        $CloudBlockLevel,
-
-        [Parameter()]
-        [ValidateRange(0, 50)]
-        [System.Int32]
-        $CloudExtendedTimeout,
-
-        [Parameter()]
-        [ValidateRange(0, 90)]
-        [System.Int32]
-        $DaysToRetainCleanedMalware,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableCatchupFullScan,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableCatchupQuickScan,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $EnableLowCPUPriority,
-
-        [Parameter()]
-        [System.String[]]
-        $ExcludedExtensions,
-
-        [Parameter()]
-        [System.String[]]
-        $ExcludedPaths,
-
-        [Parameter()]
-        [System.String[]]
-        $ExcludedProcesses,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2)]
-        [System.Int32]
-        $PUAProtection,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2)]
-        [System.Int32]
-        $RealTimeScanDirection,
-
-        [Parameter()]
-        [ValidateSet(1, 2)]
-        [System.Int32]
-        $ScanParameter,
-
-        [Parameter()]
-        [ValidateRange(0, 1380)]
-        [System.Int32]
-        $ScheduleQuickScanTime,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2, 3, 4, 5, 6, 7, 8)]
-        [System.Int32]
-        $ScheduleScanDay,
-
-        [Parameter()]
-        [ValidateRange(0, 1380)]
-        [System.Int32]
-        $ScheduleScanTime,
-
-        [Parameter()]
-        [System.String[]]
-        $SignatureUpdateFallbackOrder,
-
-        [Parameter()]
-        [System.String[]]
-        $SignatureUpdateFileSharesSources,
-
-        [Parameter()]
-        [ValidateRange(0, 24)]
-        [System.Int32]
-        $SignatureUpdateInterval,
-
-        [Parameter()]
-        [ValidateSet(0, 1, 2, 3)]
-        [System.Int32]
-        $SubmitSamplesConsent,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $AllowOnAccessProtection,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $HighSeverityThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $SevereThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $LowSeverityThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet('clean', 'quarantine', 'remove', 'allow', 'userdefined', 'block')]
-        [System.String]
-        $ModerateSeverityThreatDefaultAction,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisableRestorePoint,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $RandomizeScheduleTaskTimes,
-
-        [Parameter()]
-        [System.String]
-        $SecurityIntelligenceLocation,
-
-        [Parameter()]
-        [ValidateSet(0, 1)]
-        [System.Int32]
-        $DisablePrivacyMode,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        $baseFilter = "creationSource eq 'SccmAV' and technologies eq 'configManager'"
-        if (-not [System.String]::IsNullOrEmpty($Filter))
+        if ($this.RequiresPowerShellCore())
         {
-            $Filter = "($Filter) and ($baseFilter)"
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        else
-        {
-            $Filter = $baseFilter
-        }
-        [array]$getValue = Get-MgBetaDeviceManagementConfigurationPolicy `
-            -Filter $Filter `
-            -All `
-            -ErrorAction Stop
-        #endregion
 
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
+            #region resource generator code
+            $baseFilter = "creationSource eq 'SccmAV' and technologies eq 'configManager'"
+            $mergedFilter = $baseFilter
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
             {
-                $displayedKey = $config.displayName
+                $mergedFilter = "($($this.Filter)) and ($baseFilter)"
             }
-            elseif (-not [string]::IsNullOrEmpty($config.name))
+            [array]$getValue = Get-MgBetaDeviceManagementConfigurationPolicy `
+                -Filter $mergedFilter `
+                -All `
+                -ExpandProperty 'assignments' `
+                -ErrorAction Stop
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
             {
-                $displayedKey = $config.name
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.Name
-                Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $rawResults = $Results.Clone()
-
-            if ($Results.Assignments)
+            else
             {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
-                if ($complexTypeStringResult)
-                {
-                    $Results.Assignments = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('Assignments') | Out-Null
-                }
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('Assignments') `
-                -RawResults $rawResults
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        PostProcessing     = {
-            param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-            $PostProcessingArgs[0] | ForEach-Object {
-                if ($_.Key -notlike '*Variable' -or $_.Key -notin @('Verbose', 'Debug', 'ErrorAction', 'WarningAction', 'InformationAction'))
+            foreach ($config in $getValue)
+            {
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
                 {
-                    if ($null -ne $CurrentValues[$_.Key] -or $null -ne $DesiredValues[$_.Key])
+                    $displayedKey = $config.displayName
+                }
+                elseif (-not [string]::IsNullOrEmpty($config.name))
+                {
+                    $displayedKey = $config.name
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.Name
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                if ($Results.Assignments)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
+                    if ($complexTypeStringResult)
                     {
-                        $ValuesToCheck[$_.Key] = $null
-                        if (-not $DesiredValues.ContainsKey($_.Key))
-                        {
-                            $DesiredValues.Add($_.Key, $null)
-                        }
+                        $Results.Assignments = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('Assignments') | Out-Null
                     }
                 }
-            }
 
-            return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('Assignments') `
+                    -RawResults $rawResults
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
         }
-        PostProcessingArgs = $MyInvocation.MyCommand.Parameters.GetEnumerator()
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return $this.GetSettingsCatalogCompareParameters()
+    }
+
+    hidden [IntuneAntivirusPolicyWindows10ConfigMgr] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneAntivirusPolicyWindows10ConfigMgr])
+        {
+            return $Values
+        }
+
+        $result = [IntuneAntivirusPolicyWindows10ConfigMgr]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')
+class MSFT_DeviceManagementConfigurationPolicyAssignments
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The type of the target assignment.')]
+    [ValidateSet('#microsoft.graph.cloudPcManagementGroupAssignmentTarget', '#microsoft.graph.groupAssignmentTarget', '#microsoft.graph.allLicensedUsersAssignmentTarget', '#microsoft.graph.allDevicesAssignmentTarget', '#microsoft.graph.exclusionGroupAssignmentTarget', '#microsoft.graph.configurationManagerCollectionAssignmentTarget')]
+    [System.String] $dataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of filter of the target assignment i.e. Exclude or Include. Possible values are:none, include, exclude.')]
+    [ValidateSet('none', 'include', 'exclude')]
+    [System.String] $deviceAndAppManagementAssignmentFilterType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The Id of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The display name of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Id that is the target of the assignment.')]
+    [System.String] $groupId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Display Name that is the target of the assignment.')]
+    [System.String] $groupDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The collection Id that is the target of the assignment.(ConfigMgr)')]
+    [System.String] $collectionId
+}

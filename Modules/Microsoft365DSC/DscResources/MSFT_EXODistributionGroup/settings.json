@@ -1,5 +1,16 @@
 {
   "resourceName": "EXODistributionGroup",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "DistributionGroup",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "roles": {
     "read": [],
     "update": [
@@ -23,7 +34,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Recipients"
         ],
@@ -31,7 +42,7 @@
           "Distribution Groups"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "View-Only Organization Management"
         ],
@@ -46,5 +57,18 @@
     "Global",
     "USGov"
   ],
-  "mode": "Data"
+  "mode": "Data",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-DistributionGroup",
+        "Get-DistributionGroupMember",
+        "Get-Recipient",
+        "New-DistributionGroup",
+        "Remove-DistributionGroup",
+        "Set-DistributionGroup"
+      ]
+    }
+  ]
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,12 +21,14 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADAdministrativeUnit 'TestUnit'
+        AADAdministrativeUnit 'AADAdministrativeUnit-Example'
         {
-            DisplayName                   = 'Test-Unit'
-            Description                   = 'Test Description'
+            DisplayName                   = 'Amsterdam Office'
+            Description                   = 'Users and devices based in the Amsterdam office'
+            Visibility                    = 'Public'
             MembershipRule                = "(user.country -eq `"Canada`")"
             MembershipRuleProcessingState = 'On'
             MembershipType                = 'Dynamic'
@@ -36,14 +39,15 @@ Configuration Example
                     RoleName       = 'User Administrator'
                     RoleMemberInfo = MSFT_MicrosoftGraphMember
                     {
-                        Identity = "admin@$TenantId"
+                        Identity = "MeganB@$TenantId"
                         Type     = "User"
                     }
                 }
             )
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            Ensure                        = 'Present'
+            ApplicationId                 = $ApplicationId
+            TenantId                      = $TenantId
+            CertificateThumbprint         = $CertificateThumbprint
         }
     }
 }

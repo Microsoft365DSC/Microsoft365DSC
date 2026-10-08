@@ -1,47 +1,102 @@
 {
   "resourceName": "IntuneDeviceCompliancePolicyWindows10",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceCompliancePolicy",
+    "odataSubtype": "windows10CompliancePolicy",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceCompliancePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DeviceSettingStateSummaries",
+      "reason": "ReadOnly",
+      "note": "Per-setting compliance rollup Intune computes from device check-ins"
+    },
+    {
+      "name": "DeviceStatuses",
+      "reason": "ReadOnly",
+      "note": "Per-device compliance results the service reports"
+    },
+    {
+      "name": "DeviceStatusOverview",
+      "reason": "ReadOnly",
+      "note": "Counts aggregate Intune calculates from device compliance results"
+    },
+    {
+      "name": "UserStatuses",
+      "reason": "ReadOnly",
+      "note": "Per-user compliance outcomes Intune produces from device check-ins"
+    },
+    {
+      "name": "UserStatusOverview",
+      "reason": "ReadOnly",
+      "note": "Counts aggregate Intune calculates from user compliance results"
+    }
+  ],
   "description": "This resource configures the settings of Windows 10 compliance policies in your cloud-based organization.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
           },
           {
             "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       },
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.Read.All"
           },
           {
             "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "DeviceManagementConfiguration.ReadWrite.All"
+          },
+          {
+            "name": "DeviceManagementScripts.Read.All"
+          },
+          {
+            "name": "DeviceManagementRBAC.Read.All"
           }
         ]
       }
@@ -71,6 +126,7 @@
         "Get-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Get-MgBetaDeviceManagementDeviceCompliancePolicyAssignment",
         "Get-MgBetaDeviceManagementNotificationMessageTemplate",
+        "Invoke-MgBetaScheduleDeviceManagementDeviceCompliancePolicyActionForRule",
         "New-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Remove-MgBetaDeviceManagementDeviceCompliancePolicy",
         "Update-MgBetaDeviceManagementDeviceCompliancePolicy"

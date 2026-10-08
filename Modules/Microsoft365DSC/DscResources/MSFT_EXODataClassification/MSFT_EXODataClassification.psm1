@@ -1,468 +1,294 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXODataClassification'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXODataClassification : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Identity parameter specifies the data classification rule that you want to modify.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Description parameter specifies a description for the data classification rule. You use the Description parameter with the Locale and Name parameters to specify descriptions for the data classification rule in different languages. ')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String[]]
-        $Fingerprints,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Fingerprints parameter specifies the byte-encoded document files that are used as fingerprints by the data classification rule.')]
+    [System.String[]] $Fingerprints
 
-        [Parameter()]
-        [System.Boolean]
-        $IsDefault,
+    [DscProperty()]
+    [System.ComponentModel.Description('IsDefault is used with the Locale parameter to specify the default language for the data classification rule.')]
+    [System.Nullable[System.Boolean]] $IsDefault
 
-        [Parameter()]
-        [System.String]
-        $Locale,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Locale parameter adds or removes languages that are associated with the data classification rule.')]
+    [System.String] $Locale
 
-        [Parameter()]
-        [System.String]
-        $Name,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Name parameter specifies a name for the data classification rule. The value must be less than 256 characters.')]
+    [System.String] $Name
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies if this policy should exist.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting Data classification policy with Identity $Identity"
-
-    try
+    [EXODataClassification] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXODataClassification]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting Data classification policy with Identity $($this.Identity)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $DataClassification = Get-DataClassification -Identity $Identity -ErrorAction SilentlyContinue
-            if ($null -eq $DataClassification)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                if (-not [System.String]::IsNullOrEmpty($Name))
-                {
-                    Write-Verbose -Message "Couldn't retrieve data classification by Identity. Trying by Name {$Name}."
-                    $DataClassification = Get-DataClassification -Identity $Name
-                }
+                $null = $this.Connect('ExchangeOnline')
 
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $DataClassification = Get-DataClassification -Identity $this.Identity -ErrorAction SilentlyContinue
                 if ($null -eq $DataClassification)
                 {
-                    Write-Verbose -Message "Data classification $($Identity) does not exist."
-                    return $nullReturn
+                    if (-not [System.String]::IsNullOrEmpty($this.Name))
+                    {
+                        Write-Verbose -Message "Couldn't retrieve data classification by Identity. Trying by Name {$($this.Name)}."
+                        $DataClassification = Get-DataClassification -Identity $this.Name
+                    }
+
+                    if ($null -eq $DataClassification)
+                    {
+                        Write-Verbose -Message "Data classification $($this.Identity) does not exist."
+                        return $this.AsResult($nullReturn)
+                    }
                 }
             }
+            else
+            {
+                $DataClassification = $this.ExportedInstance
+            }
+
+            $currentDefaultCultureName = ([System.Globalization.CultureInfo]$DataClassification.DefaultCulture).Name
+            $DataClassificationLocale = $currentDefaultCultureName
+            $DataClassificationIsDefault = $false
+            if (([String]::IsNullOrEmpty($this.Locale)) -or ($this.Locale -eq $currentDefaultCultureName))
+            {
+                $DataClassificationIsDefault = $true
+            }
+
+            $result = @{
+                Identity              = $this.Identity
+                Description           = $DataClassification.Description
+                Fingerprints          = [System.String[]]$DataClassification.Fingerprints
+                IsDefault             = $DataClassificationIsDefault
+                Locale                = $DataClassificationLocale
+                Name                  = $DataClassification.Name
+                Credential            = $this.Credential
+                Ensure                = 'Present'
+                ApplicationId         = $this.ApplicationId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                TenantId              = $this.TenantId
+                AccessTokens          = $this.AccessTokens
+            }
+
+            Write-Verbose -Message "Found Data classification policy $($this.Identity)"
+            return $this.AsResult($result)
         }
-        else
+        catch
         {
-            $DataClassification = $Script:exportedInstance
-        }
+            $this.LogError($_, 'Error retrieving data:')
 
-        $currentDefaultCultureName = ([System.Globalization.CultureInfo]$DataClassification.DefaultCulture).Name
-        $DataClassificationLocale = $currentDefaultCultureName
-        $DataClassificationIsDefault = $false
-        if (([String]::IsNullOrEmpty($Locale)) -or ($Locale -eq $currentDefaultCultureName))
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            $DataClassificationIsDefault = $true
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        $result = @{
-            Identity              = $Identity
-            Description           = $DataClassification.Description
-            Fingerprints          = [System.String[]]$DataClassification.Fingerprints
-            IsDefault             = $DataClassificationIsDefault
-            Locale                = $DataClassificationLocale
-            Name                  = $DataClassification.Name
-            Credential            = $Credential
-            Ensure                = 'Present'
-            ApplicationId         = $ApplicationId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            TenantId              = $TenantId
-            AccessTokens          = $AccessTokens
+        Write-Verbose -Message "Setting configuration of Data classification policy for $($this.Identity)"
+
+        $null = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $DataClassification = Get-DataClassification -Identity $this.Identity -ErrorAction SilentlyContinue
+        $DataClassificationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present' -and $null -eq $DataClassification)
+        {
+            Write-Verbose -Message 'Data Classification in Exchange Online are now deprecated in favor of Sensitive Information Types in Purview.'
+        }
+        elseif ($this.Ensure -eq 'Present' -and $null -ne $DataClassification)
+        {
+            $verboseMessage = "Setting Data classification policy $($this.Identity) with values:" + `
+                " $(Convert-M365DscHashtableToString -Hashtable $DataClassificationParams)"
+            Write-Verbose -Message $verboseMessage
+            if (-not [String]::IsNullOrEmpty($this.Locale))
+            {
+                $DataClassificationParams.Locale = New-Object system.globalization.cultureinfo($this.Locale)
+            }
+            $DataClassificationParams.Remove('IsDefault') | Out-Null
+            $isDefaultValue = $false
+            if ($null -ne $this.IsDefault)
+            {
+                $isDefaultValue = $this.IsDefault
+            }
+            Set-DataClassification @DataClassificationParams -IsDefault:$isDefaultValue -Confirm:$false
+            Write-Verbose -Message 'Data classification policy updated successfully.'
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $null -ne $DataClassification)
+        {
+            Write-Verbose -Message "Removing Data classification policy $($this.Identity)"
+            Remove-DataClassification -Identity $this.Identity -Confirm:$false
+            Write-Verbose -Message 'Data classification policy removed successfully.'
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        Write-Verbose -Message "Found Data classification policy $($Identity)"
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        #Ensure the proper dependencies are installed in the current environment.
+        Confirm-M365DSCDependencies
+
+        #region Telemetry
+        $this.AddTelemetry('Export')
+
+        #endregion
+        try
+        {
+            #region resource generator code
+            [array] $exportedInstances = Get-DataClassification -ErrorAction SilentlyContinue | Sort-Object -Property Name
+            $dscContent = [System.Text.StringBuilder]::new()
+
+            if ($exportedInstances.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            $i = 1
+            foreach ($DataClassification in $exportedInstances)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Length)] $($DataClassification.Name)" -DeferWrite
+
+                $Params = @{
+                    Identity              = $DataClassification.Identity
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    CertificatePath       = $this.CertificatePath
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $DataClassification
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXODataClassification] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXODataClassification])
+        {
+            return $Values
+        }
+
+        $result = [EXODataClassification]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.String[]]
-        $Fingerprints,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsDefault,
-
-        [Parameter()]
-        [System.String]
-        $Locale,
-
-        [Parameter()]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Data classification policy for $($Identity)"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $DataClassification = Get-DataClassification -Identity $Identity -ErrorAction SilentlyContinue
-    $DataClassificationParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $null -eq $DataClassification)
-    {
-        Write-Verbose -Message 'Data Classification in Exchange Online are now deprecated in favor of Sensitive Information Types in Purview.'
-    }
-    elseif ($Ensure -eq 'Present' -and $null -ne $DataClassification)
-    {
-        $verboseMessage = "Setting Data classification policy $($Identity) with values:" + `
-            " $(Convert-M365DscHashtableToString -Hashtable $DataClassificationParams)"
-        Write-Verbose -Message $verboseMessage
-        if (-not [String]::IsNullOrEmpty($Locale))
-        {
-            $DataClassificationParams.Locale = New-Object system.globalization.cultureinfo($Locale)
-        }
-        $DataClassificationParams.Remove('IsDefault') | Out-Null
-        if ($null -eq $IsDefault)
-        {
-            $IsDefault = $false
-        }
-        Set-DataClassification @DataClassificationParams -IsDefault:$IsDefault -Confirm:$false
-        Write-Verbose -Message 'Data classification policy updated successfully.'
-    }
-    elseif ($Ensure -eq 'Absent' -and $null -ne $DataClassification)
-    {
-        Write-Verbose -Message "Removing Data classification policy $($Identity)"
-        Remove-DataClassification -Identity $Identity -Confirm:$false
-        Write-Verbose -Message 'Data classification policy removed successfully.'
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [System.String[]]
-        $Fingerprints,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsDefault,
-
-        [Parameter()]
-        [System.String]
-        $Locale,
-
-        [Parameter()]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-
-    #endregion
-    try
-    {
-        #region resource generator code
-        [array] $exportedInstances = Get-DataClassification -ErrorAction SilentlyContinue | Sort-Object -Property Name
-        $dscContent = [System.Text.StringBuilder]::new()
-
-        if ($exportedInstances.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        $i = 1
-        foreach ($DataClassification in $exportedInstances)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Length)] $($DataClassification.Name)" -DeferWrite
-
-            $Params = @{
-                Identity              = $DataClassification.Identity
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                CertificatePath       = $CertificatePath
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $DataClassification
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-Export-ModuleMember -Function *-TargetResource

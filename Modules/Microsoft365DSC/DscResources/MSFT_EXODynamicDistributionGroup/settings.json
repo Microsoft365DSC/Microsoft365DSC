@@ -1,5 +1,16 @@
 {
   "resourceName": "EXODynamicDistributionGroup",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "DynamicDistributionGroup",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "roles": {
     "read": [],
     "update": [
@@ -23,11 +34,19 @@
       }
     },
     "exchange": {
-      "requiredroles": [
-        "Organization Management",
-        "Recipient Management"
-      ],
-      "requiredrolegroups": []
+      "requiredRoles": {
+        "read": [
+          "Recipient Management"
+        ],
+        "update": [
+          "Organization Management",
+          "Recipient Management"
+        ]
+      },
+      "requiredRoleGroups": {
+        "read": [],
+        "update": []
+      }
     }
   },
   "requiredModules": [],
@@ -35,5 +54,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Data"
+  "mode": "Data",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-DynamicDistributionGroup",
+        "Get-Recipient",
+        "New-DynamicDistributionGroup",
+        "Remove-DynamicDistributionGroup",
+        "Set-DynamicDistributionGroup"
+      ]
+    }
+  ]
 }

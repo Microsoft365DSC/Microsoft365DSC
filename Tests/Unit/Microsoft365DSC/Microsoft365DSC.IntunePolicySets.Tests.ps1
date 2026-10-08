@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -45,7 +45,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgbetaDeviceAppManagementPolicySet -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -113,21 +113,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     GuidedDeploymentTags = @("FakeStringValue")
                     Id = "FakeStringValue"
                     RoleScopeTags = @("FakeStringValue")
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             dataType                                   = '#microsoft.graph.GroupAssignmentTarget'
                             groupId                                    = '12345678-1234-1234-1234-1234567890ab'
                             deviceAndAppManagementAssignmentFilterType = 'none'
-                        } -ClientOnly)
+                        })
                     )
-                    Items = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyItems -Property @{
+                    Items = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyItems] @{
                             dataType                                   = '#microsoft.graph.managedAppProtectionPolicySetItem'
                             payloadId                                    = 'T_12345678-1234-1234-1234-1234567890ab'
                             itemType = '#microsoft.graph.androidManagedAppProtection'
                             displayName = 'FakeStringValue'
                             guidedDeploymentTags = [string[]]@('FakeStringValue')
-                        } -ClientOnly)
+                        })
                     )
                     Ensure = "Present"
                     Credential = $Credential;
@@ -138,13 +138,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgbetaDeviceAppManagementPolicySet -Exactly 1
             }
         }
@@ -157,21 +157,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     GuidedDeploymentTags = @("FakeStringValue")
                     Id = "FakeStringValue"
                     RoleScopeTags = @("FakeStringValue")
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             dataType                                   = '#microsoft.graph.GroupAssignmentTarget'
                             groupId                                    = '12345678-1234-1234-1234-1234567890ab'
                             deviceAndAppManagementAssignmentFilterType = 'none'
-                        } -ClientOnly)
+                        })
                     )
-                    Items = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyItems -Property @{
+                    Items = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyItems] @{
                             dataType                                   = '#microsoft.graph.managedAppProtectionPolicySetItem'
                             payloadId                                    = 'T_12345678-1234-1234-1234-1234567890ab'
                             itemType = '#microsoft.graph.androidManagedAppProtection'
                             displayName = 'FakeStringValue'
                             guidedDeploymentTags = [string[]]@('FakeStringValue')
-                        } -ClientOnly)
+                        })
                     )
                     Ensure = 'Absent'
                     Credential = $Credential;
@@ -179,15 +179,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgbetaDeviceAppManagementPolicySet -Exactly 1
             }
         }
@@ -199,21 +199,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     GuidedDeploymentTags = @("FakeStringValue")
                     Id = "FakeStringValue"
                     RoleScopeTags = @("FakeStringValue")
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             dataType                                   = '#microsoft.graph.GroupAssignmentTarget'
                             groupId                                    = '12345678-1234-1234-1234-1234567890ab'
                             deviceAndAppManagementAssignmentFilterType = 'none'
-                        } -ClientOnly)
+                        })
                     )
-                    Items = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyItems -Property @{
+                    Items = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyItems] @{
                             dataType                                   = '#microsoft.graph.managedAppProtectionPolicySetItem'
                             payloadId                                    = 'T_12345678-1234-1234-1234-1234567890ab'
                             itemType = '#microsoft.graph.androidManagedAppProtection'
                             displayName = 'FakeStringValue'
                             guidedDeploymentTags = [string[]]@('FakeStringValue')
-                        } -ClientOnly)
+                        })
                     )
                     #>
                     Ensure = 'Present'
@@ -223,7 +223,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -235,21 +235,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     GuidedDeploymentTags = @("FakeStringValue")
                     Id = "FakeStringValue"
                     RoleScopeTags = @("FakeStringValue")
-                    Assignments = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyAssignments -Property @{
+                    Assignments = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyAssignments] @{
                             dataType                                   = '#microsoft.graph.GroupAssignmentTarget'
                             groupId                                    = '12345678-1234-1234-1234-1234567890ab'
                             deviceAndAppManagementAssignmentFilterType = 'none'
-                        } -ClientOnly)
+                        })
                     )
-                    Items = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_DeviceManagementConfigurationPolicyItems -Property @{
+                    Items = @(
+                        ([MSFT_DeviceManagementConfigurationPolicyItems] @{
                             dataType                                   = '#microsoft.graph.managedAppProtectionPolicySetItem'
                             payloadId                                    = 'T_12345678-1234-1234-1234-1234567890ab'
                             itemType = '#microsoft.graph.androidManagedAppProtection'
                             displayName = 'FakeStringValue'
                             guidedDeploymentTags = [string[]]@('FakeStringValue')
-                        } -ClientOnly)
+                        })
                     )
                     Ensure = 'Present'
                     Credential = $Credential;
@@ -257,15 +257,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntunePolicySets' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgbetaDeviceAppManagementPolicySet -Exactly 1
             }
         }
@@ -280,7 +280,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntunePolicySets' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

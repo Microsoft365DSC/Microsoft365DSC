@@ -1,5 +1,37 @@
 {
   "resourceName": "AADActivityBasedTimeoutPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "activityBasedTimeoutPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyActivityBasedTimeoutPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AzurePortalTimeOut",
+      "reason": "Accepted",
+      "note": "The WebSessionIdleTimeout for app c44b4083-3bb0-49c1-b47d-974e53cbdf3c"
+    },
+    {
+      "name": "DefaultTimeOut",
+      "reason": "Accepted",
+      "note": "The WebSessionIdleTimeout for the default application policy"
+    },
+    {
+      "name": "Definition",
+      "reason": "Accepted",
+      "note": "Synthesized from / to AzurePortalTimeOut and DefaultTimeOut. Other applicationIds are not expressible."
+    },
+    {
+      "name": "IsOrganizationDefault",
+      "reason": "NotConfigurable",
+      "note": "The policy has no appliesTo collection and always scopes to the organization."
+    }
+  ],
   "description": "This resource configures an Azure AD Activity Based Timeout Policy.",
   "permissions": {
     "graph": {

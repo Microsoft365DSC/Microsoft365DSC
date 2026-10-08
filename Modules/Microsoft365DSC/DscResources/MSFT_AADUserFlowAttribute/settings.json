@@ -1,5 +1,22 @@
 {
   "resourceName": "AADUserflowAttribute",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "identityUserFlowAttribute",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaIdentityUserFlowAttribute",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "UserFlowAttributeType",
+      "reason": "ReadOnly",
+      "note": "DataType carries the attribute type"
+    }
+  ],
   "description": "This resource configures an Azure User Flow attribute..",
   "roles": {
     "read": [],

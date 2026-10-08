@@ -22,15 +22,15 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneTermsAndConditions "IntuneTermsAndConditions-IntuneTermsAndConditions_1"
+        IntuneTermsAndConditions "IntuneTermsAndConditions-Example"
         {
-            ApplicationId         = $ConfigurationData.NonNodeData.ApplicationId;
-            CertificateThumbprint = $ConfigurationData.NonNodeData.CertificateThumbprint;
             DisplayName           = "IntuneTermsAndConditions_1";
             Ensure                = "Absent";
-            TenantId              = $OrganizationName;
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

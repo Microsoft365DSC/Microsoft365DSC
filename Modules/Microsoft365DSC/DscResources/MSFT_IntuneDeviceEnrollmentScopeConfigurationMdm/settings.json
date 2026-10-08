@@ -1,12 +1,44 @@
 {
   "resourceName": "IntuneDeviceEnrollmentScopeConfigurationMdm",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "mobileDeviceManagementPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyMobileDeviceManagementPolicy",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "ReadOnly",
+      "note": "Belongs to the registered MDM application"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "ReadOnly",
+      "note": "Names the registered MDM application"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "IsValid",
+      "reason": "ReadOnly",
+      "note": "Service-computed validity flag"
+    }
+  ],
   "description": "This resource configures an Intune Device Enrollment Scope Configuration Mdm.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.Read.All"
@@ -14,7 +46,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "Policy.ReadWrite.MobilityManagement"
@@ -44,7 +76,8 @@
     {
       "module": "Microsoft.Graph.Beta.Identity.SignIns",
       "cmdlets": [
-        "Get-MgBetaPolicyMobileDeviceManagementPolicy"
+        "Get-MgBetaPolicyMobileDeviceManagementPolicy",
+        "Update-MgBetaPolicyMobileDeviceManagementPolicy"
       ]
     },
     {

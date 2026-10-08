@@ -1,5 +1,377 @@
 {
   "resourceName": "O365Group",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "v1.0",
+    "entityType": "group",
+    "odataSubtype": null,
+    "cmdletNoun": "MgGroup",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AcceptedSenders",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through AcceptMessagesOnlyFromSendersOrMembers"
+    },
+    {
+      "name": "AccessType",
+      "reason": "NotConfigurable",
+      "note": "Written and read back as the value the service derives from Visibility."
+    },
+    {
+      "name": "AllowExternalSenders",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes the inverse through RequireSenderAuthenticationEnabled"
+    },
+    {
+      "name": "AppRoleAssignments",
+      "reason": "OwnedByOtherResource",
+      "note": "AADServicePrincipal creates the same assignments with PrincipalType Group"
+    },
+    {
+      "name": "AssignedLabels",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings assigns the label through SensitivityLabelId"
+    },
+    {
+      "name": "AssignedLicenses",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroup manages group-based licensing through AssignedLicenses"
+    },
+    {
+      "name": "AutoSubscribeNewMembers",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings exposes AutoSubscribeNewMembers directly"
+    },
+    {
+      "name": "Calendar",
+      "reason": "ReadOnly",
+      "note": "Exchange provisions it with the group mailbox and EXOGroupSettings holds its flags"
+    },
+    {
+      "name": "CalendarView",
+      "reason": "ReadOnly",
+      "note": "The service computes the view for a requested time range"
+    },
+    {
+      "name": "Classification",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings sets the group classification"
+    },
+    {
+      "name": "Conversations",
+      "reason": "Accepted",
+      "note": "Group mailbox conversations are user authored content."
+    },
+    {
+      "name": "Drive",
+      "reason": "ReadOnly",
+      "note": "SharePoint provisions the default document library with the group"
+    },
+    {
+      "name": "Drives",
+      "reason": "ReadOnly",
+      "note": "SharePoint creates and maintains the group document libraries"
+    },
+    {
+      "name": "Events",
+      "reason": "Accepted",
+      "note": "Calendar events are user authored content."
+    },
+    {
+      "name": "ExpirationDateTime",
+      "reason": "ReadOnly",
+      "note": "Computed from the lifecycle policy that AADGroupLifecyclePolicy manages"
+    },
+    {
+      "name": "Extensions",
+      "reason": "Accepted",
+      "note": "Open and schema extensions carry arbitrary application data."
+    },
+    {
+      "name": "GroupLifecyclePolicies",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroupLifecyclePolicy manages the tenant policy and AADGroup scopes groups into it"
+    },
+    {
+      "name": "GroupTypes",
+      "reason": "Accepted",
+      "note": "The resource writes Unified into the create body itself"
+    },
+    {
+      "name": "HasMembersWithLicenseErrors",
+      "reason": "ReadOnly",
+      "note": "Computed from group-based license assignment results"
+    },
+    {
+      "name": "HideFromAddressLists",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through HiddenFromAddressListsEnabled"
+    },
+    {
+      "name": "HideFromOutlookClients",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through HiddenFromExchangeClientsEnabled"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "The directory assigns the object id at creation"
+    },
+    {
+      "name": "InfoCatalogs",
+      "reason": "Deferred",
+      "note": "Refused on permissions the module does not request today."
+    },
+    {
+      "name": "IsArchived",
+      "reason": "NotConfigurable",
+      "note": "The service answers that the path is not supported."
+    },
+    {
+      "name": "IsAssignableToRole",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroup exposes IsAssignableToRole for role-assignable groups"
+    },
+    {
+      "name": "IsFavorite",
+      "reason": "NotConfigurable",
+      "note": "The service directs the property to the joined groups API."
+    },
+    {
+      "name": "IsManagementRestricted",
+      "reason": "OwnedByOtherResource",
+      "note": "Derived from membership in an AADAdministrativeUnit with restricted management"
+    },
+    {
+      "name": "IsSubscribedByMail",
+      "reason": "NotConfigurable",
+      "note": "Graph refuses the write with an app only token."
+    },
+    {
+      "name": "LicenseProcessingState",
+      "reason": "ReadOnly",
+      "note": "The directory reports group-based license assignment progress"
+    },
+    {
+      "name": "Mail",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings sets it through PrimarySmtpAddress"
+    },
+    {
+      "name": "MailEnabled",
+      "reason": "Accepted",
+      "note": "The resource hard-codes a mail-enabled group in the create body"
+    },
+    {
+      "name": "ManagedBy",
+      "reason": "Accepted",
+      "note": "Group owners, carried by user principal name."
+    },
+    {
+      "name": "MemberOf",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroup reconciles it through MemberOf"
+    },
+    {
+      "name": "MembershipRule",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroup manages dynamic membership rules"
+    },
+    {
+      "name": "MembershipRuleProcessingState",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroup manages dynamic membership rule processing"
+    },
+    {
+      "name": "MembersWithLicenseErrors",
+      "reason": "ReadOnly",
+      "note": "The directory computes the members whose license assignment failed"
+    },
+    {
+      "name": "Onenote",
+      "reason": "Accepted",
+      "note": "The group notebook holds user authored content."
+    },
+    {
+      "name": "OnPremisesDomainName",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value"
+    },
+    {
+      "name": "OnPremisesExtensionAttributes",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings exposes the same slots as CustomAttribute1-15"
+    },
+    {
+      "name": "OnPremisesLastSyncDateTime",
+      "reason": "ReadOnly",
+      "note": "The directory stamps the last successful synchronization time"
+    },
+    {
+      "name": "OnPremisesNetBiosName",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value"
+    },
+    {
+      "name": "OnPremisesProvisioningErrors",
+      "reason": "ReadOnly",
+      "note": "The directory records synchronization provisioning failures"
+    },
+    {
+      "name": "OnPremisesSamAccountName",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value"
+    },
+    {
+      "name": "OnPremisesSecurityIdentifier",
+      "reason": "ReadOnly",
+      "note": "Directory synchronization writes this value from the on-premises forest"
+    },
+    {
+      "name": "OnPremisesSyncEnabled",
+      "reason": "ReadOnly",
+      "note": "The directory sets this flag for synchronized objects"
+    },
+    {
+      "name": "OrganizationId",
+      "reason": "ReadOnly",
+      "note": "The directory stamps the owning tenant identifier"
+    },
+    {
+      "name": "Owners",
+      "reason": "Accepted",
+      "note": "The resource writes the owners navigation through ManagedBy"
+    },
+    {
+      "name": "PermissionGrants",
+      "reason": "Accepted",
+      "note": "Resource-specific consent records written by the consent flow."
+    },
+    {
+      "name": "Photo",
+      "reason": "Accepted",
+      "note": "The group photo is uploaded image bytes rather than a declarative value."
+    },
+    {
+      "name": "Photos",
+      "reason": "ReadOnly",
+      "note": "The service renders the size variants of the group photo"
+    },
+    {
+      "name": "Planner",
+      "reason": "OwnedByOtherResource",
+      "note": "PlannerPlan manages group-owned plans through OwnerGroup"
+    },
+    {
+      "name": "PreferredDataLocation",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings carries this as MailboxRegion"
+    },
+    {
+      "name": "PreferredLanguage",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings sets the group language preference"
+    },
+    {
+      "name": "ProxyAddresses",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings manages the full set as EmailAddresses"
+    },
+    {
+      "name": "RejectedSenders",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings manages it through RejectMessagesFromSendersOrMembers"
+    },
+    {
+      "name": "RenewedDateTime",
+      "reason": "ReadOnly",
+      "note": "The directory stamps the renewal date"
+    },
+    {
+      "name": "ResourceBehaviorOptions",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings exposes each behavior as its own writable property"
+    },
+    {
+      "name": "ResourceProvisioningOptions",
+      "reason": "OwnedByOtherResource",
+      "note": "TeamsTeam creates the team whose existence this collection reports"
+    },
+    {
+      "name": "SecurityEnabled",
+      "reason": "Accepted",
+      "note": "The resource hard-codes this value in the create body"
+    },
+    {
+      "name": "SecurityIdentifier",
+      "reason": "ReadOnly",
+      "note": "The directory derives the SID from the assigned object id"
+    },
+    {
+      "name": "ServiceProvisioningErrors",
+      "reason": "ReadOnly",
+      "note": "The directory records service provisioning failures"
+    },
+    {
+      "name": "Sites",
+      "reason": "OwnedByOtherResource",
+      "note": "SPOSite manages the connected SharePoint site by its URL"
+    },
+    {
+      "name": "Team",
+      "reason": "OwnedByOtherResource",
+      "note": "TeamsTeam creates and configures the attached team"
+    },
+    {
+      "name": "Threads",
+      "reason": "Accepted",
+      "note": "Conversation threads are group mailbox content authored by users."
+    },
+    {
+      "name": "TransitiveMemberOf",
+      "reason": "ReadOnly",
+      "note": "The directory computes the transitive membership closure"
+    },
+    {
+      "name": "TransitiveMembers",
+      "reason": "ReadOnly",
+      "note": "The directory computes the transitive member closure"
+    },
+    {
+      "name": "UniqueName",
+      "reason": "NotConfigurable",
+      "note": "Written and read back as null."
+    },
+    {
+      "name": "UnseenConversationsCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count for the caller"
+    },
+    {
+      "name": "UnseenCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count for the caller"
+    },
+    {
+      "name": "UnseenMessagesCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count for the caller"
+    },
+    {
+      "name": "Visibility",
+      "reason": "OwnedByOtherResource",
+      "note": "AADGroup manages visibility and EXOGroupSettings exposes Public or Private as AccessType"
+    },
+    {
+      "name": "WelcomeMessageEnabled",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings controls the welcome message through WelcomeMessageEnabled"
+    }
+  ],
   "description": "",
   "permissions": {
     "graph": {

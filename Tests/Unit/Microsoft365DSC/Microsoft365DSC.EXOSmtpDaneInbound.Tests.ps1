@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -30,7 +30,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -56,7 +56,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Disable-SmtpDaneInbound -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -81,14 +81,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Enable SmtpDaneInbound from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Set()
                 Should -Invoke -CommandName Enable-SmtpDaneInbound -Exactly 1
+
+                Mock -CommandName Enable-SmtpDaneInbound -MockWith {
+                    return [PSCustomObject]@{
+                        Result    = 'Error'
+                        ErrorData = "ErrorCode:'DomainNotFound'"
+                    }
+                }
+                { (New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Set() } | Should -Throw "*DomainNotFound*"
             }
         }
 
@@ -102,16 +110,24 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should disable SmtpDaneInbound from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Set()
                 Should -Invoke -CommandName Disable-SmtpDaneInbound -Exactly 1
+
+                Mock -CommandName Disable-SmtpDaneInbound -MockWith {
+                    return [PSCustomObject]@{
+                        Result    = 'Error'
+                        ErrorData = "ErrorCode:'DomainNotFound'"
+                    }
+                }
+                { (New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Set() } | Should -Throw "*DomainNotFound*"
             }
         }
 
@@ -125,7 +141,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXOSmtpDaneInbound' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -139,7 +155,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOSmtpDaneInbound' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

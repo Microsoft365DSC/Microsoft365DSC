@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADVerifiedIdAuthority 'AADVerifiedIdAuthority-Contoso'
+        AADVerifiedIdAuthority 'AADVerifiedIdAuthority-Example'
         {
-            DidMethod            = "web";
-            Ensure               = "Absent";
-            KeyVaultMetadata     = MSFT_AADVerifiedIdAuthorityKeyVaultMetadata{
-                SubscriptionId = '2ff65b89-ab22-4489-b84d-e60d1dc30a62'
-                ResourceName = 'xtakeyvault'
-                ResourceUrl = 'https://xtakeyvault.vault.azure.net/'
-                ResourceGroup = 'TBD'
-            };
-            LinkedDomainUrl      = "https://nik-charlebois.com/";
-            Name                 = "Contoso";
+            Ensure                = "Absent";
+            LinkedDomainUrl       = "https://$TenantId/";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

@@ -6,7 +6,7 @@ param (
 )
 
 $moduleName = 'Pester'
-$minVersion = '5.5.0'
+$minVersion = '6.2.0'
 
 $module = Get-Module -ListAvailable | Where-Object { $_.Name -eq $moduleName -and $_.Version -ge $minVersion }
 

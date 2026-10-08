@@ -1,427 +1,252 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOAtpPolicyForO365'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOAtpPolicyForO365 : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Specifies the resource is a single instance, the value must be ''Yes''')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter()]
-        [System.String]
-        $Identity = 'Default',
+    [DscProperty()]
+    [System.ComponentModel.Description('The AllowSafeDocsOpen parameter specifies whether users can click through and bypass the Protected View container even when Safe Documents identifies a file as malicious.')]
+    [System.Nullable[System.Boolean]] $AllowSafeDocsOpen
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowSafeDocsOpen = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EnableATPForSPOTeamsODB parameter specifies whether ATP is enabled for SharePoint Online, OneDrive for Business and Microsoft Teams. Default is $false.')]
+    [System.Nullable[System.Boolean]] $EnableATPForSPOTeamsODB
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableATPForSPOTeamsODB = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EnableSafeDocs parameter specifies whether to enable the Safe Documents feature in the organization. Default is $false.')]
+    [System.Nullable[System.Boolean]] $EnableSafeDocs
 
-        [Parameter()]
-        [System.Boolean]
-        $EnableSafeDocs = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Getting configuration of AtpPolicyForO365 for $Identity"
-
-    try
+    [EXOAtpPolicyForO365] Get()
     {
-        if (-not $Script:exportedInstance)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOAtpPolicyForO365]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message 'Getting configuration of the EXO AtpPolicyForO365'
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = @{
-                IsSingleInstance = 'Yes'
-            }
-
-            $AtpPolicyForO365 = Get-AtpPolicyForO365 -Identity $Identity -ErrorAction SilentlyContinue
-            if (-not $AtpPolicyForO365)
+        try
+        {
+            if (-not $this.ExportedInstance)
             {
-                Write-Verbose -Message "AtpPolicyForO365 $($Identity) does not exist."
-                return $nullReturn
-            }
-        }
-        else
-        {
-            $AtpPolicyForO365 = $Script:exportedInstance
-        }
+                $null = $this.Connect('ExchangeOnline')
 
-        Write-Verbose -Message "Found AtpPolicyForO365 $($Identity)"
+                Confirm-M365DSCDependencies
 
-        $result = @{
-            IsSingleInstance        = 'Yes'
-            Identity                = $AtpPolicyForO365.Identity
-            AllowSafeDocsOpen       = $AtpPolicyForO365.AllowSafeDocsOpen
-            EnableATPForSPOTeamsODB = $AtpPolicyForO365.EnableATPForSPOTeamsODB
-            EnableSafeDocs          = $AtpPolicyForO365.EnableSafeDocs
-            ApplicationId           = $ApplicationId
-            CertificateThumbprint   = $CertificateThumbprint
-            CertificatePath         = $CertificatePath
-            CertificatePassword     = $CertificatePassword
-            ManagedIdentity         = $ManagedIdentity.IsPresent
-            TenantId                = $TenantId
-            AccessTokens            = $AccessTokens
-        }
+                $this.AddTelemetry('Get')
 
-        return $result
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+                $nullReturn = @{
+                    IsSingleInstance = 'Yes'
+                }
 
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.String]
-        $Identity = 'Default',
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowSafeDocsOpen = $false,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableATPForSPOTeamsODB = $false,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableSafeDocs = $false,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of AtpPolicyForO365 for $Identity"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    if ('Default' -ne $Identity)
-    {
-        throw "EXOAtpPolicyForO365 configurations MUST specify Identity value of 'Default'"
-    }
-
-    $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    $AtpPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $AtpPolicyParams.Remove('IsSingleInstance') | Out-Null
-    Write-Verbose -Message "Setting AtpPolicyForO365 $Identity with values: $(Convert-M365DscHashtableToString -Hashtable $AtpPolicyParams)"
-
-    Set-AtpPolicyForO365 @AtpPolicyParams
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.String]
-        $Identity = 'Default',
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowSafeDocsOpen = $false,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableATPForSPOTeamsODB = $false,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnableSafeDocs = $false,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        if (Confirm-ImportedCmdletIsAvailable -CmdletName Get-AtpPolicyForO365)
-        {
-            [array]$ATPPolicies = Get-AtpPolicyForO365 -ErrorAction Stop
-            $dscContent = [System.Text.StringBuilder]::new()
-
-            if ($ATPPolicies.Length -eq 0)
-            {
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $AtpPolicyForO365 = Get-AtpPolicyForO365 -Identity 'Default' -ErrorAction SilentlyContinue
+                if (-not $AtpPolicyForO365)
+                {
+                    Write-Verbose -Message 'AtpPolicyForO365 Default does not exist.'
+                    return $this.AsResult($nullReturn)
+                }
             }
             else
             {
-                Write-M365DSCHost -Message "`r`n" -DeferWrite
+                $AtpPolicyForO365 = $this.ExportedInstance
             }
-            $i = 1
-            foreach ($atpPolicy in $ATPPolicies)
+
+            Write-Verbose -Message 'Found the EXO AtpPolicyForO365 Default'
+
+            $result = @{
+                IsSingleInstance        = 'Yes'
+                AllowSafeDocsOpen       = $AtpPolicyForO365.AllowSafeDocsOpen
+                EnableATPForSPOTeamsODB = $AtpPolicyForO365.EnableATPForSPOTeamsODB
+                EnableSafeDocs          = $AtpPolicyForO365.EnableSafeDocs
+                ApplicationId           = $this.ApplicationId
+                CertificateThumbprint   = $this.CertificateThumbprint
+                CertificatePath         = $this.CertificatePath
+                CertificatePassword     = $this.CertificatePassword
+                ManagedIdentity         = $this.ManagedIdentity
+                TenantId                = $this.TenantId
+                AccessTokens            = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Setting configuration of the EXO AtpPolicyForO365'
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $null = $this.Connect('ExchangeOnline')
+
+        $AtpPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $AtpPolicyParams.Remove('IsSingleInstance') | Out-Null
+        $AtpPolicyParams.Add('Identity', 'Default')
+        Write-Verbose -Message "Setting configuration of the EXO AtpPolicyForO365 Default"
+
+        Set-AtpPolicyForO365 @AtpPolicyParams
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        $dscContent = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            if (Confirm-ImportedCmdletIsAvailable -CmdletName Get-AtpPolicyForO365)
             {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                [array]$ATPPolicies = Get-AtpPolicyForO365 -ErrorAction Stop
+                $dscContent = [System.Text.StringBuilder]::new()
+
+                if ($ATPPolicies.Length -eq 0)
                 {
-                    $Global:M365DSCExportResourceInstancesCount++
-                }
-
-                Write-M365DSCHost -Message "    |---[$i/$($ATPPolicies.Length)] $($atpPolicy.Identity)" -DeferWrite
-
-                $Params = @{
-                    IsSingleInstance      = 'Yes'
-                    Identity              = $atpPolicy.Identity
-                    Credential            = $Credential
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    CertificateThumbprint = $CertificateThumbprint
-                    CertificatePassword   = $CertificatePassword
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    CertificatePath       = $CertificatePath
-                    AccessTokens          = $AccessTokens
-                }
-                $Script:exportedInstance = $atpPolicy
-                $Results = Get-TargetResource @Params
-                if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
-                {
-                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                        -ConnectionMode $ConnectionMode `
-                        -ModulePath $PSScriptRoot `
-                        -Results $Results `
-                        -Credential $Credential
-                    [void]$dscContent.Append($currentDSCBlock)
-
-                    Save-M365DSCPartialExport -Content $currentDSCBlock `
-                        -FileName $Global:PartialExportFileName
-
                     Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 }
                 else
                 {
-                    Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+                    Write-M365DSCHost -Message "`r`n" -DeferWrite
                 }
+                $i = 1
+                foreach ($atpPolicy in $ATPPolicies)
+                {
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                    {
+                        $Global:M365DSCExportResourceInstancesCount++
+                    }
 
-                $i++
+                    Write-M365DSCHost -Message "    |---[$i/$($ATPPolicies.Length)] $($atpPolicy.Identity)" -DeferWrite
+
+                    $Params = @{
+                        IsSingleInstance      = 'Yes'
+                        Credential            = $this.Credential
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        CertificatePassword   = $this.CertificatePassword
+                        ManagedIdentity       = $this.ManagedIdentity
+                        CertificatePath       = $this.CertificatePath
+                        AccessTokens          = $this.AccessTokens
+                    }
+                    $this.ExportedInstance = $atpPolicy
+                    $Results = $this.GetForExport($Params)
+                    if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
+                    {
+                        $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                            -ConnectionMode $ConnectionMode `
+                            -ModulePath $this.GetModulePath() `
+                            -Results $Results `
+                            -Credential $this.Credential
+                        [void]$dscContent.Append($currentDSCBlock)
+
+                        Save-M365DSCPartialExport -Content $currentDSCBlock `
+                            -FileName $Global:PartialExportFileName
+
+                        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    }
+                    else
+                    {
+                        Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+                    }
+
+                    $i++
+                }
             }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for ATP Policies"
+            }
+
+            return $dscContent.ToString()
         }
-        else
+        catch
         {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for ATP Policies"
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXOAtpPolicyForO365] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOAtpPolicyForO365])
+        {
+            return $Values
         }
 
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        $result = [EXOAtpPolicyForO365]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
 
-        throw
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

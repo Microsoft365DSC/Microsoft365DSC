@@ -2,15 +2,23 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0-windowsservercore-ltsc2025
 
 WORKDIR /DSC
 
-SHELL ["powershell", "-NoLogo"]
-
 COPY . .
 
-RUN $null = Install-PackageProvider -Name "NuGet" -Force
-RUN $null = Install-Module -Name "Microsoft.PowerShell.PSResourceGet" -Repository "PSGallery" -Scope "AllUsers" -Force -SkipPublisherCheck
-RUN $null = Install-PSResource -Name "Pester" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense
-RUN $null = Install-PSResource -Name "M365DSC.PSDesiredStateConfiguration" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense
+SHELL ["powershell", "-NoLogo"]
 
-RUN .\Utilities\Install-M365DSCAndDependencies.ps1 -IsSDK
+RUN Install-PackageProvider -Name "NuGet" -Force
+RUN Install-Module -Name "Microsoft.PowerShell.PSResourceGet" -Repository "PSGallery" -Scope "AllUsers" -Force -SkipPublisherCheck
+RUN Install-PSResource -Name "Pester" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense
+RUN Install-PSResource -Name "DSCParser" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense
+RUN Install-PSResource -Name "M365DSC.PSDesiredStateConfiguration" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense
+
+RUN ./Utilities/Install-PowerShell.ps1 -IsSDK
+RUN ./Utilities/Build-Microsoft365DSC.ps1
+RUN ./Utilities/Build-DllFiles.ps1 -Configuration Release
+RUN Import-Module ./Modules/Microsoft365DSC/Microsoft365DSC.psd1; Update-M365DSCDependencies -Development
+
+SHELL ["pwsh", "-NoLogo"]
+
+RUN ./Utilities/Install-M365DSCAndDependencies.ps1 -IsSDK
 
 ENTRYPOINT ["pwsh", "-NoLogo"]

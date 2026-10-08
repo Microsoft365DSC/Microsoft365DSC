@@ -4,7 +4,8 @@ This example updates a new Defender Role Definition.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,13 +18,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        DefenderRoleDefinition "DefenderRoleDefinitionExample"
+        DefenderRoleDefinition "DefenderRoleDefinition-Example"
         {
-            Description           = "Test Definition - Updated";
+            Description           = "Grants the security operations team full XDR and posture management rights";
             DisplayName           = "MyNewDefinition";
             Ensure                = "Present";
             RolePermissions       = @(

@@ -4,7 +4,8 @@ It is not meant to use as a production baseline.
 #>
 
 Configuration Example {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,18 +18,31 @@ Configuration Example {
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node Localhost
     {
-        AADTenantDetails 'ConfigureTenantDetails'
+        AADTenantDetails 'AADTenantDetails-Example'
         {
             IsSingleInstance                     = 'Yes'
-            TechnicalNotificationMails           = "example@contoso.com"
-            MarketingNotificationEmails          = "example@contoso.com"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            TechnicalNotificationMails           = "it-operations@contoso.com"
+            MarketingNotificationEmails          = "marketing@contoso.com"
+            SecurityComplianceNotificationMails  = @("security@contoso.com", "compliance@contoso.com")
+            SecurityComplianceNotificationPhones = @("+1 425 555 0101")
+            BusinessPhones                       = @("+1 425 555 0100")
+            Street                               = "1 Contoso Plaza"
+            City                                 = "Redmond"
+            State                                = "WA"
+            PostalCode                           = "98052"
+            PreferredLanguage                    = "en"
+            PrivacyProfile                       = MSFT_privacyProfile{
+                ContactEmail = "privacy@contoso.com"
+                StatementUrl = "https://www.contoso.com/privacy"
+            };
+            ApplicationId                        = $ApplicationId
+            TenantId                             = $TenantId
+            CertificateThumbprint                = $CertificateThumbprint
         }
     }
 }

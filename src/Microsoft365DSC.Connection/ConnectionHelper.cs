@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Microsoft365DSC.Connection
 {
@@ -12,31 +11,25 @@ namespace Microsoft365DSC.Connection
     public static class ConnectionHelper
     {
         /// <summary>
-        /// Gets all resources that support the specified authentication method and
-        /// determines the most secure authentication method supported by each resource.
+        /// Determines the most secure authentication method supported by each requested resource from a
+        /// map of resource name (with or without the MSFT_ prefix) to the names of its DSC properties.
         /// </summary>
-        /// <param name="dscResourcesPath">
-        /// The path to the DSCResources folder containing the .psm1 resource modules.
-        /// </param>
+        /// <param name="propertyNamesByResource">The property names declared by each resource.</param>
         /// <param name="authenticationMethods">
         /// The authentication methods to evaluate, in order of preference:
         /// ApplicationWithSecret, CertificateThumbprint, CertificatePath, Credentials,
         /// CredentialsWithTenantId, CredentialsWithApplicationId, ManagedIdentity, AccessTokens.
         /// </param>
-        /// <param name="resources">
-        /// The resource names to evaluate (without MSFT_ prefix and .psm1 extension).
-        /// </param>
-        /// <returns>
-        /// A list of Hashtable objects, each containing 'Resource' (string) and 'AuthMethod' (string).
-        /// </returns>
+        /// <param name="resources">The resource names to evaluate (without MSFT_ prefix).</param>
+        /// <returns>A list of Hashtable objects, each containing 'Resource' (string) and 'AuthMethod' (string).</returns>
         public static List<Hashtable> GetComponentsWithMostSecureAuthenticationType(
-            string dscResourcesPath,
+            IDictionary propertyNamesByResource,
             string[] authenticationMethods,
             string[] resources)
         {
-            if (string.IsNullOrEmpty(dscResourcesPath))
+            if (propertyNamesByResource == null || propertyNamesByResource.Count == 0)
             {
-                throw new ArgumentNullException(nameof(dscResourcesPath));
+                throw new ArgumentNullException(nameof(propertyNamesByResource));
             }
 
             if (authenticationMethods == null || authenticationMethods.Length == 0)
@@ -49,35 +42,20 @@ namespace Microsoft365DSC.Connection
                 throw new ArgumentNullException(nameof(resources));
             }
 
-            HashSet<string>? resourceSet = new(resources, StringComparer.OrdinalIgnoreCase);
-            HashSet<string>? authMethodSet = new(authenticationMethods, StringComparer.OrdinalIgnoreCase);
-            List<Hashtable>? components = [];
+            HashSet<string> resourceSet = new(resources, StringComparer.OrdinalIgnoreCase);
+            HashSet<string> authMethodSet = new(authenticationMethods, StringComparer.OrdinalIgnoreCase);
+            List<Hashtable> components = [];
 
-            string[]? modules = Directory.GetFiles(dscResourcesPath, "*.psm1", SearchOption.AllDirectories);
-
-            foreach (string modulePath in modules)
+            foreach (DictionaryEntry entry in propertyNamesByResource)
             {
-                string fileName = Path.GetFileNameWithoutExtension(modulePath);
-                string resourceName = StripPrefix(fileName, "MSFT_");
-
+                string resourceName = StripPrefix(entry.Key.ToString(), "MSFT_");
                 if (!resourceSet.Contains(resourceName))
                 {
                     continue;
                 }
 
-                List<string> parameters;
-                try
-                {
-                    parameters = Utilities.Utilities.GetFunctionParameterNamesByAST(modulePath, "Set-TargetResource");
-                }
-                catch (InvalidOperationException)
-                {
-                    continue;
-                }
-
-                HashSet<string>? paramSet = new(parameters, StringComparer.OrdinalIgnoreCase);
-                string? authMethod = DetermineMostSecureAuthMethod(authMethodSet, paramSet, fileName);
-
+                HashSet<string> propertySet = ToPropertyNames(entry.Value);
+                string? authMethod = DetermineMostSecureAuthMethod(authMethodSet, propertySet, resourceName);
                 if (authMethod != null)
                 {
                     components.Add(new Hashtable
@@ -91,83 +69,123 @@ namespace Microsoft365DSC.Connection
             return components;
         }
 
+        /// <summary>Collects the property names of a map value, accepting any non-string enumerable.</summary>
+        private static HashSet<string> ToPropertyNames(object? value)
+        {
+            HashSet<string> names = new(StringComparer.OrdinalIgnoreCase);
+            if (value is IEnumerable enumerable && value is not string)
+            {
+                foreach (object? item in enumerable)
+                {
+                    if (item?.ToString() is { Length: > 0 } name)
+                    {
+                        names.Add(name);
+                    }
+                }
+            }
+
+            return names;
+        }
+
+        /// <summary>
+        /// One authentication method a resource may support, and what it takes to qualify.
+        /// </summary>
+        private sealed class AuthenticationCandidate
+        {
+            public AuthenticationCandidate(
+                string method,
+                string authMethod,
+                string[] requiredProperties,
+                string[]? excludedResourcePrefixes = null)
+            {
+                Method = method;
+                AuthMethod = authMethod;
+                RequiredProperties = requiredProperties;
+                ExcludedResourcePrefixes = excludedResourcePrefixes;
+            }
+
+            /// <summary>The method name as supplied by the caller.</summary>
+            public string Method { get; }
+
+            /// <summary>The name reported back for this method.</summary>
+            public string AuthMethod { get; }
+
+            /// <summary>Properties the resource must declare for this method to apply.</summary>
+            public string[] RequiredProperties { get; }
+
+            /// <summary>Resource name prefixes this method never applies to.</summary>
+            public string[]? ExcludedResourcePrefixes { get; }
+        }
+
+        /// <summary>
+        /// The authentication methods in descending order of security. The first candidate whose
+        /// method was requested and whose properties the resource declares wins.
+        /// </summary>
+        private static readonly AuthenticationCandidate[] AuthenticationPriority =
+        [
+            new("CertificateThumbprint", "CertificateThumbprint", ["ApplicationId", "CertificateThumbprint", "TenantId"]),
+            new("CertificatePath", "CertificatePath", ["ApplicationId", "CertificatePath", "TenantId"]),
+            new("ApplicationWithSecret", "ApplicationSecret", ["ApplicationId", "ApplicationSecret", "TenantId"]),
+            new("CredentialsWithTenantId", "CredentialsWithTenantId", ["Credential", "TenantId"], ["SPO", "OD", "PP"]),
+            new("CredentialsWithApplicationId", "CredentialsWithApplicationId", ["Credential"]),
+            new("Credentials", "Credentials", ["Credential"]),
+            new("ManagedIdentity", "ManagedIdentity", ["ManagedIdentity"]),
+            new("AccessTokens", "AccessTokens", ["AccessTokens"])
+        ];
+
         /// <summary>
         /// Determines the most secure authentication method for a resource based on
-        /// the authentication methods requested and the parameters the resource supports.
-        /// The priority order matches the original PowerShell elseif chain.
+        /// the authentication methods requested and the DSC properties the resource declares.
         /// </summary>
         private static string? DetermineMostSecureAuthMethod(
             HashSet<string> authMethods,
             HashSet<string> parameters,
-            string fileName)
+            string resourceName)
         {
-            // CertificateThumbprint
-            if (authMethods.Contains("CertificateThumbprint") &&
-                parameters.Contains("ApplicationId") &&
-                parameters.Contains("CertificateThumbprint") &&
-                parameters.Contains("TenantId"))
+            foreach (AuthenticationCandidate candidate in AuthenticationPriority)
             {
-                return "CertificateThumbprint";
-            }
+                if (!authMethods.Contains(candidate.Method) ||
+                    IsExcluded(resourceName, candidate.ExcludedResourcePrefixes) ||
+                    !DeclaresAll(parameters, candidate.RequiredProperties))
+                {
+                    continue;
+                }
 
-            // CertificatePath
-            if (authMethods.Contains("CertificatePath") &&
-                parameters.Contains("ApplicationId") &&
-                parameters.Contains("CertificatePath") &&
-                parameters.Contains("TenantId"))
-            {
-                return "CertificatePath";
-            }
-
-            // ApplicationWithSecret -> AuthMethod = "ApplicationSecret"
-            if (authMethods.Contains("ApplicationWithSecret") &&
-                parameters.Contains("ApplicationId") &&
-                parameters.Contains("ApplicationSecret") &&
-                parameters.Contains("TenantId"))
-            {
-                return "ApplicationSecret";
-            }
-
-            // CredentialsWithTenantId (excludes SPO, OD, PP prefixed resources)
-            if (authMethods.Contains("CredentialsWithTenantId") &&
-                parameters.Contains("Credential") &&
-                parameters.Contains("TenantId") &&
-                !fileName.StartsWith("MSFT_SPO", StringComparison.OrdinalIgnoreCase) &&
-                !fileName.StartsWith("MSFT_OD", StringComparison.OrdinalIgnoreCase) &&
-                !fileName.StartsWith("MSFT_PP", StringComparison.OrdinalIgnoreCase))
-            {
-                return "CredentialsWithTenantId";
-            }
-
-            // CredentialsWithApplicationId
-            if (authMethods.Contains("CredentialsWithApplicationId") &&
-                parameters.Contains("Credential"))
-            {
-                return "CredentialsWithApplicationId";
-            }
-
-            // Credentials
-            if (authMethods.Contains("Credentials") &&
-                parameters.Contains("Credential"))
-            {
-                return "Credentials";
-            }
-
-            // ManagedIdentity
-            if (authMethods.Contains("ManagedIdentity") &&
-                parameters.Contains("ManagedIdentity"))
-            {
-                return "ManagedIdentity";
-            }
-
-            // AccessTokens
-            if (authMethods.Contains("AccessTokens") &&
-                parameters.Contains("AccessTokens"))
-            {
-                return "AccessTokens";
+                return candidate.AuthMethod;
             }
 
             return null;
+        }
+
+        private static bool IsExcluded(string resourceName, string[]? excludedPrefixes)
+        {
+            if (excludedPrefixes is null)
+            {
+                return false;
+            }
+
+            foreach (string prefix in excludedPrefixes)
+            {
+                if (resourceName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool DeclaresAll(HashSet<string> parameters, string[] requiredProperties)
+        {
+            foreach (string required in requiredProperties)
+            {
+                if (!parameters.Contains(required))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static string StripPrefix(string value, string prefix)

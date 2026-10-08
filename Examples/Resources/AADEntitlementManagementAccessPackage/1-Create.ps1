@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,25 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADEntitlementManagementAccessPackage 'myAccessPackage'
+        AADEntitlementManagementAccessPackage 'AADEntitlementManagementAccessPackage-Example'
         {
             AccessPackagesIncompatibleWith = @();
             CatalogId                      = "General";
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            Description                    = "Integration Tests";
-            DisplayName                    = "Integration Package";
+            Description                    = "Grants access to the finance reporting toolset";
+            DisplayName                    = "Finance Reporting Access";
             Ensure                         = "Present";
             IsHidden                       = $False;
             IsRoleScopesVisible            = $True;
+            IncompatibleAccessPackages     = @();
+            IncompatibleGroups             = @();
+            ApplicationId                  = $ApplicationId
+            TenantId                       = $TenantId
+            CertificateThumbprint          = $CertificateThumbprint
         }
     }
 }

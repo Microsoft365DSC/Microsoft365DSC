@@ -4,28 +4,69 @@ This example adds a new Teams Calling Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsCallingPolicy 'ConfigureCallingPolicy'
+        TeamsCallingPolicy 'TeamsCallingPolicy-Example'
         {
-            Identity                   = 'New Calling Policy'
-            AllowPrivateCalling        = $false
-            AllowVoicemail             = 'UserOverride'
-            AllowCallGroups            = $true
-            AllowDelegation            = $true
-            AllowCallForwardingToUser  = $false
-            AllowCallForwardingToPhone = $true
-            PreventTollBypass          = $true
-            BusyOnBusyEnabledType      = 'Enabled'
-            Ensure                     = 'Present'
-            Credential                 = $Credscredential
+            Identity                                   = "CorporateCalling"
+            Description                                = "Standard calling features for staff at the Amsterdam office"
+            AIInterpreter                              = "Enabled"
+            AllowMeetingKnowledgeGeneration            = $false
+            CallingSpendUserLimit                      = 100
+            Copilot                                    = "EnabledWithTranscript"
+            EnableSpendLimits                          = $true
+            EnableWebPstnMediaBypass                   = $true
+            ExplicitRecordingConsent                   = "Enabled"
+            InboundFederatedCallRoutingTreatment       = "RegularIncoming"
+            InboundPstnCallRoutingTreatment            = "UserOverride"
+            PopoutAppPathForIncomingPstnCalls          = "https://crm.contoso.com/callers/{phone}"
+            PopoutForIncomingPstnCalls                 = "Enabled"
+            PreventComplianceRecording                 = "None"
+            RealTimeText                               = "Enabled"
+            RecordingAndTranscriptionAudioNotification = "Enabled"
+            ReportCall                                 = "Enabled"
+            ShowTeamsCallsInCallLog                    = $true
+            VoicePhishingDetection                     = "Banner"
+            VoiceSimulationInInterpreter               = "Enabled"
+            AllowPrivateCalling                        = $true
+            AllowVoicemail                             = "UserOverride"
+            AllowCallGroups                            = $true
+            AllowDelegation                            = $true
+            AllowCallForwardingToUser                  = $true
+            AllowCallForwardingToPhone                 = $true
+            AllowCallRedirect                          = "Enabled"
+            AllowSIPDevicesCalling                     = $true
+            AllowWebPSTNCalling                        = $true
+            PreventTollBypass                          = $true
+            BusyOnBusyEnabledType                      = "Enabled"
+            CallRecordingExpirationDays                = 60
+            MusicOnHoldEnabledType                     = "Enabled"
+            AllowCloudRecordingForCalls                = $true
+            AllowTranscriptionforCalling               = $true
+            LiveCaptionsEnabledTypeForCalling          = "DisabledUserOverride"
+            AutoAnswerEnabledType                      = "Disabled"
+            SpamFilteringEnabledType                   = "Enabled"
+            Ensure                                     = 'Present'
+            ApplicationId                              = $ApplicationId
+            TenantId                                   = $TenantId
+            CertificateThumbprint                      = $CertificateThumbprint
         }
     }
 }

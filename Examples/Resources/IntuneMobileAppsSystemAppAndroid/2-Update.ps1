@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,26 +21,43 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        IntuneMobileAppsSystemAppAndroid "IntuneMobileAppsSystemAppAndroid-Office"
+        IntuneMobileAppsSystemAppAndroid "IntuneMobileAppsSystemAppAndroid-Example"
         {
             DisplayName           = "Office";
             Ensure                = "Present";
             AppIdentifier         = "com.microsoft.office";
-            Publisher             = "Company"; # Drift
+            Publisher             = "Company"; # Updated Property
+            Description           = "Microsoft Office system app preinstalled on corporate-owned Android devices";
+            Developer             = "Microsoft Corporation";
+            InformationUrl        = "https://intranet.contoso.com/apps/office-android";
+            IsFeatured            = $true;
+            LargeIcon             = MSFT_DeviceManagementMimeContent{
+                Type  = "image/png"
+                Value = "<base64-encoded-app-icon>"
+            };
+            Notes                 = "Reviewed annually by the mobility team";
+            Owner                 = "Endpoint Management Team";
+            PrivacyInformationUrl = "https://www.contoso.com/privacy";
             RoleScopeTagIds       = @("0")
             Assignments           = @(
                 MSFT_DeviceManagementSystemMobileAppAssignment {
-                    groupDisplayName = 'All devices'
+                    groupDisplayName                           = 'All devices'
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
-                    intent = 'required'
-                    assignmentSettings = MSFT_DeviceManagementSystemMobileAppAssignmentSettings{
-                        odataType = "#microsoft.graph.androidManagedStoreAppAssignmentSettings"
+                    dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
+                    intent                                     = 'required'
+                    assignmentSettings                         = MSFT_DeviceManagementSystemMobileAppAssignmentSettings{
+                        odataType                      = "#microsoft.graph.androidManagedStoreAppAssignmentSettings"
                         androidManagedStoreAppTrackIds = @()
-                        autoUpdateMode = "default"
+                        autoUpdateMode                 = "default"
                     }
+                }
+                MSFT_DeviceManagementSystemMobileAppAssignment{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
+                    intent           = 'required'
                 }
             );
             ApplicationId         = $ApplicationId;

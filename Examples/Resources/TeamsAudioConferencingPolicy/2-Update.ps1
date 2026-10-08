@@ -1,0 +1,38 @@
+<#
+This example is used to test new resources and showcase the usage of new resources being worked on.
+It is not meant to use as a production baseline.
+#>
+
+Configuration Example
+{
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
+    )
+
+    Import-DscResource -ModuleName Microsoft365DSC
+
+    Node localhost
+    {
+        TeamsAudioConferencingPolicy 'TeamsAudioConferencingPolicy-Example'
+        {
+            AllowTollFreeDialin       = $False # Updated Property
+            Ensure                    = 'Present'
+            Identity                  = 'Sales Audio Conferencing'
+            MeetingInvitePhoneNumbers = @()
+            ApplicationId             = $ApplicationId
+            TenantId                  = $TenantId
+            CertificateThumbprint     = $CertificateThumbprint
+        }
+    }
+}

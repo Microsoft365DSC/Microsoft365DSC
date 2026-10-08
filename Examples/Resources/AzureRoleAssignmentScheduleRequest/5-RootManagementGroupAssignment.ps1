@@ -6,18 +6,26 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AzureRoleAssignmentScheduleRequest "RootManagementGroupOwnerAssignment"
+        AzureRoleAssignmentScheduleRequest "AzureRoleAssignmentScheduleRequest-Example"
         {
-            Principal             = "AdeleV@contoso.onmicrosoft.com"
+            Principal             = "AdeleV@$TenantId"
             RoleDefinition        = "Owner"
             DirectoryScopeId      = "/providers/Microsoft.Management/managementGroups/rootGroup"
             PrincipalType         = "User"
@@ -26,7 +34,7 @@ Configuration Example
                 startDateTime = '2024-01-15T08:00:00Z'
                 expiration    = MSFT_AzureRoleAssignmentScheduleRequestScheduleExpiration
                 {
-                    type        = 'noExpiration'
+                    type = 'noExpiration'
                 }
             }
             ApplicationId         = $ApplicationId

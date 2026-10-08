@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        AADAuthenticationMethodPolicyVoice "AADAuthenticationMethodPolicyVoice-Voice"
+        AADAuthenticationMethodPolicyVoice "AADAuthenticationMethodPolicyVoice-Example"
         {
+            Ensure                = "Absent";
+            Id                    = "Voice";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            Ensure                = "Absent";
-            Id                    = "Voice";
         }
     }
 }

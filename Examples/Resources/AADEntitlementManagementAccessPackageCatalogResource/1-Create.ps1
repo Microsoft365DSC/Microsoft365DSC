@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,35 +19,26 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADGroup 'DependantGroup'
+        AADEntitlementManagementAccessPackageCatalogResource 'AADEntitlementManagementAccessPackageCatalogResource-Example'
         {
-            DisplayName     = "MyGroup"
-            Description     = "Microsoft DSC Group"
-            SecurityEnabled = $True
-            MailEnabled     = $True
-            GroupTypes      = @("Unified")
-            MailNickname    = "MyGroup"
-            Visibility      = "Private"
-            Ensure          = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-        }
-        AADEntitlementManagementAccessPackageCatalogResource 'myAccessPackageCatalogResource'
-        {
-            ApplicationId         = $ApplicationId;
-            CatalogId             = "My Catalog";
-            CertificateThumbprint = $CertificateThumbprint;
-            DisplayName           = "MyGroup";
-            OriginSystem          = "AADGroup";
-            OriginId              = 'MyGroup'
+            CatalogId             = "General";
+            DisplayName           = "Mark 8 Project Team";
+            OriginSystem          = "AadGroup";
+            OriginId              = "Mark 8 Project Team";
+            AddedBy               = "MeganB@$TenantId";
+            AddedOn               = "2026-01-01T00:00:00.0000000Z";
+            Description           = "Welcome to the team that we've assembled to create the Mark 8.";
+            ResourceType          = "Microsoft 365 Teams Group";
             Ensure                = "Present";
             IsPendingOnboarding   = $False;
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

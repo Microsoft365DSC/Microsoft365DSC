@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -72,15 +72,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IntervalInHours          = 1;
                     IsActive                 = $True;
                     Name                     = "MyScan";
-                    ScanAuthenticationParams = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams -Property @{
+                    ScanAuthenticationParams = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams] @{
                         Type = 'NoAuthNoPriv'
                         DataType = '#microsoft.windowsDefenderATP.api.SnmpAuthParams'
-                    } -ClientOnly)
-                    ScannerAgent             = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent -Property @{
+                    })
+                    ScannerAgent             = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent] @{
                         machineId = '55c636a37ff1a21a3241437eb6ce15881xxxxxx'
                         machineName = 'WIN-XXXXXXXXXX'
                         id = 'c819dc6d-f9fe-4d05-8022-88a34766442d_55c636a37ff1a21a3241437eb6ce15881xxxxxxx'
-                    } -ClientOnly)
+                    })
                     ScanType                 = "Network";
                     Target                   = "172.1.12.1";
                     Ensure              = 'Present'
@@ -92,14 +92,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create a new instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Invoke-M365DSCDefenderREST -Exactly 2
             }
         }
@@ -110,15 +110,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IntervalInHours          = 1;
                     IsActive                 = $True;
                     Name                     = "MyScan";
-                    ScanAuthenticationParams = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams -Property @{
+                    ScanAuthenticationParams = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams] @{
                         Type = 'NoAuthNoPriv'
                         DataType = '#microsoft.windowsDefenderATP.api.SnmpAuthParams'
-                    } -ClientOnly)
-                    ScannerAgent             = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent -Property @{
+                    })
+                    ScannerAgent             = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent] @{
                         machineId = '55c636a37ff1a21a3241437eb6ce15881xxxxxx'
                         machineName = 'WIN-XXXXXXXXXX'
                         id = 'c819dc6d-f9fe-4d05-8022-88a34766442d_55c636a37ff1a21a3241437eb6ce15881xxxxxxx'
-                    } -ClientOnly)
+                    })
                     ScanType                 = "Network";
                     Target                   = "172.1.12.1";
                     Ensure              = 'Absent'
@@ -126,14 +126,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Invoke-M365DSCDefenderREST -Exactly 2
             }
         }
@@ -144,15 +144,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IntervalInHours          = 1;
                     IsActive                 = $True;
                     Name                     = "MyScan";
-                    ScanAuthenticationParams = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams -Property @{
+                    ScanAuthenticationParams = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams] @{
                         Type = 'NoAuthNoPriv'
                         DataType = '#microsoft.windowsDefenderATP.api.SnmpAuthParams'
-                    } -ClientOnly)
-                    ScannerAgent             = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent -Property @{
+                    })
+                    ScannerAgent             = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent] @{
                         machineId = '55c636a37ff1a21a3241437eb6ce15881xxxxxx'
                         machineName = 'WIN-XXXXXXXXXX'
                         id = 'c819dc6d-f9fe-4d05-8022-88a34766442d_55c636a37ff1a21a3241437eb6ce15881xxxxxxx'
-                    } -ClientOnly)
+                    })
                     ScanType                 = "Network";
                     Target                   = "172.1.12.1";
                     Ensure              = 'Present'
@@ -161,7 +161,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -171,15 +171,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IntervalInHours          = 24; # Drift
                     IsActive                 = $True;
                     Name                     = "MyScan";
-                    ScanAuthenticationParams = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams -Property @{
+                    ScanAuthenticationParams = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionAuthenticationParams] @{
                         Type = 'NoAuthNoPriv'
                         DataType = '#microsoft.windowsDefenderATP.api.SnmpAuthParams'
-                    } -ClientOnly)
-                    ScannerAgent             = (New-CimInstance -ClassName MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent -Property @{
+                    })
+                    ScannerAgent             = ([MSFT_DefenderDeviceAuthenticatedScanDefinitionScanAgent] @{
                         machineId = '55c636a37ff1a21a3241437eb6ce15881xxxxxx'
                         machineName = 'WIN-XXXXXXXXXX'
                         id = 'c819dc6d-f9fe-4d05-8022-88a34766442d_55c636a37ff1a21a3241437eb6ce15881xxxxxxx'
-                    } -ClientOnly)
+                    })
                     ScanType                 = "Network";
                     Target                   = "172.1.12.1";
                     Ensure              = 'Present'
@@ -188,15 +188,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -Property $testParams).Set()
                 Should -Invoke -CommandName Invoke-M365DSCDefenderREST -Exactly 2
             }
         }
@@ -210,7 +210,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'DefenderDeviceAuthenticatedScanDefinition' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

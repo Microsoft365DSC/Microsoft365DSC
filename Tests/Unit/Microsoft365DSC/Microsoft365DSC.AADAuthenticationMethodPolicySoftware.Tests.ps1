@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -53,7 +53,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -74,17 +74,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The AADAuthenticationMethodPolicySoftware should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    ExcludeTargets = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFTAADAuthenticationMethodPolicySoftwareExcludeTarget -Property @{
+                    ExcludeTargets = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareExcludeTarget] @{
                             TargetType = "group"
                             Id = "Fakegroup"
-                        } -ClientOnly)
+                        })
                     )
-                    IncludeTargets        = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget -Property @{
+                    IncludeTargets        = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget] @{
                             TargetType = 'group'
                             Id         = 'Fakegroup'
-                        } -ClientOnly)
+                        })
                     )
                     Id = "SoftwareOath"
                     State = "enabled"
@@ -97,13 +97,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -Exactly 1
             }
         }
@@ -111,17 +111,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The AADAuthenticationMethodPolicySoftware exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    ExcludeTargets = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFTAADAuthenticationMethodPolicySoftwareExcludeTarget -Property @{
+                    ExcludeTargets = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareExcludeTarget] @{
                             TargetType = "group"
                             Id = "Fakegroup"
-                        } -ClientOnly)
+                        })
                     )
-                    IncludeTargets        = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget -Property @{
+                    IncludeTargets        = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget] @{
                             TargetType = 'group'
                             Id         = 'Fakegroup'
-                        } -ClientOnly)
+                        })
                     )
                     Id = "SoftwareOath"
                     State = "enabled"
@@ -131,32 +131,32 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -Exactly 1
             }
         }
         Context -Name "The AADAuthenticationMethodPolicySoftware Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    ExcludeTargets = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFTAADAuthenticationMethodPolicySoftwareExcludeTarget -Property @{
+                    ExcludeTargets = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareExcludeTarget] @{
                             TargetType = "group"
                             Id = "Fakegroup"
-                        } -ClientOnly)
+                        })
                     )
-                    IncludeTargets        = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget -Property @{
+                    IncludeTargets        = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget] @{
                             TargetType = 'group'
                             Id         = 'Fakegroup'
-                        } -ClientOnly)
+                        })
                     )
                     Id = "SoftwareOath"
                     State = "enabled"
@@ -167,24 +167,24 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The AADAuthenticationMethodPolicySoftware exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    ExcludeTargets = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFTAADAuthenticationMethodPolicySoftwareExcludeTarget -Property @{
+                    ExcludeTargets = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareExcludeTarget] @{
                             TargetType = "group"
                             Id = "Fakegroup"
-                        } -ClientOnly)
+                        })
                     )
-                    IncludeTargets        = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget -Property @{
+                    IncludeTargets        = @(
+                        ([MSFT_AADAuthenticationMethodPolicySoftwareIncludeTarget] @{
                             TargetType = 'group'
                             Id         = 'Fakegroup'
-                        } -ClientOnly)
+                        })
                     )
                     Id = "SoftwareOath"
                     State = "disabled"
@@ -194,15 +194,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicySoftware' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -Exactly 1
             }
         }
@@ -216,7 +216,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADAuthenticationMethodPolicySoftware' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,9 +22,9 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOMailboxAutoReplyConfiguration "EXOMailboxAutoReplyConfiguration"
+        EXOMailboxAutoReplyConfiguration "EXOMailboxAutoReplyConfiguration-Example"
         {
             AutoDeclineFutureRequestsWhenOOF = $False;
             AutoReplyState                   = "Disabled";
@@ -39,9 +40,9 @@ Configuration Example
             InternalMessage                  = "";
             OOFEventSubject                  = "";
             StartTime                        = "1/22/2024 3:00:00 PM";
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                    = $ApplicationId
+            TenantId                         = $TenantId
+            CertificateThumbprint            = $CertificateThumbprint
         }
     }
 }

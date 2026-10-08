@@ -4,36 +4,17 @@ WORKDIR /DSC
 
 SHELL ["bash", "-c"]
 
+COPY ./Utilities/Install-M365DSCAndDependencies.ps1 /DSC/Install-M365DSCAndDependencies.ps1
+
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    zlib1g-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev \
-    llvm \
-    libncurses5-dev \
-    libncursesw5-dev \
-    xz-utils \
-    tk-dev \
-    libffi-dev \
-    liblzma-dev \
-    python3-openssl \
-    git \
     wget \
     curl \
-    apt-transport-https \
-    software-properties-common \
+    libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python3.11
-RUN curl https://pyenv.run | bash
-ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-RUN pyenv install "3.11.9"
-
-RUN wget -q https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/p/powershell/powershell_7.6.5-1.deb_amd64.deb && \
-    dpkg -i powershell_7.6.5-1.deb_amd64.deb && \
-    rm powershell_7.6.5-1.deb_amd64.deb
+RUN wget -q https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/p/powershell/powershell_7.6.6-1.deb_amd64.deb && \
+    dpkg -i powershell_7.6.6-1.deb_amd64.deb && \
+    rm powershell_7.6.6-1.deb_amd64.deb
 
 RUN wget -q https://github.com/microsoft/omi/releases/download/v1.9.1-0/omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
     dpkg -i ./omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
@@ -51,13 +32,11 @@ RUN wget https://archive.ubuntu.com/ubuntu/pool/main/n/nano/nano_9.2-1_amd64.deb
 RUN mv /etc/opt/omi/conf/dsc/configuration/baseregistration /etc/opt/omi/conf/dsc/configuration/BaseRegistration && \
     mv /etc/opt/omi/conf/dsc/configuration/BaseRegistration/baseresource.schema.mof /etc/opt/omi/conf/dsc/configuration/BaseRegistration/BaseResource.schema.mof
 
-COPY ./Utilities/Install-M365DSCAndDependencies.ps1 /DSC/Install-M365DSCAndDependencies.ps1
+RUN pwsh -Command 'Install-Module -Name "Microsoft.PowerShell.PSResourceGet" -Repository "PSGallery" -Scope "AllUsers" -Force -SkipPublisherCheck'
+RUN pwsh -Command 'Save-PSResource -Name "Microsoft365Dsc" -Repository "PSGallery" -Path "/usr/local/share/powershell/Modules" -SkipDependencyCheck -TrustRepository -AcceptLicense'
+RUN pwsh -Command 'Install-PSResource -Name "Pester" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
+RUN pwsh -Command 'Install-PSResource -Name "M365DSC.PSDesiredStateConfiguration" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
 
-RUN pwsh -Command '$null = Install-Module -Name "Microsoft.PowerShell.PSResourceGet" -Repository "PSGallery" -Scope "AllUsers" -Force -SkipPublisherCheck'
-RUN pwsh -Command '$null = Save-PSResource -Name "Microsoft365Dsc" -Repository "PSGallery" -Path "/usr/local/share/powershell/Modules" -SkipDependencyCheck -TrustRepository -AcceptLicense'
-RUN pwsh -Command '$null = Install-PSResource -Name "Pester" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
-RUN pwsh -Command '$null = Install-PSResource -Name "M365DSC.PSDesiredStateConfiguration" -Repository "PSGallery" -Scope "AllUsers" -SkipDependencyCheck -TrustRepository -AcceptLicense'
-
-RUN pwsh -Command /DSC/Install-M365DSCAndDependencies.ps1
+RUN pwsh -Command ./Install-M365DSCAndDependencies.ps1
 
 ENTRYPOINT ["pwsh", "-NoLogo"]

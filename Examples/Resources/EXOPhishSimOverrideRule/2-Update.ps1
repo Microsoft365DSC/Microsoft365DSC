@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,21 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOPhishSimOverrideRule "EXOPhishSimOverrideRule-_Exe:PhishSimOverr:d779965e-ab14-4dd8-b3f5-0876a99f988b"
+        EXOPhishSimOverrideRule "EXOPhishSimOverrideRule-Example"
         {
-            Comment                                  = "New Comment note";
-            Ensure                                   = "Present";
-            Identity                                 = "_Exe:PhishSimOverr:d779965e-ab14-4dd8-b3f5-0876a99f988b";
-            ApplicationId                            = $ApplicationId
-            TenantId                                 = $TenantId
-            CertificateThumbprint                    = $CertificateThumbprint
+            Comment               = "Allows security awareness training campaigns from the training vendor and the internal red team"; # Updated Property
+            Domains               = @("fabrikam.com","wingtiptoys.com");
+            Ensure                = "Present";
+            IsSingleInstance      = "Yes";
+            SenderIpRanges        = @("192.168.1.55");
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

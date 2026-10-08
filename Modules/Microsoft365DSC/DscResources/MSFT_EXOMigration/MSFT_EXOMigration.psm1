@@ -1,632 +1,384 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOMigration'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOMigration : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Identity parameter identifies the name of the current migration batch.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String[]]
-        $NotificationEmails,
+    [DscProperty()]
+    [System.ComponentModel.Description('The NotificationEmails parameter specifies one or more email addresses that migration status reports are sent to.')]
+    [System.String[]] $NotificationEmails
 
-        [Parameter()]
-        [System.String]
-        $CompleteAfter,
+    [DscProperty()]
+    [System.ComponentModel.Description('The CompleteAfter parameter specifies a delay before the batch is completed.')]
+    [System.String] $CompleteAfter
 
-        [Parameter()]
-        [System.Boolean]
-        $AddUsers,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AddUsers parameter controls whether additional users can be dynamically added to an existing migration batch after it has been created.')]
+    [System.Nullable[System.Boolean]] $AddUsers
 
-        [Parameter()]
-        [System.String]
-        $BadItemLimit,
+    [DscProperty()]
+    [System.ComponentModel.Description('The MoveOptions parameter specifies the stages of the migration that you want to skip for debugging purposes.')]
+    [System.String[]] $MoveOptions
 
-        [Parameter()]
-        [System.String]
-        $LargeItemLimit,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SkipMerging parameter specifies the stages of the migration that you want to skip for debugging purposes.')]
+    [System.String[]] $SkipMerging
 
-        [Parameter()]
-        [System.String[]]
-        $MoveOptions,
+    [DscProperty()]
+    [System.ComponentModel.Description('The StartAfter parameter specifies a delay before the data migration for the users within the batch is started.')]
+    [System.String] $StartAfter
 
-        [Parameter()]
-        [System.String[]]
-        $SkipMerging,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Update switch sets the Update flag on the migration batch.')]
+    [System.Nullable[System.Boolean]] $Update
 
-        [Parameter()]
-        [System.String]
-        $StartAfter,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Status parameter returns information about migration users that have the specified status state.')]
+    [System.String] $Status
 
-        [Parameter()]
-        [System.Boolean]
-        $Update,
+    [DscProperty()]
+    [System.ComponentModel.Description('Migration Users states the list of the users/mailboxes that are part of a migration batch that are to be migrated.')]
+    [System.String[]] $MigrationUsers
 
-        [Parameter()]
-        [System.String]
-        $Status,
+    [DscProperty()]
+    [System.ComponentModel.Description('The SourceEndpoint parameter specifies the migration endpoint to use for the source of the migration batch.')]
+    [System.String] $SourceEndpoint
 
-        [Parameter()]
-        [System.String]
-        $TargetDeliveryDomain,
+    [DscProperty()]
+    [System.ComponentModel.Description('The TargetDeliveryDomain parameter specifies the FQDN of the external email address created in the source forest for the mail-enabled user when the migration batch is complete.')]
+    [System.String] $TargetDeliveryDomain
 
-        [Parameter()]
-        [System.String]
-        $SourceEndpoint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies if the migration endpoint should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String[]]
-        $MigrationUsers,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Getting configuration for Migration Batch with Identity {$Identity}"
-
-    try
+    [EXOMigration] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOMigration]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for Migration Batch with Identity {$($this.Identity)}"
 
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $instance = Get-MigrationBatch -Identity $Identity -ErrorAction SilentlyContinue
-            if ($null -eq $instance)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                Write-Verbose -Message "Migration Batch with Identity $Identity not found"
-                return $nullResult
+                $null = $this.Connect('ExchangeOnline')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $instance = Get-MigrationBatch -Identity $this.Identity -ErrorAction SilentlyContinue
+                if ($null -eq $instance)
+                {
+                    Write-Verbose -Message "Migration Batch with Identity $($this.Identity) not found"
+                    return $this.AsResult($nullResult)
+                }
+            }
+            else
+            {
+                $instance = $this.ExportedInstance
+            }
+
+            Write-Verbose -Message "Migration Batch with Identity $($this.Identity) found"
+
+            $Users = Get-MigrationUser -BatchId $this.Identity
+            $UserEmails = @()
+            foreach ($user in $Users)
+            {
+                $UserEmails += $user.Identity
+            }
+
+            $results = @{
+                Identity              = $this.Identity
+                NotificationEmails    = [System.String[]]$instance.NotificationEmails
+                AddUsers              = [System.Boolean]$instance.AddUsers
+                MoveOptions           = [System.String[]]$instance.MoveOptions
+                SkipMerging           = [System.String[]]$instance.SkipMerging
+                Update                = [System.Boolean]$instance.Update
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+                Status                = $instance.Status.Value
+                MigrationUsers        = $UserEmails
+                SourceEndpoint        = $instance.SourceEndpoint.Identity.Id
+                TargetDeliveryDomain  = $instance.TargetDeliveryDomain
+            }
+
+            if ($null -ne $instance.CompleteAfter)
+            {
+                $results.Add('CompleteAfter', $instance.CompleteAfter.ToString('MM/dd/yyyy hh:mm tt'))
+            }
+
+            if ($null -ne $instance.StartAfter)
+            {
+                $results.Add('StartAfter', $instance.StartAfter.ToString('MM/dd/yyyy hh:mm tt'))
+            }
+
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for Migration Batch with Identity {$($this.Identity)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            # Convert the list of users to CSV format
+            $csvContent = @('"EmailAddress"') + ($this.MigrationUsers | ForEach-Object { "`"$_`"" })
+
+            # Join the results into a single string with new lines
+            $csvContent = $csvContent -join "`r`n"
+
+            # Convert the CSV content to bytes directly without saving to a file
+            $csvBytes = [System.Text.Encoding]::UTF8.GetBytes($csvContent -join "`r`n")
+
+            $BatchParams = @{
+                Name                 = $this.Identity  # Use the existing Identity as the new batch name
+                CSVData              = $csvBytes  # Directly use the byte array
+                NotificationEmails   = $this.NotificationEmails  # Use the same notification emails if provided
+                CompleteAfter        = $this.CompleteAfter
+                StartAfter           = $this.StartAfter
+                SkipMerging          = $this.SkipMerging
+                SourceEndpoint       = $this.SourceEndpoint
+                TargetDeliveryDomain = $this.TargetDeliveryDomain
+            }
+
+            # Create a new migration batch with the specified parameters
+            New-MigrationBatch @BatchParams
+            Write-M365DSCHost -Message "A new migration batch named '$($currentInstance.Identity)' has been created with the specified parameters."
+        }
+
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            # Retrieve the migration batch
+            $migrationBatch = Get-MigrationBatch -Identity $currentInstance.Identity -ErrorAction Stop
+
+            if ($migrationBatch.Status.Value -in @('Completed', 'CompletedWithErrors', 'Stopped', 'Failed', 'SyncedWithErrors'))
+            {
+                # If the migration batch is in a final state, remove it directly
+                Remove-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
+                Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' has been removed as it was in a completed or stopped state."
+            }
+            elseif ($migrationBatch.Status.Value -in @('InProgress', 'Syncing', 'Queued', 'Completing'))
+            {
+                # If the migration batch is in progress, stop it first
+                Stop-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
+                Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' was in progress and has been stopped."
+
+                # Now remove the migration batch
+                Remove-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
+                Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' has been removed after stopping."
+            }
+            else
+            {
+                Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' is in an unexpected status: $($migrationBatch.Status.Value). Manual intervention may be required."
             }
         }
-        else
+
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            $instance = $Script:exportedInstance
-        }
-
-        Write-Verbose -Message "Migration Batch with Identity $Identity found"
-
-        $Users = Get-MigrationUser -BatchId $Identity
-        $UserEmails = @()
-        foreach ($user in $Users)
-        {
-            $UserEmails += $user.Identity
-        }
-
-        $results = @{
-            Identity              = $Identity
-            NotificationEmails    = [System.String[]]$instance.NotificationEmails
-            AddUsers              = [System.Boolean]$instance.AddUsers
-            BadItemLimit          = [System.String]$instance.BadItemLimit
-            LargeItemLimit        = [System.String]$instance.LargeItemLimit
-            MoveOptions           = [System.String[]]$instance.MoveOptions
-            SkipMerging           = [System.String[]]$instance.SkipMerging
-            Update                = [System.Boolean]$instance.Update
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-            Status                = $instance.Status.Value
-            MigrationUsers        = $UserEmails
-            SourceEndpoint        = $instance.SourceEndpoint.Identity.Id
-            TargetDeliveryDomain  = $instance.TargetDeliveryDomain
-        }
-
-        if ($null -ne $instance.CompleteAfter)
-        {
-            $results.Add('CompleteAfter', $instance.CompleteAfter.ToString('MM/dd/yyyy hh:mm tt'))
-        }
-
-        if ($null -ne $instance.StartAfter)
-        {
-            $results.Add('StartAfter', $instance.CompleteAfter.ToString('MM/dd/yyyy hh:mm tt'))
-        }
-
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String[]]
-        $NotificationEmails,
-
-        [Parameter()]
-        [System.String]
-        $CompleteAfter,
-
-        [Parameter()]
-        [System.Boolean]
-        $AddUsers,
-
-        [Parameter()]
-        [System.String]
-        $BadItemLimit,
-
-        [Parameter()]
-        [System.String]
-        $LargeItemLimit,
-
-        [Parameter()]
-        [System.String[]]
-        $MoveOptions,
-
-        [Parameter()]
-        [System.String[]]
-        $SkipMerging,
-
-        [Parameter()]
-        [System.String]
-        $StartAfter,
-
-        [Parameter()]
-        [System.Boolean]
-        $Update,
-
-        [Parameter()]
-        [System.String]
-        $Status,
-
-        [Parameter()]
-        [System.String]
-        $TargetDeliveryDomain,
-
-        [Parameter()]
-        [System.String]
-        $SourceEndpoint,
-
-        [Parameter()]
-        [System.String[]]
-        $MigrationUsers,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Migration Batch with Identity {$Identity}"
-
-    Confirm-M365DSCDependencies
-
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        # Convert the list of users to CSV format
-        $csvContent = @('"EmailAddress"') + ($MigrationUsers | ForEach-Object { "`"$_`"" })
-
-        # Join the results into a single string with new lines
-        $csvContent = $csvContent -join "`r`n"
-
-        # Convert the CSV content to bytes directly without saving to a file
-        $csvBytes = [System.Text.Encoding]::UTF8.GetBytes($csvContent -join "`r`n")
-
-        $BatchParams = @{
-            Name                 = $Identity  # Use the existing Identity as the new batch name
-            CSVData              = $csvBytes  # Directly use the byte array
-            NotificationEmails   = $NotificationEmails  # Use the same notification emails if provided
-            CompleteAfter        = $CompleteAfter
-            StartAfter           = $StartAfter
-            BadItemLimit         = [System.String]$BadItemLimit
-            LargeItemLimit       = $LargeItemLimit
-            SkipMerging          = $SkipMerging
-            SourceEndpoint       = $SourceEndpoint
-            TargetDeliveryDomain = $TargetDeliveryDomain
-        }
-
-        # Create a new migration batch with the specified parameters
-        New-MigrationBatch @BatchParams
-        Write-M365DSCHost -Message "A new migration batch named '$($currentInstance.Identity)' has been created with the specified parameters."
-    }
-
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        # Retrieve the migration batch
-        $migrationBatch = Get-MigrationBatch -Identity $currentInstance.Identity -ErrorAction Stop
-
-        if ($migrationBatch.Status.Value -in @('Completed', 'CompletedWithErrors', 'Stopped', 'Failed', 'SyncedWithErrors'))
-        {
-            # If the migration batch is in a final state, remove it directly
-            Remove-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
-            Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' has been removed as it was in a completed or stopped state."
-        }
-        elseif ($migrationBatch.Status.Value -in @('InProgress', 'Syncing', 'Queued', 'Completing'))
-        {
-            # If the migration batch is in progress, stop it first
-            Stop-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
-            Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' was in progress and has been stopped."
-
-            # Now remove the migration batch
-            Remove-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
-            Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' has been removed after stopping."
-        }
-        else
-        {
-            Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' is in an unexpected status: $($migrationBatch.Status.Value). Manual intervention may be required."
-        }
-    }
-
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        # Define the path for the CSV file to store the migration users
-        $csvFilePath = "$env:TEMP\MigrationUsers.csv"
-
-        # Convert each item in the array to a custom object with an EmailAddress property
-        $csvContent = $MigrationUsers | ForEach-Object { @{EmailAddress = $_ } }
-
-        # Export to CSV with the header "EmailAddress"
-        $csvContent | Export-Csv -Path $csvFilePath -NoTypeInformation -Force
-
-        $BatchParams = @{
-            Identity           = $Identity  # Use the existing Identity as the new batch name
-            CSVData            = [System.IO.File]::ReadAllBytes($csvFilePath)  # Load the CSV as byte array
-            NotificationEmails = $NotificationEmails  # Use the same notification emails if provided
-            CompleteAfter      = $CompleteAfter
-            StartAfter         = $StartAfter
-            BadItemLimit       = [System.String]$BadItemLimit
-            LargeItemLimit     = $LargeItemLimit
-            SkipMerging        = $SkipMerging
-            Update             = $Update
-            AddUsers           = $AddUsers
-        }
-
-        Set-MigrationBatch @BatchParams
-
-        $migrationBatch = Get-MigrationBatch -Identity $currentInstance.Identity -ErrorAction Stop
-
-        if ($currentInstance.Status -eq 'Stopped' -and $migrationBatch.Status -eq 'Started')
-        {
-            # If currentInstance is stopped but migrationBatch is started, stop the migration batch
-            Stop-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
-            Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' was running and has been stopped to match the current instance status."
-        }
-        elseif ($currentInstance.Status -eq 'Started' -and $migrationBatch.Status -eq 'Stopped')
-        {
-            # If currentInstance is started but migrationBatch is stopped, start the migration batch
-            Start-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
-            Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' was stopped and has been started to match the current instance status."
-        }
-    }
-}
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String[]]
-        $NotificationEmails,
-
-        [Parameter()]
-        [System.String]
-        $CompleteAfter,
-
-        [Parameter()]
-        [System.Boolean]
-        $AddUsers,
-
-        [Parameter()]
-        [System.String]
-        $BadItemLimit,
-
-        [Parameter()]
-        [System.String]
-        $LargeItemLimit,
-
-        [Parameter()]
-        [System.String[]]
-        $MoveOptions,
-
-        [Parameter()]
-        [System.String[]]
-        $SkipMerging,
-
-        [Parameter()]
-        [System.String]
-        $StartAfter,
-
-        [Parameter()]
-        [System.Boolean]
-        $Update,
-
-        [Parameter()]
-        [System.String]
-        $TargetDeliveryDomain,
-
-        [Parameter()]
-        [System.String]
-        $Status,
-
-        [Parameter()]
-        [System.String]
-        $SourceEndpoint,
-
-        [Parameter()]
-        [System.String[]]
-        $MigrationUsers,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$migrationBatches = Get-MigrationBatch -ErrorAction Stop
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($migrationBatches.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $migrationBatches)
-        {
-            $displayedKey = $config.Identity
-            Write-M365DSCHost -Message "    |---[$i/$($migrationBatches.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Identity              = $config.Identity
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            # Define the path for the CSV file to store the migration users
+            $csvFilePath = "$env:TEMP\MigrationUsers.csv"
+
+            # Convert each item in the array to a custom object with an EmailAddress property
+            $csvContent = $this.MigrationUsers | ForEach-Object { @{EmailAddress = $_ } }
+
+            # Export to CSV with the header "EmailAddress"
+            $csvContent | Export-Csv -Path $csvFilePath -NoTypeInformation -Force
+
+            $BatchParams = @{
+                Identity           = $this.Identity  # Use the existing Identity as the new batch name
+                CSVData            = [System.IO.File]::ReadAllBytes($csvFilePath)  # Load the CSV as byte array
+                NotificationEmails = $this.NotificationEmails  # Use the same notification emails if provided
+                CompleteAfter      = $this.CompleteAfter
+                StartAfter         = $this.StartAfter
+                SkipMerging        = $this.SkipMerging
+                Update             = $this.Update
+                AddUsers           = $this.AddUsers
             }
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
 
-        throw
+            Set-MigrationBatch @BatchParams
+
+            $migrationBatch = Get-MigrationBatch -Identity $currentInstance.Identity -ErrorAction Stop
+
+            if ($currentInstance.Status -eq 'Stopped' -and $migrationBatch.Status -eq 'Started')
+            {
+                # If currentInstance is stopped but migrationBatch is started, stop the migration batch
+                Stop-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
+                Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' was running and has been stopped to match the current instance status."
+            }
+            elseif ($currentInstance.Status -eq 'Started' -and $migrationBatch.Status -eq 'Stopped')
+            {
+                # If currentInstance is started but migrationBatch is stopped, start the migration batch
+                Start-MigrationBatch -Identity $currentInstance.Identity -Confirm:$false
+                Write-M365DSCHost -Message "Migration batch '$($currentInstance.Identity)' was stopped and has been started to match the current instance status."
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        #region Telemetry
+        $this.AddTelemetry('Export')
+        #endregion
+
+        try
+        {
+            [array]$migrationBatches = Get-MigrationBatch -ErrorAction Stop
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($migrationBatches.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $migrationBatches)
+            {
+                $displayedKey = $config.Identity
+                Write-M365DSCHost -Message "    |---[$i/$($migrationBatches.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Identity              = $config.Identity
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXOMigration] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOMigration])
+        {
+            return $Values
+        }
+
+        $result = [EXOMigration]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

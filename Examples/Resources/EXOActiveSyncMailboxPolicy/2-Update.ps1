@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,17 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOActiveSyncMailboxPolicy 'TestActiveSyncMailboxPolicy'
+        EXOActiveSyncMailboxPolicy 'EXOActiveSyncMailboxPolicy-Example'
         {
             AllowApplePushNotifications              = $True;
             AllowBluetooth                           = "Allow";
             AllowBrowser                             = $True;
-            AllowCamera                              = $False; # Drift
+            AllowCamera                              = $False; # Updated Property
             AllowConsumerEmail                       = $True;
             AllowDesktopSync                         = $True;
             AllowExternalDeviceManagement            = $False;
@@ -56,10 +58,9 @@ Configuration Example
             PasswordExpiration                       = "Unlimited";
             PasswordHistory                          = 0;
             DevicePolicyRefreshInterval              = "Unlimited";
-            Identity                                 = "Test";
+            Identity                                 = "Corporate Mobile Devices";
             IrmEnabled                               = $True;
-            IsDefault                                = $True;
-            IsDefaultPolicy                          = $True;
+            IsDefault                                = $false;
             MaxAttachmentSize                        = "Unlimited";
             MaxCalendarAgeFilter                     = "All";
             MaxPasswordFailedAttempts                = "Unlimited";
@@ -69,7 +70,7 @@ Configuration Example
             MaxInactivityTimeLock                    = "Unlimited";
             MinPasswordComplexCharacters             = 1;
             MinPasswordLength                        = 1;
-            Name                                     = "Test";
+            Name                                     = "Corporate Mobile Devices";
             PasswordRecoveryEnabled                  = $False;
             RequireDeviceEncryption                  = $False;
             RequireEncryptedSMIMEMessages            = $False;
@@ -81,10 +82,10 @@ Configuration Example
             UnapprovedInROMApplicationList           = @();
             UNCAccessEnabled                         = $True;
             WSSAccessEnabled                         = $True;
-            Ensure               = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            Ensure                                   = "Present"
+            ApplicationId                            = $ApplicationId
+            TenantId                                 = $TenantId
+            CertificateThumbprint                    = $CertificateThumbprint
         }
     }
 }

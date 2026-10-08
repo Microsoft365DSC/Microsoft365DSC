@@ -1,5 +1,77 @@
 {
   "resourceName": "IntuneAzureNetworkConnectionWindows365",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "cloudPcOnPremisesConnection",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementVirtualEndpointOnPremiseConnection",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AlternateResourceUrl",
+      "reason": "ReadOnly",
+      "note": "The service populates the partner resource link"
+    },
+    {
+      "name": "HealthCheckPaused",
+      "reason": "ReadOnly",
+      "note": "Windows 365 pauses and resumes the recurring health checks itself"
+    },
+    {
+      "name": "HealthCheckStatus",
+      "reason": "ReadOnly",
+      "note": "The service reports the outcome of its health check run"
+    },
+    {
+      "name": "HealthCheckStatusDetail",
+      "reason": "ReadOnly",
+      "note": "The service fills this with health-check results"
+    },
+    {
+      "name": "HealthCheckStatusDetails",
+      "reason": "Deprecated",
+      "note": "Superseded by healthCheckStatusDetail and empty since 31 January 2024"
+    },
+    {
+      "name": "InUse",
+      "reason": "ReadOnly",
+      "note": "The service reports whether the connection is in use"
+    },
+    {
+      "name": "InUseByCloudPc",
+      "reason": "ReadOnly",
+      "note": "The service sets this when a Cloud PC uses the connection"
+    },
+    {
+      "name": "ManagedBy",
+      "reason": "Accepted",
+      "note": "Pinned to windows365 on every create"
+    },
+    {
+      "name": "SubnetPrivateIpDetail",
+      "reason": "ReadOnly",
+      "note": "The service computes the free-address count and last sync time"
+    },
+    {
+      "name": "SubscriptionId",
+      "reason": "Accepted",
+      "note": "Resolved from the declared SubscriptionName"
+    },
+    {
+      "name": "Type",
+      "reason": "Deprecated",
+      "note": "Superseded by ConnectionType, which carries the same allowed values"
+    },
+    {
+      "name": "VirtualNetworkLocation",
+      "reason": "ReadOnly",
+      "note": "The service takes the Azure region of the virtual network"
+    }
+  ],
   "description": "This resource configures an Intune Azure Network Connection for Windows365.",
   "permissions": {
     "graph": {

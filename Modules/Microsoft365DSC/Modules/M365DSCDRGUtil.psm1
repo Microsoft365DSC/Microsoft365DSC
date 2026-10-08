@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Converts the first character of a string to uppercase.
 
@@ -89,7 +89,7 @@ function Rename-M365DSCCimInstanceParameter
         foreach ($item in $Properties)
         {
             $itemType = $item.GetType().FullName
-            if ($itemType -like '*Hashtable*' -or $itemType -like '*CimInstance*' -or $itemType -like '*Object*')
+            if ($itemType -like '*Hashtable*' -or $itemType -like '*CimInstance*' -or $itemType -like '*Object*' -or $itemType -like "*MSFT_*")
             {
                 try
                 {
@@ -117,14 +117,25 @@ function Rename-M365DSCCimInstanceParameter
         $result = [System.Collections.Specialized.CollectionsUtil]::CreateCaseInsensitiveHashtable([Hashtable]$Properties)
     }
 
-    if ($type -like '*CimInstance*' -or $type -like '*Hashtable*' -or $type -like '*Object*')
+    if ($type -like '*CimInstance*' -or $type -like '*Hashtable*' -or $type -like '*Object*' -or $type -like "*MSFT_*")
     {
         $hashProperties = Get-M365DSCDRGComplexTypeToHashtable -ComplexObject $result
         $keys = ($hashProperties.Clone()).Keys
 
         foreach ($key in $keys)
         {
-            $keyName = $key.Substring(0, 1).ToLower() + $key.Substring(1, $key.Length - 1)
+            $keyName = if ($key -cmatch '^[A-Z0-9]+$')
+            {
+                $key.ToLower()
+            }
+            elseif ($key -cmatch '^([A-Z]+)(?=[A-Z][a-z])')
+            {
+                $Matches[1].ToLower() + $key.Substring($Matches[1].Length)
+            }
+            else
+            {
+                $key.Substring(0, 1).ToLower() + $key.Substring(1, $key.Length - 1)
+            }
             if ($key -in $KeyMapping.Keys)
             {
                 $keyName = $KeyMapping.$key
@@ -305,14 +316,13 @@ function Get-M365DSCDRGComplexTypeToString
 
 <#
 .SYNOPSIS
-    Update special characters in a string to be escaped in a DSC configuration.
+    Replace every character that would need escaping inside a DSC instance name with an underscore.
 
 .DESCRIPTION
-    This function updates special characters in a string to be escaped in a DSC configuration.
+    This function replaces the characters that cannot appear unescaped in a DSC instance name.
     The function replaces the following characters:
-        - 0x201C = “
-        - 0x201D = ”
-        - 0x201E = „
+        - <>:"/\|?*'[]()`$ and the space
+        - 0x2019, 0x201C, 0x201D, 0x201E and 0x201F
 
 .PARAMETER String
     The string to be updated.
@@ -321,9 +331,9 @@ function Get-M365DSCDRGComplexTypeToString
     System.String
 
 .EXAMPLE
-    PS> Update-M365DSCSpecialCharacters -String 'This is a test string with special characters: „, “, ”'
+    PS> Remove-M365DSCSpecialCharacters -String 'Policy (Windows) "Baseline"'
 #>
-function Update-M365DSCSpecialCharacters
+function Remove-M365DSCSpecialCharacters
 {
     [CmdletBinding()]
     [OutputType([System.String])]
@@ -334,138 +344,7 @@ function Update-M365DSCSpecialCharacters
     )
 
     Initialize-M365DSCDllLoader -ErrorAction Stop
-    return [Microsoft365DSC.Utilities.Utilities]::UpdateSpecialCharacters($String)
-}
-
-<#
-.SYNOPSIS
-    Tests whether an object is a CIM instance.
-
-.DESCRIPTION
-    Returns true when the provided object is not null and its type name indicates a CIM instance.
-
-.PARAMETER Object
-    Specifies the object to test.
-
-.OUTPUTS
-    System.Boolean
-#>
-function Test-IsCimInstance
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param (
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyCollection()]
-        [AllowEmptyString()]
-        [AllowNull()]
-        [System.Object]
-        $Object
-    )
-
-    return $null -ne $Object -and $Object.GetType().FullName -like '*CimInstance*'
-}
-
-<#
-.SYNOPSIS
-    Tests whether an object is a hashtable-like type.
-
-.DESCRIPTION
-    Returns true when the provided object is not null and is a hashtable or ordered dictionary.
-
-.PARAMETER Object
-    Specifies the object to test.
-
-.OUTPUTS
-    System.Boolean
-#>
-function Test-IsHashtable
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param (
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyCollection()]
-        [AllowEmptyString()]
-        [AllowNull()]
-        [System.Object]
-        $Object
-    )
-
-    return $null -ne $Object -and ($Object.GetType().FullName -like '*Hashtable' -or $Object.GetType().FullName -like '*OrderedDictionary')
-}
-
-<#
-.SYNOPSIS
-    Tests whether an object is an object array.
-
-.DESCRIPTION
-    Returns true when the provided object is not null and its type name is Object[].
-
-.PARAMETER Object
-    Specifies the object to test.
-
-.OUTPUTS
-    System.Boolean
-#>
-function Test-IsObjectArray
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param (
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyCollection()]
-        [AllowEmptyString()]
-        [AllowNull()]
-        [System.Object]
-        $Object
-    )
-
-    return $null -ne $Object -and $Object.GetType().Name -eq 'Object[]'
-}
-
-<#
-.SYNOPSIS
-    Tests whether an object can be treated as a complex object array.
-
-.DESCRIPTION
-    Returns true when the object is an array of CIM instances or hashtables, or an object array containing those types.
-
-.PARAMETER Object
-    Specifies the object to evaluate.
-
-.OUTPUTS
-    System.Boolean
-#>
-function Test-IsComplexArrayCandidate
-{
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyCollection()]
-        [AllowEmptyString()]
-        [AllowNull()]
-        [System.Object]
-        $Object
-    )
-
-    if ($null -eq $Object)
-    {
-        return $false
-    }
-
-    $typeName = $Object.GetType().FullName
-    if ($typeName -like '*CimInstance[[\]]' -or $typeName -like '*Hashtable[[\]]')
-    {
-        return $true
-    }
-
-    if ($typeName -like '*Object[[\]]' -and $Object.Count -gt 0)
-    {
-        return ($Object[0].GetType().FullName -like '*CimInstance*' -or $Object[0].GetType().FullName -like '*Hashtable*')
-    }
-
-    return $false
+    return [Microsoft365DSC.Utilities.Utilities]::RemoveSpecialCharacters($String)
 }
 
 <#
@@ -521,6 +400,76 @@ function Compare-M365DSCComplexObject
         $Global:AllDrifts.DriftInfo += $tuple.Item1
     }
     return $tuple.Item2
+}
+
+<#
+.SYNOPSIS
+    Renders a drift value as readable text.
+
+.DESCRIPTION
+    A drift on a complex property carries the object itself. String interpolation renders such an
+    object as its type name. This function expands its members instead.
+
+.PARAMETER Value
+    The value to render.
+
+.PARAMETER Depth
+    How many levels of nesting to expand before falling back to the type name.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Convert-M365DSCDriftValueToString
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param(
+        [Parameter()]
+        $Value,
+
+        [Parameter()]
+        [System.Int32]
+        $Depth = 3
+    )
+
+    if ($null -eq $Value)
+    {
+        return [System.String]::Empty
+    }
+
+    if ($Value -is [System.String] -or $Value -is [System.ValueType])
+    {
+        return $Value.ToString()
+    }
+
+    if ($Depth -le 0)
+    {
+        return $Value.ToString()
+    }
+
+    if ($Value -is [System.Collections.IDictionary])
+    {
+        $entries = @()
+        foreach ($key in ($Value.Keys | Sort-Object))
+        {
+            $entries += "$key=$(Convert-M365DSCDriftValueToString -Value $Value[$key] -Depth ($Depth - 1))"
+        }
+
+        return '{' + ($entries -join ', ') + '}'
+    }
+
+    if ($Value -is [System.Collections.IEnumerable])
+    {
+        $entries = @()
+        foreach ($item in $Value)
+        {
+            $entries += Convert-M365DSCDriftValueToString -Value $item -Depth ($Depth - 1)
+        }
+
+        return $entries -join ', '
+    }
+
+    return $Value.ToString()
 }
 
 <#
@@ -630,7 +579,9 @@ function Write-M365DSCDriftsToEventLog
         $EventMessage.Append("        <ParametersNotInDesiredState>`r`n") | Out-Null
         foreach ($drift in $Drifts.DriftInfo)
         {
-            $EventMessage.Append("            <Param Name=`"$($drift.PropertyName.Replace('..', '.'))`"><CurrentValue>$($drift.CurrentValue)</CurrentValue><DesiredValue>$($drift.DesiredValue)</DesiredValue></Param>`r`n") | Out-Null
+            $currentText = Convert-M365DSCDriftValueToString -Value $drift.CurrentValue
+            $desiredText = Convert-M365DSCDriftValueToString -Value $drift.DesiredValue
+            $EventMessage.Append("            <Param Name=`"$($drift.PropertyName.Replace('..', '.'))`"><CurrentValue>$currentText</CurrentValue><DesiredValue>$desiredText</DesiredValue></Param>`r`n") | Out-Null
         }
         $EventMessage.Append("        </ParametersNotInDesiredState>`r`n") | Out-Null
         $EventMessage.Append("    </ConfigurationDrift>`r`n") | Out-Null

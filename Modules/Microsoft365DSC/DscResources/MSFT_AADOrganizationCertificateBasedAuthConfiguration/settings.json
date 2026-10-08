@@ -1,5 +1,27 @@
 {
   "resourceName": "AADOrganizationCertificateBasedAuthConfiguration",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "certificateBasedAuthConfiguration",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaOrganizationCertificateBasedAuthConfiguration",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "The class declares no Id property and hardcodes the fixed configuration GUID"
+    },
+    {
+      "name": "OrganizationId",
+      "reason": "Accepted",
+      "note": "Parent organization identifier that identifies the authentication configuration"
+    }
+  ],
   "description": "This resource configures an Azure AD Organization Certificate Based Auth Configuration.",
   "permissions": {
     "graph": {
@@ -30,7 +52,6 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.Identity.DirectoryManagement",
     "Microsoft.Graph.Beta.Identity.SignIns"
   ],
@@ -41,12 +62,6 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
       "cmdlets": [
         "Get-MgBetaOrganization"
@@ -55,7 +70,9 @@
     {
       "module": "Microsoft.Graph.Beta.Identity.SignIns",
       "cmdlets": [
-        "Get-MgBetaOrganizationCertificateBasedAuthConfiguration"
+        "Get-MgBetaOrganizationCertificateBasedAuthConfiguration",
+        "New-MgBetaOrganizationCertificateBasedAuthConfiguration",
+        "Remove-MgBetaOrganizationCertificateBasedAuthConfiguration"
       ]
     }
   ]

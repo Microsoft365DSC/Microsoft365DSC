@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,16 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXODnssecForVerifiedDomain "EXODnssecForVerifiedDomain-nik-charlebois.com"
+        EXODnssecForVerifiedDomain "EXODnssecForVerifiedDomain-Example"
         {
+            DnssecFeatureStatus   = "Disabled"; # Updated Property
+            DomainName            = "contoso.com";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint
-            DnssecFeatureStatus   = "Enabled";
-            DomainName            = "nik-charlebois.com";
         }
     }
 }

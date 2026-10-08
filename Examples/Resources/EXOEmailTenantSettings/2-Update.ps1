@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,20 +19,22 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOEmailTenantSettings "EXOEmailTenantSettings-Test"
+        EXOEmailTenantSettings "EXOEmailTenantSettings-Example"
         {
-            IsSingleInstance                         = "Yes"
-            EnablePriorityAccountProtection          = $True;
-            Identity                                 = $TenantId;
-            IsValid                                  = $True;
-            ObjectState                              = "Unchanged"
-            Name                                     = "Default"
-            TenantId                                 = $TenantId
-            CertificateThumbprint                    = $CertificateThumbprint
-            ApplicationId                            = $ApplicationId
+            IsSingleInstance                = "Yes"
+            EnablePriorityAccountProtection = $True;
+            Identity                        = $TenantId;
+            IsValid                         = $True;
+            ObjectState                     = "Unchanged"
+            Name                            = "Default"
+            ApplicationId                   = $ApplicationId
+            TenantId                        = $TenantId
+            CertificateThumbprint           = $CertificateThumbprint
         }
     }
 }

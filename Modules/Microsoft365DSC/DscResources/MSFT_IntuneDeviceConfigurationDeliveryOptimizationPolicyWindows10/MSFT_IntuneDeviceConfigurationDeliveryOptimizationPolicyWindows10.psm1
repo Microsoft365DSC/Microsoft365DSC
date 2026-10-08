@@ -1,945 +1,619 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10 : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.Int64]
-        $BackgroundDownloadFromHttpDelayInSeconds,
+    [DscProperty()]
+    [System.ComponentModel.Description('Policy description')]
+    [System.String] $Description
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BandwidthMode,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Policy name')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.Int32]
-        $CacheServerBackgroundDownloadFallbackToHttpDelayInSeconds,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of Scope Tags for this Entity instance.')]
+    [System.String[]] $RoleScopeTagIds
 
-        [Parameter()]
-        [System.Int32]
-        $CacheServerForegroundDownloadFallbackToHttpDelayInSeconds,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.String[]]
-        $CacheServerHostNames,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Download Mode (0: HTTP only, no peering, 1: HTTP blended with peering behind the same NAT, 2: HTTP blended with peering across a private group, 3: HTTP blended with Internet peering, 99: HTTP only, no peering, no use of DO cloud service, 100: Bypass mode, deprecated in Windows 11)')]
+    [ValidateSet('0', '1', '2', '3', '99', '100')]
+    [System.Nullable[System.Int32]] $DODownloadMode
 
-        [Parameter()]
-        [ValidateSet('userDefined', 'httpOnly', 'httpWithPeeringNat', 'httpWithPeeringPrivateGroup', 'httpWithInternetPeering', 'simpleDownload', 'bypassMode')]
-        [System.String]
-        $DeliveryOptimizationMode,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Restrict Peer Selection By (0: None, 1: Subnet mask, 2: Local discovery (DNS-SD))')]
+    [ValidateSet('0', '1', '2')]
+    [System.Nullable[System.Int32]] $DORestrictPeerSelectionBy
 
-        [Parameter()]
-        [System.Int64]
-        $ForegroundDownloadFromHttpDelayInSeconds,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Group Id Source (0: Not Set, 1: AD site, 2: Authenticated domain SID, 3: DHCP Option ID, 4: DNS Suffix, 5: Entra ID Tenant ID)')]
+    [ValidateSet('0', '1', '2', '3', '4', '5')]
+    [System.Nullable[System.Int32]] $DOGroupIdSource
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GroupIdSource,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Group Id')]
+    [System.String] $DOGroupId
 
-        [Parameter()]
-        [System.Int32]
-        $MaximumCacheAgeInDays,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Max Foreground Download Bandwidth')]
+    [System.Nullable[System.Int32]] $DOMaxForegroundDownloadBandwidth
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $MaximumCacheSize,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Max Background Download Bandwidth')]
+    [System.Nullable[System.Int32]] $DOMaxBackgroundDownloadBandwidth
 
-        [Parameter()]
-        [System.Int32]
-        $MinimumBatteryPercentageAllowedToUpload,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Percentage Max Foreground Bandwidth')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $DOPercentageMaxForegroundBandwidth
 
-        [Parameter()]
-        [System.Int32]
-        $MinimumDiskSizeAllowedToPeerInGigabytes,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Percentage Max Background Bandwidth')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $DOPercentageMaxBackgroundBandwidth
 
-        [Parameter()]
-        [System.Int32]
-        $MinimumFileSizeToCacheInMegabytes,
+    [DscProperty()]
+    [System.ComponentModel.Description('Set Business Hours to Limit Foreground Download Bandwidth (0: Disabled, 1: Enabled)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $SetHoursToLimitForegroundDownloadBandwidth
 
-        [Parameter()]
-        [System.Int32]
-        $MinimumRamAllowedToPeerInGigabytes,
+    [DscProperty()]
+    [System.ComponentModel.Description('To: (Device) - Depends on SetHoursToLimitForegroundDownloadBandwidth (0: 12 AM, 1: 1 AM, 2: 2 AM, 3: 3 AM, 4: 4 AM, 5: 5 AM, 6: 6 AM, 7: 7 AM, 8: 8 AM, 9: 9 AM, 10: 10 AM, 11: 11 AM, 12: 12 PM, 13: 1 PM, 14: 2 PM, 15: 3 PM, 16: 4 PM, 17: 5 PM, 18: 6 PM, 19: 7 PM, 20: 8 PM, 21: 9 PM, 22: 10 PM, 23: 11 PM)')]
+    [ValidateSet('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23')]
+    [System.String] $SetHoursToLimitForegroundDownloadBandwidthTo
 
-        [Parameter()]
-        [System.String]
-        $ModifyCacheLocation,
+    [DscProperty()]
+    [System.ComponentModel.Description('From: (Device) - Depends on SetHoursToLimitForegroundDownloadBandwidth (0: 12 AM, 1: 1 AM, 2: 2 AM, 3: 3 AM, 4: 4 AM, 5: 5 AM, 6: 6 AM, 7: 7 AM, 8: 8 AM, 9: 9 AM, 10: 10 AM, 11: 11 AM, 12: 12 PM, 13: 1 PM, 14: 2 PM, 15: 3 PM, 16: 4 PM, 17: 5 PM, 18: 6 PM, 19: 7 PM, 20: 8 PM, 21: 9 PM, 22: 10 PM, 23: 11 PM)')]
+    [ValidateSet('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23')]
+    [System.String] $SetHoursToLimitForegroundDownloadBandwidthFrom
 
-        [Parameter()]
-        [ValidateSet('notConfigured', 'subnetMask')]
-        [System.String]
-        $RestrictPeerSelectionBy,
+    [DscProperty()]
+    [System.ComponentModel.Description('Maximum Foreground Download Bandwidth (percentage) during Business Hours: - Depends on SetHoursToLimitForegroundDownloadBandwidth')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $SetHoursToLimitForegroundDownloadBandwidthIn
 
-        [Parameter()]
-        [ValidateSet('notConfigured', 'enabled', 'disabled')]
-        [System.String]
-        $VpnPeerCaching,
+    [DscProperty()]
+    [System.ComponentModel.Description('Maximum Foreground Download Bandwidth (percentage) outside of Business Hours: - Depends on SetHoursToLimitForegroundDownloadBandwidth')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $SetHoursToLimitForegroundDownloadBandwidthOut
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Set Business Hours to Limit Background Download Bandwidth (0: Disabled, 1: Enabled)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $SetHoursToLimitBackgroundDownloadBandwidth
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Maximum Background Download Bandwidth (percentage) outside of Business Hours: - Depends on SetHoursToLimitBackgroundDownloadBandwidth')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $SetHoursToLimitBackgroundDownloadBandwidthOut
 
-        [Parameter()]
-        [System.String]
-        $Id,
+    [DscProperty()]
+    [System.ComponentModel.Description('From: (Device) - Depends on SetHoursToLimitBackgroundDownloadBandwidth (0: 12 AM, 1: 1 AM, 2: 2 AM, 3: 3 AM, 4: 4 AM, 5: 5 AM, 6: 6 AM, 7: 7 AM, 8: 8 AM, 9: 9 AM, 10: 10 AM, 11: 11 AM, 12: 12 PM, 13: 1 PM, 14: 2 PM, 15: 3 PM, 16: 4 PM, 17: 5 PM, 18: 6 PM, 19: 7 PM, 20: 8 PM, 21: 9 PM, 22: 10 PM, 23: 11 PM)')]
+    [ValidateSet('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23')]
+    [System.String] $SetHoursToLimitBackgroundDownloadBandwidthFrom
 
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
+    [DscProperty()]
+    [System.ComponentModel.Description('Maximum Background Download Bandwidth (percentage) during Business Hours: - Depends on SetHoursToLimitBackgroundDownloadBandwidth')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $SetHoursToLimitBackgroundDownloadBandwidthIn
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
+    [DscProperty()]
+    [System.ComponentModel.Description('To: (Device) - Depends on SetHoursToLimitBackgroundDownloadBandwidth (0: 12 AM, 1: 1 AM, 2: 2 AM, 3: 3 AM, 4: 4 AM, 5: 5 AM, 6: 6 AM, 7: 7 AM, 8: 8 AM, 9: 9 AM, 10: 10 AM, 11: 11 AM, 12: 12 PM, 13: 1 PM, 14: 2 PM, 15: 3 PM, 16: 4 PM, 17: 5 PM, 18: 6 PM, 19: 7 PM, 20: 8 PM, 21: 9 PM, 22: 10 PM, 23: 11 PM)')]
+    [ValidateSet('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23')]
+    [System.String] $SetHoursToLimitBackgroundDownloadBandwidthTo
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Delay Foreground Download From Http')]
+    [System.Nullable[System.Int32]] $DODelayForegroundDownloadFromHttp
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Delay Background Download From Http')]
+    [System.Nullable[System.Int32]] $DODelayBackgroundDownloadFromHttp
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Min RAM Allowed To Peer')]
+    [ValidateRange(1, 100000)]
+    [System.Nullable[System.Int32]] $DOMinRAMAllowedToPeer
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Min Disk Size Allowed To Peer')]
+    [ValidateRange(1, 100000)]
+    [System.Nullable[System.Int32]] $DOMinDiskSizeAllowedToPeer
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Min File Size To Cache')]
+    [ValidateRange(1, 100000)]
+    [System.Nullable[System.Int32]] $DOMinFileSizeToCache
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Min Battery Percentage Allowed To Upload')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $DOMinBatteryPercentageAllowedToUpload
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Modify Cache Drive')]
+    [System.String] $DOModifyCacheDrive
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Max Cache Age')]
+    [System.Nullable[System.Int32]] $DOMaxCacheAge
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Absolute Max Cache Size')]
+    [System.Nullable[System.Int32]] $DOAbsoluteMaxCacheSize
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Max Cache Size')]
+    [ValidateRange(1, 100)]
+    [System.Nullable[System.Int32]] $DOMaxCacheSize
 
-    Write-Warning -Message 'This resource is deprecated and will be removed in a future release. Please use the IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10V2 resource instead.'
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Allow VPN Peer Caching (0: Not allowed, 1: Allowed)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $DOAllowVPNPeerCaching
 
-    Write-Verbose -Message "Getting configuration of the Intune Device Configuration Delivery Optimization Policy for Windows10 with Id {$Id} and DisplayName {$DisplayName}"
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Cache Host')]
+    [System.String[]] $DOCacheHost
 
-    try
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Cache Host Source')]
+    [ValidateRange(1, 2)]
+    [System.Nullable[System.Int32]] $DOCacheHostSource
+
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Disallow Cache Server Downloads On VPN (0: Not Set, 1: Enabled)')]
+    [ValidateSet('0', '1')]
+    [System.Nullable[System.Int32]] $DODisallowCacheServerDownloadsOnVPN
+
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Delay Cache Server Fallback Foreground')]
+    [ValidateRange(0, 2592000)]
+    [System.Nullable[System.Int32]] $DODelayCacheServerFallbackForeground
+
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Delay Cache Server Fallback Background')]
+    [ValidateRange(0, 2592000)]
+    [System.Nullable[System.Int32]] $DODelayCacheServerFallbackBackground
+
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Min Background Qos')]
+    [System.Nullable[System.Int32]] $DOMinBackgroundQos
+
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Monthly Upload Data Cap')]
+    [System.Nullable[System.Int32]] $DOMonthlyUploadDataCap
+
+    [DscProperty()]
+    [System.ComponentModel.Description('DO Vpn Keywords')]
+    [System.String[]] $DOVpnKeywords
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Represents the assignment to the Intune policy.')]
+    [MSFT_DeviceManagementConfigurationPolicyAssignments[]] $Assignments
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Admin')]
+    [System.Management.Automation.PSCredential] $Credential
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory tenant used for authentication.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
+
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
+    [IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for the Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Id {$($this.Id)} and Name {$($this.DisplayName)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $getValue = $null
-            #region resource generator code
-            if (-not [string]::IsNullOrEmpty($Id))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.DisplayName)
             {
-                $getValue = Get-MgBetaDeviceManagementDeviceConfiguration -All -Filter "Id eq '$Id'" -ErrorAction SilentlyContinue
-            }
 
-            if ($null -eq $getValue)
-            {
-                Write-Verbose -Message "Could not find an Intune Device Configuration Delivery Optimization Policy for Windows10 with Id {$Id}"
+                $null = $this.Connect('MicrosoftGraph')
 
-                if (-not [string]::IsNullOrEmpty($DisplayName))
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $getValue = $null
+
+                #region resource generator code
+                if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
-                    $getValue = Get-MgBetaDeviceManagementDeviceConfiguration `
-                        -All `
-                        -Filter "DisplayName eq '$($DisplayName -replace "'", "''")'" `
-                        -ErrorAction SilentlyContinue
+                    $getValue = Get-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId $this.Id -ErrorAction SilentlyContinue `
+                        -ExpandProperty 'settings($expand=settingDefinitions)'
+                    $settings = $getValue.settings
+                }
 
-                    if ($null -eq $getValue)
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Id {$($this.Id)}"
+
+                    if (-not [System.String]::IsNullOrEmpty($this.DisplayName))
                     {
-                        Write-Verbose -Message "Could not find an Intune Device Configuration Delivery Optimization Policy for Windows10 with DisplayName {$DisplayName}"
-                        return $nullResult
-                    }
-                    if (([array]$getValue).Count -gt 1)
-                    {
-                        throw "A policy with a duplicated displayName {'$DisplayName'} was found - Ensure displayName is unique"
+                        $getValue = Get-MgBetaDeviceManagementConfigurationPolicy `
+                            -All `
+                            -Filter "Name eq '$($this.DisplayName)'" `
+                            -ErrorAction SilentlyContinue
                     }
                 }
+                #endregion
+                if ($null -eq $getValue)
+                {
+                    Write-Verbose -Message "Could not find an Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Name {$($this.DisplayName)}."
+                    return $this.AsResult($nullResult)
+                }
             }
-            #endregion
-        }
-        else
-        {
-            $getValue = $Script:exportedInstance
-        }
-
-        $Id = $getValue.Id
-        Write-Verbose -Message "An Intune Device Configuration Delivery Optimization Policy for Windows10 with Id {$Id} and DisplayName {$DisplayName} was found."
-
-        #region resource generator code
-        $complexBandwidthMode = [ordered]@{}
-        $complexBandwidthMode.Add('MaximumDownloadBandwidthInKilobytesPerSecond', $getValue.bandwidthMode.maximumDownloadBandwidthInKilobytesPerSecond)
-        $complexBandwidthMode.Add('MaximumUploadBandwidthInKilobytesPerSecond', $getValue.bandwidthMode.maximumUploadBandwidthInKilobytesPerSecond)
-        $complexBandwidthBackgroundPercentageHours = [ordered]@{}
-        $complexBandwidthBackgroundPercentageHours.Add('BandwidthBeginBusinessHours', $getValue.bandwidthMode.bandwidthBackgroundPercentageHours.bandwidthBeginBusinessHours)
-        $complexBandwidthBackgroundPercentageHours.Add('BandwidthEndBusinessHours', $getValue.bandwidthMode.bandwidthBackgroundPercentageHours.bandwidthEndBusinessHours)
-        $complexBandwidthBackgroundPercentageHours.Add('BandwidthPercentageDuringBusinessHours', $getValue.bandwidthMode.bandwidthBackgroundPercentageHours.bandwidthPercentageDuringBusinessHours)
-        $complexBandwidthBackgroundPercentageHours.Add('BandwidthPercentageOutsideBusinessHours', $getValue.bandwidthMode.bandwidthBackgroundPercentageHours.bandwidthPercentageOutsideBusinessHours)
-        if ($complexBandwidthBackgroundPercentageHours.values.Where({ $null -ne $_ }).Count -eq 0)
-        {
-            $complexBandwidthBackgroundPercentageHours = $null
-        }
-        $complexBandwidthMode.Add('BandwidthBackgroundPercentageHours', $complexBandwidthBackgroundPercentageHours)
-        $complexBandwidthForegroundPercentageHours = [ordered]@{}
-        $complexBandwidthForegroundPercentageHours.Add('BandwidthBeginBusinessHours', $getValue.bandwidthMode.bandwidthForegroundPercentageHours.bandwidthBeginBusinessHours)
-        $complexBandwidthForegroundPercentageHours.Add('BandwidthEndBusinessHours', $getValue.bandwidthMode.bandwidthForegroundPercentageHours.bandwidthEndBusinessHours)
-        $complexBandwidthForegroundPercentageHours.Add('BandwidthPercentageDuringBusinessHours', $getValue.bandwidthMode.bandwidthForegroundPercentageHours.bandwidthPercentageDuringBusinessHours)
-        $complexBandwidthForegroundPercentageHours.Add('BandwidthPercentageOutsideBusinessHours', $getValue.bandwidthMode.bandwidthForegroundPercentageHours.bandwidthPercentageOutsideBusinessHours)
-        if ($complexBandwidthForegroundPercentageHours.values.Where({ $null -ne $_ }).Count -eq 0)
-        {
-            $complexBandwidthForegroundPercentageHours = $null
-        }
-        $complexBandwidthMode.Add('BandwidthForegroundPercentageHours', $complexBandwidthForegroundPercentageHours)
-        $complexBandwidthMode.Add('MaximumBackgroundBandwidthPercentage', $getValue.bandwidthMode.maximumBackgroundBandwidthPercentage)
-        $complexBandwidthMode.Add('MaximumForegroundBandwidthPercentage', $getValue.bandwidthMode.maximumForegroundBandwidthPercentage)
-        if ($null -ne $getValue.bandwidthMode.'@odata.type')
-        {
-            $complexBandwidthMode.Add('odataType', $getValue.bandwidthMode.'@odata.type'.ToString())
-        }
-        if ($complexBandwidthMode.values.Where({ $null -ne $_ }).Count -eq 0)
-        {
-            $complexBandwidthMode = $null
-        }
-
-        $complexGroupIdSource = [ordered]@{}
-        $complexGroupIdSource.Add('GroupIdCustom', $getValue.groupIdSource.groupIdCustom)
-        if ($null -ne $getValue.groupIdSource.groupIdSourceOption)
-        {
-            $complexGroupIdSource.Add('GroupIdSourceOption', $getValue.groupIdSource.groupIdSourceOption.ToString())
-        }
-        if ($null -ne $getValue.groupIdSource.'@odata.type')
-        {
-            $complexGroupIdSource.Add('odataType', $getValue.groupIdSource.'@odata.type'.ToString())
-        }
-        if ($complexGroupIdSource.values.Where({ $null -ne $_ }).Count -eq 0)
-        {
-            $complexGroupIdSource = $null
-        }
-
-        $complexMaximumCacheSize = [ordered]@{}
-        $complexMaximumCacheSize.Add('MaximumCacheSizeInGigabytes', $getValue.maximumCacheSize.maximumCacheSizeInGigabytes)
-        $complexMaximumCacheSize.Add('MaximumCacheSizePercentage', $getValue.maximumCacheSize.maximumCacheSizePercentage)
-        if ($null -ne $getValue.maximumCacheSize.'@odata.type')
-        {
-            $complexMaximumCacheSize.Add('odataType', $getValue.maximumCacheSize.'@odata.type'.ToString())
-        }
-        if ($complexMaximumCacheSize.values.Where({ $null -ne $_ }).Count -eq 0)
-        {
-            $complexMaximumCacheSize = $null
-        }
-
-        #endregion
-
-        #region resource generator code
-        $enumDeliveryOptimizationMode = $null
-        if ($null -ne $getValue.deliveryOptimizationMode)
-        {
-            $enumDeliveryOptimizationMode = $getValue.deliveryOptimizationMode.ToString()
-        }
-
-        $enumRestrictPeerSelectionBy = $null
-        if ($null -ne $getValue.restrictPeerSelectionBy)
-        {
-            $enumRestrictPeerSelectionBy = $getValue.restrictPeerSelectionBy.ToString()
-        }
-
-        $enumVpnPeerCaching = $null
-        if ($null -ne $getValue.vpnPeerCaching)
-        {
-            $enumVpnPeerCaching = $getValue.vpnPeerCaching.ToString()
-        }
-
-        #endregion
-
-        $results = @{
-            #region resource generator code
-            BackgroundDownloadFromHttpDelayInSeconds                  = $getValue.backgroundDownloadFromHttpDelayInSeconds
-            BandwidthMode                                             = $complexBandwidthMode
-            CacheServerBackgroundDownloadFallbackToHttpDelayInSeconds = $getValue.cacheServerBackgroundDownloadFallbackToHttpDelayInSeconds
-            CacheServerForegroundDownloadFallbackToHttpDelayInSeconds = $getValue.cacheServerForegroundDownloadFallbackToHttpDelayInSeconds
-            CacheServerHostNames                                      = $getValue.cacheServerHostNames
-            DeliveryOptimizationMode                                  = $enumDeliveryOptimizationMode
-            ForegroundDownloadFromHttpDelayInSeconds                  = $getValue.foregroundDownloadFromHttpDelayInSeconds
-            GroupIdSource                                             = $complexGroupIdSource
-            MaximumCacheAgeInDays                                     = $getValue.maximumCacheAgeInDays
-            MaximumCacheSize                                          = $complexMaximumCacheSize
-            MinimumBatteryPercentageAllowedToUpload                   = $getValue.minimumBatteryPercentageAllowedToUpload
-            MinimumDiskSizeAllowedToPeerInGigabytes                   = $getValue.minimumDiskSizeAllowedToPeerInGigabytes
-            MinimumFileSizeToCacheInMegabytes                         = $getValue.minimumFileSizeToCacheInMegabytes
-            MinimumRamAllowedToPeerInGigabytes                        = $getValue.minimumRamAllowedToPeerInGigabytes
-            ModifyCacheLocation                                       = $getValue.modifyCacheLocation
-            RestrictPeerSelectionBy                                   = $enumRestrictPeerSelectionBy
-            VpnPeerCaching                                            = $enumVpnPeerCaching
-            Description                                               = $getValue.Description
-            DisplayName                                               = $getValue.DisplayName
-            Id                                                        = $getValue.Id
-            RoleScopeTagIds                                           = $getValue.RoleScopeTagIds
-            Ensure                                                    = 'Present'
-            Credential                                                = $Credential
-            ApplicationId                                             = $ApplicationId
-            TenantId                                                  = $TenantId
-            ApplicationSecret                                         = $ApplicationSecret
-            CertificateThumbprint                                     = $CertificateThumbprint
-            CertificatePath                                           = $CertificatePath
-            CertificatePassword                                       = $CertificatePassword
-            ManagedIdentity                                           = $ManagedIdentity.IsPresent
-            AccessTokens                                              = $AccessTokens
-            #endregion
-        }
-        $returnAssignments = @()
-        $graphAssignments = Get-MgBetaDeviceManagementDeviceConfigurationAssignment -DeviceConfigurationId $Id
-        if ($graphAssignments.Count -gt 0)
-        {
-            $returnAssignments += ConvertFrom-IntunePolicyAssignment `
-                -IncludeDeviceFilter:$true `
-                -Assignments ($graphAssignments)
-        }
-        $results.Add('Assignments', $returnAssignments)
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.Int64]
-        $BackgroundDownloadFromHttpDelayInSeconds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BandwidthMode,
-
-        [Parameter()]
-        [System.Int32]
-        $CacheServerBackgroundDownloadFallbackToHttpDelayInSeconds,
-
-        [Parameter()]
-        [System.Int32]
-        $CacheServerForegroundDownloadFallbackToHttpDelayInSeconds,
-
-        [Parameter()]
-        [System.String[]]
-        $CacheServerHostNames,
-
-        [Parameter()]
-        [ValidateSet('userDefined', 'httpOnly', 'httpWithPeeringNat', 'httpWithPeeringPrivateGroup', 'httpWithInternetPeering', 'simpleDownload', 'bypassMode')]
-        [System.String]
-        $DeliveryOptimizationMode,
-
-        [Parameter()]
-        [System.Int64]
-        $ForegroundDownloadFromHttpDelayInSeconds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GroupIdSource,
-
-        [Parameter()]
-        [System.Int32]
-        $MaximumCacheAgeInDays,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $MaximumCacheSize,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumBatteryPercentageAllowedToUpload,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumDiskSizeAllowedToPeerInGigabytes,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumFileSizeToCacheInMegabytes,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumRamAllowedToPeerInGigabytes,
-
-        [Parameter()]
-        [System.String]
-        $ModifyCacheLocation,
-
-        [Parameter()]
-        [ValidateSet('notConfigured', 'subnetMask')]
-        [System.String]
-        $RestrictPeerSelectionBy,
-
-        [Parameter()]
-        [ValidateSet('notConfigured', 'enabled', 'disabled')]
-        [System.String]
-        $VpnPeerCaching,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Warning -Message 'This resource is deprecated and will be removed in a future release. Please use the IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10V2 resource instead.'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $PSBoundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating an Intune Device Configuration Delivery Optimization Policy for Windows10 with DisplayName {$DisplayName}"
-        $PSBoundParameters.Remove('Assignments') | Out-Null
-
-        $CreateParameters = ([Hashtable]$PSBoundParameters).Clone()
-        $createParameters = Rename-M365DSCCimInstanceParameter -Properties $createParameters
-        $createParameters.Remove('Id') | Out-Null
-
-        #region resource generator code
-        $CreateParameters.Add('@odata.type', '#microsoft.graph.windowsDeliveryOptimizationConfiguration')
-        $policy = New-MgBetaDeviceManagementDeviceConfiguration -BodyParameter $CreateParameters
-        $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
-
-        if ($policy.id)
-        {
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $policy.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceConfigurations'
-        }
-        #endregion
-    }
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Intune Device Configuration Delivery Optimization Policy for Windows10 with Id {$($currentInstance.Id)}"
-        $PSBoundParameters.Remove('Assignments') | Out-Null
-
-        $UpdateParameters = ([Hashtable]$PSBoundParameters).Clone()
-        $UpdateParameters = Rename-M365DSCCimInstanceParameter -Properties $UpdateParameters
-        $UpdateParameters.Remove('Id') | Out-Null
-
-        #region resource generator code
-        $UpdateParameters.Add('@odata.type', '#microsoft.graph.windowsDeliveryOptimizationConfiguration')
-        Update-MgBetaDeviceManagementDeviceConfiguration `
-            -DeviceConfigurationId $currentInstance.Id `
-            -BodyParameter $UpdateParameters
-        $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $Assignments
-        Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
-            -Targets $assignmentsHash `
-            -Repository 'deviceManagement/deviceConfigurations'
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Intune Device Configuration Delivery Optimization Policy for Windows10 with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaDeviceManagementDeviceConfiguration -DeviceConfigurationId $currentInstance.Id
-        #endregion
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        #region resource generator code
-        [Parameter()]
-        [System.Int64]
-        $BackgroundDownloadFromHttpDelayInSeconds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $BandwidthMode,
-
-        [Parameter()]
-        [System.Int32]
-        $CacheServerBackgroundDownloadFallbackToHttpDelayInSeconds,
-
-        [Parameter()]
-        [System.Int32]
-        $CacheServerForegroundDownloadFallbackToHttpDelayInSeconds,
-
-        [Parameter()]
-        [System.String[]]
-        $CacheServerHostNames,
-
-        [Parameter()]
-        [ValidateSet('userDefined', 'httpOnly', 'httpWithPeeringNat', 'httpWithPeeringPrivateGroup', 'httpWithInternetPeering', 'simpleDownload', 'bypassMode')]
-        [System.String]
-        $DeliveryOptimizationMode,
-
-        [Parameter()]
-        [System.Int64]
-        $ForegroundDownloadFromHttpDelayInSeconds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $GroupIdSource,
-
-        [Parameter()]
-        [System.Int32]
-        $MaximumCacheAgeInDays,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $MaximumCacheSize,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumBatteryPercentageAllowedToUpload,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumDiskSizeAllowedToPeerInGigabytes,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumFileSizeToCacheInMegabytes,
-
-        [Parameter()]
-        [System.Int32]
-        $MinimumRamAllowedToPeerInGigabytes,
-
-        [Parameter()]
-        [System.String]
-        $ModifyCacheLocation,
-
-        [Parameter()]
-        [ValidateSet('notConfigured', 'subnetMask')]
-        [System.String]
-        $RestrictPeerSelectionBy,
-
-        [Parameter()]
-        [ValidateSet('notConfigured', 'enabled', 'disabled')]
-        [System.String]
-        $VpnPeerCaching,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.String[]]
-        $RoleScopeTagIds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Assignments,
-        #endregion
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Warning -Message 'This resource is deprecated and will be removed in a future release. Please use the IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10V2 resource instead.'
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #region resource generator code
-        $baseFilter = "isof('microsoft.graph.windowsDeliveryOptimizationConfiguration')"
-        if (-not [string]::IsNullOrEmpty($Filter))
-        {
-            $Filter = "($baseFilter) and ($Filter)"
-        }
-        else
-        {
-            $Filter = $baseFilter
-        }
-        [array]$getValue = Get-MgBetaDeviceManagementDeviceConfiguration -Filter $Filter -All `
-            -ErrorAction Stop
-        #endregion
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($getValue.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $getValue)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            else
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $getValue = $this.ExportedInstance
+                $settings = $getValue.settings
+            }
+            $resolvedId = $getValue.Id
+            Write-Verbose -Message "An Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Id {$($resolvedId)} and Name {$($this.DisplayName)} was found"
+
+            # Retrieve policy specific settings
+            if ($null -eq $settings)
+            {
+                [array]$settings = Get-MgBetaDeviceManagementConfigurationPolicySetting `
+                    -DeviceManagementConfigurationPolicyId $resolvedId `
+                    -ExpandProperty 'settingDefinitions' `
+                    -All `
+                    -ErrorAction Stop
             }
 
-            $displayedKey = $config.Id
-            if (-not [String]::IsNullOrEmpty($config.displayName))
-            {
-                $displayedKey = $config.displayName
-            }
-            Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
+            $policySettings = @{}
+            $policySettings = Export-IntuneSettingCatalogPolicySettings -Settings $settings -ReturnHashtable $policySettings
+
+            $results = @{
+                #region resource generator code
+                Description           = $getValue.Description
+                DisplayName           = $getValue.Name
+                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Id                    = $getValue.Id
                 Ensure                = 'Present'
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                #endregion
             }
+            $results += $policySettings
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @params
-            $rawResults = $Results.Clone()
+            $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
+            if ($null -eq $assignmentsValues)
+            {
+                $assignmentsValues = Get-MgBetaDeviceManagementConfigurationPolicyAssignment -DeviceManagementConfigurationPolicyId $resolvedId
+            }
+            $assignmentResult = @()
+            if ($assignmentsValues.Count -gt 0)
+            {
+                $assignmentResult += ConvertFrom-IntunePolicyAssignment -Assignments $assignmentsValues -IncludeDeviceFilter $true
+            }
+            $results.Add('Assignments', $assignmentResult)
 
-            if ( $null -ne $Results.BandwidthMode)
-            {
-                $complexMapping = @(
-                    @{
-                        Name            = 'BandwidthMode'
-                        CimInstanceName = 'MicrosoftGraphDeliveryOptimizationBandwidth'
-                        IsRequired      = $False
-                    }
-                    @{
-                        Name            = 'BandwidthBackgroundPercentageHours'
-                        CimInstanceName = 'MicrosoftGraphDeliveryOptimizationBandwidthBusinessHoursLimit'
-                        IsRequired      = $False
-                    }
-                    @{
-                        Name            = 'BandwidthForegroundPercentageHours'
-                        CimInstanceName = 'MicrosoftGraphDeliveryOptimizationBandwidthBusinessHoursLimit'
-                        IsRequired      = $False
-                    }
-                )
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.BandwidthMode `
-                    -CIMInstanceName 'MicrosoftGraphdeliveryOptimizationBandwidth' `
-                    -ComplexTypeMapping $complexMapping
-
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.BandwidthMode = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('BandwidthMode') | Out-Null
-                }
-            }
-            if ( $null -ne $Results.GroupIdSource)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.GroupIdSource `
-                    -CIMInstanceName 'MicrosoftGraphdeliveryOptimizationGroupIdSource'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.GroupIdSource = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('GroupIdSource') | Out-Null
-                }
-            }
-            if ( $null -ne $Results.MaximumCacheSize)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.MaximumCacheSize `
-                    -CIMInstanceName 'MicrosoftGraphdeliveryOptimizationMaxCacheSize'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.MaximumCacheSize = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('MaximumCacheSize') | Out-Null
-                }
-            }
-            if ($Results.Assignments)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
-                if ($complexTypeStringResult)
-                {
-                    $Results.Assignments = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('Assignments') | Out-Null
-                }
-            }
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('BandwidthMode', 'GroupIdSource', 'MaximumCacheSize', 'Assignments') `
-                -RawResults $rawResults
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        if ($_.Exception -like '*401*' -or $_.ErrorDetails.Message -like "*`"ErrorCode`":`"Forbidden`"*" -or `
-                $_.Exception -like '*Request not applicable to target tenant*')
+        catch
         {
-            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
-        }
-        else
-        {
-            New-M365DSCLogEntry -Message 'Error during Export:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error retrieving data:')
 
             throw
         }
     }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of the Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Id {$($this.Id)} and Name {$($this.DisplayName)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        $resolvedRoleScopeTagIds = $this.RoleScopeTagIds
+        if ($boundParameters.ContainsKey('RoleScopeTagIds'))
+        {
+            $resolvedRoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $this.RoleScopeTagIds
+        }
+
+        $templateReferenceId = '132f1027-0325-45e0-854a-6955cd3c68c0_1'
+        $platforms = 'windows10'
+        $technologies = 'mdm'
+
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating an Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Name {$($this.DisplayName)}"
+            $boundParameters.Remove('Assignments') | Out-Null
+
+            $settings = Get-IntuneSettingCatalogPolicySetting `
+                -DSCParams ([System.Collections.Hashtable]$boundParameters) `
+                -TemplateId $templateReferenceId
+
+            $createParameters = @{
+                name              = $this.DisplayName
+                description       = $this.Description
+                templateReference = @{ templateId = $templateReferenceId }
+                platforms         = $platforms
+                technologies      = $technologies
+                settings          = $settings
+                roleScopeTagIds   = $resolvedRoleScopeTagIds
+            }
+
+            #region resource generator code
+            $policy = New-MgBetaDeviceManagementConfigurationPolicy -BodyParameter $createParameters
+
+            if ($policy.Id)
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $policy.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/configurationPolicies'
+            }
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Id {$($currentInstance.Id)}"
+            $boundParameters.Remove('Assignments') | Out-Null
+
+            $settings = Get-IntuneSettingCatalogPolicySetting `
+                -DSCParams ([System.Collections.Hashtable]$boundParameters) `
+                -TemplateId $templateReferenceId
+
+            Update-IntuneDeviceConfigurationPolicy `
+                -DeviceConfigurationPolicyId $currentInstance.Id `
+                -Name $this.DisplayName `
+                -Description $this.Description `
+                -TemplateReferenceId $templateReferenceId `
+                -Platforms $platforms `
+                -Technologies $technologies `
+                -Settings $settings `
+                -RoleScopeTagIds $resolvedRoleScopeTagIds
+
+            #region resource generator code
+            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+            Update-DeviceConfigurationPolicyAssignment `
+                -DeviceConfigurationPolicyId $currentInstance.Id `
+                -Targets $assignmentsHash `
+                -Repository 'deviceManagement/configurationPolicies'
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Intune Device Configuration Delivery Optimization Policy for Windows10 Setting Catalog with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId $currentInstance.Id
+            #endregion
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            #region resource generator code
+            $policyTemplateID = '132f1027-0325-45e0-854a-6955cd3c68c0_1'
+            $baseFilter = "templateReference/templateId eq '$policyTemplateID'"
+            $mergedFilter = $baseFilter
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
+            {
+                $mergedFilter = "($($this.Filter)) and ($baseFilter)"
+            }
+            [array]$getValue = Get-M365DSCExportCachedConfigurationPolicies `
+                -TemplateId $policyTemplateID `
+                -Filter $mergedFilter
+            #endregion
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($getValue.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $getValue)
+            {
+                $displayedKey = $config.Id
+                if (-not [String]::IsNullOrEmpty($config.displayName))
+                {
+                    $displayedKey = $config.displayName
+                }
+                elseif (-not [string]::IsNullOrEmpty($config.name))
+                {
+                    $displayedKey = $config.name
+                }
+                Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    DisplayName           = $config.Name
+                    Ensure                = 'Present'
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                if ($Results.Assignments)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
+                    if ($complexTypeStringResult)
+                    {
+                        $Results.Assignments = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('Assignments') | Out-Null
+                    }
+                }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('Assignments') `
+                    -RawResults $rawResults
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return $this.GetSettingsCatalogCompareParameters()
+    }
+
+    hidden [IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10])
+        {
+            return $Values
+        }
+
+        $result = [IntuneDeviceConfigurationDeliveryOptimizationPolicyWindows10]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
+    }
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_DeviceManagementConfigurationPolicyAssignments
+{
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The type of the target assignment.')]
+    [ValidateSet('#microsoft.graph.cloudPcManagementGroupAssignmentTarget', '#microsoft.graph.groupAssignmentTarget', '#microsoft.graph.allLicensedUsersAssignmentTarget', '#microsoft.graph.allDevicesAssignmentTarget', '#microsoft.graph.exclusionGroupAssignmentTarget', '#microsoft.graph.configurationManagerCollectionAssignmentTarget')]
+    [System.String] $dataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of filter of the target assignment i.e. Exclude or Include. Possible values are:none, include, exclude.')]
+    [ValidateSet('none', 'include', 'exclude')]
+    [System.String] $deviceAndAppManagementAssignmentFilterType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The Id of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The display name of the filter for the target assignment.')]
+    [System.String] $deviceAndAppManagementAssignmentFilterDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Id that is the target of the assignment.')]
+    [System.String] $groupId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The group Display Name that is the target of the assignment.')]
+    [System.String] $groupDisplayName
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The collection Id that is the target of the assignment.(ConfigMgr)')]
+    [System.String] $collectionId
+}

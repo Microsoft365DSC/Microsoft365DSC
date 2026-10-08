@@ -1,5 +1,47 @@
 {
   "resourceName": "IntuneWindowsHelloForBusinessGlobalPolicy",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "deviceEnrollmentConfiguration",
+    "odataSubtype": "deviceEnrollmentWindowsHelloForBusinessConfiguration",
+    "cmdletNoun": "MgBetaDeviceManagementDeviceEnrollmentConfiguration",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "The service refuses the write on the default Windows Hello record."
+    },
+    {
+      "name": "DeviceEnrollmentConfigurationType",
+      "reason": "Accepted",
+      "note": "The odata subtype is fixed here and other members belong to sibling resources"
+    },
+    {
+      "name": "DisplayName",
+      "reason": "NotConfigurable",
+      "note": "The service refuses the write on the default Windows Hello record."
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "Priority",
+      "reason": "ReadOnly",
+      "note": "Singleton configuration with no sibling to order against"
+    },
+    {
+      "name": "RoleScopeTagIds",
+      "reason": "NotConfigurable",
+      "note": "The tenant wide default enrollment configuration carries no scope tags."
+    }
+  ],
   "description": "This resource configures an Intune Windows Hello For Business Global Policy.",
   "permissions": {
     "graph": {

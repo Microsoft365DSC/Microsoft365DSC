@@ -6,24 +6,33 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsGroupPolicyAssignment 'TeamsGroupPolicyAssignment'
+        TeamsGroupPolicyAssignment 'TeamsGroupPolicyAssignment-Example'
         {
-            Ensure           = 'Present'
-            GroupDisplayname = 'SecGroup'
-            GroupId          = ''
-            PolicyName       = 'AllowCalling'
-            PolicyType       = 'TeamsCallingPolicy'
-            Priority         = 1
-            Credential       = $Credscredential
+            Ensure                = 'Present'
+            GroupDisplayname      = 'Sales and Marketing'
+            PolicyName            = 'AllowCalling'
+            PolicyType            = 'TeamsCallingPolicy'
+            Priority              = 1
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

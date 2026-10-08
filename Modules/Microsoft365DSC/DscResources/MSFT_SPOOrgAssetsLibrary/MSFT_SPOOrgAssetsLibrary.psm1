@@ -1,505 +1,359 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SPOOrgAssetsLibrary'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SPOOrgAssetsLibrary : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $LibraryUrl,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Indicates the absolute URL of the library to be designated as a central location for organization assets.')]
+    [System.String] $LibraryUrl
 
-        [Parameter()]
-        [System.String]
-        $ThumbnailUrl,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the CDN type. The valid values are public or private.')]
+    [ValidateSet('Public', 'Private')]
+    [System.String] $CdnType
 
-        [Parameter()]
-        [ValidateSet('Public', 'Private')]
-        [System.String]
-        $CdnType = 'Public',
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the absolute URL of the library to be designated as a central location for organization Indicates the URL of the background image used when the library is publicly displayed. If no thumbnail URL is indicated, the card will have a gray background.')]
+    [System.String] $ThumbnailUrl
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if the SPO Org Assets library should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the SharePoint Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message 'Getting configuration of SPO Org Assets Library'
-
-    try
+    [SPOOrgAssetsLibrary] Get()
     {
-        $ConnectionMode = New-M365DSCConnection -Workload 'PnP' `
-            -InboundParameters $PSBoundParameters
-
-        if ($ConnectionMode -eq 'Credentials')
+        $cdn = $null
+        $orgAsset = $null
+        $orgthumbnailUrl = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $tenantName = Get-M365TenantName -Credential $Credential
+            $remote = [SPOOrgAssetsLibrary]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
-        else
+
+        Write-Verbose -Message 'Getting configuration of SPO Org Assets Library'
+
+        try
         {
-            $tenantName = $TenantId.Split('.')[0]
-        }
-        $orgLibraryUrl = "https://$tenantName.sharepoint.com/$($Script:exportedInstance.libraryurl.DecodedUrl)"
+            $ConnectionMode = $this.Connect('PnP')
 
-        if (-not $Script:exportedInstance -or $orgLibraryUrl -ne $LibraryUrl)
-        {
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $orgAssets = Get-PnPOrgAssetsLibrary -ErrorAction SilentlyContinue
-
-            $cdn = $null
-            if ($CdnType -eq 'Public')
+            if ($ConnectionMode -eq 'Credentials')
             {
-                if ((Get-PnPTenantCdnEnabled -CdnType $CdnType).Value)
+                $tenantName = Get-M365TenantName -Credential $this.Credential
+            }
+            else
+            {
+                $tenantName = $this.TenantId.Split('.')[0]
+            }
+            $orgLibraryUrl = "https://$tenantName.sharepoint.com/$($this.ExportedInstance.libraryurl.DecodedUrl)"
+
+            if (-not $this.ExportedInstance -or $orgLibraryUrl -ne $this.LibraryUrl)
+            {
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $orgAssets = Get-PnPOrgAssetsLibrary -ErrorAction SilentlyContinue
+
+                $cdn = $null
+                if ($this.CdnType -eq 'Public')
+                {
+                    if ((Get-PnPTenantCdnEnabled -CdnType $this.CdnType).Value)
+                    {
+                        $cdn = 'Public'
+                    }
+                }
+
+                if ($this.CdnType -eq 'Private')
+                {
+                    if ((Get-PnPTenantCdnEnabled -CdnType $this.CdnType).Value)
+                    {
+                        $cdn = 'Private'
+                    }
+                }
+
+                if ($null -eq $orgAssets)
+                {
+                    return $this.AsResult($nullReturn)
+                }
+
+                foreach ($asset in $orgAssets)
+                {
+                    $orgLibraryUrl = "https://$tenantName.sharepoint.com/$($asset.libraryurl.DecodedUrl)"
+                    if ($orgLibraryUrl -eq $this.LibraryUrl)
+                    {
+                        $orgAsset = $asset
+                        break
+                    }
+                }
+
+                if ($null -eq $orgAsset)
+                {
+                    return $this.AsResult($nullReturn)
+                }
+            }
+            else
+            {
+                $orgAsset = $this.ExportedInstance
+            }
+
+            Write-Verbose -Message "Found existing SharePoint Org Site Assets for $($this.LibraryUrl)"
+            if ($null -ne $orgAsset.ThumbnailUrl.DecodedUrl)
+            {
+                $orgthumbnailUrl = "https://$tenantName.sharepoint.com/$($orgAsset.LibraryUrl.decodedurl.Substring(0,$orgAsset.LibraryUrl.decodedurl.LastIndexOf('/')))/$($orgAsset.ThumbnailUrl.decodedurl)"
+            }
+
+            $result = @{
+                LibraryUrl            = $orgLibraryUrl
+                ThumbnailUrl          = $orgthumbnailUrl
+                CdnType               = $cdn
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message 'Setting configuration of SharePoint Org Site Assets'
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentOrgSiteAsset = $this.Get().ToHashtable()
+        $currentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present')
+        {
+            $cdn = $null
+            if ($this.CdnType -eq 'Public')
+            {
+                if ((Get-PnPTenantCdnEnabled -CdnType $this.CdnType).Value)
                 {
                     $cdn = 'Public'
                 }
             }
 
-            if ($CdnType -eq 'Private')
+            if ($this.CdnType -eq 'Private')
             {
-                if ((Get-PnPTenantCdnEnabled -CdnType $CdnType).Value)
+                if ((Get-PnPTenantCdnEnabled -CdnType $this.CdnType).Value)
                 {
                     $cdn = 'Private'
                 }
             }
 
-            if ($null -eq $orgAssets)
+            if ($null -eq $cdn)
             {
-                return $nullReturn
+                throw "Tenant $($this.CdnType) CDN must be configured before setting site organization Library"
             }
+        }
 
-            foreach ($asset in $orgAssets)
+        if ($this.Ensure -eq 'Present' -and $currentOrgSiteAsset.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message 'Removing existing Org Asset Library'
+            ## No set so remove / add
+            Remove-PnPOrgAssetsLibrary -LibraryUrl $currentOrgSiteAsset.LibraryUrl
+            ### add slight delay fails if you immediately try to add
+            Write-Verbose -Message 'Waiting 30 seconds'
+            Start-Sleep -Seconds 30
+            Write-Verbose -Message 'Adding Org Asset Library'
+            Add-PnPOrgAssetsLibrary @currentParameters
+        }
+        elseif ($this.Ensure -eq 'Present' -and $currentOrgSiteAsset.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Adding Org Asset Library $($currentParameters.LibraryUrl)"
+            try
             {
-                $orgLibraryUrl = "https://$tenantName.sharepoint.com/$($asset.libraryurl.DecodedUrl)"
-                if ($orgLibraryUrl -eq $LibraryUrl)
+                Add-PnPOrgAssetsLibrary @currentParameters -ErrorAction Stop
+            }
+            catch
+            {
+                Write-Warning -Message "Exception: $($_.Exception)"
+                if ($_ -notlike '*This library is already an organization assets library.*')
                 {
-                    $orgAsset = $asset
-                    break
+                    throw $_
                 }
             }
         }
-        else
+        elseif ($this.Ensure -eq 'Absent' -and $currentOrgSiteAsset.Ensure -eq 'Present')
         {
-            $orgAsset = $Script:exportedInstance
+            Write-Verbose -Message 'Removing existing Org Asset Library'
+            Remove-PnPOrgAssetsLibrary -LibraryUrl $currentOrgSiteAsset.LibraryUrl
+
+            $originUrl = [System.Uri]::UnescapeDataString(([System.Uri]$currentOrgSiteAsset.LibraryUrl).AbsolutePath).Trim('/')
+            foreach ($cdnType in @('Public', 'Private'))
+            {
+                $origins = @(Get-PnPTenantCdnOrigin -CdnType $cdnType -ErrorAction SilentlyContinue) -replace '\s*\(configuration pending\)$', ''
+                if ($origins -contains $originUrl)
+                {
+                    Write-Verbose -Message "Removing $cdnType CDN origin {$originUrl}"
+                    Remove-PnPTenantCdnOrigin -OriginUrl $originUrl -CdnType $cdnType
+                }
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        $tenantName = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        Write-Verbose -Message "Found existing SharePoint Org Site Assets for $LibraryUrl"
-        if ($null -ne $orgAsset.ThumbnailUrl.DecodedUrl)
+        try
         {
-            $orgthumbnailUrl = "https://$tenantName.sharepoint.com/$($orgAsset.LibraryUrl.decodedurl.Substring(0,$orgAsset.LibraryUrl.decodedurl.LastIndexOf('/')))/$($orgAsset.ThumbnailUrl.decodedurl)"
+            $ConnectionMode = $this.Connect('PnP')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Export')
+            #endregion
+
+            [array]$orgAssets = Get-PnPOrgAssetsLibrary -ErrorAction Stop
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+
+            if ($orgAssets.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            if ($null -ne $orgAssets)
+            {
+                foreach ($orgAssetLib in $orgAssets)
+                {
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                    {
+                        $Global:M365DSCExportResourceInstancesCount++
+                    }
+
+                    Write-M365DSCHost -Message "    [$i/$($orgAssets.Length)] $($orgAssetLib.libraryurl.DecodedUrl)" -DeferWrite
+                    $Params = @{
+                        Credential            = $this.Credential
+                        LibraryUrl            = "https://$tenantName.sharepoint.com/$($orgAssetLib.libraryurl.DecodedUrl)"
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        CertificatePassword   = $this.CertificatePassword
+                        CertificatePath       = $this.CertificatePath
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        ManagedIdentity       = $this.ManagedIdentity
+                        ApplicationSecret     = $this.ApplicationSecret
+                        AccessTokens          = $this.AccessTokens
+                    }
+
+                    $this.ExportedInstance = $orgAssetLib
+                    $Results = $this.GetForExport($Params)
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $i++
+                }
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [SPOOrgAssetsLibrary] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [SPOOrgAssetsLibrary])
+        {
+            return $Values
         }
 
-        $result = @{
-            LibraryUrl            = $orgLibraryUrl
-            ThumbnailUrl          = $orgthumbnailUrl
-            CdnType               = $cdn
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
+        $result = [SPOOrgAssetsLibrary]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $LibraryUrl,
-
-        [Parameter()]
-        [System.String]
-        $ThumbnailUrl,
-
-        [Parameter()]
-        [ValidateSet('Public', 'Private')]
-        [System.String]
-        $CdnType = 'Public',
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting configuration of SharePoint Org Site Assets'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentOrgSiteAsset = Get-TargetResource @PSBoundParameters
-    $currentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    $cdn = $null
-    if ($CdnType -eq 'Public')
-    {
-        if (Get-PnPTenantCdnEnabled -CdnType $CdnType)
-        {
-            $cdn = 'Public'
-        }
-    }
-
-    if ($CdnType -eq 'Private')
-    {
-        if (Get-PnPTenantCdnEnabled -CdnType $CdnType)
-        {
-            $cdn = 'Private'
-        }
-    }
-
-    if ($null -eq $cdn)
-    {
-        throw "Tenant $CdnType CDN must be configured before setting site organization Library"
-    }
-
-    if ($Ensure -eq 'Present' -and $currentOrgSiteAsset.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message 'Removing existing Org Asset Library'
-        ## No set so remove / add
-        Remove-PnPOrgAssetsLibrary -LibraryUrl $currentOrgSiteAsset.LibraryUrl
-        ### add slight delay fails if you immediately try to add
-        Write-Verbose -Message 'Waiting 30 seconds'
-        Start-Sleep -Seconds 30
-        Write-Verbose -Message 'Adding Org Asset Library'
-        Add-PnPOrgAssetsLibrary @currentParameters
-    }
-    elseif ($Ensure -eq 'Present' -and $currentOrgSiteAsset.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Adding Org Asset Library $($currentParameters.LibraryUrl)"
-        try
-        {
-            Add-PnPOrgAssetsLibrary @currentParameters -ErrorAction Stop
-        }
-        catch
-        {
-            Write-Warning -Message "Exception: $($_.Exception)"
-            if ($_ -notlike '*This library is already an organization assets library.*')
-            {
-                throw $_
-            }
-        }
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentOrgSiteAsset.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message 'Removing existing Org Asset Library'
-        Remove-PnPOrgAssetsLibrary -LibraryUrl $currentOrgSiteAsset.LibraryUrl
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $LibraryUrl,
-
-        [Parameter()]
-        [System.String]
-        $ThumbnailUrl,
-
-        [Parameter()]
-        [ValidateSet('Public', 'Private')]
-        [System.String]
-        $CdnType = 'Public',
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    try
-    {
-        $ConnectionMode = New-M365DSCConnection -Workload 'PnP' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        [array]$orgAssets = Get-PnPOrgAssetsLibrary -ErrorAction Stop
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-
-        if ($orgAssets.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        if ($null -ne $orgAssets)
-        {
-            foreach ($orgAssetLib in $orgAssets)
-            {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-                {
-                    $Global:M365DSCExportResourceInstancesCount++
-                }
-
-                Write-M365DSCHost -Message "    [$i/$($orgAssets.Length)] $($orgAssetLib.libraryurl.DecodedUrl)" -DeferWrite
-                $Params = @{
-                    Credential            = $Credential
-                    LibraryUrl            = "https://$tenantName.sharepoint.com/$($orgAssetLib.libraryurl.DecodedUrl)"
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    CertificatePassword   = $CertificatePassword
-                    CertificatePath       = $CertificatePath
-                    CertificateThumbprint = $CertificateThumbprint
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    ApplicationSecret     = $ApplicationSecret
-                    AccessTokens          = $AccessTokens
-                }
-
-                $Script:exportedInstance = $orgAssetLib
-                $Results = Get-TargetResource @Params
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                $i++
-            }
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

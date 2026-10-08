@@ -1,5 +1,27 @@
 {
   "resourceName": "AADCrossTenantAccessPolicyConfigurationDefault",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "crossTenantAccessPolicyConfigurationDefault",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyCrossTenantAccessPolicyDefault",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    },
+    {
+      "name": "IsServiceDefault",
+      "reason": "ReadOnly",
+      "note": "Reports whether the configuration still matches the system default. Reset through the resetToSystemDefault action."
+    }
+  ],
   "description": "This resource configures an Azure AD Authentication Method Policy Configuration Default.",
   "roles": {
     "read": [
@@ -38,11 +60,9 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.Identity.SignIns",
     "Microsoft.Graph.Groups",
-    "Microsoft.Graph.Users",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Users"
   ],
   "supportedEnvironments": [
     "Global",
@@ -51,15 +71,10 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Authentication",
-      "cmdlets": [
-        "Invoke-MgGraphRequest"
-      ]
-    },
-    {
       "module": "Microsoft.Graph.Beta.Identity.SignIns",
       "cmdlets": [
-        "Get-MgBetaPolicyCrossTenantAccessPolicyDefault"
+        "Get-MgBetaPolicyCrossTenantAccessPolicyDefault",
+        "Update-MgBetaPolicyCrossTenantAccessPolicyDefault"
       ]
     },
     {
@@ -72,12 +87,6 @@
       "module": "Microsoft.Graph.Users",
       "cmdlets": [
         "Get-MgUser"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

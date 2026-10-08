@@ -26,12 +26,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -46,14 +46,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ConnectorActionConfigurations =
-                        (New-CimInstance -ClassName 'MSFT_PPDLPPolicyConnectorConfigurationsAction' -Property @{
-                            actionRules = [CimInstance[]]@(New-CimInstance -ClassName 'MSFT_PPDLPPolicyConnectorConfigurationsActionRules' -Property @{
+                        ([MSFT_PPDLPPolicyConnectorConfigurationsAction] @{
+                            actionRules = @([MSFT_PPDLPPolicyConnectorConfigurationsActionRules] @{
                                     actionId = 'CreateInvitation'
                                     behavior = 'Block'
-                                } -ClientOnly)
+                                })
                             connectorId = '/providers/Microsoft.PowerApps/apis/shared_aadinvitationmanager'
                             defaultConnectorActionRuleBehavior = 'Allow'
-                        } -ClientOnly)
+                        })
                     PolicyName                    = "DSCPolicy";
                     PPTenantId                    = "e91d4e0e-d5a5-4e3a-be14-2192592a59af";
                     Ensure                        = 'Absent'
@@ -115,16 +115,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             It 'Should return Values from the Get method' {
                 $Global:count = 1
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PPDLPPolicyConnectorConfigurations' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
             It 'Should return false from the Test method' {
                 $Global:count = 1
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PPDLPPolicyConnectorConfigurations' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the instance from the Set method' {
                 $Global:count = 1
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PPDLPPolicyConnectorConfigurations' -Property $testParams).Set()
                 Should -Invoke -CommandName Invoke-M365DSCPowerPlatformRESTWebRequest -Exactly 2
             }
         }
@@ -133,14 +133,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ConnectorActionConfigurations =
-                        (New-CimInstance -ClassName 'MSFT_PPDLPPolicyConnectorConfigurationsAction' -Property @{
-                            actionRules = [CimInstance[]]@(New-CimInstance -ClassName 'MSFT_PPDLPPolicyConnectorConfigurationsActionRules' -Property @{
+                        ([MSFT_PPDLPPolicyConnectorConfigurationsAction] @{
+                            actionRules = @([MSFT_PPDLPPolicyConnectorConfigurationsActionRules] @{
                                     actionId = 'CreateInvitation'
                                     behavior = 'Block'
-                                } -ClientOnly)
+                                })
                             connectorId = '/providers/Microsoft.PowerApps/apis/shared_aadinvitationmanager'
                             defaultConnectorActionRuleBehavior = 'Allow'
-                        } -ClientOnly)
+                        })
                     PolicyName                    = "DSCPolicy";
                     PPTenantId                    = "e91d4e0e-d5a5-4e3a-be14-2192592a59af";
                     Ensure                        = 'Present'
@@ -202,7 +202,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return true from the Test method' {
                 $Global:count = 1
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'PPDLPPolicyConnectorConfigurations' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -210,14 +210,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     ConnectorActionConfigurations =
-                        (New-CimInstance -ClassName 'MSFT_PPDLPPolicyConnectorConfigurationsAction' -Property @{
-                            actionRules = [CimInstance[]]@(New-CimInstance -ClassName 'MSFT_PPDLPPolicyConnectorConfigurationsActionRules' -Property @{
+                        ([MSFT_PPDLPPolicyConnectorConfigurationsAction] @{
+                            actionRules = @([MSFT_PPDLPPolicyConnectorConfigurationsActionRules] @{
                                     actionId = 'CreateInvitation'
                                     behavior = 'Block'
-                                } -ClientOnly)
+                                })
                             connectorId = '/providers/Microsoft.PowerApps/apis/shared_aadinvitationmanager'
                             defaultConnectorActionRuleBehavior = 'Allow'
-                        } -ClientOnly)
+                        })
                     PolicyName                    = "DSCPolicy";
                     PPTenantId                    = "e91d4e0e-d5a5-4e3a-be14-2192592a59af";
                     Ensure                        = 'Present'
@@ -279,17 +279,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return Values from the Get method' {
                 $Global:count = 1
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PPDLPPolicyConnectorConfigurations' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
                 $Global:count = 1
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PPDLPPolicyConnectorConfigurations' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
                 $Global:count = 1
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PPDLPPolicyConnectorConfigurations' -Property $testParams).Set()
                 Should -Invoke -CommandName Invoke-M365DSCPowerPlatformRESTWebRequest -Exactly 2
             }
         }
@@ -361,7 +361,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             It 'Should Reverse Engineer resource from the Export method' {
                 $Global:count = 1
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'PPDLPPolicyConnectorConfigurations' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

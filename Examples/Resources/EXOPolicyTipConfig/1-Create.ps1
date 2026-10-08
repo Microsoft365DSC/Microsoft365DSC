@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,15 +19,16 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOPolicyTipConfig 'ConfigurePolicyTipConfig'
+        EXOPolicyTipConfig 'EXOPolicyTipConfig-Example'
         {
-            Name                 = "en\NotifyOnly"
-            Value                = "This message contains content that is restricted by Contoso company policy."
-            Ensure               = "Present"
+            Name                  = "en\NotifyOnly"
+            Value                 = "This message contains content that is restricted by Contoso company policy."
+            Ensure                = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

@@ -1,5 +1,16 @@
 {
   "resourceName": "SentinelAlertRule",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures alert rules in Azure Sentinel.",
   "roles": {
     "read": [],
@@ -25,10 +36,14 @@
       }
     },
     "azure": {
-      "requiredRoles": [
-        "Microsoft Sentinel Reader",
-        "Microsoft Sentinel Contributor"
-      ]
+      "requiredRoles": {
+        "read": [
+          "Microsoft Sentinel Reader"
+        ],
+        "update": [
+          "Microsoft Sentinel Contributor"
+        ]
+      }
     }
   },
   "requiredModules": [

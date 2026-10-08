@@ -1,5 +1,16 @@
 {
   "resourceName": "O365AdminAuditLogConfig",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "AdminAuditLogConfig",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "permissions": {
     "Office 365 Exchange Online": {
@@ -17,12 +28,29 @@
       }
     },
     "exchange": {
-      "requiredroles": [
-        "Audit Logs"
-      ],
-      "requiredrolegroups": []
+      "requiredRoles": {
+        "read": [
+          "Audit Logs"
+        ],
+        "update": [
+          "Audit Logs"
+        ]
+      },
+      "requiredRoleGroups": {
+        "read": [],
+        "update": []
+      }
     }
   },
   "requiredModules": [],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-AdminAuditLogConfig",
+        "Set-AdminAuditLogConfig"
+      ]
+    }
+  ]
 }

@@ -1,24 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <AssemblyName>Microsoft365DSC.Compare</AssemblyName>
     <RootNamespace>Microsoft365DSC.Compare</RootNamespace>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Authors>Microsoft365DSC Team</Authors>
-    <Company>Microsoft365DSC</Company>
+    <IsPackable>true</IsPackable>
     <Product>Microsoft365DSC Compare</Product>
     <Description>Performance-optimized C# library for Microsoft365DSC configuration comparison operations</Description>
-    <Copyright>Copyright © Microsoft365DSC</Copyright>
-    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
-    <PackageReference Include="System.Management" Version="10.0.1" />
   </ItemGroup>
 
   <ItemGroup>

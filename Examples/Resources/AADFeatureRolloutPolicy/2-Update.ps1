@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,20 +19,22 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADFeatureRolloutPolicy "AADFeatureRolloutPolicy-CertificateBasedAuthentication rollout policy"
+        AADFeatureRolloutPolicy "AADFeatureRolloutPolicy-Example"
         {
-            ApplicationId           = $ApplicationId
             AppliesTo               = @("AADGroup_1")
-            TenantId                = $TenantId
-            CertificateThumbprint   = $CertificateThumbprint
             Description             = "CertificateBasedAuthentication rollout policy";
             DisplayName             = "certificateBasedAuthentication rollout policy";
             Ensure                  = "Present";
             IsAppliedToOrganization = $False;
-            IsEnabled               = $False; # Updated property
+            IsEnabled               = $False; # Updated Property
+            ApplicationId           = $ApplicationId
+            TenantId                = $TenantId
+            CertificateThumbprint   = $CertificateThumbprint
         }
     }
 }

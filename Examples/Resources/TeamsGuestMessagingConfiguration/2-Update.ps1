@@ -4,16 +4,26 @@ This example is used to configure the tenant's Guest Messaging settings for Team
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsGuestMessagingConfiguration 'TeamsGuestMessagingConfig'
+        TeamsGuestMessagingConfiguration 'TeamsGuestMessagingConfiguration-Example'
         {
             IsSingleInstance       = 'Yes'
             AllowGiphy             = $True
@@ -24,7 +34,9 @@ Configuration Example
             AllowUserDeleteMessage = $False
             AllowUserEditMessage   = $True
             GiphyRatingType        = "Moderate"
-            Credential             = $Credscredential
+            ApplicationId          = $ApplicationId
+            TenantId               = $TenantId
+            CertificateThumbprint  = $CertificateThumbprint
         }
     }
 }

@@ -4,7 +4,8 @@ This example creates a device cleanup rule.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,16 +18,35 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
         IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 'IntuneWindowsUpdateForBusinessHotpatchProfileWindows10-Example'
         {
-            DisplayName           = "Example";
-            Description           = "";
+            DisplayName           = "Hotpatch - Windows 11 Enterprise";
+            Description           = "Enables hotpatch quality updates so security fixes apply without a restart";
             HotpatchEnabled       = $True;
             RoleScopeTagIds       = @("0");
+            ApprovalSettings      = @(
+                MSFT_MicrosoftGraphWindowsQualityUpdateApprovalSetting{
+                    ApprovalMethodType           = "automatic"
+                    DeferredDeploymentInDay      = 2
+                    WindowsQualityUpdateCadence  = "monthly"
+                    WindowsQualityUpdateCategory = "all"
+                }
+            );
+            Assignments           = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.allDevicesAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName = "Intune Excluded Devices"
+                }
+            );
             Ensure                = 'Present';
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;

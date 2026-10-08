@@ -4,7 +4,8 @@ This example removes a Device Control Policy.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,14 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneEpmCertificatePolicySetting "IntuneEpmCertificatePolicySetting-IntuneEpmCertificatePolicySetting_1"
+        IntuneEpmCertificatePolicySetting "IntuneEpmCertificatePolicySetting-Example"
         {
-            DisplayName           = "IntuneEpmCertificatePolicySetting_1";
-            CertificateFile       = "<Base64EncodedCertificateContent>";
+            DisplayName           = "Contoso Elevation Signing Certificate";
+            CertificateFile       = "<base64-encoded-certificate>";
             Ensure                = "Absent";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;

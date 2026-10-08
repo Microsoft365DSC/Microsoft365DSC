@@ -5,22 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCFilePlanPropertyCitation 'FilePlanPropertyCitation'
+        SCFilePlanPropertyCitation 'SCFilePlanPropertyCitation-Example'
         {
-            Name                 = "Demo Citation"
-            CitationURL          = "https://contoso.com"
-            CitationJurisdiction = "Federal"
-            Ensure               = "Present"
-            Credential           = $Credscredential
+            Name                  = "Sarbanes-Oxley Act"
+            CitationURL           = "https://www.congress.gov/bill/107th-congress/house-bill/3763"
+            CitationJurisdiction  = "Federal"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

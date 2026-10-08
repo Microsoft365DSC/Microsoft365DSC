@@ -21,12 +21,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -79,16 +79,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Set()
                 Should -Invoke -CommandName New-ActiveSyncDeviceAccessRule -Exactly 1
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
         }
 
@@ -105,11 +105,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -126,12 +126,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-ActiveSyncDeviceAccessRule -Exactly 1
+            }
+        }
+
+        Context -Name 'Active Sync Device Access Rule exists and it SHOULD NOT.' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Identity   = 'iOS 6.1 10B145 (DeviceOS)'
+                    Ensure     = 'Absent'
+                    Credential = $Credential
+                }
+            }
+
+            It 'Should return false from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Test() | Should -Be $false
+            }
+
+            It 'Should remove the rule from the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'EXOActiveSyncDeviceAccessRule' -Property $testParams).Set()
+                Should -Invoke -CommandName Remove-ActiveSyncDeviceAccessRule -Exactly 1 -ParameterFilter { $Identity -eq 'iOS 6.1 10B145 (DeviceOS)' }
             }
         }
 
@@ -146,7 +165,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should Reverse Engineer resource from the Export method when single' {
 
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOActiveSyncDeviceAccessRule' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

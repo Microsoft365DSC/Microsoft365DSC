@@ -1,5 +1,32 @@
 {
   "resourceName": "AADEntitlementManagementAccessPackage",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "accessPackage",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaEntitlementManagementAccessPackage",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AccessPackageAssignmentPolicies",
+      "reason": "OwnedByOtherResource",
+      "note": "AADEntitlementManagementAccessPackageAssignmentPolicy owns these and links back through AccessPackageId"
+    },
+    {
+      "name": "AccessPackageCatalog",
+      "reason": "OwnedByOtherResource",
+      "note": "AADEntitlementManagementAccessPackageCatalog owns the catalog, associated here through CatalogId"
+    },
+    {
+      "name": "UniqueName",
+      "reason": "Deferred",
+      "note": "Accepted on create and immutable afterwards."
+    }
+  ],
   "description": "This resource configures an Azure AD Entitlement Management Access Package.",
   "roles": {
     "read": [

@@ -1,4 +1,0 @@
-<CIMInstances>[ClassVersion("1.0.0.0"), FriendlyName("<ResourceName>")]
-class MSFT_<ResourceName> : OMI_BaseResource
-{
-<Properties>};

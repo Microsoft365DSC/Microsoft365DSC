@@ -5,26 +5,39 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsWorkloadPolicy 'Example'
+        TeamsWorkloadPolicy 'TeamsWorkloadPolicy-Example'
         {
-            AllowCalling         = $True;
-            AllowCallingPinned   = $True;
-            AllowMeeting         = $True;
-            AllowMeetingPinned   = $True;
-            AllowMessaging       = $True;
-            AllowMessagingPinned = $True;
-            Credential           = $Credscredential;
-            Ensure               = "Present";
-            Identity             = "Global";
+            AllowCalling          = $True;
+            AllowCallingPinned    = $True;
+            AllowMeeting          = $True;
+            AllowMeetingPinned    = $True;
+            AllowMessaging        = $True;
+            AllowMessagingPinned  = $True;
+            Description           = "Pins messaging, meetings and calling for frontline staff";
+            Ensure                = "Present";
+            Identity              = "Frontline Workloads";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

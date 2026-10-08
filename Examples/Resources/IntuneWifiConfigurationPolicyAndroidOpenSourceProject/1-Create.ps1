@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,29 +19,41 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneWifiConfigurationPolicyAndroidOpenSourceProject 'myWifiConfigAndroidOpensourcePolicy'
+        IntuneWifiConfigurationPolicyAndroidOpenSourceProject 'IntuneWifiConfigurationPolicyAndroidOpenSourceProject-Example'
         {
             DisplayName                    = 'wifi aosp'
+            Description                    = 'Wi-Fi for shared warehouse scanning devices'
             Assignments                    = @(
-                MSFT_DeviceManagementConfigurationPolicyAssignments {
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
                     dataType                                   = '#microsoft.graph.allDevicesAssignmentTarget'
                 }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName = 'Intune Excluded Devices'
+                }
             )
-            ConnectAutomatically           = $False
-            ConnectWhenNetworkNameIsHidden = $True
-            NetworkName                    = 'aaaa'
-            PreSharedKeyIsSet              = $True
-            Ssid                           = 'aaaaa'
+            ConnectAutomatically           = $false
+            ConnectWhenNetworkNameIsHidden = $true
+            NetworkName                    = 'Warehouse Scanner Wi-Fi'
+            PreSharedKey                   = '<wifi-pre-shared-key>'
+            PreSharedKeyIsSet              = $true
+            ProxyExclusionList             = @('intranet.contoso.com', '*.contoso.local')
+            ProxyManualAddress             = 'proxy.contoso.com'
+            ProxyManualPort                = 8080
+            ProxySetting                   = 'manual'
+            RoleScopeTagIds                = @('0')
+            Ssid                           = 'Contoso-Scanners'
             WiFiSecurityType               = 'wpaPersonal'
             Ensure                         = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                  = $ApplicationId;
+            TenantId                       = $TenantId;
+            CertificateThumbprint          = $CertificateThumbprint;
         }
     }
 }

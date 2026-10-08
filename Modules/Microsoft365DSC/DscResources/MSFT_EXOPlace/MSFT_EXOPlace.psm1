@@ -1,697 +1,352 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOPlace'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOPlace : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Identity parameter specifies the room mailbox that you want to modify. You can use any value that uniquely identifies the room.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $DisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The display name of the place.')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String]
-        $AudioDeviceName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AudioDeviceName parameter specifies the name of the audio device in the room. If the value contains spaces, enclose the value in quotation marks.')]
+    [System.String] $AudioDeviceName
 
-        [Parameter()]
-        [System.String]
-        $Building,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Building parameter specifies the building name or building number that the room is in. If the value contains spaces, enclose the value in quotation marks.')]
+    [System.String] $Building
 
-        [Parameter()]
-        [System.UInt32]
-        $Capacity,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Capacity parameter specifies the capacity of the room. A valid value is an integer.')]
+    [System.Nullable[System.UInt32]] $Capacity
 
-        [Parameter()]
-        [System.String]
-        $City,
+    [DscProperty()]
+    [System.ComponentModel.Description('The City parameter specifies the room''s city. If the value contains spaces, enclose the value in quotation marks.')]
+    [System.String] $City
 
-        [Parameter()]
-        [System.String]
-        $CountryOrRegion,
+    [DscProperty()]
+    [System.ComponentModel.Description('The CountryOrRegion parameter specifies the room''s country or region. A valid value is a valid ISO 3166-1 two-letter country code (for example, AU for Australia) or the corresponding friendly name for the country (which might be different from the official ISO 3166 Maintenance Agency short name).')]
+    [System.String] $CountryOrRegion
 
-        [Parameter()]
-        [System.String[]]
-        $Desks = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The DisplayDeviceName parameter specifies the name of the display device in the room. If the value contains spaces, enclose the value in quotation marks.')]
+    [System.String] $DisplayDeviceName
 
-        [Parameter()]
-        [System.String]
-        $DisplayDeviceName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Floor parameter specifies the floor number that the room is on.')]
+    [System.String] $Floor
 
-        [Parameter()]
-        [System.UInt32]
-        $Floor,
+    [DscProperty()]
+    [System.ComponentModel.Description('The FloorLabel parameter specifies a descriptive label for the floor that the room is on. If the value contains spaces, enclose the value in quotation marks.')]
+    [System.String] $FloorLabel
 
-        [Parameter()]
-        [System.String]
-        $FloorLabel,
+    [DscProperty()]
+    [System.ComponentModel.Description('The GeoCoordinates parameter specifies the room''s location in latitude, longitude and (optionally) altitude coordinates.')]
+    [System.String] $GeoCoordinates
 
-        [Parameter()]
-        [System.String]
-        $GeoCoordinates,
+    [DscProperty()]
+    [System.ComponentModel.Description('The IsWheelChairAccessible parameter specifies whether the room is wheelchair accessible.')]
+    [System.Nullable[System.Boolean]] $IsWheelChairAccessible
 
-        [Parameter()]
-        [System.Boolean]
-        $IsWheelChairAccessible,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Label parameter specifies a descriptive label for the room (for example, a number or name). If the value contains spaces, enclose the value in quotation marks.')]
+    [System.String] $Label
 
-        [Parameter()]
-        [System.String]
-        $Label,
+    [DscProperty()]
+    [System.ComponentModel.Description('The MTREnabled parameter identifies the room as configured with a Microsoft Teams room system. You can add Teams room systems as audio sources in Teams meetings that involve the room.')]
+    [System.Nullable[System.Boolean]] $MTREnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $MTREnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ParentId parameter specifies the ID of a Place in the parent location hierarchy in Microsoft Places.')]
+    [System.String] $ParentId
 
-        [Parameter()]
-        [System.String]
-        $ParentId,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ParentType parameter specifies the parent type of the ParentId in Microsoft Places. Valid values are: Floor, Section')]
+    [ValidateSet('Floor', 'Section', 'None')]
+    [System.String] $ParentType
 
-        [Parameter()]
-        [ValidateSet('Floor', 'Section', 'None')]
-        [System.String]
-        $ParentType,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Phone parameter specifies the room''s telephone number.')]
+    [System.String] $Phone
 
-        [Parameter()]
-        [System.String]
-        $Phone,
+    [DscProperty()]
+    [System.ComponentModel.Description('The PostalCode parameter specifies the room''s postal code.')]
+    [System.String] $PostalCode
 
-        [Parameter()]
-        [System.String]
-        $PostalCode,
+    [DscProperty()]
+    [System.ComponentModel.Description('The State parameter specifies the room''s state or province.')]
+    [System.String] $State
 
-        [Parameter()]
-        [System.String]
-        $State,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Street parameter specifies the room''s physical address.')]
+    [System.String] $Street
 
-        [Parameter()]
-        [System.String]
-        $Street,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Tags parameter specifies additional features of the room (for example, details like the type of view or furniture type).')]
+    [System.String[]] $Tags
 
-        [Parameter()]
-        [System.String[]]
-        $Tags,
+    [DscProperty()]
+    [System.ComponentModel.Description('The VideoDeviceName parameter specifies the name of the video device in the room. If the value contains spaces, enclose the value in quotation marks.')]
+    [System.String] $VideoDeviceName
 
-        [Parameter()]
-        [System.String]
-        $VideoDeviceName,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies if this Outbound connector should exist.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Getting configuration for Place for $($Identity)"
-
-    # TODO: Remove property 'Desks' in next breaking change
-    if ($PSBoundParameters.ContainsKey('Desks'))
+    [EXOPlace] Get()
     {
-        $PSBoundParameters.Remove('Desks') | Out-Null
-        Write-Warning "Property 'Desks' is deprecated and will be removed"
-    }
-
-    try
-    {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOPlace]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for Place for $($this.Identity)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
+        $boundParameters = $this.GetBoundParameters()
 
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $place = Get-Place -Identity $Identity -ErrorAction SilentlyContinue
-            if ($null -eq $place)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                if (-not [System.String]::IsNullOrEmpty($DisplayName))
-                {
-                    Write-Verbose -Message "Couldn't retrieve place by Id {$($Identity)}. Trying by DisplayName"
-                    $place = Get-Place -ResultSize 'Unlimited' | Where-Object -FilterScript { $_.DisplayName -eq $DisplayName }
-                }
+                $null = $this.Connect('ExchangeOnline')
 
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $boundParameters
+                $nullReturn.Ensure = 'Absent'
+
+                $place = Get-Place -Identity $this.Identity -ErrorAction SilentlyContinue
                 if ($null -eq $place)
                 {
-                    return $nullReturn
+                    if (-not [System.String]::IsNullOrEmpty($this.DisplayName))
+                    {
+                        Write-Verbose -Message "Couldn't retrieve place by Id {$($this.Identity)}. Trying by DisplayName"
+                        $place = Get-Place -ResultSize 'Unlimited' | Where-Object -FilterScript { $_.DisplayName -eq $this.DisplayName }
+                    }
+
+                    if ($null -eq $place)
+                    {
+                        return $this.AsResult($nullReturn)
+                    }
                 }
             }
+            else
+            {
+                $place = $this.ExportedInstance
+            }
+
+            Write-Verbose -Message "Found Place with Identity {$($this.Identity)}"
+
+            $TagsValue = [Array] $place.Tags
+            if ($null -eq $place.Tags)
+            {
+                $TagsValue = @()
+            }
+
+            $result = @{
+                Identity               = $place.Identity
+                AudioDeviceName        = $place.AudioDeviceName
+                Building               = $place.Building
+                Capacity               = $place.Capacity
+                City                   = $place.City
+                CountryOrRegion        = $place.CountryOrRegion
+                DisplayDeviceName      = $place.DisplayDeviceName
+                DisplayName            = $place.DisplayName
+                Floor                  = $place.Floor
+                FloorLabel             = $place.FloorLabel
+                GeoCoordinates         = $place.GeoCoordinates
+                IsWheelChairAccessible = [Boolean] $place.IsWheelChairAccessible
+                Label                  = $place.Label
+                MTREnabled             = [Boolean] $place.MTREnabled
+                ParentId               = $place.ParentId
+                ParentType             = $place.ParentType
+                Phone                  = $place.Phone
+                PostalCode             = $place.PostalCode
+                State                  = $place.State
+                Street                 = $place.Street
+                Tags                   = $TagsValue
+                VideoDeviceName        = $place.VideoDeviceName
+                Credential             = $this.Credential
+                Ensure                 = 'Present'
+                ApplicationId          = $this.ApplicationId
+                CertificateThumbprint  = $this.CertificateThumbprint
+                CertificatePath        = $this.CertificatePath
+                CertificatePassword    = $this.CertificatePassword
+                ManagedIdentity        = $this.ManagedIdentity
+                TenantId               = $this.TenantId
+                AccessTokens           = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
         }
-        else
+        catch
         {
-            $place = $Script:exportedInstance
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
         }
+    }
 
-        Write-Verbose -Message "Found Place with Identity {$Identity}"
-
-        $TagsValue = [Array] $place.Tags
-        if ($null -eq $place.Tags)
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            $TagsValue = @()
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        $result = @{
-            Identity               = $place.Identity
-            AudioDeviceName        = $place.AudioDeviceName
-            Building               = $place.Building
-            Capacity               = $place.Capacity
-            City                   = $place.City
-            CountryOrRegion        = $place.CountryOrRegion
-            Desks                  = [System.String[]] $place.Desks
-            DisplayDeviceName      = $place.DisplayDeviceName
-            DisplayName            = $place.DisplayName
-            Floor                  = $place.Floor
-            FloorLabel             = $place.FloorLabel
-            GeoCoordinates         = $place.GeoCoordinates
-            IsWheelChairAccessible = [Boolean] $place.IsWheelChairAccessible
-            Label                  = $place.Label
-            MTREnabled             = [Boolean] $place.MTREnabled
-            ParentId               = $place.ParentId
-            ParentType             = $place.ParentType
-            Phone                  = $place.Phone
-            PostalCode             = $place.PostalCode
-            State                  = $place.State
-            Street                 = $place.Street
-            Tags                   = $TagsValue
-            VideoDeviceName        = $place.VideoDeviceName
-            Credential             = $Credential
-            Ensure                 = 'Present'
-            ApplicationId          = $ApplicationId
-            CertificateThumbprint  = $CertificateThumbprint
-            CertificatePath        = $CertificatePath
-            CertificatePassword    = $CertificatePassword
-            ManagedIdentity        = $ManagedIdentity.IsPresent
-            TenantId               = $TenantId
-            AccessTokens           = $AccessTokens
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        Write-Verbose -Message "Setting configuration of Place for $($this.Identity)"
+
+        $boundParameters = $this.GetBoundParameters()
+
+        $null = $this.Connect('ExchangeOnline')
+
+        $updateParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $boundParameters
+
+        $updateParameters.Remove('DisplayName') | Out-Null
+
+        if ([System.String]::IsNullOrEmpty($this.ParentId) -and $null -ne $this.ParentType)
+        {
+            Write-Verbose -Message 'ParentId is $null, removing ParentType.'
+            $updateParameters.Remove('ParentType') | Out-Null
+        }
+        Set-Place @updateParameters
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+        try
+        {
+            [array]$places = Get-Place -ResultSize 'Unlimited' -ErrorAction Stop | `
+                    Where-Object -FilterScript { $_.PlaceType -ne 'RoomList' }
+            $dscContent = [System.Text.StringBuilder]::new()
+
+            if ($places.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            $i = 1
+            foreach ($place in $places)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($places.Length)] $($place.Identity)" -DeferWrite
+
+                $Params = @{
+                    Identity              = $place.Identity
+                    DisplayName           = $place.DisplayName
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    CertificatePath       = $this.CertificatePath
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $place
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXOPlace] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOPlace])
+        {
+            return $Values
+        }
+
+        $result = [EXOPlace]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $AudioDeviceName,
-
-        [Parameter()]
-        [System.String]
-        $Building,
-
-        [Parameter()]
-        [System.UInt32]
-        $Capacity,
-
-        [Parameter()]
-        [System.String]
-        $City,
-
-        [Parameter()]
-        [System.String]
-        $CountryOrRegion,
-
-        [Parameter()]
-        [System.String[]]
-        $Desks = @(),
-
-        [Parameter()]
-        [System.String]
-        $DisplayDeviceName,
-
-        [Parameter()]
-        [System.UInt32]
-        $Floor,
-
-        [Parameter()]
-        [System.String]
-        $FloorLabel,
-
-        [Parameter()]
-        [System.String]
-        $GeoCoordinates,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsWheelChairAccessible,
-
-        [Parameter()]
-        [System.String]
-        $Label,
-
-        [Parameter()]
-        [System.Boolean]
-        $MTREnabled,
-
-        [Parameter()]
-        [System.String]
-        $ParentId,
-
-        [Parameter()]
-        [ValidateSet('Floor', 'Section', 'None')]
-        [System.String]
-        $ParentType,
-
-        [Parameter()]
-        [System.String]
-        $Phone,
-
-        [Parameter()]
-        [System.String]
-        $PostalCode,
-
-        [Parameter()]
-        [System.String]
-        $State,
-
-        [Parameter()]
-        [System.String]
-        $Street,
-
-        [Parameter()]
-        [System.String[]]
-        $Tags,
-
-        [Parameter()]
-        [System.String]
-        $VideoDeviceName,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    Write-Verbose -Message "Setting configuration of Place for $($Identity)"
-
-    # TODO: Remove property 'Desks' in next breaking change
-    if ($PSBoundParameters.ContainsKey('Desks'))
-    {
-        $PSBoundParameters.Remove('Desks') | Out-Null
-        Write-Warning "Property 'Desks' is deprecated and will be removed"
-    }
-
-    $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    $updateParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ([System.String]::IsNullOrEmpty($ParentId) -and $null -ne $ParentType)
-    {
-        Write-Verbose -Message 'ParentId is $null, removing ParentType.'
-        $updateParameters.Remove('ParentType') | Out-Null
-    }
-    Set-Place @updateParameters
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $AudioDeviceName,
-
-        [Parameter()]
-        [System.String]
-        $Building,
-
-        [Parameter()]
-        [System.UInt32]
-        $Capacity,
-
-        [Parameter()]
-        [System.String]
-        $City,
-
-        [Parameter()]
-        [System.String]
-        $CountryOrRegion,
-
-        [Parameter()]
-        [System.String[]]
-        $Desks = @(),
-
-        [Parameter()]
-        [System.String]
-        $DisplayDeviceName,
-
-        [Parameter()]
-        [System.UInt32]
-        $Floor,
-
-        [Parameter()]
-        [System.String]
-        $FloorLabel,
-
-        [Parameter()]
-        [System.String]
-        $GeoCoordinates,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsWheelChairAccessible,
-
-        [Parameter()]
-        [System.String]
-        $Label,
-
-        [Parameter()]
-        [System.Boolean]
-        $MTREnabled,
-
-        [Parameter()]
-        [System.String]
-        $ParentId,
-
-        [Parameter()]
-        [ValidateSet('Floor', 'Section', 'None')]
-        [System.String]
-        $ParentType,
-
-        [Parameter()]
-        [System.String]
-        $Phone,
-
-        [Parameter()]
-        [System.String]
-        $PostalCode,
-
-        [Parameter()]
-        [System.String]
-        $State,
-
-        [Parameter()]
-        [System.String]
-        $Street,
-
-        [Parameter()]
-        [System.String[]]
-        $Tags,
-
-        [Parameter()]
-        [System.String]
-        $VideoDeviceName,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-    try
-    {
-        [array]$places = Get-Place -ResultSize 'Unlimited' -ErrorAction Stop | `
-                Where-Object -FilterScript { $_.PlaceType -ne 'RoomList' }
-        $dscContent = [System.Text.StringBuilder]::new()
-
-        if ($places.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        $i = 1
-        foreach ($place in $places)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            Write-M365DSCHost -Message "    |---[$i/$($places.Length)] $($place.Identity)" -DeferWrite
-
-            $Params = @{
-                Identity              = $place.Identity
-                DisplayName           = $place.DisplayName
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                CertificatePath       = $CertificatePath
-                AccessTokens          = $AccessTokens
-            }
-            $Script:exportedInstance = $place
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('Desks')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

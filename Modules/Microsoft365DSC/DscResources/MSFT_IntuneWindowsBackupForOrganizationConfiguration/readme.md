@@ -4,4 +4,4 @@
 
 Intune Windows Backup For Organization Configuration
 
-**Attention**: Can only be updated using the delegated `Credentials` authentication method.
+**Please note:** This resource only supports delegated authentication using the `Credentials` authentication method.

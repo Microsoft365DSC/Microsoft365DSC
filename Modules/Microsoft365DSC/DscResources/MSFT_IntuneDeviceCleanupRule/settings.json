@@ -1,0 +1,61 @@
+{
+  "resourceName": "IntuneDeviceCleanupRule",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "managedDeviceCleanupRule",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementManagedDeviceCleanupRule",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "This resource configures an Intune Device Cleanup Rule.",
+  "permissions": {
+    "graph": {
+      "application": {
+        "read": [
+          {
+            "name": "DeviceManagementConfiguration.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "DeviceManagementConfiguration.ReadWrite.All"
+          }
+        ]
+      },
+      "delegated": {
+        "read": [
+          {
+            "name": "DeviceManagementConfiguration.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "DeviceManagementConfiguration.ReadWrite.All"
+          }
+        ]
+      }
+    }
+  },
+  "requiredModules": [
+    "Microsoft.Graph.Beta.DeviceManagement"
+  ],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.DeviceManagement",
+      "cmdlets": [
+        "Get-MgBetaDeviceManagementManagedDeviceCleanupRule",
+        "New-MgBetaDeviceManagementManagedDeviceCleanupRule",
+        "Remove-MgBetaDeviceManagementManagedDeviceCleanupRule",
+        "Update-MgBetaDeviceManagementManagedDeviceCleanupRule"
+      ]
+    }
+  ]
+}

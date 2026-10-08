@@ -4,7 +4,8 @@ This example removes an existing Azure AD Terms of Use Agreement.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,13 +18,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADAgreement 'CompanyTermsOfUse'
+        AADAgreement 'AADAgreement-Example'
         {
-            DisplayName = "Company Terms of Use"
+            DisplayName           = "Company Terms of Use"
             Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

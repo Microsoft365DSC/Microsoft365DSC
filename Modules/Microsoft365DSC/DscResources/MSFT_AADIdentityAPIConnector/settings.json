@@ -1,5 +1,16 @@
 {
   "resourceName": "AADIdentityAPIConnector",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "identityApiConnector",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaIdentityApiConnector",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures an Azure AD Identity API Connector.",
   "permissions": {
     "graph": {

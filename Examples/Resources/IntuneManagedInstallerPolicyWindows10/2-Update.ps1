@@ -4,7 +4,8 @@ This example creates a new Intune Mobile App Configuration Policy for iOs device
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,28 +18,32 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName 'Microsoft365DSC'
 
     Node localhost
     {
-        IntuneManagedInstallerPolicyWindows10 "IntuneManagedInstallerPolicyWindows10-SideCar ManagedInstaller Script"
+        IntuneManagedInstallerPolicyWindows10 "IntuneManagedInstallerPolicyWindows10-Example"
         {
             Assignments              = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
-                    dataType = "#microsoft.graph.allDevicesAssignmentTarget"
+                    dataType                                   = "#microsoft.graph.allDevicesAssignmentTarget"
                     deviceAndAppManagementAssignmentFilterType = "none"
-                    deviceAndAppManagementAssignmentFilterId = "00000000-0000-0000-0000-000000000000"
-                    groupDisplayName = "All devices"
+                    groupDisplayName                           = "All devices"
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType         = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    groupDisplayName = "Intune Excluded Devices"
                 }
             );
-            Description              = "This script is used to set SideCar as ManagedInstaller";
-            DisplayName              = "SideCar ManagedInstaller Script";
+            Description              = "Trusts apps deployed by the Intune Management Extension in App Control for Business";
+            DisplayName              = "Intune Management Extension Managed Installer";
             Ensure                   = "Present";
-            IsIntuneManagedInstaller = $False; # Updated property
+            IsIntuneManagedInstaller = $False; # Updated Property
             RoleScopeTagIds          = @("0");
             ApplicationId            = $ApplicationId;
+            TenantId                 = $TenantId;
             CertificateThumbprint    = $CertificateThumbprint;
-            TenantId                 = $OrganizationName;
         }
     }
 }

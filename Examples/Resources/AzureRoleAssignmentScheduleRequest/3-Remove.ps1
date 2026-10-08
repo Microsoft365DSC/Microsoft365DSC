@@ -6,21 +6,28 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AzureRoleAssignmentScheduleRequest "RemoveAssignment"
+        AzureRoleAssignmentScheduleRequest "AzureRoleAssignmentScheduleRequest-Example"
         {
-            Principal             = "AdeleV@contoso.onmicrosoft.com"
+            Principal             = "AdeleV@$TenantId"
             RoleDefinition        = "Owner"
-            DirectoryScopeId      = "/subscriptions/12345678-1234-1234-1234-123456789012"
-            PrincipalType         = "User"
+            DirectoryScopeId      = "/subscriptions/<subscription-id>"
             Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

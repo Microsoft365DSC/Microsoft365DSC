@@ -5,35 +5,46 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCLabelPolicy 'ConfigureLabelPolicy'
+        SCLabelPolicy 'SCLabelPolicy-Example'
         {
-            Name             = "DemoLabelPolicy"
-            Comment          = "Demo Label policy comment"
-            Labels           = @("Personal", "General")
-            ExchangeLocation = @("All")
-            AdvancedSettings = @(
-                MSFT_SCLabelSetting
-                {
-                    Key   = "AllowedLevel"
-                    Value = @("Sensitive", "Classified")
+            Name                         = "Finance Label Policy"
+            Comment                      = "Publishes the Finance Confidential label to the finance team"
+            Labels                       = @("Finance Confidential")
+            ExchangeLocation             = @("AdeleV@$TenantId", "MeganB@$TenantId")
+            ModernGroupLocation          = @("Mark8ProjectTeam@$TenantId")
+            AdvancedSettings             = @(
+                MSFT_SCLabelSetting{
+                    Key   = "RequireDowngradeJustification"
+                    Value = "True"
                 }
-                MSFT_SCLabelSetting
-                {
-                    Key   = "LabelStatus"
-                    Value = "Enabled"
+                MSFT_SCLabelSetting{
+                    Key   = "AttachmentAction"
+                    Value = "Automatic"
                 }
             )
-            Ensure           = "Present"
-            Credential       = $Credscredential
+            Ensure                       = "Present"
+            ApplicationId                = $ApplicationId
+            TenantId                     = $TenantId
+            CertificateThumbprint        = $CertificateThumbprint
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,29 +19,31 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADCustomSecurityAttributeDefinition "AADCustomSecurityAttributeDefinition-ShoeSize"
+        AADCustomSecurityAttributeDefinition "AADCustomSecurityAttributeDefinition-Example"
         {
-            ApplicationId           = $ApplicationId;
             AllowedValues           = @(
                 MSFT_CustomSecurityAttributeAllowedValue{
                     IsActive = $True
-                    ValueId = "AllowedValue1"
+                    ValueId  = "Alpine"
                 }
             );
-            AttributeSet            = "TestAttributeSet";
-            CertificateThumbprint   = $CertificateThumbprint;
+            AttributeSet            = "Engineering";
             Ensure                  = "Present";
             IsCollection            = $False;
             IsSearchable            = $True;
-            Name                    = "ShoeSize";
+            Name                    = "Project";
             Status                  = "Available";
-            TenantId                = $TenantId;
             Type                    = "String";
-            UsePreDefinedValuesOnly = $False;
-            Description             = "What size of shoe is the person wearing?"
+            UsePreDefinedValuesOnly = $True;
+            Description             = "Active project of the user"
+            ApplicationId           = $ApplicationId;
+            TenantId                = $TenantId;
+            CertificateThumbprint   = $CertificateThumbprint;
         }
     }
 }

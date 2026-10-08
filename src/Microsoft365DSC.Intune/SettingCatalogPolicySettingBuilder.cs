@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,7 +70,7 @@ namespace Microsoft365DSC.Intune
             // Collect all definitions across all templates
             List<SettingDefinitionInfo> allDefinitions = settingTemplates.SelectMany(t => t.SettingDefinitions).ToList();
             List<Hashtable> settingInstances = [];
-            List<string> processedSettingDefinitionIds = [];
+            HashSet<string> processedSettingDefinitionIds = new(StringComparer.Ordinal);
 
             foreach (var settingTemplate in settingTemplates)
             {
@@ -174,8 +174,11 @@ namespace Microsoft365DSC.Intune
             List<SettingTemplateInfo> settingTemplates,
             Hashtable dscParams)
         {
+            // User scope is always announced through the user_ prefix; everything else is
+            // device-scoped (the CSP default context), including definitions without a
+            // device_ prefix whose base URI goes straight to ./Vendor/MSFT.
             var deviceTemplates = settingTemplates
-                .Where(t => t.SettingInstanceTemplate?.SettingDefinitionId?.StartsWith("device_", StringComparison.OrdinalIgnoreCase) == true)
+                .Where(t => t.SettingInstanceTemplate?.SettingDefinitionId?.StartsWith("user_", StringComparison.OrdinalIgnoreCase) != true)
                 .ToList();
             var userTemplates = settingTemplates
                 .Where(t => t.SettingInstanceTemplate?.SettingDefinitionId?.StartsWith("user_", StringComparison.OrdinalIgnoreCase) == true)
@@ -277,6 +280,7 @@ namespace Microsoft365DSC.Intune
             string cimParamName = null;
             Hashtable effectiveDscParams = dscParams;
             List<SettingDefinitionInfo> effectiveAllDefinitions = allDefinitions;
+            string childInstanceName = settingInstanceName;
 
             // Multi-instance detection
             bool isMultiInstance =
@@ -286,8 +290,10 @@ namespace Microsoft365DSC.Intune
 
             if (isMultiInstance)
             {
-                string settingName = SettingsCatalogHelper.GetSettingName(settingDefinition, allDefinitions);
+                string settingName = SettingsCatalogHelper.WithoutDoubledParent(
+                    SettingsCatalogHelper.GetSettingName(settingDefinition, allDefinitions));
                 string fullClassName = settingInstanceName + settingName;
+                childInstanceName = fullClassName;
 
                 var (paramName, cimInstances) = FindCimInstancesByClassName(dscParams, fullClassName);
                 cimParamName = paramName;
@@ -326,7 +332,7 @@ namespace Microsoft365DSC.Intune
                     string childSettingValueType = ODataTypePrefix + childSettingValueName;
                     if (childSettingValueName.Length > 0)
                     {
-                        childSettingValueName = char.ToLowerInvariant(childSettingValueName[0]) + childSettingValueName.Substring(1);
+                        childSettingValueName = SettingsCatalogHelper.ToCamelCase(childSettingValueName);
                     }
 
                     // Find matching child template from parent's children
@@ -340,6 +346,16 @@ namespace Microsoft365DSC.Intune
                         childValueTemplateId = childTemplate.ValueTemplateId;
                     }
 
+                    string childIdSuffix = GetChildNameFromId(settingDefinition.Id, childDef.Id);
+                    if (childIdSuffix.Length > 0 && currentDscParams.ContainsKey(childIdSuffix))
+                    {
+                        string resolvedName = SettingsCatalogHelper.GetSettingName(childDef, effectiveAllDefinitions);
+                        if (!string.IsNullOrEmpty(resolvedName) && !currentDscParams.ContainsKey(resolvedName))
+                        {
+                            currentDscParams[resolvedName] = currentDscParams[childIdSuffix];
+                        }
+                    }
+
                     var childValue = BuildSettingInstanceValue(
                         currentDscParams,
                         childDef,
@@ -350,7 +366,7 @@ namespace Microsoft365DSC.Intune
                         childSettingValueName,
                         childSettingValueType,
                         childValueTemplateId,
-                        settingInstanceName + (isMultiInstance ? SettingsCatalogHelper.GetSettingName(settingDefinition, allDefinitions) : string.Empty),
+                        childInstanceName,
                         level + 1);
 
                     if (childValue is null || childValue.Count == 0)
@@ -452,7 +468,7 @@ namespace Microsoft365DSC.Intune
                 string childSettingValueType = ODataTypePrefix + childSettingValueName;
                 if (childSettingValueName.Length > 0)
                 {
-                    childSettingValueName = char.ToLowerInvariant(childSettingValueName[0]) + childSettingValueName.Substring(1);
+                    childSettingValueName = SettingsCatalogHelper.ToCamelCase(childSettingValueName);
                 }
 
                 // Find child template from parent's choiceSettingValueTemplate.children
@@ -498,6 +514,15 @@ namespace Microsoft365DSC.Intune
 
                 childValue["@odata.type"] = childSettingType;
                 choiceChildren.Add(childValue);
+            }
+
+            var nestedChildren = choiceChildren
+                .Where(child => child["settingDefinitionId"] is string childId &&
+                    choiceChildren.Any(sibling => !ReferenceEquals(sibling, child) && ContainsSettingDefinition(sibling, childId)))
+                .ToList();
+            foreach (var nestedChild in nestedChildren)
+            {
+                choiceChildren.Remove(nestedChild);
             }
 
             // Children array is required - either populated children or empty array
@@ -708,11 +733,7 @@ namespace Microsoft365DSC.Intune
             List<SettingDefinitionInfo> definitions,
             string parentSettingId)
         {
-            return definitions
-                .Where(d =>
-                    (d.DependentOnParentSettingIds.Count > 0 && d.DependentOnParentSettingIds.Contains(parentSettingId)) ||
-                    (d.OptionsDependentOnParentSettingIds.Count > 0 && d.OptionsDependentOnParentSettingIds.Contains(parentSettingId)))
-                .ToList();
+            return SettingsCatalogHelper.DefinitionLookups.For(definitions).ChildrenOf(parentSettingId);
         }
 
         /// <summary>
@@ -744,122 +765,198 @@ namespace Microsoft365DSC.Intune
 
         private static bool IsGroupSettingCollection(string settingType)
         {
-            return string.Equals(settingType, GroupSettingCollectionInstanceType, StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(settingType, SettingGroupCollectionDefinitionType, StringComparison.OrdinalIgnoreCase);
+            return IsAnyOf(settingType, GroupSettingCollectionInstanceType, SettingGroupCollectionDefinitionType);
         }
 
         private static bool IsChoiceSetting(string settingType)
         {
-            return string.Equals(settingType, ChoiceSettingInstanceType, StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(settingType, ChoiceSettingDefinitionType, StringComparison.OrdinalIgnoreCase);
+            return IsAnyOf(settingType, ChoiceSettingInstanceType, ChoiceSettingDefinitionType);
         }
 
         private static bool IsChoiceSettingCollection(string settingType)
         {
-            return string.Equals(settingType, ChoiceSettingCollectionInstanceType, StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(settingType, ChoiceSettingCollectionDefinitionType, StringComparison.OrdinalIgnoreCase);
+            return IsAnyOf(settingType, ChoiceSettingCollectionInstanceType, ChoiceSettingCollectionDefinitionType);
         }
 
         private static bool IsSimpleSettingCollection(string settingType)
         {
-            return string.Equals(settingType, SimpleSettingCollectionInstanceType, StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(settingType, SimpleSettingCollectionDefinitionType, StringComparison.OrdinalIgnoreCase);
+            return IsAnyOf(settingType, SimpleSettingCollectionInstanceType, SimpleSettingCollectionDefinitionType);
+        }
+
+        /// <summary>
+        /// A setting type arrives either as the instance OData type or as the matching definition
+        /// type, so every check above accepts both spellings.
+        /// </summary>
+        private static bool IsAnyOf(string settingType, string instanceType, string definitionType)
+        {
+            return string.Equals(settingType, instanceType, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(settingType, definitionType, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Returns true when a setting instance with the given definition id is nested anywhere below the instance.
+        /// </summary>
+        private static bool ContainsSettingDefinition(object node, string settingDefinitionId)
+        {
+            switch (node)
+            {
+                case Hashtable table:
+                    foreach (DictionaryEntry entry in table)
+                    {
+                        if (entry.Value is Hashtable nested &&
+                            string.Equals(nested["settingDefinitionId"] as string, settingDefinitionId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+                        if (ContainsSettingDefinition(entry.Value, settingDefinitionId))
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                case IEnumerable items when node is not string:
+                    foreach (var item in items)
+                    {
+                        if (item is Hashtable nested &&
+                            string.Equals(nested["settingDefinitionId"] as string, settingDefinitionId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+                        if (ContainsSettingDefinition(item, settingDefinitionId))
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                default:
+                    return false;
+            }
         }
 
         #endregion
 
         #region CIM Instance helpers
 
+        private static bool ContainsValue(object value) => value switch
+        {
+            null => false,
+            string text => text.Length > 0,
+            ICollection collection => collection.Count > 0,
+            _ => true,
+        };
+
+        private static string GetChildNameFromId(string parentId, string childId)
+        {
+            if (string.IsNullOrEmpty(parentId) || string.IsNullOrEmpty(childId))
+                return string.Empty;
+
+            string prefix = parentId + "_";
+            return childId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                ? childId.Substring(prefix.Length)
+                : string.Empty;
+        }
+
+        private static string GetClassNameOf(object value) => value switch
+        {
+            CimInstance cim => cim.CimClass?.CimSystemProperties?.ClassName
+                ?? cim.CimSystemProperties?.ClassName
+                ?? string.Empty,
+            null => string.Empty,
+            _ => value.GetType().Name,
+        };
+
         /// <summary>
-        /// Scans DSCParams values for CimInstance objects matching the expected CIM class name.
+        /// Scans DSCParams values for embedded instances matching the expected CIM class name.
         /// Matches exact class name or alternate <c>{name}_Intune*</c> pattern.
         /// </summary>
-        internal static (string ParamName, List<CimInstance> Instances) FindCimInstancesByClassName(
+        internal static (string ParamName, List<object> Instances) FindCimInstancesByClassName(
             Hashtable dscParams,
             string expectedClassName)
         {
             string alternateName = expectedClassName + "_Intune";
-            List<CimInstance> instances = [];
+            List<object> instances = [];
             string paramName = string.Empty;
 
-            foreach (DictionaryEntry entry in dscParams)
+            bool Matches(string className)
             {
-                object value = entry.Value;
+                if (string.IsNullOrEmpty(className))
+                    return false;
 
-                // Unwrap PSObject
-                if (value is PSObject pso)
-                    value = pso.BaseObject;
+                if (string.Equals(className, expectedClassName, StringComparison.OrdinalIgnoreCase) ||
+                    className.StartsWith(alternateName, StringComparison.OrdinalIgnoreCase))
+                    return true;
 
-                if (value is CimInstance cimInstance)
-                {
-                    string className = cimInstance.CimClass?.CimSystemProperties?.ClassName
-                        ?? cimInstance.CimSystemProperties?.ClassName
-                        ?? string.Empty;
+                if (!className.StartsWith(expectedClassName, StringComparison.OrdinalIgnoreCase))
+                    return false;
 
-                    if (string.Equals(className, expectedClassName, StringComparison.OrdinalIgnoreCase) ||
-                        className.StartsWith(alternateName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        instances.Add(cimInstance);
-                        paramName = entry.Key?.ToString() ?? string.Empty;
-                    }
-                }
-                else if (value is CimInstance[] cimArray)
-                {
-                    foreach (var ci in cimArray)
-                    {
-                        string className = ci.CimClass?.CimSystemProperties?.ClassName
-                            ?? ci.CimSystemProperties?.ClassName
-                            ?? string.Empty;
-
-                        if (string.Equals(className, expectedClassName, StringComparison.OrdinalIgnoreCase) ||
-                            className.StartsWith(alternateName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            instances.Add(ci);
-                            paramName = entry.Key?.ToString() ?? string.Empty;
-                        }
-                    }
-                }
-                else if (value is object[] objArray)
-                {
-                    foreach (var item in objArray)
-                    {
-                        object unwrapped = item is PSObject psoItem ? psoItem.BaseObject : item;
-                        if (unwrapped is CimInstance ci)
-                        {
-                            string className = ci.CimClass?.CimSystemProperties?.ClassName
-                                ?? ci.CimSystemProperties?.ClassName
-                                ?? string.Empty;
-
-                            if (string.Equals(className, expectedClassName, StringComparison.OrdinalIgnoreCase) ||
-                                className.StartsWith(alternateName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                instances.Add(ci);
-                                paramName = entry.Key?.ToString() ?? string.Empty;
-                            }
-                        }
-                    }
-                }
+                string suffix = className.Substring(expectedClassName.Length);
+                return suffix.Length > 1
+                    && (suffix[0] == 'V' || suffix[0] == 'v')
+                    && suffix.Skip(1).All(char.IsDigit);
             }
+
+            void Collect(object candidate, object key)
+            {
+                object value = candidate is PSObject pso ? pso.BaseObject : candidate;
+                if (value is null)
+                    return;
+
+                if (value is IEnumerable enumerable and not string and not Hashtable)
+                {
+                    foreach (var item in enumerable)
+                        Collect(item, key);
+                    return;
+                }
+
+                if (!Matches(GetClassNameOf(value)))
+                    return;
+
+                instances.Add(value);
+                paramName = key?.ToString() ?? string.Empty;
+            }
+
+            foreach (DictionaryEntry entry in dscParams)
+                Collect(entry.Value, entry.Key);
 
             return (paramName, instances);
         }
 
         /// <summary>
-        /// Extracts properties from a CimInstance, keeping only modified values.
-        /// Property names are PascalCase. Nested CimInstances are preserved as-is for recursive processing.
-        /// Mirrors the PS logic: <c>foreach ($property in $instance.CimInstanceProperties) { if ($property.IsValueModified) ... }</c>
+        /// Extracts the properties an embedded instance carries a value for.
+        /// Property names are PascalCase. Nested instances are preserved as-is for recursive processing.
         /// </summary>
-        internal static Hashtable ExtractCimPropertiesModifiedOnly(CimInstance cimInstance)
+        internal static Hashtable ExtractCimPropertiesModifiedOnly(object instance)
         {
             var result = new Hashtable(StringComparer.OrdinalIgnoreCase);
-            if (cimInstance is null)
+            object value = instance is PSObject pso ? pso.BaseObject : instance;
+            if (value is null)
                 return result;
 
-            foreach (var property in cimInstance.CimInstanceProperties)
+            if (value is Hashtable hashtable)
+                return hashtable;
+
+            if (value is CimInstance cimInstance)
             {
-                if (property.IsValueModified)
+                foreach (var property in cimInstance.CimInstanceProperties)
                 {
-                    result[property.Name] = property.Value;
+                    if (property.IsValueModified)
+                    {
+                        result[property.Name] = property.Value;
+                    }
+                }
+
+                return result;
+            }
+
+            foreach (var property in value.GetType().GetProperties())
+            {
+                if (!property.CanRead || property.GetIndexParameters().Length > 0)
+                    continue;
+
+                object propertyValue = property.GetValue(value);
+                if (ContainsValue(propertyValue))
+                {
+                    result[property.Name] = propertyValue;
                 }
             }
 
@@ -867,8 +964,8 @@ namespace Microsoft365DSC.Intune
         }
 
         /// <summary>
-        /// Extracts properties from a CimInstance (or PSObject wrapping one) with camelCase property names.
-        /// Filters only modified values and excludes PSComputerName.
+        /// Extracts properties from an embedded instance with camelCase property names.
+        /// Carries only the properties that hold a value, and excludes PSComputerName.
         /// Mirrors <c>Convert-M365DSCDRGComplexTypeToHashtable -SingleLevel -ExcludeUnchangedProperties</c>.
         /// </summary>
         internal static Hashtable ExtractCimPropertiesCamelCase(object value)
@@ -881,19 +978,16 @@ namespace Microsoft365DSC.Intune
             if (value is PSObject pso)
                 value = pso.BaseObject;
 
-            if (value is CimInstance cimInstance)
+            if (value is CimInstance or not Hashtable)
             {
-                foreach (var property in cimInstance.CimInstanceProperties)
+                foreach (DictionaryEntry entry in ExtractCimPropertiesModifiedOnly(value))
                 {
-                    if (string.Equals(property.Name, "PSComputerName", StringComparison.OrdinalIgnoreCase))
-                        continue;
-                    if (!property.IsValueModified)
+                    string name = entry.Key?.ToString() ?? string.Empty;
+                    if (name.Length == 0 ||
+                        string.Equals(name, "PSComputerName", StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    string camelName = property.Name.Length > 0
-                        ? char.ToLowerInvariant(property.Name[0]) + property.Name.Substring(1)
-                        : property.Name;
-                    result[camelName] = property.Value;
+                    result[SettingsCatalogHelper.ToCamelCase(name)] = entry.Value;
                 }
             }
             else if (value is Hashtable ht)

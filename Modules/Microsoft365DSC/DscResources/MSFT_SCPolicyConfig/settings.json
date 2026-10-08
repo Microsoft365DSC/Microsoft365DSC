@@ -1,5 +1,16 @@
 {
   "resourceName": "SCPolicyConfig",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "PolicyConfig",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures the Data Loss Prevention settings in Purview.",
   "roles": {
     "read": [
@@ -30,5 +41,14 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-PolicyConfig",
+        "Set-PolicyConfig"
+      ]
+    }
+  ]
 }

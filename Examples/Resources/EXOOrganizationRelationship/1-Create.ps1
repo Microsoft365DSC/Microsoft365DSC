@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,29 +19,37 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOOrganizationRelationship 'ConfigureOrganizationRelationship'
+        EXOOrganizationRelationship 'EXOOrganizationRelationship-Example'
         {
-            Name                  = "Contoso"
-            ArchiveAccessEnabled  = $True
-            DeliveryReportEnabled = $True
-            DomainNames           = "mail.contoso.com"
-            Enabled               = $True
-            FreeBusyAccessEnabled = $True
-            FreeBusyAccessLevel   = "AvailabilityOnly"
-            MailboxMoveEnabled    = $True
-            MailTipsAccessEnabled = $True
-            MailTipsAccessLevel   = "None"
-            PhotosEnabled         = $True
-            TargetApplicationUri  = "mail.contoso.com"
-            TargetAutodiscoverEpr = "https://mail.contoso.com/autodiscover/autodiscover.svc/wssecurity"
-            Ensure                = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            Name                       = "Contoso"
+            ArchiveAccessEnabled       = $True
+            DeliveryReportEnabled      = $True
+            DomainNames                = "mail.contoso.com"
+            Enabled                    = $True
+            FreeBusyAccessEnabled      = $True
+            FreeBusyAccessLevel        = "AvailabilityOnly"
+            FreeBusyAccessScope        = "Executives"
+            MailboxMoveEnabled         = $True
+            MailboxMoveCapability      = "RemoteOutbound"
+            MailboxMovePublishedScopes = @("Executives")
+            MailTipsAccessEnabled      = $True
+            MailTipsAccessLevel        = "Limited"
+            MailTipsAccessScope        = "Executives"
+            OrganizationContact        = "administrator@contoso.com"
+            PhotosEnabled              = $True
+            TargetApplicationUri       = "mail.contoso.com"
+            TargetAutodiscoverEpr      = "https://mail.contoso.com/autodiscover/autodiscover.svc/wssecurity"
+            TargetOwaURL               = "https://mail.contoso.com/owa"
+            TargetSharingEpr           = "https://mail.contoso.com/EWS/Exchange.asmx"
+            Ensure                     = "Present"
+            ApplicationId              = $ApplicationId
+            TenantId                   = $TenantId
+            CertificateThumbprint      = $CertificateThumbprint
         }
     }
 }

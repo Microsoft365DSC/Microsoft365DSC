@@ -11,13 +11,18 @@ if (Test-Path $CmdletSourceModulesPath) {
     Write-Host "Filtering to $($cmdletFilter.Count) cmdlets from settings.json"
 }
 
-$allFunctions = Get-Command | Where-Object { $_.Name -match "^(Add|Clear|Get|New|Update|Remove|Restore|Set|Invoke)-Mg" -and $_.Name -ne 'Invoke-MgGraphRequest' -and $_.Name -ne 'Get-MgContext' }
-Write-Host "Found $($allFunctions.Count) Mg* function definitions"
-
-# If we have a filter, only process functions that are in our cmdlet list
+# Resolve the mapped cmdlets by name so that any verb reaches the signature file
 if ($cmdletFilter) {
-    $allFunctions = @($allFunctions | Where-Object { $_.Name -in $cmdletFilter })
-    Write-Host "After filter: $($allFunctions.Count) functions to process"
+    $allFunctions = @(Get-Command -Name $cmdletFilter -ErrorAction SilentlyContinue | Sort-Object -Property Name)
+    $unresolved = @($cmdletFilter | Where-Object { $_ -notin $allFunctions.Name })
+    if ($unresolved.Count -gt 0) {
+        Write-Warning "No command found for: $($unresolved -join ', ')"
+    }
+    Write-Host "Resolved $($allFunctions.Count) of $($cmdletFilter.Count) mapped cmdlets"
+}
+else {
+    $allFunctions = @(Get-Command | Where-Object { $_.Name -match "^(Add|Clear|Get|New|Update|Remove|Restore|Set|Invoke)-Mg" -and $_.Name -ne 'Invoke-MgGraphRequest' -and $_.Name -ne 'Get-MgContext' })
+    Write-Host "Found $($allFunctions.Count) Mg* function definitions"
 }
 
 $allFunctionsList = [System.Collections.Generic.List[System.Object]]::new($allFunctions.Count)

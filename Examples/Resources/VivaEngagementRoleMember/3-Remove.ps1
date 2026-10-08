@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,32 +19,34 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        VivaEngagementRoleMember "VivaEngagementRoleMember-Network Admin"
+        VivaEngagementRoleMember "VivaEngagementRoleMember-Example1"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            Members               = @("admin@contoso.com");
+            Members               = @();
             Role                  = "Network Admin";
-            TenantId              = $TenantId;
-        }
-        VivaEngagementRoleMember "VivaEngagementRoleMember-Verified Admin"
-        {
             ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;
-            Members               = @("admin@contoso.com","NestorW@M365x73318397.OnMicrosoft.com");
+        }
+        VivaEngagementRoleMember "VivaEngagementRoleMember-Example2"
+        {
+            Members               = @();
             Role                  = "Verified Admin";
-            TenantId              = $TenantId;
-        }
-        VivaEngagementRoleMember "VivaEngagementRoleMember-Corporate Communicator"
-        {
             ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            Members               = @("NestorW@contoso.com"); #Removed Allan
-            Role                  = "Corporate Communicator";
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
+        }
+        VivaEngagementRoleMember "VivaEngagementRoleMember-Example3"
+        {
+            Members               = @();
+            Role                  = "Corporate Communicator";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

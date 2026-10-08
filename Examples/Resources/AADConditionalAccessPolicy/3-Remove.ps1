@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,14 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADConditionalAccessPolicy 'ConditionalAccessPolicy'
+        AADConditionalAccessPolicy 'AADConditionalAccessPolicy-Example'
         {
-            DisplayName                          = 'Example CAP'
-            Ensure                               = 'Absent'
+            DisplayName           = 'Require MFA for Mobile Devices'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

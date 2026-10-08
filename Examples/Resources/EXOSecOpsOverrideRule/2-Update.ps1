@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,20 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXOSecOpsOverrideRule "EXOSecOpsOverrideRule-_Exe:SecOpsOverrid:ca3c51ac-925c-49f4-af42-43e26b874245"
+        EXOSecOpsOverrideRule "EXOSecOpsOverrideRule-Example"
         {
-            Comment                                  = "TestComment";
-            Ensure                                   = "Present";
-            Identity                                 = "_Exe:SecOpsOverrid:ca3c51ac-925c-49f4-af42-43e26b874245";
-            Policy                                   = "40528418-717d-4368-a1ae-7912918f8a1f";
-            ApplicationId                            = $ApplicationId
-            TenantId                                 = $TenantId
-            CertificateThumbprint                    = $CertificateThumbprint
+            Comment               = "Delivers unfiltered mail to the security operations mailbox for analysis"; # Updated Property
+            Ensure                = "Present";
+            IsSingleInstance      = "Yes";
+            SentTo                = @("AlexW@$TenantId");
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

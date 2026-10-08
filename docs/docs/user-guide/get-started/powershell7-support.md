@@ -1,52 +1,38 @@
 # PowerShell 7+ support
 
-While Microsoft365DSC supports running PowerShell 7+, there are a few things that need to be put in place before being able to fully leverage it.
+Microsoft365DSC requires PowerShell 7.6 or higher to be installed on the machine. The module and all of its resources are written against PowerShell 7, and every cmdlet of the module has to be run from a PowerShell 7 console. You can download the latest release from [aka.ms/powershell-release](https://aka.ms/powershell-release).
 
-## Module needs to be installed in the Windows PowerShell Repository
+If you start a session with an older PowerShell version, or with Windows PowerShell, the module emits a warning at import time telling you which version is running and what is supported in that session.
 
-Microsoft365DSC currently requires dependencies to be installed under the `C:\Program Files\WindowsPowerShell\Modules` folders. Having the dependencies installed anywhere else can cause issues loading modules. The recommendation here is to use Windows PowerShell 5.1 to install the Module using:
+## Windows PowerShell and the Local Configuration Manager
+
+There is one scenario in which Windows PowerShell 5.1 is still involved: compiling a configuration into a MOF file and applying or testing it through the Local Configuration Manager, using `Start-DscConfiguration` and `Test-DscConfiguration`. The classic LCM only runs on Windows PowerShell.
+
+In that case, the resources do not execute on Windows PowerShell. Each resource method detects the edition it runs on and relays the call into a PowerShell 7 session on the same machine, then rebuilds the typed result from what comes back. PowerShell 7 therefore still has to be installed and reachable, even when the LCM drives the module.
+
+Two things have to be in place for the relay to work:
+
+* WinRM has to be configured, and the `PowerShell.7` session configuration has to be registered. Run `Enable-PSRemoting -Force -SkipNetworkProfileCheck` from an elevated **PowerShell 7** console to register it.
+* The LCM resolves the module through the Windows PowerShell module path. If you drive the module through the LCM, Microsoft365DSC has to be available under `C:\Program Files\WindowsPowerShell\Modules\Microsoft365DSC` as well.
+
+Everything else, including `Export-M365DSCConfiguration`, `Update-M365DSCDependencies`, `New-M365DSCDeltaReport` and `Assert-M365DSCBlueprint`, runs directly on PowerShell 7 and needs no Windows PowerShell at all.
+
+!!! note
+    If your configuration contains empty arrays, it still has to be compiled in Windows PowerShell 5.1. Otherwise, the affected properties might be omitted from the resulting MOF file. This is a limitation of the MOF compiler, not of Microsoft365DSC.
+
+## Installing the module and its dependencies
+
+Install Microsoft365DSC and its prerequisites from an elevated Windows PowerShell console:
 
 ```powershell
 Install-Module Microsoft365DSC -Force
-Update-M365DSCModule
+Update-M365DSCDependencies
 ```
 
-Then flip to PowerShell 7+ once the prerequisite modules are properly installed under `C:\Program Files\WindowsPowerShell\Modules`.
-
-## Common Issues When the Modules are not in the Right Folder
-
-### Export is Throwing Multiple Warnings
-
-The module that is ensuring the proper encoding of the exported DSC content relies on the Get-DscResource cmdlet to cache information about the resources' properties and is a way to improve performance. If the Microsoft365DSC module is not located under the Windows PowerShell folder, every instance extracted by the Export process will throw the following error:
+Then, in a second elevated PowerShell 7 console, run the same command to make sure the module is available in that edition as well:
 
 ```powershell
-WARNING: There are no modules present in the system with the given module specification.
+Update-M365DSCDependencies
 ```
 
-To solve this, make sure the Microsoft365DSC is properly installed under `C:\Program Files\WindowsPowerShell\Modules` and that you do not have multiple versions of it installed in different locations.
-
-### Issues loading the PnP.PowerShell Module
-
-The PnP.PowerShell module, which is currently being used by the SharePoint Online and OneDrive for Business workloads, needs to be loaded using Windows PowerShell. In PowerShell 7+, this is done by running the **Import-Module** cmdlet using the **-UseWindowsPowerShell** switch, and requires the modules to be located under `C:\Program Files\WindowsPowerShell`. In order for Microsoft365DSC to work for SharePoint Online and OneDrive for Business with PowerShell 7, you need to make sure that the PnP.PowerShell module is located under `C:\Program Files\WindowsPowerShell\Modules\PnP.PowerShell`. This can be achieved by either manually moving the module to that location or by using Windows PowerShell 5.1 to install it using the following line:
-
-```powershell
-Install-Module PnP.PowerShell -Force -Scope AllUsers
-```
-
-The reason why this module needs to be loaded using WindowsPowerShell is because it tries to load its own version of the System.IdentityModel.Tokens assembly, which conflicts with the one used by the Microsoft.Graph.Authentication module. Microsoft365DSC often requires both modules to be loaded at the same time, which causes a conflict. By using the -UseWindowsPowerShell switch, we load the PnP.PowerShell module into its own separate runspace, which avoids the assembly conflicts. Having the PnP module installed under any path other than the Windows PowerShell one can result in one of the issues listed below:
-
-```powershell
-Exception: Powershell 7+ was detected. We need to load the PnP.PowerShell module using the -UseWindowsPowerShell switch which
-requires the module to be installed under C:\Program Files\WindowsPowerShell\Modules. You can either move the module to
-that location or use PowerShell 5.1 to install the modules using 'Install-Module Pnp.PowerShell -Force -Scope AllUsers'.
-
-Connect-PnPOnline: Could not load file or assembly 'System.IdentityModel.Tokens.Jwt, Version=6.12.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35'. Could not find or load a specific file. (0x80131621)
-```
-
-## PSDesiredStateConfiguration needs to be installed separately
-
-Starting with PowerShell 7.2, the core Desired State Configuration module (PSdesiredStateConfiguration) has been decoupled from the core PowerShell build and now needs to be installed separately. In an administrative PowerShell 7+ console, you can install the module by running the command:
-
-```powershell
-Update-M365DSCDependencies -Scope AllUsers
-```
+`Update-M365DSCDependencies` reads the dependency list that ships with the module and installs the pinned versions. Run it after every update of the module. If you plan to use the LCM, install the module for all users so that both PowerShell 7 and Windows PowerShell can resolve it.

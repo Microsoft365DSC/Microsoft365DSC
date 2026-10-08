@@ -1,0 +1,24 @@
+{
+  "resourceName": "AADUnknownSegment",
+  "description": "Fixture for AADUnknownSegment.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+      "cmdlets": [
+        "Get-MgBetaDirectoryUnknownThing",
+        "New-MgBetaDirectoryUnknownThing"
+      ]
+    }
+  ]
+}

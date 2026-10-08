@@ -4,22 +4,34 @@ This example adds a new Teams Calling Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $credsTeamsAdmin
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
         TeamsTemplatesPolicy "TeamsTemplatesPolicy-Example"
         {
-            Credential           = $credsTeamsAdmin;
-            Description          = "Example Policy";
-            Ensure               = "Present";
-            HiddenTemplates      = @("Manage a Project","Manage an Event","Adopt Office 365","Organize Help Desk");
-            Identity             = "Example Policy";
+            Description           = "Hides the templates that are not approved for use";
+            Ensure                = "Present";
+            HiddenTemplates       = @("Manage a Project","Manage an Event","Adopt Office 365","Organize Help Desk");
+            Identity              = "Approved Templates";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

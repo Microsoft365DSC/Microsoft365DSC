@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,27 +19,49 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10 'Example'
+        IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10 'IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10-Example'
         {
-            AdvancedThreatProtectionAutoPopulateOnboardingBlob = $True; # Updated Property
+            AdvancedThreatProtectionAutoPopulateOnboardingBlob = $true; # Updated Property
+            AdvancedThreatProtectionOffboardingBlob            = "<offboarding-blob>";
+            AdvancedThreatProtectionOffboardingFilename        = "WindowsDefenderATP.offboarding";
             AdvancedThreatProtectionOnboardingFilename         = "WindowsDefenderATP.onboarding";
-            AllowSampleSharing                                 = $True;
+            AllowSampleSharing                                 = $true;
             Assignments                                        = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = '#microsoft.graph.groupAssignmentTarget'
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allDevicesAssignmentTarget'
+                    groupDisplayName                           = 'Intune Pilot Devices'
                 }
             );
+            Description                                        = "Onboards corporate Windows endpoints to Microsoft Defender for Endpoint";
+            DeviceManagementApplicabilityRuleDeviceMode        = MSFT_DeviceManagementApplicabilityRuleDeviceMode{
+                Name       = "Standard configuration devices only"
+                DeviceMode = "standardConfiguration"
+                RuleType   = "include"
+            };
+            DeviceManagementApplicabilityRuleOsEdition         = MSFT_DeviceManagementApplicabilityRuleOsEdition{
+                Name           = "Enterprise and Professional editions only"
+                OsEditionTypes = @("windows10Enterprise", "windows10Professional")
+                RuleType       = "include"
+            };
+            DeviceManagementApplicabilityRuleOsVersion         = MSFT_DeviceManagementApplicabilityRuleOsVersion{
+                Name         = "Windows 10 22H2 or later"
+                MinOSVersion = "10.0.19045.0"
+                MaxOSVersion = "10.0.26100.9999"
+                RuleType     = "include"
+            };
             DisplayName                                        = "MDE onboarding Legacy";
-            EnableExpeditedTelemetryReporting                  = $True;
+            EnableExpeditedTelemetryReporting                  = $true;
             Ensure                                             = "Present";
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            RoleScopeTagIds                                    = @("0");
+            ApplicationId                                      = $ApplicationId;
+            TenantId                                           = $TenantId;
+            CertificateThumbprint                              = $CertificateThumbprint;
         }
     }
 }

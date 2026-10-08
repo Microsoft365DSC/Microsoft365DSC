@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,73 +19,74 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADClaimsMappingPolicy "AADClaimsMappingPolicy-Test1234"
+        AADClaimsMappingPolicy "AADClaimsMappingPolicy-Example"
         {
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
             Definition            = @(
                 MSFT_AADClaimsMappingPolicyDefinition{
                     ClaimsMappingPolicy = MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy{
-                        ClaimsSchema = @(
+                        ClaimsSchema         = @(
                             MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema{
                                 SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
-                                Source = 'user'
-                                Id = 'userprincipalname'
+                                Source        = 'user'
+                                Id            = 'userprincipalname'
                             }
                             MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema{
                                 SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'
-                                Source = 'user'
-                                Id = 'givenname'
+                                Source        = 'user'
+                                Id            = 'givenname'
                             }
                             MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema{
                                 SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
-                                Source = 'user'
-                                Id = 'displayname'
+                                Source        = 'user'
+                                Id            = 'displayname'
                             }
                             MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema{
                                 SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
-                                Source = 'user'
-                                Id = 'surname'
+                                Source        = 'user'
+                                Id            = 'surname'
                             }
                             MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema{
                                 SamlClaimType = 'username'
-                                Source = 'user'
-                                Id = 'userprincipalname'
+                                Source        = 'user'
+                                Id            = 'userprincipalname'
                             }
                         )
                         ClaimsTransformation = @(
                             MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation{
-                                OutputClaims = @(
+                                OutputClaims         = @(
                                     MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims{
-                                        ClaimTypeReferenceId = 'TOS'
+                                        ClaimTypeReferenceId    = 'TOS'
                                         TransformationClaimType = 'createdClaim'
                                     }
                                 )
-                                Id = 'CreateTermsOfService'
-                                InputParameters = @(
+                                Id                   = 'CreateTermsOfService'
+                                InputParameters      = @(
                                     MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter{
                                         DataType = 'string'
-                                        Id = 'value'
-                                        Value = 'sandbox'
+                                        Id       = 'value'
+                                        Value    = 'sandbox'
                                     }
                                 )
                                 TransformationMethod = 'CreateStringClaim'
                             }
                         )
                         IncludeBasicClaimSet = $True
-                        Version = 1
+                        Version              = 1
                     }
 
                 }
             );
-            DisplayName           = "Test1234";
+            DisplayName           = "Expense Reporting Claims";
             Ensure                = "Present";
-            Id                    = "fd0dc3f3-cfdf-4d56-bb03-e18161a5ac93";
             IsOrganizationDefault = $False;
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

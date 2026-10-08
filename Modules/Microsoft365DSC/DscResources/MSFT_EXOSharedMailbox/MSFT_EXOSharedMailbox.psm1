@@ -1,669 +1,468 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOSharedMailbox'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOSharedMailbox : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The display name of the Shared Mailbox')]
+    [System.String] $DisplayName
 
-        [Parameter()]
-        [System.String]
-        $Identity,
+    [DscProperty()]
+    [System.ComponentModel.Description('The unique identifier of the Shared Mailbox')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $PrimarySMTPAddress,
+    [DscProperty()]
+    [System.ComponentModel.Description('The primary email address of the Shared Mailbox')]
+    [System.String] $PrimarySMTPAddress
 
-        [Parameter()]
-        [System.String]
-        $Alias,
+    [DscProperty()]
+    [System.ComponentModel.Description('The alias of the Shared Mailbox')]
+    [System.String] $Alias
 
-        [Parameter()]
-        [System.String[]]
-        $EmailAddresses,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EmailAddresses parameter specifies all the email addresses (proxy addresses) for the Shared Mailbox')]
+    [System.String[]] $EmailAddresses
 
-        [Parameter()]
-        [System.Boolean]
-        $AuditEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AuditEnabled parameter specifies whether to enable or disable mailbox audit logging for the mailbox. If auditing is enabled, actions specified in the AuditAdmin, AuditDelegate, and AuditOwner parameters are logged')]
+    [System.Nullable[System.Boolean]] $AuditEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $MessageCopyForSendOnBehalfEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The MessageCopyForSendOnBehalfEnabled parameter specifies whether to copy the sender for messages that are sent from a mailbox by users that have the ''send on behalf of'' permission')]
+    [System.Nullable[System.Boolean]] $MessageCopyForSendOnBehalfEnabled
 
-        [Parameter()]
-        [System.Boolean]
-        $MessageCopyForSentAsEnabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('The MessageCopyForSentAsEnabled parameter specifies whether to copy the sender for messages that are sent from a mailbox by users that have the ''send as'' permission')]
+    [System.Nullable[System.Boolean]] $MessageCopyForSentAsEnabled
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the group exists, absent ensures it is removed')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of Office 365 Shared Mailbox $DisplayName"
-
-    try
+    [EXOSharedMailbox] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.DisplayName -ne $DisplayName)
+        $mailbox = $null
+        $Id = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOSharedMailbox]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of Office 365 Shared Mailbox $($this.DisplayName)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            try
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.DisplayName -ne $this.DisplayName)
             {
-                if (-not [System.String]::IsNullOrEmpty($Identity))
+                $null = $this.Connect('ExchangeOnline')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                try
                 {
-                    $mailbox = Get-Mailbox -Identity $Identity `
-                        -RecipientTypeDetails 'SharedMailbox' `
-                        -ResultSize Unlimited `
-                        -ErrorAction SilentlyContinue
+                    if (-not [System.String]::IsNullOrEmpty($this.Identity))
+                    {
+                        $mailbox = Get-Mailbox -Identity $this.Identity `
+                            -RecipientTypeDetails 'SharedMailbox' `
+                            -ResultSize Unlimited `
+                            -ErrorAction SilentlyContinue
+                    }
+
+                    if ($null -eq $mailbox)
+                    {
+                        $mailbox = Get-Mailbox -Identity $this.DisplayName `
+                            -RecipientTypeDetails 'SharedMailbox' `
+                            -ResultSize Unlimited `
+                            -ErrorAction SilentlyContinue
+                    }
+                }
+                catch
+                {
+                    Write-Verbose -Message "Could not retrieve AAD roledefinition by Id: {$Id}"
                 }
 
                 if ($null -eq $mailbox)
                 {
-                    $mailbox = Get-Mailbox -Identity $DisplayName `
-                        -RecipientTypeDetails 'SharedMailbox' `
-                        -ResultSize Unlimited `
-                        -ErrorAction SilentlyContinue
+                    Write-Verbose -Message "The specified Shared Mailbox doesn't already exist."
+                    return $this.AsResult($nullReturn)
                 }
             }
-            catch
+            else
             {
-                Write-Verbose -Message "Could not retrieve AAD roledefinition by Id: {$Id}"
+                $mailbox = $this.ExportedInstance
             }
 
-            if ($null -eq $mailbox)
+            #region EmailAddresses
+            $CurrentEmailAddresses = $mailbox.EmailAddresses | Foreach-Object { $_.Split(':') } | Where-Object { $_ -ne 'smtp' }
+            if (-not [System.String]::IsNullOrEmpty($this.PrimarySMTPAddress))
             {
-                Write-Verbose -Message "The specified Shared Mailbox doesn't already exist."
-                return $nullReturn
+                $CurrentEmailAddresses = $CurrentEmailAddresses | Where-Object { $_ -ne $this.PrimarySMTPAddress }
             }
+            else
+            {
+                $CurrentEmailAddresses = $CurrentEmailAddresses | Where-Object { $_ -ne $mailbox.PrimarySMTPAddress }
+            }
+            #endregion
+
+            $result = @{
+                DisplayName                       = $this.DisplayName
+                Identity                          = $mailbox.Identity
+                PrimarySMTPAddress                = $mailbox.PrimarySMTPAddress.ToString()
+                Alias                             = $mailbox.Alias
+                AuditEnabled                      = $mailbox.AuditEnabled
+                EmailAddresses                    = Get-M365DSCArrayFromProperty -PropertyValue $CurrentEmailAddresses -ElementType ([System.String])
+                MessageCopyForSendOnBehalfEnabled = $mailbox.MessageCopyForSendOnBehalfEnabled
+                MessageCopyForSentAsEnabled       = $mailbox.MessageCopyForSentAsEnabled
+                Ensure                            = 'Present'
+                Credential                        = $this.Credential
+                ApplicationId                     = $this.ApplicationId
+                CertificateThumbprint             = $this.CertificateThumbprint
+                CertificatePath                   = $this.CertificatePath
+                CertificatePassword               = $this.CertificatePassword
+                ManagedIdentity                   = $this.ManagedIdentity
+                TenantId                          = $this.TenantId
+                AccessTokens                      = $this.AccessTokens
+            }
+
+            Write-Verbose -Message "Found an existing instance of Shared Mailbox '$($this.DisplayName)'"
+            return $this.AsResult($result)
         }
-        else
+        catch
         {
-            $mailbox = $Script:exportedInstance
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        #region EmailAddresses
-        $CurrentEmailAddresses = $mailbox.EmailAddresses | Foreach-Object { $_.Split(':') } | Where-Object { $_ -ne 'smtp' }
-        if (-not [System.String]::IsNullOrEmpty($PrimarySMTPAddress))
+        Write-Verbose -Message "Setting configuration of Office 365 Shared Mailbox $($this.DisplayName)"
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentMailbox = $this.Get().ToHashtable()
+
+        #region Validation
+        foreach ($secondaryAlias in $this.EmailAddresses)
         {
-            $CurrentEmailAddresses = $CurrentEmailAddresses | Where-Object { $_ -ne $PrimarySMTPAddress }
-        }
-        else
-        {
-            $CurrentEmailAddresses = $CurrentEmailAddresses | Where-Object { $_ -ne $mailbox.PrimarySMTPAddress }
+            if (-not [System.String]::IsNullOrEmpty($this.PrimarySMTPAddress) -and $secondaryAlias.ToLower() -eq $this.PrimarySMTPAddress.ToLower())
+            {
+                throw 'You cannot have the EmailAddresses list contain the PrimarySMTPAddress'
+            }
         }
         #endregion
 
-        $result = @{
-            DisplayName                       = $DisplayName
-            Identity                          = $mailbox.Identity
-            PrimarySMTPAddress                = $mailbox.PrimarySMTPAddress.ToString()
-            Alias                             = $mailbox.Alias
-            AuditEnabled                      = $mailbox.AuditEnabled
-            EmailAddresses                    = Get-M365DSCArrayFromProperty -PropertyValue $CurrentEmailAddresses -ElementType ([System.String])
-            MessageCopyForSendOnBehalfEnabled = $mailbox.MessageCopyForSendOnBehalfEnabled
-            MessageCopyForSentAsEnabled       = $mailbox.MessageCopyForSentAsEnabled
-            Ensure                            = 'Present'
-            Credential                        = $Credential
-            ApplicationId                     = $ApplicationId
-            CertificateThumbprint             = $CertificateThumbprint
-            CertificatePath                   = $CertificatePath
-            CertificatePassword               = $CertificatePassword
-            ManagedIdentity                   = $ManagedIdentity.IsPresent
-            TenantId                          = $TenantId
-            AccessTokens                      = $AccessTokens
-        }
-
-        Write-Verbose -Message "Found an existing instance of Shared Mailbox '$($DisplayName)'"
-        return $result
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $PrimarySMTPAddress,
-
-        [Parameter()]
-        [System.String]
-        $Alias,
-
-        [Parameter()]
-        [System.String[]]
-        $EmailAddresses = @(),
-
-        [Parameter()]
-        [System.Boolean]
-        $AuditEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $MessageCopyForSendOnBehalfEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $MessageCopyForSentAsEnabled,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of Office 365 Shared Mailbox $DisplayName"
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentMailbox = Get-TargetResource @PSBoundParameters
-
-    #region Validation
-    foreach ($secondaryAlias in $EmailAddresses)
-    {
-        if ($secondaryAlias.ToLower() -eq $PrimarySMTPAddress.ToLower())
+        # CASE: Mailbox doesn't exist but should;
+        if ($this.Ensure -eq 'Present' -and $currentMailbox.Ensure -eq 'Absent')
         {
-            throw 'You cannot have the EmailAddresses list contain the PrimarySMTPAddress'
+            Write-Verbose -Message "Shared Mailbox '$($this.DisplayName)' does not exist but it should. Creating it."
+
+            $NewMailBoxParameters = @{
+                Name               = $this.DisplayName
+                Shared             = $true
+            }
+
+            if ($this.GetBoundParameters().ContainsKey("Alias"))
+            {
+                $NewMailBoxParameters.Add('Alias', $this.Alias)
+            }
+
+            if ($this.GetBoundParameters().ContainsKey("PrimarySMTPAddress"))
+            {
+                $NewMailBoxParameters.Add('PrimarySMTPAddress', $this.PrimarySMTPAddress)
+            }
+
+            New-MailBox @NewMailBoxParameters
+
+            if ($this.GetBoundParameters().ContainsKey("AuditEnabled") -or $this.GetBoundParameters().ContainsKey("EmailAddresses") -or $this.GetBoundParameters().ContainsKey("MessageCopyForSendOnBehalfEnabled") -or $this.GetBoundParameters().ContainsKey("MessageCopyForSentAsEnabled"))
+            {
+                $SetParameters = @{
+                    Identity = $this.DisplayName
+                }
+
+                if ($this.GetBoundParameters().ContainsKey("AuditEnabled"))
+                {
+                    $SetParameters.Add("AuditEnabled", $this.AuditEnabled)
+                }
+
+                if ($this.GetBoundParameters().ContainsKey("EmailAddresses"))
+                {
+                    $SetParameters.Add("EmailAddresses", @{ add = $this.EmailAddresses })
+                }
+
+                if ($this.GetBoundParameters().ContainsKey("MessageCopyForSendOnBehalfEnabled"))
+                {
+                    $SetParameters.Add("MessageCopyForSendOnBehalfEnabled", $this.MessageCopyForSendOnBehalfEnabled)
+                }
+
+                if ($this.GetBoundParameters().ContainsKey("MessageCopyForSentAsEnabled"))
+                {
+                    $SetParameters.Add("MessageCopyForSentAsEnabled", $this.MessageCopyForSentAsEnabled)
+                }
+
+                Set-Mailbox @SetParameters
+            }
         }
-    }
-    #endregion
-
-    # CASE: Mailbox doesn't exist but should;
-    if ($Ensure -eq 'Present' -and $currentMailbox.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Shared Mailbox '$($DisplayName)' does not exist but it should. Creating it."
-
-        $NewMailBoxParameters = @{
-            Name               = $DisplayName
-            Shared             = $true
-        }
-
-        if ($PSBoundParameters.ContainsKey("Alias"))
+        # CASE: Mailbox exists but it shouldn't;
+        elseif ($this.Ensure -eq 'Absent' -and $currentMailbox.Ensure -eq 'Present')
         {
-            $NewMailBoxParameters.Add('Alias', $Alias)
+            Write-Verbose -Message "Shared Mailbox '$($this.DisplayName)' exists but it shouldn't. Deleting it."
+            Remove-Mailbox -Identity $this.DisplayName -Confirm:$false
         }
-
-        if ($PSBoundParameters.ContainsKey("PrimarySMTPAddress"))
+        # CASE: Mailbox exists and it should, but has different values than the desired ones
+        elseif ($this.Ensure -eq 'Present' -and $currentMailbox.Ensure -eq 'Present')
         {
-            $NewMailBoxParameters.Add('PrimarySMTPAddress', $PrimarySMTPAddress)
-        }
+            Write-Verbose -Message "Shared Mailbox '$($this.DisplayName)' already exists, but needs updating."
 
-        New-MailBox @NewMailBoxParameters
+            if ($this.GetBoundParameters().ContainsKey("PrimarySMTPAddress"))
+            {
+                if ($currentMailbox.PrimarySMTPAddress -ne $this.PrimarySMTPAddress)
+                {
+                    Write-Verbose -Message "Updating PrimarySMTPAddress for the Shared Mailbox '$($this.DisplayName)' from $($currentMailbox.PrimarySMTPAddress) to $($this.PrimarySMTPAddress)"
+                    Set-Mailbox -Identity $this.DisplayName -WindowsEmailAddress $this.PrimarySMTPAddress -MicrosoftOnlineServicesID $this.PrimarySMTPAddress
+                }
+            }
 
-        if ($PSBoundParameters.ContainsKey("AuditEnabled") -or $PSBoundParameters.ContainsKey("EmailAddresses") -or $PSBoundParameters.ContainsKey("MessageCopyForSendOnBehalfEnabled") -or $PSBoundParameters.ContainsKey("MessageCopyForSentAsEnabled"))
-        {
             $SetParameters = @{
-                Identity = $DisplayName
+                Identity = $this.DisplayName
             }
 
-            if ($PSBoundParameters.ContainsKey("AuditEnabled"))
+            if ($this.GetBoundParameters().ContainsKey("Alias"))
             {
-                $SetParameters.Add("AuditEnabled", $AuditEnabled)
+                if ($currentMailbox.Alias -ne $this.Alias)
+                {
+                    Write-Verbose -Message "Updating Alias for the Shared Mailbox '$($this.DisplayName)' from $($currentMailbox.Alias) to $($this.Alias)"
+                    $SetParameters.Add("Alias", $this.Alias)
+                }
             }
 
-            if ($PSBoundParameters.ContainsKey("EmailAddresses"))
+            if ($this.GetBoundParameters().ContainsKey("AuditEnabled"))
             {
-                $SetParameters.Add("EmailAddresses", @{ add = $EmailAddresses })
+                if ($this.AuditEnabled -ne $currentMailbox.AuditEnabled)
+                {
+                    Write-Verbose -Message "AuditEnabled for Shared Mailbox '$($this.DisplayName)' needs to be updated from $($currentMailbox.AuditEnabled) to $($this.AuditEnabled)"
+                    $SetParameters.Add("AuditEnabled", $this.AuditEnabled)
+                }
             }
 
-            if ($PSBoundParameters.ContainsKey("MessageCopyForSendOnBehalfEnabled"))
+            # CASE: EmailAddresses need to be updated
+            if ($this.GetBoundParameters().ContainsKey("EmailAddresses"))
             {
-                $SetParameters.Add("MessageCopyForSendOnBehalfEnabled", $MessageCopyForSendOnBehalfEnabled)
+                $current = $currentMailbox.EmailAddresses
+                $desired = $this.EmailAddresses
+
+                $emailAddressesToAdd = $desired | Where-Object { $_ -notin $current } | Sort-Object -Unique
+                if ($null -ne $this.PrimarySMTPAddress)
+                {
+                    $emailAddressesToAdd = $emailAddressesToAdd | Where-Object { $_ -ne $this.PrimarySMTPAddress }
+                }
+                else
+                {
+                    $emailAddressesToAdd = $emailAddressesToAdd | Where-Object { $_ -ne $currentMailbox.PrimarySMTPAddress }
+                }
+
+                $emailAddressesToRemove = $current | Where-Object { $_ -notin $desired } | Sort-Object -Unique
+                if ($null -ne $this.PrimarySMTPAddress)
+                {
+                    $emailAddressesToRemove = $emailAddressesToRemove | Where-Object { $_ -ne $this.PrimarySMTPAddress }
+                }
+                else
+                {
+                    $emailAddressesToRemove = $emailAddressesToRemove | Where-Object { $_ -ne $currentMailbox.PrimarySMTPAddress }
+                }
+
+                if ($null -ne $emailAddressesToAdd -or $null -ne $emailAddressesToRemove)
+                {
+                    $SetParameters.Add("EmailAddresses", @{})
+
+                    # Add EmailAddresses
+                    Write-Verbose -Message "Updating the list of EmailAddresses for the Shared Mailbox '$($this.DisplayName)'"
+                    if ($null -ne $emailAddressesToAdd)
+                    {
+                        Write-Verbose -Message "Adding the following EmailAddresses: $($emailAddressesToAdd | Out-String)"
+                        $SetParameters.EmailAddresses.Add("add", $emailAddressesToAdd)
+                    }
+                    # Remove EmailAddresses
+                    if ($null -ne $emailAddressesToRemove)
+                    {
+                        Write-Verbose -Message "Removing the following EmailAddresses: $($emailAddressesToRemove | Out-String)"
+                        $SetParameters.EmailAddresses.Add("remove", $emailAddressesToRemove)
+                    }
+                }
             }
 
-            if ($PSBoundParameters.ContainsKey("MessageCopyForSentAsEnabled"))
+            if ($this.GetBoundParameters().ContainsKey("MessageCopyForSendOnBehalfEnabled"))
             {
-                $SetParameters.Add("MessageCopyForSentAsEnabled", $MessageCopyForSentAsEnabled)
+                if ($currentMailbox.MessageCopyForSendOnBehalfEnabled -ne $this.MessageCopyForSendOnBehalfEnabled)
+                {
+                    Write-Verbose -Message "Updating MessageCopyForSendOnBehalfEnabled for the Shared Mailbox '$($this.DisplayName)' from $($currentMailbox.MessageCopyForSendOnBehalfEnabled) to $($this.MessageCopyForSendOnBehalfEnabled)"
+                    $SetParameters.Add("MessageCopyForSendOnBehalfEnabled", $this.MessageCopyForSendOnBehalfEnabled)
+                }
+            }
+
+            if ($this.GetBoundParameters().ContainsKey("MessageCopyForSentAsEnabled"))
+            {
+                if ($currentMailbox.MessageCopyForSentAsEnabled -ne $this.MessageCopyForSentAsEnabled)
+                {
+                    Write-Verbose -Message "Updating MessageCopyForSentAsEnabled for the Shared Mailbox '$($this.DisplayName)' from $($currentMailbox.MessageCopyForSentAsEnabled) to $($this.MessageCopyForSentAsEnabled)"
+                    $SetParameters.Add("MessageCopyForSentAsEnabled", $this.MessageCopyForSentAsEnabled)
+                }
             }
 
             Set-Mailbox @SetParameters
         }
     }
-    # CASE: Mailbox exists but it shouldn't;
-    elseif ($Ensure -eq 'Absent' -and $currentMailbox.Ensure -eq 'Present')
+
+    [bool] Test()
     {
-        Write-Verbose -Message "Shared Mailbox '$($DisplayName)' exists but it shouldn't. Deleting it."
-        Remove-Mailbox -Identity $DisplayName -Confirm:$false
+        return ([M365DSCResourceBase] $this).Test()
     }
-    # CASE: Mailbox exists and it should, but has different values than the desired ones
-    elseif ($Ensure -eq 'Present' -and $currentMailbox.Ensure -eq 'Present')
+
+    [string] Export()
     {
-        Write-Verbose -Message "Shared Mailbox '$($DisplayName)' already exists, but needs updating."
-
-        if ($PSBoundParameters.ContainsKey("PrimarySMTPAddress"))
+        if ($this.RequiresPowerShellCore())
         {
-            if ($currentMailbox.PrimarySMTPAddress -ne $PrimarySMTPAddress)
-            {
-                Write-Verbose -Message "Updating PrimarySMTPAddress for the Shared Mailbox '$($DisplayName)' from $($currentMailbox.PrimarySMTPAddress) to $PrimarySMTPAddress"
-                Set-Mailbox -Identity $DisplayName -WindowsEmailAddress $PrimarySMTPAddress -MicrosoftOnlineServicesID $PrimarySMTPAddress
-            }
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        $SetParameters = @{
-            Identity = $DisplayName
-        }
+        $ConnectionMode = $this.Connect('ExchangeOnline')
 
-        if ($PSBoundParameters.ContainsKey("Alias"))
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            if ($currentMailbox.Alias -ne $Alias)
+            [array] $exportedInstances = Get-Mailbox -RecipientTypeDetails 'SharedMailbox' `
+                -ResultSize Unlimited `
+                -ErrorAction Stop
+            $dscContent = [System.Text.StringBuilder]::new()
+            $i = 1
+            if ($exportedInstances.Length -eq 0)
             {
-                Write-Verbose -Message "Updating Alias for the Shared Mailbox '$($DisplayName)' from $($currentMailbox.Alias) to $Alias"
-                $SetParameters.Add("Alias", $Alias)
-            }
-        }
-
-        if ($PSBoundParameters.ContainsKey("AuditEnabled"))
-        {
-            if ($AuditEnabled -ne $currentMailbox.AuditEnabled)
-            {
-                Write-Verbose -Message "AuditEnabled for Shared Mailbox '$($DisplayName)' needs to be updated from $($currentMailbox.AuditEnabled) to $AuditEnabled"
-                $SetParameters.Add("AuditEnabled", $AuditEnabled)
-            }
-        }
-
-        # CASE: EmailAddresses need to be updated
-        if ($PSBoundParameters.ContainsKey("EmailAddresses"))
-        {
-            $current = $currentMailbox.EmailAddresses
-            $desired = $EmailAddresses
-
-            $emailAddressesToAdd = $desired | Where-Object { $_ -notin $current } | Sort-Object -Unique
-            if ($null -ne $PrimarySMTPAddress)
-            {
-                $emailAddressesToAdd = $emailAddressesToAdd | Where-Object { $_ -ne $PrimarySMTPAddress }
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
             else
             {
-                $emailAddressesToAdd = $emailAddressesToAdd | Where-Object { $_ -ne $currentMailbox.PrimarySMTPAddress }
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
-
-            $emailAddressesToRemove = $current | Where-Object { $_ -notin $desired } | Sort-Object -Unique
-            if ($null -ne $PrimarySMTPAddress)
+            foreach ($mailbox in $exportedInstances)
             {
-                $emailAddressesToRemove = $emailAddressesToRemove | Where-Object { $_ -ne $PrimarySMTPAddress }
-            }
-            else
-            {
-                $emailAddressesToRemove = $emailAddressesToRemove | Where-Object { $_ -ne $currentMailbox.PrimarySMTPAddress }
-            }
-
-            if ($null -ne $emailAddressesToAdd -or $null -ne $emailAddressesToRemove)
-            {
-                $SetParameters.Add("EmailAddresses", @{})
-
-                # Add EmailAddresses
-                Write-Verbose -Message "Updating the list of EmailAddresses for the Shared Mailbox '$($DisplayName)'"
-                if ($null -ne $emailAddressesToAdd)
+                Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Length)] $($mailbox.Name)" -DeferWrite
+                $mailboxName = $mailbox.Name
+                if ($mailboxName)
                 {
-                    Write-Verbose -Message "Adding the following EmailAddresses: $($emailAddressesToAdd | Out-String)"
-                    $SetParameters.EmailAddresses.Add("add", $emailAddressesToAdd)
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                    {
+                        $Global:M365DSCExportResourceInstancesCount++
+                    }
+
+                    $params = @{
+                        Identity              = $mailbox.Identity
+                        Credential            = $this.Credential
+                        DisplayName           = $mailboxName
+                        Alias                 = $mailbox.Alias
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        CertificatePassword   = $this.CertificatePassword
+                        ManagedIdentity       = $this.ManagedIdentity
+                        CertificatePath       = $this.CertificatePath
+                        AccessTokens          = $this.AccessTokens
+                    }
+                    $this.ExportedInstance = $mailbox
+                    $Results = $this.GetForExport($Params)
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
                 }
-                # Remove EmailAddresses
-                if ($null -ne $emailAddressesToRemove)
-                {
-                    Write-Verbose -Message "Removing the following EmailAddresses: $($emailAddressesToRemove | Out-String)"
-                    $SetParameters.EmailAddresses.Add("remove", $emailAddressesToRemove)
-                }
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
             }
+            return $dscContent.ToString()
         }
-
-        if ($PSBoundParameters.ContainsKey("MessageCopyForSendOnBehalfEnabled"))
+        catch
         {
-            if ($currentMailbox.MessageCopyForSendOnBehalfEnabled -ne $MessageCopyForSendOnBehalfEnabled)
-            {
-                Write-Verbose -Message "Updating MessageCopyForSendOnBehalfEnabled for the Shared Mailbox '$($DisplayName)' from $($currentMailbox.MessageCopyForSendOnBehalfEnabled) to $MessageCopyForSendOnBehalfEnabled"
-                $SetParameters.Add("MessageCopyForSendOnBehalfEnabled", $MessageCopyForSendOnBehalfEnabled)
-            }
-        }
+            $this.LogError($_, 'Error during Export:')
 
-        if ($PSBoundParameters.ContainsKey("MessageCopyForSentAsEnabled"))
-        {
-            if ($currentMailbox.MessageCopyForSentAsEnabled -ne $MessageCopyForSentAsEnabled)
-            {
-                Write-Verbose -Message "Updating MessageCopyForSentAsEnabled for the Shared Mailbox '$($DisplayName)' from $($currentMailbox.MessageCopyForSentAsEnabled) to $MessageCopyForSentAsEnabled"
-                $SetParameters.Add("MessageCopyForSentAsEnabled", $MessageCopyForSentAsEnabled)
-            }
+            throw
         }
-
-        Set-Mailbox @SetParameters
     }
-}
 
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter()]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $PrimarySMTPAddress,
-
-        [Parameter()]
-        [System.String]
-        $Alias,
-
-        [Parameter()]
-        [System.String[]]
-        $EmailAddresses,
-
-        [Parameter()]
-        [System.Boolean]
-        $AuditEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $MessageCopyForSendOnBehalfEnabled,
-
-        [Parameter()]
-        [System.Boolean]
-        $MessageCopyForSentAsEnabled,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
+    [System.Collections.Hashtable] GetCompareParameters()
     {
-        [array] $exportedInstances = Get-Mailbox -RecipientTypeDetails 'SharedMailbox' `
-            -ResultSize Unlimited `
-            -ErrorAction Stop
-        $dscContent = [System.Text.StringBuilder]::new()
-        $i = 1
-        if ($exportedInstances.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+        return @{
+            IncludedProperties = @('DisplayName')
         }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($mailbox in $exportedInstances)
-        {
-            Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Length)] $($mailbox.Name)" -DeferWrite
-            $mailboxName = $mailbox.Name
-            if ($mailboxName)
-            {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-                {
-                    $Global:M365DSCExportResourceInstancesCount++
-                }
-
-                $params = @{
-                    Identity              = $mailbox.Identity
-                    Credential            = $Credential
-                    DisplayName           = $mailboxName
-                    Alias                 = $mailbox.Alias
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    CertificateThumbprint = $CertificateThumbprint
-                    CertificatePassword   = $CertificatePassword
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    CertificatePath       = $CertificatePath
-                    AccessTokens          = $AccessTokens
-                }
-                $Script:exportedInstance = $mailbox
-                $Results = Get-TargetResource @Params
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-            }
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
     }
-    catch
+
+    hidden [EXOSharedMailbox] AsResult([System.Object] $Values)
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        if ($Values -is [EXOSharedMailbox])
+        {
+            return $Values
+        }
 
-        throw
+        $result = [EXOSharedMailbox]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        IncludedProperties = @('DisplayName')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

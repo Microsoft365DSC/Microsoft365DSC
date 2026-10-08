@@ -1,5 +1,16 @@
 {
   "resourceName": "AzureRoleDefinition",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "AzRoleDefinition",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Manages Azure RBAC custom role definitions across management group, subscription, and resource group scopes.",
   "roles": {
     "read": [

@@ -1,5 +1,16 @@
 {
   "resourceName": "IntuneWindowsDataProcessingSettings",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "dataProcessorServiceForWindowsFeaturesOnboarding",
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the Windows data processing settings at the tenant level.",
   "permissions": {
     "graph": {
@@ -30,8 +41,7 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Authentication",
-    "MSCloudLoginAssistant"
+    "Microsoft.Graph.Authentication"
   ],
   "supportedEnvironments": [
     "Global",
@@ -43,12 +53,6 @@
       "module": "Microsoft.Graph.Authentication",
       "cmdlets": [
         "Invoke-MgGraphRequest"
-      ]
-    },
-    {
-      "module": "MSCloudLoginAssistant",
-      "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

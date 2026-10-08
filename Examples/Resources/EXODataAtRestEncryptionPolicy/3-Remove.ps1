@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,18 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXODataAtRestEncryptionPolicy "M365DataAtRestEncryptionPolicy-Riyansh_Policy"
+        EXODataAtRestEncryptionPolicy "EXODataAtRestEncryptionPolicy-Example"
         {
-            AzureKeyIDs          = @("https://m365dataatrestencryption.vault.azure.net/keys/EncryptionKey","https://m365datariyansh.vault.azure.net/keys/EncryptionRiyansh");
-            Description          = "Tenant default policy 1";
-            Enabled              = $True;
-            Ensure               = "Absent";
-            Identity             = "Riyansh_Policy";
-            Name                 = "Riyansh_Policy";
+            Ensure                = "Absent";
+            Identity              = "Riyansh_Policy";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

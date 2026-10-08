@@ -1,5 +1,16 @@
 {
   "resourceName": "SPOApp",
+  "generatedFrom": {
+    "workload": "PnP",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "PnPApp",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource allows users to deploy App instances in the App Catalog.",
   "permissions": {
     "graph": {

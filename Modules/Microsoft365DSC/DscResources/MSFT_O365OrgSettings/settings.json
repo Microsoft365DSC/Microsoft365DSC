@@ -1,5 +1,16 @@
 {
   "resourceName": "O365OrgSettings",
+  "generatedFrom": {
+    "workload": null,
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "roles": {
     "read": [
@@ -133,6 +144,7 @@
     "ExchangeOnlineManagement",
     "Microsoft.Graph.Applications",
     "Microsoft.Graph.Authentication",
+    "Microsoft.Graph.Beta.Reports",
     "MSCloudLoginAssistant"
   ],
   "mode": "Configuration",
@@ -159,10 +171,16 @@
       ]
     },
     {
+      "module": "Microsoft.Graph.Beta.Reports",
+      "cmdlets": [
+        "Get-MgBetaAdminReportSetting",
+        "Update-MgBetaAdminReportSetting"
+      ]
+    },
+    {
       "module": "MSCloudLoginAssistant",
       "cmdlets": [
-        "Get-MSCloudLoginConnectionProfile",
-        "Reset-MSCloudLoginConnectionProfileContext"
+        "Get-MSCloudLoginConnectionProfile"
       ]
     }
   ]

@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -45,14 +45,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MgBetaPolicyClaimMappingPolicy -MockWith {
                 return @{
                     Definition = @("{`"ClaimsMappingPolicy`":{`"Version`":1,`"IncludeBasicClaimSet`":`"true`",`"ClaimsSchema`":[{`"Source`":`"user`",`"ID`":`"userprincipalname`",`"SamlClaimType`":`"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier`"}],`"ClaimsTransformation`":[{`"ID`":`"CreateTermsOfService`",`"TransformationMethod`":`"CreateStringClaim`",`"InputParameters`":[{`"ID`":`"value`",`"DataType`":`"string`", `"Value`":`"sandbox`"}],`"OutputClaims`":[{`"ClaimTypeReferenceId`":`"TOS`",`"TransformationClaimType`":`"createdClaim`"}]}]}}")
-                    Description = "FakeStringValue"
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsOrganizationDefault = $True
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -66,41 +65,40 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The AADClaimsMappingPolicy should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Definition = [CimInstance[]]@(
-                        New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinition -Property @{
-                            ClaimsMappingPolicy = New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy -Property @{
-                                ClaimsSchema = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema -Property @{
+                    Definition = @(
+                        [MSFT_AADClaimsMappingPolicyDefinition] @{
+                            ClaimsMappingPolicy = [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy] @{
+                                ClaimsSchema = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema] @{
                                         SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
                                         Source = 'user'
                                         Id = 'userprincipalname'
-                                    } -ClientOnly
+                                    }
                                 )
-                                ClaimsTransformation = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation -Property @{
-                                        OutputClaims = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims -Property @{
+                                ClaimsTransformation = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation] @{
+                                        OutputClaims = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims] @{
                                                 ClaimTypeReferenceId = 'TOS'
                                                 TransformationClaimType = 'createdClaim'
-                                            } -ClientOnly
+                                            }
                                         )
                                         Id = 'CreateTermsOfService'
-                                        InputParameters = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter -Property @{
+                                        InputParameters = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter] @{
                                                 DataType = 'string'
                                                 Id = 'value'
                                                 Value = 'sandbox'
-                                            } -ClientOnly
+                                            }
                                         )
                                         TransformationMethod = 'CreateStringClaim'
-                                    } -ClientOnly
+                                    }
                                 )
                                 IncludeBasicClaimSet = $True
                                 Version = 1
-                            } -ClientOnly
-                        } -ClientOnly
+                            }
+                        }
                     );
-                    Description = "FakeStringValue"
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsOrganizationDefault = $True
@@ -113,55 +111,56 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName New-MgBetaPolicyClaimMappingPolicy -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaPolicyClaimMappingPolicy -Exactly 1 -ParameterFilter {
+                    $BodyParameter.Definition -is [System.Array] -and $BodyParameter.Definition.Count -eq 1
+                }
             }
         }
 
         Context -Name "The AADClaimsMappingPolicy exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Definition = [CimInstance[]]@(
-                        New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinition -Property @{
-                            ClaimsMappingPolicy = New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy -Property @{
-                                ClaimsSchema = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema -Property @{
+                    Definition = @(
+                        [MSFT_AADClaimsMappingPolicyDefinition] @{
+                            ClaimsMappingPolicy = [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy] @{
+                                ClaimsSchema = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema] @{
                                         SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
                                         Source = 'user'
                                         Id = 'userprincipalname'
-                                    } -ClientOnly
+                                    }
                                 )
-                                ClaimsTransformation = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation -Property @{
-                                        OutputClaims = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims -Property @{
+                                ClaimsTransformation = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation] @{
+                                        OutputClaims = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims] @{
                                                 ClaimTypeReferenceId = 'TOS'
                                                 TransformationClaimType = 'createdClaim'
-                                            } -ClientOnly
+                                            }
                                         )
                                         Id = 'CreateTermsOfService'
-                                        InputParameters = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter -Property @{
+                                        InputParameters = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter] @{
                                                 DataType = 'string'
                                                 Id = 'value'
                                                 Value = 'sandbox'
-                                            } -ClientOnly
+                                            }
                                         )
                                         TransformationMethod = 'CreateStringClaim'
-                                    } -ClientOnly
+                                    }
                                 )
                                 IncludeBasicClaimSet = $True
                                 Version = 1
-                            } -ClientOnly
-                        } -ClientOnly
+                            }
+                        }
                     );
-                    Description = "FakeStringValue"
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsOrganizationDefault = $True
@@ -171,56 +170,55 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaPolicyClaimMappingPolicy -Exactly 1
             }
         }
         Context -Name "The AADClaimsMappingPolicy Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Definition = [CimInstance[]]@(
-                        New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinition -Property @{
-                            ClaimsMappingPolicy = New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy -Property @{
-                                ClaimsSchema = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema -Property @{
+                    Definition = @(
+                        [MSFT_AADClaimsMappingPolicyDefinition] @{
+                            ClaimsMappingPolicy = [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy] @{
+                                ClaimsSchema = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema] @{
                                         SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
                                         Source = 'user'
                                         Id = 'userprincipalname'
-                                    } -ClientOnly
+                                    }
                                 )
-                                ClaimsTransformation = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation -Property @{
-                                        OutputClaims = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims -Property @{
+                                ClaimsTransformation = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation] @{
+                                        OutputClaims = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims] @{
                                                 ClaimTypeReferenceId = 'TOS'
                                                 TransformationClaimType = 'createdClaim'
-                                            } -ClientOnly
+                                            }
                                         )
                                         Id = 'CreateTermsOfService'
-                                        InputParameters = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter -Property @{
+                                        InputParameters = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter] @{
                                                 DataType = 'string'
                                                 Id = 'value'
                                                 Value = 'sandbox'
-                                            } -ClientOnly
+                                            }
                                         )
                                         TransformationMethod = 'CreateStringClaim'
-                                    } -ClientOnly
+                                    }
                                 )
                                 IncludeBasicClaimSet = $True
                                 Version = 1
-                            } -ClientOnly
-                        } -ClientOnly
+                            }
+                        }
                     );
-                    Description = "FakeStringValue"
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsOrganizationDefault = $True
@@ -230,49 +228,48 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The AADClaimsMappingPolicy exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Definition = [CimInstance[]]@(
-                        New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinition -Property @{
-                            ClaimsMappingPolicy = New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy -Property @{
-                                ClaimsSchema = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema -Property @{
+                    Definition = @(
+                        [MSFT_AADClaimsMappingPolicyDefinition] @{
+                            ClaimsMappingPolicy = [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicy] @{
+                                ClaimsSchema = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsSchema] @{
                                         SamlClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname' # Drift
                                         Source = 'user'
                                         Id = 'givenname' # Drift
-                                    } -ClientOnly
+                                    }
                                 )
-                                ClaimsTransformation = [CimInstance[]]@(
-                                    New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation -Property @{
-                                        OutputClaims = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims -Property @{
+                                ClaimsTransformation = @(
+                                    [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformation] @{
+                                        OutputClaims = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationOutputClaims] @{
                                                 ClaimTypeReferenceId = 'TOS'
                                                 TransformationClaimType = 'createdClaim'
-                                            } -ClientOnly
+                                            }
                                         )
                                         Id = 'CreateTermsOfService'
-                                        InputParameters = [CimInstance[]]@(
-                                            New-CimInstance -ClassName MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter -Property @{
+                                        InputParameters = @(
+                                            [MSFT_AADClaimsMappingPolicyDefinitionMappingPolicyClaimsTransformationInputParameter] @{
                                                 DataType = 'string'
                                                 Id = 'value'
                                                 Value = 'sandbox'
-                                            } -ClientOnly
+                                            }
                                         )
                                         TransformationMethod = 'CreateStringClaim'
-                                    } -ClientOnly
+                                    }
                                 )
                                 IncludeBasicClaimSet = $True
                                 Version = 1
-                            } -ClientOnly
-                        } -ClientOnly
+                            }
+                        }
                     );
 
-                    Description = "FakeStringValue"
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsOrganizationDefault = $True
@@ -282,15 +279,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADClaimsMappingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaPolicyClaimMappingPolicy -Exactly 1
             }
         }
@@ -304,7 +301,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADClaimsMappingPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

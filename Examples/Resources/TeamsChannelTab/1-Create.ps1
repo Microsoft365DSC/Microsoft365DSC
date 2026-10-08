@@ -5,23 +5,40 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
+    )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsChannelTab 'ConfigureChannelTab'
+        TeamsChannelTab 'TeamsChannelTab-Example'
         {
             ChannelName           = "General"
-            ContentUrl            = "https://contoso.com"
-            DisplayName           = "TestTab"
+            Configuration         = MSFT_MicrosoftGraphTeamsTabConfiguration{
+                ContentUrl = "https://contoso.com"
+                WebsiteUrl = "https://contoso.com"
+            }
+            DisplayName           = "Project Plan"
             SortOrderIndex        = "10100"
-            TeamName              = "Contoso Team"
+            TeamName              = "Mark 8 Project Team"
             TeamsApp              = "com.microsoft.teamspace.tab.web"
-            WebSiteUrl            = "https://contoso.com"
             Ensure                = "Present"
-            ApplicationId         = "12345"
-            CertificateThumbprint = "ABCDEF1234567890"
-            TenantId              = "contoso.onmicrosoft.com"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

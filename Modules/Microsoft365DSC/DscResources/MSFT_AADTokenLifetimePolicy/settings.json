@@ -1,5 +1,16 @@
 {
   "resourceName": "AADTokenLifetimePolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "tokenLifetimePolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyTokenLifetimePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the Azure AD Token Lifetime Policies.",
   "roles": {
     "read": [],

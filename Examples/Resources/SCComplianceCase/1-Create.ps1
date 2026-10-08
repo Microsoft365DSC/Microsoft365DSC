@@ -5,22 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCComplianceCase 'ConfigureComplianceCase'
+        SCComplianceCase 'SCComplianceCase-Example'
         {
-            Name               = "MyCase"
-            Description        = "MyPolicy"
-            Status             = "Active"
-            Ensure             = "Present"
-            Credential         = $Credscredential
+            Name                  = "Contoso Litigation 2026"
+            Description           = "Supplier contract dispute filed in March 2026"
+            Status                = "Active"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

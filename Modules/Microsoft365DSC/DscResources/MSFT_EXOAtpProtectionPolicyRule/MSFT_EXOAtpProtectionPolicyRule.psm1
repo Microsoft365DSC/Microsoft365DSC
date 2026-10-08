@@ -1,560 +1,322 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOAtpProtectionPolicyRule'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOAtpProtectionPolicyRule : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Identifier for the rule')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $Comments,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether the rule is enabled')]
+    [System.Nullable[System.Boolean]] $Enabled
 
-        [Parameter()]
-        [System.Boolean]
-        $Enabled,
+    [DscProperty()]
+    [System.ComponentModel.Description('Informative comments for the rule, such as what the rule is used for or how it has changed over time. The length of the comment can''t exceed 1024 characters.')]
+    [System.String] $Comments
 
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfRecipientDomainIs,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies an exception that looks for recipients with email addresses in the specified domains.')]
+    [System.String[]] $ExceptIfRecipientDomainIs
 
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfSentTo,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies an exception that looks for recipients in messages. You can use any value that uniquely identifies the recipient')]
+    [System.String[]] $ExceptIfSentTo
 
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfSentToMemberOf,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies an exception that looks for messages sent to members of groups. You can use any value that uniquely identifies the group.')]
+    [System.String[]] $ExceptIfSentToMemberOf
 
-        [Parameter()]
-        [System.String]
-        $Name,
+    [DscProperty()]
+    [System.ComponentModel.Description('Unique name for the rule. The maximum length is 64 characters.')]
+    [System.String] $Name
 
-        [Parameter()]
-        [System.UInt32]
-        $Priority,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a priority value for the rule that determines the order of rule processing. A lower integer value indicates a higher priority, the value 0 is the highest priority, and rules can''t have the same priority value.')]
+    [System.Nullable[System.UInt32]] $Priority
 
-        [Parameter()]
-        [System.String[]]
-        $RecipientDomainIs,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a condition that looks for recipients with email addresses in the specified domains.')]
+    [System.String[]] $RecipientDomainIs
 
-        [Parameter()]
-        [System.String]
-        $SafeAttachmentPolicy,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the existing Safe Attachments policy that''s associated with the preset security policy.')]
+    [System.String] $SafeAttachmentPolicy
 
-        [Parameter()]
-        [System.String]
-        $SafeLinksPolicy,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the existing Safe Links policy that''s associated with the preset security policy.')]
+    [System.String] $SafeLinksPolicy
 
-        [Parameter()]
-        [System.String[]]
-        $SentTo,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a condition that looks for recipients in messages. You can use any value that uniquely identifies the recipient.')]
+    [System.String[]] $SentTo
 
-        [Parameter()]
-        [System.String[]]
-        $SentToMemberOf,
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a condition that looks for messages sent to members of distribution groups, dynamic distribution groups, or mail-enabled security groups. ')]
+    [System.String[]] $SentToMemberOf
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for ATP Protection Policy Rule with Identity $Identity"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [EXOAtpProtectionPolicyRule] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOAtpProtectionPolicyRule]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for ATP Protection Policy Rule with Identity $($this.Identity)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $instance = Get-ATPProtectionPolicyRule -Identity $Identity -ErrorAction SilentlyContinue
-
-            if ($null -eq $instance)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                return $nullResult
-            }
-        }
-        else
-        {
-            $instance = $Script:exportedInstance
-        }
+                $null = $this.Connect('ExchangeOnline')
 
-        Write-Verbose -Message "Found ATP Protection Policy Rule with Identity $($instance.Identity)"
+                Confirm-M365DSCDependencies
 
-        $results = @{
-            Identity                  = $instance.Identity
-            Ensure                    = 'Present'
-            Comments                  = $instance.Comments
-            Enabled                   = $instance.State -eq 'Enabled'
-            ExceptIfRecipientDomainIs = $instance.ExceptIfRecipientDomainIs
-            ExceptIfSentTo            = $instance.ExceptIfSentTo
-            ExceptIfSentToMemberOf    = $instance.ExceptIfSentToMemberOf
-            Name                      = $instance.Name
-            Priority                  = $instance.Priority
-            RecipientDomainIs         = $instance.RecipientDomainIs
-            SafeAttachmentPolicy      = $instance.SafeAttachmentPolicy
-            SafeLinksPolicy           = $instance.SafeLinksPolicy
-            SentTo                    = $instance.SentTo
-            SentToMemberOf            = $instance.SentToMemberOf
-            Credential                = $Credential
-            ApplicationId             = $ApplicationId
-            TenantId                  = $TenantId
-            CertificateThumbprint     = $CertificateThumbprint
-            CertificatePath           = $CertificatePath
-            CertificatePassword       = $CertificatePassword
-            ManagedIdentity           = $ManagedIdentity.IsPresent
-            AccessTokens              = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+                $this.AddTelemetry('Get')
 
-        throw
-    }
-}
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
 
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+                $instance = Get-ATPProtectionPolicyRule -Identity $this.Identity -ErrorAction SilentlyContinue
 
-        [Parameter()]
-        [System.String]
-        $Comments,
-
-        [Parameter()]
-        [System.Boolean]
-        $Enabled,
-
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfRecipientDomainIs,
-
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfSentTo,
-
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfSentToMemberOf,
-
-        [Parameter()]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.UInt32]
-        $Priority,
-
-        [Parameter()]
-        [System.String[]]
-        $RecipientDomainIs,
-
-        [Parameter()]
-        [System.String]
-        $SafeAttachmentPolicy,
-
-        [Parameter()]
-        [System.String]
-        $SafeLinksPolicy,
-
-        [Parameter()]
-        [System.String[]]
-        $SentTo,
-
-        [Parameter()]
-        [System.String[]]
-        $SentToMemberOf,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for ATP Protection Policy Rule with Identity $Identity"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    # CREATE
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        $SetParameters.Remove('Identity') | Out-Null
-        New-ATPProtectionPolicyRule @SetParameters
-    }
-    # UPDATE
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        if ($currentInstance.SafeAttachmentPolicy -ne $SetParameters.SafeAttachmentPolicy)
-        {
-            throw 'SafeAttachmentPolicy cannot be changed after creation'
-        }
-        if ($currentInstance.SafeLinksPolicy -ne $SetParameters.SafeLinksPolicy)
-        {
-            throw 'SafeLinksPolicy cannot be changed after creation'
-        }
-
-        # Enabled state can only be changed by the Enabled/Disable-ATPProtectionPolicyRule cmdlets
-        if ($currentInstance.Enabled -ne $setParameters.Enabled)
-        {
-            Write-Verbose -Message "Changing Enabled state of the ATPProtectionPolicyRule $($currentInstance.Identity) from $($currentInstance.Enabled) to $($setParameters.Enabled)"
-            if ($setParameters.Enabled)
-            {
-                Enable-ATPProtectionPolicyRule -Identity $currentInstance.Identity
+                if ($null -eq $instance)
+                {
+                    return $this.AsResult($nullResult)
+                }
             }
             else
             {
-                Disable-ATPProtectionPolicyRule -Identity $currentInstance.Identity
+                $instance = $this.ExportedInstance
             }
-        }
 
-        $SetParameters.Remove('SafeLinksPolicy') | Out-Null
-        $SetParameters.Remove('SafeAttachmentPolicy') | Out-Null
-        $SetParameters.Remove('Enabled') | Out-Null
+            Write-Verbose -Message "Found ATP Protection Policy Rule with Identity $($instance.Identity)"
 
-        Set-ATPProtectionPolicyRule @SetParameters
-    }
-    # REMOVE
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        ##TODO - Replace by the Remove cmdlet for the resource
-        Remove-ATPProtectionPolicyRule -Identity $currentInstance.Identity
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Comments,
-
-        [Parameter()]
-        [System.Boolean]
-        $Enabled,
-
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfRecipientDomainIs,
-
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfSentTo,
-
-        [Parameter()]
-        [System.String[]]
-        $ExceptIfSentToMemberOf,
-
-        [Parameter()]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.UInt32]
-        $Priority,
-
-        [Parameter()]
-        [System.String[]]
-        $RecipientDomainIs,
-
-        [Parameter()]
-        [System.String]
-        $SafeAttachmentPolicy,
-
-        [Parameter()]
-        [System.String]
-        $SafeLinksPolicy,
-
-        [Parameter()]
-        [System.String[]]
-        $SentTo,
-
-        [Parameter()]
-        [System.String[]]
-        $SentToMemberOf,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    ##TODO - Replace workload
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$rules = Get-ATPProtectionPolicyRule -ErrorAction Stop
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($rules.Count -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $rules)
-        {
-            $displayedKey = $config.Identity
-            Write-M365DSCHost -Message "    |---[$i/$($rules.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Identity              = $config.Identity
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            $results = @{
+                Identity                  = $instance.Identity
+                Ensure                    = 'Present'
+                Comments                  = $instance.Comments
+                Enabled                   = $instance.State -eq 'Enabled'
+                ExceptIfRecipientDomainIs = $instance.ExceptIfRecipientDomainIs
+                ExceptIfSentTo            = $instance.ExceptIfSentTo
+                ExceptIfSentToMemberOf    = $instance.ExceptIfSentToMemberOf
+                Name                      = $instance.Name
+                Priority                  = $instance.Priority
+                RecipientDomainIs         = $instance.RecipientDomainIs
+                SafeAttachmentPolicy      = $instance.SafeAttachmentPolicy
+                SafeLinksPolicy           = $instance.SafeLinksPolicy
+                SentTo                    = $instance.SentTo
+                SentToMemberOf            = $instance.SentToMemberOf
+                Credential                = $this.Credential
+                ApplicationId             = $this.ApplicationId
+                TenantId                  = $this.TenantId
+                CertificateThumbprint     = $this.CertificateThumbprint
+                CertificatePath           = $this.CertificatePath
+                CertificatePassword       = $this.CertificatePassword
+                ManagedIdentity           = $this.ManagedIdentity
+                AccessTokens              = $this.AccessTokens
             }
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
 
-        throw
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for ATP Protection Policy Rule with Identity $($this.Identity)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        # CREATE
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
+        {
+            $SetParameters.Remove('Identity') | Out-Null
+            New-ATPProtectionPolicyRule @SetParameters
+        }
+        # UPDATE
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
+        {
+            if ($SetParameters.ContainsKey('SafeAttachmentPolicy') -and $currentInstance.SafeAttachmentPolicy -ne $SetParameters.SafeAttachmentPolicy)
+            {
+                throw 'SafeAttachmentPolicy cannot be changed after creation'
+            }
+            if ($SetParameters.ContainsKey('SafeLinksPolicy') -and $currentInstance.SafeLinksPolicy -ne $SetParameters.SafeLinksPolicy)
+            {
+                throw 'SafeLinksPolicy cannot be changed after creation'
+            }
+
+            if ($null -ne $this.Enabled -and $currentInstance.Enabled -ne $this.Enabled)
+            {
+                Write-Verbose -Message "Changing Enabled state of the ATPProtectionPolicyRule $($currentInstance.Identity) from $($currentInstance.Enabled) to $($setParameters.Enabled)"
+                if ($setParameters.Enabled)
+                {
+                    Enable-ATPProtectionPolicyRule -Identity $currentInstance.Identity -Confirm:$false
+                }
+                else
+                {
+                    Disable-ATPProtectionPolicyRule -Identity $currentInstance.Identity -Confirm:$false
+                }
+            }
+
+            $SetParameters.Remove('SafeLinksPolicy') | Out-Null
+            $SetParameters.Remove('SafeAttachmentPolicy') | Out-Null
+            $SetParameters.Remove('Enabled') | Out-Null
+
+            Set-ATPProtectionPolicyRule @SetParameters
+        }
+        # REMOVE
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Remove-ATPProtectionPolicyRule -Identity $currentInstance.Identity -Confirm:$false
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        ##TODO - Replace workload
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$rules = Get-ATPProtectionPolicyRule -ErrorAction Stop
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($rules.Count -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $rules)
+            {
+                $displayedKey = $config.Identity
+                Write-M365DSCHost -Message "    |---[$i/$($rules.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Identity              = $config.Identity
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXOAtpProtectionPolicyRule] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOAtpProtectionPolicyRule])
+        {
+            return $Values
+        }
+
+        $result = [EXOAtpProtectionPolicyRule]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

@@ -1,5 +1,37 @@
 {
   "resourceName": "IntuneRoleDefinitionWindows365",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleDefinition",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaRoleManagementCloudPcRoleDefinition",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AllowedPrincipalTypes",
+      "reason": "ReadOnly",
+      "note": "Reports which principal types the role definition accepts."
+    },
+    {
+      "name": "IsEnabled",
+      "reason": "NotConfigurable",
+      "note": "The service computes it as true once the role exists."
+    },
+    {
+      "name": "IsPrivileged",
+      "reason": "ReadOnly",
+      "note": "The service derives this flag from the sensitive actions in RolePermissions"
+    },
+    {
+      "name": "ResourceScopes",
+      "reason": "Deprecated",
+      "note": "Marked DO NOT USE and accepts only the root scope, IntuneRoleAssignmentWindows365 models scope"
+    }
+  ],
   "description": "This resource configures an Intune Role Definition Windows365.",
   "permissions": {
     "graph": {

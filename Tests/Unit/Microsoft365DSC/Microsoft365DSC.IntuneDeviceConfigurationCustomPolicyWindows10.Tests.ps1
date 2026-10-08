@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ("tenantadmin@mydomain.com", $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ("tenantadmin@onmicrosoft.com", $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -42,6 +42,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -MockWith {
             }
 
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
             Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                 return @{
                     '@odata.type' = "#microsoft.graph.windows10CustomConfiguration"
@@ -58,12 +61,28 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         }
                     )
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsEdition = @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsVersion = @{
+                        name = "FakeStringValue"
+                        minOSVersion = "10.0.19045.0"
+                        maxOSVersion = "10.0.26100.9999"
+                        ruleType = "include"
+                    }
                     displayName = "FakeStringValue"
                     id = "FakeStringValue"
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -79,10 +98,26 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsEdition = @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsVersion = @{
+                        name = "FakeStringValue"
+                        minOSVersion = "10.0.19045.0"
+                        maxOSVersion = "10.0.26100.9999"
+                        ruleType = "include"
+                    }
                     displayName = "FakeStringValue"
                     id = "FakeStringValue"
-                    omaSettings = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphomaSetting -Property @{
+                    omaSettings = @(
+                        ([MSFT_MicrosoftGraphomaSetting] @{
                             fileName = "FakeStringValue"
                             description = "FakeStringValue"
                             omaUri = "FakeStringValue"
@@ -91,7 +126,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             value = "FakeStringValue"
                             isEncrypted = $True
                             displayName = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     Ensure = "Present"
                     Credential = $Credential;
@@ -102,13 +137,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It "Should return Values from the Get method" {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -117,10 +152,26 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsEdition = @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsVersion = @{
+                        name = "FakeStringValue"
+                        minOSVersion = "10.0.19045.0"
+                        maxOSVersion = "10.0.26100.9999"
+                        ruleType = "include"
+                    }
                     displayName = "FakeStringValue"
                     id = "FakeStringValue"
-                    omaSettings = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphomaSetting -Property @{
+                    omaSettings = @(
+                        ([MSFT_MicrosoftGraphomaSetting] @{
                             fileName = "FakeStringValue"
                             description = "FakeStringValue"
                             omaUri = "FakeStringValue"
@@ -129,7 +180,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             value = "FakeStringValue"
                             isEncrypted = $True
                             displayName = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     Ensure = "Absent"
                     Credential = $Credential;
@@ -137,15 +188,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should return Values from the Get method" {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -153,10 +204,26 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = @{
+                        name = "FakeStringValue"
+                        deviceMode = "standardConfiguration"
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsEdition = @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsVersion = @{
+                        name = "FakeStringValue"
+                        minOSVersion = "10.0.19045.0"
+                        maxOSVersion = "10.0.26100.9999"
+                        ruleType = "include"
+                    }
                     displayName = "FakeStringValue"
                     id = "FakeStringValue"
-                    omaSettings = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphomaSetting -Property @{
+                    omaSettings = @(
+                        ([MSFT_MicrosoftGraphomaSetting] @{
                             fileName = "FakeStringValue"
                             description = "FakeStringValue"
                             omaUri = "FakeStringValue"
@@ -165,7 +232,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             value = "FakeStringValue"
                             isEncrypted = $True
                             displayName = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     Ensure = "Present"
                     Credential = $Credential;
@@ -174,7 +241,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -182,10 +249,26 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     description = "FakeStringValue"
+                    deviceManagementApplicabilityRuleDeviceMode = @{
+                        name = "FakeStringValue"
+                        deviceMode = "sModeConfiguration" # Updated property
+                        ruleType = "include"
+                    }
+                    deviceManagementApplicabilityRuleOsEdition = @{
+                        name = "FakeStringValue"
+                        osEditionTypes = @("windows10Enterprise")
+                        ruleType = "exclude" # Updated property
+                    }
+                    deviceManagementApplicabilityRuleOsVersion = @{
+                        name = "FakeStringValue"
+                        minOSVersion = "10.0.19045.0"
+                        maxOSVersion = "10.0.26100.9999"
+                        ruleType = "include"
+                    }
                     displayName = "FakeStringValue"
                     id = "FakeStringValue"
-                    omaSettings = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphomaSetting -Property @{
+                    omaSettings = @(
+                        ([MSFT_MicrosoftGraphomaSetting] @{
                             fileName = "FakeStringValue"
                             description = "FakeStringValue"
                             omaUri = "FakeStringValue"
@@ -194,7 +277,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             value = "FakeStringValue2" # Updated property
                             isEncrypted = $True
                             displayName = "FakeStringValue"
-                        } -ClientOnly)
+                        })
                     )
                     Ensure = "Present"
                     Credential = $Credential;
@@ -202,15 +285,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should return Values from the Get method" {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $false
             }
 
             It "Should call the Set method" {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -225,7 +308,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should Reverse Engineer resource from the Export method" {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceConfigurationCustomPolicyWindows10' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,19 +19,21 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOQuarantinePolicy 'ConfigureQuarantinePolicy'
+        EXOQuarantinePolicy 'EXOQuarantinePolicy-Example'
         {
-            EndUserQuarantinePermissionsValue = 87;
-            ESNEnabled                        = $False;
-            Identity                          = "$TenantId\IntegrationPolicy";
-            Ensure                            = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            EndUserQuarantinePermissionsValue        = 87;
+            ESNEnabled                               = $False;
+            Identity                                 = "$TenantId\CorporateQuarantinePolicy";
+            QuarantinePolicyType                     = "PolicyQuarantineTag";
+            Ensure                                   = "Present"
+            ApplicationId                            = $ApplicationId
+            TenantId                                 = $TenantId
+            CertificateThumbprint                    = $CertificateThumbprint
         }
     }
 }

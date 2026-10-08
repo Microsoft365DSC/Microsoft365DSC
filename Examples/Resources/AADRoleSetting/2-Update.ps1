@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        AADRoleSetting 28b253d8-cde5-471f-a331-fe7320023cdd
+        AADRoleSetting "AADRoleSetting-Example"
         {
             ActivateApprover                                          = @();
             ActivationMaxDuration                                     = "PT8H";
@@ -63,10 +65,10 @@ Configuration Example
             ExpireEligibleAssignment                                  = "P365D";
             PermanentActiveAssignmentisExpirationRequired             = $False;
             PermanentEligibleAssignmentisExpirationRequired           = $False;
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
             Ensure                                                    = 'Present'
+            ApplicationId                                             = $ApplicationId
+            TenantId                                                  = $TenantId
+            CertificateThumbprint                                     = $CertificateThumbprint
         }
     }
 }

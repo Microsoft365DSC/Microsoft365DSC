@@ -4,7 +4,8 @@ This example creates a certificate-based application configuration with trusted 
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,27 +18,27 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
-    
+
     Import-DscResource -ModuleName Microsoft365DSC
-    
-    node localhost
+
+    Node localhost
     {
-        AADCertificateBasedApplicationConfiguration "ContosoRootCA"
+        AADCertificateBasedApplicationConfiguration "AADCertificateBasedApplicationConfiguration-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            Description           = "Trusted certificate authorities from Contoso";
-            DisplayName           = "Contoso Root CA Configuration";
-            Ensure                = "Present";
-            TenantId              = $TenantId;
+            Description                   = "Trusted certificate authorities from Contoso";
+            DisplayName                   = "Contoso Root CA Configuration";
+            Ensure                        = "Present";
             TrustedCertificateAuthorities = @(
                 MSFT_AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority{
-                    Certificate = "MIIDPzCCAiegAwIBAgIQPbcHn..."
-                    IsRootAuthority = $true
-                    Issuer = "CN=Contoso Root CA, O=Contoso, C=US"
+                    Certificate                = "<base64-encoded-certificate>"
+                    IsRootAuthority            = $true
+                    Issuer                     = "CN=Contoso Root CA, O=Contoso, C=US"
                     IssuerSubjectKeyIdentifier = "1234567890ABCDEF"
                 }
             );
+            ApplicationId                 = $ApplicationId;
+            TenantId                      = $TenantId;
+            CertificateThumbprint         = $CertificateThumbprint;
         }
     }
 }

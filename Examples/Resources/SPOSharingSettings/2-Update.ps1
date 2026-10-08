@@ -5,39 +5,70 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SPOSharingSettings 'ConfigureSharingSettings'
+        SPOSharingSettings 'SPOSharingSettings-Example'
         {
-            IsSingleInstance                           = "Yes"
-            SharingCapability                          = 'ExternalUserSharingOnly'
-            ShowEveryoneClaim                          = $false
-            ShowAllUsersClaim                          = $false
-            ShowEveryoneExceptExternalUsersClaim       = $true
-            ProvisionSharedWithEveryoneFolder          = $false
-            EnableGuestSignInAcceleration              = $false
-            BccExternalSharingInvitations              = $false
-            BccExternalSharingInvitationsList          = ""
-            RequireAnonymousLinksExpireInDays          = 730
-            SharingAllowedDomainList                   = @("contoso.com")
-            SharingBlockedDomainList                   = @("contoso.com")
-            SharingDomainRestrictionMode               = "None"
-            DefaultSharingLinkType                     = "AnonymousAccess"
-            PreventExternalUsersFromResharing          = $false
-            ShowPeoplePickerSuggestionsForGuestUsers   = $false
-            FileAnonymousLinkType                      = "Edit"
-            FolderAnonymousLinkType                    = "Edit"
-            NotifyOwnersWhenItemsReshared              = $true
-            DefaultLinkPermission                      = "View"
-            Ensure                                     = "Present"
-            Credential                                 = $Credscredential
+            IsSingleInstance                                           = "Yes"
+            AllowGuestUserShareToUsersNotInSiteCollection              = $false
+            AllowSharingOutsideRestrictedAccessControlGroups           = $true
+            SharingCapability                                          = "ExternalUserSharingOnly"
+            MySiteSharingCapability                                    = "ExistingExternalUserSharingOnly"
+            CoreDefaultShareLinkScope                                  = "SpecificPeople"
+            CoreDefaultShareLinkRole                                   = "View"
+            CoreDefaultLinkToExistingAccess                            = $false
+            CoreLoopSharingCapability                                  = "ExternalUserSharingOnly"
+            CoreLoopDefaultSharingLinkScope                            = "SpecificPeople"
+            CoreLoopDefaultSharingLinkRole                             = "View"
+            CoreOrganizationSharingLinkMaxExpirationInDays             = 180
+            CoreOrganizationSharingLinkRecommendedExpirationInDays     = 90
+            OneDriveDefaultShareLinkScope                              = "SpecificPeople"
+            OneDriveDefaultShareLinkRole                               = "View"
+            OneDriveDefaultLinkToExistingAccess                        = $false
+            OneDriveLoopSharingCapability                              = "ExternalUserSharingOnly"
+            OneDriveLoopDefaultSharingLinkScope                        = "SpecificPeople"
+            OneDriveLoopDefaultSharingLinkRole                         = "View"
+            OneDriveOrganizationSharingLinkMaxExpirationInDays         = 180
+            OneDriveOrganizationSharingLinkRecommendedExpirationInDays = 90
+            ShowEveryoneClaim                                          = $false
+            ShowAllUsersClaim                                          = $false
+            ShowEveryoneExceptExternalUsersClaim                       = $true
+            ProvisionSharedWithEveryoneFolder                          = $false
+            EnableGuestSignInAcceleration                              = $false
+            GuestSharingGroupAllowListInTenantByPrincipalIdentity      = @()
+            WhoCanShareAllowListInTenant                               = @()
+            WhoCanShareAllowListInTenantByPrincipalIdentity            = @()
+            RestrictExternalSharing                                    = @()
+            RestrictExternalSharingForAgents                           = $false
+            BccExternalSharingInvitations                              = $true
+            BccExternalSharingInvitationsList                          = "compliance@contoso.com"
+            SharingDomainRestrictionMode                               = "None"
+            DefaultSharingLinkType                                     = "Direct"
+            DefaultLinkPermission                                      = "View"
+            PreventExternalUsersFromResharing                          = $false
+            ShowPeoplePickerSuggestionsForGuestUsers                   = $false
+            NotifyOwnersWhenItemsReshared                              = $true
+            ExternalUserExpirationRequired                             = $false
+            ApplicationId                                              = $ApplicationId
+            TenantId                                                   = $TenantId
+            CertificateThumbprint                                      = $CertificateThumbprint
         }
     }
 }

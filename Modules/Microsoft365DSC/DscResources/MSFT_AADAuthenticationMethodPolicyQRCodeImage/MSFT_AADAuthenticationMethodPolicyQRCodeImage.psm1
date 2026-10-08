@@ -1,551 +1,389 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADAuthenticationMethodPolicyQRCodeImage'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADAuthenticationMethodPolicyQRCodeImage : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The unique identifier for an entity. Read-only.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [ValidateSet('enabled', 'disabled')]
-        [System.String]
-        $State,
+    [DscProperty()]
+    [System.ComponentModel.Description('Displayname of the groups of users that are excluded from a policy.')]
+    [MSFT_AADAuthenticationMethodPolicyQRCodeImageExcludeTarget[]] $ExcludeTargets
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $ExcludeTargets,
+    [DscProperty()]
+    [System.ComponentModel.Description('Displayname of the groups of users that are included from a policy.')]
+    [MSFT_AADAuthenticationMethodPolicyQRCodeImageIncludeTarget[]] $IncludeTargets
 
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $IncludeTargets,
+    [DscProperty()]
+    [System.ComponentModel.Description('The state of the policy. Possible values are: enabled, disabled.')]
+    [ValidateSet('enabled', 'disabled')]
+    [System.String] $State
 
-        [Parameter()]
-        [System.UInt32]
-        $StandardQRCodeLifetimeInDays,
+    [DscProperty()]
+    [System.ComponentModel.Description('Lifetime in days of the qr code.')]
+    [System.Nullable[System.UInt32]] $StandardQRCodeLifetimeInDays
 
-        [Parameter()]
-        [ValidateRange(8, 20)]
-        [System.UInt32]
-        $PinLength,
+    [DscProperty()]
+    [System.ComponentModel.Description('Length of the PIN.')]
+    [ValidateRange(8, 20)]
+    [System.Nullable[System.UInt32]] $PinLength
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Absent', 'Present')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting the Azure AD Authentication Method Policy QR Code with Id {$Id}"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [AADAuthenticationMethodPolicyQRCodeImage] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Id -ne $Id)
+        $nullResult = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [AADAuthenticationMethodPolicyQRCodeImage]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting the Azure AD Authentication Method Policy QR Code with Id {$($this.Id)}"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Id -ne $this.Id)
+            {
+                $null = $this.Connect('MicrosoftGraph')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $nullResult.Ensure = 'Absent'
+
+                $instance = Get-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration `
+                    -AuthenticationMethodConfigurationId 'qrCodePin' `
+                    -ErrorAction SilentlyContinue
+            }
+            else
+            {
+                $instance = $this.ExportedInstance | Where-Object -FilterScript { $_.Id -eq $this.Id }
+            }
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            #region resource generator code
+            $complexExcludeTargets = @()
+            foreach ($currentExcludeTargets in $instance.excludeTargets)
+            {
+                $myExcludeTargets = [ordered]@{}
+                if ($currentExcludeTargets.id -ne 'all_users')
+                {
+                    $myExcludeTargetsDisplayName = Get-M365DSCGroupDisplayNameById -GroupId $currentExcludeTargets.Id
+                    if ($null -eq $myExcludeTargetsDisplayName)
+                    {
+                        continue
+                    }
+                    $myExcludeTargets.Add('Id', $myExcludeTargetsDisplayName)
+                }
+                else
+                {
+                    $myExcludeTargets.Add('Id', $currentExcludeTargets.id)
+                }
+
+                if ($null -ne $currentExcludeTargets.targetType)
+                {
+                    $myExcludeTargets.Add('TargetType', $currentExcludeTargets.targetType)
+                }
+
+                if ($myExcludeTargets.values.Where({ $null -ne $_ }).Count -gt 0)
+                {
+                    $complexExcludeTargets += $myExcludeTargets
+                }
+            }
             #endregion
 
-            $nullResult = $PSBoundParameters
-            $nullResult.Ensure = 'Absent'
-
-            $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'beta/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/qrCodePin'
-            $response = Invoke-MgGraphRequest -Uri $uri -Method GET
-            $instance = $response
-        }
-        else
-        {
-            $instance = $Script:exportedInstance | Where-Object -FilterScript { $_.Id -eq $Id }
-        }
-        if ($null -eq $instance)
-        {
-            return $nullResult
-        }
-
-        #region resource generator code
-        $complexExcludeTargets = @()
-        foreach ($currentExcludeTargets in $instance.excludeTargets)
-        {
-            $myExcludeTargets = [ordered]@{}
-            if ($currentExcludeTargets.id -ne 'all_users')
+            $complexIncludeTargets = @()
+            foreach ($currentIncludeTargets in $instance.includeTargets)
             {
-                $myExcludeTargetsDisplayName = Get-M365DSCGroupDisplayNameById -GroupId $currentExcludeTargets.Id
-                if ($null -eq $myExcludeTargetsDisplayName)
+                $myIncludeTargets = [ordered]@{}
+                if ($currentIncludeTargets.id -ne 'all_users')
                 {
-                    continue
-                }
-                $myExcludeTargets.Add('Id', $myExcludeTargetsDisplayName)
-            }
-            else
-            {
-                $myExcludeTargets.Add('Id', $currentExcludeTargets.id)
-            }
-
-            if ($null -ne $currentExcludeTargets.targetType)
-            {
-                $myExcludeTargets.Add('TargetType', $currentExcludeTargets.targetType.ToString())
-            }
-
-            if ($myExcludeTargets.values.Where({ $null -ne $_ }).Count -gt 0)
-            {
-                $complexExcludeTargets += $myExcludeTargets
-            }
-        }
-        #endregion
-
-        $complexIncludeTargets = @()
-        foreach ($currentIncludeTargets in $instance.includeTargets)
-        {
-            $myIncludeTargets = [ordered]@{}
-            if ($currentIncludeTargets.id -ne 'all_users')
-            {
-                $myIncludeTargetsDisplayName = Get-M365DSCGroupDisplayNameById -GroupId $currentIncludeTargets.Id
-                if ($null -eq $myIncludeTargetsDisplayName)
-                {
-                    continue
-                }
-                $myIncludeTargets.Add('Id', $myIncludeTargetsDisplayName)
-            }
-            else
-            {
-                $myIncludeTargets.Add('Id', $currentIncludeTargets.id)
-            }
-
-            if ($null -ne $currentIncludeTargets.targetType)
-            {
-                $myIncludeTargets.Add('TargetType', $currentIncludeTargets.targetType.ToString())
-            }
-
-            if ($myIncludeTargets.values.Where({ $null -ne $_ }).Count -gt 0)
-            {
-                $complexIncludeTargets += $myIncludeTargets
-            }
-        }
-
-        $results = @{
-            Id                           = $response.Id
-            State                        = $response.State
-            ExcludeTargets               = $complexExcludeTargets
-            IncludeTargets               = $complexIncludeTargets
-            StandardQRCodeLifetimeInDays = $response.StandardQRCodeLifetimeInDays
-            PinLength                    = $response.PinLength
-            Ensure                       = 'Present'
-            Credential                   = $Credential
-            ApplicationId                = $ApplicationId
-            TenantId                     = $TenantId
-            CertificateThumbprint        = $CertificateThumbprint
-            CertificatePath              = $CertificatePath
-            CertificatePassword          = $CertificatePassword
-            ManagedIdentity              = $ManagedIdentity.IsPresent
-            AccessTokens                 = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [ValidateSet('enabled', 'disabled')]
-        [System.String]
-        $State,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $ExcludeTargets,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $IncludeTargets,
-
-        [Parameter()]
-        [System.UInt32]
-        $StandardQRCodeLifetimeInDays,
-
-        [Parameter()]
-        [ValidateRange(8, 20)]
-        [System.UInt32]
-        $PinLength,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting the Azure AD Authentication Method Policy QR Code with Id {$Id}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $BoundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating the Azure AD Authentication Method Policy QR Code Image with Id {$($currentInstance.Id)}"
-
-        $UpdateParameters = ([Hashtable]$BoundParameters).Clone()
-        $UpdateParameters = Rename-M365DSCCimInstanceParameter -Properties $UpdateParameters
-        $UpdateParameters.Remove('Id') | Out-Null
-
-        Update-M365DSCAuthenticationTargets -Targets $UpdateParameters.ExcludeTargets
-        Update-M365DSCAuthenticationTargets -Targets $UpdateParameters.IncludeTargets
-
-        #region resource generator code
-        $UpdateParameters.Add('@odata.type', '#microsoft.graph.qrCodePinAuthenticationMethodConfiguration')
-        Update-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration `
-            -AuthenticationMethodConfigurationId $currentInstance.Id `
-            -BodyParameter $UpdateParameters
-        #endregion
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing the Azure AD Authentication Method Policy QR Code Image with Id {$($currentInstance.Id)}"
-        #region resource generator code
-        Remove-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -AuthenticationMethodConfigurationId $currentInstance.Id
-        #endregion
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [ValidateSet('enabled', 'disabled')]
-        [System.String]
-        $State,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $ExcludeTargets,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $IncludeTargets,
-
-        [Parameter()]
-        [System.UInt32]
-        $StandardQRCodeLifetimeInDays,
-
-        [Parameter()]
-        [ValidateRange(8, 20)]
-        [System.UInt32]
-        $PinLength,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'beta/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/qrCodePin'
-        $response = Invoke-MgGraphRequest -Uri $uri -Method GET
-        [array] $exportedInstances = $response
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($exportedInstances.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($config in $exportedInstances)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            $displayedKey = $config.Id
-            Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $response.Id
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
-            if ($null -ne $Results.ExcludeTargets)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.ExcludeTargets `
-                    -CIMInstanceName 'AADAuthenticationMethodPolicyQRCodeImageExcludeTarget'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.ExcludeTargets = $complexTypeStringResult
+                    $myIncludeTargetsDisplayName = Get-M365DSCGroupDisplayNameById -GroupId $currentIncludeTargets.Id
+                    if ($null -eq $myIncludeTargetsDisplayName)
+                    {
+                        continue
+                    }
+                    $myIncludeTargets.Add('Id', $myIncludeTargetsDisplayName)
                 }
                 else
                 {
-                    $Results.Remove('ExcludeTargets') | Out-Null
+                    $myIncludeTargets.Add('Id', $currentIncludeTargets.id)
+                }
+
+                if ($null -ne $currentIncludeTargets.targetType)
+                {
+                    $myIncludeTargets.Add('TargetType', $currentIncludeTargets.targetType)
+                }
+
+                if ($myIncludeTargets.values.Where({ $null -ne $_ }).Count -gt 0)
+                {
+                    $complexIncludeTargets += $myIncludeTargets
                 }
             }
 
-            if ($null -ne $Results.IncludeTargets)
-            {
-                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.IncludeTargets `
-                    -CIMInstanceName 'AADAuthenticationMethodPolicyQRCodeImageIncludeTarget'
-                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
-                {
-                    $Results.IncludeTargets = $complexTypeStringResult
-                }
-                else
-                {
-                    $Results.Remove('IncludeTargets') | Out-Null
-                }
+            $results = @{
+                Id                           = $instance.Id
+                State                        = $instance.State
+                ExcludeTargets               = $complexExcludeTargets
+                IncludeTargets               = $complexIncludeTargets
+                StandardQRCodeLifetimeInDays = $instance.StandardQRCodeLifetimeInDays
+                PinLength                    = $instance.PinLength
+                Ensure                       = 'Present'
+                Credential                   = $this.Credential
+                ApplicationId                = $this.ApplicationId
+                TenantId                     = $this.TenantId
+                CertificateThumbprint        = $this.CertificateThumbprint
+                CertificatePath              = $this.CertificatePath
+                CertificatePassword          = $this.CertificatePassword
+                ManagedIdentity              = $this.ManagedIdentity
+                AccessTokens                 = $this.AccessTokens
             }
-
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential `
-                -NoEscape @('ExcludeTargets', 'IncludeTargets')
-
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
 
-        throw
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting the Azure AD Authentication Method Policy QR Code with Id {$($this.Id)}"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating the Azure AD Authentication Method Policy QR Code Image with Id {$($currentInstance.Id)}"
+
+            $updateParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
+            $updateParameters.Remove('Id') | Out-Null
+
+            Update-M365DSCAuthenticationTargets -Targets $updateParameters.ExcludeTargets
+            Update-M365DSCAuthenticationTargets -Targets $updateParameters.IncludeTargets
+
+            #region resource generator code
+            $updateParameters.Add('@odata.type', '#microsoft.graph.qrCodePinAuthenticationMethodConfiguration')
+            Update-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration `
+                -AuthenticationMethodConfigurationId $currentInstance.Id `
+                -BodyParameter $updateParameters
+            #endregion
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing the Azure AD Authentication Method Policy QR Code Image with Id {$($currentInstance.Id)}"
+            #region resource generator code
+            Remove-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -AuthenticationMethodConfigurationId $currentInstance.Id
+            #endregion
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array] $exportedInstances = Get-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration `
+                -AuthenticationMethodConfigurationId 'qrCodePin' `
+                -ErrorAction Stop
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($exportedInstances.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $exportedInstances)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $config.Id
+                Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                if ($null -ne $Results.ExcludeTargets)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.ExcludeTargets `
+                        -CIMInstanceName 'AADAuthenticationMethodPolicyQRCodeImageExcludeTarget'
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.ExcludeTargets = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('ExcludeTargets') | Out-Null
+                    }
+                }
+
+                if ($null -ne $Results.IncludeTargets)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.IncludeTargets `
+                        -CIMInstanceName 'AADAuthenticationMethodPolicyQRCodeImageIncludeTarget'
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.IncludeTargets = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('IncludeTargets') | Out-Null
+                    }
+                }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -NoEscape @('ExcludeTargets', 'IncludeTargets')
+
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [AADAuthenticationMethodPolicyQRCodeImage] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADAuthenticationMethodPolicyQRCodeImage])
+        {
+            return $Values
+        }
+
+        $result = [AADAuthenticationMethodPolicyQRCodeImage]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
 
-Export-ModuleMember -Function *-TargetResource
+class MSFT_AADAuthenticationMethodPolicyQRCodeImageExcludeTarget
+{
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The object identifier of an Azure AD group.')]
+    [System.String] $Id
+
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The type of the authentication method target. Possible values are: group and unknownFutureValue.')]
+    [ValidateSet('group', 'unknownFutureValue')]
+    [System.String] $TargetType
+}
+
+class MSFT_AADAuthenticationMethodPolicyQRCodeImageIncludeTarget
+{
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The object identifier of an Azure AD group.')]
+    [System.String] $Id
+
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The type of the authentication method target. Possible values are: group and unknownFutureValue.')]
+    [ValidateSet('group', 'unknownFutureValue')]
+    [System.String] $TargetType
+}

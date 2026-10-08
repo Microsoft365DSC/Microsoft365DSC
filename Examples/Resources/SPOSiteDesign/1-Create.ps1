@@ -5,25 +5,51 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SPOSiteDesign 'ConfigureSiteDesign'
+        SPOSiteScript 'SPOSiteScript-SiteDesign'
         {
-            Title               = "DSC Site Design"
-            SiteScriptNames     = @("Cust List", "List_Views")
-            WebTemplate         = "TeamSite"
-            IsDefault           = $false
-            Description         = "Created by DSC"
-            PreviewImageAltText = "Office 365"
-            Ensure              = "Present"
-            Credential          = $Credscredential
+            Title                 = "Contoso Team Site Lists"
+            Content               = '{"$schema": "https://developer.microsoft.com/json-schemas/sp/site-design-script-actions.schema.json", "actions": [{"verb": "createSPList", "listName": "Customer Tracking", "templateType": 100}], "version": 1}'
+            Description           = "Creates the customer tracking list on new team sites"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
+        }
+
+        SPOSiteDesign 'SPOSiteDesign-Example'
+        {
+            Title                 = "Contoso Team Site Design"
+            SiteScriptNames       = @("Contoso Team Site Lists")
+            WebTemplate           = "TeamSite"
+            IsDefault             = $false
+            Description           = "Standard layout for departmental team sites"
+            PreviewImageAltText   = "Contoso team site layout"
+            PreviewImageUrl       = "https://contoso.sharepoint.com/SiteAssets/team-site-preview.png"
+            Version               = 1
+            DependsOn             = "[SPOSiteScript]SPOSiteScript-SiteDesign"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

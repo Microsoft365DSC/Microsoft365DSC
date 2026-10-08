@@ -5,26 +5,36 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsAIPolicy "TeamsAIPolicy-AIEnabled"
+        TeamsAIPolicy "TeamsAIPolicy-Example"
         {
-            ApplicationId             = $ConfigurationData.NonNodeData.ApplicationId;
-            CertificateThumbprint     = $ConfigurationData.NonNodeData.CertificateThumbprint;
             Description               = "Teams AI Policy with all AI Features enabled.";
             EnrollFace                = "Enabled";
             EnrollVoice               = "Enabled";
             Ensure                    = "Present";
             Identity                  = "AIEnabled";
             SpeakerAttributionForBYOD = "Enabled";
-            TenantId                  = $OrganizationName;
+            ApplicationId             = $ApplicationId;
+            TenantId                  = $TenantId;
+            CertificateThumbprint     = $CertificateThumbprint;
         }
     }
 }

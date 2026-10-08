@@ -26,7 +26,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -34,7 +34,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -52,7 +52,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             Name = "Custom policy internet rule"
                             ruleType = "fqdn"
                             action   = "bypass"
-                            ports    = @(80,443)
+                            ports    = @('80','443')
                             protocol = "tcp"
                             destinations = @(
                                 @{
@@ -64,7 +64,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             Name = "Custom policy internet rule"
                             ruleType = "ipSubnet"
                             action   = "bypass"
-                            ports    = @(80,443)
+                            ports    = @('80','443')
                             protocol = "tcp"
                             destinations = @(
                                 @{
@@ -87,31 +87,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     Name                  = "Custom Bypass";
-                    PolicyRules           = [CimInstance[]]@(
-                        New-CimInstance -ClassName MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule -Property @{
+                    PolicyRules           = @(
+                        [MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule] @{
                             Name           = 'Custom policy internet rule'
                             ActionValue    = 'bypass'
                             RuleType       = 'fqdn'
                             Protocol       = 'tcp'
-                            Ports          = @(80, 443)
+                            Ports          = @('80', '443')
                             Destinations   = @('www.google.com')
-                        } -ClientOnly
+                        }
 
-                        New-CimInstance -ClassName MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule -Property @{
+                        [MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule] @{
                             Name           = 'Custom policy internet rule'
                             ActionValue    = 'bypass'
                             RuleType       = 'ipSubnet'
                             Protocol       = 'tcp'
-                            Ports          = @(80, 443)
+                            Ports          = @('80', '443')
                             Destinations   = @('192.164.0.0/24')
-                        } -ClientOnly
+                        }
                     )
                     Credential          = $Credential;
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADNetworkAccessForwardingPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -119,38 +119,38 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     Name                  = "Custom Bypass";
-                    PolicyRules           = [CimInstance[]]@(
-                        New-CimInstance -ClassName MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule -Property @{
+                    PolicyRules           = @(
+                        [MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule] @{
                             Name           = 'Custom policy internet rule'
                             ActionValue    = 'bypass'
                             RuleType       = 'fqdn'
                             Protocol       = 'tcp'
-                            Ports          = @(80, 443)
+                            Ports          = @('80', '443')
                             Destinations   = @('www.google.com')
-                        } -ClientOnly
-                        New-CimInstance -ClassName MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule -Property @{
+                        }
+                        [MSFT_MicrosoftGraphNetworkAccessForwardingPolicyRule] @{
                             Name           = 'Custom policy internet rule'
                             ActionValue    = 'bypass'
                             RuleType       = 'ipSubnet'
                             Protocol       = 'tcp'
-                            Ports          = @(80, 443)
+                            Ports          = @('80', '443')
                             Destinations   = @('192.164.0.0/28') # Drift
-                        } -ClientOnly
+                        }
                     )
                     Credential          = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Name | Should -Be "Custom Bypass"
+                ((New-M365DSCResourceInstance -ResourceName 'AADNetworkAccessForwardingPolicy' -Property $testParams).Get().ToHashtable()).Name | Should -Be "Custom Bypass"
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADNetworkAccessForwardingPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADNetworkAccessForwardingPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaNetworkAccessForwardingPolicyRule
                 Should -Invoke -CommandName New-MgBetaNetworkAccessForwardingPolicyRule
             }
@@ -165,7 +165,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADNetworkAccessForwardingPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,27 +19,47 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationDomainJoinPolicyWindows10 'Example'
+        IntuneDeviceConfigurationDomainJoinPolicyWindows10 'IntuneDeviceConfigurationDomainJoinPolicyWindows10-Example'
         {
-            ActiveDirectoryDomainName         = "domain.com";
-            Assignments                       = @(
+            ActiveDirectoryDomainName                   = "corp.contoso.com";
+            Assignments                                 = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = '#microsoft.graph.groupAssignmentTarget'
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.allLicensedUsersAssignmentTarget'
+                    groupDisplayName                           = 'Intune Pilot Devices'
                 }
             );
-            ComputerNameStaticPrefix          = "WK-";
-            ComputerNameSuffixRandomCharCount = 12;
-            DisplayName                       = "Domain Join";
-            Ensure                            = "Present";
-            OrganizationalUnit                = "OU=workstation,CN=domain,CN=com";
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ComputerNameStaticPrefix                    = "WKS";
+            ComputerNameSuffixRandomCharCount           = 11;
+            Description                                 = "Joins newly provisioned workstations to the corporate Active Directory domain";
+            DeviceManagementApplicabilityRuleDeviceMode = MSFT_DeviceManagementApplicabilityRuleDeviceMode{
+                Name       = "Standard configuration devices only"
+                DeviceMode = "standardConfiguration"
+                RuleType   = "include"
+            };
+            DeviceManagementApplicabilityRuleOsEdition  = MSFT_DeviceManagementApplicabilityRuleOsEdition{
+                Name           = "Enterprise and Professional editions only"
+                OsEditionTypes = @("windows10Enterprise", "windows10Professional")
+                RuleType       = "include"
+            };
+            DeviceManagementApplicabilityRuleOsVersion  = MSFT_DeviceManagementApplicabilityRuleOsVersion{
+                Name         = "Windows 10 22H2 or later"
+                MinOSVersion = "10.0.19045.0"
+                MaxOSVersion = "10.0.26100.9999"
+                RuleType     = "include"
+            };
+            DisplayName                                 = "Domain Join";
+            Ensure                                      = "Present";
+            OrganizationalUnit                          = "OU=Workstations,OU=Contoso,DC=corp,DC=contoso,DC=com";
+            RoleScopeTagIds                             = @("0");
+            ApplicationId                               = $ApplicationId;
+            TenantId                                    = $TenantId;
+            CertificateThumbprint                       = $CertificateThumbprint;
         }
     }
 }

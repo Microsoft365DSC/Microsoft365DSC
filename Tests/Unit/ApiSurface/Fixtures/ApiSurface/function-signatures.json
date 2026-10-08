@@ -1,0 +1,34 @@
+{
+  "Get-MgBetaTestPolicy": [
+    {
+      "Name": "TestPolicyId",
+      "Type": "System.String"
+    },
+    {
+      "Name": "Filter",
+      "Type": "System.String"
+    },
+    {
+      "Name": "All",
+      "Type": "System.Management.Automation.SwitchParameter"
+    }
+  ],
+  "New-MgBetaTestPolicy": [
+    {
+      "Name": "BodyParameter",
+      "Type": "System.Object"
+    }
+  ],
+  "Remove-MgBetaTestPolicy": [
+    {
+      "Name": "TestPolicyId",
+      "Type": "System.String"
+    }
+  ],
+  "Get-MgBetaTestOverridden": [
+    {
+      "Name": "TestPolicyId",
+      "Type": "System.String"
+    }
+  ]
+}

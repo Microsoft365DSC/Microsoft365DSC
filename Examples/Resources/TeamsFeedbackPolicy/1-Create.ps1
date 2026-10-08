@@ -5,25 +5,37 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsFeedbackPolicy 'Example'
+        TeamsFeedbackPolicy 'TeamsFeedbackPolicy-Example'
         {
             AllowEmailCollection      = $False;
             AllowLogCollection        = $False;
             AllowScreenshotCollection = $False;
-            Credential                = $Credscredential;
             Ensure                    = "Present";
-            Identity                  = "Global";
+            Identity                  = "Frontline Feedback";
             ReceiveSurveysMode        = "EnabledUserOverride";
             UserInitiatedMode         = "Enabled";
+            ApplicationId             = $ApplicationId;
+            TenantId                  = $TenantId;
+            CertificateThumbprint     = $CertificateThumbprint;
         }
     }
 }

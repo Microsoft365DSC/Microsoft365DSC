@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsCallQueue",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsCallQueue",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource is used to manage Call Queue in your Skype for Business Online organization.",
   "roles": {
     "read": [

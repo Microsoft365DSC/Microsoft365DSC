@@ -1,514 +1,350 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_TeamsM365App'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class TeamsM365App : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Application ID of Microsoft Teams app.')]
+    [System.String] $Id
 
-        [Parameter()]
-        [System.Boolean]
-        $IsBlocked,
+    [DscProperty()]
+    [System.ComponentModel.Description('The state of the app in the tenant.')]
+    [System.Nullable[System.Boolean]] $IsBlocked
 
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'UsersAndGroups', 'NoOne')]
-        $AssignmentType,
+    [DscProperty()]
+    [System.ComponentModel.Description('App availability type.')]
+    [ValidateSet('Everyone', 'UsersAndGroups', 'NoOne')]
+    [System.String] $AssignmentType
 
-        [Parameter()]
-        [System.String[]]
-        $Users,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of all the users for whom the app is enabled or disabled.')]
+    [System.String[]] $Users
 
-        [Parameter()]
-        [System.String[]]
-        $Groups,
+    [DscProperty()]
+    [System.ComponentModel.Description('List of all the groups for whom the app is enabled or disabled.')]
+    [System.String[]] $Groups
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for Teams M365App $Id"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [TeamsM365App] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Id -ne $Id)
+        $nullResult = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-                -InboundParameters $PSBoundParameters
-
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullResult = $PSBoundParameters
-            $instance = Get-M365TeamsApp -Id $Id -ErrorAction SilentlyContinue
-        }
-        else
-        {
-            $instance = $Script:exportedInstance
+            $remote = [TeamsM365App]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
 
-        if ($null -eq $instance)
-        {
-            return $nullResult
-        }
+        Write-Verbose -Message "Getting configuration for Teams M365App $($this.Id)"
 
-        $usersValue = @()
-        if ($null -ne $instance.AvailableTo.Users)
-        {
-            foreach ($userEntry in $instance.AvailableTo.Users)
-            {
-                $userInfo = Get-MgUser -UserId $userEntry.Id
-                $usersValue += $userInfo.UserPrincipalName
-            }
-        }
-
-        $groupsValue = @()
-        if ($null -ne $instance.AvailableTo.Groups)
-        {
-            foreach ($groupEntry in $instance.AvailableTo.Groups)
-            {
-                $groupInfo = Get-MgGroup -GroupId $groupEntry.Id
-                $groupsValue += $groupInfo.DisplayName
-            }
-        }
-
-        Write-Verbose -Message "Found an instance with Id {$Id}"
-        $results = @{
-            Id                    = $instance.Id
-            IsBlocked             = [Boolean]$instance.IsBlocked
-            AssignmentType        = $instance.AvailableTo.AssignmentType
-            Users                 = $usersValue
-            Groups                = $groupsValue
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsBlocked,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'UsersAndGroups', 'NoOne')]
-        $AssignmentType,
-
-        [Parameter()]
-        [System.String[]]
-        $Users,
-
-        [Parameter()]
-        [System.String[]]
-        $Groups,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Teams M365App $Id"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    Write-Verbose -Message "Updating {$Id}"
-
-    if ($AssignmentType -eq 'UsersAndGroups')
-    {
-        #region Users
-        $usersDelta = Compare-Object -ReferenceObject $currentInstance.Users -DifferenceObject $Users
-        $usersToAdd = @()
-        $usersToRemove = @()
-        foreach ($delta in $usersDelta)
-        {
-            if ($delta.SideIndicator -eq '<=')
-            {
-                $userInfo = Get-MgUser -UserId $delta.InputObject -ErrorAction Stop
-                $usersToRemove += $userInfo.Id
-            }
-            elseif ($delta.SideIndicator -eq '=>')
-            {
-                $userInfo = Get-MgUser -UserId $delta.InputObject -ErrorAction Stop
-                $usersToAdd += $userInfo.Id
-            }
-        }
-
-        if ($usersToRemove.Length -gt 0)
-        {
-            Write-Verbose -Message "Removing Users Assignments for {$($usersToAdd)}"
-            Update-M365TeamsApp -Id $Id `
-                -IsBlocked $IsBlocked `
-                -AppAssignmentType $AssignmentType `
-                -OperationType 'Remove' `
-                -Users $usersToRemove
-        }
-
-        if ($usersToAdd.Length -gt 0)
-        {
-            Write-Verbose -Message "Removing Users Assignments for {$($usersToAdd)}"
-            Update-M365TeamsApp -Id $Id `
-                -IsBlocked $IsBlocked `
-                -AppAssignmentType $AssignmentType `
-                -OperationType 'Add' `
-                -Users $usersToAdd
-        }
-        #endregion
-
-        #region Groups
-        $groupsDelta = Compare-Object -ReferenceObject $currentInstance.Groups -DifferenceObject $Groups
-        $groupsToAdd = @()
-        $groupsToRemove = @()
-        foreach ($delta in $groupsDelta)
-        {
-            if ($delta.SideIndicator -eq '<=')
-            {
-                $groupInfo = Get-MgGroup -Filter "DisplayName eq '$($delta.InputObject -replace "'", "''")'" -ErrorAction Stop
-                $groupsToRemove += $groupInfo.Id
-            }
-            elseif ($delta.SideIndicator -eq '=>')
-            {
-                $groupInfo = Get-MgGroup -Filter "DisplayName eq '$($delta.InputObject -replace "'", "''")'" -ErrorAction Stop
-                $groupsToAdd += $groupInfo.Id
-            }
-        }
-
-        if ($groupsToRemove.Length -gt 0)
-        {
-            Write-Verbose -Message "Removing Group Assignments for {$($groupsToRemove)}"
-            Update-M365TeamsApp -Id $Id `
-                -IsBlocked $IsBlocked `
-                -AppAssignmentType $AssignmentType `
-                -OperationType 'Remove' `
-                -Groups $groupsToRemove
-        }
-
-        if ($groupsToAdd.Length -gt 0)
-        {
-            Write-Verbose -Message "Adding Group Assignments for {$($groupsToAdd)}"
-            Update-M365TeamsApp -Id $Id `
-                -IsBlocked $IsBlocked `
-                -AppAssignmentType $AssignmentType `
-                -OperationType 'Add' `
-                -Groups $groupsToAdd
-        }
-        #endregion
-    }
-    else
-    {
-        Write-Verbose -Message "Updating core settings for app {$Id}"
-        Update-M365TeamsApp -Id $Id `
-            -IsBlocked $IsBlocked `
-            -AppAssignmentType $AssignmentType
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Id,
-
-        [Parameter()]
-        [System.Boolean]
-        $IsBlocked,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'UsersAndGroups', 'NoOne')]
-        $AssignmentType,
-
-        [Parameter()]
-        [System.String[]]
-        $Users,
-
-        [Parameter()]
-        [System.String[]]
-        $Groups,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array] $exportedInstances = @()
         try
         {
-            [array] $exportedInstances = Get-AllM365TeamsApps -ErrorAction Stop
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Id -ne $this.Id)
+            {
+                $null = $this.Connect('MicrosoftTeams')
+
+                $null = $this.Connect('MicrosoftGraph')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullResult = $this.GetBoundParameters()
+                $instance = Get-M365TeamsApp -Id $this.Id -ErrorAction SilentlyContinue
+            }
+            else
+            {
+                $instance = $this.ExportedInstance
+            }
+
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            $usersValue = @()
+            if ($null -ne $instance.AvailableTo.Users)
+            {
+                foreach ($userEntry in $instance.AvailableTo.Users)
+                {
+                    $userInfo = Get-MgUser -UserId $userEntry.Id
+                    $usersValue += $userInfo.UserPrincipalName
+                }
+            }
+
+            $groupsValue = @()
+            if ($null -ne $instance.AvailableTo.Groups)
+            {
+                foreach ($groupEntry in $instance.AvailableTo.Groups)
+                {
+                    $groupInfo = Get-MgGroup -GroupId $groupEntry.Id
+                    $groupsValue += $groupInfo.DisplayName
+                }
+            }
+
+            Write-Verbose -Message "Found an instance with Id {$($this.Id)}"
+            $results = @{
+                Id                    = $instance.Id
+                IsBlocked             = [Boolean]$instance.IsBlocked
+                AssignmentType        = $instance.AvailableTo.AssignmentType
+                Users                 = $usersValue
+                Groups                = $groupsValue
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+            return $this.AsResult($results)
         }
         catch
         {
-            Write-Verbose $_
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($exportedInstances.Length -eq 0)
+        Write-Verbose -Message "Setting configuration for Teams M365App $($this.Id)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        Write-Verbose -Message "Updating {$($this.Id)}"
+
+        if ($this.AssignmentType -eq 'UsersAndGroups')
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            #region Users
+            $usersDelta = Compare-Object -ReferenceObject $currentInstance.Users -DifferenceObject $this.Users
+            $usersToAdd = @()
+            $usersToRemove = @()
+            foreach ($delta in $usersDelta)
+            {
+                if ($delta.SideIndicator -eq '<=')
+                {
+                    $userInfo = Get-MgUser -UserId $delta.InputObject -ErrorAction Stop
+                    $usersToRemove += $userInfo.Id
+                }
+                elseif ($delta.SideIndicator -eq '=>')
+                {
+                    $userInfo = Get-MgUser -UserId $delta.InputObject -ErrorAction Stop
+                    $usersToAdd += $userInfo.Id
+                }
+            }
+
+            if ($usersToRemove.Length -gt 0)
+            {
+                Write-Verbose -Message "Removing Users Assignments for {$($usersToAdd)}"
+                Update-M365TeamsApp -Id $this.Id `
+                    -IsBlocked $this.IsBlocked `
+                    -AppAssignmentType $this.AssignmentType `
+                    -OperationType 'Remove' `
+                    -Users $usersToRemove
+            }
+
+            if ($usersToAdd.Length -gt 0)
+            {
+                Write-Verbose -Message "Removing Users Assignments for {$($usersToAdd)}"
+                Update-M365TeamsApp -Id $this.Id `
+                    -IsBlocked $this.IsBlocked `
+                    -AppAssignmentType $this.AssignmentType `
+                    -OperationType 'Add' `
+                    -Users $usersToAdd
+            }
+            #endregion
+
+            #region Groups
+            $groupsDelta = Compare-Object -ReferenceObject $currentInstance.Groups -DifferenceObject $this.Groups
+            $groupsToAdd = @()
+            $groupsToRemove = @()
+            foreach ($delta in $groupsDelta)
+            {
+                if ($delta.SideIndicator -eq '<=')
+                {
+                    $groupInfo = Get-MgGroup -Filter "DisplayName eq '$($delta.InputObject -replace "'", "''")'" -ErrorAction Stop
+                    $groupsToRemove += $groupInfo.Id
+                }
+                elseif ($delta.SideIndicator -eq '=>')
+                {
+                    $groupInfo = Get-MgGroup -Filter "DisplayName eq '$($delta.InputObject -replace "'", "''")'" -ErrorAction Stop
+                    $groupsToAdd += $groupInfo.Id
+                }
+            }
+
+            if ($groupsToRemove.Length -gt 0)
+            {
+                Write-Verbose -Message "Removing Group Assignments for {$($groupsToRemove)}"
+                Update-M365TeamsApp -Id $this.Id `
+                    -IsBlocked $this.IsBlocked `
+                    -AppAssignmentType $this.AssignmentType `
+                    -OperationType 'Remove' `
+                    -Groups $groupsToRemove
+            }
+
+            if ($groupsToAdd.Length -gt 0)
+            {
+                Write-Verbose -Message "Adding Group Assignments for {$($groupsToAdd)}"
+                Update-M365TeamsApp -Id $this.Id `
+                    -IsBlocked $this.IsBlocked `
+                    -AppAssignmentType $this.AssignmentType `
+                    -OperationType 'Add' `
+                    -Groups $groupsToAdd
+            }
+            #endregion
         }
         else
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            Write-Verbose -Message "Updating core settings for app {$($this.Id)}"
+            Update-M365TeamsApp -Id $this.Id `
+                -IsBlocked $this.IsBlocked `
+                -AppAssignmentType $this.AssignmentType
         }
-        foreach ($config in $exportedInstances)
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            $displayedKey = $config.Id
-            Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Id                    = $config.Id
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftTeams')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array] $exportedInstances = @()
+            try
+            {
+                [array] $exportedInstances = Get-AllM365TeamsApps -ErrorAction Stop
+            }
+            catch
+            {
+                Write-Verbose $_
             }
 
-            $Script:exportedInstance = $config
-            $Results = Get-TargetResource @Params
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($exportedInstances.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $exportedInstances)
+            {
+                $displayedKey = $config.Id
+                Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Id                    = $config.Id
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
 
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $this.ExportedInstance = $config
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [TeamsM365App] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [TeamsM365App])
+        {
+            return $Values
+        }
+
+        $result = [TeamsM365App]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

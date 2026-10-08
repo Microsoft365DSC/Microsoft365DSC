@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,17 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        PPPowerAppPolicyUrlPatterns "PPPowerAppPolicyUrlPatterns"
+        PPPowerAppPolicyUrlPatterns "PPPowerAppPolicyUrlPatterns-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
             Ensure                = "Absent";
-            PolicyName            = "DSCPolicy";
+            PolicyName            = "Contoso Data Policy";
             PPTenantId            = "e91d4e0e-d5a5-4e3a-be14-2192592a59af";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

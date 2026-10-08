@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,22 +19,23 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXODkimSigningConfig 'ConfigureDKIMSigning'
+        EXODkimSigningConfig 'EXODkimSigningConfig-Example'
         {
-            KeySize                = 1024
+            KeySize                = 2048
             Identity               = $TenantId
             HeaderCanonicalization = "Relaxed"
-            Enabled                = $False # Updated Property
+            Enabled                = $false
             BodyCanonicalization   = "Relaxed"
-            AdminDisplayName       = ""
+            AdminDisplayName       = "Signing keys for the initial domain"
             Ensure                 = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId          = $ApplicationId
+            TenantId               = $TenantId
+            CertificateThumbprint  = $CertificateThumbprint
         }
     }
 }

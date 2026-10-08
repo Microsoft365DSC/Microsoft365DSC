@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -32,7 +32,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -73,11 +73,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Mock -CommandName Get-RoleGroup -MockWith {
                     return @{
                         Name        = 'Contoso Role Group'
-                        Members     = 'Group1'
+                        Members     = @('Group1')
                         Description = 'This is the Contoso Role Group'
                     }
                 }
-                Mock -Command Get-RoleGroupMember -parameterFilter { $name -eq 'Contoso Role Group'}  -MockWith {
+                Mock -Command Get-RoleGroupMember -parameterFilter { $Identity -eq 'Contoso Role Group'}  -MockWith {
                     [PSCustomObject]@{
                         Name = 'Group1'
                         Alias = '00000000-0000-0000-0000-000000000000'
@@ -86,11 +86,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroupMember' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Add-RoleGroupMember method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroupMember' -Property $testParams).Set()
                 Should -Invoke -CommandName Add-RoleGroupMember -Exactly 1
             }
         }
@@ -112,17 +112,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         Description = 'This is the Contoso Role Group'
                     }
                 }
-                Mock -Command Get-RoleGroupMember -parameterFilter { $name -eq 'Contoso Role Group'}  -MockWith {
+                Mock -Command Get-RoleGroupMember -parameterFilter { $Identity -eq 'Contoso Role Group'}  -MockWith {
                     [PSCustomObject]@{Name = 'Group1'; Alias = "00000000-0000-0000-0000-000000000000" }, [PSCustomObject]@{Name = 'User1'; Alias = "User1@contoso.com" }, [PSCustomObject]@{Name = 'User2'; Alias = "User2@contoso.com" }, [PSCustomObject]@{Name = 'User3'; Alias = "User3@contoso.com" }
                 }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroupMember' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Remove-RoleGroupMember method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroupMember' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-RoleGroupMember -Exactly 1
             }
         }
@@ -147,11 +147,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroupMember' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Remove-RoleGroupMember method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroupMember' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-RoleGroupMember -Exactly 3
             }
         }
@@ -184,7 +184,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroupMember' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -204,13 +204,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     }
                 }
 
-                Mock -Command Get-RoleGroupMember -parameterFilter { $name -eq 'Contoso Role Group'}  -MockWith {
+                Mock -Command Get-RoleGroupMember -parameterFilter { $Identity -eq 'Contoso Role Group'}  -MockWith {
                     [PSCustomObject]@{Name = 'Group1'; Alias = "00000000-0000-0000-0000-000000000000" }, [PSCustomObject]@{Name = 'User1'; Alias = "User1@contoso.com" }, [PSCustomObject]@{Name = 'User2'; Alias = "User2@contoso.com" }
                 }
             }
 
             It 'Should Reverse Engineer resource from the Export method when single' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCRoleGroupMember' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

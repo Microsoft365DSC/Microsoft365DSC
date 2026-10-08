@@ -1,26 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <AssemblyName>Microsoft365DSC.Connection</AssemblyName>
     <RootNamespace>Microsoft365DSC.Connection</RootNamespace>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Authors>Microsoft365DSC Team</Authors>
-    <Company>Microsoft365DSC</Company>
-    <Product>Microsoft365DSC Utilities</Product>
-    <Description>Performance-optimized C# utilities for Microsoft365DSC configuration operations</Description>
-    <Copyright>Copyright © Microsoft365DSC</Copyright>
-    <Version>1.0.0</Version>
+    <Product>Microsoft365DSC Connection</Product>
+    <Description>Performance-optimized C# helpers for resolving Microsoft365DSC resource authentication methods</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Microsoft365DSC.Utilities\Microsoft365DSC.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

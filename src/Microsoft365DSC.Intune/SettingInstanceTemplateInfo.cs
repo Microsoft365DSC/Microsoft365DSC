@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,11 +74,11 @@ namespace Microsoft365DSC.Intune
     ///
     /// The template objects have a dual nature:
     /// <list type="bullet">
-    /// <item>Root templates (from <c>$settingTemplate.SettingInstanceTemplate</c>): most data in <c>AdditionalProperties</c></item>
+    /// <item>Root templates (from <c>$settingTemplate.SettingInstanceTemplate</c>): most data one level down</item>
     /// <item>Child templates (from value template's <c>children</c>): data at top level (plain dictionaries)</item>
     /// </list>
     /// </summary>
-    public static class SettingInstanceTemplateMapper
+    internal static class SettingInstanceTemplateMapper
     {
         private const string ODataTypePrefix = "#microsoft.graph.deviceManagementConfiguration";
 
@@ -87,7 +87,7 @@ namespace Microsoft365DSC.Intune
         /// </summary>
         /// <param name="template">The raw Graph SDK object, PSObject, or Hashtable.</param>
         /// <param name="isRoot">
-        /// True for root-level templates where OData type and value templates are in AdditionalProperties.
+        /// True for root-level templates where OData type and value templates are nested one level down.
         /// False for child templates where data is at the top level.
         /// </param>
         public static SettingInstanceTemplateInfo FromGraphObject(object template)
@@ -112,7 +112,7 @@ namespace Microsoft365DSC.Intune
             string settingValueName = settingType.Replace(ODataTypePrefix, "").Replace("Instance", "Value");
             if (settingValueName.Length > 0)
             {
-                settingValueName = char.ToLowerInvariant(settingValueName[0]) + settingValueName.Substring(1);
+                settingValueName = SettingsCatalogHelper.ToCamelCase(settingValueName);
             }
             info.SettingValueName = settingValueName;
 
@@ -188,7 +188,7 @@ namespace Microsoft365DSC.Intune
     /// Maps raw Graph API setting template objects to <see cref="SettingTemplateInfo"/>.
     /// These are the objects returned by <c>Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate</c>.
     /// </summary>
-    public static class SettingTemplateMapper
+    internal static class SettingTemplateMapper
     {
         /// <summary>
         /// Maps a single setting template from the Graph API.

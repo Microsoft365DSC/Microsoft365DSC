@@ -1,742 +1,433 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOGlobalAddressList'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOGlobalAddressList : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateLength(1, 64)]
-        [System.String]
-        $Name,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Name parameter specifies the unique name of the GAL. The maximum length is 64 characters.')]
+    [ValidateLength(1, 64)]
+    [System.String] $Name
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCompany,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCompany parameter specifies a precanned filter that''s based on the value of the recipient''s Company property.')]
+    [System.String[]] $ConditionalCompany
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute1,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute1 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute1 property.')]
+    [System.String[]] $ConditionalCustomAttribute1
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute10,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute10 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute10 property.')]
+    [System.String[]] $ConditionalCustomAttribute10
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute11,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute11 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute11 property.')]
+    [System.String[]] $ConditionalCustomAttribute11
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute12,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute12 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute12 property.')]
+    [System.String[]] $ConditionalCustomAttribute12
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute13,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute13 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute13 property.')]
+    [System.String[]] $ConditionalCustomAttribute13
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute14,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute14 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute14 property.')]
+    [System.String[]] $ConditionalCustomAttribute14
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute15,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute15 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute15 property.')]
+    [System.String[]] $ConditionalCustomAttribute15
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute2,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute2 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute2 property.')]
+    [System.String[]] $ConditionalCustomAttribute2
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute3,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute3 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute3 property.')]
+    [System.String[]] $ConditionalCustomAttribute3
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute4,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute4 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute4 property.')]
+    [System.String[]] $ConditionalCustomAttribute4
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute5,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute5 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute5 property.')]
+    [System.String[]] $ConditionalCustomAttribute5
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute6,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute6 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute6 property.')]
+    [System.String[]] $ConditionalCustomAttribute6
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute7,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute7 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute7 property.')]
+    [System.String[]] $ConditionalCustomAttribute7
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute8,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute8 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute8 property.')]
+    [System.String[]] $ConditionalCustomAttribute8
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute9,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalCustomAttribute9 parameter specifies a precanned filter that''s based on the value of the recipient''s CustomAttribute9 property.')]
+    [System.String[]] $ConditionalCustomAttribute9
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalDepartment,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalDepartment parameter specifies a precanned filter that''s based on the value of the recipient''s Department property.')]
+    [System.String[]] $ConditionalDepartment
 
-        [Parameter()]
-        [System.String[]]
-        $ConditionalStateOrProvince,
+    [DscProperty()]
+    [System.ComponentModel.Description('The ConditionalStateOrProvince parameter specifies a precanned filter that''s based on the value of the recipient''s StateOrProvince property.')]
+    [System.String[]] $ConditionalStateOrProvince
 
-        [Parameter()]
-        [ValidateSet('', 'AllRecipients', 'MailboxUsers', 'MailContacts', 'MailGroups', 'MailUsers', 'Resources')]
-        [System.String[]]
-        $IncludedRecipients,
+    [DscProperty()]
+    [System.ComponentModel.Description('The IncludedRecipients parameter specifies a precanned filter that''s based on the recipient type.')]
+    [ValidateSet('', 'AllRecipients', 'MailboxUsers', 'MailContacts', 'MailGroups', 'MailUsers', 'Resources')]
+    [System.String[]] $IncludedRecipients
 
-        [Parameter()]
-        [System.String]
-        $RecipientFilter,
+    [DscProperty()]
+    [System.ComponentModel.Description('The RecipientFilter parameter specifies an OPath filter that''s based on the value of any available recipient property.')]
+    [System.String] $RecipientFilter
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if the Global Address List should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting Global Address List configuration for $Name"
-
-    try
+    [EXOGlobalAddressList] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Name -ne $Name)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOGlobalAddressList]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting Global Address List configuration for $($this.Name)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            if ($null -eq (Get-Command 'Get-GlobalAddressList' -ErrorAction SilentlyContinue))
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.Name)
             {
-                Write-Warning -Message "Command 'Get-GlobalAddressList' not found. Returning Absent for Global Address List $($Name)."
-                return $nullReturn
+                $null = $this.Connect('ExchangeOnline')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                if ($null -eq (Get-Command 'Get-GlobalAddressList' -ErrorAction SilentlyContinue))
+                {
+                    Write-Warning -Message "Command 'Get-GlobalAddressList' not found. Returning Absent for Global Address List $($this.Name)."
+                    return $this.AsResult($nullReturn)
+                }
+
+                $GlobalAddressList = Get-GlobalAddressList -Identity $this.Name -ErrorAction SilentlyContinue
+                if ($null -eq $GlobalAddressList)
+                {
+                    Write-Verbose -Message "Global Address List $($this.Name) does not exist."
+                    return $this.AsResult($nullReturn)
+                }
+            }
+            else
+            {
+                $GlobalAddressList = $this.ExportedInstance
             }
 
-            $GlobalAddressList = Get-GlobalAddressList -Identity $Name -ErrorAction SilentlyContinue
-            if ($null -eq $GlobalAddressList)
+            $includedRecipientsValue = ''
+            if ($null -ne $GlobalAddressList.IncludedRecipients)
             {
-                Write-Verbose -Message "Global Address List $($Name) does not exist."
-                return $nullReturn
+                $includedRecipientsValue = $GlobalAddressList.IncludedRecipients
+            }
+
+            $result = @{
+                Name                         = $GlobalAddressList.Name
+                ConditionalCompany           = $GlobalAddressList.ConditionalCompany
+                ConditionalCustomAttribute1  = $GlobalAddressList.ConditionalCustomAttribute1
+                ConditionalCustomAttribute10 = $GlobalAddressList.ConditionalCustomAttribute10
+                ConditionalCustomAttribute11 = $GlobalAddressList.ConditionalCustomAttribute11
+                ConditionalCustomAttribute12 = $GlobalAddressList.ConditionalCustomAttribute12
+                ConditionalCustomAttribute13 = $GlobalAddressList.ConditionalCustomAttribute13
+                ConditionalCustomAttribute14 = $GlobalAddressList.ConditionalCustomAttribute14
+                ConditionalCustomAttribute15 = $GlobalAddressList.ConditionalCustomAttribute15
+                ConditionalCustomAttribute2  = $GlobalAddressList.ConditionalCustomAttribute2
+                ConditionalCustomAttribute3  = $GlobalAddressList.ConditionalCustomAttribute3
+                ConditionalCustomAttribute4  = $GlobalAddressList.ConditionalCustomAttribute4
+                ConditionalCustomAttribute5  = $GlobalAddressList.ConditionalCustomAttribute5
+                ConditionalCustomAttribute6  = $GlobalAddressList.ConditionalCustomAttribute6
+                ConditionalCustomAttribute7  = $GlobalAddressList.ConditionalCustomAttribute7
+                ConditionalCustomAttribute8  = $GlobalAddressList.ConditionalCustomAttribute8
+                ConditionalCustomAttribute9  = $GlobalAddressList.ConditionalCustomAttribute9
+                ConditionalDepartment        = $GlobalAddressList.ConditionalDepartment
+                ConditionalStateOrProvince   = $GlobalAddressList.ConditionalStateOrProvince
+                IncludedRecipients           = $includedRecipientsValue
+                RecipientFilter              = $GlobalAddressList.RecipientFilter
+                Ensure                       = 'Present'
+                Credential                   = $this.Credential
+                ApplicationId                = $this.ApplicationId
+                CertificateThumbprint        = $this.CertificateThumbprint
+                CertificatePath              = $this.CertificatePath
+                CertificatePassword          = $this.CertificatePassword
+                ManagedIdentity              = $this.ManagedIdentity
+                TenantId                     = $this.TenantId
+                AccessTokens                 = $this.AccessTokens
+            }
+
+            Write-Verbose -Message "Found Global Address List $($this.Name)"
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting Global Address List configuration for $($this.Name)"
+
+        $currentGlobalAddressListConfig = $this.Get().ToHashtable()
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $null = $this.Connect('ExchangeOnline')
+
+        # RecipientFilter parameter cannot be used in combination with the IncludedRecipients parameter or any Conditional parameters (which are used to create precanned filters).
+        if ($this.RecipientFilter)
+        {
+            $NewGlobalAddressListParams = @{
+                Name            = $this.Name
+                RecipientFilter = $this.RecipientFilter
+                Confirm         = $false
             }
         }
         else
         {
-            $GlobalAddressList = $Script:exportedInstance
+            $NewGlobalAddressListParams = @{
+                Name                         = $this.Name
+                ConditionalCompany           = $this.ConditionalCompany
+                ConditionalCustomAttribute1  = $this.ConditionalCustomAttribute1
+                ConditionalCustomAttribute10 = $this.ConditionalCustomAttribute10
+                ConditionalCustomAttribute11 = $this.ConditionalCustomAttribute11
+                ConditionalCustomAttribute12 = $this.ConditionalCustomAttribute12
+                ConditionalCustomAttribute13 = $this.ConditionalCustomAttribute13
+                ConditionalCustomAttribute14 = $this.ConditionalCustomAttribute14
+                ConditionalCustomAttribute15 = $this.ConditionalCustomAttribute15
+                ConditionalCustomAttribute2  = $this.ConditionalCustomAttribute2
+                ConditionalCustomAttribute3  = $this.ConditionalCustomAttribute3
+                ConditionalCustomAttribute4  = $this.ConditionalCustomAttribute4
+                ConditionalCustomAttribute5  = $this.ConditionalCustomAttribute5
+                ConditionalCustomAttribute6  = $this.ConditionalCustomAttribute6
+                ConditionalCustomAttribute7  = $this.ConditionalCustomAttribute7
+                ConditionalCustomAttribute8  = $this.ConditionalCustomAttribute8
+                ConditionalCustomAttribute9  = $this.ConditionalCustomAttribute9
+                ConditionalDepartment        = $this.ConditionalDepartment
+                ConditionalStateOrProvince   = $this.ConditionalStateOrProvince
+                Confirm                      = $false
+            }
+
+            if (-not [System.String]::IsNullOrEmpty($this.IncludedRecipients))
+            {
+                $NewGlobalAddressListParams.Add('IncludedRecipients', $this.IncludedRecipients)
+            }
         }
 
-        if ($null -eq $GlobalAddressList.IncludedRecipients)
-        {
-            $IncludedRecipients = ''.ToString()
-        }
-        else
-        {
-            $IncludedRecipients = $GlobalAddressList.IncludedRecipients
-        }
-
-        $result = @{
-            Name                         = $GlobalAddressList.Name
-            ConditionalCompany           = $GlobalAddressList.ConditionalCompany
-            ConditionalCustomAttribute1  = $GlobalAddressList.ConditionalCustomAttribute1
-            ConditionalCustomAttribute10 = $GlobalAddressList.ConditionalCustomAttribute10
-            ConditionalCustomAttribute11 = $GlobalAddressList.ConditionalCustomAttribute11
-            ConditionalCustomAttribute12 = $GlobalAddressList.ConditionalCustomAttribute12
-            ConditionalCustomAttribute13 = $GlobalAddressList.ConditionalCustomAttribute13
-            ConditionalCustomAttribute14 = $GlobalAddressList.ConditionalCustomAttribute14
-            ConditionalCustomAttribute15 = $GlobalAddressList.ConditionalCustomAttribute15
-            ConditionalCustomAttribute2  = $GlobalAddressList.ConditionalCustomAttribute2
-            ConditionalCustomAttribute3  = $GlobalAddressList.ConditionalCustomAttribute3
-            ConditionalCustomAttribute4  = $GlobalAddressList.ConditionalCustomAttribute4
-            ConditionalCustomAttribute5  = $GlobalAddressList.ConditionalCustomAttribute5
-            ConditionalCustomAttribute6  = $GlobalAddressList.ConditionalCustomAttribute6
-            ConditionalCustomAttribute7  = $GlobalAddressList.ConditionalCustomAttribute7
-            ConditionalCustomAttribute8  = $GlobalAddressList.ConditionalCustomAttribute8
-            ConditionalCustomAttribute9  = $GlobalAddressList.ConditionalCustomAttribute9
-            ConditionalDepartment        = $GlobalAddressList.ConditionalDepartment
-            ConditionalStateOrProvince   = $GlobalAddressList.ConditionalStateOrProvince
-            IncludedRecipients           = $IncludedRecipients
-            RecipientFilter              = $GlobalAddressList.RecipientFilter
-            Ensure                       = 'Present'
-            Credential                   = $Credential
-            ApplicationId                = $ApplicationId
-            CertificateThumbprint        = $CertificateThumbprint
-            CertificatePath              = $CertificatePath
-            CertificatePassword          = $CertificatePassword
-            ManagedIdentity              = $ManagedIdentity.IsPresent
-            TenantId                     = $TenantId
-            AccessTokens                 = $AccessTokens
-        }
-
-        Write-Verbose -Message "Found Global Address List $($Name)"
-        return $result
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateLength(1, 64)]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCompany,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute1,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute10,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute11,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute12,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute13,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute14,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute15,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute2,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute3,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute4,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute5,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute6,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute7,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute8,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute9,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalDepartment,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalStateOrProvince,
-
-        [Parameter()]
-        [ValidateSet('', 'AllRecipients', 'MailboxUsers', 'MailContacts', 'MailGroups', 'MailUsers', 'Resources')]
-        [System.String[]]
-        $IncludedRecipients,
-
-        [Parameter()]
-        [System.String]
-        $RecipientFilter,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting Global Address List configuration for $Name"
-
-    $currentGlobalAddressListConfig = Get-TargetResource @PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    # RecipientFilter parameter cannot be used in combination with the IncludedRecipients parameter or any Conditional parameters (which are used to create precanned filters).
-    if ($RecipientFilter)
-    {
-        $NewGlobalAddressListParams = @{
-            Name            = $Name
-            RecipientFilter = $RecipientFilter
-            Confirm         = $false
-        }
-    }
-    else
-    {
-        $NewGlobalAddressListParams = @{
-            Name                         = $Name
-            ConditionalCompany           = $ConditionalCompany
-            ConditionalCustomAttribute1  = $ConditionalCustomAttribute1
-            ConditionalCustomAttribute10 = $ConditionalCustomAttribute10
-            ConditionalCustomAttribute11 = $ConditionalCustomAttribute11
-            ConditionalCustomAttribute12 = $ConditionalCustomAttribute12
-            ConditionalCustomAttribute13 = $ConditionalCustomAttribute13
-            ConditionalCustomAttribute14 = $ConditionalCustomAttribute14
-            ConditionalCustomAttribute15 = $ConditionalCustomAttribute15
-            ConditionalCustomAttribute2  = $ConditionalCustomAttribute2
-            ConditionalCustomAttribute3  = $ConditionalCustomAttribute3
-            ConditionalCustomAttribute4  = $ConditionalCustomAttribute4
-            ConditionalCustomAttribute5  = $ConditionalCustomAttribute5
-            ConditionalCustomAttribute6  = $ConditionalCustomAttribute6
-            ConditionalCustomAttribute7  = $ConditionalCustomAttribute7
-            ConditionalCustomAttribute8  = $ConditionalCustomAttribute8
-            ConditionalCustomAttribute9  = $ConditionalCustomAttribute9
-            ConditionalDepartment        = $ConditionalDepartment
-            ConditionalStateOrProvince   = $ConditionalStateOrProvince
+        $SetGlobalAddressListParams = @{
+            Identity                     = $this.Name
+            Name                         = $this.Name
+            ConditionalCompany           = $this.ConditionalCompany
+            ConditionalCustomAttribute1  = $this.ConditionalCustomAttribute1
+            ConditionalCustomAttribute10 = $this.ConditionalCustomAttribute10
+            ConditionalCustomAttribute11 = $this.ConditionalCustomAttribute11
+            ConditionalCustomAttribute12 = $this.ConditionalCustomAttribute12
+            ConditionalCustomAttribute13 = $this.ConditionalCustomAttribute13
+            ConditionalCustomAttribute14 = $this.ConditionalCustomAttribute14
+            ConditionalCustomAttribute15 = $this.ConditionalCustomAttribute15
+            ConditionalCustomAttribute2  = $this.ConditionalCustomAttribute2
+            ConditionalCustomAttribute3  = $this.ConditionalCustomAttribute3
+            ConditionalCustomAttribute4  = $this.ConditionalCustomAttribute4
+            ConditionalCustomAttribute5  = $this.ConditionalCustomAttribute5
+            ConditionalCustomAttribute6  = $this.ConditionalCustomAttribute6
+            ConditionalCustomAttribute7  = $this.ConditionalCustomAttribute7
+            ConditionalCustomAttribute8  = $this.ConditionalCustomAttribute8
+            ConditionalCustomAttribute9  = $this.ConditionalCustomAttribute9
+            ConditionalDepartment        = $this.ConditionalDepartment
+            ConditionalStateOrProvince   = $this.ConditionalStateOrProvince
             Confirm                      = $false
         }
 
-        if (-not [System.String]::IsNullOrEmpty($IncludedRecipients))
+        if (-not [System.String]::IsNullOrEmpty($this.IncludedRecipients))
         {
-            $NewGlobalAddressListParams.Add('IncludedRecipients', $IncludedRecipients)
+            $SetGlobalAddressListParams.Add('IncludedRecipients', $this.IncludedRecipients)
+        }
+
+        if (-not [System.String]::IsNullOrEmpty($this.RecipientFilter))
+        {
+            $SetGlobalAddressListParams.Add('RecipientFilter', $this.RecipientFilter)
+        }
+
+        # CASE: Global Address List doesn't exist but should;
+        if ($this.Ensure -eq 'Present' -and $currentGlobalAddressListConfig.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Global Address List '$($this.Name)' does not exist but it should. Create and configure it."
+            # Create Global Address List
+            New-GlobalAddressList @NewGlobalAddressListParams
+
+        }
+        # CASE: Global Address List exists but it shouldn't;
+        elseif ($this.Ensure -eq 'Absent' -and $currentGlobalAddressListConfig.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Global Address List '$($this.Name)' exists but it shouldn't. Remove it."
+            Remove-GlobalAddressList -Identity $this.Name -Confirm:$false
+        }
+        # CASE: Global Address List exists and it should, but has different values than the desired ones
+        elseif ($this.Ensure -eq 'Present' -and $currentGlobalAddressListConfig.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Global Address List '$($this.Name)' already exists, but needs updating."
+            Write-Verbose -Message "Setting Global Address List $($this.Name) with values: $(Convert-M365DscHashtableToString -Hashtable $SetGlobalAddressListParams)"
+            Set-GlobalAddressList @SetGlobalAddressListParams
         }
     }
 
-    $SetGlobalAddressListParams = @{
-        Identity                     = $Name
-        Name                         = $Name
-        ConditionalCompany           = $ConditionalCompany
-        ConditionalCustomAttribute1  = $ConditionalCustomAttribute1
-        ConditionalCustomAttribute10 = $ConditionalCustomAttribute10
-        ConditionalCustomAttribute11 = $ConditionalCustomAttribute11
-        ConditionalCustomAttribute12 = $ConditionalCustomAttribute12
-        ConditionalCustomAttribute13 = $ConditionalCustomAttribute13
-        ConditionalCustomAttribute14 = $ConditionalCustomAttribute14
-        ConditionalCustomAttribute15 = $ConditionalCustomAttribute15
-        ConditionalCustomAttribute2  = $ConditionalCustomAttribute2
-        ConditionalCustomAttribute3  = $ConditionalCustomAttribute3
-        ConditionalCustomAttribute4  = $ConditionalCustomAttribute4
-        ConditionalCustomAttribute5  = $ConditionalCustomAttribute5
-        ConditionalCustomAttribute6  = $ConditionalCustomAttribute6
-        ConditionalCustomAttribute7  = $ConditionalCustomAttribute7
-        ConditionalCustomAttribute8  = $ConditionalCustomAttribute8
-        ConditionalCustomAttribute9  = $ConditionalCustomAttribute9
-        ConditionalDepartment        = $ConditionalDepartment
-        ConditionalStateOrProvince   = $ConditionalStateOrProvince
-        Confirm                      = $false
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
     }
 
-    if (-not [System.String]::IsNullOrEmpty($IncludedRecipients))
+    [string] Export()
     {
-        $SetGlobalAddressListParams.Add('IncludedRecipients', $IncludedRecipients)
-    }
-
-    if (-not [System.String]::IsNullOrEmpty($RecipientFilter))
-    {
-        $SetGlobalAddressListParams.Add('RecipientFilter', $RecipientFilter)
-    }
-
-    # CASE: Global Address List doesn't exist but should;
-    if ($Ensure -eq 'Present' -and $currentGlobalAddressListConfig.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Global Address List '$($Name)' does not exist but it should. Create and configure it."
-        # Create Global Address List
-        New-GlobalAddressList @NewGlobalAddressListParams
-
-    }
-    # CASE: Global Address List exists but it shouldn't;
-    elseif ($Ensure -eq 'Absent' -and $currentGlobalAddressListConfig.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Global Address List '$($Name)' exists but it shouldn't. Remove it."
-        Remove-GlobalAddressList -Identity $Name -Confirm:$false
-    }
-    # CASE: Global Address List exists and it should, but has different values than the desired ones
-    elseif ($Ensure -eq 'Present' -and $currentGlobalAddressListConfig.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Global Address List '$($Name)' already exists, but needs updating."
-        Write-Verbose -Message "Setting Global Address List $($Name) with values: $(Convert-M365DscHashtableToString -Hashtable $SetGlobalAddressListParams)"
-        Set-GlobalAddressList @SetGlobalAddressListParams
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateLength(1, 64)]
-        [System.String]
-        $Name,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCompany,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute1,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute10,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute11,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute12,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute13,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute14,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute15,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute2,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute3,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute4,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute5,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute6,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute7,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute8,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalCustomAttribute9,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalDepartment,
-
-        [Parameter()]
-        [System.String[]]
-        $ConditionalStateOrProvince,
-
-        [Parameter()]
-        [ValidateSet('', 'AllRecipients', 'MailboxUsers', 'MailContacts', 'MailGroups', 'MailUsers', 'Resources')]
-        [System.String[]]
-        $IncludedRecipients,
-
-        [Parameter()]
-        [System.String]
-        $RecipientFilter,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    if ($null -eq (Get-Command 'Get-GlobalAddressList' -ErrorAction SilentlyContinue))
-    {
-        Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for Global Address List" -CommitWrite
-        return ''
-    }
-
-    try
-    {
-        [array]$AllGlobalAddressLists = Get-GlobalAddressList -ErrorAction Stop
-
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($AllGlobalAddressLists.Length -eq 0)
+        if ($this.RequiresPowerShellCore())
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        else
+
+        $ConnectionMode = $this.Connect('ExchangeOnline')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        if ($null -eq (Get-Command 'Get-GlobalAddressList' -ErrorAction SilentlyContinue))
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for Global Address List" -CommitWrite
+            return ''
         }
-        $i = 1
-        foreach ($GlobalAddressList in $AllGlobalAddressLists)
+
+        try
         {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            [array]$AllGlobalAddressLists = Get-GlobalAddressList -ErrorAction Stop
+
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($AllGlobalAddressLists.Length -eq 0)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-
-            Write-M365DSCHost -Message "    |---[$i/$($AllGlobalAddressLists.Count)] $($GlobalAddressList.Name)" -DeferWrite
-
-            $Params = @{
-                Name                  = $GlobalAddressList.Name
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                CertificatePath       = $CertificatePath
-                AccessTokens          = $AccessTokens
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
-            $Script:exportedInstance = $GlobalAddressList
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
+            $i = 1
+            foreach ($GlobalAddressList in $AllGlobalAddressLists)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($AllGlobalAddressLists.Count)] $($GlobalAddressList.Name)" -DeferWrite
+
+                $Params = @{
+                    Name                  = $GlobalAddressList.Name
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    CertificatePath       = $this.CertificatePath
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $GlobalAddressList
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [EXOGlobalAddressList] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOGlobalAddressList])
+        {
+            return $Values
+        }
+
+        $result = [EXOGlobalAddressList]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

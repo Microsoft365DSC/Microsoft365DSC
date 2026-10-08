@@ -21,7 +21,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -33,6 +33,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             Mock -CommandName Remove-PSSession -MockWith {
+            }
+
+            Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
             }
 
             Mock -CommandName Remove-MgBetaIdentityConditionalAccessNamedLocation -MockWith {
@@ -50,11 +53,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName New-MgBetaIdentityConditionalAccessNamedLocation -MockWith {
+            }
+
+            Mock -CommandName Update-MgBetaIdentityConditionalAccessNamedLocation -MockWith {
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
@@ -82,14 +88,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
                 Should -Invoke -CommandName 'Get-MgBetaIdentityConditionalAccessNamedLocation' -Exactly 1
             }
             It 'Should return false from the test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should create the Policy from the set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Set()
             }
         }
         Context -Name 'The Policy exists but it should not' -Fixture {
@@ -105,16 +111,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
                 Should -Invoke -CommandName 'Get-MgBetaIdentityConditionalAccessNamedLocation' -Exactly 1
             }
 
             It 'Should return false from the test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the app from the set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Remove-MgBetaIdentityConditionalAccessNamedLocation' -Exactly 1
             }
         }
@@ -132,12 +138,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaIdentityConditionalAccessNamedLocation' -Exactly 1
             }
 
             It 'Should return true from the test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -154,16 +160,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the get method' {
-                Get-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaIdentityConditionalAccessNamedLocation' -Exactly 1
             }
 
             It 'Should return false from the test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Set()
             }
         }
 
@@ -199,13 +205,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the get method' {
-                $result = Get-TargetResource @testParams
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Get().ToHashtable()
                 $result.Ensure | Should -Be 'Absent'
                 Should -Invoke -CommandName 'Get-MgBetaIdentityConditionalAccessNamedLocation' -Exactly 1
             }
 
             It 'Should call the set method' {
-                { Set-TargetResource @testParams } | Should -Throw "More than one instance of a Named Location Policy with name {Company Network} was found. Please provide the ID parameter."
+                { (New-M365DSCResourceInstance -ResourceName 'AADNamedLocationPolicy' -Property $testParams).Set() } | Should -Throw "More than one instance of a Named Location Policy with name {Company Network} was found. Please provide the ID parameter."
             }
         }
 
@@ -219,7 +225,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should reverse engineer resource from the export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADNamedLocationPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

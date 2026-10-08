@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,21 +19,19 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        ADOPermissionGroup "TestPermissionGroup"
+        ADOPermissionGroup "ADOPermissionGroup-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
-            Description           = "My Description";
-            DisplayName           = "TestGroup";
             Ensure                = "Absent";
-            Level                 = "Organization";
-            Members               = @("AdeleV@$TenantId");
-            OrganizationName      = "O365DSC-Dev";
-            PrincipalName         = "[O365DSC-DEV]\TestGroup";
+            OrganizationName      = "Contoso-Dev";
+            PrincipalName         = "[CONTOSO-DEV]\ProjectAdministrators";
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

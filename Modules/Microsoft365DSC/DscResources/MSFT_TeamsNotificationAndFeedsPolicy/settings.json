@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsNotificationAndFeedsPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTeamsNotificationAndFeedsPolicy",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Teams Notifications and Feeds Policy.",
   "roles": {
     "read": [
@@ -9,7 +20,7 @@
       "Teams Administrator"
     ]
   },
-  "permissions": [],
+  "permissions": {},
   "requiredModules": [
     "MicrosoftTeams"
   ],

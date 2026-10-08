@@ -1,497 +1,255 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_TeamsGuestMessagingConfiguration'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class TeamsGuestMessagingConfiguration : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserEditMessage,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Only valid value is ''Yes''.')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserDeleteMessage,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if a user is allowed to edit their own messages.')]
+    [System.Nullable[System.Boolean]] $AllowUserEditMessage
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserChat,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if a user is allowed to delete their own messages.')]
+    [System.Nullable[System.Boolean]] $AllowUserDeleteMessage
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserDeleteChat,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if a user is allowed to chat.')]
+    [System.Nullable[System.Boolean]] $AllowUserChat
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowGiphy,
+    [DscProperty()]
+    [System.ComponentModel.Description('Turn this setting on to allow users to permanently delete their one-on-one chat, group chat, and meeting chat as participants (this deletes the chat only for them, not other users in the chat).')]
+    [System.Nullable[System.Boolean]] $AllowUserDeleteChat
 
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Moderate', 'Strict', 'NoRestriction')]
-        $GiphyRatingType = 'Moderate',
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines Giphy content restrictions. Default value is Moderate, other options are Strict and NoRestriction.')]
+    [ValidateSet('Moderate', 'Strict', 'NoRestriction')]
+    [System.String] $GiphyRatingType
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowMemes,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if memes are available for use.')]
+    [System.Nullable[System.Boolean]] $AllowMemes
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowStickers,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if stickers are available for use.')]
+    [System.Nullable[System.Boolean]] $AllowStickers
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowImmersiveReader,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if Giphy are available for use.')]
+    [System.Nullable[System.Boolean]] $AllowGiphy
 
-        [Parameter()]
-        [System.Boolean]
-        $UsersCanDeleteBotMessages,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if Immersive Reader is enabled.')]
+    [System.Nullable[System.Boolean]] $AllowImmersiveReader
 
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Teams Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Getting configuration of Teams Guest Messaging settings'
-
-    # TODO: Remove property 'UsersCanDeleteBotMessages' in next breaking change
-    if ($PSBoundParameters.ContainsKey('UsersCanDeleteBotMessages'))
+    [TeamsGuestMessagingConfiguration] Get()
     {
-        $PSBoundParameters.Remove('UsersCanDeleteBotMessages') | Out-Null
-        Write-Warning "Property 'UsersCanDeleteBotMessages' is deprecated and will be removed"
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [TeamsGuestMessagingConfiguration]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
+
+        Write-Verbose -Message 'Getting configuration of Teams Guest Messaging settings'
+
+        try
+        {
+            $null = $this.Connect('MicrosoftTeams')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $config = Get-CsTeamsGuestMessagingConfiguration -ErrorAction Stop
+
+            return $this.AsResult(@{
+                AllowUserEditMessage      = $config.AllowUserEditMessage
+                AllowUserDeleteMessage    = $config.AllowUserDeleteMessage
+                AllowUserChat             = $config.AllowUserChat
+                AllowUserDeleteChat       = $config.AllowUserDeleteChat
+                AllowGiphy                = $config.AllowGiphy
+                GiphyRatingType           = $config.GiphyRatingType
+                AllowMemes                = $config.AllowMemes
+                AllowStickers             = $config.AllowStickers
+                AllowImmersiveReader      = $config.AllowImmersiveReader
+                IsSingleInstance          = 'Yes'
+                Credential                = $this.Credential
+                ApplicationId             = $this.ApplicationId
+                TenantId                  = $this.TenantId
+                CertificateThumbprint     = $this.CertificateThumbprint
+                CertificatePath           = $this.CertificatePath
+                CertificatePassword       = $this.CertificatePassword
+                ManagedIdentity           = $this.ManagedIdentity
+                AccessTokens              = $this.AccessTokens
+            })
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
     }
 
-    try
+    [void] Set()
     {
-        $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-            -InboundParameters $PSBoundParameters
+        $Identity = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message 'Setting configuration of Teams Guest Messaging settings'
+
+        $boundParameters = $this.GetBoundParameters()
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $config = Get-CsTeamsGuestMessagingConfiguration -ErrorAction Stop
+        $null = $this.Connect('MicrosoftTeams')
 
-        return @{
-            AllowUserEditMessage      = $config.AllowUserEditMessage
-            AllowUserDeleteMessage    = $config.AllowUserDeleteMessage
-            AllowUserChat             = $config.AllowUserChat
-            AllowUserDeleteChat       = $config.AllowUserDeleteChat
-            AllowGiphy                = $config.AllowGiphy
-            GiphyRatingType           = $config.GiphyRatingType
-            AllowMemes                = $config.AllowMemes
-            AllowStickers             = $config.AllowStickers
-            AllowImmersiveReader      = $config.AllowImmersiveReader
-            IsSingleInstance          = 'Yes'
-            Credential                = $Credential
-            ApplicationId             = $ApplicationId
-            TenantId                  = $TenantId
-            CertificateThumbprint     = $CertificateThumbprint
-            CertificatePath           = $CertificatePath
-            CertificatePassword       = $CertificatePassword
-            ManagedIdentity           = $ManagedIdentity.IsPresent
-            AccessTokens              = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserEditMessage,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserDeleteMessage,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserChat,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserDeleteChat,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowGiphy,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Moderate', 'Strict', 'NoRestriction')]
-        $GiphyRatingType = 'Moderate',
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowMemes,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowStickers,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowImmersiveReader,
-
-        [Parameter()]
-        [System.Boolean]
-        $UsersCanDeleteBotMessages,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting configuration of Teams Guest Messaging settings'
-
-    # TODO: Remove property 'UsersCanDeleteBotMessages' in next breaking change
-    if ($PSBoundParameters.ContainsKey('UsersCanDeleteBotMessages'))
-    {
-        $PSBoundParameters.Remove('UsersCanDeleteBotMessages') | Out-Null
-        Write-Warning "Property 'UsersCanDeleteBotMessages' is deprecated and will be removed"
-    }
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    # Check that at least one optional parameter is specified
-    $inputValues = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    foreach ($item in $inputValues.GetEnumerator())
-    {
-        if ([System.String]::IsNullOrEmpty($item.Value))
+        # Check that at least one optional parameter is specified
+        $inputValues = Remove-M365DSCAuthenticationParameter -BoundParameters $boundParameters.Clone()
+        foreach ($item in $inputValues.GetEnumerator())
         {
-            $inputValues.Remove($item.Key) | Out-Null
-        }
-    }
-
-    if ($inputValues.Count -eq 0)
-    {
-        throw "You need to specify at least one optional parameter for the Set-TargetResource function `
-            of the [TeamsGuestMessagingConfiguration] instance {$Identity}"
-    }
-
-    $SetParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $SetParams.Add('Identity', 'Global')
-    $SetParams.Remove('IsSingleInstance') | Out-Null
-    Set-CsTeamsGuestMessagingConfiguration @SetParams
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserEditMessage,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserDeleteMessage,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserChat,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowUserDeleteChat,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowGiphy,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Moderate', 'Strict', 'NoRestriction')]
-        $GiphyRatingType = 'Moderate',
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowMemes,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowStickers,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowImmersiveReader,
-
-        [Parameter()]
-        [System.Boolean]
-        $UsersCanDeleteBotMessages,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $dscContent = [System.Text.StringBuilder]::new()
-        $params = @{
-            IsSingleInstance      = 'Yes'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-        $Results = Get-TargetResource @Params
-        if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            if ([System.String]::IsNullOrEmpty($item.Value))
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $inputValues.Remove($item.Key) | Out-Null
+            }
+        }
+
+        if ($inputValues.Count -eq 0)
+        {
+            throw "You need to specify at least one optional parameter for the [TeamsGuestMessagingConfiguration] instance {$Identity}"
+        }
+
+        $SetParams = Remove-M365DSCAuthenticationParameter -BoundParameters $boundParameters.Clone()
+        $SetParams.Add('Identity', 'Global')
+        $SetParams.Remove('IsSingleInstance') | Out-Null
+        Set-CsTeamsGuestMessagingConfiguration @SetParams
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftTeams')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $dscContent = [System.Text.StringBuilder]::new()
+            $params = @{
+                IsSingleInstance      = 'Yes'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            }
+            $Results = $this.GetForExport($Params)
+            if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
             }
 
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $dscContent.ToString()
         }
-        else
+        catch
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [TeamsGuestMessagingConfiguration] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [TeamsGuestMessagingConfiguration])
+        {
+            return $Values
         }
 
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        $result = [TeamsGuestMessagingConfiguration]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
 
-        throw
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('UsersCanDeleteBotMessages')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

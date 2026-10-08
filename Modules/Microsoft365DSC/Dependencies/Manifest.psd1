@@ -1,4 +1,4 @@
-@{
+﻿@{
     Dependencies = @(
         @{
             ModuleName      = 'Az.Accounts'
@@ -26,40 +26,45 @@
         },
         @{
             ModuleName      = 'DSCParser'
-            RequiredVersion = '3.1.0.3'
+            RequiredVersion = '3.1.0.5'
         },
         @{
             ModuleName      = 'ExchangeOnlineManagement'
             RequiredVersion = '3.9.2'
         },
         @{
+            ModuleName      = 'M365DSC.mgx'
+            RequiredVersion = '2.1.9'
+            PowerShellCore  = $true
+        },
+        @{
+            ModuleName      = 'M365DSC.PSDesiredStateConfiguration'
+            RequiredVersion = '3.1.9'
+        },
+        @{
             ModuleName      = 'Microsoft.Graph.Authentication'
-            RequiredVersion = '2.35.1'
+            RequiredVersion = '2.41.1'
         },
         @{
             ModuleName      = 'MicrosoftTeams'
-            RequiredVersion = '7.6.0'
+            RequiredVersion = '8.0.0'
         },
         @{
             ModuleName      = "MSCloudLoginAssistant"
-            RequiredVersion = "1.2.4"
+            RequiredVersion = "1.2.9"
         },
         @{
             ModuleName      = 'PnP.PowerShell'
-            RequiredVersion = '1.12.0'
-            InstallLocation = 'WindowsPowerShell'
-            # TODO: Review again once ModuleFast can work with additional properties
-            # https://github.com/microsoft/Microsoft365DSC/pull/6726
-            # https://github.com/ykuijs/M365DSC_CICD/issues/53
-            #DependsOn       = @('Microsoft.Graph.Authentication')
+            RequiredVersion = '3.4.1'
+            PowerShellCore  = $true
         },
         @{
             ModuleName      = 'ReverseDSC'
-            RequiredVersion = '2.0.0.36'
+            RequiredVersion = '3.0.0.0'
         },
         @{
             ModuleName      = 'PSParallelPipeline'
-            RequiredVersion = '1.2.5'
+            RequiredVersion = '1.3.0'
         }
     )
 }

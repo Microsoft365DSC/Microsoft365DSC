@@ -4,24 +4,36 @@ This examples create a new Teams Meeting Broadcast Policy.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsMeetingBroadcastPolicy 'ConfigureMeetingBroadcastPolicy'
+        TeamsMeetingBroadcastPolicy 'TeamsMeetingBroadcastPolicy-Example'
         {
-            Identity                        = "MyDemoPolicy"
+            Identity                        = "Town Hall Broadcasts"
             AllowBroadcastScheduling        = $True
             AllowBroadcastTranscription     = $False
             BroadcastAttendeeVisibilityMode = "EveryoneInCompany"
             BroadcastRecordingMode          = "AlwaysEnabled"
             Ensure                          = "Present"
-            Credential                      = $Credscredential
+            ApplicationId                   = $ApplicationId
+            TenantId                        = $TenantId
+            CertificateThumbprint           = $CertificateThumbprint
         }
     }
 }

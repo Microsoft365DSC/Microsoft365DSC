@@ -1,4 +1,24 @@
-﻿BeforeDiscovery {
+﻿<#
+    Optional scoping, for verifying one batch of examples without compiling all of them.
+    Pester expands the <Placeholder> in a test name after filtering, so -FullNameFilter cannot
+    select by resource; pass these through a container instead:
+
+        Invoke-Pester -Container (New-PesterContainer `
+            -Path ./Tests/QA/Microsoft365DSC.Examples.Tests.ps1 `
+            -Data @{ Workload = 'AAD' })
+#>
+param
+(
+    [Parameter()]
+    [System.String[]]
+    $Workload,
+
+    [Parameter()]
+    [System.String[]]
+    $ResourceName
+)
+
+BeforeDiscovery {
     $examplesPath = Join-Path -Path $PSScriptRoot -ChildPath '../../Examples'
 
     # If there are no Examples folder, exit.
@@ -8,6 +28,22 @@
     }
 
     $exampleFiles = @(Get-ChildItem -Path $examplesPath -Filter '*.ps1' -Recurse)
+
+    if ($Workload)
+    {
+        $exampleFiles = @($exampleFiles | Where-Object -FilterScript {
+                $folder = Split-Path -Path $_.Directory -Leaf
+                $Workload | Where-Object -FilterScript { $folder -like "$_*" }
+            })
+    }
+
+    if ($ResourceName)
+    {
+        $exampleFiles = @($exampleFiles | Where-Object -FilterScript {
+                $folder = Split-Path -Path $_.Directory -Leaf
+                $ResourceName | Where-Object -FilterScript { $folder -like $_ }
+            })
+    }
 
     $exampleToTest = @()
 
@@ -28,7 +64,23 @@
         return
     }
 
-    $resourceFolders = Get-ChildItem -Path $resourcesPath -Directory
+    $resourceFolders = Get-ChildItem -Path $resourcesPath -Directory -Filter 'MSFT_*'
+
+    if ($Workload)
+    {
+        $resourceFolders = @($resourceFolders | Where-Object -FilterScript {
+                $friendlyName = $_.BaseName -replace '^MSFT_', ''
+                $Workload | Where-Object -FilterScript { $friendlyName -like "$_*" }
+            })
+    }
+
+    if ($ResourceName)
+    {
+        $resourceFolders = @($resourceFolders | Where-Object -FilterScript {
+                $friendlyName = $_.BaseName -replace '^MSFT_', ''
+                $ResourceName | Where-Object -FilterScript { $friendlyName -like $_ }
+            })
+    }
 
     $allResources = @()
 
@@ -39,10 +91,16 @@
             ResourceName   = $resourceFolder.BaseName -replace '^MSFT_', ''
         }
     }
+
+    $compilerModulePath = Join-Path -Path $PSScriptRoot -ChildPath '../../Modules/Microsoft365DSC/Modules/M365DSCConfigurationCompiler.psm1'
+    Import-Module -Name $compilerModulePath -Force
+    $fastCompileAvailable = Test-M365DSCFastCompileAvailable
 }
 
 Describe -Name 'Successfully compile examples' {
     BeforeAll {
+        Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath '../../Modules/Microsoft365DSC/Modules/M365DSCConfigurationCompiler.psm1') -Force
+
         function Get-PublishFileName
         {
             [CmdletBinding()]
@@ -57,144 +115,173 @@ Describe -Name 'Successfully compile examples' {
             # Get the filename without extension.
             $filenameWithoutExtension = (Get-Item -Path $Path).BaseName
 
-            <#
-                Resource modules using auto-documentation uses a numeric value followed
-                by a dash ('-') to be able to control the order of the example in
-                the documentation. That will not be used when publishing, so remove
-                it here from the name that is compared to the configuration name.
-            #>
             return $filenameWithoutExtension -replace '^[0-9]+-'
+        }
+
+        function Get-ExampleConfigurationInfo
+        {
+            [CmdletBinding()]
+            [OutputType([System.Object])]
+            param
+            (
+                [Parameter(Mandatory = $true)]
+                [System.String]
+                $Path
+            )
+
+            # Masking the Configuration keyword before parsing to prevent resolution of
+            # Import-DscResource for each of the resources
+            $text = [System.IO.File]::ReadAllText($Path)
+            $masked = [regex]::Replace($text, '(?i)\bConfiguration\b', 'C0nfiguration')
+            $ast = [System.Management.Automation.Language.Parser]::ParseInput($masked, [ref] $null, [ref] $null)
+
+            $names = @()
+            $configurationEnd = -1
+            $commands = $ast.FindAll(
+                { $args[0] -is [System.Management.Automation.Language.CommandAst] },
+                $true)
+
+            foreach ($command in $commands)
+            {
+                if ($command.GetCommandName() -ne 'C0nfiguration' -or $command.CommandElements.Count -lt 2)
+                {
+                    continue
+                }
+
+                $element = $command.CommandElements[1] -as [System.Management.Automation.Language.StringConstantExpressionAst]
+                if ($null -ne $element)
+                {
+                    $names += $element.Value
+                }
+
+                if ($configurationEnd -lt 0)
+                {
+                    $configurationEnd = $command.Extent.EndOffset
+                }
+            }
+
+            $parameters = @()
+            $paramBlock = $null
+            if ($configurationEnd -ge 0)
+            {
+                $body = $ast.FindAll(
+                    { $args[0] -is [System.Management.Automation.Language.ScriptBlockExpressionAst] },
+                    $true) |
+                    Where-Object -FilterScript { $_.Extent.StartOffset -ge $configurationEnd } |
+                    Sort-Object -Property { $_.Extent.StartOffset } |
+                    Select-Object -First 1
+
+                if ($null -ne $body)
+                {
+                    $paramBlock = $body.ScriptBlock.ParamBlock
+                }
+            }
+
+            if ($null -ne $paramBlock)
+            {
+                foreach ($parameter in $paramBlock.Parameters)
+                {
+                    $attribute = $parameter.Attributes | Where-Object -FilterScript {
+                        $_ -is [System.Management.Automation.Language.AttributeAst] -and $_.TypeName.Name -eq 'Parameter'
+                    }
+
+                    $isMandatory = $false
+                    foreach ($named in @($attribute.NamedArguments))
+                    {
+                        if ($named.ArgumentName -eq 'Mandatory' -and $named.Argument.Extent.Text -ne '$false')
+                        {
+                            $isMandatory = $true
+                        }
+                    }
+
+                    $parameters += [PSCustomObject] @{
+                        Name        = $parameter.Name.VariablePath.UserPath
+                        Type        = $parameter.StaticType
+                        IsMandatory = $isMandatory
+                    }
+                }
+            }
+
+            return [PSCustomObject] @{
+                Names      = $names
+                Parameters = $parameters
+            }
+        }
+
+        $mockPassword = ConvertTo-SecureString '&iPm%M5q3K$Hhq=wcEK' -AsPlainText -Force
+        $script:MockCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList @('tenantadmin@contoso.onmicrosoft.com', $mockPassword)
+
+        $script:MockConfigurationData = @{
+            AllNodes = @(
+                @{
+                    NodeName                    = 'localhost'
+                    PsDscAllowPlainTextPassword = $true
+                }
+            )
         }
     }
 
-    It "Should compile example '<ExampleDescriptiveName>' correctly" -TestCases $exampleToTest {
+    It 'Should have an M365DSCFastHost-capable engine available' {
+        Test-M365DSCFastCompileAvailable | Should -BeTrue -Because 'the examples are compiled through Invoke-M365DSCConfigurationBuild, which needs M365DSC.PSDesiredStateConfiguration installed; without it every example falls back to the legacy pipeline at 30-90 seconds each'
+    }
+
+    It "Should compile example '<ExampleDescriptiveName>' correctly" -TestCases $exampleToTest -Skip:(-not $fastCompileAvailable) {
         {
-            $mockPassword = ConvertTo-SecureString '&iPm%M5q3K$Hhq=wcEK' -AsPlainText -Force
-            $mockCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList @('tenantadmin@contoso.onmicrosoft.com', $mockPassword)
+            $info = Get-ExampleConfigurationInfo -Path $ExampleFile.FullName
 
-            $mockConfigurationData = @{
-                AllNodes = @(
-                    @{
-                        NodeName                    = 'localhost'
-                        PsDscAllowPlainTextPassword = $true
-                    }
-                )
+            $candidateNames = @(
+                'Example'
+                    (Get-PublishFileName -Path $ExampleFile.FullName)
+            )
+
+            $configurationName = $info.Names | Where-Object -FilterScript { $_ -in $candidateNames } | Select-Object -First 1
+
+            if (-not $configurationName)
+            {
+                throw ('The example ''{0}'' does not contain a configuration named ''{1}''.' -f $ExampleDescriptiveName, ($candidateNames -join "', or '"))
             }
 
-            <#
-                Set this first because it is used in the final block,
-                and must be set otherwise it fails on not being assigned.
-            #>
-            $existingCommandName = $null
+            $exampleParameters = @{}
 
-            try
+            foreach ($parameter in $info.Parameters)
             {
-                . $ExampleFile.FullName
-
-                <#
-                    Test for either a configuration named 'Example',
-                    or parse the name from the filename and try that
-                    as the configuration name (requirement for Azure
-                    Automation).
-                #>
-                $commandName = @(
-                    'Example',
-                        (Get-PublishFileName -Path $ExampleFile.FullName)
-                )
-
-                # Get the first one that matches.
-                $existingCommand = Get-ChildItem -Path 'function:' | Where-Object {
-                    $_.Name -in $commandName
-                } | Select-Object -First 1
-
-                if ($existingCommand)
+                if ($parameter.Name -eq 'PsDscRunAsCredential')
                 {
-                    $existingCommandName = $existingCommand.Name
-
-                    $exampleCommand = Get-Command -Name $existingCommandName -ErrorAction 'SilentlyContinue'
-
-                    if ($exampleCommand)
-                    {
-                        $exampleParameters = @{}
-
-                        # Remove any common parameters that are available.
-                        $commandParameters = $exampleCommand.Parameters.Keys | Where-Object -FilterScript {
-                                ($_ -notin [System.Management.Automation.PSCmdlet]::CommonParameters) -and `
-                            ($_ -notin [System.Management.Automation.PSCmdlet]::OptionalCommonParameters)
-                        }
-
-                        foreach ($parameterName in $commandParameters)
-                        {
-                            $parameterType = $exampleCommand.Parameters[$parameterName].ParameterType.FullName
-
-                            <#
-                                    Each credential parameter in the Example function is assigned the
-                                    mocked credential. 'PsDscRunAsCredential' is not assigned because
-                                    that breaks the example.
-                                #>
-                            if ($parameterName -ne 'PsDscRunAsCredential' `
-                                    -and $parameterType -eq 'System.Management.Automation.PSCredential')
-                            {
-                                $exampleParameters.Add($parameterName, $mockCredential)
-                            }
-                            else
-                            {
-                                <#
-                                        Check for mandatory parameters.
-                                        Assume the parameters are all in the 'all' parameter set.
-                                    #>
-                                $isParameterMandatory = $exampleCommand.Parameters[$parameterName].ParameterSets['__AllParameterSets'].IsMandatory
-                                if ($isParameterMandatory)
-                                {
-                                    <#
-                                            Convert '1' to the type that the parameter expects.
-                                            Using '1' since it can be converted to String, Numeric
-                                            and Boolean.
-                                        #>
-                                    $exampleParameters.Add($parameterName, ('1' -as $parameterType))
-                                }
-                                elseif ($parameterName -eq 'TenantId')
-                                {
-                                    $exampleParameters.Add('TenantId', (New-Guid).ToString())
-                                }
-                            }
-                        }
-
-                        <#
-                                If there is a $ConfigurationData variable that was dot-sourced
-                                then use that as the configuration data instead of the mocked
-                                configuration data.
-                            #>
-                        if (Get-Item -Path variable:ConfigurationData -ErrorAction 'SilentlyContinue')
-                        {
-                            $mockConfigurationData = $ConfigurationData
-                        }
-
-                        & $exampleCommand.Name @exampleParameters -ConfigurationData $mockConfigurationData -OutputPath 'TestDrive:\' -ErrorAction 'Continue' -WarningAction 'SilentlyContinue' | Out-Null
-                    }
+                    continue
                 }
-                else
+
+                if ($parameter.Type -eq [System.Management.Automation.PSCredential])
                 {
-                    throw ('The example ''{0}'' does not contain a configuration named ''{1}''.' -f $exampleDescriptiveName, ($commandName -join "', or '"))
+                    $exampleParameters.Add($parameter.Name, $script:MockCredential)
+                }
+                elseif ($parameter.IsMandatory)
+                {
+                    $exampleParameters.Add($parameter.Name, ('1' -as $parameter.Type))
+                }
+                elseif ($parameter.Name -eq 'TenantId')
+                {
+                    $exampleParameters.Add('TenantId', (New-Guid).ToString())
                 }
             }
-            finally
-            {
-                <#
-                        Remove the function we dot-sourced so next example file
-                        doesn't use the previous Example-function. Using recurse
-                        since it saw child functions when copied in helper functions
-                        during debugging, it resulted in an interactive prompt.
-                    #>
-                Remove-Item -Path "function:$existingCommandName" -ErrorAction 'SilentlyContinue' -Recurse -Force
 
-                <#
-                        Remove the variable $ConfigurationData if it existed in
-                        the file we dot-sourced so next example file doesn't use
-                        the previous examples configuration.
-                    #>
-                Remove-Item -Path 'variable:ConfigurationData' -ErrorAction 'SilentlyContinue'
+            $outputPath = Join-Path -Path $TestDrive -ChildPath ('{0}-{1}' -f $ResourceName, $ExampleFile.BaseName)
+
+            $buildParameters = @{
+                Path              = $ExampleFile.FullName
+                ConfigurationName = $configurationName
+                ConfigurationData = $script:MockConfigurationData
+                OutputPath        = $outputPath
+                Engine            = 'FastHost'
+                ErrorAction       = 'Stop'
+                WarningAction     = 'SilentlyContinue'
             }
+
+            if ($exampleParameters.Count -gt 0)
+            {
+                $buildParameters.Add('Parameters', $exampleParameters)
+            }
+
+            $null = Invoke-M365DSCConfigurationBuild @buildParameters
         } | Should -Not -Throw
     }
 }

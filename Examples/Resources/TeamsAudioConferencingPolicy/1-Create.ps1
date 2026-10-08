@@ -5,22 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsAudioConferencingPolicy 'Example'
+        TeamsAudioConferencingPolicy 'TeamsAudioConferencingPolicy-Example'
         {
             AllowTollFreeDialin       = $True
-            Credential                = $Credscredential
             Ensure                    = 'Present'
-            Identity                  = 'Global'
+            Identity                  = 'Sales Audio Conferencing'
             MeetingInvitePhoneNumbers = @()
+            ApplicationId             = $ApplicationId
+            TenantId                  = $TenantId
+            CertificateThumbprint     = $CertificateThumbprint
         }
     }
 }

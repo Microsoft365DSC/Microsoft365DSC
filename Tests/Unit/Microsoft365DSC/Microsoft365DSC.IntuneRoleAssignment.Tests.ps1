@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -45,27 +45,40 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-MgBetaDeviceManagementRoleAssignment -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
             Mock -CommandName Get-MgBetaDeviceManagementRoleAssignment -MockWith {
                 return @{
-                    Description = 'FakeStringValue'
-                    DisplayName = 'FakeStringValue'
-                    Id          = 'FakeStringValue'
-                    Members        = @('FakeStringValue')
-                    resourceScopes = @('FakeStringValue')
-                    ScopeType   = 'resourceScope'
+                    Description     = 'FakeStringValue'
+                    DisplayName     = 'FakeStringValue'
+                    Id              = 'FakeStringValue'
+                    Members         = @('FakeStringValue')
+                    resourceScopes  = @('FakeStringValue')
+                    ScopeType       = 'resourceScope'
+                    RoleScopeTagIds = @('0')
                 }
             }
             Mock -CommandName Get-MgDeviceManagementRoleDefinition -MockWith {
-                return @()
+                return @{
+                    Id          = '7fbbd347-98de-431d-942b-cf5bea92998d'
+                    DisplayName = 'FakeStringValue'
+                }
             }
             Mock -CommandName Get-MgDeviceManagementRoleDefinitionRoleAssignment -MockWith {
-                return @()
+                return @{
+                    Id = 'FakeStringValue'
+                }
             }
             Mock -CommandName Get-MgGroup -MockWith {
+                return @{
+                    Displayname = 'FakeStringValue'
+                    Id          = 'FakeStringValue'
+                }
+            }
+
+            Mock -ModuleName M365DSCIntuneUtil -CommandName Get-MgGroup -MockWith {
                 return @{
                     Displayname = 'FakeStringValue'
                     Id          = 'FakeStringValue'
@@ -88,11 +101,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The IntuneRoleAssignment should exist but it DOES NOT' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Description = 'FakeStringValue'
-                    DisplayName = 'FakeStringValue'
-                    Id          = 'FakeStringValue'
-                    Ensure      = 'Present'
-                    Credential  = $Credential
+                    Description     = 'FakeStringValue'
+                    DisplayName     = 'FakeStringValue'
+                    Id              = 'FakeStringValue'
+                    Ensure          = 'Present'
+                    RoleScopeTagIds = @('0')
+                    Credential      = $Credential
                 }
 
                 Mock -CommandName Get-MgBetaDeviceManagementRoleAssignment -MockWith {
@@ -100,13 +114,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementRoleAssignment -Exactly 1
             }
         }
@@ -118,24 +132,28 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName                = 'FakeStringValue'
                     Id                         = ''
                     Ensure                     = 'Absent'
-                    RoleDefinition             = '7fbbd347-98de-431d-942b-cf5bea92998d'
                     MembersDisplayNames        = @('FakeStringValue')
                     ResourceScopesDisplayNames = @('FakeStringValue')
                     ScopeType                  = 'resourceScope'
+                    RoleScopeTagIds            = @('0')
                     Credential                 = $Credential
+                }
+
+                Mock -CommandName Get-MgDeviceManagementRoleDefinition -ParameterFilter { -not [System.String]::IsNullOrEmpty($Filter) } -MockWith {
+                    return $null
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementRoleAssignment -Exactly 1
             }
         }
@@ -150,13 +168,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     MembersDisplayNames        = @('FakeStringValue')
                     ResourceScopesDisplayNames = @('FakeStringValue')
                     ScopeType                  = 'resourceScope'
+                    RoleScopeTagIds            = @('0')
                     Credential                 = $Credential
                 }
             }
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -171,20 +190,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     MembersDisplayNames        = @('OtherMember') # Updated property
                     ResourceScopesDisplayNames = @('FakeStringValue')
                     ScopeType                  = 'resourceScope'
+                    RoleScopeTagIds            = @('0')
                     Credential                 = $Credential
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleAssignment' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementRoleAssignment -Exactly 1
             }
         }
@@ -199,7 +219,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneRoleAssignment' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

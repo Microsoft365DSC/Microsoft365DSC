@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsM365App",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "M365TeamsApp",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource manages Teams app. This includes app state, app availability, user who updated app availability, and the associated timestamp.",
   "roles": {
     "read": [

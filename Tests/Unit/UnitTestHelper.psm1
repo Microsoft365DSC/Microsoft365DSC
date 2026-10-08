@@ -30,6 +30,10 @@ function New-M365DscUnitTestHelper
     $mainModule = Join-Path -Path $moduleRoot -ChildPath "Microsoft365DSC.psd1"
     Remove-Module -Name "AzureAD" -Force -ErrorAction SilentlyContinue
     Import-Module -Name $mainModule -Global
+    if ($null -ne ('Microsoft365DSC.Intune.SettingTemplateCache' -as [System.Type]))
+    {
+        [Microsoft365DSC.Intune.SettingTemplateCache]::Reset()
+    }
 
     if ($PSBoundParameters.ContainsKey("SubModulePath") -eq $true)
     {
@@ -41,20 +45,37 @@ function New-M365DscUnitTestHelper
     if ($PSBoundParameters.ContainsKey("DscResource") -eq $true)
     {
         $describeHeader = "DSC Resource '$DscResource'"
-        $moduleName = "MSFT_$DscResource"
-        $modulePath = "DscResources\MSFT_$DscResource\MSFT_$DscResource.psm1"
-        $moduleToLoad = Join-Path -Path $moduleRoot -ChildPath $modulePath
+        $moduleName = Get-M365DSCResourceModuleName -ResourceName $DscResource
+
+        if ([System.String]::IsNullOrEmpty($moduleName))
+        {
+            throw ("Could not resolve the class module for resource '$DscResource'. " +
+                'Confirm the module was built (Utilities/Build-Microsoft365DSC.ps1) and that the ' +
+                'resource is registered by one of the Classes/Part*.psm1 files.')
+        }
+
+        $moduleToLoad = $null
     }
 
     $Global:IsTestEnvironment = $true
 
-    Import-Module -Name $moduleToLoad -Global -Force
+    # Only the sub-module case has a file of its own to load; a DSC resource is already in memory.
+    if (-not [System.String]::IsNullOrEmpty($moduleToLoad))
+    {
+        Import-Module -Name $moduleToLoad -Global -Force
+    }
+
+    $resourceImport = ''
+    if (-not [System.String]::IsNullOrEmpty($moduleToLoad))
+    {
+        $resourceImport = "Import-Module -Name `"$moduleToLoad`""
+    }
 
     $initScript = @"
             Remove-Module -Name "AzureAD" -Force -ErrorAction SilentlyContinue
             Import-Module -Name "$StubModule" -WarningAction SilentlyContinue -Global
             Import-Module -Name "$GenericStubModule" -WarningAction SilentlyContinue
-            Import-Module -Name "$moduleToLoad"
+            $resourceImport
 "@
 
     return @{

@@ -5,27 +5,29 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
+    )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        param(
-            [Parameter()]
-            [System.String]
-            $ApplicationId,
-
-            [Parameter()]
-            [System.String]
-            $TenantId,
-
-            [Parameter()]
-            [System.String]
-            $CertificateThumbprint
-        )
-        AADAuthenticationMethodPolicyFido2 "AADAuthenticationMethodPolicyFido2-Fido2"
+        AADAuthenticationMethodPolicyFido2 "AADAuthenticationMethodPolicyFido2-Example"
         {
-            Ensure                           = "Absent";
-            Id                               = "Fido2";
+            Ensure                = "Absent";
+            Id                    = "Fido2";
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

@@ -1,0 +1,125 @@
+{
+  "nonShimCmdlets": [
+    {
+      "cmdlet": "Invoke-MgGraphRequest",
+      "reason": "The raw Graph call the shim itself wraps. It is never wrapped by the shim."
+    },
+    {
+      "cmdlet": "Get-MgContext",
+      "reason": "An authentication cmdlet with no Graph route, so there is nothing for the shim to wrap."
+    }
+  ],
+  "nonComparableEntityTypes": [
+    {
+      "entityType": "deviceManagementConfigurationPolicy",
+      "reason": "The 42 resources on this entity carry up to 82 properties while the CSDL entity carries 16. Their real surface is the settings catalog, which phase 7 covers."
+    },
+    {
+      "entityType": "directorySetting",
+      "reason": "The entity carries displayName, id, templateId and values. Its 3 resources project the names inside the values bag as properties, so every one of them reads as orphaned."
+    }
+  ],
+  "serviceManagedProperties": [
+    "committedContentVersion",
+    "contentVersions",
+    "createdBy",
+    "createdByAppId",
+    "createdDateTime",
+    "createdOnBehalfOf",
+    "deletedDateTime",
+    "lastModifiedBy",
+    "lastModifiedByAppId",
+    "lastModifiedDateTime",
+    "modifiedBy",
+    "modifiedDateTime",
+    "version"
+  ],
+  "globalReadOnlyProperties": [
+    {
+      "name": "CommittedContentVersion",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "ContentVersions",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "CreatedBy",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "CreatedByAppId",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "CreatedDateTime",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "CreatedOnBehalfOf",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "DeletedDateTime",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "LastModifiedBy",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "LastModifiedByAppId",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "LastModifiedDateTime",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "ModifiedBy",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "ModifiedDateTime",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "SupportsScopeTags",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    },
+    {
+      "name": "Version",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on every type that carries it."
+    }
+  ],
+  "nonVendorProperties": [
+    "AccessTokens",
+    "ApplicationId",
+    "ApplicationSecret",
+    "Assignments",
+    "CertificatePassword",
+    "CertificatePath",
+    "CertificateThumbprint",
+    "Credential",
+    "DependsOn",
+    "Ensure",
+    "IsSingleInstance",
+    "ManagedIdentity",
+    "PsDscRunAsCredential",
+    "TenantId"
+  ]
+}

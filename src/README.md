@@ -12,6 +12,10 @@ C# library targeting netstandard2.0 for accelerating configuration comparison an
 
 C# library target netstandard2.0 for quick type conversions.
 
+### Microsoft365DSC.Reporting
+
+C# library targeting netstandard2.0 that converts parsed configurations into reports. Every output format is an `IReportConverter` registered in `ReportConverterRegistry`. The Markdown converter reports the properties a configuration sets, and builds the layout of each document from the schema, readme and permission files the module ships.
+
 ### Microsoft365DSC.Utilities
 
 Utilities library for internal usage.

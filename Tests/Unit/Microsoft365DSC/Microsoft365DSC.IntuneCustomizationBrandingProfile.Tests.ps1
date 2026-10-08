@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -118,7 +118,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 )
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -136,12 +136,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneCustomizationBrandingProfile should exist but it DOES NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CompanyPortalBlockedActions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcompanyPortalBlockedAction -Property @{
+                    CompanyPortalBlockedActions = @(
+                        ([MSFT_MicrosoftGraphcompanyPortalBlockedAction] @{
                             Platform = "android"
                             OwnerType = "unknown"
                             Action = "unknown"
-                        } -ClientOnly)
+                        })
                     )
                     ContactITEmailAddress = "FakeStringValue"
                     ContactITName = "FakeStringValue"
@@ -152,14 +152,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     EnrollmentAvailability = "availableWithPrompts"
                     Id = "FakeStringValue"
-                    LandingPageCustomizedImage = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    LandingPageCustomizedImage = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue3'
-                    } -ClientOnly)
-                    LightBackgroundLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    LightBackgroundLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue2'
-                    } -ClientOnly)
+                    })
                     OnlineSupportSiteName = "FakeStringValue"
                     OnlineSupportSiteUrl = "FakeStringValue"
                     PrivacyUrl = "FakeStringValue"
@@ -171,15 +171,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ShowDisplayNameNextToLogo = $True
                     ShowLogo = $True
                     ShowOfficeWebApps = $True
-                    ThemeColor = (New-CimInstance -ClassName MSFT_MicrosoftGraphRgbColor -Property @{
+                    ThemeColor = ([MSFT_MicrosoftGraphrgbColor] @{
                         r = 0
                         g = 0
                         b = 0
-                    } -ClientOnly)
-                    ThemeColorLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    ThemeColorLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue1'
-                    } -ClientOnly)
+                    })
                     Ensure = "Present"
                     Credential = $Credential;
                 }
@@ -189,13 +189,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementIntuneBrandingProfile -Exactly 1
             }
         }
@@ -203,12 +203,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneCustomizationBrandingProfile exists but it SHOULD NOT" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CompanyPortalBlockedActions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcompanyPortalBlockedAction -Property @{
+                    CompanyPortalBlockedActions = @(
+                        ([MSFT_MicrosoftGraphcompanyPortalBlockedAction] @{
                             Platform = "android"
                             OwnerType = "unknown"
                             Action = "unknown"
-                        } -ClientOnly)
+                        })
                     )
                     ContactITEmailAddress = "FakeStringValue"
                     ContactITName = "FakeStringValue"
@@ -219,14 +219,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     EnrollmentAvailability = "availableWithPrompts"
                     Id = "FakeStringValue"
-                    LandingPageCustomizedImage = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    LandingPageCustomizedImage = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue3'
-                    } -ClientOnly)
-                    LightBackgroundLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    LightBackgroundLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue2'
-                    } -ClientOnly)
+                    })
                     OnlineSupportSiteName = "FakeStringValue"
                     OnlineSupportSiteUrl = "FakeStringValue"
                     PrivacyUrl = "FakeStringValue"
@@ -238,30 +238,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ShowDisplayNameNextToLogo = $True
                     ShowLogo = $True
                     ShowOfficeWebApps = $True
-                    ThemeColor = (New-CimInstance -ClassName MSFT_MicrosoftGraphRgbColor -Property @{
+                    ThemeColor = ([MSFT_MicrosoftGraphrgbColor] @{
                         r = 0
                         g = 0
                         b = 0
-                    } -ClientOnly)
-                    ThemeColorLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    ThemeColorLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue1'
-                    } -ClientOnly)
+                    })
                     Ensure = "Absent"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementIntuneBrandingProfile -Exactly 1
             }
         }
@@ -269,12 +269,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "The IntuneCustomizationBrandingProfile Exists and Values are already in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CompanyPortalBlockedActions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcompanyPortalBlockedAction -Property @{
+                    CompanyPortalBlockedActions = @(
+                        ([MSFT_MicrosoftGraphcompanyPortalBlockedAction] @{
                             Platform = "android"
                             OwnerType = "unknown"
                             Action = "unknown"
-                        } -ClientOnly)
+                        })
                     )
                     ContactITEmailAddress = "FakeStringValue"
                     ContactITName = "FakeStringValue"
@@ -285,14 +285,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     EnrollmentAvailability = "availableWithPrompts"
                     Id = "FakeStringValue"
-                    LandingPageCustomizedImage = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    LandingPageCustomizedImage = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue3'
-                    } -ClientOnly)
-                    LightBackgroundLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    LightBackgroundLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue2'
-                    } -ClientOnly)
+                    })
                     OnlineSupportSiteName = "FakeStringValue"
                     OnlineSupportSiteUrl = "FakeStringValue"
                     PrivacyUrl = "FakeStringValue"
@@ -304,34 +304,34 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ShowDisplayNameNextToLogo = $True
                     ShowLogo = $True
                     ShowOfficeWebApps = $True
-                    ThemeColor = (New-CimInstance -ClassName MSFT_MicrosoftGraphRgbColor -Property @{
+                    ThemeColor = ([MSFT_MicrosoftGraphrgbColor] @{
                         r = 0
                         g = 0
                         b = 0
-                    } -ClientOnly)
-                    ThemeColorLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    ThemeColorLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue1'
-                    } -ClientOnly)
+                    })
                     Ensure = "Present"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name "The IntuneCustomizationBrandingProfile exists and values are NOT in the desired state" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    CompanyPortalBlockedActions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphcompanyPortalBlockedAction -Property @{
+                    CompanyPortalBlockedActions = @(
+                        ([MSFT_MicrosoftGraphcompanyPortalBlockedAction] @{
                             Platform = "android"
                             OwnerType = "unknown"
                             Action = "unknown"
-                        } -ClientOnly)
+                        })
                     )
                     ContactITEmailAddress = "FakeStringValue"
                     ContactITName = "FakeStringValue"
@@ -342,14 +342,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     EnrollmentAvailability = "availableWithPrompts"
                     Id = "FakeStringValue"
-                    LandingPageCustomizedImage = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    LandingPageCustomizedImage = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue2' # Drift
-                    } -ClientOnly)
-                    LightBackgroundLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    LightBackgroundLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue2'
-                    } -ClientOnly)
+                    })
                     OnlineSupportSiteName = "FakeStringValue"
                     OnlineSupportSiteUrl = "FakeStringValue"
                     PrivacyUrl = "FakeStringValue"
@@ -361,30 +361,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ShowDisplayNameNextToLogo = $True
                     ShowLogo = $True
                     ShowOfficeWebApps = $True
-                    ThemeColor = (New-CimInstance -ClassName MSFT_MicrosoftGraphRgbColor -Property @{
+                    ThemeColor = ([MSFT_MicrosoftGraphrgbColor] @{
                         r = 0
                         g = 0
                         b = 0
-                    } -ClientOnly)
-                    ThemeColorLogo = (New-CimInstance -ClassName MSFT_MicrosoftGraphMimeContent -Property @{
+                    })
+                    ThemeColorLogo = ([MSFT_MicrosoftGraphMimeContent] @{
                         Type = "image/png"
                         Value = 'FakeStringValue1'
-                    } -ClientOnly)
+                    })
                     Ensure = "Present"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCustomizationBrandingProfile' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementIntuneBrandingProfile -Exactly 1
             }
         }
@@ -399,7 +399,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneCustomizationBrandingProfile' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

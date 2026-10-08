@@ -1,5 +1,22 @@
 {
   "resourceName": "AADAdministrativeUnit",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "v1.0",
+    "entityType": "administrativeUnit",
+    "odataSubtype": null,
+    "cmdletNoun": "MgDirectoryAdministrativeUnit",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Extensions",
+      "reason": "NotConfigurable",
+      "note": "Open extensions carry application defined members with no fixed schema."
+    }
+  ],
   "description": "This resource configures an Azure Active Directory administrative unit.",
   "roles": {
     "read": [
@@ -31,7 +48,7 @@
             "name": "Device.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "RoleManagement.Read.Directory"
@@ -61,7 +78,7 @@
             "name": "Device.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "RoleManagement.Read.Directory"

@@ -1,451 +1,273 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AADGroupLifecyclePolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AADGroupLifecyclePolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Only valid value is ''Yes''.')]
+    [ValidateSet('Yes')]
+    [System.String] $IsSingleInstance
 
-        [Parameter(Mandatory = $true)]
-        [System.UInt32]
-        $GroupLifetimeInDays,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('The number of days a group can exist before it needs to be renewed.')]
+    [System.Nullable[System.UInt32]] $GroupLifetimeInDays
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        [ValidateSet('All', 'Selected', 'None')]
-        $ManagedGroupTypes,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('This parameter allows the admin to select which office 365 groups the policy will apply to. ''None'' will create the policy in a disabled state. ''All'' will apply the policy to every Office 365 group in the tenant. ''Selected'' will allow the admin to choose specific Office 365 groups that the policy will apply to.')]
+    [ValidateSet('All', 'None', 'Selected')]
+    [System.String] $ManagedGroupTypes
 
-        [Parameter(Mandatory = $true)]
-        [System.String[]]
-        $AlternateNotificationEmails,
+    [DscProperty(Mandatory)]
+    [System.ComponentModel.Description('Notification emails for groups that have no owners will be sent to these email addresses.')]
+    [System.String[]] $AlternateNotificationEmails
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specify if the Azure AD Groups Lifecycle Policy should exist or not.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials for the Microsoft Graph delegated permissions.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message 'Getting configuration of AzureAD Groups Lifecycle Policy'
-
-    try
+    [AADGroupLifecyclePolicy] Get()
     {
-        $null = New-M365DSCConnection -Workload 'MicrosoftGraph' -InboundParameters $PSBoundParameters
+        $Policy = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [AADGroupLifecyclePolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $nullReturn = $PSBoundParameters
-        $nullReturn.Ensure = 'Absent'
+        Write-Verbose -Message 'Getting configuration of AzureAD Groups Lifecycle Policy'
 
         try
         {
-            $Policy = Get-MgGroupLifecyclePolicy -ErrorAction SilentlyContinue
+            $null = $this.Connect('MicrosoftGraph')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullReturn = $this.GetBoundParameters()
+            $nullReturn.Ensure = 'Absent'
+
+            try
+            {
+                $Policy = Get-MgGroupLifecyclePolicy -ErrorAction SilentlyContinue
+            }
+            catch
+            {
+                $this.LogError($_, 'Error retrieving data:')
+            }
+
+            if ($null -eq $Policy)
+            {
+                return $this.AsResult($nullReturn)
+            }
+            else
+            {
+                Write-Verbose 'Found existing AzureAD Groups Lifecycle Policy'
+                $result = @{
+                    IsSingleInstance            = 'Yes'
+                    GroupLifetimeInDays         = $Policy.GroupLifetimeInDays
+                    ManagedGroupTypes           = $Policy.ManagedGroupTypes
+                    AlternateNotificationEmails = $Policy.AlternateNotificationEmails.Split(';')
+                    Ensure                      = 'Present'
+                    Credential                  = $this.Credential
+                    ApplicationId               = $this.ApplicationId
+                    ApplicationSecret           = $this.ApplicationSecret
+                    TenantId                    = $this.TenantId
+                    CertificateThumbprint       = $this.CertificateThumbprint
+                    ManagedIdentity             = $this.ManagedIdentity
+                    AccessTokens                = $this.AccessTokens
+                }
+
+                return $this.AsResult($result)
+            }
         }
         catch
         {
-            New-M365DSCLogEntry -Message 'Error retrieving data:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        if ($null -eq $Policy)
+        Write-Verbose -Message 'Setting configuration of Azure AD Groups Lifecycle Policy'
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $null = $this.Connect('MicrosoftGraph')
+
+        $currentPolicy = $this.Get().ToHashtable()
+        $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $boundParameters = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
+
+        if ($this.Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Absent')
         {
-            return $nullReturn
+            Write-Verbose -Message "The Group Lifecycle Policy should exist but it doesn't. Creating it."
+            $createParameters = $boundParameters
+            $createParameters.Remove('IsSingleInstance') | Out-Null
+
+            $emails = ''
+            foreach ($email in $createParameters.alternateNotificationEmails)
+            {
+                $emails += $email + ';'
+            }
+            $emails = $emails.TrimEnd(';')
+            $createParameters.alternateNotificationEmails = $emails
+            New-MgGroupLifecyclePolicy -BodyParameter $createParameters
         }
-        else
+        elseif ($this.Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Present')
         {
-            Write-Verbose 'Found existing AzureAD Groups Lifecycle Policy'
-            $result = @{
-                IsSingleInstance            = 'Yes'
-                GroupLifetimeInDays         = $Policy.GroupLifetimeInDays
-                ManagedGroupTypes           = $Policy.ManagedGroupTypes
-                AlternateNotificationEmails = $Policy.AlternateNotificationEmails.Split(';')
-                Ensure                      = 'Present'
-                Credential                  = $Credential
-                ApplicationId               = $ApplicationId
-                ApplicationSecret           = $ApplicationSecret
-                TenantId                    = $TenantId
-                CertificateThumbprint       = $CertificateThumbprint
-                ManagedIdentity             = $ManagedIdentity.IsPresent
-                AccessTokens                = $AccessTokens
+            $updateParameters = $boundParameters
+            $updateParameters.Remove('IsSingleInstance') | Out-Null
+
+            $emails = ''
+            foreach ($email in $updateParameters.alternateNotificationEmails)
+            {
+                $emails += $email + ';'
+            }
+            $emails = $emails.TrimEnd(';')
+            $updateParameters.alternateNotificationEmails = $emails
+
+            Write-Verbose -Message "The Group Lifecycle Policy exists but it's not in the Desired State. Updating it."
+            Update-MgGroupLifecyclePolicy -GroupLifecyclePolicyId (Get-MgGroupLifecyclePolicy).Id -BodyParameter $updateParameters
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message 'The Group Lifecycle Policy should NOT exist but it DOES. Removing it.'
+            Remove-MgGroupLifecyclePolicy -GroupLifecyclePolicyId (Get-MgGroupLifecyclePolicy).Id
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            {
+                $Global:M365DSCExportResourceInstancesCount++
             }
 
-            return $result
+            $dscContent = [System.Text.StringBuilder]::new()
+            $Params = @{
+                Credential                  = $this.Credential
+                IsSingleInstance            = 'Yes'
+                GroupLifetimeInDays         = 1
+                ManagedGroupTypes           = 'All'
+                AlternateNotificationEmails = 'empty@contoso.com'
+                ApplicationId               = $this.ApplicationId
+                ApplicationSecret           = $this.ApplicationSecret
+                TenantId                    = $this.TenantId
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                AccessTokens                = $this.AccessTokens
+            }
+            $Results = $this.GetForExport($Params)
+            if ($Results.Ensure -eq 'Present')
+            {
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+            }
+
+            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
         }
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
 
-        throw
+    hidden [AADGroupLifecyclePolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AADGroupLifecyclePolicy])
+        {
+            return $Values
+        }
+
+        $result = [AADGroupLifecyclePolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter(Mandatory = $true)]
-        [System.UInt32]
-        $GroupLifetimeInDays,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        [ValidateSet('All', 'Selected', 'None')]
-        $ManagedGroupTypes,
-
-        [Parameter(Mandatory = $true)]
-        [System.String[]]
-        $AlternateNotificationEmails,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message 'Setting configuration of Azure AD Groups Lifecycle Policy'
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'MicrosoftGraph' -InboundParameters $PSBoundParameters
-
-    $currentPolicy = Get-TargetResource @PSBoundParameters
-    $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "The Group Lifecycle Policy should exist but it doesn't. Creating it."
-        $creationParams = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
-        $creationParams.Remove('IsSingleInstance') | Out-Null
-
-        $emails = ''
-        foreach ($email in $creationParams.alternateNotificationEmails)
-        {
-            $emails += $email + ';'
-        }
-        $emails = $emails.TrimEnd(';')
-        $creationParams.alternateNotificationEmails = $emails
-        New-MgGroupLifecyclePolicy -BodyParameter $creationParams
-    }
-    elseif ($Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Present')
-    {
-        $updateParams = Rename-M365DSCCimInstanceParameter -Properties $boundParameters
-        $updateParams.Remove('IsSingleInstance') | Out-Null
-
-        $emails = ''
-        foreach ($email in $updateParams.alternateNotificationEmails)
-        {
-            $emails += $email + ';'
-        }
-        $emails = $emails.TrimEnd(';')
-        $updateParams.alternateNotificationEmails = $emails
-
-        Write-Verbose -Message "The Group Lifecycle Policy exists but it's not in the Desired State. Updating it."
-        Update-MgGroupLifecyclePolicy -GroupLifecyclePolicyId (Get-MgGroupLifecyclePolicy).Id -BodyParameter $updateParams
-    }
-    elseif ($Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message 'The Group Lifecycle Policy should NOT exist but it DOES. Removing it.'
-        Remove-MgGroupLifecyclePolicy -GroupLifecyclePolicyId (Get-MgGroupLifecyclePolicy).Id
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Yes')]
-        [System.String]
-        $IsSingleInstance,
-
-        [Parameter(Mandatory = $true)]
-        [System.UInt32]
-        $GroupLifetimeInDays,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        [ValidateSet('All', 'Selected', 'None')]
-        $ManagedGroupTypes,
-
-        [Parameter(Mandatory = $true)]
-        [System.String[]]
-        $AlternateNotificationEmails,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-        {
-            $Global:M365DSCExportResourceInstancesCount++
-        }
-
-        $dscContent = [System.Text.StringBuilder]::new()
-        $Params = @{
-            Credential                  = $Credential
-            IsSingleInstance            = 'Yes'
-            GroupLifetimeInDays         = 1
-            ManagedGroupTypes           = 'All'
-            AlternateNotificationEmails = 'empty@contoso.com'
-            ApplicationId               = $ApplicationId
-            ApplicationSecret           = $ApplicationSecret
-            TenantId                    = $TenantId
-            CertificateThumbprint       = $CertificateThumbprint
-            CertificatePath             = $CertificatePath
-            CertificatePassword         = $CertificatePassword
-            ManagedIdentity             = $ManagedIdentity.IsPresent
-            AccessTokens                = $AccessTokens
-        }
-        $Results = Get-TargetResource @Params
-        if ($Results.Ensure -eq 'Present')
-        {
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-        }
-
-        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

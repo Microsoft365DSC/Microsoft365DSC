@@ -1,0 +1,51 @@
+{
+  "Get-MgBetaTestPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Test",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/testPolicies/{testPolicy-id}",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/testPolicies",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "New-MgBetaTestPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Test",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/testPolicies",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Remove-MgBetaTestPolicy": {
+    "SourceModule": "Microsoft.Graph.Beta.Test",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "DELETE",
+        "URI": "/testPolicies/{testPolicy-id}",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaTestOverridden": {
+    "SourceModule": "Microsoft.Graph.Beta.Test",
+    "ApiVersion": "beta",
+    "Variants": [
+      {
+        "Method": "POST",
+        "URI": "/testPolicies/retrieveThing",
+        "ApiVersion": "beta"
+      }
+    ]
+  }
+}

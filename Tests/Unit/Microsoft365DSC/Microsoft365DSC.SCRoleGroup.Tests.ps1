@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -32,7 +32,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -57,6 +57,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-RoleGroup -MockWith {
             }
 
+            Mock -CommandName Set-RoleGroup -MockWith {
+            }
+
             # Mock Write-M365DSCHost to hide output during the tests
             Mock -CommandName Write-M365DSCHost -MockWith {
             }
@@ -78,11 +81,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName New-RoleGroup -Exactly 1
             }
         }
@@ -113,11 +116,41 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
+            }
+        }
+
+        Context -Name 'Role Group should exist. Role Group exists but is not in the desired state. Test should fail.' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Name        = 'Contoso Role Group'
+                    Roles       = 'Address Lists'
+                    Description = 'This is the Contoso Role Group'
+                    Ensure      = 'Present'
+                    Credential  = $Credential
+                }
+
+                Mock -CommandName Get-RoleGroup -MockWith {
+                    return @{
+                        Name        = 'Contoso Role Group'
+                        Roles       = 'Address Lists'
+                        Description = 'Outdated description'
+                    }
+                }
+            }
+
+            It 'Should return false from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Test() | Should -Be $false
+            }
+
+            It 'Should call the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-RoleGroup -Exactly 1 -ParameterFilter { $Identity -eq 'Contoso Role Group' -and $Description -eq 'This is the Contoso Role Group' }
+                Should -Invoke -CommandName New-RoleGroup -Exactly 0
             }
         }
 
@@ -142,15 +175,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should return Present from the Get Method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCRoleGroup' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-RoleGroup -Exactly 1
             }
         }
@@ -178,7 +211,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method when single' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCRoleGroup' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

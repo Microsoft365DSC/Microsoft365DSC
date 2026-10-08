@@ -1,10 +1,73 @@
 {
   "resourceName": "AADGroupEligibilityScheduleSettings",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "unifiedRoleManagementPolicyRule",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaPolicyRoleManagementPolicyRule",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "ApprovalRule",
+      "reason": "Accepted",
+      "note": "A flattened value from unifiedRoleManagementPolicyApprovalRule"
+    },
+    {
+      "name": "AuthenticationContextRule",
+      "reason": "Accepted",
+      "note": "A flattened value from unifiedRoleManagementPolicyAuthenticationContextRule"
+    },
+    {
+      "name": "EnablementRule",
+      "reason": "Accepted",
+      "note": "A flattened value from unifiedRoleManagementPolicyEnablementRule"
+    },
+    {
+      "name": "ExpirationRule",
+      "reason": "Accepted",
+      "note": "A flattened value from unifiedRoleManagementPolicyExpirationRule"
+    },
+    {
+      "name": "GroupDisplayName",
+      "reason": "Accepted",
+      "note": "The display name of the group the policy applies to"
+    },
+    {
+      "name": "NotificationRule",
+      "reason": "Accepted",
+      "note": "A flattened value from unifiedRoleManagementPolicyNotificationRule"
+    },
+    {
+      "name": "PIMGroupRole",
+      "reason": "Accepted",
+      "note": "The group role the policy applies to"
+    },
+    {
+      "name": "RuleType",
+      "reason": "Accepted",
+      "note": "The type of the policy rule, differentiating between rule types"
+    },
+    {
+      "name": "Target",
+      "reason": "NotConfigurable",
+      "note": "Declared on the abstract policy rule, with no writable shape here."
+    }
+  ],
   "description": "This resource configures an Azure AD Group Eligibility Schedule Settings.",
   "permissions": {
     "graph": {
       "delegated": {
         "read": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "PrivilegedAccess.Read.AzureADGroup"
+          },
           {
             "name": "RoleManagementPolicy.Read.Directory"
           }
@@ -20,6 +83,12 @@
       },
       "application": {
         "read": [
+          {
+            "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "PrivilegedAccess.Read.AzureADGroup"
+          },
           {
             "name": "RoleManagementPolicy.Read.Directory"
           }

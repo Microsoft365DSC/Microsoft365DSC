@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -21,23 +22,31 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        EXOInboundConnector 'ConfigureInboundConnector'
+        EXOInboundConnector 'EXOInboundConnector-Example'
         {
-            Identity                     = "Integration Inbound Connector"
+            Identity                     = "Partner Mail Gateway"
+            AssociatedAcceptedDomains    = @("$TenantId")
             CloudServicesMailEnabled     = $False
-            Comment                      = "Inbound connector for Integration"
+            Comment                      = "Accepts mail relayed by the partner gateway"
             ConnectorSource              = "Default"
             ConnectorType                = "Partner"
+            EFSkipIPs                    = @("20.81.42.17")
+            EFSkipLastIP                 = $False
+            EFUsers                      = @("AdeleV@$TenantId")
             Enabled                      = $True
             RequireTls                   = $True
+            RestrictDomainsToCertificate = $True
+            RestrictDomainsToIPAddresses = $False
             SenderDomains                = "*.contoso.com"
+            SenderIPAddresses            = @("20.81.42.17")
             TlsSenderCertificateName     = "contoso.com"
+            TreatMessagesAsInternal      = $False
             Ensure                       = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            ApplicationId                = $ApplicationId
+            TenantId                     = $TenantId
+            CertificateThumbprint        = $CertificateThumbprint
         }
     }
 }

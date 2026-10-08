@@ -4,7 +4,8 @@ This example removes a Device Remediation.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,15 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAppAndBrowserIsolationPolicyWindows10ConfigMgr 'ConfigureAppAndBrowserIsolationPolicyWindows10ConfigMgr'
+        IntuneAppAndBrowserIsolationPolicyWindows10ConfigMgr 'IntuneAppAndBrowserIsolationPolicyWindows10ConfigMgr-Example'
         {
-            Id          = '00000000-0000-0000-0000-000000000000'
-            DisplayName = 'App and Browser Isolation'
-            Ensure      = 'Absent'
+            DisplayName           = 'App and Browser Isolation (ConfigMgr)'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

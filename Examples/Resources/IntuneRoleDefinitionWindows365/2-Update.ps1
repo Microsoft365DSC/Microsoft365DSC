@@ -4,7 +4,8 @@ This example creates a new Intune Role Definition.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,11 +18,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        IntuneRoleDefinitionWindows365 'IntuneRoleDefinitionWindows365'
+        IntuneRoleDefinitionWindows365 'IntuneRoleDefinitionWindows365-Example'
         {
             DisplayName           = 'IntuneRoleDefinitionWindows365_1'
             Description           = ''
@@ -33,7 +35,7 @@ Configuration Example
                     )
                 }
             );
-            Ensure                    = 'Present'
+            Ensure                = 'Present'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

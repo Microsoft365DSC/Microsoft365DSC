@@ -5,24 +5,33 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        O365Group 'OttawaTeamGroup'
+        O365Group 'O365Group-Example'
         {
-            DisplayName        = "Ottawa Employees"
-            MailNickName       = "OttawaEmployees"
-            Description        = "This is only for employees of the Ottawa Office"
-            ManagedBy          = "TenantAdmin@contoso.onmicrosoft.com"
-            Members            = @("Bob.Houle", "John.Smith")
-            Ensure             = "Absent"
-            Credential         = $Credscredential
+            DisplayName           = "Ottawa Employees"
+            MailNickName          = "OttawaEmployees"
+            Ensure                = "Absent"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -1,487 +1,298 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_AzureBillingAccountsAssociatedTenant'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class AzureBillingAccountsAssociatedTenant : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The ID that uniquely identifies a tenant.')]
+    [System.String] $AssociatedTenantId
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $BillingAccount,
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the associated tenant.')]
+    [System.String] $DisplayName
 
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $AssociatedTenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the billing account.')]
+    [System.String] $BillingAccount
 
-        [Parameter()]
-        [System.String]
-        $BillingManagementState,
+    [DscProperty()]
+    [System.ComponentModel.Description('The state determines whether users from the associated tenant can be assigned roles for commerce activities like viewing and downloading invoices, managing payments, and making purchases.')]
+    [System.String] $BillingManagementState
 
-        [Parameter()]
-        [System.String]
-        $ProvisioningManagementState,
+    [DscProperty()]
+    [System.ComponentModel.Description('The state determines whether subscriptions and licenses can be provisioned in the associated tenant. It can be set to ''Pending'' to initiate a billing request.')]
+    [System.String] $ProvisioningManagementState
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the instance exists, absent ensures it is removed.')]
+    [ValidateSet('Absent', 'Present')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
+    [DscProperty()]
+    [System.ComponentModel.Description('The Azure subscription to connect to if the access is restricted on subscription level.')]
+    [System.String] $SubscriptionId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for Azure Billing Accounts Associated Tenant for Billing Account {$BillingAccount} and Display Name {$DisplayName}"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [AzureBillingAccountsAssociatedTenant] Get()
     {
-        $null = New-M365DSCConnection -Workload 'Azure' `
-            -InboundParameters $PSBoundParameters
+        $instance = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [AzureBillingAccountsAssociatedTenant]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration for Azure Billing Accounts Associated Tenant for Billing Account {$($this.BillingAccount)} and Display Name {$($this.DisplayName)}"
+
+        try
+        {
+            $null = $this.Connect('Azure')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $nullResult = $this.GetBoundParameters()
+            $nullResult.Ensure = 'Absent'
+
+            $accounts = Get-M365DSCAzureBillingAccount
+            $currentAccount = $accounts.value | Where-Object -FilterScript { $_.properties.displayName -eq $this.BillingAccount }
+
+            if ($null -ne $currentAccount)
+            {
+                $instances = Get-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $currentAccount.Name -ErrorAction Stop
+                $instance = $instances.value | Where-Object -FilterScript { $_.properties.displayName -eq $this.DisplayName }
+            }
+            if ($null -eq $instance)
+            {
+                return $this.AsResult($nullResult)
+            }
+
+            $results = @{
+                BillingAccount              = $this.BillingAccount
+                DisplayName                 = $this.DisplayName
+                AssociatedTenantId          = $instance.properties.tenantId
+                BillingManagementState      = $instance.properties.billingManagementState
+                ProvisioningManagementState = $instance.properties.provisioningManagementState
+                Ensure                      = 'Present'
+                SubscriptionId              = $this.SubscriptionId
+                Credential                  = $this.Credential
+                ApplicationId               = $this.ApplicationId
+                TenantId                    = $this.TenantId
+                CertificateThumbprint       = $this.CertificateThumbprint
+                CertificatePath             = $this.CertificatePath
+                CertificatePassword         = $this.CertificatePassword
+                ManagedIdentity             = $this.ManagedIdentity
+                AccessTokens                = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for Azure Billing Accounts Associated Tenant for Billing Account {$($this.BillingAccount)} and Display Name {$($this.DisplayName)}"
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $nullResult = $PSBoundParameters
-        $nullResult.Ensure = 'Absent'
+        $currentInstance = $this.Get().ToHashtable()
+        $billingAccounts = Get-M365DSCAzureBillingAccount
+        $account = $billingAccounts.value | Where-Object -FilterScript { $_.properties.displayName -eq $this.BillingAccount }
 
-        $accounts = Get-M365DSCAzureBillingAccount
-        $currentAccount = $accounts.value | Where-Object -FilterScript { $_.properties.displayName -eq $BillingAccount }
-
-        if ($null -ne $currentAccount)
+        $instanceParams = @{
+            properties = @{
+                displayName                 = $this.DisplayName
+                tenantId                    = $this.AssociatedTenantId
+                billingManagementState      = $this.BillingManagementState
+                provisioningManagementState = $this.ProvisioningManagementState
+            }
+        }
+        # CREATE
+        if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
         {
-            $instances = Get-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $currentAccount.Name -ErrorAction Stop
-            $instance = $instances.value | Where-Object -FilterScript { $_.properties.displayName -eq $DisplayName }
+            Write-Verbose -Message "Adding associated tenant {$($this.AssociatedTenantId)}"
+            New-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $account.Name `
+                -AssociatedTenantId $this.AssociatedTenantId `
+                -Body $instanceParams
         }
-        if ($null -eq $instance)
+        # UPDATE
+        elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
-            return $nullResult
+            Write-Verbose -Message "Updating associated tenant {$($this.AssociatedTenantId)}"
+            New-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $account.Name `
+                -AssociatedTenantId $this.AssociatedTenantId `
+                -Body $instanceParams
         }
-
-        $results = @{
-            BillingAccount              = $BillingAccount
-            DisplayName                 = $DisplayName
-            AssociatedTenantId          = $instance.properties.tenantId
-            BillingManagementState      = $instance.properties.billingManagementState
-            ProvisioningManagementState = $instance.properties.provisioningManagementState
-            Ensure                      = 'Present'
-            SubscriptionId              = $SubscriptionId
-            Credential                  = $Credential
-            ApplicationId               = $ApplicationId
-            TenantId                    = $TenantId
-            CertificateThumbprint       = $CertificateThumbprint
-            CertificatePath             = $CertificatePath
-            CertificatePassword         = $CertificatePassword
-            ManagedIdentity             = $ManagedIdentity.IsPresent
-            AccessTokens                = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $BillingAccount,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $AssociatedTenantId,
-
-        [Parameter()]
-        [System.String]
-        $BillingManagementState,
-
-        [Parameter()]
-        [System.String]
-        $ProvisioningManagementState,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Azure Billing Accounts Associated Tenant for Billing Account {$BillingAccount} and Display Name {$DisplayName}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-    $billingAccounts = Get-M365DSCAzureBillingAccount
-    $account = $billingAccounts.value | Where-Object -FilterScript { $_.properties.displayName -eq $BillingAccount }
-
-    $instanceParams = @{
-        properties = @{
-            displayName                 = $DisplayName
-            tenantId                    = $AssociatedTenantId
-            billingManagementState      = $BillingManagementState
-            provisioningManagementState = $ProvisioningManagementState
-        }
-    }
-    # CREATE
-    if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Adding associated tenant {$AssociatedTenantId}"
-        New-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $account.Name `
-            -AssociatedTenantId $AssociatedTenantId `
-            -Body $instanceParams
-    }
-    # UPDATE
-    elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating associated tenant {$AssociatedTenantId}"
-        New-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $account.Name `
-            -AssociatedTenantId $AssociatedTenantId `
-            -Body $instanceParams
-    }
-    # REMOVE
-    elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing associated tenant {$AssociatedTenantId}"
-        Remove-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $account.Name `
-            -AssociatedTenantId $AssociatedTenantId
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $DisplayName,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $BillingAccount,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $AssociatedTenantId,
-
-        [Parameter()]
-        [System.String]
-        $BillingManagementState,
-
-        [Parameter()]
-        [System.String]
-        $ProvisioningManagementState,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $compareParameters = Get-CompareParameters
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '') `
-        @compareParameters
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $SubscriptionId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'Azure' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        #Get all billing account
-        $accounts = Get-M365DSCAzureBillingAccount
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($Script:exportedInstances.Length -eq 0)
+        # REMOVE
+        elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            Write-Verbose -Message "Removing associated tenant {$($this.AssociatedTenantId)}"
+            Remove-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $account.Name `
+                -AssociatedTenantId $this.AssociatedTenantId
         }
-        else
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        [array] $Script:exportedInstances = @()
-        foreach ($config in $accounts.value)
+
+        $ConnectionMode = $this.Connect('Azure')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            $displayedKey = $config.properties.displayName
-            Write-M365DSCHost -Message "    |---[$i/$($accounts.Count)] $displayedKey"
+            #Get all billing account
+            [array]$accounts = Get-M365DSCAzureBillingAccount
 
-            $associatedTenants += Get-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $config.name
-
-            $j = 1
-            foreach ($associatedTenant in $associatedTenants.value)
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($accounts.Count -eq 0)
             {
-                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-                {
-                    $Global:M365DSCExportResourceInstancesCount++
-                }
-                Write-M365DSCHost -Message "        |---[$j/$($associatedTenants.value.Length)] $($associatedTenant.properties.DisplayName)" -DeferWrite
-                $params = @{
-                    BillingAccount        = $config.properties.displayName
-                    DisplayName           = $associatedTenant.properties.displayName
-                    AssociatedTenantId    = $associatedTenant.properties.tenantId
-                    SubscriptionId        = $SubscriptionId
-                    Credential            = $Credential
-                    ApplicationId         = $ApplicationId
-                    TenantId              = $TenantId
-                    CertificateThumbprint = $CertificateThumbprint
-                    CertificatePath       = $CertificatePath
-                    CertificatePassword   = $CertificatePassword
-                    ManagedIdentity       = $ManagedIdentity.IsPresent
-                    AccessTokens          = $AccessTokens
-                }
-
-                $Results = Get-TargetResource @Params
-
-                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                    -ConnectionMode $ConnectionMode `
-                    -ModulePath $PSScriptRoot `
-                    -Results $Results `
-                    -Credential $Credential
-                [void]$dscContent.Append($currentDSCBlock)
-                Save-M365DSCPartialExport -Content $currentDSCBlock `
-                    -FileName $Global:PartialExportFileName
-                $j++
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-            $i++
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($config in $accounts.value)
+            {
+                $displayedKey = $config.properties.displayName
+                Write-M365DSCHost -Message "    |---[$i/$($accounts.Count)] $displayedKey"
+
+                [array]$associatedTenants = Get-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $config.name
+
+                $j = 1
+                foreach ($associatedTenant in $associatedTenants.value)
+                {
+                    if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                    {
+                        $Global:M365DSCExportResourceInstancesCount++
+                    }
+                    Write-M365DSCHost -Message "        |---[$j/$($associatedTenants.value.Length)] $($associatedTenant.properties.DisplayName)" -DeferWrite
+                    $params = @{
+                        BillingAccount        = $config.properties.displayName
+                        DisplayName           = $associatedTenant.properties.displayName
+                        AssociatedTenantId    = $associatedTenant.properties.tenantId
+                        SubscriptionId        = $this.SubscriptionId
+                        Credential            = $this.Credential
+                        ApplicationId         = $this.ApplicationId
+                        TenantId              = $this.TenantId
+                        CertificateThumbprint = $this.CertificateThumbprint
+                        CertificatePath       = $this.CertificatePath
+                        CertificatePassword   = $this.CertificatePassword
+                        ManagedIdentity       = $this.ManagedIdentity
+                        AccessTokens          = $this.AccessTokens
+                    }
+
+                    $Results = $this.GetForExport($Params)
+
+                    $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                        -ConnectionMode $ConnectionMode `
+                        -ModulePath $this.GetModulePath() `
+                        -Results $Results `
+                        -Credential $this.Credential
+                    [void]$dscContent.Append($currentDSCBlock)
+                    Save-M365DSCPartialExport -Content $currentDSCBlock `
+                        -FileName $Global:PartialExportFileName
+                    $j++
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                }
+                $i++
+            }
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
     }
-    catch
+
+    [System.Collections.Hashtable] GetCompareParameters()
     {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        return @{
+            ExcludedProperties = @('SubscriptionId')
+        }
+    }
 
-        throw
+    hidden [AzureBillingAccountsAssociatedTenant] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [AzureBillingAccountsAssociatedTenant])
+        {
+            return $Values
+        }
+
+        $result = [AzureBillingAccountsAssociatedTenant]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-function Get-CompareParameters
-{
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param()
-
-    return @{
-        ExcludedProperties = @('SubscriptionId')
-    }
-}
-
-Export-ModuleMember -Function @('*-TargetResource', 'Get-CompareParameters')

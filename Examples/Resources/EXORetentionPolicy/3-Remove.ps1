@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,20 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        EXORetentionPolicy "EXORetentionPolicy-Test"
+        EXORetentionPolicy "EXORetentionPolicy-Example"
         {
-            Name                        = "Test Retention Policy";
-            Identity                    = "Test Retention Policy";
-            IsDefault                   = $False;
-            IsDefaultArbitrationMailbox = $False;
-            RetentionPolicyTagLinks     = @("6 Month Delete","Personal 5 year move to archive","1 Month Delete","1 Week Delete","Personal never move to archive","Personal 1 year move to archive","Default 2 year move to archive","Deleted Items","Junk Email","Recoverable Items 14 days move to archive","Never Delete");
-            Ensure                      = "Absent";
-            ApplicationId               = $ApplicationId;
-            TenantId                    = $TenantId;
-            CertificateThumbprint       = $CertificateThumbprint;
+            Identity              = "Standard Retention Policy";
+            Ensure                = "Absent";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

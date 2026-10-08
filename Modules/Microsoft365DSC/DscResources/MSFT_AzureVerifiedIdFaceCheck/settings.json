@@ -1,5 +1,16 @@
 {
   "resourceName": "AzureVerifiedIdFaceCheck",
+  "generatedFrom": {
+    "workload": "Azure",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": null,
+    "cmdletVerb": null,
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Configures Azure Verified Id FaceCheck.",
   "roles": {
     "read": [],

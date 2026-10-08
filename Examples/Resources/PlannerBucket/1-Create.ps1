@@ -4,7 +4,8 @@ This example creates a new Planner Bucket in a Plan.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,13 +18,14 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        PlannerBucket 'ContosoPlannerBucket'
+        PlannerBucket 'PlannerBucket-Example'
         {
-            PlanId                = "1234567890"
+            PlanId                = "<planner-plan-id>"
             Name                  = "Contoso Bucket"
             Ensure                = "Present"
             ApplicationId         = $ApplicationId

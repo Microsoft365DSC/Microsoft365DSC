@@ -121,6 +121,8 @@ Describe 'Test-M365DSCNotFoundError' {
         It 'Should return $true for "<Message>"' -ForEach @(
             @{ Message = "The operation couldn't be completed because object 'TestDomain.com' couldn't be found on 'YOURSERVER.outlook.com'." }
             @{ Message = "The specified object was not found in the store." }
+            @{ Message = "|Microsoft.Exchange.Management.Tasks.ComplianceCaseTaskException|Unable to execute the task. Reason: The compliance case ""Contoso Litigation 2026"" doesn't exist. Please create the case." }
+            @{ Message = "|Microsoft.Exchange.Configuration.Tasks.ManagementObjectNotFoundException|Policy ""Litigation Hold 2026"" wasn't found.  Make sure you typed the policy name correctly." }
         ) {
             try
             {
@@ -294,6 +296,93 @@ Describe 'Invoke-M365DSCCommand' {
             } -MaxRetries 3 -BaseDelayInSeconds 0
             $result | Should -Be 'Finally succeeded'
             $script:callCount | Should -Be 3
+        }
+    }
+}
+
+Describe 'Wait-M365DSCCondition' {
+    BeforeAll {
+        Mock -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -MockWith {}
+    }
+
+    Context 'When the condition is met' {
+        It 'Should return $true without sleeping when met on the first attempt' {
+            $script:callCount = 0
+            $result = Wait-M365DSCCondition -Description 'object' -ScriptBlock {
+                $script:callCount++
+                $true
+            }
+            $result | Should -BeTrue
+            $script:callCount | Should -Be 1
+            Should -Invoke -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -Exactly 0
+        }
+
+        It 'Should reset the count after an unmet result and require consecutive met results' {
+            $script:results = @($true, $false, $true, $true)
+            $script:callCount = 0
+            $result = Wait-M365DSCCondition -Description 'object' -ConsecutiveCount 2 -RetryDelayInSeconds 3 -ScriptBlock {
+                $script:results[$script:callCount++]
+            }
+            $result | Should -BeTrue
+            $script:callCount | Should -Be 4
+            Should -Invoke -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -Exactly 1 -ParameterFilter { $Seconds -eq 3 }
+        }
+    }
+
+    Context 'When the condition is never met' {
+        It 'Should return $false after the maximum attempts' {
+            $script:callCount = 0
+            $result = Wait-M365DSCCondition -Description 'object' -MaxAttempts 3 -ScriptBlock {
+                $script:callCount++
+                $null
+            }
+            $result | Should -BeFalse
+            $script:callCount | Should -Be 3
+            Should -Invoke -CommandName Start-Sleep -ModuleName M365DSCErrorHandler -Exactly 2
+        }
+    }
+}
+
+Describe 'Save-M365DSCPartialExport' {
+    BeforeAll {
+        Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1" -Force -Global
+        Initialize-M365DSCDllLoader
+        $Script:ErrorHandlerPath = (Resolve-Path -Path "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCErrorHandler.psm1").Path
+    }
+
+    It 'keeps every instance written concurrently by several runspaces' {
+        $fileName = "$(New-Guid).partial.ps1"
+        $filePath = Join-Path -Path $env:TEMP -ChildPath $fileName
+        $workers = foreach ($worker in 1..4)
+        {
+            $powershell = [System.Management.Automation.PowerShell]::Create()
+            $null = $powershell.AddScript({
+                    param ($ModulePath, $FileName, $Worker)
+                    Import-Module $ModulePath
+                    foreach ($instance in 1..50)
+                    {
+                        Save-M365DSCPartialExport -Content "worker $Worker instance $instance`r`n" -FileName $FileName
+                    }
+                }).AddArgument($Script:ErrorHandlerPath).AddArgument($fileName).AddArgument($worker)
+            [pscustomobject]@{ PowerShell = $powershell; Handle = $powershell.BeginInvoke() }
+        }
+
+        try
+        {
+            foreach ($entry in $workers)
+            {
+                $entry.PowerShell.EndInvoke($entry.Handle)
+                $entry.PowerShell.Streams.Error | Should -BeNullOrEmpty
+            }
+
+            $lines = @(Get-Content -Path $filePath)
+            $lines.Count | Should -Be 200
+            @($lines | Sort-Object -Unique).Count | Should -Be 200
+        }
+        finally
+        {
+            $workers | ForEach-Object -Process { $_.PowerShell.Dispose() }
+            Remove-Item -Path $filePath -Force -ErrorAction SilentlyContinue
         }
     }
 }

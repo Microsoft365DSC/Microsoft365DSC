@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
@@ -37,7 +37,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Connect-Graph -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -78,7 +78,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Get-MgPlannerTaskDetail -MockWith {
                 return @{
-                    CheckList = @()
+                    CheckList   = @()
+                    PreviewType = 'automatic'
                 }
             }
 
@@ -99,11 +100,20 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PlanId          = '1234567890'
                     Title           = 'Contoso Task'
                     Priority        = 5
-                    Bucket          = '1234'
+                    PreviewType     = 'automatic'
+                    BucketId        = '1234'
                     PercentComplete = 75
                     StartDateTime   = '2020-06-09'
                     DueDateTime     = '2020-06-10'
-                    AssignedUsers   = @('john.smith@contoso.com')
+                    Assignments     = @('john.smith@contoso.com')
+                    Description     = 'Contoso Task Description'
+                    Attachments     = [MSFT_PlannerTaskAttachment[]]@(
+                        [MSFT_PlannerTaskAttachment] @{
+                            Uri   = 'https://contoso.com/doc.docx'
+                            Alias = 'Contoso Document'
+                            Type  = 'Word'
+                        }
+                    )
                     Ensure          = 'Present'
                     Credential      = $Credential
                 }
@@ -113,20 +123,47 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Get-MgPlannerTaskDetail -MockWith {
-                    return $null
+                    return @{
+                        '@odata.etag' = 'W/"NewTaskDetails"'
+                    }
+                }
+
+                Mock -CommandName New-MgPlannerTask -MockWith {
+                    return @{
+                        Id = 'NewTask12345'
+                    }
+                }
+
+                Mock -CommandName Update-MgPlannerTaskDetail -MockWith {
                 }
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the Task in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Set()
+
+                Should -Invoke -CommandName New-MgPlannerTask -Exactly 1 -ParameterFilter {
+                    -not $BodyParameter.ContainsKey('Details') -and -not $BodyParameter.ContainsKey('Ensure')
+                }
+            }
+
+            It 'Should write the attachments to the details of the new Task in the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Set()
+
+                Should -Invoke -CommandName Update-MgPlannerTaskDetail -Exactly 1 -ParameterFilter {
+                    $PlannerTaskId -eq 'NewTask12345' -and
+                    $Headers.'If-Match' -eq 'W/"NewTaskDetails"' -and
+                    $BodyParameter.references.Keys -contains 'https://contoso.com/doc.docx' -and
+                    $BodyParameter.references.'https://contoso.com/doc.docx'.alias -eq 'Contoso Document' -and
+                    $BodyParameter.description -eq 'Contoso Task Description'
+                }
             }
         }
 
@@ -134,10 +171,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     PlanId          = '1234567890'
-                    TaskId          = '12345'
+                    Id              = '12345'
                     Title           = 'Contoso Task'
                     Priority        = 4
-                    AssignedUsers   = @('john.smith@contoso.com')
+                    PreviewType     = 'checklist'
+                    Assignments     = @('john.smith@contoso.com')
                     PercentComplete = 75
                     Categories      = @('Pink')
                     StartDateTime   = '2020-06-09'
@@ -148,15 +186,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $False
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Set()
             }
         }
 
@@ -165,25 +203,63 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     PlanId          = '1234567890'
                     Title           = 'Contoso Task'
-                    TaskId          = '12345'
+                    Id              = '12345'
                     Priority        = 5
-                    AssignedUsers   = @('john.smith@contoso.com')
+                    PreviewType     = 'automatic'
+                    Assignments     = @('john.smith@contoso.com')
                     PercentComplete = 75
                     Categories      = @('Pink')
                     StartDateTime   = '2020-06-09'
                     DueDateTime     = '2020-06-10'
-                    Bucket          = 'Bucket12345'
+                    BucketId        = 'Bucket12345'
                     Ensure          = 'Present'
                     Credential      = $Credential
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Set method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $true
+            }
+        }
+
+        Context -Name 'Task exists on a plan that defines a custom category label' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    PlanId          = '1234567890'
+                    Title           = 'Contoso Task'
+                    Id              = '12345'
+                    Priority        = 5
+                    PreviewType     = 'automatic'
+                    Assignments     = @('john.smith@contoso.com')
+                    PercentComplete = 75
+                    Categories      = @('Urgent')
+                    StartDateTime   = '2020-06-09'
+                    DueDateTime     = '2020-06-10'
+                    BucketId        = 'Bucket12345'
+                    Ensure          = 'Present'
+                    Credential      = $Credential
+                }
+
+                Mock -CommandName Get-MgPlannerPlanDetail -MockWith {
+                    return @{
+                        Id                   = '1234567890'
+                        CategoryDescriptions = @{
+                            Category1 = 'Urgent'
+                        }
+                    }
+                }
+            }
+
+            It 'Should return the plan label from the Get method' {
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Get().ToHashtable()).Categories | Should -Be 'Urgent'
+            }
+
+            It 'Should return true from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -192,9 +268,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     PlanId          = '1234567890'
                     Title           = 'Contoso Task'
-                    TaskId          = '12345'
+                    Id              = '12345'
                     Priority        = 5
-                    AssignedUsers   = @('john.smith@contoso.com')
+                    PreviewType     = 'automatic'
+                    Assignments     = @('john.smith@contoso.com')
                     PercentComplete = 75
                     Categories      = @('Pink')
                     StartDateTime   = '2020-06-09'
@@ -205,11 +282,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Set method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $False
             }
         }
 
@@ -217,11 +294,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     PlanId          = '1234567890'
-                    TaskId          = '12345'
+                    Id              = '12345'
                     Title           = 'Contoso Task'
-                    Bucket          = 'Bucket12345'
+                    BucketId        = 'Bucket12345'
                     Priority        = 5
-                    AssignedUsers   = @('john.smith@contoso.com')
+                    PreviewType     = 'automatic'
+                    Assignments     = @('john.smith@contoso.com')
                     PercentComplete = 75
                     Categories      = @('Pink')
                     StartDateTime   = '2020-06-09'
@@ -239,11 +317,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should return 'Bucket12345' as the Bucket Value" {
-                (Get-TargetResource @testParams).Bucket | Should -Be 'Bucket12345'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Get().ToHashtable()).BucketId | Should -Be 'Bucket12345'
             }
 
             It 'Should return True from the Test method' {
-                Test-TargetResource @testParams | Should -Be $True
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $True
             }
         }
 
@@ -252,11 +330,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     PlanId          = '1234567890'
-                    TaskId          = '12345'
+                    Id              = '12345'
                     Title           = 'Contoso Task'
-                    Bucket          = 'TestBucket'
+                    BucketId        = 'TestBucket'
                     Priority        = 5
-                    AssignedUsers   = @('john.smith@contoso.com')
+                    PreviewType     = 'automatic'
+                    Assignments     = @('john.smith@contoso.com')
                     PercentComplete = 75
                     Categories      = @('Pink')
                     StartDateTime   = '2020-06-09'
@@ -271,7 +350,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -279,10 +358,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     PlanId          = '1234567890'
-                    TaskId          = '12345'
+                    Id              = '12345'
                     Title           = 'Contoso Task'
                     Priority        = 5
-                    AssignedUsers   = @('john.smith@contoso.com')
+                    PreviewType     = 'automatic'
+                    Assignments     = @('john.smith@contoso.com')
                     PercentComplete = 75
                     Categories      = @('Pink')
                     StartDateTime   = '2020-06-09'
@@ -301,11 +381,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It "Should return 'TestBucket' as the Bucket Value" {
-                (Get-TargetResource @testParams).Bucket | Should -Be 'Bucket12345'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Get().ToHashtable()).BucketId | Should -Be 'Bucket12345'
             }
 
             It 'Should return False from the Test method' {
-                Test-TargetResource @testParams | Should -Be $False
+                (New-M365DSCResourceInstance -ResourceName 'PlannerTask' -Property $testParams).Test() | Should -Be $False
             }
         }
 
@@ -348,8 +428,79 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'PlannerTask' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
+            }
+        }
+
+        Context -Name 'ReverseDSC Tests across plans with different category labels' -Fixture {
+            BeforeAll {
+                $Global:CurrentModeIsExport = $true
+                $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
+                $testParams = @{
+                    Credential = $Credential
+                }
+
+                Mock -CommandName Get-MgGroup -MockWith {
+                    return @(
+                        @{
+                            DisplayName = 'Contoso Group'
+                            Id          = '12345-12345-12345-12345-12345'
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-MgGroupPlannerPlan -MockWith {
+                    return @(
+                        @{
+                            Title = 'Contoso Plan One'
+                            Id    = 'PlanOne'
+                        },
+                        @{
+                            Title = 'Contoso Plan Two'
+                            Id    = 'PlanTwo'
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-MgGroupPlannerPlanTask -MockWith {
+                    return @(
+                        @{
+                            Id     = "Task$PlannerPlanId"
+                            PlanId = $PlannerPlanId
+                            Title  = "Contoso Task on $PlannerPlanId"
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-MgPlannerTask -MockWith {
+                    return @{
+                        Id                = $PlannerTaskId
+                        Title             = 'Contoso Task'
+                        AppliedCategories = @{
+                            Category1 = $true
+                        }
+                    }
+                }
+
+                Mock -CommandName Get-MgPlannerPlanDetail -MockWith {
+                    $labelsByPlan = @{
+                        PlanOne = 'Urgent'
+                        PlanTwo = 'Blocked'
+                    }
+                    return @{
+                        Id                   = $PlannerPlanId
+                        CategoryDescriptions = @{
+                            Category1 = $labelsByPlan.$PlannerPlanId
+                        }
+                    }
+                }
+            }
+
+            It 'Should export the category label of the plan that owns each task' {
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'PlannerTask' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Match 'Urgent'
+                $result | Should -Match 'Blocked'
             }
         }
     }

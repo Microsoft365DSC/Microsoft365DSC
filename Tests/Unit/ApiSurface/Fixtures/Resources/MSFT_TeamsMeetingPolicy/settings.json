@@ -1,0 +1,27 @@
+{
+  "resourceName": "TeamsMeetingPolicy",
+  "description": "Fixture for TeamsMeetingPolicy.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "MicrosoftTeams",
+      "cmdlets": [
+        "Get-CsOnlineUser",
+        "Get-CsTeamsMeetingPolicy",
+        "New-CsTeamsMeetingPolicy",
+        "Remove-CsTeamsMeetingPolicy",
+        "Set-CsTeamsMeetingPolicy"
+      ]
+    }
+  ]
+}

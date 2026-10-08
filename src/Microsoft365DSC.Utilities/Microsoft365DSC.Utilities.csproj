@@ -1,28 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <AssemblyName>Microsoft365DSC.Utilities</AssemblyName>
     <RootNamespace>Microsoft365DSC.Utilities</RootNamespace>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Authors>Microsoft365DSC Team</Authors>
-    <Company>Microsoft365DSC</Company>
+    <IsPackable>true</IsPackable>
     <Product>Microsoft365DSC Utilities</Product>
     <Description>Performance-optimized C# utilities for Microsoft365DSC configuration operations</Description>
-    <Copyright>Copyright © Microsoft365DSC</Copyright>
-    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
-    <PackageReference Include="System.Management" Version="10.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Microsoft365DSC.Cache\Microsoft365DSC.Cache.csproj" />
   </ItemGroup>
 
 </Project>

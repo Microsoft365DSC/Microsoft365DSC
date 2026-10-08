@@ -22,15 +22,15 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAppProtectionPolicyWindows10 "IntuneAppProtectionPolicyWindows10-IntuneAppProtectionPolicyWindows10_1"
+        IntuneAppProtectionPolicyWindows10 "IntuneAppProtectionPolicyWindows10-Example"
         {
-            ApplicationId                           = $ConfigurationData.NonNodeData.ApplicationId;
-            CertificateThumbprint                   = $ConfigurationData.NonNodeData.CertificateThumbprint;
-            DisplayName                             = "IntuneAppProtectionPolicyWindows10_1";
-            Ensure                                  = "Absent";
-            TenantId                                = $OrganizationName;
+            DisplayName           = "Windows App Protection Baseline";
+            Ensure                = "Absent";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

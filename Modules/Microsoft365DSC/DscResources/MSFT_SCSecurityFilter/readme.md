@@ -4,4 +4,4 @@
 
 This resource configures a Security Filter in Purview.
 
-**Please note:** This resource does not support certificate based authentication.
+**Please note:** This resource only supports delegated authentication using the `Credentials` authentication method.

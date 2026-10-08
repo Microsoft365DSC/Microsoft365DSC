@@ -1,5 +1,16 @@
 {
   "resourceName": "SCSensitivityLabel",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "Label",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures a Sensitivity Label in Purview.",
   "roles": {
     "read": [
@@ -25,14 +36,22 @@
       }
     },
     "purview": {
-      "requiredroles": [
-        "Sensitivity Label Administrator",
-        "Sensitivity Label Reader"
-      ],
-      "requiredrolegroups": [
-        "Compliance Data Administrator",
-        "Security Reader"
-      ]
+      "requiredRoles": {
+        "read": [
+          "Sensitivity Label Reader"
+        ],
+        "update": [
+          "Sensitivity Label Administrator"
+        ]
+      },
+      "requiredRoleGroups": {
+        "read": [
+          "Security Reader"
+        ],
+        "update": [
+          "Compliance Data Administrator"
+        ]
+      }
     }
   },
   "requiredModules": [],
@@ -40,5 +59,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-DlpSensitiveInformationType",
+        "Get-Label",
+        "New-Label",
+        "Remove-Label",
+        "Set-Label"
+      ]
+    }
+  ]
 }

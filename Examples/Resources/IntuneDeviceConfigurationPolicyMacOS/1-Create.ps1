@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,13 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceConfigurationPolicyMacOS 'myMacOSDevicePolicy'
+        IntuneDeviceConfigurationPolicyMacOS 'IntuneDeviceConfigurationPolicyMacOS-Example'
         {
             DisplayName                                     = 'MacOS device restriction'
+            ActivationLockWhenSupervisedAllowed             = $True
             AddingGameCenterFriendsBlocked                  = $True
             AirDropBlocked                                  = $False
             AppleWatchBlockAutoUnlock                       = $False
@@ -32,12 +35,12 @@ Configuration Example
                 MSFT_DeviceManagementConfigurationPolicyAssignments {
                     deviceAndAppManagementAssignmentFilterType = 'none'
                     dataType                                   = '#microsoft.graph.groupAssignmentTarget'
-                    groupId                                    = 'e8cbd84d-be6a-4b72-87f0-0e677541fda0'
+                    groupDisplayName                           = 'Intune Pilot Devices'
                 }
                 MSFT_DeviceManagementConfigurationPolicyAssignments {
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType                                   = '#microsoft.graph.groupAssignmentTarget'
-                    groupId                                    = 'ea9199b8-3e6e-407b-afdc-e0943e0d3c20'
+                    dataType                                   = '#microsoft.graph.exclusionGroupAssignmentTarget'
+                    groupDisplayName                           = 'Intune Excluded Devices'
                 })
             CameraBlocked                                   = $False
             ClassroomAppBlockRemoteScreenObservation        = $False
@@ -84,10 +87,10 @@ Configuration Example
             PasswordRequiredType                            = 'deviceDefault'
             PrivacyAccessControls                           = @(
                 MSFT_MicrosoftGraphmacosprivacyaccesscontrolitem {
-                    displayName                  = 'test'
-                    identifier                   = 'test45'
+                    displayName                  = 'Contoso Support Agent'
+                    identifier                   = '/Applications/Contoso Support.app'
                     identifierType               = 'path'
-                    codeRequirement              = 'test'
+                    codeRequirement              = 'anchor apple generic and identifier "com.contoso.supportagent"'
                     blockCamera                  = $True
                     speechRecognition            = 'notConfigured'
                     accessibility                = 'notConfigured'
@@ -117,9 +120,9 @@ Configuration Example
             UpdateDelayPolicy                               = @('delayOSUpdateVisibility', 'delayAppUpdateVisibility', 'delayMajorOsUpdateVisibility')
             WallpaperModificationBlocked                    = $False
             Ensure                                          = 'Present'
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                                   = $ApplicationId;
+            TenantId                                        = $TenantId;
+            CertificateThumbprint                           = $CertificateThumbprint;
         }
     }
 }

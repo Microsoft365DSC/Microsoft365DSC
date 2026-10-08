@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -35,7 +35,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Remove-PSSession -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -52,16 +52,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IsViewingBeforeAcceptanceRequired    = $true
                     IsPerDeviceAcceptanceRequired        = $false
                     UserReacceptRequiredFrequency        = 'P90D'
-                    AcceptanceStatement                  = 'I accept the terms'
-                    File                                 = @{
-                        Data     = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes('Terms content'))
-                        Name     = 'terms.txt'
-                        Language = 'en-US'
+                    TermsExpiration                      = @{
+                        Frequency     = 'P365D'
+                        StartDateTime = [System.DateTime]::new(2026, 1, 1, 0, 0, 0, [System.DateTimeKind]::Utc)
                     }
                 }
             }
 
-            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+            Mock -CommandName Invoke-M365DSCGraphRequest -ParameterFilter { $Method -eq 'GET' -and $Uri -like '*/termsOfUse/agreements/*/file/localizations' } -MockWith {
+                return @{
+                    value = @(
+                        @{
+                            fileName  = 'nutzungsbedingungen.pdf'
+                            language  = 'de-DE'
+                            isDefault = $false
+                        },
+                        @{
+                            fileName  = 'terms.txt'
+                            language  = 'en-US'
+                            isDefault = $true
+                        }
+                    )
+                }
+            }
+
+            Mock -CommandName Invoke-M365DSCGraphRequest -ParameterFilter { $Method -eq 'POST' -and $Uri -like '*/termsOfUse/agreements/*/files' } -MockWith {
+            }
+
+            Mock -CommandName New-MgBetaAgreement -MockWith {
+            }
+
+            Mock -CommandName Update-MgBetaAgreement -MockWith {
             }
 
             Mock -CommandName Remove-MgBetaAgreement -MockWith {
@@ -82,10 +103,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IsViewingBeforeAcceptanceRequired    = $true
                     IsPerDeviceAcceptanceRequired        = $false
                     UserReacceptRequiredFrequency        = 'P90D'
-                    AcceptanceStatement                  = 'I accept the terms'
-                    FileData                             = 'Terms content'
-                    FileName                             = 'terms.txt'
+                    FileData                             = 'JVBERi0xLjQKJSVFT0Y='
+                    FileName                             = 'terms.pdf'
                     Language                             = 'en-US'
+                    TermsExpiration                      = @{
+                        Frequency     = 'P365D'
+                        StartDateTime = '2026-01-01T00:00:00Z'
+                    }
                     Ensure                               = 'Present'
                     Credential                           = $Credential
                 }
@@ -96,16 +120,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Create the agreement from the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaAgreement -Exactly 1 -ParameterFilter {
+                    $BodyParameter.files[0].fileData.data -eq 'JVBERi0xLjQKJSVFT0Y=' -and $BodyParameter.files[0].isDefault -eq $true
+                }
             }
         }
 
@@ -119,15 +145,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the agreement from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaAgreement -Exactly 1
             }
         }
@@ -139,17 +165,20 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IsViewingBeforeAcceptanceRequired    = $true
                     IsPerDeviceAcceptanceRequired        = $false
                     UserReacceptRequiredFrequency        = 'P90D'
-                    AcceptanceStatement                  = 'I accept the terms'
                     FileData                             = 'Terms content'
                     FileName                             = 'terms.txt'
                     Language                             = 'en-US'
+                    TermsExpiration                      = @{
+                        Frequency     = 'P365D'
+                        StartDateTime = '2026-01-01T00:00:00.0000000Z'
+                    }
                     Ensure                               = 'Present'
                     Credential                           = $Credential
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -160,22 +189,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IsViewingBeforeAcceptanceRequired    = $false
                     IsPerDeviceAcceptanceRequired        = $true
                     UserReacceptRequiredFrequency        = 'P30D'
-                    AcceptanceStatement                  = 'I accept the updated terms' # Drift
-                    FileData                             = 'Updated terms content'
-                    FileName                             = 'updated_terms.txt'
+                    FileData                             = "%PDF-1.4`n%%EOF"
+                    FileName                             = 'updated_terms.pdf'
                     Language                             = 'en-US'
+                    TermsExpiration                      = @{
+                        Frequency     = 'P365D'
+                        StartDateTime = '2026-01-01T00:00:00Z'
+                    }
                     Ensure                               = 'Present'
                     Credential                           = $Credential
                 }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'AADAgreement' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MgBetaAgreement -Exactly 1 -ParameterFilter {
+                    $BodyParameter.Count -eq 2 -and $BodyParameter.isViewingBeforeAcceptanceRequired -eq $false -and $BodyParameter.displayName -eq 'Test Agreement'
+                }
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'POST' -and $Body.fileName -eq 'updated_terms.pdf' -and $Body.language -eq 'en-US' -and
+                    $Body.isDefault -eq $true -and $Body.fileData.data -eq 'JVBERi0xLjQKJSVFT0Y='
+                }
             }
         }
 
@@ -189,7 +227,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADAgreement' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

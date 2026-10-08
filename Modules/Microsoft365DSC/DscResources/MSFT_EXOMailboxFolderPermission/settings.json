@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOMailboxFolderPermission",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "MailboxFolderPermission",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Use this resource to add/set/remove mailbox folder permissions for users in your tenant.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "View-Only Recipients"
         ],
@@ -33,7 +44,7 @@
           "Mail Recipients"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "View-Only Organization Management"
         ],
@@ -48,5 +59,17 @@
     "Global",
     "USGov"
   ],
-  "mode": "Configuration"
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Add-MailboxFolderPermission",
+        "Get-MailboxFolder",
+        "Get-MailboxFolderPermission",
+        "Remove-MailboxFolderPermission",
+        "Set-MailboxFolderPermission"
+      ]
+    }
+  ]
 }

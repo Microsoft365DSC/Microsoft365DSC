@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,62 +19,62 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADIdentityB2XUserFlow "AADIdentityB2XUserFlow-B2X_1_TestFlow"
+        AADIdentityB2XUserFlow "AADIdentityB2XUserFlow-Example"
         {
-            ApplicationId             = $ApplicationId
-            TenantId                  = $TenantId
-            CertificateThumbprint     = $CertificateThumbprint
             ApiConnectorConfiguration = MSFT_MicrosoftGraphuserFlowApiConnectorConfiguration
             {
                 postAttributeCollectionConnectorName = 'RestApi_f6e8e73d-6b17-433e-948f-f578f12bd57c'
-                postFederationSignupConnectorName = 'RestApi_beeb7152-673c-48b3-b143-9975949a93ca'
+                postFederationSignupConnectorName    = 'RestApi_beeb7152-673c-48b3-b143-9975949a93ca'
             };
-            Credential                = $Credscredential;
             Ensure                    = "Present";
-            Id                        = "B2X_1_TestFlow";
-            IdentityProviders         = @("MSASignup-OAUTH","EmailOtpSignup-OAUTH");
+            Id                        = "B2X_1_ContractorSignup";
+            IdentityProviders         = @("EmailOtpSignup-OAUTH"); # Updated Property
             UserAttributeAssignments  = @(
                 MSFT_MicrosoftGraphuserFlowUserAttributeAssignment
                 {
                     UserInputType = 'textBox'
-                    IsOptional = $True
-                    DisplayName = 'Email Address'
-                    Id = 'emailReadonly'
+                    IsOptional    = $True
+                    DisplayName   = 'Email Address'
+                    Id            = 'emailReadonly'
 
                 }
                 MSFT_MicrosoftGraphuserFlowUserAttributeAssignment
                 {
-                    UserInputType = 'dropdownSingleSelect'
-                    IsOptional = $True
-                    DisplayName = 'Random'
-                    Id = 'city'
+                    UserInputType       = 'dropdownSingleSelect'
+                    IsOptional          = $True
+                    DisplayName         = 'Random'
+                    Id                  = 'city'
                     UserAttributeValues = @(
                         MSFT_MicrosoftGraphuserFlowUserAttributeAssignmentUserAttributeValues
                         {
                             IsDefault = $True
-                            Name = 'S'
-                            Value = '2'
+                            Name      = 'S'
+                            Value     = '2'
                         }
                         MSFT_MicrosoftGraphuserFlowUserAttributeAssignmentUserAttributeValues
                         {
                             IsDefault = $True
-                            Name = 'X'
-                            Value = '1'
+                            Name      = 'X'
+                            Value     = '1'
                         }
                     )
                 }
                 MSFT_MicrosoftGraphuserFlowUserAttributeAssignment{
                     UserInputType = 'textBox'
-                    IsOptional = $False
-                    DisplayName = 'Piyush1'
-                    Id = 'extension_91d51274096941f786b07b9d723d93f4_Piyush1'
+                    IsOptional    = $False
+                    DisplayName   = 'Piyush1'
+                    Id            = 'extension_91d51274096941f786b07b9d723d93f4_Piyush1'
 
                 }
             );
+            ApplicationId             = $ApplicationId
+            TenantId                  = $TenantId
+            CertificateThumbprint     = $CertificateThumbprint
         }
     }
 }

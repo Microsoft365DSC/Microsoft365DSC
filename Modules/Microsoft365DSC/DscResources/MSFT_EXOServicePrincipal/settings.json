@@ -1,5 +1,16 @@
 {
   "resourceName": "EXOServicePrincipal",
+  "generatedFrom": {
+    "workload": "ExchangeOnline",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "ServicePrincipal",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "Use this resource to to view information about service principals, create service principals, to remove service principals, to change service principals in your cloud-based organization.",
   "roles": {
     "read": [
@@ -25,7 +36,7 @@
       }
     },
     "exchange": {
-      "requiredroles": {
+      "requiredRoles": {
         "read": [
           "Role Management"
         ],
@@ -33,7 +44,7 @@
           "Role Management"
         ]
       },
-      "requiredrolegroups": {
+      "requiredRoleGroups": {
         "read": [
           "Organization Management"
         ],
@@ -52,6 +63,15 @@
   ],
   "mode": "Data",
   "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-ServicePrincipal",
+        "New-ServicePrincipal",
+        "Remove-ServicePrincipal",
+        "Set-ServicePrincipal"
+      ]
+    },
     {
       "module": "Microsoft.Graph.Applications",
       "cmdlets": [

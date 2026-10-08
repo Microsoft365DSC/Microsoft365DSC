@@ -5,24 +5,36 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCCaseHoldRule 'ConfigureCaseHoldRule'
+        SCCaseHoldRule 'SCCaseHoldRule-Example'
         {
-            Name               = "My Rule"
-            Policy             = "My Policy"
-            Comment            = "This is a demo rule"
-            Disabled           = $false
-            ContentMatchQuery  = "filename:2016 budget filetype:xlsx"
-            Ensure             = "Present"
-            Credential         = $Credscredential
+            Name                  = "Supplier Budget Spreadsheets"
+            Policy                = "Litigation Hold 2026"
+            Comment               = "Limits the hold to budget spreadsheets"
+            Disabled              = $false
+            ContentMatchQuery     = "filename:budget filetype:xlsx"
+            Ensure                = "Present"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

@@ -1,5 +1,22 @@
 {
   "resourceName": "IntuneMobileThreatDefenseConnector",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "mobileThreatDefenseConnector",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementMobileThreatDefenseConnector",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "DisplayName",
+      "reason": "NotConfigurable",
+      "note": "The mobileThreatDefenseConnector entity carries no display name and the resource hard codes the partner label."
+    }
+  ],
   "description": "This resource configures a connection to Mobile Threat Defense partner.",
   "permissions": {
     "graph": {

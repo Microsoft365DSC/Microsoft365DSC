@@ -1,5 +1,27 @@
 {
   "resourceName": "AADGroupLifecyclePolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "v1.0",
+    "entityType": "groupLifecyclePolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgGroupLifecyclePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AlternateNotificationEmails",
+      "reason": "Accepted",
+      "note": "Graph carries the addresses as one semicolon delimited string instead of a String array."
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "Service-assigned. The resource keys on IsSingleInstance."
+    }
+  ],
   "description": "This resource configures an Azure Active Directory Group Lifecycle Policy (e.g. Expiration).",
   "roles": {
     "read": [],

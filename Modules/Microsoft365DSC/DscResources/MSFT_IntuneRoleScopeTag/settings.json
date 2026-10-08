@@ -1,5 +1,22 @@
 {
   "resourceName": "IntuneRoleScopeTag",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "roleScopeTag",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementRoleScopeTag",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "IsBuiltIn",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    }
+  ],
   "description": "This resource configures an Intune Role Scope Tag.",
   "permissions": {
     "graph": {
@@ -9,7 +26,7 @@
             "name": "DeviceManagementConfiguration.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -17,7 +34,7 @@
             "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       },
@@ -27,7 +44,7 @@
             "name": "DeviceManagementConfiguration.Read.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ],
         "update": [
@@ -35,7 +52,7 @@
             "name": "DeviceManagementConfiguration.ReadWrite.All"
           },
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           }
         ]
       }

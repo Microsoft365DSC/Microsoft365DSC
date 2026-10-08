@@ -1,473 +1,308 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_EXOHostedConnectionFilterPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class EXOHostedConnectionFilterPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The Identity parameter specifies the Hosted Connection Filter Policy that you want to modify.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
+    [DscProperty()]
+    [System.ComponentModel.Description('The AdminDisplayName parameter specifies a description for the policy.')]
+    [System.String] $AdminDisplayName
 
-        [Parameter()]
-        [Boolean]
-        $EnableSafeList = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The EnableSafeList parameter enables or disables use of the safe list. The safe list is a dynamic allow list in the Microsoft datacenter that requires no customer configuration. Valid input for this parameter is $true or $false. The default value is $false.')]
+    [System.Nullable[System.Boolean]] $EnableSafeList
 
-        [Parameter()]
-        [System.String[]]
-        $IPAllowList = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The IPAllowList parameter specifies IP addresses from which messages are always allowed. Messages from the IP addresses you specify won''t be identified as spam, despite any other spam characteristics of the messages. Valid values for this parameter are: A single IP address, an IP address range, a CIDR IP.')]
+    [System.String[]] $IPAllowList
 
-        [Parameter()]
-        [System.String[]]
-        $IPBlockList = @(),
+    [DscProperty()]
+    [System.ComponentModel.Description('The IPBlockList parameter specifies IP addresses from which messages are never allowed. Messages from the IP addresses you specify are blocked without any further spam scanning. Valid values for this parameter are: A single IP address, an IP address range, a CIDR IP.')]
+    [System.String[]] $IPBlockList
 
-        [Parameter()]
-        [Boolean]
-        $MakeDefault = $false,
+    [DscProperty()]
+    [System.ComponentModel.Description('The MakeDefault parameter makes the specified policy the default connection filter policy. Default is $false.')]
+    [System.Nullable[System.Boolean]] $MakeDefault
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies if this Hosted Connection Filter Policy should exist.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Exchange Global Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of HostedConnectionFilterPolicy for $Identity"
-
-    try
+    [EXOHostedConnectionFilterPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'ExchangeOnline' `
-                -InboundParameters $PSBoundParameters
+            $remote = [EXOHostedConnectionFilterPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration of HostedConnectionFilterPolicy for $($this.Identity)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $HostedConnectionFilterPolicy = Get-HostedConnectionFilterPolicy -Identity $Identity -ErrorAction SilentlyContinue
-            if (-not $HostedConnectionFilterPolicy)
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
             {
-                Write-Verbose -Message "HostedConnectionFilterPolicy [$($Identity)] does not exist."
-                return $nullReturn
+                $null = $this.Connect('ExchangeOnline')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $HostedConnectionFilterPolicy = Get-HostedConnectionFilterPolicy -Identity $this.Identity -ErrorAction SilentlyContinue
+                if (-not $HostedConnectionFilterPolicy)
+                {
+                    Write-Verbose -Message "HostedConnectionFilterPolicy [$($this.Identity)] does not exist."
+                    return $this.AsResult($nullReturn)
+                }
+            }
+            else
+            {
+                $HostedConnectionFilterPolicy = $this.ExportedInstance
+            }
+
+            Write-Verbose -Message "Found HostedConnectionFilterPolicy $($this.Identity)"
+
+            $result = @{
+                Ensure                = 'Present'
+                Identity              = $this.Identity
+                AdminDisplayName      = $HostedConnectionFilterPolicy.AdminDisplayName
+                EnableSafeList        = $HostedConnectionFilterPolicy.EnableSafeList
+                IPAllowList           = $HostedConnectionFilterPolicy.IPAllowList
+                IPBlockList           = $HostedConnectionFilterPolicy.IPBlockList
+                MakeDefault           = $false
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                TenantId              = $this.TenantId
+                AccessTokens          = $this.AccessTokens
+            }
+
+            if ($HostedConnectionFilterPolicy.IsDefault)
+            {
+                $result.MakeDefault = $true
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of HostedConnectionFilterPolicy for $($this.Identity)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentInstance = $this.Get().ToHashtable()
+
+        $HostedConnectionFilterPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+        $HostedConnectionFilterPolicyParams.Remove('MakeDefault') | Out-Null
+
+        if ($HostedConnectionFilterPolicyParams.RuleScope)
+        {
+            $HostedConnectionFilterPolicyParams += @{
+                Scope = $HostedConnectionFilterPolicyParams.RuleScope
+            }
+            $HostedConnectionFilterPolicyParams.Remove('RuleScope') | Out-Null
+        }
+
+        if ($this.Ensure -eq 'Present' -and $CurrentInstance.Ensure -eq 'Absent')
+        {
+            $HostedConnectionFilterPolicyParams += @{
+                Name = $HostedConnectionFilterPolicyParams.Identity
+            }
+            $HostedConnectionFilterPolicyParams.Remove('Identity') | Out-Null
+            Write-Verbose -Message "Creating New Policy {$($this.Identity)}"
+            New-HostedConnectionFilterPolicy @HostedConnectionFilterPolicyParams
+
+            if ($this.GetBoundParameters().MakeDefault)
+            {
+                Write-Verbose -Message "Making Policy {$($this.Identity)} the default one"
+                $attempt = 1
+                while ($true)
+                {
+                    try
+                    {
+                        Set-HostedConnectionFilterPolicy -Identity $this.Identity -MakeDefault -Confirm:$false -ErrorAction Stop
+                        break
+                    }
+                    catch
+                    {
+                        if ($attempt -ge 5 -or -not (Test-M365DSCNotFoundError -ErrorRecord $_))
+                        {
+                            throw
+                        }
+
+                        $attempt++
+                        Start-Sleep -Seconds 5
+                    }
+                }
+            }
+
+            Write-Verbose -Message "With Parameters: $(Convert-M365DscHashtableToString -Hashtable $HostedConnectionFilterPolicyParams)"
+        }
+        elseif ($this.Ensure -eq 'Present' -and $CurrentInstance.Ensure -eq 'Present')
+        {
+            if ($this.GetBoundParameters().MakeDefault)
+            {
+                Set-HostedConnectionFilterPolicy @HostedConnectionFilterPolicyParams -MakeDefault -Confirm:$false
+            }
+            else
+            {
+                Set-HostedConnectionFilterPolicy @HostedConnectionFilterPolicyParams -Confirm:$false
             }
         }
-        else
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentInstance.Ensure -eq 'Present')
         {
-            $HostedConnectionFilterPolicy = $Script:exportedInstance
+            Write-Verbose -Message "Removing HostedConnectionFilterPolicy $($this.Identity)"
+            Remove-HostedConnectionFilterPolicy -Identity $this.Identity -Confirm:$false
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-        Write-Verbose -Message "Found HostedConnectionFilterPolicy $($Identity)"
+        $ConnectionMode = $this.Connect('ExchangeOnline')
 
-        $result = @{
-            Ensure                = 'Present'
-            Identity              = $Identity
-            AdminDisplayName      = $HostedConnectionFilterPolicy.AdminDisplayName
-            EnableSafeList        = $HostedConnectionFilterPolicy.EnableSafeList
-            IPAllowList           = $HostedConnectionFilterPolicy.IPAllowList
-            IPBlockList           = $HostedConnectionFilterPolicy.IPBlockList
-            MakeDefault           = $false
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            TenantId              = $TenantId
-            AccessTokens          = $AccessTokens
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            [array]$HostedConnectionFilterPolicies = Get-HostedConnectionFilterPolicy
+            $dscContent = [System.Text.StringBuilder]::new()
+
+            if ($HostedConnectionFilterPolicies.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            $i = 1
+            foreach ($HostedConnectionFilterPolicy in $HostedConnectionFilterPolicies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $Params = @{
+                    Credential            = $this.Credential
+                    Identity              = $HostedConnectionFilterPolicy.Identity
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    CertificatePath       = $this.CertificatePath
+                    AccessTokens          = $this.AccessTokens
+                }
+                $this.ExportedInstance = $HostedConnectionFilterPolicy
+                Write-M365DSCHost -Message "    |---[$i/$($HostedConnectionFilterPolicies.Length)] $($HostedConnectionFilterPolicy.Identity)" -DeferWrite
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [EXOHostedConnectionFilterPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [EXOHostedConnectionFilterPolicy])
+        {
+            return $Values
         }
 
-        if ($HostedConnectionFilterPolicy.IsDefault)
+        $result = [EXOHostedConnectionFilterPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
         {
-            $result.MakeDefault = $true
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
-
-        [Parameter()]
-        [Boolean]
-        $EnableSafeList = $false,
-
-        [Parameter()]
-        [System.String[]]
-        $IPAllowList = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $IPBlockList = @(),
-
-        [Parameter()]
-        [Boolean]
-        $MakeDefault = $false,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of HostedConnectionFilterPolicy for $Identity"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentInstance = Get-TargetResource @PSBoundParameters
-
-    $HostedConnectionFilterPolicyParams = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-    $HostedConnectionFilterPolicyParams.Remove('MakeDefault') | Out-Null
-
-    if ($HostedConnectionFilterPolicyParams.RuleScope)
-    {
-        $HostedConnectionFilterPolicyParams += @{
-            Scope = $HostedConnectionFilterPolicyParams.RuleScope
-        }
-        $HostedConnectionFilterPolicyParams.Remove('RuleScope') | Out-Null
-    }
-
-    if ($Ensure -eq 'Present' -and $CurrentInstance.Ensure -eq 'Absent')
-    {
-        $HostedConnectionFilterPolicyParams += @{
-            Name = $HostedConnectionFilterPolicyParams.Identity
-        }
-        $HostedConnectionFilterPolicyParams.Remove('Identity') | Out-Null
-        if ($PSBoundParameters.MakeDefault)
-        {
-            Write-Verbose -Message "Creating New Default Policy {$Identity}"
-            New-HostedConnectionFilterPolicy @HostedConnectionFilterPolicyParams -MakeDefault
-        }
-        else
-        {
-            Write-Verbose -Message "Creating New Policy {$Identity}"
-            New-HostedConnectionFilterPolicy @HostedConnectionFilterPolicyParams
-        }
-
-        Write-Verbose -Message "With Parameters: $(Convert-M365DscHashtableToString -Hashtable $HostedConnectionFilterPolicyParams)"
-    }
-    elseif ($Ensure -eq 'Present' -and $CurrentInstance.Ensure -eq 'Present')
-    {
-        if ($PSBoundParameters.MakeDefault)
-        {
-            Set-HostedConnectionFilterPolicy @HostedConnectionFilterPolicyParams -MakeDefault -Confirm:$false
-        }
-        else
-        {
-            Set-HostedConnectionFilterPolicy @HostedConnectionFilterPolicyParams -Confirm:$false
-        }
-    }
-    elseif ($Ensure -eq 'Absent' -and $CurrentInstance.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing HostedConnectionFilterPolicy $($Identity)"
-        Remove-HostedConnectionFilterPolicy -Identity $Identity -Confirm:$false
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $AdminDisplayName,
-
-        [Parameter()]
-        [Boolean]
-        $EnableSafeList = $false,
-
-        [Parameter()]
-        [System.String[]]
-        $IPAllowList = @(),
-
-        [Parameter()]
-        [System.String[]]
-        $IPBlockList = @(),
-
-        [Parameter()]
-        [Boolean]
-        $MakeDefault = $false,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'ExchangeOnline' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        [array]$HostedConnectionFilterPolicies = Get-HostedConnectionFilterPolicy
-        $dscContent = [System.Text.StringBuilder]::new()
-
-        if ($HostedConnectionFilterPolicies.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        $i = 1
-        foreach ($HostedConnectionFilterPolicy in $HostedConnectionFilterPolicies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            $Params = @{
-                Credential            = $Credential
-                Identity              = $HostedConnectionFilterPolicy.Identity
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                CertificatePath       = $CertificatePath
-                AccessTokens          = $AccessTokens
-            }
-            $Script:exportedInstance = $HostedConnectionFilterPolicy
-            Write-M365DSCHost -Message "    |---[$i/$($HostedConnectionFilterPolicies.Length)] $($HostedConnectionFilterPolicy.Identity)" -DeferWrite
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

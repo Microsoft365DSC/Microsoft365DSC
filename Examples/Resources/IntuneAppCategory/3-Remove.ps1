@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,13 +21,13 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        IntuneAppCategory "IntuneAppCategory-Data Management"
+        IntuneAppCategory "IntuneAppCategory-Example"
         {
-            Id                   = "a1fc9fe2-728d-4867-9a72-a61e18f8c606";
-            DisplayName          = "Custom Data Management";
-            Ensure               = "Absent";
+            DisplayName           = "Custom Data Management";
+            Ensure                = "Absent";
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

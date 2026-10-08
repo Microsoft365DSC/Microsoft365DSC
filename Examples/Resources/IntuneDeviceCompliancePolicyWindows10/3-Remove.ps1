@@ -4,7 +4,8 @@ This example creates a new Device Comliance Policy for Windows.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,14 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneDeviceCompliancePolicyWindows10 'ConfigureDeviceCompliancePolicyWindows10'
+        IntuneDeviceCompliancePolicyWindows10 'IntuneDeviceCompliancePolicyWindows10-Example'
         {
-            DisplayName                                 = 'Windows 10 DSC Policy'
-            Ensure                                      = 'Absent'
+            DisplayName           = 'Windows 10 Device Compliance'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

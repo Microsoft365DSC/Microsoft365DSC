@@ -56,6 +56,11 @@ function Invoke-M365DSCPowerPlatformRESTWebRequest
     }
     catch
     {
+        if (-not [System.String]::IsNullOrEmpty($_.ErrorDetails.Message))
+        {
+            throw "$($_.Exception.Message) $($_.ErrorDetails.Message)"
+        }
+
         throw $_
     }
     $result = $null

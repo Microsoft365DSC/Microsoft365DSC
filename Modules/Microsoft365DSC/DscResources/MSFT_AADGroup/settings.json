@@ -1,5 +1,347 @@
 {
   "resourceName": "AADGroup",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "group",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaGroup",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "AcceptedSenders",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through AcceptMessagesOnlyFromSendersOrMembers"
+    },
+    {
+      "name": "AccessType",
+      "reason": "NotConfigurable",
+      "note": "Written and read back as the value the service derives from Visibility."
+    },
+    {
+      "name": "AllowExternalSenders",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes the inverse through RequireSenderAuthenticationEnabled"
+    },
+    {
+      "name": "AppRoleAssignments",
+      "reason": "OwnedByOtherResource",
+      "note": "AADServicePrincipal creates these through AppRoleAssignedTo with principal type Group"
+    },
+    {
+      "name": "AssignedLabels",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings assigns the label through SensitivityLabelId. Graph refuses the property in an app only context."
+    },
+    {
+      "name": "AssignedToRole",
+      "reason": "Accepted",
+      "note": "Resolved from the role assignments whose principal is the group."
+    },
+    {
+      "name": "AutoSubscribeNewMembers",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings manages this flag under the same name"
+    },
+    {
+      "name": "Calendar",
+      "reason": "ReadOnly",
+      "note": "The service provisions the group calendar with the group mailbox and Graph marks the navigation read only."
+    },
+    {
+      "name": "CalendarView",
+      "reason": "ReadOnly",
+      "note": "A read only view of the group calendar events."
+    },
+    {
+      "name": "Classification",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through Classification"
+    },
+    {
+      "name": "CloudLicensing",
+      "reason": "ReadOnly",
+      "note": "The service derives cloud licensing usage rights from assigned licenses"
+    },
+    {
+      "name": "Conversations",
+      "reason": "Accepted",
+      "note": "Group mailbox conversations are user authored content."
+    },
+    {
+      "name": "Drive",
+      "reason": "ReadOnly",
+      "note": "The service provisions and maintains the default document library"
+    },
+    {
+      "name": "Drives",
+      "reason": "ReadOnly",
+      "note": "The service provisions and maintains the group document libraries"
+    },
+    {
+      "name": "Endpoints",
+      "reason": "ReadOnly",
+      "note": "The service publishes group endpoints and Graph returns them as read only"
+    },
+    {
+      "name": "Events",
+      "reason": "Accepted",
+      "note": "Calendar events are user authored content."
+    },
+    {
+      "name": "ExpirationDateTime",
+      "reason": "ReadOnly",
+      "note": "The service computes it from the lifecycle policy and the last renewal"
+    },
+    {
+      "name": "Extensions",
+      "reason": "ReadOnly",
+      "note": "Open extensions belong to the applications that define them."
+    },
+    {
+      "name": "GroupAsMembers",
+      "reason": "Accepted",
+      "note": "The group typed entries of members."
+    },
+    {
+      "name": "GroupLifecyclePolicies",
+      "reason": "Accepted",
+      "note": "Modeled through GroupLifecyclePolicySelectedEnabled. The policy object belongs to AADGroupLifecyclePolicy"
+    },
+    {
+      "name": "GroupLifecyclePolicySelectedEnabled",
+      "reason": "Accepted",
+      "note": "Flattens the groupLifecyclePolicies navigation into a flag saying whether the group sits in the selected scope policy."
+    },
+    {
+      "name": "HasMembersWithLicenseErrors",
+      "reason": "ReadOnly",
+      "note": "The service computes whether members have license errors"
+    },
+    {
+      "name": "HideFromAddressLists",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through HiddenFromAddressListsEnabled"
+    },
+    {
+      "name": "HideFromOutlookClients",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through HiddenFromExchangeClientsEnabled"
+    },
+    {
+      "name": "InfoCatalogs",
+      "reason": "Deferred",
+      "note": "Refused on permissions the module does not request today."
+    },
+    {
+      "name": "IsArchived",
+      "reason": "NotConfigurable",
+      "note": "The service answers that the path is not supported."
+    },
+    {
+      "name": "IsFavorite",
+      "reason": "NotConfigurable",
+      "note": "The service directs the property to the joined groups API."
+    },
+    {
+      "name": "IsManagementRestricted",
+      "reason": "OwnedByOtherResource",
+      "note": "AADAdministrativeUnit controls it through IsMemberManagementRestricted and Members"
+    },
+    {
+      "name": "IsSubscribedByMail",
+      "reason": "NotConfigurable",
+      "note": "Graph refuses the write with an app only token."
+    },
+    {
+      "name": "LicenseProcessingState",
+      "reason": "ReadOnly",
+      "note": "The service reports group based license assignment progress"
+    },
+    {
+      "name": "Mail",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through PrimarySmtpAddress and EmailAddresses"
+    },
+    {
+      "name": "MembershipRuleProcessingStatus",
+      "reason": "ReadOnly",
+      "note": "The service reports the last dynamic membership rule evaluation"
+    },
+    {
+      "name": "MembersWithLicenseErrors",
+      "reason": "ReadOnly",
+      "note": "The service computes members with license assignment errors"
+    },
+    {
+      "name": "Onenote",
+      "reason": "Accepted",
+      "note": "The group notebook holds user authored content."
+    },
+    {
+      "name": "OnPremisesDomainName",
+      "reason": "ReadOnly",
+      "note": "Synced from the on premises directory"
+    },
+    {
+      "name": "OnPremisesExtensionAttributes",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings manages the backing Exchange custom attributes 1-15"
+    },
+    {
+      "name": "OnPremisesLastSyncDateTime",
+      "reason": "ReadOnly",
+      "note": "The service stamps the last on premises synchronization time"
+    },
+    {
+      "name": "OnPremisesNetBiosName",
+      "reason": "ReadOnly",
+      "note": "Synced from the on premises directory"
+    },
+    {
+      "name": "OnPremisesProvisioningErrors",
+      "reason": "ReadOnly",
+      "note": "The service reports errors from on premises provisioning"
+    },
+    {
+      "name": "OnPremisesSamAccountName",
+      "reason": "ReadOnly",
+      "note": "Synced from the on premises directory"
+    },
+    {
+      "name": "OnPremisesSecurityIdentifier",
+      "reason": "ReadOnly",
+      "note": "Synced from the on premises directory"
+    },
+    {
+      "name": "OnPremisesSyncEnabled",
+      "reason": "ReadOnly",
+      "note": "The service sets it for groups synced from on premises"
+    },
+    {
+      "name": "OrganizationId",
+      "reason": "ReadOnly",
+      "note": "The service stamps the owning tenant"
+    },
+    {
+      "name": "PermissionGrants",
+      "reason": "Accepted",
+      "note": "Resource-specific consent records written by the consent flow."
+    },
+    {
+      "name": "Photo",
+      "reason": "Accepted",
+      "note": "The group photo is uploaded image bytes rather than a declarative value."
+    },
+    {
+      "name": "Photos",
+      "reason": "ReadOnly",
+      "note": "The sizes the service renders from the profile photo."
+    },
+    {
+      "name": "Planner",
+      "reason": "OwnedByOtherResource",
+      "note": "PlannerPlan creates plans for a group through OwnerGroup"
+    },
+    {
+      "name": "PreferredDataLocation",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through MailboxRegion"
+    },
+    {
+      "name": "PreferredLanguage",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes it through Language"
+    },
+    {
+      "name": "ProxyAddresses",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings manages them through EmailAddresses and PrimarySmtpAddress"
+    },
+    {
+      "name": "RejectedSenders",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings writes them through RejectMessagesFromSendersOrMembers"
+    },
+    {
+      "name": "RenewedDateTime",
+      "reason": "ReadOnly",
+      "note": "The service stamps the last renewal time"
+    },
+    {
+      "name": "ResourceBehaviorOptions",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings manages the equivalent behaviors after group creation"
+    },
+    {
+      "name": "ResourceProvisioningOptions",
+      "reason": "OwnedByOtherResource",
+      "note": "TeamsTeam provisions the team and Graph reflects it here"
+    },
+    {
+      "name": "SecurityIdentifier",
+      "reason": "ReadOnly",
+      "note": "The service assigns it at group creation"
+    },
+    {
+      "name": "ServiceProvisioningErrors",
+      "reason": "ReadOnly",
+      "note": "The service reports errors raised while provisioning the group into dependent services"
+    },
+    {
+      "name": "Sites",
+      "reason": "ReadOnly",
+      "note": "The service provisions and maintains a group's linked SharePoint sites"
+    },
+    {
+      "name": "Team",
+      "reason": "OwnedByOtherResource",
+      "note": "TeamsTeam manages the team of a group through GroupID"
+    },
+    {
+      "name": "Threads",
+      "reason": "Accepted",
+      "note": "Conversation threads are group mailbox content authored by users."
+    },
+    {
+      "name": "TransitiveMemberOf",
+      "reason": "ReadOnly",
+      "note": "The service computes transitive membership. MemberOf models the direct memberships"
+    },
+    {
+      "name": "TransitiveMembers",
+      "reason": "ReadOnly",
+      "note": "The service computes transitive membership. Members and GroupAsMembers model direct members"
+    },
+    {
+      "name": "UniqueName",
+      "reason": "ReadOnly",
+      "note": "Graph documents this alternate key as immutable after group creation"
+    },
+    {
+      "name": "UnseenConversationsCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count from conversation read state"
+    },
+    {
+      "name": "UnseenCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count from conversation read state"
+    },
+    {
+      "name": "UnseenMessagesCount",
+      "reason": "ReadOnly",
+      "note": "The service computes this count from message read state"
+    },
+    {
+      "name": "WelcomeMessageEnabled",
+      "reason": "OwnedByOtherResource",
+      "note": "EXOGroupSettings manages this flag under the same name for Microsoft 365 groups"
+    }
+  ],
   "description": "This resource configures an Azure Active Directory group.",
   "roles": {
     "read": [],
@@ -136,14 +478,18 @@
         "Get-MgBetaGroup",
         "Get-MgBetaGroupLifecyclePolicy",
         "Get-MgBetaGroupMember",
+        "New-MgBetaGroup",
         "New-MgBetaGroupMemberByRef",
+        "Remove-MgBetaGroup",
         "Remove-MgBetaGroupFromLifecyclePolicy",
-        "Remove-MgBetaGroupMemberDirectoryObjectByRef"
+        "Remove-MgBetaGroupMemberDirectoryObjectByRef",
+        "Update-MgBetaGroup"
       ]
     },
     {
       "module": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
       "cmdlets": [
+        "Get-MgBetaDirectoryDeletedItemAsGroup",
         "Get-MgBetaSubscribedSku",
         "Restore-MgBetaDirectoryDeletedItem"
       ]
@@ -160,15 +506,9 @@
     {
       "module": "Microsoft.Graph.Groups",
       "cmdlets": [
-        "Get-MgGroupMember",
-        "New-MgGroup",
-        "New-MgGroupMemberByRef",
         "New-MgGroupOwnerByRef",
-        "Remove-MgGroup",
-        "Remove-MgGroupMemberDirectoryObjectByRef",
         "Remove-MgGroupOwnerDirectoryObjectByRef",
-        "Set-MgGroupLicense",
-        "Update-MgGroup"
+        "Set-MgGroupLicense"
       ]
     },
     {

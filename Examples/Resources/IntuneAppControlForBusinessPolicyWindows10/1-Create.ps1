@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,20 +21,34 @@ Configuration Example
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        IntuneAppControlForBusinessPolicyWindows10 "IntuneAppControlForBusinessPolicyWindows10-Example"
+        IntuneAppControlForBusinessPolicyWindows10 'IntuneAppControlForBusinessPolicyWindows10-Example'
         {
-            Id                    = "a1fc9fe2-728d-4867-9a72-a61e18f8c606";
-            ConfigureApplicationControlEnableAppControlPolicy               = 1;
-            ConfigureApplicationControlOptions                              = 1;
-            ConfigureApplicationControlSelectAdditionalRulesForTrustingApps = @(1);
-            Description           = "";
-            DisplayName           = "Example";
-            Ensure                = "Present";
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            Assignments                                               = @(
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.exclusionGroupAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                    groupDisplayName                           = "Intune Excluded Devices"
+                }
+                MSFT_DeviceManagementConfigurationPolicyAssignments{
+                    dataType                                   = "#microsoft.graph.groupAssignmentTarget"
+                    deviceAndAppManagementAssignmentFilterType = "none"
+                    groupDisplayName                           = "Intune Pilot Devices"
+                }
+            );
+            ConfigureApplicationControlOptions                        = "1";
+            ConfigureApplicationControlsAuditMode                     = "1";
+            ConfigureApplicationControlsTrustAppsFromManagedInstaller = "1";
+            ConfigureApplicationControlsTrustAppsWithGoodReputation   = "1";
+            Description                                               = "Audits application execution on pilot devices";
+            DisplayName                                               = "App Control for Business - Audit Mode";
+            Ensure                                                    = "Present";
+            RoleScopeTagIds                                           = @("0");
+            ApplicationId                                             = $ApplicationId;
+            TenantId                                                  = $TenantId;
+            CertificateThumbprint                                     = $CertificateThumbprint;
         }
     }
 }

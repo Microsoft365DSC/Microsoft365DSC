@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,13 +19,13 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADAdminConsentRequestPolicy "AADAdminConsentRequestPolicy"
+        AADAdminConsentRequestPolicy "AADAdminConsentRequestPolicy-Example"
         {
-            ApplicationId         = $ApplicationId;
-            CertificateThumbprint = $CertificateThumbprint;
             IsEnabled             = $True;
             IsSingleInstance      = "Yes";
             NotifyReviewers       = $False;
@@ -48,7 +49,9 @@ Configuration Example
                      ReviewerId   = 'Attack Simulation Administrator'
                 }
                 );
+            ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

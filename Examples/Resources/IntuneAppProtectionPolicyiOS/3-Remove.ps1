@@ -4,7 +4,8 @@ This example creates a new App ProtectionPolicy for iOS.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,14 +18,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneAppProtectionPolicyiOS 'MyCustomiOSPolicy'
+        IntuneAppProtectionPolicyiOS 'IntuneAppProtectionPolicyiOS-Example'
         {
-            DisplayName                             = 'My DSC iOS App Protection Policy'
-            Ensure                                  = 'Absent'
+            DisplayName           = 'iOS App Protection - Corporate'
+            Ensure                = 'Absent'
             ApplicationId         = $ApplicationId;
             TenantId              = $TenantId;
             CertificateThumbprint = $CertificateThumbprint;

@@ -6,34 +6,42 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        PPTenantIsolationSettings 'PowerPlatformTenantSettings'
+        PPTenantIsolationSettings 'PPTenantIsolationSettings-Example'
         {
-            IsSingleInstance = 'Yes'
-            Enabled          = $true
-            RulesToInclude   = @(
-                MSFT_PPTenantRule
-                {
-                    TenantName = 'contoso.onmicrosoft.com'
+            IsSingleInstance      = 'Yes'
+            Enabled               = $false # Updated Property
+            RulesToInclude        = @(
+                MSFT_PPTenantRule{
+                    TenantName = "$TenantId"
                     Direction  = 'Inbound'
                 }
             )
-            RulesToExclude   = @(
-                MSFT_PPTenantRule
-                {
+            RulesToExclude        = @(
+                MSFT_PPTenantRule{
                     TenantName = 'fabrikam.onmicrosoft.com'
                     Direction  = 'Both'
                 }
             )
-            Credential       = $Credscredential
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }

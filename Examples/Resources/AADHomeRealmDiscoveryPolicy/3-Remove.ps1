@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,23 +19,15 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADHomeRealmDiscoveryPolicy "AADHomeRealmDiscoveryPolicy-displayName-value"
+        AADHomeRealmDiscoveryPolicy "AADHomeRealmDiscoveryPolicy-Example"
         {
-            Definition            = @(
-                MSFT_AADHomeRealDiscoveryPolicyDefinition {
-                    PreferredDomain       = 'federated.example.edu'
-                    AccelerateToFederatedDomain         = $False
-                    AlternateIdLogin = MSFT_AADHomeRealDiscoveryPolicyDefinitionAlternateIdLogin {
-                        Enabled = $True
-                    }
-                }
-            );
             DisplayName           = "displayName-value";
             Ensure                = "Absent";
-            IsOrganizationDefault = $False;
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

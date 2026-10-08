@@ -1,715 +1,372 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_TeamsEventsPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class TeamsEventsPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Identity of the Teams Events Policy.')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('Description of the Teams Events Policy.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowWebinars,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs if a user is allowed to edit the communication emails in Teams Town Hall or Teams Webinar events.')]
+    [ValidateSet('Disabled', 'Enabled')]
+    [System.String] $AllowEmailEditing
 
-        [Parameter()]
-        [ValidateSet('Disabled', 'Enabled')]
-        [System.String]
-        $BackroomChat,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls whether attendance and engagement reports are allowed for events. Possible values are: Enabled, Disabled, ForceEnabled, ForceDisabled.')]
+    [ValidateSet('Enabled', 'Disabled', 'ForceEnabled', 'ForceDisabled')]
+    [System.String] $AllowEngagementReport
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $BroadcastPremiumApps,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs access to the integrations tab in the event creation workflow.')]
+    [System.Nullable[System.Boolean]] $AllowEventIntegrations
 
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'EveryoneInCompanyExcludingGuests')]
-        $EventAccessType,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines if webinars are allowed by the policy or not.')]
+    [ValidateSet('Disabled', 'Enabled')]
+    [System.String] $AllowWebinars
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowEmailEditing,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs if a user can create town halls using Teams Events.')]
+    [ValidateSet('Disabled', 'Enabled')]
+    [System.String] $AllowTownhalls
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowEventIntegrations,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs which users in a tenant can add which registration form questions to an event registration page for attendees to answer when registering for the event.')]
+    [ValidateSet('DefaultOnly', 'DefaultAndPredefinedOnly', 'AllQuestions')]
+    [System.String] $AllowedQuestionTypesInRegistrationForm
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowTownhalls,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting describes how IT admins can control which types of Town Hall attendees can have their recordings published.')]
+    [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
+    [System.String] $AllowedTownhallTypesForRecordingPublish
 
-        [Parameter()]
-        [ValidateSet('DefaultOnly', 'DefaultAndPredefinedOnly', 'AllQuestions')]
-        [System.String]
-        $AllowedQuestionTypesInRegistrationForm,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting describes how IT admins can control which types of webinar attendees can have their recordings published.')]
+    [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
+    [System.String] $AllowedWebinarTypesForRecordingPublish
 
-        [Parameter()]
-        [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
-        [System.String]
-        $AllowedWebinarTypesForRecordingPublish,
+    [DscProperty()]
+    [System.ComponentModel.Description('TBD')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $BackroomChat
 
-        [Parameter()]
-        [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
-        [System.String]
-        $AllowedTownhallTypesForRecordingPublish,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting will enable Tenant Admins to specify if an organizer of a Teams Premium town hall may add an app that is accessible by everyone, including attendees, in a broadcast style Event including a Town hall.')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $BroadcastPremiumApps
 
-        [Parameter()]
-        [ValidateSet('eOTP', 'None')]
-        [System.String]
-        $ExternalPresenterJoinVerification,
+    [DscProperty()]
+    [System.ComponentModel.Description('TBD')]
+    [ValidateSet('eOTP', 'None')]
+    [System.String] $ExternalPresenterJoinVerification
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $ImmersiveEvents,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs if a user can create Immersive Events using Teams Events.')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $ImmersiveEvents
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $RecordingForTownhall,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls what information is shown in attendance reports. Possible values are: FullInformation, IdentityOnly.')]
+    [ValidateSet('FullInformation', 'IdentityOnly')]
+    [System.String] $InfoShownInReportMode
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $RecordingForWebinar,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether recording is allowed in a user''s townhall.')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $RecordingForTownhall
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $Registration,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether recording is allowed in a user''s webinar.')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $RecordingForWebinar
 
-        [Parameter()]
-        [ValidateSet('Everyone', 'EveryoneInOrganizationAndGuests')]
-        [System.String]
-        $TownhallEventAttendeeAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('TBD')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $Registration
 
-        [Parameter()]
-        [ValidateSet('Max720p', 'Max1080p', 'MicrosoftManaged')]
-        [System.String]
-        $TownhallMaxResolution,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs what identity types may attend a Town hall that is scheduled by a particular person or group that is assigned this policy.')]
+    [ValidateSet('Everyone', 'EveryoneInOrganizationAndGuests')]
+    [System.String] $TownhallEventAttendeeAccess
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $TranscriptionForTownhall,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether transcriptions are allowed in a user''s townhall.')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $TranscriptionForTownhall
 
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $TranscriptionForWebinar,
+    [DscProperty()]
+    [System.ComponentModel.Description('Determines whether transcriptions are allowed in a user''s webinar.')]
+    [ValidateSet('Enabled', 'Disabled')]
+    [System.String] $TranscriptionForWebinar
 
-        [Parameter()]
-        [ValidateSet('Optimized', 'None')]
-        [System.String]
-        $TownhallChatExperience,
+    [DscProperty()]
+    [System.ComponentModel.Description('Defines who is allowed to join the event.')]
+    [ValidateSet('Everyone', 'EveryoneInCompanyExcludingGuests')]
+    [System.String] $EventAccessType
 
-        [Parameter()]
-        [System.Boolean]
-        $UseMicrosoftECDN,
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the policy exists, absent ensures it is removed.')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs whether the user can enable the Comment Stream chat experience for Town Halls.')]
+    [ValidateSet('Optimized', 'None')]
+    [System.String] $TownhallChatExperience
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('This policy sets the maximum video resolution supported in Town hall events. Possible values are: Max720p: Town halls support video resolution up to 720p. Max1080p: Town halls support video resolution up to 1080p. MicrosoftManaged: Town halls will support video resolution up to 720p except for those customers whose networks have been assessed by Microsoft to support up to 1080p.')]
+    [ValidateSet('Max720p', 'Max1080p', 'MicrosoftManaged')]
+    [System.String] $TownhallMaxResolution
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('This setting governs whether the global admin disables this property and prevents the organizers from creating town halls that use Microsoft eCDN even though they have been assigned a Teams Premium license.')]
+    [System.Nullable[System.Boolean]] $UseMicrosoftECDN
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the Teams Global Admin.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-    Write-Verbose -Message "Getting the Teams Events Policy {$Identity}"
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-    try
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
+
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter = '*'
+
+    [TeamsEventsPolicy] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Identity -ne $Identity)
+        $nullReturn = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-                -InboundParameters $PSBoundParameters
-
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
-
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
-
-            $policy = Get-CsTeamsEventsPolicy -Identity $Identity `
-                -ErrorAction 'SilentlyContinue'
-        }
-        else
-        {
-            $policy = $Script:exportedInstance
+            $remote = [TeamsEventsPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
         }
 
-        if ($null -eq $policy)
+        Write-Verbose -Message "Getting the Teams Events Policy {$($this.Identity)}"
+
+        try
         {
-            Write-Verbose -Message "Could not find Teams Events Policy {$Identity}"
-            return $nullReturn
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Identity -ne $this.Identity)
+            {
+                $null = $this.Connect('MicrosoftTeams')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                $policy = Get-CsTeamsEventsPolicy -Identity $this.Identity `
+                    -ErrorAction 'SilentlyContinue'
+            }
+            else
+            {
+                $policy = $this.ExportedInstance
+            }
+
+            if ($null -eq $policy)
+            {
+                Write-Verbose -Message "Could not find Teams Events Policy {$($this.Identity)}"
+                return $this.AsResult($nullReturn)
+            }
+
+            Write-Verbose -Message "Found Teams Events Policy {$($this.Identity)}"
+
+            $result = @{
+                Identity                                = $this.Identity
+                Description                             = $policy.Description
+                AllowWebinars                           = $policy.AllowWebinars
+                BackroomChat                            = $policy.BackroomChat
+                BroadcastPremiumApps                    = $policy.BroadcastPremiumApps
+                EventAccessType                         = $policy.EventAccessType
+                ExternalPresenterJoinVerification       = $policy.ExternalPresenterJoinVerification
+                AllowEmailEditing                       = $policy.AllowEmailEditing
+                AllowEngagementReport                   = $policy.AllowEngagementReport
+                AllowEventIntegrations                  = $policy.AllowEventIntegrations
+                AllowTownhalls                          = $policy.AllowTownhalls
+                AllowedQuestionTypesInRegistrationForm  = $policy.AllowedQuestionTypesInRegistrationForm
+                AllowedWebinarTypesForRecordingPublish  = $policy.AllowedWebinarTypesForRecordingPublish
+                AllowedTownhallTypesForRecordingPublish = $policy.AllowedTownhallTypesForRecordingPublish
+                ImmersiveEvents                         = $policy.ImmersiveEvents
+                InfoShownInReportMode                   = $policy.InfoShownInReportMode
+                RecordingForTownhall                    = $policy.RecordingForTownhall
+                RecordingForWebinar                     = $policy.RecordingForWebinar
+                Registration                            = $policy.Registration
+                TownhallChatExperience                  = $policy.TownhallChatExperience
+                TownhallEventAttendeeAccess             = $policy.TownhallEventAttendeeAccess
+                TownhallMaxResolution                   = $policy.TownhallMaxResolution
+                TranscriptionForTownhall                = $policy.TranscriptionForTownhall
+                TranscriptionForWebinar                 = $policy.TranscriptionForWebinar
+                UseMicrosoftECDN                        = $policy.UseMicrosoftECDN
+                Ensure                                  = 'Present'
+                Credential                              = $this.Credential
+                ApplicationId                           = $this.ApplicationId
+                TenantId                                = $this.TenantId
+                CertificateThumbprint                   = $this.CertificateThumbprint
+                CertificatePath                         = $this.CertificatePath
+                CertificatePassword                     = $this.CertificatePassword
+                ManagedIdentity                         = $this.ManagedIdentity
+                AccessTokens                            = $this.AccessTokens
+            }
+
+            return $this.AsResult($result)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
         }
 
-        Write-Verbose -Message "Found Teams Events Policy {$Identity}"
+        Write-Verbose -Message "Setting Teams Events Policy {$($this.Identity)}"
 
-        $result = @{
-            Identity                                = $Identity
-            Description                             = $policy.Description
-            AllowWebinars                           = $policy.AllowWebinars
-            BackroomChat                            = $policy.BackroomChat
-            BroadcastPremiumApps                    = $policy.BroadcastPremiumApps
-            EventAccessType                         = $policy.EventAccessType
-            ExternalPresenterJoinVerification       = $policy.ExternalPresenterJoinVerification
-            AllowEmailEditing                       = $policy.AllowEmailEditing
-            AllowEventIntegrations                  = $policy.AllowEventIntegrations
-            AllowTownhalls                          = $policy.AllowTownhalls
-            AllowedQuestionTypesInRegistrationForm  = $policy.AllowedQuestionTypesInRegistrationForm
-            AllowedWebinarTypesForRecordingPublish  = $policy.AllowedWebinarTypesForRecordingPublish
-            AllowedTownhallTypesForRecordingPublish = $policy.AllowedTownhallTypesForRecordingPublish
-            ImmersiveEvents                         = $policy.ImmersiveEvents
-            RecordingForTownhall                    = $policy.RecordingForTownhall
-            RecordingForWebinar                     = $policy.RecordingForWebinar
-            Registration                            = $policy.Registration
-            TownhallChatExperience                  = $policy.TownhallChatExperience
-            TownhallEventAttendeeAccess             = $policy.TownhallEventAttendeeAccess
-            TownhallMaxResolution                   = $policy.TownhallMaxResolution
-            TranscriptionForTownhall                = $policy.TranscriptionForTownhall
-            TranscriptionForWebinar                 = $policy.TranscriptionForWebinar
-            UseMicrosoftECDN                        = $policy.UseMicrosoftECDN
-            Ensure                                  = 'Present'
-            Credential                              = $Credential
-            ApplicationId                           = $ApplicationId
-            TenantId                                = $TenantId
-            CertificateThumbprint                   = $CertificateThumbprint
-            CertificatePath                         = $CertificatePath
-            CertificatePassword                     = $CertificatePassword
-            ManagedIdentity                         = $ManagedIdentity.IsPresent
-            AccessTokens                            = $AccessTokens
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $CurrentValues = $this.Get().ToHashtable()
+        $SetParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
+
+        if ($this.Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "Creating a new Teams Events Policy {$($this.Identity)}"
+            New-CsTeamsEventsPolicy @SetParameters
+        }
+        elseif ($this.Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Updating settings for Teams Events Policy {$($this.Identity)}"
+            Set-CsTeamsEventsPolicy @SetParameters
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing existing Teams Events Policy {$($this.Identity)}"
+            Remove-CsTeamsEventsPolicy -Identity $this.Identity -Confirm:$false
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftTeams')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $i = 1
+            [array]$policies = Get-CsTeamsEventsPolicy -Filter $this.Filter -ErrorAction Stop
+            $dscContent = [System.Text.StringBuilder]::new()
+            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            foreach ($policy in $policies)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
+                $params = @{
+                    Identity              = $policy.Identity
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $policy
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [TeamsEventsPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [TeamsEventsPolicy])
+        {
+            return $Values
+        }
+
+        $result = [TeamsEventsPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
         }
 
         return $result
     }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
 }
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowWebinars,
-
-        [Parameter()]
-        [ValidateSet('Disabled', 'Enabled')]
-        [System.String]
-        $BackroomChat,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $BroadcastPremiumApps,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'EveryoneInCompanyExcludingGuests')]
-        $EventAccessType,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowEmailEditing,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowEventIntegrations,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowTownhalls,
-
-        [Parameter()]
-        [ValidateSet('DefaultOnly', 'DefaultAndPredefinedOnly', 'AllQuestions')]
-        [System.String]
-        $AllowedQuestionTypesInRegistrationForm,
-
-        [Parameter()]
-        [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
-        [System.String]
-        $AllowedWebinarTypesForRecordingPublish,
-
-        [Parameter()]
-        [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
-        [System.String]
-        $AllowedTownhallTypesForRecordingPublish,
-
-        [Parameter()]
-        [ValidateSet('eOTP', 'None')]
-        [System.String]
-        $ExternalPresenterJoinVerification,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $ImmersiveEvents,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $RecordingForTownhall,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $RecordingForWebinar,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $Registration,
-
-        [Parameter()]
-        [ValidateSet('Everyone', 'EveryoneInOrganizationAndGuests')]
-        [System.String]
-        $TownhallEventAttendeeAccess,
-
-        [Parameter()]
-        [ValidateSet('Max720p', 'Max1080p', 'MicrosoftManaged')]
-        [System.String]
-        $TownhallMaxResolution,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $TranscriptionForTownhall,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $TranscriptionForWebinar,
-
-        [Parameter()]
-        [ValidateSet('Optimized', 'None')]
-        [System.String]
-        $TownhallChatExperience,
-
-        [Parameter()]
-        [System.Boolean]
-        $UseMicrosoftECDN,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting Teams Events Policy {$Identity}"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $CurrentValues = Get-TargetResource @PSBoundParameters
-    $SetParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $PSBoundParameters
-
-    if ($Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
-    {
-        Write-Verbose -Message "Creating a new Teams Events Policy {$Identity}"
-        New-CsTeamsEventsPolicy @SetParameters
-    }
-    elseif ($Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Updating settings for Teams Events Policy {$Identity}"
-        Set-CsTeamsEventsPolicy @SetParameters
-    }
-    elseif ($Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing existing Teams Events Policy {$Identity}"
-        Remove-CsTeamsEventsPolicy -Identity $Identity -Confirm:$false
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowWebinars,
-
-        [Parameter()]
-        [ValidateSet('Disabled', 'Enabled')]
-        [System.String]
-        $BackroomChat,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $BroadcastPremiumApps,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('Everyone', 'EveryoneInCompanyExcludingGuests')]
-        $EventAccessType,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowEmailEditing,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowEventIntegrations,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $AllowTownhalls,
-
-        [Parameter()]
-        [ValidateSet('DefaultOnly', 'DefaultAndPredefinedOnly', 'AllQuestions')]
-        [System.String]
-        $AllowedQuestionTypesInRegistrationForm,
-
-        [Parameter()]
-        [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
-        [System.String]
-        $AllowedWebinarTypesForRecordingPublish,
-
-        [Parameter()]
-        [ValidateSet('None', 'InviteOnly', 'EveryoneInCompanyIncludingGuests', 'Everyone')]
-        [System.String]
-        $AllowedTownhallTypesForRecordingPublish,
-
-        [Parameter()]
-        [ValidateSet('eOTP', 'None')]
-        [System.String]
-        $ExternalPresenterJoinVerification,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $ImmersiveEvents,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $RecordingForTownhall,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $RecordingForWebinar,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $Registration,
-
-        [Parameter()]
-        [ValidateSet('Everyone', 'EveryoneInOrganizationAndGuests')]
-        [System.String]
-        $TownhallEventAttendeeAccess,
-
-        [Parameter()]
-        [ValidateSet('Max720p', 'Max1080p', 'MicrosoftManaged')]
-        [System.String]
-        $TownhallMaxResolution,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $TranscriptionForTownhall,
-
-        [Parameter()]
-        [ValidateSet('Enabled', 'Disabled')]
-        [System.String]
-        $TranscriptionForWebinar,
-
-        [Parameter()]
-        [ValidateSet('Optimized', 'None')]
-        [System.String]
-        $TownhallChatExperience,
-
-        [Parameter()]
-        [System.Boolean]
-        $UseMicrosoftECDN,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.String]
-        $Filter = "*",
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftTeams' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $i = 1
-        [array]$policies = Get-CsTeamsEventsPolicy -Filter $Filter -ErrorAction Stop
-        $dscContent = [System.Text.StringBuilder]::new()
-        Write-M365DSCHost -Message "`r`n" -DeferWrite
-        foreach ($policy in $policies)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
-            $params = @{
-                Identity              = $policy.Identity
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $policy
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

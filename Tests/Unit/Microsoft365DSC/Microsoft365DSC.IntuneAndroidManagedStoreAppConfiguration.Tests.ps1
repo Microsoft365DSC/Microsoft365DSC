@@ -21,12 +21,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -64,15 +64,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     DisplayName                                 = 'Test Android Managed Store App Configuration Policy'
                     Description                                 = 'Test Android Managed Store App Configuration Policy Description'
+                    RoleScopeTagIds                             = @('0')
                     targetedMobileApps            = @("{FakeStringValue}")
-                    permissionActions                      = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_androidPermissionAction -Property @{
+                    permissionActions                      = @(
+                        ([MSFT_androidPermissionAction] @{
                             permission = "android.permission.READ_SMS"
                             action = "prompt"
-                        } -ClientOnly)
+                        })
                     )
                     appSupportsOemConfig                        = $False
                     connectedAppsEnabled                        = $False
+                    credentialProviderRoleState                 = "allowed"
                     packageId                                   = "app:org.mozilla.firefox"
                     payloadJson                                 = ""
                     profileApplicability                        = "androidDeviceOwner"
@@ -86,15 +88,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                    (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                    ((New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the Android Managed Store App Configuration Policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-MgBetaDeviceAppManagementMobileAppConfiguration' -Exactly 1
             }
         }
@@ -104,15 +106,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     DisplayName                                 = 'Test Android Managed Store App Configuration Policy'
                     Description                                 = 'Test Android Managed Store App Configuration Policy Description'
+                    RoleScopeTagIds                             = @('0')
                     targetedMobileApps                          = @("{FakeStringValue}")
-                    permissionActions                           = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_androidPermissionAction -Property @{
+                    permissionActions                           = @(
+                        ([MSFT_androidPermissionAction] @{
                             permission = "android.permission.READ_SMS"
                             action = "prompt"
-                        } -ClientOnly)
+                        })
                     )
                     appSupportsOemConfig                        = $False
                     connectedAppsEnabled                        = $False
+                    credentialProviderRoleState                 = "allowed"
                     packageId                                   = "app:org.mozilla.firefox"
                     payloadJson                                 = ""
                     profileApplicability                        = "androidDeviceOwner"
@@ -122,37 +126,38 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceAppManagementMobileAppConfiguration -MockWith {
                     return @{
-                        DisplayName                      = 'Test Android Managed Store App Configuration Policy'
-                        Description                      = 'Different Value'
-                        Id                               = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
-                        targetedMobileApps               = @("{FakeStringValue}")
-                        permissionActions = @(
+                        DisplayName                 = 'Test Android Managed Store App Configuration Policy'
+                        Description                 = 'Different Value'
+                        Id                          = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
+                        targetedMobileApps          = @("{FakeStringValue}")
+                        permissionActions           = @(
                            @{
                                 permission      = "android.permission.READ_SMS"
                                 action          = "prompt"
 
                             }
                         )
-                        appSupportsOemConfig      = $False
-                        connectedAppsEnabled      = $False
-                        packageId                 = "app:org.mozilla.firefox"
-                        payloadJson               = ""
-                        profileApplicability      = "androidDeviceOwner"
-                        '@odata.type'             = '#microsoft.graph.androidManagedStoreAppConfiguration'
+                        appSupportsOemConfig        = $False
+                        connectedAppsEnabled        = $False
+                        credentialProviderRoleState = "notConfigured"
+                        packageId                   = "app:org.mozilla.firefox"
+                        payloadJson                 = ""
+                        profileApplicability        = "androidDeviceOwner"
+                        '@odata.type'               = '#microsoft.graph.androidManagedStoreAppConfiguration'
                     }
                 }
             }
 
             It 'Should return Present from the Get method' {
-                    (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                    ((New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the Android Managed Store App Configuration Policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceAppManagementMobileAppConfiguration -Exactly 1
 
             }
@@ -163,15 +168,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     DisplayName                                 = 'Test Android Managed Store App Configuration Policy'
                     Description                                 = 'Test Android Managed Store App Configuration Policy Description'
+                    RoleScopeTagIds                             = @('0')
                     targetedMobileApps                          = @("{FakeStringValue}")
-                    permissionActions                           = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_androidPermissionAction -Property @{
+                    permissionActions                           = @(
+                        ([MSFT_androidPermissionAction] @{
                             permission = "android.permission.READ_SMS"
                             action = "prompt"
-                        } -ClientOnly)
+                        })
                     )
                     appSupportsOemConfig                        = $False
                     connectedAppsEnabled                        = $False
+                    credentialProviderRoleState                 = "allowed"
                     packageId                                   = "app:org.mozilla.firefox"
                     payloadJson                                 = ""
                     profileApplicability                        = "androidDeviceOwner"
@@ -181,28 +188,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceAppManagementMobileAppConfiguration -MockWith {
                     return @{
-                        DisplayName                             = 'Test Android Managed Store App Configuration Policy'
-                        Description                             = 'Test Android Managed Store App Configuration Policy Description'
-                        Id                                      = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
-                        targetedMobileApps                      = @("{FakeStringValue}")
-                        permissionActions = @(
+                        DisplayName                 = 'Test Android Managed Store App Configuration Policy'
+                        Description                 = 'Test Android Managed Store App Configuration Policy Description'
+                        RoleScopeTagIds             = @('0')
+                        Id                          = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
+                        targetedMobileApps          = @("{FakeStringValue}")
+                        permissionActions           = @(
                            @{
                                 permission      = "android.permission.READ_SMS"
                                 action          = "prompt"
                             }
                         )
-                        appSupportsOemConfig      = $False
-                        connectedAppsEnabled      = $False
-                        packageId                 = "app:org.mozilla.firefox"
-                        payloadJson               = ""
-                        profileApplicability      = "androidDeviceOwner"
-                        '@odata.type'             = '#microsoft.graph.androidManagedStoreAppConfiguration'
+                        appSupportsOemConfig        = $False
+                        connectedAppsEnabled        = $False
+                        credentialProviderRoleState = "allowed"
+                        packageId                   = "app:org.mozilla.firefox"
+                        payloadJson                 = ""
+                        profileApplicability        = "androidDeviceOwner"
+                        '@odata.type'               = '#microsoft.graph.androidManagedStoreAppConfiguration'
                     }
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -211,15 +220,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     DisplayName                                 = 'Test Android Managed Store App Configuration Policy'
                     Description                                 = 'Test Android Managed Store App Configuration Policy Description'
+                    RoleScopeTagIds                             = @('0')
                     targetedMobileApps                          = @("{FakeStringValue}")
-                    permissionActions                           = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_androidPermissionAction -Property @{
+                    permissionActions                           = @(
+                        ([MSFT_androidPermissionAction] @{
                             permission = "android.permission.READ_SMS"
                             action = "prompt"
-                        } -ClientOnly)
+                        })
                     )
                     appSupportsOemConfig                        = $False
                     connectedAppsEnabled                        = $False
+                    credentialProviderRoleState                 = "allowed"
                     packageId                                   = "app:org.mozilla.firefox"
                     payloadJson                                 = ""
                     profileApplicability                        = "androidDeviceOwner"
@@ -229,36 +240,38 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceAppManagementMobileAppConfiguration -MockWith {
                     return @{
-                        DisplayName          = 'Test Android Managed Store App Configuration Policy'
-                        Description          = 'Test Android Managed Store App Configuration Policy Description'
-                        Id                   = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
-                        permissionActions = @(
+                        DisplayName                 = 'Test Android Managed Store App Configuration Policy'
+                        Description                 = 'Test Android Managed Store App Configuration Policy Description'
+                        RoleScopeTagIds             = @('0')
+                        Id                          = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
+                        permissionActions           = @(
                            @{
                                 permission      = "android.permission.READ_SMS"
                                 action          = "prompt"
 
                             }
                         )
-                        appSupportsOemConfig      = $False
-                        connectedAppsEnabled      = $False
-                        packageId                 = "app:org.mozilla.firefox"
-                        payloadJson               = ""
-                        profileApplicability      = "androidDeviceOwner"
-                        '@odata.type'             = '#microsoft.graph.androidManagedStoreAppConfiguration'
+                        appSupportsOemConfig        = $False
+                        connectedAppsEnabled        = $False
+                        credentialProviderRoleState = "allowed"
+                        packageId                   = "app:org.mozilla.firefox"
+                        payloadJson                 = ""
+                        profileApplicability        = "androidDeviceOwner"
+                        '@odata.type'               = '#microsoft.graph.androidManagedStoreAppConfiguration'
                     }
                 }
             }
 
             It 'Should return Present from the Get method' {
-                    (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                    ((New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the Android Managed Store App Configuration Policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceAppManagementMobileAppConfiguration -Exactly 1
             }
         }
@@ -273,29 +286,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceAppManagementMobileAppConfiguration -MockWith {
                     return @{
-                        DisplayName                   = 'Test Android Managed Store App Configuration Policy'
-                        Description                   = 'Test Android Managed Store App Configuration Policy Description'
-                        Id                            = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
-                        targetedMobileApps            = @("{FakeStringValue}")
-                        permissionActions = @(
+                        DisplayName                 = 'Test Android Managed Store App Configuration Policy'
+                        Description                 = 'Test Android Managed Store App Configuration Policy Description'
+                        RoleScopeTagIds             = @('0')
+                        Id                          = 'e30954ac-a65e-4dcb-ab79-91d45f3c52b4'
+                        targetedMobileApps          = @("{FakeStringValue}")
+                        permissionActions           = @(
                            @{
                                 permission        = "android.permission.READ_SMS"
                                 action            = "prompt"
 
                             }
                         )
-                        appSupportsOemConfig      = $False
-                        connectedAppsEnabled      = $False
-                        packageId                 = "app:org.mozilla.firefox"
-                        payloadJson               = ""
-                        profileApplicability      = "androidDeviceOwner"
-                        '@odata.type'             = '#microsoft.graph.androidManagedStoreAppConfiguration'
+                        appSupportsOemConfig        = $False
+                        connectedAppsEnabled        = $False
+                        credentialProviderRoleState = "allowed"
+                        packageId                   = "app:org.mozilla.firefox"
+                        payloadJson                 = ""
+                        profileApplicability        = "androidDeviceOwner"
+                        '@odata.type'               = '#microsoft.graph.androidManagedStoreAppConfiguration'
                     }
                 }
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneAndroidManagedStoreAppConfiguration' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

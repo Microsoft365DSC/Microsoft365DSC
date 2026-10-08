@@ -1,401 +1,262 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_VivaEngagementRoleMember'
+﻿using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class VivaEngagementRoleMember : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Role,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('Name of the engagement role.')]
+    [System.String] $Role
 
-        [Parameter()]
-        [System.String[]]
-        $Members,
+    [DscProperty()]
+    [System.ComponentModel.Description('User principal names of the users to assign to the role.')]
+    [System.String[]] $Members
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration for Viva Engagement Role Member for role $Role"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [VivaEngagementRoleMember] Get()
     {
-        if ($null -eq $Script:exportedInstance -or $Role -ne $Script:exportedInstance.displayName)
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                -InboundParameters $PSBoundParameters
+            $remote = [VivaEngagementRoleMember]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-            #Ensure the proper dependencies are installed in the current environment.
-            Confirm-M365DSCDependencies
+        Write-Verbose -Message "Getting configuration for Viva Engagement Role Member for role $($this.Role)"
 
-            #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
-            #endregion
-
-            $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'beta/employeeExperience/roles'
-            $roles = Invoke-MgGraphRequest -Uri $uri -Method GET
-            $roleInstance = $roles.value | Where-Object -FilterScript { $_.displayName -eq $role }
-
-            if ([System.String]::IsNullOrEmpty($roleInstance))
+        try
+        {
+            if ($null -eq $this.ExportedInstance -or $this.Role -ne $this.ExportedInstance.displayName)
             {
-                throw "Could not find role instance with name {$role}"
-            }
-        }
-        else
-        {
-            $roleInstance = $Script:exportedInstance
-        }
+                $null = $this.Connect('MicrosoftGraph')
 
-        $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/employeeExperience/roles/$($roleInstance.id)/members"
-        $idsOfMembers = Invoke-MgGraphRequest -Uri $uri -Method GET
+                Confirm-M365DSCDependencies
 
-        $membersValue = @()
-        foreach ($memberId in $idsOfMembers.value)
-        {
-            $userInfo = Get-MgUser -UserId $memberId.id
-            $membersValue += $userInfo.UserPrincipalName
-        }
+                $this.AddTelemetry('Get')
 
-        $results = @{
-            Role                  = $Role
-            Members               = $membersValue
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+                $uri = '/beta/employeeExperience/roles'
+                $roles = Invoke-M365DSCGraphRequest -Uri $uri -Method GET
+                $roleInstance = $roles.value | Where-Object -FilterScript { $_.displayName -eq $this.role }
 
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Role,
-
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration for Viva Engagement Role Member for role $Role"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $currentInstance = Get-TargetResource @PSBoundParameters
-
-    $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'beta/employeeExperience/roles'
-    $roles = Invoke-MgGraphRequest -Uri $uri -Method GET
-    $roleInstance = $roles.value | Where-Object -FilterScript { $_.displayName -eq $role }
-
-    $membersDiff = Compare-Object -ReferenceObject $currentInstance.Members -DifferenceObject $Members
-
-    foreach ($member in $membersDiff)
-    {
-        $userInfo = Get-MgUser -Filter "UserPrincipalName eq '$($member.InputObject)'"
-        if (-not [System.String]::IsNullOrEmpty($userInfo))
-        {
-            if ($member.SideIndicator -eq '=>')
-            {
-                Write-Verbose -Message "Adding user {$($member.InputObject)} to role {$Role}"
-                $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/employeeExperience/roles/$($roleInstance.id)/members"
-                $body = @{
-                    'user@odata.bind' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/users('" + $userInfo.Id + "')"
+                if ([System.String]::IsNullOrEmpty($roleInstance))
+                {
+                    throw "Could not find role instance with name {$($this.role)}"
                 }
-                Write-Verbose -Message "POST request to $uri with:`r`n$(ConvertTo-Json $body -Depth 10)"
-                Invoke-MgGraphRequest -Uri $uri -Method POST -Body $body
             }
             else
             {
-                Write-Verbose -Message "Removing user {$($member.InputObject)} from role {$Role}"
-                $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/employeeExperience/roles/$($roleInstance.id)/members/$($userInfo.Id)"
-                Invoke-MgGraphRequest -Uri $uri -Method DELETE
+                $roleInstance = $this.ExportedInstance
             }
-        }
-        else
-        {
-            Write-Error -Message "Could not find user {$($member.InputObject)}"
-        }
-    }
-}
 
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Role,
+            $uri = "/beta/employeeExperience/roles/$($roleInstance.id)/members"
+            $idsOfMembers = Invoke-M365DSCGraphRequest -Uri $uri -Method GET
 
-        [Parameter()]
-        [System.String[]]
-        $Members,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $uri = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + 'beta/employeeExperience/roles'
-
-        [array]$roles = (Invoke-MgGraphRequest -Uri $uri -Method Get -ErrorAction Stop).value
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($roles.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($role in $roles)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            $membersValue = @()
+            foreach ($memberId in $idsOfMembers.value)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                $userInfo = Get-MgUser -UserId $memberId.id
+                $membersValue += $userInfo.UserPrincipalName
             }
 
-            $displayedKey = $role.displayName
-            Write-M365DSCHost -Message "    |---[$i/$($roles.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                Role                  = $role.displayName
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            $results = @{
+                Role                  = $this.Role
+                Members               = $membersValue
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
             }
-
-            $Script:exportedInstance = $role
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            return $this.AsResult($results)
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
 
-        throw
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration for Viva Engagement Role Member for role $($this.Role)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        $currentInstance = $this.Get().ToHashtable()
+
+        $uri = '/beta/employeeExperience/roles'
+        $roles = Invoke-M365DSCGraphRequest -Uri $uri -Method GET
+        $roleInstance = $roles.value | Where-Object -FilterScript { $_.displayName -eq $this.role }
+
+        $membersDiff = Compare-Object -ReferenceObject $currentInstance.Members -DifferenceObject $this.Members
+
+        foreach ($member in $membersDiff)
+        {
+            $userInfo = Get-MgUser -Filter "UserPrincipalName eq '$($member.InputObject)'"
+            if (-not [System.String]::IsNullOrEmpty($userInfo))
+            {
+                if ($member.SideIndicator -eq '=>')
+                {
+                    Write-Verbose -Message "Adding user {$($member.InputObject)} to role {$($this.Role)}"
+                    $uri = "/beta/employeeExperience/roles/$($roleInstance.id)/members"
+                    $body = @{
+                        'user@odata.bind' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/users('" + $userInfo.Id + "')"
+                    }
+                    Write-Verbose -Message "POST request to $uri with:`r`n$(ConvertTo-Json $body -Depth 10)"
+                    Invoke-M365DSCGraphRequest -Uri $uri -Method POST -Body $body
+                }
+                else
+                {
+                    Write-Verbose -Message "Removing user {$($member.InputObject)} from role {$($this.Role)}"
+                    $uri = "/beta/employeeExperience/roles/$($roleInstance.id)/members/$($userInfo.Id)"
+                    Invoke-M365DSCGraphRequest -Uri $uri -Method DELETE
+                }
+            }
+            else
+            {
+                throw "Could not find user {$($member.InputObject)}"
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        $ConnectionMode = $this.Connect('MicrosoftGraph')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
+        {
+            $uri = '/beta/employeeExperience/roles'
+            [array]$roles = (Invoke-M365DSCGraphRequest -Uri $uri -Method Get -ErrorAction Stop).value
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($roles.Length -eq 0)
+            {
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($role in $roles)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
+
+                $displayedKey = $role.displayName
+                Write-M365DSCHost -Message "    |---[$i/$($roles.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    Role                  = $role.displayName
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
+
+                $this.ExportedInstance = $role
+                $Results = $this.GetForExport($Params)
+                $rawResults = $Results.Clone()
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential `
+                    -RawResults $rawResults
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
+        }
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
+
+            throw
+        }
+    }
+
+    hidden [VivaEngagementRoleMember] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [VivaEngagementRoleMember])
+        {
+            return $Values
+        }
+
+        $result = [VivaEngagementRoleMember]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

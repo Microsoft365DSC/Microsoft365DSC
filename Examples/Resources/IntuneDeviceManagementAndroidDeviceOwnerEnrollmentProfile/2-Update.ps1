@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,26 +19,25 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile "IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile-MyTestEnrollmentProfile"
+        IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile "IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile-Example"
         {
-            AccountId                 = "8d2ac1fd-0ac9-4047-af2f-f1e6323c9a34e";
-            ApplicationId             = $ApplicationId;
-            CertificateThumbprint     = $CertificateThumbprint;
-            ConfigureWifi             = $True;
-            Description               = "This is my enrollment profile";
-            DisplayName               = "MyTestEnrollmentProfile";
-            EnrollmentMode            = "corporateOwnedDedicatedDevice";
-            EnrollmentTokenType       = "default";
-            Ensure                    = "Present";
-            IsTeamsDeviceProfile      = $False;
-            RoleScopeTagIds           = @("0");
-            TenantId                  = $TenantId;
-            TokenExpirationDateTime   = "10/31/2024 3:59:59 AM";
-            WifiHidden                = $True; #Drift
-            WifiSecurityType          = "none";
+            Description             = "Dedicated devices for the warehouse and loading dock scanning stations"; # Updated Property
+            DeviceNameTemplate      = "Android-{{SERIAL}}";
+            DisplayName             = "Corporate Android Enrollment";
+            EnrollmentMode          = "corporateOwnedDedicatedDevice";
+            EnrollmentTokenType     = "default";
+            Ensure                  = "Present";
+            IsTeamsDeviceProfile    = $False;
+            RoleScopeTagIds         = @("0");
+            TokenExpirationDateTime = "2026-01-01T00:00:00.0000000Z";
+            ApplicationId           = $ApplicationId;
+            TenantId                = $TenantId;
+            CertificateThumbprint   = $CertificateThumbprint;
         }
     }
 }

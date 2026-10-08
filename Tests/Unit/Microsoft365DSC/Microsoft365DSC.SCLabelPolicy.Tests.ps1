@@ -22,12 +22,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
-            Mock -CommandName Confirm-M365DSCDependencies -MockWith {
+            Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -70,14 +70,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Comment          = 'This is a test label policy'
                     Labels           = @('Personal', 'General')
                     AdvancedSettings = @(
-                        (New-CimInstance -ClassName MSFT_SCLabelSetting -Property @{
+                        ([MSFT_SCLabelSetting] @{
                             Key   = 'LabelStatus'
                             Value = 'Enabled'
-                        } -ClientOnly),
-                        (New-CimInstance -ClassName MSFT_SCLabelSetting -Property @{
+                        }),
+                        ([MSFT_SCLabelSetting] @{
                             Key   = 'DefaultLabelStatus'
                             Value = 'None'
-                        } -ClientOnly)
+                        })
                     )
                     Credential       = $Credential
                     Ensure           = 'Present'
@@ -89,15 +89,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should return Absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Set()
             }
         }
 
@@ -123,15 +123,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $true
             }
 
             It 'Should update from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Set()
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
         }
 
@@ -153,21 +153,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         Name = 'TestLabelPolicy'
                     }
                 }
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should delete from the Set method' {
                 Mock -CommandName Get-LabelPolicy -MockWith {
                     $null
                 }
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Set()
             }
 
             It 'Should return Absent from the Get method' {
                 Mock -CommandName Get-LabelPolicy -MockWith {
                     $null
                 }
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
         }
 
@@ -200,7 +200,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method when all four location properties match current state' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -227,11 +227,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method when ExchangeLocation drifts' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call Set-LabelPolicy with synthesized AddExchangeLocation and RemoveExchangeLocation' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-LabelPolicy -Exactly 1 -Scope It -ParameterFilter {
                     $AddExchangeLocation -contains 'new-user@contoso.com' -and `
                     $RemoveExchangeLocation -contains 'old-user@contoso.com'
@@ -262,11 +262,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method when ExchangeLocationException drifts' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call Set-LabelPolicy with synthesized AddExchangeLocationException and RemoveExchangeLocationException' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-LabelPolicy -Exactly 1 -Scope It -ParameterFilter {
                     $AddExchangeLocationException -contains 'new-except@contoso.com' -and `
                     $RemoveExchangeLocationException -contains 'old-except@contoso.com'
@@ -297,11 +297,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method when ModernGroupLocation drifts' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call Set-LabelPolicy with synthesized AddModernGroupLocation and RemoveModernGroupLocation' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-LabelPolicy -Exactly 1 -Scope It -ParameterFilter {
                     $AddModernGroupLocation -contains 'newgroup@contoso.com' -and `
                     $RemoveModernGroupLocation -contains 'oldgroup@contoso.com'
@@ -332,11 +332,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method when ModernGroupLocationException drifts' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call Set-LabelPolicy with synthesized AddModernGroupLocationException and RemoveModernGroupLocationException' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-LabelPolicy -Exactly 1 -Scope It -ParameterFilter {
                     $AddModernGroupLocationException -contains 'newexceptgroup@contoso.com' -and `
                     $RemoveModernGroupLocationException -contains 'oldexceptgroup@contoso.com'
@@ -367,7 +367,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true when AddExchangeLocation entry is already present in current state' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -394,7 +394,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false when RemoveExchangeLocation entry still exists in current state' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -425,10 +425,47 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should call Get-Label exactly once with no -Identity argument when resolving multiple defaultlabel settings' {
-                $null = Get-TargetResource @testParams
+                $null = (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName Get-Label -Exactly 1 -Scope It -ParameterFilter {
                     $null -eq $Identity
                 }
+            }
+        }
+
+        Context -Name 'AdvancedSettings comparison' -Fixture {
+            BeforeAll {
+                $postProcessing = (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property @{
+                        Name       = 'TestLabelPolicy'
+                        Credential = $Credential
+                    }).GetCompareParameters().PostProcessing
+            }
+
+            It 'Should compare array valued advanced settings as sets' {
+                $desired = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') })
+                [SCLabelPolicy]::TestAdvancedSettings($desired, @(@{ Key = 'AttachmentAction'; Value = @('b', 'a') })) | Should -BeTrue
+                [SCLabelPolicy]::TestAdvancedSettings($desired, @(@{ Key = 'attachmentaction'; Value = @('a') })) | Should -BeFalse
+                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'attachmentaction'; Value = [System.String[]] @('a') }), @(@{ Key = 'attachmentaction'; Value = 'a' })) | Should -BeTrue
+                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'attachmentaction'; Value = 'a' }), @(@{ Key = 'attachmentaction'; Value = @('a', 'b') })) | Should -BeFalse
+            }
+
+            It 'Should ignore desired settings the current side does not carry' {
+                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'missing'; Value = 'x' }), @()) | Should -BeTrue
+                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'missing'; Value = 'x' }), $null) | Should -BeTrue
+            }
+
+            It 'Should flag drift through PostProcessing only when array valued advanced settings differ' {
+                $desiredValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) }
+                $currentValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a') }) }
+                $drifted = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @(@{ IsReport = $true }))
+                $drifted.Item3.AdvancedSettings.Drift | Should -Be 'desired'
+                Compare-M365DSCResourceState -ResourceName 'SCLabelPolicy' -DesiredValues @{ Name = 'TestLabelPolicy'; AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) } `
+                    -CurrentValues @{ Name = 'TestLabelPolicy'; AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a') }) } `
+                    -PostProcessing $postProcessing -PostProcessingArgs @(@{ IsReport = $true }) | Should -BeFalse
+
+                $desiredValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) }
+                $currentValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('b', 'a') }) }
+                $matching = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @())
+                $matching.Item3.ContainsKey('AdvancedSettings') | Should -BeFalse
             }
         }
 
@@ -449,7 +486,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SCLabelPolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

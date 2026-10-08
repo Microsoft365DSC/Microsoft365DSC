@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,18 +33,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
             Mock -CommandName Get-CsTenantFederationConfiguration -MockWith {
                 return @{
-                    AllowFederatedUsers       = $True
-                    AllowTeamsConsumer        = $False
-                    AllowTeamsConsumerInbound = $False
-                    AllowedTrialTenantDomains = @()
-                    BlockAllSubdomains        = $False
-                    Identity                  = 'Global'
+                    AllowFederatedUsers                                 = $True
+                    AllowTeamsConsumer                                  = $False
+                    AllowTeamsConsumerInbound                           = $False
+                    AllowedTrialTenantDomains                           = @([PSCustomObject]@{ Domain = 'northwindtraders.onmicrosoft.com' })
+                    BlockAllSubdomains                                  = $False
+                    EnableExternalAccessRestrictionsForChatParticipants = $False
+                    EnableMutualFederationForChatParticipants           = $False
+                    Identity                                            = 'Global'
+                    SecurityTeamAllowBlockListDelegation                = 'Disabled'
                 }
             }
 
@@ -65,48 +68,54 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'When settings are correctly set' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    AllowFederatedUsers       = $True
-                    AllowTeamsConsumer        = $False
-                    AllowTeamsConsumerInbound = $False
-                    AllowedTrialTenantDomains = @()
-                    BlockAllSubdomains        = $False
-                    IsSingleInstance          = 'Yes'
-                    Credential                = $Credential
+                    AllowFederatedUsers                                 = $True
+                    AllowTeamsConsumer                                  = $False
+                    AllowTeamsConsumerInbound                           = $False
+                    AllowedTrialTenantDomains                           = @('northwindtraders.onmicrosoft.com')
+                    BlockAllSubdomains                                  = $False
+                    EnableExternalAccessRestrictionsForChatParticipants = $False
+                    EnableMutualFederationForChatParticipants           = $False
+                    SecurityTeamAllowBlockListDelegation                = 'Disabled'
+                    IsSingleInstance                                    = 'Yes'
+                    Credential                                          = $Credential
                 }
             }
 
             It 'Should return False for the AllowTeamsConsumer property from the Get method' {
-                (Get-TargetResource @testParams).AllowTeamsConsumer | Should -Be $false
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsFederationConfiguration' -Property $testParams).Get().ToHashtable()).AllowTeamsConsumer | Should -Be $false
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'TeamsFederationConfiguration' -Property $testParams).Test() | Should -Be $true
             }
         }
 
         Context -Name 'When settings are NOT correctly set' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    AllowFederatedUsers       = $True
-                    AllowTeamsConsumer        = $True
-                    AllowTeamsConsumerInbound = $True
-                    AllowedTrialTenantDomains = @()
-                    BlockAllSubdomains        = $False
-                    IsSingleInstance          = 'Yes'
-                    Credential                = $Credential
+                    AllowFederatedUsers                                 = $True
+                    AllowTeamsConsumer                                  = $True
+                    AllowTeamsConsumerInbound                           = $True
+                    AllowedTrialTenantDomains                           = @()
+                    BlockAllSubdomains                                  = $False
+                    EnableExternalAccessRestrictionsForChatParticipants = $True
+                    EnableMutualFederationForChatParticipants           = $True
+                    SecurityTeamAllowBlockListDelegation                = 'Enabled'
+                    IsSingleInstance                                    = 'Yes'
+                    Credential                                          = $Credential
                 }
             }
 
             It 'Should return False for the AllowTeamsConsumer property from the Get method' {
-                (Get-TargetResource @testParams).AllowTeamsConsumer | Should -Be $false
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsFederationConfiguration' -Property $testParams).Get().ToHashtable()).AllowTeamsConsumer | Should -Be $false
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsFederationConfiguration' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Updates the Teams Federations settings in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsFederationConfiguration' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-CsTenantFederationConfiguration -Exactly 1
             }
         }
@@ -121,7 +130,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsFederationConfiguration' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

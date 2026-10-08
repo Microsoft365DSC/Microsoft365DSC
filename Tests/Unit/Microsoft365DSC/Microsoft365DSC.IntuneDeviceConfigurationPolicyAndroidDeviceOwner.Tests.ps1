@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -46,13 +46,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             Mock -CommandName Update-DeviceConfigurationPolicyAssignment -MockWith {
             }
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
             # Mock Write-M365DSCHost to hide output during the tests
             Mock -CommandName Write-M365DSCHost -MockWith {
             }
+            Mock -CommandName Get-M365DSCExportCachedCollection -MockWith {
+                return Get-MgBetaDeviceManagementDeviceConfiguration
+            }
+
             $Script:exportedInstances =$null
             $Script:ExportMode = $false
         }
@@ -62,18 +66,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     AccountsBlockModification                                = $True
+                    AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerdelegatedscopeappsetting] @{
+                            appScopes = @('certificateInstall')
+                            appDetail = ([MSFT_MicrosoftGraphapplistitem] @{
+                                appId       = 'FakeStringValue'
+                                publisher   = 'FakeStringValue'
+                                appStoreUrl = 'FakeStringValue'
+                                name        = 'FakeStringValue'
+                                odataType   = '#microsoft.graph.appleAppListItem'
+                            })
+                        })
+                    )
                     AppsAllowInstallFromUnknownSources                       = $True
                     AppsAutoUpdatePolicy                                     = 'notConfigured'
                     AppsDefaultPermissionPolicy                              = 'deviceDefault'
                     AppsRecommendSkippingFirstUseHints                       = $True
-                    AzureAdSharedDeviceDataClearApps                         = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    AzureAdSharedDeviceDataClearApps                         = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     BluetoothBlockConfiguration                              = $True
                     BluetoothBlockContactSharing                             = $True
@@ -86,21 +102,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DataRoamingBlocked                                       = $True
                     DateTimeConfigurationBlocked                             = $True
                     Description                                              = 'FakeStringValue'
-                    DetailedHelpText                                         = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    DetailedHelpText                                         = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
-                    DeviceOwnerLockScreenMessage                             = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                            localizedMessages = @()
+                        })
+                    DeviceLocationMode                                       = 'notConfigured'
+                    DeviceOwnerLockScreenMessage                             = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     DisplayName                                              = 'FakeStringValue'
                     EnrollmentProfile                                        = 'notConfigured'
                     FactoryResetBlocked                                      = $True
-                    GlobalProxy                                              = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownerglobalproxy -Property @{
+                    GlobalProxy                                              = ([MSFT_MicrosoftGraphandroiddeviceownerglobalproxy] @{
                             proxyAutoConfigURL = 'FakeStringValue'
                             odataType          = '#microsoft.graph.androidDeviceOwnerGlobalProxyAutoConfig'
-                        } -ClientOnly)
+                        })
                     GoogleAccountsBlocked                                    = $True
                     Id                                                       = 'FakeStringValue'
                     KioskCustomizationDeviceSettingsBlocked                  = $True
@@ -110,14 +127,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskCustomizationSystemNavigation                       = 'notConfigured'
                     KioskModeAppOrderEnabled                                 = $True
                     KioskModeAppPositions                                    = @()
-                    KioskModeApps                                            = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    KioskModeApps                                            = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     KioskModeAppsInFolderOrderedByName                       = $True
                     KioskModeBluetoothConfigurationEnabled                   = $True
@@ -130,6 +147,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeIconSize                                        = 'notConfigured'
                     KioskModeLockHomeScreen                                  = $True
                     KioskModeManagedFolders                                  = @()
+                    KioskModeManagedHomeScreenAppSettings                    = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerkioskmodeapp] @{
+                            className                 = 'FakeStringValue'
+                            offlineAppAccessEnabled   = $True
+                            package                   = 'FakeStringValue'
+                            preSignInAppAccessEnabled = $True
+                        })
+                    )
                     KioskModeManagedHomeScreenAutoSignout                    = $True
                     KioskModeManagedHomeScreenInactiveSignOutDelayInSeconds  = 25
                     KioskModeManagedHomeScreenInactiveSignOutNoticeInSeconds = 25
@@ -154,6 +179,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeVirtualHomeButtonType                           = 'notConfigured'
                     KioskModeWallpaperUrl                                    = 'FakeStringValue'
                     KioskModeWiFiConfigurationEnabled                        = $True
+                    LocateDeviceLostModeEnabled                              = $True
+                    LocateDeviceUserlessDisabled                             = $True
                     MicrophoneForceMute                                      = $True
                     MicrosoftLauncherConfigurationEnabled                    = $True
                     MicrosoftLauncherCustomWallpaperAllowUserModification    = $True
@@ -182,14 +209,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PasswordSignInFailureCountBeforeFactoryReset             = 25
                     PersonalProfileAppsAllowInstallFromUnknownSources        = $True
                     PersonalProfileCameraBlocked                             = $True
-                    PersonalProfilePersonalApplications                      = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    PersonalProfilePersonalApplications                      = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     PersonalProfilePlayStoreMode                             = 'notConfigured'
                     PersonalProfileScreenCaptureBlocked                      = $True
@@ -198,21 +225,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     SecurityCommonCriteriaModeEnabled                        = $True
                     SecurityDeveloperSettingsEnabled                         = $True
                     SecurityRequireVerifyApps                                = $True
-                    ShortHelpText                                            = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    ShareDeviceLocationDisabled                              = $True
+                    ShortHelpText                                            = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     StatusBarBlocked                                         = $True
                     StorageAllowUsb                                          = $True
                     StorageBlockExternalMedia                                = $True
                     StorageBlockUsbFileTransfer                              = $True
-                    SystemUpdateFreezePeriods                                = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod -Property @{
+                    SystemUpdateFreezePeriods                                = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod] @{
                             endMonth   = 25
                             startMonth = 25
                             startDay   = 25
                             endDay     = 25
-                        } -ClientOnly)
+                        })
                     )
                     SystemUpdateInstallType                                  = 'deviceDefault'
                     SystemUpdateWindowEndMinutesAfterMidnight                = 25
@@ -247,13 +275,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -261,18 +289,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     AccountsBlockModification                                = $True
+                    AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerdelegatedscopeappsetting] @{
+                            appScopes = @('certificateInstall')
+                            appDetail = ([MSFT_MicrosoftGraphapplistitem] @{
+                                appId       = 'FakeStringValue'
+                                publisher   = 'FakeStringValue'
+                                appStoreUrl = 'FakeStringValue'
+                                name        = 'FakeStringValue'
+                                odataType   = '#microsoft.graph.appleAppListItem'
+                            })
+                        })
+                    )
                     AppsAllowInstallFromUnknownSources                       = $True
                     AppsAutoUpdatePolicy                                     = 'notConfigured'
                     AppsDefaultPermissionPolicy                              = 'deviceDefault'
                     AppsRecommendSkippingFirstUseHints                       = $True
-                    AzureAdSharedDeviceDataClearApps                         = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    AzureAdSharedDeviceDataClearApps                         = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     BluetoothBlockConfiguration                              = $True
                     BluetoothBlockContactSharing                             = $True
@@ -285,21 +325,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DataRoamingBlocked                                       = $True
                     DateTimeConfigurationBlocked                             = $True
                     Description                                              = 'FakeStringValue'
-                    DetailedHelpText                                         = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    DetailedHelpText                                         = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
-                    DeviceOwnerLockScreenMessage                             = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                            localizedMessages = @()
+                        })
+                    DeviceLocationMode                                       = 'notConfigured'
+                    DeviceOwnerLockScreenMessage                             = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     DisplayName                                              = 'FakeStringValue'
                     EnrollmentProfile                                        = 'notConfigured'
                     FactoryResetBlocked                                      = $True
-                    GlobalProxy                                              = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownerglobalproxy -Property @{
+                    GlobalProxy                                              = ([MSFT_MicrosoftGraphandroiddeviceownerglobalproxy] @{
                             proxyAutoConfigURL = 'FakeStringValue'
                             odataType          = '#microsoft.graph.androidDeviceOwnerGlobalProxyAutoConfig'
-                        } -ClientOnly)
+                        })
                     GoogleAccountsBlocked                                    = $True
                     Id                                                       = 'FakeStringValue'
                     KioskCustomizationDeviceSettingsBlocked                  = $True
@@ -309,14 +350,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskCustomizationSystemNavigation                       = 'notConfigured'
                     KioskModeAppOrderEnabled                                 = $True
                     KioskModeAppPositions                                    = @()
-                    KioskModeApps                                            = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    KioskModeApps                                            = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     KioskModeAppsInFolderOrderedByName                       = $True
                     KioskModeBluetoothConfigurationEnabled                   = $True
@@ -329,6 +370,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeIconSize                                        = 'notConfigured'
                     KioskModeLockHomeScreen                                  = $True
                     KioskModeManagedFolders                                  = @()
+                    KioskModeManagedHomeScreenAppSettings                    = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerkioskmodeapp] @{
+                            className                 = 'FakeStringValue'
+                            offlineAppAccessEnabled   = $True
+                            package                   = 'FakeStringValue'
+                            preSignInAppAccessEnabled = $True
+                        })
+                    )
                     KioskModeManagedHomeScreenAutoSignout                    = $True
                     KioskModeManagedHomeScreenInactiveSignOutDelayInSeconds  = 25
                     KioskModeManagedHomeScreenInactiveSignOutNoticeInSeconds = 25
@@ -353,6 +402,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeVirtualHomeButtonType                           = 'notConfigured'
                     KioskModeWallpaperUrl                                    = 'FakeStringValue'
                     KioskModeWiFiConfigurationEnabled                        = $True
+                    LocateDeviceLostModeEnabled                              = $True
+                    LocateDeviceUserlessDisabled                             = $True
                     MicrophoneForceMute                                      = $True
                     MicrosoftLauncherConfigurationEnabled                    = $True
                     MicrosoftLauncherCustomWallpaperAllowUserModification    = $True
@@ -381,14 +432,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PasswordSignInFailureCountBeforeFactoryReset             = 25
                     PersonalProfileAppsAllowInstallFromUnknownSources        = $True
                     PersonalProfileCameraBlocked                             = $True
-                    PersonalProfilePersonalApplications                      = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    PersonalProfilePersonalApplications                      = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     PersonalProfilePlayStoreMode                             = 'notConfigured'
                     PersonalProfileScreenCaptureBlocked                      = $True
@@ -397,21 +448,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     SecurityCommonCriteriaModeEnabled                        = $True
                     SecurityDeveloperSettingsEnabled                         = $True
                     SecurityRequireVerifyApps                                = $True
-                    ShortHelpText                                            = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    ShareDeviceLocationDisabled                              = $True
+                    ShortHelpText                                            = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     StatusBarBlocked                                         = $True
                     StorageAllowUsb                                          = $True
                     StorageBlockExternalMedia                                = $True
                     StorageBlockUsbFileTransfer                              = $True
-                    SystemUpdateFreezePeriods                                = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod -Property @{
+                    SystemUpdateFreezePeriods                                = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod] @{
                             endMonth   = 25
                             startMonth = 25
                             startDay   = 25
                             endDay     = 25
-                        } -ClientOnly)
+                        })
                     )
                     SystemUpdateInstallType                                  = 'deviceDefault'
                     SystemUpdateWindowEndMinutesAfterMidnight                = 25
@@ -443,6 +495,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                     return @{
+                        AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            @{
+                                appScopes = @('certificateInstall')
+                                appDetail = @{
+                                    name          = 'FakeStringValue'
+                                    appId         = 'FakeStringValue'
+                                    appStoreUrl   = 'FakeStringValue'
+                                    '@odata.type' = '#microsoft.graph.appleAppListItem'
+                                    publisher     = 'FakeStringValue'
+                                }
+                            }
+                        )
+                        LocateDeviceLostModeEnabled                              = $True
+                        LocateDeviceUserlessDisabled                             = $True
+                        ShareDeviceLocationDisabled                              = $True
                         VolumeBlockAdjustment                                    = $True
                         ScreenCaptureBlocked                                     = $True
                         KioskModeMediaVolumeConfigurationEnabled                 = $True
@@ -460,6 +527,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                         BluetoothBlockConfiguration                              = $True
+                        DeviceLocationMode                                       = 'notConfigured'
                         DeviceOwnerLockScreenMessage                             = @{
                             defaultMessage    = 'FakeStringValue'
                             localizedMessages = @()
@@ -572,6 +640,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         WorkProfilePasswordMinimumNonLetterCharacters            = 25
                         WorkProfilePasswordSignInFailureCountBeforeFactoryReset  = 25
                         KioskModeManagedFolders                                  = @()
+                        KioskModeManagedHomeScreenAppSettings                    = @(
+                            @{
+                                className                 = 'FakeStringValue'
+                                offlineAppAccessEnabled   = $True
+                                package                   = 'FakeStringValue'
+                                preSignInAppAccessEnabled = $True
+                            }
+                        )
                         ShortHelpText                                            = @{
                             defaultMessage    = 'FakeStringValue'
                             localizedMessages = @()
@@ -626,15 +702,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -643,18 +719,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     AccountsBlockModification                                = $True
+                    AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerdelegatedscopeappsetting] @{
+                            appScopes = @('certificateInstall')
+                            appDetail = ([MSFT_MicrosoftGraphapplistitem] @{
+                                appId       = 'FakeStringValue'
+                                publisher   = 'FakeStringValue'
+                                appStoreUrl = 'FakeStringValue'
+                                name        = 'FakeStringValue'
+                                odataType   = '#microsoft.graph.appleAppListItem'
+                            })
+                        })
+                    )
                     AppsAllowInstallFromUnknownSources                       = $True
                     AppsAutoUpdatePolicy                                     = 'notConfigured'
                     AppsDefaultPermissionPolicy                              = 'deviceDefault'
                     AppsRecommendSkippingFirstUseHints                       = $True
-                    AzureAdSharedDeviceDataClearApps                         = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    AzureAdSharedDeviceDataClearApps                         = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     BluetoothBlockConfiguration                              = $True
                     BluetoothBlockContactSharing                             = $True
@@ -667,21 +755,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DataRoamingBlocked                                       = $True
                     DateTimeConfigurationBlocked                             = $True
                     Description                                              = 'FakeStringValue'
-                    DetailedHelpText                                         = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    DetailedHelpText                                         = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
-                    DeviceOwnerLockScreenMessage                             = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                            localizedMessages = @()
+                        })
+                    DeviceLocationMode                                       = 'notConfigured'
+                    DeviceOwnerLockScreenMessage                             = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     DisplayName                                              = 'FakeStringValue'
                     EnrollmentProfile                                        = 'notConfigured'
                     FactoryResetBlocked                                      = $True
-                    GlobalProxy                                              = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownerglobalproxy -Property @{
+                    GlobalProxy                                              = ([MSFT_MicrosoftGraphandroiddeviceownerglobalproxy] @{
                             proxyAutoConfigURL = 'FakeStringValue'
                             odataType          = '#microsoft.graph.androidDeviceOwnerGlobalProxyAutoConfig'
-                        } -ClientOnly)
+                        })
                     GoogleAccountsBlocked                                    = $True
                     Id                                                       = 'FakeStringValue'
                     KioskCustomizationDeviceSettingsBlocked                  = $True
@@ -691,14 +780,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskCustomizationSystemNavigation                       = 'notConfigured'
                     KioskModeAppOrderEnabled                                 = $True
                     KioskModeAppPositions                                    = @()
-                    KioskModeApps                                            = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    KioskModeApps                                            = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     KioskModeAppsInFolderOrderedByName                       = $True
                     KioskModeBluetoothConfigurationEnabled                   = $True
@@ -711,6 +800,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeIconSize                                        = 'notConfigured'
                     KioskModeLockHomeScreen                                  = $True
                     KioskModeManagedFolders                                  = @()
+                    KioskModeManagedHomeScreenAppSettings                    = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerkioskmodeapp] @{
+                            className                 = 'FakeStringValue'
+                            offlineAppAccessEnabled   = $True
+                            package                   = 'FakeStringValue'
+                            preSignInAppAccessEnabled = $True
+                        })
+                    )
                     KioskModeManagedHomeScreenAutoSignout                    = $True
                     KioskModeManagedHomeScreenInactiveSignOutDelayInSeconds  = 25
                     KioskModeManagedHomeScreenInactiveSignOutNoticeInSeconds = 25
@@ -735,6 +832,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeVirtualHomeButtonType                           = 'notConfigured'
                     KioskModeWallpaperUrl                                    = 'FakeStringValue'
                     KioskModeWiFiConfigurationEnabled                        = $True
+                    LocateDeviceLostModeEnabled                              = $True
+                    LocateDeviceUserlessDisabled                             = $True
                     MicrophoneForceMute                                      = $True
                     MicrosoftLauncherConfigurationEnabled                    = $True
                     MicrosoftLauncherCustomWallpaperAllowUserModification    = $True
@@ -763,14 +862,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PasswordSignInFailureCountBeforeFactoryReset             = 25
                     PersonalProfileAppsAllowInstallFromUnknownSources        = $True
                     PersonalProfileCameraBlocked                             = $True
-                    PersonalProfilePersonalApplications                      = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    PersonalProfilePersonalApplications                      = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     PersonalProfilePlayStoreMode                             = 'notConfigured'
                     PersonalProfileScreenCaptureBlocked                      = $True
@@ -779,21 +878,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     SecurityCommonCriteriaModeEnabled                        = $True
                     SecurityDeveloperSettingsEnabled                         = $True
                     SecurityRequireVerifyApps                                = $True
-                    ShortHelpText                                            = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    ShareDeviceLocationDisabled                              = $True
+                    ShortHelpText                                            = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     StatusBarBlocked                                         = $True
                     StorageAllowUsb                                          = $True
                     StorageBlockExternalMedia                                = $True
                     StorageBlockUsbFileTransfer                              = $True
-                    SystemUpdateFreezePeriods                                = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod -Property @{
+                    SystemUpdateFreezePeriods                                = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod] @{
                             endMonth   = 25
                             startMonth = 25
                             startDay   = 25
                             endDay     = 25
-                        } -ClientOnly)
+                        })
                     )
                     SystemUpdateInstallType                                  = 'deviceDefault'
                     SystemUpdateWindowEndMinutesAfterMidnight                = 25
@@ -825,6 +925,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                     return @{
+                        AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            @{
+                                appScopes = @('certificateInstall')
+                                appDetail = @{
+                                    name          = 'FakeStringValue'
+                                    appId         = 'FakeStringValue'
+                                    appStoreUrl   = 'FakeStringValue'
+                                    '@odata.type' = '#microsoft.graph.appleAppListItem'
+                                    publisher     = 'FakeStringValue'
+                                }
+                            }
+                        )
+                        LocateDeviceLostModeEnabled                              = $True
+                        LocateDeviceUserlessDisabled                             = $True
+                        ShareDeviceLocationDisabled                              = $True
                         VolumeBlockAdjustment                                    = $True
                         ScreenCaptureBlocked                                     = $True
                         KioskModeMediaVolumeConfigurationEnabled                 = $True
@@ -842,6 +957,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                         BluetoothBlockConfiguration                              = $True
+                        DeviceLocationMode                                       = 'notConfigured'
                         DeviceOwnerLockScreenMessage                             = @{
                             defaultMessage    = 'FakeStringValue'
                             localizedMessages = @()
@@ -954,6 +1070,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         WorkProfilePasswordMinimumNonLetterCharacters            = 25
                         WorkProfilePasswordSignInFailureCountBeforeFactoryReset  = 25
                         KioskModeManagedFolders                                  = @()
+                        KioskModeManagedHomeScreenAppSettings                    = @(
+                            @{
+                                className                 = 'FakeStringValue'
+                                offlineAppAccessEnabled   = $True
+                                package                   = 'FakeStringValue'
+                                preSignInAppAccessEnabled = $True
+                            }
+                        )
                         ShortHelpText                                            = @{
                             defaultMessage    = 'FakeStringValue'
                             localizedMessages = @()
@@ -1008,25 +1132,37 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Test() | Should -Be $true
             }
         }
         Context -Name 'The IntuneDeviceConfigurationPolicyAndroidDeviceOwner exists and values are NOT in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
                     AccountsBlockModification                                = $True
+                    AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerdelegatedscopeappsetting] @{
+                            appScopes = @('certificateInstall')
+                            appDetail = ([MSFT_MicrosoftGraphapplistitem] @{
+                                appId       = 'FakeStringValue'
+                                publisher   = 'FakeStringValue'
+                                appStoreUrl = 'FakeStringValue'
+                                name        = 'FakeStringValue'
+                                odataType   = '#microsoft.graph.appleAppListItem'
+                            })
+                        })
+                    )
                     AppsAllowInstallFromUnknownSources                       = $True
                     AppsAutoUpdatePolicy                                     = 'notConfigured'
                     AppsDefaultPermissionPolicy                              = 'deviceDefault'
                     AppsRecommendSkippingFirstUseHints                       = $True
-                    AzureAdSharedDeviceDataClearApps                         = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    AzureAdSharedDeviceDataClearApps                         = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     BluetoothBlockConfiguration                              = $True
                     BluetoothBlockContactSharing                             = $True
@@ -1039,21 +1175,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DataRoamingBlocked                                       = $True
                     DateTimeConfigurationBlocked                             = $True
                     Description                                              = 'FakeStringValue'
-                    DetailedHelpText                                         = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    DetailedHelpText                                         = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
-                    DeviceOwnerLockScreenMessage                             = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                            localizedMessages = @()
+                        })
+                    DeviceLocationMode                                       = 'notConfigured'
+                    DeviceOwnerLockScreenMessage                             = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     DisplayName                                              = 'FakeStringValue'
                     EnrollmentProfile                                        = 'notConfigured'
                     FactoryResetBlocked                                      = $True
-                    GlobalProxy                                              = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownerglobalproxy -Property @{
+                    GlobalProxy                                              = ([MSFT_MicrosoftGraphandroiddeviceownerglobalproxy] @{
                             proxyAutoConfigURL = 'FakeStringValue'
                             odataType          = '#microsoft.graph.androidDeviceOwnerGlobalProxyAutoConfig'
-                        } -ClientOnly)
+                        })
                     GoogleAccountsBlocked                                    = $True
                     Id                                                       = 'FakeStringValue'
                     KioskCustomizationDeviceSettingsBlocked                  = $True
@@ -1063,14 +1200,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskCustomizationSystemNavigation                       = 'notConfigured'
                     KioskModeAppOrderEnabled                                 = $True
                     KioskModeAppPositions                                    = @()
-                    KioskModeApps                                            = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    KioskModeApps                                            = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     KioskModeAppsInFolderOrderedByName                       = $True
                     KioskModeBluetoothConfigurationEnabled                   = $True
@@ -1083,6 +1220,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeIconSize                                        = 'notConfigured'
                     KioskModeLockHomeScreen                                  = $True
                     KioskModeManagedFolders                                  = @()
+                    KioskModeManagedHomeScreenAppSettings                    = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownerkioskmodeapp] @{
+                            className                 = 'FakeStringValue'
+                            offlineAppAccessEnabled   = $True
+                            package                   = 'FakeStringValue'
+                            preSignInAppAccessEnabled = $True
+                        })
+                    )
                     KioskModeManagedHomeScreenAutoSignout                    = $True
                     KioskModeManagedHomeScreenInactiveSignOutDelayInSeconds  = 25
                     KioskModeManagedHomeScreenInactiveSignOutNoticeInSeconds = 25
@@ -1107,6 +1252,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     KioskModeVirtualHomeButtonType                           = 'notConfigured'
                     KioskModeWallpaperUrl                                    = 'FakeStringValue'
                     KioskModeWiFiConfigurationEnabled                        = $True
+                    LocateDeviceLostModeEnabled                              = $True
+                    LocateDeviceUserlessDisabled                             = $True
                     MicrophoneForceMute                                      = $True
                     MicrosoftLauncherConfigurationEnabled                    = $True
                     MicrosoftLauncherCustomWallpaperAllowUserModification    = $True
@@ -1135,14 +1282,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PasswordSignInFailureCountBeforeFactoryReset             = 25
                     PersonalProfileAppsAllowInstallFromUnknownSources        = $True
                     PersonalProfileCameraBlocked                             = $True
-                    PersonalProfilePersonalApplications                      = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphapplistitem -Property @{
+                    PersonalProfilePersonalApplications                      = @(
+                            ([MSFT_MicrosoftGraphapplistitem] @{
                             appId       = 'FakeStringValue'
                             publisher   = 'FakeStringValue'
                             appStoreUrl = 'FakeStringValue'
                             name        = 'FakeStringValue'
                             odataType   = '#microsoft.graph.appleAppListItem'
-                        } -ClientOnly)
+                        })
                     )
                     PersonalProfilePlayStoreMode                             = 'notConfigured'
                     PersonalProfileScreenCaptureBlocked                      = $True
@@ -1151,21 +1298,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     SecurityCommonCriteriaModeEnabled                        = $True
                     SecurityDeveloperSettingsEnabled                         = $True
                     SecurityRequireVerifyApps                                = $True
-                    ShortHelpText                                            = (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage -Property @{
+                    ShareDeviceLocationDisabled                              = $True
+                    ShortHelpText                                            = ([MSFT_MicrosoftGraphandroiddeviceowneruserfacingmessage] @{
                             defaultMessage    = 'FakeStringValue'
-                            localizedMessages = [CimInstance[]]@()
-                        } -ClientOnly)
+                            localizedMessages = @()
+                        })
                     StatusBarBlocked                                         = $True
                     StorageAllowUsb                                          = $True
                     StorageBlockExternalMedia                                = $True
                     StorageBlockUsbFileTransfer                              = $True
-                    SystemUpdateFreezePeriods                                = [CimInstance[]]@(
-                            (New-CimInstance -ClassName MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod -Property @{
+                    SystemUpdateFreezePeriods                                = @(
+                            ([MSFT_MicrosoftGraphandroiddeviceownersystemupdatefreezeperiod] @{
                             endMonth   = 25
                             startMonth = 25
                             startDay   = 25
                             endDay     = 25
-                        } -ClientOnly)
+                        })
                     )
                     SystemUpdateInstallType                                  = 'deviceDefault'
                     SystemUpdateWindowEndMinutesAfterMidnight                = 25
@@ -1197,6 +1345,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                     return @{
+                        AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            @{
+                                appScopes = @('captureSecurityLog')
+                                appDetail = @{
+                                    name          = 'FakeStringValue'
+                                    appId         = 'FakeStringValue'
+                                    appStoreUrl   = 'FakeStringValue'
+                                    '@odata.type' = '#microsoft.graph.appleAppListItem'
+                                    publisher     = 'FakeStringValue'
+                                }
+                            }
+                        )
                         WorkProfilePasswordMinimumUpperCaseCharacters            = 7
                         WorkProfilePasswordRequireUnlock                         = 'deviceDefault'
                         SystemUpdateFreezePeriods                                = @(
@@ -1208,6 +1368,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                         VpnAlwaysOnPackageIdentifier                             = 'FakeStringValue'
+                        DeviceLocationMode                                       = 'notConfigured'
                         DeviceOwnerLockScreenMessage                             = @{
                             defaultMessage    = 'FakeStringValue'
                             localizedMessages = @()
@@ -1291,6 +1452,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         PasswordExpirationDays                                   = 7
                         WorkProfilePasswordMinimumNonLetterCharacters            = 7
                         KioskModeManagedFolders                                  = @()
+                        KioskModeManagedHomeScreenAppSettings                    = @(
+                            @{
+                                className                 = 'FakeStringValue'
+                                offlineAppAccessEnabled   = $False
+                                package                   = 'FakeStringValue'
+                                preSignInAppAccessEnabled = $True
+                            }
+                        )
                         KioskModeIconSize                                        = 'notConfigured'
                         AppsAutoUpdatePolicy                                     = 'notConfigured'
                         MicrosoftLauncherDockPresenceConfiguration               = 'notConfigured'
@@ -1316,15 +1485,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
             }
         }
@@ -1339,6 +1508,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -MockWith {
                     return @{
+                        AndroidDeviceOwnerDelegatedScopeAppSettings              = @(
+                            @{
+                                appScopes = @('certificateInstall')
+                                appDetail = @{
+                                    name          = 'FakeStringValue'
+                                    appId         = 'FakeStringValue'
+                                    appStoreUrl   = 'FakeStringValue'
+                                    '@odata.type' = '#microsoft.graph.appleAppListItem'
+                                    publisher     = 'FakeStringValue'
+                                }
+                            }
+                        )
+                        LocateDeviceLostModeEnabled                              = $True
+                        LocateDeviceUserlessDisabled                             = $True
+                        ShareDeviceLocationDisabled                              = $True
                         VolumeBlockAdjustment                                    = $True
                         ScreenCaptureBlocked                                     = $True
                         KioskModeMediaVolumeConfigurationEnabled                 = $True
@@ -1356,6 +1540,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                         BluetoothBlockConfiguration                              = $True
+                        DeviceLocationMode                                       = 'notConfigured'
                         DeviceOwnerLockScreenMessage                             = @{
                             defaultMessage    = 'FakeStringValue'
                             localizedMessages = @()
@@ -1468,6 +1653,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         WorkProfilePasswordMinimumNonLetterCharacters            = 25
                         WorkProfilePasswordSignInFailureCountBeforeFactoryReset  = 25
                         KioskModeManagedFolders                                  = @()
+                        KioskModeManagedHomeScreenAppSettings                    = @(
+                            @{
+                                className                 = 'FakeStringValue'
+                                offlineAppAccessEnabled   = $True
+                                package                   = 'FakeStringValue'
+                                preSignInAppAccessEnabled = $True
+                            }
+                        )
                         ShortHelpText                                            = @{
                             defaultMessage    = 'FakeStringValue'
                             localizedMessages = @()
@@ -1521,7 +1714,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceConfigurationPolicyAndroidDeviceOwner' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,26 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        SentinelThreatIntelligenceIndicator "SentinelThreatIntelligenceIndicator-ipv6-addr Indicator"
+        SentinelThreatIntelligenceIndicator "SentinelThreatIntelligenceIndicator-Example"
         {
-            ApplicationId          = $ApplicationId;
-            CertificateThumbprint  = $CertificateThumbprint;
-            DisplayName            = "MyIndicator";
-            Ensure                 = "Absent";
-            Labels                 = @("Tag1", "Tag2");
-            Pattern                = "[ipv6-addr:value = '2607:fa49:d340:f600:c8d5:6961:247f:a238']";
-            PatternType            = "ipv6-addr";
-            ResourceGroupName      = "MyResourceGroup";
-            Source                 = "Microsoft Sentinel";
-            SubscriptionId         = "12345-12345-12345-12345-12345";
-            TenantId               = $TenantId;
-            ThreatIntelligenceTags = @();
-            ValidFrom              = "2024-10-21T19:03:57.24Z";
-            ValidUntil             = "2024-10-21T19:03:57.24Z";
-            WorkspaceName          = "SentinelWorkspace";
+            DisplayName           = "Known phishing domain";
+            Ensure                = "Absent";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

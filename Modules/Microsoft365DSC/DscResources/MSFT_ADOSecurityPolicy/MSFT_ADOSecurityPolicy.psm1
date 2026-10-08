@@ -1,587 +1,384 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_ADOSecurityPolicy'
+using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class ADOSecurityPolicy : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $OrganizationName,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The name of the Azure DevOPS Organization.')]
+    [System.String] $OrganizationName
 
-        [Parameter()]
-        [System.Boolean]
-        $DisallowAadGuestUserAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls the external guest access.')]
+    [System.Nullable[System.Boolean]] $DisallowAadGuestUserAccess
 
-        [Parameter()]
-        [System.Boolean]
-        $DisallowOAuthAuthentication,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls the Third-party application access via OAuth.')]
+    [System.Nullable[System.Boolean]] $DisallowOAuthAuthentication
 
-        [Parameter()]
-        [System.Boolean]
-        $DisallowSecureShell,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls SSH Authentication.')]
+    [System.Nullable[System.Boolean]] $DisallowSecureShell
 
-        [Parameter()]
-        [System.Boolean]
-        $LogAuditEvents,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls Log Audit Events.')]
+    [System.Nullable[System.Boolean]] $LogAuditEvents
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowAnonymousAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls the Allow public projects setting.')]
+    [System.Nullable[System.Boolean]] $AllowAnonymousAccess
 
-        [Parameter()]
-        [System.Boolean]
-        $ArtifactsExternalPackageProtectionToken,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls the Additional protections when using public package registries setting.')]
+    [System.Nullable[System.Boolean]] $ArtifactsExternalPackageProtectionToken
 
-        [Parameter()]
-        [System.Boolean]
-        $EnforceAADConditionalAccess,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls the Enable IP Conditional Access policy validation setting.')]
+    [System.Nullable[System.Boolean]] $EnforceAADConditionalAccess
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowTeamAdminsInvitationsAccessToken,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls the Allow team and project administrators to invite new user setting.')]
+    [System.Nullable[System.Boolean]] $AllowTeamAdminsInvitationsAccessToken
 
-        [Parameter()]
-        [System.Boolean]
-        $AllowRequestAccessToken,
+    [DscProperty()]
+    [System.ComponentModel.Description('Controls the Request access setting.')]
+    [System.Nullable[System.Boolean]] $AllowRequestAccessToken
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the workload''s Admin')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory tenant used for authentication.')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting configuration of ADO Security Policy for organization $OrganizationName"
+    # Export-only. Not part of the resource schema.
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-    try
+    [ADOSecurityPolicy] Get()
     {
-        $null = New-M365DSCConnection -Workload 'AzureDevOPS' `
-            -InboundParameters $PSBoundParameters
+        if ($this.RequiresPowerShellCore())
+        {
+            $remote = [ADOSecurityPolicy]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
 
-        #Ensure the proper dependencies are installed in the current environment.
+        Write-Verbose -Message "Getting configuration of ADO Security Policy for organization $($this.OrganizationName)"
+
+        try
+        {
+            $null = $this.Connect('AzureDevOPS')
+
+            #Ensure the proper dependencies are installed in the current environment.
+            Confirm-M365DSCDependencies
+
+            #region Telemetry
+            $this.AddTelemetry('Get')
+            #endregion
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowAadGuestUserAccess?defaultValue"
+            $DisallowAadGuestUserAccessValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowOAuthAuthentication?defaultValue"
+            $DisallowOAuthAuthenticationValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($DisallowOAuthAuthenticationValue))
+            {
+                $DisallowOAuthAuthenticationValue = $true
+            }
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowSecureShell?defaultValue"
+            $DisallowSecureShellValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($DisallowSecureShellValue))
+            {
+                $DisallowSecureShellValue = $false
+            }
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.LogAuditEvents?defaultValue"
+            $LogAuditEventsValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($LogAuditEventsValue))
+            {
+                $LogAuditEventsValue = $false
+            }
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowAnonymousAccess?defaultValue"
+            $AllowAnonymousAccessValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($AllowAnonymousAccessValue))
+            {
+                $AllowAnonymousAccessValue = $false
+            }
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.ArtifactsExternalPackageProtectionToken?defaultValue"
+            $ArtifactsExternalPackageProtectionTokenValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($ArtifactsExternalPackageProtectionTokenValue))
+            {
+                $ArtifactsExternalPackageProtectionTokenValue = $true
+            }
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.EnforceAADConditionalAccess?defaultValue"
+            $EnforceAADConditionalAccessValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($EnforceAADConditionalAccessValue))
+            {
+                $EnforceAADConditionalAccessValue = $false
+            }
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowTeamAdminsInvitationsAccessToken?defaultValue"
+            $AllowTeamAdminsInvitationsAccessTokenValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($AllowTeamAdminsInvitationsAccessTokenValue))
+            {
+                $AllowTeamAdminsInvitationsAccessTokenValue = $true
+            }
+
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowRequestAccessToken?defaultValue"
+            $AllowRequestAccessTokenValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+            if ([System.String]::IsNullOrEmpty($AllowRequestAccessTokenValue))
+            {
+                $AllowRequestAccessTokenValue = $true
+            }
+
+            $results = @{
+                OrganizationName                        = $this.OrganizationName
+                DisallowAadGuestUserAccess              = [Boolean]::Parse($DisallowAadGuestUserAccessValue)
+                DisallowOAuthAuthentication             = [Boolean]::Parse($DisallowOAuthAuthenticationValue)
+                DisallowSecureShell                     = [Boolean]::Parse($DisallowSecureShellValue)
+                LogAuditEvents                          = [Boolean]::Parse($LogAuditEventsValue)
+                AllowAnonymousAccess                    = [Boolean]::Parse($AllowAnonymousAccessValue)
+                ArtifactsExternalPackageProtectionToken = [Boolean]::Parse($ArtifactsExternalPackageProtectionTokenValue)
+                EnforceAADConditionalAccess             = [Boolean]::Parse($EnforceAADConditionalAccessValue)
+                AllowTeamAdminsInvitationsAccessToken   = [Boolean]::Parse($AllowTeamAdminsInvitationsAccessTokenValue)
+                AllowRequestAccessToken                 = [Boolean]::Parse($AllowRequestAccessTokenValue)
+                Credential                              = $this.Credential
+                ApplicationId                           = $this.ApplicationId
+                TenantId                                = $this.TenantId
+                CertificateThumbprint                   = $this.CertificateThumbprint
+                CertificatePath                         = $this.CertificatePath
+                CertificatePassword                     = $this.CertificatePassword
+                ManagedIdentity                         = $this.ManagedIdentity
+                AccessTokens                            = $this.AccessTokens
+            }
+            return $this.AsResult($results)
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting configuration of ADO Security Policy for organization $($this.OrganizationName)"
+
         Confirm-M365DSCDependencies
 
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
+        $this.AddTelemetry('Set')
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowAadGuestUserAccess?defaultValue"
-        $DisallowAadGuestUserAccessValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
+        $null = $this.Connect('AzureDevOPS')
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowOAuthAuthentication?defaultValue"
-        $DisallowOAuthAuthenticationValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($DisallowOAuthAuthenticationValue))
+        if ($this.GetBoundParameters().ContainsKey('DisallowAadGuestUserAccess'))
         {
-            $DisallowOAuthAuthenticationValue = $true
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowAadGuestUserAccess?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.DisallowAadGuestUserAccess.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating DisallowAadGuestUserAccess policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowSecureShell?defaultValue"
-        $DisallowSecureShellValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($DisallowSecureShellValue))
+        if ($this.GetBoundParameters().ContainsKey('DisallowOAuthAuthentication'))
         {
-            $DisallowSecureShellValue = $false
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowOAuthAuthentication?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.DisallowOAuthAuthentication.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating DisallowOAuthAuthentication policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.LogAuditEvents?defaultValue"
-        $LogAuditEventsValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($LogAuditEventsValue))
+        if ($this.GetBoundParameters().ContainsKey('DisallowSecureShell'))
         {
-            $LogAuditEventsValue = $false
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowSecureShell?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.DisallowSecureShell.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating DisallowSecureShell policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowAnonymousAccess?defaultValue"
-        $AllowAnonymousAccessValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($AllowAnonymousAccessValue))
+        if ($this.GetBoundParameters().ContainsKey('LogAuditEvents'))
         {
-            $AllowAnonymousAccessValue = $false
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.LogAuditEvents?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.LogAuditEvents.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating LogAuditEvents policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.ArtifactsExternalPackageProtectionToken?defaultValue"
-        $ArtifactsExternalPackageProtectionTokenValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($ArtifactsExternalPackageProtectionTokenValue))
+        if ($this.GetBoundParameters().ContainsKey('AllowAnonymousAccess'))
         {
-            $ArtifactsExternalPackageProtectionTokenValue = $true
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowAnonymousAccess?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.AllowAnonymousAccess.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating AllowAnonymousAccess policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.EnforceAADConditionalAccess?defaultValue"
-        $EnforceAADConditionalAccessValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($EnforceAADConditionalAccessValue))
+        if ($this.GetBoundParameters().ContainsKey('ArtifactsExternalPackageProtectionToken'))
         {
-            $EnforceAADConditionalAccessValue = $false
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.ArtifactsExternalPackageProtectionToken?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.ArtifactsExternalPackageProtectionToken.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating ArtifactsExternalPackageProtectionToken policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowTeamAdminsInvitationsAccessToken?defaultValue"
-        $AllowTeamAdminsInvitationsAccessTokenValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($AllowTeamAdminsInvitationsAccessTokenValue))
+        if ($this.GetBoundParameters().ContainsKey('EnforceAADConditionalAccess'))
         {
-            $AllowTeamAdminsInvitationsAccessTokenValue = $true
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.EnforceAADConditionalAccess?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.EnforceAADConditionalAccess.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating EnforceAADConditionalAccess policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowRequestAccessToken?defaultValue"
-        $AllowRequestAccessTokenValue = (Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri).Value
-        if ([System.String]::IsNullOrEmpty($AllowRequestAccessTokenValue))
+        if ($this.GetBoundParameters().ContainsKey('AllowTeamAdminsInvitationsAccessToken'))
         {
-            $AllowRequestAccessTokenValue = $true
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowTeamAdminsInvitationsAccessToken?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.AllowTeamAdminsInvitationsAccessToken.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating AllowTeamAdminsInvitationsAccessToken policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
 
-        $results = @{
-            OrganizationName                        = $OrganizationName
-            DisallowAadGuestUserAccess              = [Boolean]::Parse($DisallowAadGuestUserAccessValue)
-            DisallowOAuthAuthentication             = [Boolean]::Parse($DisallowOAuthAuthenticationValue)
-            DisallowSecureShell                     = [Boolean]::Parse($DisallowSecureShellValue)
-            LogAuditEvents                          = [Boolean]::Parse($LogAuditEventsValue)
-            AllowAnonymousAccess                    = [Boolean]::Parse($AllowAnonymousAccessValue)
-            ArtifactsExternalPackageProtectionToken = [Boolean]::Parse($ArtifactsExternalPackageProtectionTokenValue)
-            EnforceAADConditionalAccess             = [Boolean]::Parse($EnforceAADConditionalAccessValue)
-            AllowTeamAdminsInvitationsAccessToken   = [Boolean]::Parse($AllowTeamAdminsInvitationsAccessTokenValue)
-            AllowRequestAccessToken                 = [Boolean]::Parse($AllowRequestAccessTokenValue)
-            Credential                              = $Credential
-            ApplicationId                           = $ApplicationId
-            TenantId                                = $TenantId
-            CertificateThumbprint                   = $CertificateThumbprint
-            CertificatePath                         = $CertificatePath
-            CertificatePassword                     = $CertificatePassword
-            ManagedIdentity                         = $ManagedIdentity.IsPresent
-            AccessTokens                            = $AccessTokens
-        }
-        return $results
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $OrganizationName,
-
-        [Parameter()]
-        [System.Boolean]
-        $DisallowAadGuestUserAccess,
-
-        [Parameter()]
-        [System.Boolean]
-        $DisallowOAuthAuthentication,
-
-        [Parameter()]
-        [System.Boolean]
-        $DisallowSecureShell,
-
-        [Parameter()]
-        [System.Boolean]
-        $LogAuditEvents,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowAnonymousAccess,
-
-        [Parameter()]
-        [System.Boolean]
-        $ArtifactsExternalPackageProtectionToken,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnforceAADConditionalAccess,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowTeamAdminsInvitationsAccessToken,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowRequestAccessToken,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting configuration of ADO Security Policy for organization $OrganizationName"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $null = New-M365DSCConnection -Workload 'AzureDevOPS' `
-        -InboundParameters $PSBoundParameters
-
-    if ($PSBoundParameters.ContainsKey('DisallowAadGuestUserAccess'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowAadGuestUserAccess?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($DisallowAadGuestUserAccess.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating DisallowAadGuestUserAccess policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('DisallowOAuthAuthentication'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowOAuthAuthentication?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($DisallowOAuthAuthentication.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating DisallowOAuthAuthentication policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('DisallowSecureShell'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.DisallowSecureShell?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($DisallowSecureShell.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating DisallowSecureShell policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('LogAuditEvents'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.LogAuditEvents?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($LogAuditEvents.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating LogAuditEvents policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('AllowAnonymousAccess'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowAnonymousAccess?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($AllowAnonymousAccess.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating AllowAnonymousAccess policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('ArtifactsExternalPackageProtectionToken'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.ArtifactsExternalPackageProtectionToken?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($ArtifactsExternalPackageProtectionToken.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating ArtifactsExternalPackageProtectionToken policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('EnforceAADConditionalAccess'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.EnforceAADConditionalAccess?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($EnforceAADConditionalAccess.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating EnforceAADConditionalAccess policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('AllowTeamAdminsInvitationsAccessToken'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowTeamAdminsInvitationsAccessToken?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($AllowTeamAdminsInvitationsAccessToken.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating AllowTeamAdminsInvitationsAccessToken policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-
-    if ($PSBoundParameters.ContainsKey('AllowRequestAccessToken'))
-    {
-        $uri = "https://dev.azure.com/$($OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowRequestAccessToken?api-version=5.0-preview"
-        $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($AllowRequestAccessToken.ToString().ToLower())`"}]"
-        Write-Verbose -Message "Updating AllowRequestAccessToken policy with values: $($body)"
-
-        Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
-    }
-}
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $OrganizationName,
-
-        [Parameter()]
-        [System.Boolean]
-        $DisallowAadGuestUserAccess,
-
-        [Parameter()]
-        [System.Boolean]
-        $DisallowOAuthAuthentication,
-
-        [Parameter()]
-        [System.Boolean]
-        $DisallowSecureShell,
-
-        [Parameter()]
-        [System.Boolean]
-        $LogAuditEvents,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowAnonymousAccess,
-
-        [Parameter()]
-        [System.Boolean]
-        $ArtifactsExternalPackageProtectionToken,
-
-        [Parameter()]
-        [System.Boolean]
-        $EnforceAADConditionalAccess,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowTeamAdminsInvitationsAccessToken,
-
-        [Parameter()]
-        [System.Boolean]
-        $AllowRequestAccessToken,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    $ConnectionMode = New-M365DSCConnection -Workload 'AzureDevOPS' `
-        -InboundParameters $PSBoundParameters
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    try
-    {
-        $devOpsProfile = Invoke-M365DSCAzureDevOPSWebRequest -Uri 'https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.1'
-        $accounts = Invoke-M365DSCAzureDevOPSWebRequest -Uri "https://app.vssps.visualstudio.com/_apis/accounts?api-version=7.1-preview.1&memberId=$($devOpsProfile.id)"
-
-        $i = 1
-        $dscContent = [System.Text.StringBuilder]::new()
-        if ($accounts.Length -eq 0)
+        if ($this.GetBoundParameters().ContainsKey('AllowRequestAccessToken'))
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            $uri = "https://dev.azure.com/$($this.OrganizationName)/_apis/OrganizationPolicy/Policies/Policy.AllowRequestAccessToken?api-version=5.0-preview"
+            $body = "[{`"from`":`"`",`"op`":2,`"path`":`"/Value`",`"value`":`"$($this.AllowRequestAccessToken.ToString().ToLower())`"}]"
+            Write-Verbose -Message "Updating AllowRequestAccessToken policy with values: $($body)"
+
+            Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method 'PATCH' -Body $body
         }
-        else
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
         {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
+            return [string] $this.InvokeInPowerShellCore('Export')
         }
-        foreach ($account in $accounts.Value)
+
+        $ConnectionMode = $this.Connect('AzureDevOPS')
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Export')
+
+        try
         {
-            $organization = $account.accountName
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+            $devOpsProfile = Invoke-M365DSCAzureDevOPSWebRequest -Uri 'https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.1'
+            $accounts = Invoke-M365DSCAzureDevOPSWebRequest -Uri "https://app.vssps.visualstudio.com/_apis/accounts?api-version=7.1-preview.1&memberId=$($devOpsProfile.id)"
+
+            $i = 1
+            $dscContent = [System.Text.StringBuilder]::new()
+            if ($accounts.Length -eq 0)
             {
-                $Global:M365DSCExportResourceInstancesCount++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-
-            $displayedKey = $organization
-            Write-M365DSCHost -Message "    |---[$i/$($accounts.Value.Count)] $displayedKey" -DeferWrite
-            $params = @{
-                OrganizationName      = $organization
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            else
+            {
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
+            foreach ($account in $accounts.Value)
+            {
+                $organization = $account.accountName
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
+                {
+                    $Global:M365DSCExportResourceInstancesCount++
+                }
 
-            $Results = Get-TargetResource @Params
+                $displayedKey = $organization
+                Write-M365DSCHost -Message "    |---[$i/$($accounts.Value.Count)] $displayedKey" -DeferWrite
+                $params = @{
+                    OrganizationName      = $organization
+                    Credential            = $this.Credential
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    AccessTokens          = $this.AccessTokens
+                }
 
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            $i++
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $Results = $this.GetForExport($Params)
+
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                $i++
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+            }
+            return $dscContent.ToString()
         }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+        catch
+        {
+            $this.LogError($_, 'Error during Export:')
 
-        throw
+            throw
+        }
+    }
+
+    hidden [ADOSecurityPolicy] AsResult([System.Object] $Values)
+    {
+        if ($Values -is [ADOSecurityPolicy])
+        {
+            return $Values
+        }
+
+        $result = [ADOSecurityPolicy]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+
+        return $result
     }
 }
-
-Export-ModuleMember -Function *-TargetResource

@@ -1,5 +1,22 @@
 {
   "resourceName": "AADEntitlementManagementAccessPackageCatalogResource",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "accessPackageResource",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResource",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "CatalogId",
+      "reason": "Accepted",
+      "note": "Parent catalog of the access package, named by identifier or display name."
+    }
+  ],
   "description": "This resource configures an Azure AD Entitlement Management Access Package Catalog Resource.",
   "roles": {
     "read": [

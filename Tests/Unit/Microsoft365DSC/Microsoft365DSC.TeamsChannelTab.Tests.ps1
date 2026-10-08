@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -36,7 +36,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -56,10 +56,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     sortOrderIndex = '10100'
                     webUrl         = 'https://contoso.com'
                     configuration  = @{
-                        entityId   = $null
                         contentUrl = 'https://contoso.com'
-                        websiteUrl = 'https://contoso.com'
+                        entityId   = $null
                         removeUrl  = $null
+                        websiteUrl = 'https://contoso.com'
                     }
                     teamsApp       = @{
                         id = 'com.microsoft.teamspace.tab.web'
@@ -95,14 +95,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ApplicationId         = '12345'
                     CertificateThumbprint = 'ABCDEF1234567890'
                     ChannelName           = 'General'
-                    ContentUrl            = 'https://contoso.com'
+                    Configuration         = @{
+                        ContentUrl = 'https://contoso.com'
+                        WebsiteUrl = 'https://contoso.com'
+                    }
                     DisplayName           = 'TestTab'
                     Ensure                = 'Present'
                     SortOrderIndex        = '10100'
                     TeamName              = 'Contoso Team'
                     TeamsApp              = 'com.microsoft.teamspace.tab.web'
                     TenantId              = 'contoso.onmicrosoft.com'
-                    WebSiteUrl            = 'https://contoso.com'
                 }
 
                 Mock -CommandName Get-MgBetaTeamChannelTab -MockWith {
@@ -111,15 +113,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the tab in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaTeamChannelTab -Exactly 1
             }
         }
@@ -130,28 +132,32 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ApplicationId         = '12345'
                     CertificateThumbprint = 'ABCDEF1234567890'
                     ChannelName           = 'General'
-                    ContentUrl            = 'https://contoso.com'
+                    Configuration         = @{
+                        ContentUrl = 'https://contoso.com'
+                        WebsiteUrl = 'https://contoso.com'
+                    }
                     DisplayName           = 'TestTab'
                     Ensure                = 'Present'
                     SortOrderIndex        = '11100' # Drift
                     TeamName              = 'Contoso Team'
                     TeamsApp              = 'com.microsoft.teamspace.tab.web'
                     TenantId              = 'contoso.onmicrosoft.com'
-                    WebSiteUrl            = 'https://contoso.com'
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
+                Should -Invoke -CommandName Get-MgBetaTeamChannelTab -ParameterFilter { $All -and $NoPageSize }
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaTeamChannelTab -Exactly 1
+                Should -Invoke -CommandName Get-MgBetaTeamChannel -ParameterFilter { -not [System.String]::IsNullOrEmpty($Filter) -and $All -and $NoPageSize }
             }
         }
 
@@ -161,23 +167,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ApplicationId         = '12345'
                     CertificateThumbprint = 'ABCDEF1234567890'
                     ChannelName           = 'General'
-                    ContentUrl            = 'https://contoso.com'
+                    Configuration         = @{
+                        ContentUrl = 'https://contoso.com'
+                        WebsiteUrl = 'https://contoso.com'
+                    }
                     DisplayName           = 'TestTab'
                     Ensure                = 'Present'
                     SortOrderIndex        = '10100'
                     TeamName              = 'Contoso Team'
                     TeamsApp              = 'com.microsoft.teamspace.tab.web'
                     TenantId              = 'contoso.onmicrosoft.com'
-                    WebSiteUrl            = 'https://contoso.com'
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -187,27 +195,29 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ApplicationId         = '12345'
                     CertificateThumbprint = 'ABCDEF1234567890'
                     ChannelName           = 'General'
-                    ContentUrl            = 'https://contoso.com'
+                    Configuration         = @{
+                        ContentUrl = 'https://contoso.com'
+                        WebsiteUrl = 'https://contoso.com'
+                    }
                     DisplayName           = 'TestTab'
                     Ensure                = 'Absent'
                     SortOrderIndex        = '10100'
                     TeamName              = 'Contoso Team'
                     TeamsApp              = 'com.microsoft.teamspace.tab.web'
                     TenantId              = 'contoso.onmicrosoft.com'
-                    WebSiteUrl            = 'https://contoso.com'
                 }
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should remove the policy from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'TeamsChannelTab' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaTeamChannelTab -Exactly 1
             }
         }
@@ -229,7 +239,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'TeamsChannelTab' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

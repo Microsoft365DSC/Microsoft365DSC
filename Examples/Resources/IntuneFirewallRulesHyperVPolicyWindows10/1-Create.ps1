@@ -4,7 +4,8 @@ This example creates a new Intune Firewall Policy for Windows10.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -17,27 +18,28 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneFirewallRulesHyperVPolicyWindows10 'myIntuneFirewallRulesHyperVPolicyWindows10'
+        IntuneFirewallRulesHyperVPolicyWindows10 'IntuneFirewallRulesHyperVPolicyWindows10-Example'
         {
             Assignments           = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
                     deviceAndAppManagementAssignmentFilterType = 'none'
-                    dataType = '#microsoft.graph.groupAssignmentTarget'
-                    groupId = '11111111-1111-1111-1111-111111111111'
+                    dataType                                   = '#microsoft.graph.groupAssignmentTarget'
+                    groupDisplayName                           = 'Intune Pilot Devices'
                 }
             );
-            FirewallRuleName = @(
+            FirewallRuleName      = @(
                 MSFT_MicrosoftGraphIntuneSettingsCatalogFirewallRuleName_IntuneFirewallRulesHyperVPolicyWindows10{
-                    Direction = 'out'
+                    Direction        = 'out'
                     RemotePortRanges = @('0-100')
-                    Name = 'Rule1'
-                    Protocol = 80
-                    Enabled = '1'
-                    Action = '1'
+                    Name             = 'Rule1'
+                    Protocol         = 80
+                    Enabled          = '1'
+                    Action           = '1'
                 }
             )
             Description           = 'Description'

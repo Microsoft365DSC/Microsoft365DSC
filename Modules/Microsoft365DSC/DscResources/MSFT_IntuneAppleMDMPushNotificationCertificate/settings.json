@@ -1,5 +1,52 @@
 {
   "resourceName": "IntuneAppleMDMPushCertificate",
+  "generatedFrom": {
+    "workload": "Intune",
+    "apiVersion": "beta",
+    "entityType": "applePushNotificationCertificate",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDeviceManagementApplePushNotificationCertificate",
+    "cmdletVerb": "Update",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "CertificateSerialNumber",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "CertificateUploadFailureReason",
+      "reason": "ReadOnly",
+      "note": "Apple push service reports the upload failure"
+    },
+    {
+      "name": "CertificateUploadStatus",
+      "reason": "ReadOnly",
+      "note": "Apple push service reports the upload status"
+    },
+    {
+      "name": "DataSharingConsentGranted",
+      "reason": "Accepted",
+      "note": "The consent lives on the separate dataSharingConsent action."
+    },
+    {
+      "name": "ExpirationDateTime",
+      "reason": "ReadOnly",
+      "note": "Taken from the uploaded certificate itself"
+    },
+    {
+      "name": "Id",
+      "reason": "ReadOnly",
+      "note": "AppleIdentifier is the key and one certificate exists per tenant"
+    },
+    {
+      "name": "TopicIdentifier",
+      "reason": "ReadOnly",
+      "note": "Apple issues the APNs topic with the certificate"
+    }
+  ],
   "description": "Configures a resource for Apple MDM Push notification certificate used for device enrollment.",
   "permissions": {
     "graph": {

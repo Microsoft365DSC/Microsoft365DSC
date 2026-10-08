@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,43 +19,44 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        IntuneUserSettingsPolicyWindows365 "My User Settings Policy for Windows 365"
+        IntuneUserSettingsPolicyWindows365 "IntuneUserSettingsPolicyWindows365-Example"
         {
-            DisplayName              = "User Settings Policy W365";
-            Ensure                   = "Present";
+            DisplayName                        = "User Settings Policy W365";
+            Ensure                             = "Present";
             Assignments                        = @(
                 MSFT_DeviceManagementConfigurationPolicyAssignments{
-                    dataType = "#microsoft.graph.cloudPcManagementGroupAssignmentTarget"
-                    groupId = "42a638ec-2bf2-47a8-8f5f-176ce2124b7b"
-                    groupDisplayName = "COGPASS-PROD-CA_AADP2"
+                    dataType         = "#microsoft.graph.cloudPcManagementGroupAssignmentTarget"
+                    groupDisplayName = "Intune Pilot Users"
                 }
             );
             CrossRegionDisasterRecoverySetting = MSFT_MicrosoftGraphcloudPcCrossRegionDisasterRecoverySetting{
                 MaintainCrossRegionRestorePointEnabled = $True
-                DisasterRecoveryNetworkSetting = MSFT_MicrosoftGraphCloudPcDisasterRecoveryNetworkSetting{
-                    RegionName = "switzerlandnorth" # Updated property
+                DisasterRecoveryNetworkSetting         = MSFT_MicrosoftGraphCloudPcDisasterRecoveryNetworkSetting{
+                    RegionName  = "switzerlandnorth" # Updated Property
                     RegionGroup = "switzerland"
-                    odataType = "#microsoft.graph.cloudPcDisasterRecoveryMicrosoftHostedNetworkSetting"
+                    odataType   = "#microsoft.graph.cloudPcDisasterRecoveryMicrosoftHostedNetworkSetting"
                 }
-                UserInitiatedDisasterRecoveryAllowed = $false
-                DisasterRecoveryType = "crossRegion"
+                UserInitiatedDisasterRecoveryAllowed   = $false
+                DisasterRecoveryType                   = "crossRegion"
             };
             LocalAdminEnabled                  = $True;
             NotificationSetting                = MSFT_MicrosoftGraphcloudPcNotificationSetting{
                 RestartPromptsDisabled = $False
             };
+            ProvisioningSourceType             = "snapshot";
             ResetEnabled                       = $True;
             RestorePointSetting                = MSFT_MicrosoftGraphcloudPcRestorePointSetting{
-                FrequencyType = "twelveHours"
+                FrequencyType      = "twelveHours"
                 UserRestoreEnabled = $True
             };
-            ApplicationId         = $ApplicationId;
-            TenantId              = $TenantId;
-            CertificateThumbprint = $CertificateThumbprint;
+            ApplicationId                      = $ApplicationId;
+            TenantId                           = $TenantId;
+            CertificateThumbprint              = $CertificateThumbprint;
         }
     }
 }

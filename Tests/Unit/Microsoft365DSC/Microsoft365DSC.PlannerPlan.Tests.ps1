@@ -38,7 +38,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Update-MGPlannerPlan -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -74,15 +74,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return absent from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should create the Plan in the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MGPlannerPlan -Exactly 1
             }
         }
@@ -115,11 +115,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should update the settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MGPlannerPlan -Exactly 1
             }
         }
@@ -151,11 +151,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return true from the Set method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -187,11 +187,91 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Present from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Set method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Test() | Should -Be $false
+            }
+        }
+
+        Context -Name "OwnerGroup is a display name and the Plan doesn't exist" -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Title      = 'Contoso Plan'
+                    OwnerGroup = 'Contoso Group'
+                    Credential = $Credential
+                    Ensure     = 'Present'
+                }
+
+                Mock -CommandName Get-MgGroup -MockWith {
+                    return $null
+                }
+
+                Mock -CommandName Get-MgGroup -ParameterFilter { $Filter -eq "displayName eq 'Contoso Group'" } -MockWith {
+                    return @(
+                        @{
+                            DisplayName = 'Contoso Group'
+                            Id          = '12345-12345-12345-12345-12345'
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-MgGroupPlannerPlan -MockWith {
+                    return $null
+                }
+            }
+
+            It 'Should look the group up by display name filter in the Get method' {
+                $null = (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Get()
+                Should -Invoke -CommandName Get-MgGroup -ParameterFilter { $Filter -eq "displayName eq 'Contoso Group'" } -Exactly 1
+                Should -Invoke -CommandName Get-MgGroup -ParameterFilter { -not [System.String]::IsNullOrEmpty($Search) } -Exactly 0
+            }
+
+            It 'Should create the Plan with the resolved group id in the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MGPlannerPlan -ParameterFilter { $Owner -eq '12345-12345-12345-12345-12345' } -Exactly 1
+            }
+        }
+
+        Context -Name 'OwnerGroup is a display name and the Plan exists' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Title      = 'Contoso Plan'
+                    OwnerGroup = 'Contoso Group'
+                    Credential = $Credential
+                    Ensure     = 'Present'
+                }
+
+                Mock -CommandName Get-MgGroup -MockWith {
+                    return $null
+                }
+
+                Mock -CommandName Get-MgGroup -ParameterFilter { $Filter -eq "displayName eq 'Contoso Group'" } -MockWith {
+                    return @(
+                        @{
+                            DisplayName = 'Contoso Group'
+                            Id          = '12345-12345-12345-12345-12345'
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-MgGroupPlannerPlan -MockWith {
+                    return @{
+                        Title = 'Contoso Plan'
+                        Id    = '1234567890'
+                        Owner = '12345-12345-12345-12345-12345'
+                    }
+                }
+            }
+
+            It 'Should return Present from the Get method' {
+                ((New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
+            }
+
+            It 'Should update the Plan with the resolved group id in the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'PlannerPlan' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MGPlannerPlan -ParameterFilter { $BodyParameter.Owner -eq '12345-12345-12345-12345-12345' } -Exactly 1
             }
         }
 
@@ -222,7 +302,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'PlannerPlan' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }
@@ -230,3 +310,4 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 }
 
 Invoke-Command -ScriptBlock $Global:DscHelper.CleanupScript -NoNewScope
+

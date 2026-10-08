@@ -5,21 +5,34 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        TeamsTenantNetworkRegion 'Example'
+        TeamsTenantNetworkRegion 'TeamsTenantNetworkRegion-Example'
         {
-            CentralSite          = "Nik";
-            Credential           = $Credscredential;
-            Ensure               = "Present";
-            Identity             = "Nik";
+            CentralSite           = "Amsterdam";
+            Description           = "European offices served by the Amsterdam central site";
+            Ensure                = "Present";
+            Identity              = "Europe";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,11 +19,12 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
     Node localhost
     {
-        AADPIMGroupSetting "AADPIMGroupSetting-test-group_owner"
+        AADPIMGroupSetting "AADPIMGroupSetting-Example"
         {
             ActivateApprover                                          = @();
             ActivationMaxDuration                                     = "PT8H";
@@ -32,7 +34,7 @@ Configuration Example
             ActiveAlertNotificationAdditionalRecipient                = @();
             ActiveAlertNotificationDefaultRecipient                   = $True;
             ActiveAlertNotificationOnlyCritical                       = $False;
-            ActiveApproveNotificationAdditionalRecipient              = @("testuser@test.com");
+            ActiveApproveNotificationAdditionalRecipient              = @("pim-approvers@contoso.com");
             ActiveApproveNotificationDefaultRecipient                 = $True;
             ActiveApproveNotificationOnlyCritical                     = $False;
             ActiveAssigneeNotificationAdditionalRecipient             = @();
@@ -43,7 +45,7 @@ Configuration Example
             AssignmentReqMFA                                          = $False;
             AuthenticationContextId                                   = "";
             AuthenticationContextRequired                             = $false;
-            DisplayName                                               = "test-group";
+            DisplayName                                               = "U.S. Sales";
             EligibilityAssignmentReqJustification                     = $False;
             EligibilityAssignmentReqMFA                               = $False;
             EligibleAlertNotificationAdditionalRecipient              = @();
@@ -66,10 +68,10 @@ Configuration Example
             PermanentActiveAssignmentisExpirationRequired             = $False;
             PermanentEligibleAssignmentisExpirationRequired           = $False;
             RoleDefinitionId                                          = "owner";
-            ApplicationId                 = $ApplicationId
-            TenantId                      = $TenantId
-            CertificateThumbprint         = $CertificateThumbprint
             Ensure                                                    = "Present";
+            ApplicationId                                             = $ApplicationId
+            TenantId                                                  = $TenantId
+            CertificateThumbprint                                     = $CertificateThumbprint
         }
     }
 }

@@ -1,5 +1,42 @@
 {
   "resourceName": "O365ExternalConnection",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "externalConnectors.externalConnection",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaExternalConnection",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Configuration",
+      "reason": "Accepted",
+      "note": "The container holds only authorizedAppIds, which the resource models as AuthorizedAppIds"
+    },
+    {
+      "name": "ConnectorId",
+      "reason": "Deferred",
+      "note": "Not yet verified against a tenant."
+    },
+    {
+      "name": "EnabledContentExperiences",
+      "reason": "Deferred",
+      "note": "Not yet verified against a tenant."
+    },
+    {
+      "name": "IngestedItemsCount",
+      "reason": "ReadOnly",
+      "note": "The service counts the items ingested into the connection"
+    },
+    {
+      "name": "State",
+      "reason": "ReadOnly",
+      "note": "Graph marks the property as read only on this type."
+    }
+  ],
   "description": "Configures external connectors in Microsoft 365.",
   "roles": {},
   "permissions": {

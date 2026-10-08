@@ -1,5 +1,16 @@
 {
   "resourceName": "TeamsUserPolicyAssignment",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsUserPolicyAssignment",
+    "cmdletVerb": "Get",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "",
   "roles": {
     "read": [
@@ -68,6 +79,7 @@
         "Grant-CsTeamsMeetingPolicy",
         "Grant-CsTeamsMessagingPolicy",
         "Grant-CsTeamsMobilityPolicy",
+        "Grant-CsTeamsPersonalAttendantPolicy",
         "Grant-CsTeamsUpdateManagementPolicy",
         "Grant-CsTeamsUpgradePolicy",
         "Grant-CsTenantDialPlan"

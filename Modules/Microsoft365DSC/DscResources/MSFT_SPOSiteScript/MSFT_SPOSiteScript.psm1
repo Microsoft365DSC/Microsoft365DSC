@@ -1,544 +1,366 @@
-Confirm-M365DSCModuleDependency -ModuleName 'MSFT_SPOSiteScript'
+﻿using module ..\_Base\M365DSCResourceBase.psm1
 
-function Get-TargetResource
+[DscResource()]
+class SPOSiteScript : M365DSCResourceBase
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Title,
+    [DscProperty(Key)]
+    [System.ComponentModel.Description('The title of the site script.')]
+    [System.String] $Title
 
-        [Parameter()]
-        [System.String]
-        $Identity,
+    [DscProperty()]
+    [System.ComponentModel.Description('ID of the site Script')]
+    [System.String] $Identity
 
-        [Parameter()]
-        [System.String]
-        $Content,
+    [DscProperty()]
+    [System.ComponentModel.Description('The description of the site script.')]
+    [System.String] $Description
 
-        [Parameter()]
-        [System.String]
-        $Description,
+    [DscProperty()]
+    [System.ComponentModel.Description('A JSON string containing the site script.')]
+    [System.String] $Content
 
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
+    [DscProperty()]
+    [System.ComponentModel.Description('Present ensures the site script exists, absent ensures it is removed')]
+    [ValidateSet('Present', 'Absent')]
+    [System.String] $Ensure
 
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Credentials of the account to authenticate with.')]
+    [System.Management.Automation.PSCredential] $Credential
 
-        [Parameter()]
-        [System.String]
-        $TenantId,
+    [DscProperty()]
+    [System.ComponentModel.Description('Id of the Azure Active Directory application to authenticate with.')]
+    [System.String] $ApplicationId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
+    [DscProperty()]
+    [System.ComponentModel.Description('Secret of the Azure Active Directory application to authenticate with.')]
+    [System.Management.Automation.PSCredential] $ApplicationSecret
 
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
+    [DscProperty()]
+    [System.ComponentModel.Description('Name of the Azure Active Directory tenant used for authentication. Format contoso.onmicrosoft.com')]
+    [System.String] $TenantId
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
+    [DscProperty()]
+    [System.ComponentModel.Description('Thumbprint of the Azure Active Directory application''s authentication certificate to use for authentication.')]
+    [System.String] $CertificateThumbprint
 
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
+    [DscProperty()]
+    [System.ComponentModel.Description('Username can be made up to anything but password will be used for CertificatePassword')]
+    [System.Management.Automation.PSCredential] $CertificatePassword
 
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
+    [DscProperty()]
+    [System.ComponentModel.Description('Path to certificate used in service principal usually a PFX file.')]
+    [System.String] $CertificatePath
 
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
+    [DscProperty()]
+    [System.ComponentModel.Description('Managed ID being used for authentication.')]
+    [System.Nullable[System.Boolean]] $ManagedIdentity
 
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
+    [DscProperty()]
+    [System.ComponentModel.Description('Access token used for authentication.')]
+    [System.String[]] $AccessTokens
 
-    Write-Verbose -Message "Getting Site Script: $Title"
-
-    try
+    [SPOSiteScript] Get()
     {
-        if (-not $Script:exportedInstance -or $Script:exportedInstance.Id -ne $Identity)
+        $SiteScript = $null
+        if ($this.RequiresPowerShellCore())
         {
-            $null = New-M365DSCConnection -Workload 'PnP' `
-                -InboundParameters $PSBoundParameters
+            $remote = [SPOSiteScript]::new()
+            $remote.FromHashtable($this.InvokeInPowerShellCore('Get'))
+            return $remote
+        }
+
+        Write-Verbose -Message "Getting Site Script: $($this.Title)"
+
+        try
+        {
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.Id -ne $this.Identity)
+            {
+                $null = $this.Connect('PnP')
+
+                Confirm-M365DSCDependencies
+
+                $this.AddTelemetry('Get')
+
+                $nullReturn = $this.GetBoundParameters()
+                $nullReturn.Ensure = 'Absent'
+
+                Write-Verbose -Message "Getting the SPO Site Script with Identity {$($this.Identity)} and Title {$($this.Title)}"
+
+                if (-not [System.String]::IsNullOrEmpty($this.Identity))
+                {
+                    $SiteScript = Get-PnPSiteScript -Identity $this.Identity -ErrorAction SilentlyContinue
+                }
+
+                if ($null -eq $SiteScript)
+                {
+                    $SiteScript = Get-PnPSiteScript -ErrorAction SilentlyContinue | Where-Object -FilterScript { $_.Title -eq $this.Title } | Select-Object -First 1
+
+                    # No script was returned
+                    if ($null -eq $SiteScript)
+                    {
+                        Write-Verbose -Message "No Site Script with the Title, {$($this.Title)}, was found."
+                        return $this.AsResult($nullReturn)
+                    }
+                    else
+                    {
+                        # get site script *with* content
+                        $SiteScript = Get-PnPSiteScript -Identity $SiteScript.Id
+                    }
+                }
+            }
+            else
+            {
+                $SiteScript = Get-PnPSiteScript -Identity $this.ExportedInstance.Id -ErrorAction SilentlyContinue
+            }
+            ##### End of Check
+
+            return $this.AsResult(@{
+                Identity              = $SiteScript.Id
+                Title                 = $SiteScript.Title
+                Description           = $SiteScript.Description
+                Content               = $SiteScript.Content
+                Ensure                = 'Present'
+                Credential            = $this.Credential
+                ApplicationId         = $this.ApplicationId
+                TenantId              = $this.TenantId
+                ApplicationSecret     = $this.ApplicationSecret
+                CertificateThumbprint = $this.CertificateThumbprint
+                CertificatePath       = $this.CertificatePath
+                CertificatePassword   = $this.CertificatePassword
+                ManagedIdentity       = $this.ManagedIdentity
+                AccessTokens          = $this.AccessTokens
+            })
+        }
+        catch
+        {
+            $this.LogError($_, 'Error retrieving data:')
+
+            throw
+        }
+    }
+
+    [void] Set()
+    {
+        $UpdateParams = $null
+        if ($this.RequiresPowerShellCore())
+        {
+            $null = $this.InvokeInPowerShellCore('Set')
+            return
+        }
+
+        Write-Verbose -Message "Setting Site Script: $($this.Title)"
+
+        Confirm-M365DSCDependencies
+
+        $this.AddTelemetry('Set')
+
+        # region Telemetry
+        $CurrentValues = $this.Get().ToHashtable()
+        $CurrentParameters = Remove-M365DSCAuthenticationParameter $this.GetBoundParameters()
+        # end region
+
+        if ($this.Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
+        {
+            # Splatting
+            $CreationParams = @{
+                Title       = $this.Title
+                Content     = $this.Content
+                Description = $this.Description
+            }
+
+            # Adding the Site Script Again.
+            Write-Verbose -Message "Site Script, {$($this.Title)}, doesn't exist. Creating it."
+            $newSiteScript = Add-PnPSiteScript @CreationParams
+
+            # let's make sure the Site Script gets added
+            $siteScript = $null
+            $circuitBreaker = 0
+            do
+            {
+                Write-Verbose -Message 'Waiting for another 3 seconds for Site Script to be ready.'
+                Start-Sleep -Seconds 3
+                try
+                {
+                    $siteScript = Get-PnPSiteScript -Identity $newSiteScript.Id -ErrorAction Stop
+                }
+                catch
+                {
+                    $siteScript = $null
+                }
+                $circuitBreaker++
+            } while ($null -eq $siteScript -and $circuitBreaker -lt 20)
+
+            Write-Verbose -Message "Site Script, {$($this.Title)}, has been successfully created."
+        }
+        elseif ($this.Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
+        {
+            Write-Verbose -Message "Removing Site Script {$($this.Title)}"
+            try
+            {
+                # The Site Script exists and it shouldn't
+                [Array]$SiteScript = Get-PnPSiteScript | Where-Object -FilterScript { $_.Title -eq $this.Title } -ErrorAction SilentlyContinue
+
+                ##### Check to see if more than one site script is returned
+                if ($SiteScript.Count -gt 1)
+                {
+                    $SiteScript = Get-PnPSiteScript -Identity $SiteScript[0].Id
+                }
+                ##### End of Check
+            }
+            catch
+            {
+                if ($Error[0].Exception.Message -eq 'Site Script Not Found')
+                {
+                    $Message = "The Site Script, $($this.Title), does not exist."
+                    $this.LogError($_, $Message)
+                    throw $Message
+                }
+            }
+            try
+            {
+                Remove-PnPSiteScript -Identity $sitescript.Id -Force -ErrorAction Stop
+            }
+            catch
+            {
+                $this.LogError($_, 'Error removing Site Script:')
+
+                throw
+            }
+        }
+        if ($this.Ensure -ne 'Absent')
+        {
+            Write-Verbose -Message "Site Script, {$($this.Title)} already exists, updating its settings"
+
+            try
+            {
+                # The Site Script exists and it shouldn't
+                [Array]$SiteScripts = Get-PnPSiteScript | Where-Object -FilterScript { $_.Title -eq $this.Title } -ErrorAction SilentlyContinue
+
+                ##### Check to see if more than one site script is returned
+                if ($SiteScripts.Count -gt 0)
+                {
+                    #
+                    #the only way to get the $content is to query the site again, but this time with the ID and not the Title like above
+                    $UpdateParams = @{
+                        Identity    = $SiteScripts[0].Id
+                        Title       = $this.Title
+                        Content     = $this.Content
+                        Description = $this.Description
+                    }
+                }
+
+                ##### End of Check
+                if ($null -ne $UpdateParams)
+                {
+                    $UpdateParams = Remove-NullEntriesFromHashtable -Hash $UpdateParams
+                    Set-PnPSiteScript @UpdateParams -ErrorAction Stop
+                }
+            }
+            catch
+            {
+                $this.LogError($_, 'Error updating Site Script:')
+
+                throw
+            }
+        }
+    }
+
+    [bool] Test()
+    {
+        return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [string] Export()
+    {
+        if ($this.RequiresPowerShellCore())
+        {
+            return [string] $this.InvokeInPowerShellCore('Export')
+        }
+
+        try
+        {
+            $ConnectionMode = $this.Connect('PNP')
 
             #Ensure the proper dependencies are installed in the current environment.
             Confirm-M365DSCDependencies
 
             #region Telemetry
-            $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-            $CommandName = $MyInvocation.MyCommand
-            $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-                -CommandName $CommandName `
-                -Parameters $PSBoundParameters
-            Add-M365DSCTelemetryEvent -Data $data
+            $this.AddTelemetry('Export')
             #endregion
 
-            $nullReturn = $PSBoundParameters
-            $nullReturn.Ensure = 'Absent'
+            $dscContent = [System.Text.StringBuilder]::new()
+            $i = 1
 
-            Write-Verbose -Message "Getting the SPO Site Script with Identity {$Identity} and Title {$Title}"
+            [array]$siteScripts = Get-PnPSiteScript -ErrorAction Stop
 
-            if (-not [System.String]::IsNullOrEmpty($Identity))
+            if ($siteScripts.Length -eq 0)
             {
-                $SiteScript = Get-PnPSiteScript -Identity $Identity -ErrorAction SilentlyContinue
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
             }
-
-            if ($null -eq $SiteScript)
+            else
             {
-                $SiteScript = Get-PnPSiteScript -ErrorAction SilentlyContinue | Where-Object -FilterScript { $_.Title -eq $Title } | Select-Object -First 1
-
-                # No script was returned
-                if ($null -eq $SiteScript)
+                Write-M365DSCHost -Message "`r`n" -DeferWrite
+            }
+            foreach ($script in $siteScripts)
+            {
+                if ($null -ne $Global:M365DSCExportResourceInstancesCount)
                 {
-                    Write-Verbose -Message "No Site Script with the Title, {$Title}, was found."
-                    return $nullReturn
+                    $Global:M365DSCExportResourceInstancesCount++
                 }
-                else
-                {
-                    # get site script *with* content
-                    $SiteScript = Get-PnPSiteScript -Identity $SiteScript.Id
+
+                Write-M365DSCHost -Message "    [$i/$($siteScripts.Length)] $($script.Title)" -DeferWrite
+                $params = @{
+                    Identity              = $script.Id
+                    Title                 = $script.Title
+                    ApplicationId         = $this.ApplicationId
+                    TenantId              = $this.TenantId
+                    ApplicationSecret     = $this.ApplicationSecret
+                    CertificateThumbprint = $this.CertificateThumbprint
+                    CertificatePath       = $this.CertificatePath
+                    CertificatePassword   = $this.CertificatePassword
+                    ManagedIdentity       = $this.ManagedIdentity
+                    Credential            = $this.Credential
+                    AccessTokens          = $this.AccessTokens
                 }
+
+                $this.ExportedInstance = $script
+                $Results = $this.GetForExport($Params)
+                $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
+                    -ConnectionMode $ConnectionMode `
+                    -ModulePath $this.GetModulePath() `
+                    -Results $Results `
+                    -Credential $this.Credential
+                [void]$dscContent.Append($currentDSCBlock)
+                Save-M365DSCPartialExport -Content $currentDSCBlock `
+                    -FileName $Global:PartialExportFileName
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
             }
-        }
-        else
-        {
-            $SiteScript = Get-PnPSiteScript -Identity $Script:exportedInstance.Id -ErrorAction SilentlyContinue
-        }
-        ##### End of Check
-
-        return @{
-            Identity              = $SiteScript.Id
-            Title                 = $SiteScript.Title
-            Description           = $SiteScript.Description
-            Content               = $SiteScript.Content
-            Ensure                = 'Present'
-            Credential            = $Credential
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            ApplicationSecret     = $ApplicationSecret
-            CertificateThumbprint = $CertificateThumbprint
-            CertificatePath       = $CertificatePath
-            CertificatePassword   = $CertificatePassword
-            ManagedIdentity       = $ManagedIdentity.IsPresent
-            AccessTokens          = $AccessTokens
-        }
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error retrieving data:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-function Set-TargetResource
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Title,
-
-        [Parameter()]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Content,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    Write-Verbose -Message "Setting Site Script: $Title"
-
-    #Ensure the proper dependencies are installed in the current environment.
-    Confirm-M365DSCDependencies
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    # region Telemetry
-    $CurrentValues = Get-TargetResource @PSBoundParameters
-    $CurrentParameters = Remove-M365DSCAuthenticationParameter $PSBoundParameters
-    # end region
-
-    if ($Ensure -eq 'Present' -and $CurrentValues.Ensure -eq 'Absent')
-    {
-        # Splatting
-        $CreationParams = @{
-            Title       = $Title
-            Content     = $Content
-            Description = $Description
-        }
-
-        # Adding the Site Script Again.
-        Write-Verbose -Message "Site Script, {$Title}, doesn't exist. Creating it."
-        $newSiteScript = Add-PnPSiteScript @CreationParams
-
-        # let's make sure the Site Script gets added
-        $siteScript = $null
-        $circuitBreaker = 0
-        do
-        {
-            Write-Verbose -Message 'Waiting for another 3 seconds for Site Script to be ready.'
-            Start-Sleep -Seconds 3
-            try
-            {
-                $siteScript = Get-PnPSiteScript -Identity $newSiteScript.Id -ErrorAction Stop
-            }
-            catch
-            {
-                $siteScript = $null
-            }
-            $circuitBreaker++
-        } while ($null -eq $siteScript -and $circuitBreaker -lt 20)
-
-        Write-Verbose -Message "Site Script, {$Title}, has been successfully created."
-    }
-    elseif ($Ensure -eq 'Absent' -and $CurrentValues.Ensure -eq 'Present')
-    {
-        Write-Verbose -Message "Removing Site Script {$Title}"
-        try
-        {
-            # The Site Script exists and it shouldn't
-            [Array]$SiteScript = Get-PnPSiteScript | Where-Object -FilterScript { $_.Title -eq $Title } -ErrorAction SilentlyContinue
-
-            ##### Check to see if more than one site script is returned
-            if ($SiteScript.Count -gt 1)
-            {
-                $SiteScript = Get-PnPSiteScript -Identity $SiteScript[0].Id
-            }
-            ##### End of Check
+            return $dscContent.ToString()
         }
         catch
         {
-            if ($Error[0].Exception.Message -eq 'Site Script Not Found')
-            {
-                $Message = "The Site Script, $($Title), does not exist."
-                New-M365DSCLogEntry -Message $Message `
-                    -Exception $_ `
-                    -Source $MyInvocation.MyCommand.ModuleName
-                throw $Message
-            }
-        }
-        try
-        {
-            Remove-PnPSiteScript -Identity $sitescript.Id -Force -ErrorAction Stop
-        }
-        catch
-        {
-            New-M365DSCLogEntry -Message 'Error removing Site Script:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $this.LogError($_, 'Error during Export:')
+
+            throw
         }
     }
-    if ($Ensure -ne 'Absent')
+
+    hidden [SPOSiteScript] AsResult([System.Object] $Values)
     {
-        Write-Verbose -Message "Site Script, {$Title} already exists, updating its settings"
-
-        try
+        if ($Values -is [SPOSiteScript])
         {
-            # The Site Script exists and it shouldn't
-            [Array]$SiteScripts = Get-PnPSiteScript | Where-Object -FilterScript { $_.Title -eq $Title } -ErrorAction SilentlyContinue
-
-            ##### Check to see if more than one site script is returned
-            if ($SiteScripts.Count -gt 0)
-            {
-                #
-                #the only way to get the $content is to query the site again, but this time with the ID and not the Title like above
-                $UpdateParams = @{
-                    Identity    = $SiteScripts[0].Id
-                    Title       = $Title
-                    Content     = $Content
-                    Description = $Description
-                }
-            }
-
-            ##### End of Check
-            if ($null -ne $UpdateParams)
-            {
-                $UpdateParams = Remove-NullEntriesFromHashtable -Hash $UpdateParams
-                Set-PnPSiteScript @UpdateParams -ErrorAction Stop
-            }
+            return $Values
         }
-        catch
+
+        $result = [SPOSiteScript]::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [System.Collections.Hashtable])
         {
-            New-M365DSCLogEntry -Message 'Error updating Site Script:' `
-                -Exception $_ `
-                -Source $($MyInvocation.MyCommand.Source) `
-                -TenantId $TenantId `
-                -Credential $Credential
+            $result.FromHashtable($Values)
         }
+
+        return $result
     }
 }
-
-function Test-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $Title,
-
-        [Parameter()]
-        [System.String]
-        $Identity,
-
-        [Parameter()]
-        [System.String]
-        $Content,
-
-        [Parameter()]
-        [System.String]
-        $Description,
-
-        [Parameter()]
-        [ValidateSet('Present', 'Absent')]
-        [System.String]
-        $Ensure = 'Present',
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    #region Telemetry
-    $ResourceName = $MyInvocation.MyCommand.ModuleName.Replace('MSFT_', '')
-    $CommandName = $MyInvocation.MyCommand
-    $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-        -CommandName $CommandName `
-        -Parameters $PSBoundParameters
-    Add-M365DSCTelemetryEvent -Data $data
-    #endregion
-
-    $result = Test-M365DSCTargetResource -DesiredValues $PSBoundParameters `
-        -ResourceName $($MyInvocation.MyCommand.Source).Replace('MSFT_', '')
-    return $result
-}
-
-function Export-TargetResource
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $Credential,
-
-        [Parameter()]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter()]
-        [System.String]
-        $TenantId,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter()]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter()]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter()]
-        [System.Management.Automation.PSCredential]
-        $CertificatePassword,
-
-        [Parameter()]
-        [Switch]
-        $ManagedIdentity,
-
-        [Parameter()]
-        [System.String[]]
-        $AccessTokens
-    )
-
-    try
-    {
-        $ConnectionMode = New-M365DSCConnection -Workload 'PNP' `
-            -InboundParameters $PSBoundParameters
-
-        #Ensure the proper dependencies are installed in the current environment.
-        Confirm-M365DSCDependencies
-
-        #region Telemetry
-        $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
-        $CommandName = $MyInvocation.MyCommand
-        $data = Format-M365DSCTelemetryParameters -ResourceName $ResourceName `
-            -CommandName $CommandName `
-            -Parameters $PSBoundParameters
-        Add-M365DSCTelemetryEvent -Data $data
-        #endregion
-
-        $dscContent = [System.Text.StringBuilder]::new()
-        $i = 1
-
-        [array]$siteScripts = Get-PnPSiteScript -ErrorAction Stop
-
-        if ($siteScripts.Length -eq 0)
-        {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-        }
-        else
-        {
-            Write-M365DSCHost -Message "`r`n" -DeferWrite
-        }
-        foreach ($script in $siteScripts)
-        {
-            if ($null -ne $Global:M365DSCExportResourceInstancesCount)
-            {
-                $Global:M365DSCExportResourceInstancesCount++
-            }
-
-            Write-M365DSCHost -Message "    [$i/$($siteScripts.Length)] $($script.Title)" -DeferWrite
-            $params = @{
-                Identity              = $script.Id
-                Title                 = $script.Title
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                ManagedIdentity       = $ManagedIdentity.IsPresent
-                Credential            = $Credential
-                AccessTokens          = $AccessTokens
-            }
-
-            $Script:exportedInstance = $script
-            $Results = Get-TargetResource @Params
-            $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $ResourceName `
-                -ConnectionMode $ConnectionMode `
-                -ModulePath $PSScriptRoot `
-                -Results $Results `
-                -Credential $Credential
-            [void]$dscContent.Append($currentDSCBlock)
-            Save-M365DSCPartialExport -Content $currentDSCBlock `
-                -FileName $Global:PartialExportFileName
-            Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-            $i++
-        }
-        return $dscContent.ToString()
-    }
-    catch
-    {
-        New-M365DSCLogEntry -Message 'Error during Export:' `
-            -Exception $_ `
-            -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
-
-        throw
-    }
-}
-
-Export-ModuleMember -Function *-TargetResource

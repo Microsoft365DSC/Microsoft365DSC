@@ -1,5 +1,16 @@
 {
   "resourceName": "AADGroupsSettings",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "directorySetting",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaDirectorySetting",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
   "description": "This resource configures the Azure Active Directory groups settings.",
   "roles": {
     "read": [],
@@ -12,7 +23,7 @@
       "delegated": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "GroupSettings.Read.All"
@@ -20,7 +31,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "GroupSettings.ReadWrite.All"
@@ -30,7 +41,7 @@
       "application": {
         "read": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "GroupSettings.Read.All"
@@ -38,7 +49,7 @@
         ],
         "update": [
           {
-            "name": "Group.Read.All"
+            "name": "GroupMember.Read.All"
           },
           {
             "name": "GroupSettings.ReadWrite.All"

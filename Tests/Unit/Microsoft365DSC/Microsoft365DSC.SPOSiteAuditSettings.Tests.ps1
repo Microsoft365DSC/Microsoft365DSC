@@ -23,7 +23,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         BeforeAll {
             $secpasswd = ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             $Global:PartialExportFileName = 'c:\TestPath'
 
@@ -33,7 +33,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Save-M365DSCPartialExport -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -70,15 +70,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return the current resource from the Get method' {
-                (Get-TargetResource @testParams).Url | Should -Be 'https://contoso.com/sites/fakesite'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOSiteAuditSettings' -Property $testParams).Get().ToHashtable()).Url | Should -Be 'https://contoso.com/sites/fakesite'
             }
 
             It 'Should set settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOSiteAuditSettings' -Property $testParams).Set()
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOSiteAuditSettings' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -104,15 +104,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return the current resource from the Get method' {
-                (Get-TargetResource @testParams).Url | Should -Be 'https://contoso.com/sites/fakesite'
+                ((New-M365DSCResourceInstance -ResourceName 'SPOSiteAuditSettings' -Property $testParams).Get().ToHashtable()).Url | Should -Be 'https://contoso.com/sites/fakesite'
             }
 
             It 'Should set settings from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'SPOSiteAuditSettings' -Property $testParams).Set()
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'SPOSiteAuditSettings' -Property $testParams).Test() | Should -Be $false
             }
         }
 
@@ -138,7 +138,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOSiteAuditSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

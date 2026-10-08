@@ -4,7 +4,8 @@ It is not meant to use as a production baseline.
 #>
 
 Configuration Example {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -22,16 +23,16 @@ Configuration Example {
 
     Node Localhost
     {
-        AADAuthenticationFlowPolicy "AADAuthenticationFlowPolicy"
+        AADAuthenticationFlowPolicy "AADAuthenticationFlowPolicy-Example"
         {
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
             Description              = "Authentication flows policy allows modification of settings related to authentication flows in AAD tenant, such as self-service sign up configuration.";
             DisplayName              = "Authentication flows policy";
             Id                       = "authenticationFlowsPolicy";
             IsSingleInstance         = "Yes";
             SelfServiceSignUpEnabled = $True;
+            ApplicationId            = $ApplicationId
+            TenantId                 = $TenantId
+            CertificateThumbprint    = $CertificateThumbprint
         }
     }
 }

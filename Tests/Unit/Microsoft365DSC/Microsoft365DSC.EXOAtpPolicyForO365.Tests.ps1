@@ -21,12 +21,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Invoke-Command -ScriptBlock $Global:DscHelper.InitializeScript -NoNewScope
         BeforeAll {
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@contoso.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return 'Credentials'
             }
 
@@ -68,7 +68,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     IsSingleInstance        = 'Yes'
-                    Identity                = 'Default'
                     Credential              = $Credential
                     AllowSafeDocsOpen       = $false
                     EnableATPForSPOTeamsODB = $true
@@ -76,7 +75,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'EXOAtpPolicyForO365' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -84,7 +83,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     IsSingleInstance        = 'Yes'
-                    Identity                = 'Default'
                     Credential              = $Credential
                     AllowSafeDocsOpen       = $true # Drift
                     EnableATPForSPOTeamsODB = $true
@@ -92,12 +90,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOAtpPolicyForO365' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
-                Should -Invoke -CommandName Set-AtpPolicyForO365 -Exactly 1
+                (New-M365DSCResourceInstance -ResourceName 'EXOAtpPolicyForO365' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-AtpPolicyForO365 -Exactly 1 -ParameterFilter { $Identity -eq 'Default' }
             }
         }
 
@@ -105,7 +103,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     IsSingleInstance        = 'Yes'
-                    Identity                = 'Invalid'
                     Credential              = $Credential
                     AllowSafeDocsOpen       = $false
                     EnableATPForSPOTeamsODB = $true
@@ -116,11 +113,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'EXOAtpPolicyForO365' -Property $testParams).Test() | Should -Be $false
             }
 
-            It 'Should throw an Error from the Set method' {
-                { Set-TargetResource @testParams } | Should -Throw "EXOAtpPolicyForO365 configurations MUST specify Identity value of 'Default'"
+            It 'Should call the Set method with the Default policy' {
+                (New-M365DSCResourceInstance -ResourceName 'EXOAtpPolicyForO365' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-AtpPolicyForO365 -Exactly 1 -ParameterFilter { $Identity -eq 'Default' }
             }
         }
 
@@ -133,7 +131,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOAtpPolicyForO365' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

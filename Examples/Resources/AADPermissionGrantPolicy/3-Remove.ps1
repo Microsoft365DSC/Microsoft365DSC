@@ -4,7 +4,8 @@ This example removes an existing Azure AD Permission Grant Policy.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -20,11 +21,11 @@ Configuration Example
 
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        AADPermissionGrantPolicy 'CustomConsentPolicy'
+        AADPermissionGrantPolicy 'AADPermissionGrantPolicy-Example'
         {
-            Id                    = "my-custom-consent-policy"
+            Id                    = "low-risk-delegated-consent"
             Ensure                = "Absent"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

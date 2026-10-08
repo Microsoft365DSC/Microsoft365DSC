@@ -5,7 +5,8 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param(
+    param
+    (
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -18,25 +19,18 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
-    node localhost
+
+    Node localhost
     {
-        AADAuthenticationMethodPolicyQRCodeImage "AADAuthenticationMethodPolicyQRCodeImage-QRCodePin"
+        AADAuthenticationMethodPolicyQRCodeImage "AADAuthenticationMethodPolicyQRCodeImage-Example"
         {
-            ApplicationId                = $ApplicationId;
-            CertificateThumbprint        = $CertificateThumbprint;
-            Ensure                       = "Absent";
-            Id                           = "QRCodePin";
-            IncludeTargets               = @(
-                MSFT_AADAuthenticationMethodPolicyQRCodeImageIncludeTarget{
-                    Id = "all_users"
-                    TargetType = "group"
-                }
-            );
-            PinLength                    = 9; # Drift
-            StandardQRCodeLifetimeInDays = 365;
-            State                        = "disabled";
-            TenantId                     = $TenantId;
+            Ensure                = "Absent";
+            Id                    = "QRCodePin";
+            ApplicationId         = $ApplicationId;
+            TenantId              = $TenantId;
+            CertificateThumbprint = $CertificateThumbprint;
         }
     }
 }

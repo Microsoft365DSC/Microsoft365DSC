@@ -22,7 +22,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         BeforeAll {
 
             $secpasswd = ConvertTo-SecureString (New-Guid | Out-String) -AsPlainText -Force
-            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@mydomain.com', $secpasswd)
+            $Credential = New-Object System.Management.Automation.PSCredential ('tenantadmin@onmicrosoft.com', $secpasswd)
 
             Mock -ModuleName M365DSCUtil -CommandName Confirm-M365DSCDependencies -MockWith {
             }
@@ -69,7 +69,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            Mock -CommandName New-M365DSCConnection -MockWith {
+            Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
 
@@ -88,11 +88,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsBuiltIn = $True
-                    RolePermissions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphUnifiedRolePermission -Property @{
+                    RolePermissions = @(
+                        ([MSFT_MicrosoftGraphunifiedRolePermission] @{
                             AllowedResourceActions = @("FakeStringValue")
-                        } -ClientOnly)
+                        })
                     )
+                    TemplateId = "FakeStringValue"
                     Ensure = "Present"
                     Credential = $Credential;
                 }
@@ -102,13 +103,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Absent'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
             }
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Test() | Should -Be $false
             }
             It 'Should Create the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaRoleManagementCloudPcRoleDefinition -Exactly 1
             }
         }
@@ -120,26 +121,27 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsBuiltIn = $True
-                    RolePermissions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphUnifiedRolePermission -Property @{
+                    RolePermissions = @(
+                        ([MSFT_MicrosoftGraphunifiedRolePermission] @{
                             AllowedResourceActions = @("FakeStringValue")
-                        } -ClientOnly)
+                        })
                     )
+                    TemplateId = "FakeStringValue"
                     Ensure = "Absent"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should Remove the group from the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Set()
                 Should -Invoke -CommandName Remove-MgBetaRoleManagementCloudPcRoleDefinition -Exactly 1
             }
         }
@@ -151,18 +153,19 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsBuiltIn = $True
-                    RolePermissions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphUnifiedRolePermission -Property @{
+                    RolePermissions = @(
+                        ([MSFT_MicrosoftGraphunifiedRolePermission] @{
                             AllowedResourceActions = @("FakeStringValue")
-                        } -ClientOnly)
+                        })
                     )
+                    TemplateId = "FakeStringValue"
                     Ensure = "Present"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return true from the Test method' {
-                Test-TargetResource @testParams | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Test() | Should -Be $true
             }
         }
 
@@ -173,26 +176,27 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     DisplayName = "FakeStringValue"
                     Id = "FakeStringValue"
                     IsBuiltIn = $True
-                    RolePermissions = [CimInstance[]]@(
-                        (New-CimInstance -ClassName MSFT_MicrosoftGraphUnifiedRolePermission -Property @{
+                    RolePermissions = @(
+                        ([MSFT_MicrosoftGraphunifiedRolePermission] @{
                             AllowedResourceActions = @("FakeStringValue2") # Drift
-                        } -ClientOnly)
+                        })
                     )
+                    TemplateId = "FakeStringValue2"
                     Ensure = "Present"
                     Credential = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                (Get-TargetResource @testParams).Ensure | Should -Be 'Present'
+                ((New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 
             It 'Should return false from the Test method' {
-                Test-TargetResource @testParams | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Test() | Should -Be $false
             }
 
             It 'Should call the Set method' {
-                Set-TargetResource @testParams
+                (New-M365DSCResourceInstance -ResourceName 'IntuneRoleDefinitionWindows365' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaRoleManagementCloudPcRoleDefinition -Exactly 1
             }
         }
@@ -207,7 +211,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should Reverse Engineer resource from the Export method' {
-                $result = Export-TargetResource @testParams
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneRoleDefinitionWindows365' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
         }

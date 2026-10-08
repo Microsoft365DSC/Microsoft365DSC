@@ -7,21 +7,30 @@ Configuration Example
 {
     param
     (
-        [Parameter(Mandatory = $true)]
-        [PSCredential]
-        $Credscredential
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String]
+        $TenantId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateThumbprint
     )
+
     Import-DscResource -ModuleName Microsoft365DSC
 
-    node localhost
+    Node localhost
     {
-        SCRoleGroup 'ConfigureRoleGroup'
+        SCRoleGroup 'SCRoleGroup-Example'
         {
-            Name                      = "Contoso Role Group"
-            Description               = "Address Lists Role for Purview Administrators"
-            Roles                     = @("Address Lists")
-            Ensure                    = "Absent"
-            Credential                = $Credscredential
+            Name                  = "Contoso Role Group"
+            Ensure                = "Absent"
+            ApplicationId         = $ApplicationId
+            TenantId              = $TenantId
+            CertificateThumbprint = $CertificateThumbprint
         }
     }
 }
