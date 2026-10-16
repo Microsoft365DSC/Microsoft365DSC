@@ -644,32 +644,9 @@ class IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10 : M365DSCRe
     {
         return @{
             ExcludedProperties = @('Id', 'PolicyConfigurationIngestionType')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                foreach ($side in @($DesiredValues, $CurrentValues))
-                {
-                    if ($null -ne $side.DefinitionValues)
-                    {
-                        $definitionValues = @(Get-M365DSCDRGComplexTypeToHashtable -ComplexObject $side.DefinitionValues)
-                        foreach ($definitionValue in $definitionValues)
-                        {
-                            $definitionValue.Remove('Definition') | Out-Null
-                            $definitionValue.Remove('Id') | Out-Null
-                            foreach ($presentationValue in $definitionValue.PresentationValues)
-                            {
-                                $presentationValue.Remove('presentationDefinitionLabel') | Out-Null
-                                $presentationValue.Remove('Id') | Out-Null
-                            }
-                        }
-                        $side.DefinitionValues = $definitionValues
-                    }
-                }
-                if ($ValuesToCheck.ContainsKey('DefinitionValues'))
-                {
-                    $ValuesToCheck.DefinitionValues = $DesiredValues.DefinitionValues
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'IgnoreNested'; Paths = @('DefinitionValues[].Definition', 'DefinitionValues[].Id', 'DefinitionValues[].PresentationValues[].presentationDefinitionLabel', 'DefinitionValues[].PresentationValues[].Id') }
+            )
         }
     }
 

@@ -439,7 +439,6 @@ class SCLabelPolicy : M365DSCResourceBase
         return ([M365DSCResourceBase] $this).Test()
     }
 
-
     [string] Export()
     {
         if ($this.RequiresPowerShellCore())
@@ -543,52 +542,9 @@ class SCLabelPolicy : M365DSCResourceBase
                 'RemoveModernGroupLocation',
                 'RemoveModernGroupLocationException'
             )
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                if ($null -ne $DesiredValues.AdvancedSettings)
-                {
-                    $TestAdvancedSettings = [SCLabelPolicy]::TestAdvancedSettings($DesiredValues.AdvancedSettings, $CurrentValues.AdvancedSettings)
-                    if ($TestAdvancedSettings)
-                    {
-                        $ValuesToCheck.Remove('AdvancedSettings') | Out-Null
-                    }
-                    else
-                    {
-                        $DesiredValues['AdvancedSettings'] = @{ Drift = 'desired' }
-                        $CurrentValues['AdvancedSettings'] = @{ Drift = 'current' }
-                        $ValuesToCheck['AdvancedSettings'] = $DesiredValues['AdvancedSettings']
-                    }
-                }
-
-                foreach ($deltaProperty in @('ModernGroupLocation', 'ModernGroupLocationException', 'ExchangeLocation', 'ExchangeLocationException', 'Labels'))
-                {
-                    $desired = $DesiredValues[$deltaProperty]
-                    $added = $DesiredValues["Add$deltaProperty"]
-                    $removed = $DesiredValues["Remove$deltaProperty"]
-                    if ($null -eq $desired -and $null -eq $added -and $null -eq $removed)
-                    {
-                        continue
-                    }
-
-                    $configData = [SCLabelPolicy]::NewPolicyData($desired, $CurrentValues[$deltaProperty], $removed, $added)
-
-                    if ($null -eq $configData -and $null -ne $CurrentValues[$deltaProperty] -and $null -ne $removed)
-                    {
-                        $DesiredValues[$deltaProperty] = "$deltaProperty drift detected"
-                        $CurrentValues[$deltaProperty] = "$deltaProperty drift current"
-                        $ValuesToCheck[$deltaProperty] = "$deltaProperty drift detected"
-                        continue
-                    }
-
-                    $current = @($CurrentValues[$deltaProperty] | Where-Object { $null -ne $_ -and '' -ne $_ })
-                    $expected = @($configData | Where-Object { $null -ne $_ -and '' -ne $_ })
-                    $DesiredValues[$deltaProperty] = [System.String[]] $expected
-                    $CurrentValues[$deltaProperty] = [System.String[]] $current
-                    $ValuesToCheck[$deltaProperty] = [System.String[]] $expected
-                }
-
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'CustomCompare'; Name = 'SCLabelPolicy' }
+            )
         }
     }
 
@@ -688,133 +644,6 @@ class SCLabelPolicy : M365DSCResourceBase
         }
 
         return $settings
-    }
-
-    hidden static [System.Collections.ArrayList] NewPolicyData([System.Object] $ConfigData, [System.Object] $CurrentData, [System.Object] $RemovedData, [System.Object] $AdditionalData)
-    {
-        $desiredData = [System.Collections.ArrayList]::new()
-        foreach ($currentItem in $CurrentData)
-        {
-            if (-not $desiredData.Contains($currentItem))
-            {
-                $desiredData.Add($currentItem) | Out-Null
-            }
-        }
-
-        foreach ($currentItem in $ConfigData)
-        {
-            if (-not $desiredData.Contains("$currentItem"))
-            {
-                $desiredData.Add($currentItem) | Out-Null
-            }
-        }
-
-        foreach ($currentItem in $RemovedData)
-        {
-            $desiredData.Remove($currentItem) | Out-Null
-        }
-
-        foreach ($currentItem in $AdditionalData)
-        {
-            if (-not $desiredData.Contains("$currentItem"))
-            {
-                $desiredData.Add($currentItem) | Out-Null
-            }
-        }
-
-        return $desiredData
-    }
-
-    hidden static [System.Boolean] IsSettingValueEqual([System.Object] $DesiredValue, [System.Object] $CurrentValue)
-    {
-        $desiredTexts = [System.Collections.Generic.List[System.String]]::new()
-        foreach ($entry in @($DesiredValue))
-        {
-            $text = [System.String] $entry
-            if ($text.Length -gt 0)
-            {
-                $desiredTexts.Add($text)
-            }
-        }
-
-        $currentTexts = [System.Collections.Generic.List[System.String]]::new()
-        foreach ($entry in @($CurrentValue))
-        {
-            $text = [System.String] $entry
-            if ($text.Length -gt 0)
-            {
-                $currentTexts.Add($text)
-            }
-        }
-
-        if ($desiredTexts.Count -ne $currentTexts.Count)
-        {
-            return $false
-        }
-
-        if ($desiredTexts.Count -gt 1)
-        {
-            $desiredTexts.Sort([System.StringComparer]::OrdinalIgnoreCase)
-            $currentTexts.Sort([System.StringComparer]::OrdinalIgnoreCase)
-        }
-
-        for ($index = 0; $index -lt $desiredTexts.Count; $index++)
-        {
-            if ($desiredTexts[$index] -ne $currentTexts[$index])
-            {
-                return $false
-            }
-        }
-
-        return $true
-    }
-
-    hidden static [System.Collections.Hashtable] NewMemberLookup([System.Object] $Items, [System.String] $MemberName)
-    {
-        $lookup = @{}
-        foreach ($item in @($Items))
-        {
-            if ($null -eq $item)
-            {
-                continue
-            }
-
-            $key = [System.String] $item.$MemberName
-            if (-not $lookup.ContainsKey($key))
-            {
-                $lookup[$key] = $item
-            }
-        }
-
-        return $lookup
-    }
-
-    hidden static [System.Boolean] TestAdvancedSettings([System.Object] $DesiredProperty, [System.Object] $CurrentProperty)
-    {
-        $foundSettings = $true
-        $currentSettings = [SCLabelPolicy]::NewMemberLookup($CurrentProperty, 'Key')
-        foreach ($desiredSetting in @($DesiredProperty))
-        {
-            if ($null -eq $desiredSetting)
-            {
-                continue
-            }
-
-            $currentSetting = $currentSettings[[System.String] $desiredSetting.Key]
-            if ($null -eq $currentSetting)
-            {
-                continue
-            }
-
-            if (-not [SCLabelPolicy]::IsSettingValueEqual($desiredSetting.Value, $currentSetting.Value))
-            {
-                $foundSettings = $false
-                break
-            }
-        }
-
-        Write-Verbose -Message "Test AdvancedSettings returned {$foundSettings}"
-        return $foundSettings
     }
 
     hidden [SCLabelPolicy] AsResult([System.Object] $Values)

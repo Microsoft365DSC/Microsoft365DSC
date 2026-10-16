@@ -603,40 +603,10 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
     {
         return @{
             ExcludedProperties = @('Justification')
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if (-not [System.String]::IsNullOrEmpty($DesiredValues.ScheduleInfo.StartDateTime))
-                {
-                    $parsedDesiredDate = [System.DateTime]::MinValue
-                    $parseResultDesired = [System.DateTime]::TryParse($DesiredValues.ScheduleInfo.StartDateTime, [ref]$parsedDesiredDate)
-
-                    $parsedCurrentDate = [System.DateTime]::MinValue
-                    $parseResultCurrent = [System.DateTime]::TryParse($CurrentValues.ScheduleInfo.StartDateTime, [ref]$parsedCurrentDate)
-
-                    if ($parseResultDesired -and $parseResultCurrent)
-                    {
-                        Write-Verbose -Message "Parsed Desired StartDateTime: $parsedDesiredDate, Parsed Current StartDateTime: $parsedCurrentDate"
-                        if ($parsedDesiredDate -ne $parsedCurrentDate -and $parsedDesiredDate -lt [System.DateTime]::Now)
-                        {
-                            Write-Verbose -Message "Ignoring StartDateTime in ScheduleInfo as it is in the past. StartDateTime cannot be set to a past date."
-                            Write-Verbose -Message "Aligning the Desired and Current StartDateTime values for comparison."
-                            $DesiredValues.ScheduleInfo.StartDateTime = $CurrentValues.ScheduleInfo.StartDateTime
-                        }
-                    }
-                }
-
-                $desiredExpiration = $DesiredValues.ScheduleInfo.expiration
-                $currentExpiration = $CurrentValues.ScheduleInfo.expiration
-                if ($desiredExpiration.type -eq 'afterDuration' -and $currentExpiration.type -eq 'afterDateTime' -and
-                    [M365DSCResourceBase]::IsSameDuration($desiredExpiration.duration, $CurrentValues.ScheduleInfo.startDateTime, $currentExpiration.endDateTime))
-                {
-                    Write-Verbose -Message "The schedule ends {$($desiredExpiration.duration)} after its start. Aligning the expiration for comparison."
-                    $currentExpiration.type = $desiredExpiration.type
-                    $currentExpiration.duration = $desiredExpiration.duration
-                    $currentExpiration.endDateTime = $desiredExpiration.endDateTime
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
+                @{ Type = 'DurationMatchesEnd'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
+            )
         }
     }
 

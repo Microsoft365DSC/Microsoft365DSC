@@ -738,30 +738,9 @@ class AzureRoleEligibilityScheduleRequest : M365DSCResourceBase
     {
         return @{
             ExcludedProperties = @('Justification', 'SubscriptionId')
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($null -ne $DesiredValues.ScheduleInfo -and
-                    -not [System.String]::IsNullOrEmpty($DesiredValues.ScheduleInfo.StartDateTime))
-                {
-                    $parsedDesiredDate = [System.DateTime]::MinValue
-                    $parseResultDesired = [System.DateTime]::TryParse($DesiredValues.ScheduleInfo.StartDateTime, [ref]$parsedDesiredDate)
-
-                    $parsedCurrentDate = [System.DateTime]::MinValue
-                    $parseResultCurrent = [System.DateTime]::TryParse($CurrentValues.ScheduleInfo.StartDateTime, [ref]$parsedCurrentDate)
-
-                    if ($parseResultDesired -and $parseResultCurrent)
-                    {
-                        Write-Verbose -Message "Parsed Desired StartDateTime: $parsedDesiredDate, Parsed Current StartDateTime: $parsedCurrentDate"
-                        if ($parsedDesiredDate -ne $parsedCurrentDate -and $parsedDesiredDate -lt [System.DateTime]::Now)
-                        {
-                            Write-Verbose -Message "Ignoring StartDateTime in ScheduleInfo as it is in the past. StartDateTime cannot be set to a past date."
-                            Write-Verbose -Message "Aligning the Desired and Current StartDateTime values for comparison."
-                            $DesiredValues.ScheduleInfo.StartDateTime = $CurrentValues.ScheduleInfo.StartDateTime
-                        }
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
+            )
         }
     }
 

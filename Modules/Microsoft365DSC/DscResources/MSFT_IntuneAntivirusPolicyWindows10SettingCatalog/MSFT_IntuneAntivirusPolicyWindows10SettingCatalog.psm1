@@ -835,51 +835,10 @@ class IntuneAntivirusPolicyWindows10SettingCatalog : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                foreach ($name in $PostProcessingArgs[0])
-                {
-                    $currentValue = $CurrentValues[$name]
-                    $desiredValue = $DesiredValues[$name]
-
-                    # See M365DSCResourceBase.GetSettingsCatalogCompareParameters: an empty
-                    # collection from Get() is not a value the configuration has to restate.
-                    if ($currentValue -is [System.Collections.ICollection] -and $currentValue.Count -eq 0)
-                    {
-                        $currentValue = $null
-                    }
-                    if ($desiredValue -is [System.Collections.ICollection] -and $desiredValue.Count -eq 0)
-                    {
-                        $desiredValue = $null
-                    }
-
-                    if ($null -ne $currentValue -or $null -ne $desiredValue)
-                    {
-                        $ValuesToCheck[$name] = $null
-                        if (-not $DesiredValues.ContainsKey($name))
-                        {
-                            $DesiredValues.Add($name, $null)
-                        }
-                    }
-                }
-
-                # Map the renaming of TamperProtection to ControlledConfiguration for comparison
-                if ($DesiredValues.ContainsKey('TamperProtection'))
-                {
-                    $DesiredValues['ControlledConfiguration'] = $DesiredValues['TamperProtection']
-                    $DesiredValues.Remove('TamperProtection')
-                }
-                if ($CurrentValues.ContainsKey('TamperProtection'))
-                {
-                    $CurrentValues['ControlledConfiguration'] = $CurrentValues['TamperProtection']
-                    $CurrentValues.Remove('TamperProtection')
-                }
-
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
-            # The leading comma matters: PostProcessingArgs is [Object[]], so without it the names
-            # unroll and $PostProcessingArgs[0] is a single string again.
-            PostProcessingArgs = @(, $this.GetSchemaPropertyNames())
+            CompareRules = @(
+                @{ Type = 'CheckAllSchemaProperties' }
+                @{ Type = 'Rename'; From = 'TamperProtection'; To = 'ControlledConfiguration' }
+            )
         }
     }
 

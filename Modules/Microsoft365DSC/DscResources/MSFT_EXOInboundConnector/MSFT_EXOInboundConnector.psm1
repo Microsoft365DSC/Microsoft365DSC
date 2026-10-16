@@ -240,27 +240,9 @@ class EXOInboundConnector : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.ContainsKey('SenderDomains'))
-                {
-                    $newSenderDomains = @()
-                    foreach ($domain in $DesiredValues.SenderDomains)
-                    {
-                        if ($domain -notlike 'smtp:*')
-                        {
-                            $newSenderDomains += 'smtp:' + $domain + ';1'
-                        }
-                        else
-                        {
-                            $newSenderDomains += $domain
-                        }
-                    }
-                    $DesiredValues.SenderDomains = [Array] $newSenderDomains
-                    $ValuesToCheck.SenderDomains = [Array] $newSenderDomains
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'Normalize'; Paths = @('SenderDomains'); Side = 'Desired'; Using = 'PrefixUnless'; Pattern = '^smtp:'; Format = 'smtp:{0};1' }
+            )
         }
     }
 

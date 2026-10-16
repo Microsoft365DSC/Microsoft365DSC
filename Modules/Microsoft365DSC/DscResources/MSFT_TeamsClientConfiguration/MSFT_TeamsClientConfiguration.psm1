@@ -282,14 +282,9 @@ class TeamsClientConfiguration : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ([System.String]::IsNullOrEmpty($DesiredValues.RestrictedSenderList))
-                {
-                    $ValuesToCheck.Remove('RestrictedSenderList') | Out-Null
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('RestrictedSenderList'); When = @{ Property = 'RestrictedSenderList'; IsNullOrEmpty = $true } }
+            )
         }
     }
 

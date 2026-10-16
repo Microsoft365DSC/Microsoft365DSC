@@ -242,15 +242,9 @@ class EXOAvailabilityConfig : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.OrgWideAccount -eq 'NotConfigured')
-                {
-                    Write-Verbose -Message "OrgWideAccount is set to 'NotConfigured' in DesiredValues. Updating it to an empty string for comparison."
-                    $DesiredValues.OrgWideAccount = ''
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'SetWhen'; Property = 'OrgWideAccount'; Value = ''; When = @{ Property = 'OrgWideAccount'; Equals = 'NotConfigured' } }
+            )
         }
     }
 

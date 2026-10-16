@@ -1480,6 +1480,7 @@ function New-M365DSCDeltaReport
             $parameters.ExcludedProperties = [System.String[]] $customCompareParams.ExcludedProperties
             $parameters.IncludedProperties = [System.String[]] $customCompareParams.IncludedProperties
             $parameters.PostProcessing = $customCompareParams.PostProcessing
+            $parameters.Rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll($customCompareParams.CompareRules)
 
             $existingArgs = @()
             if ($null -ne $customCompareParams.PostProcessingArgs)

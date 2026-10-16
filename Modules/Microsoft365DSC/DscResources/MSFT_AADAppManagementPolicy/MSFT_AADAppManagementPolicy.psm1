@@ -372,19 +372,10 @@ class AADAppManagementPolicy : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                foreach ($credential in @($DesiredValues.Restrictions.PasswordCredentials) + @($DesiredValues.Restrictions.KeyCredentials))
-                {
-                    if ($null -eq $credential)
-                    {
-                        continue
-                    }
-                    $credential.MaxLifetime = [M365DSCResourceBase]::FormatDuration($credential.MaxLifetime)
-                    $credential.RestrictForAppsCreatedAfterDateTime = [M365DSCResourceBase]::FormatDateTime($credential.RestrictForAppsCreatedAfterDateTime)
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'Normalize'; Paths = @('Restrictions.PasswordCredentials[].MaxLifetime', 'Restrictions.KeyCredentials[].MaxLifetime'); Side = 'Desired'; Using = 'FormatDuration' }
+                @{ Type = 'Normalize'; Paths = @('Restrictions.PasswordCredentials[].RestrictForAppsCreatedAfterDateTime', 'Restrictions.KeyCredentials[].RestrictForAppsCreatedAfterDateTime'); Side = 'Desired'; Using = 'FormatDateTime' }
+            )
         }
     }
 

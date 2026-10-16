@@ -322,71 +322,56 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'PostProcessing sensitive information comparison' -Fixture {
+        Context -Name 'Sensitive information comparison' -Fixture {
             BeforeAll {
-                Mock -CommandName Add-M365DSCEvent -MockWith {
-                }
-
-                $postProcessing = (New-M365DSCResourceInstance -ResourceName 'SCAutoSensitivityLabelRule' -Property @{
+                $compareRules = (New-M365DSCResourceInstance -ResourceName 'SCAutoSensitivityLabelRule' -Property @{
                         Name       = 'TestRule'
                         Policy     = 'TestPolicy'
                         Workload   = 'Exchange'
                         Credential = $Credential
-                    }).GetCompareParameters().PostProcessing
-            }
+                    }).GetCompareParameters().CompareRules
 
-            It 'Should treat a null operator and an empty operator as equal' {
-                $desired = @(@{ operator = ''; groups = @() })
-                $current = @(@{ operator = $null; groups = @() })
-                [SCAutoSensitivityLabelRule]::TestContainsSensitiveInformationGroups($desired, $current, $true) | Should -BeTrue
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 0 -Exactly -Scope It
-            }
+                function Invoke-ContentCompare
+                {
+                    param($Desired, $Current)
 
-            It 'Should match a label whose name carries escaped single quotes' {
-                $desired = @(@{ name = "Driver''s License"; id = 'id-1'; type = 'Sensitivity' })
-                $current = @(@{ name = "Driver's License"; id = 'id-1'; type = 'Sensitivity' })
-                [SCAutoSensitivityLabelRule]::TestContainsSensitiveInformationLabels($desired, $current, $true) | Should -BeTrue
-                [SCAutoSensitivityLabelRule]::TestContainsSensitiveInformation($desired, $current, $true) | Should -BeTrue
-            }
-
-            It 'Should report drift when a group is missing on the current side' {
-                $desired = @(@{ operator = 'Or'; groups = @(@{ name = 'Group1'; operator = 'And'; sensitivetypes = @(@{ name = 'ABA Routing Number' }) }) })
-                $current = @(@{ operator = 'Or'; groups = @() })
-                [SCAutoSensitivityLabelRule]::TestContainsSensitiveInformationGroups($desired, $current, $true) | Should -BeFalse
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 1 -Exactly -Scope It
-            }
-
-            It 'Should report drift when maxcount is present on one side only' {
-                $withMaxCount = @(@{ name = 'ABA Routing Number'; maxcount = '9' })
-                $withoutMaxCount = @(@{ name = 'ABA Routing Number' })
-                [SCAutoSensitivityLabelRule]::TestContainsSensitiveInformation($withMaxCount, $withoutMaxCount, $false) | Should -BeFalse
-                [SCAutoSensitivityLabelRule]::TestContainsSensitiveInformation($withoutMaxCount, $withMaxCount, $false) | Should -BeFalse
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 0 -Exactly -Scope It
-            }
-
-            It 'Should log the current operator as current and the desired operator as expected' {
-                $desired = @(@{ operator = 'And'; groups = @() })
-                $current = @(@{ operator = 'Or'; groups = @() })
-                [SCAutoSensitivityLabelRule]::TestContainsSensitiveInformationGroups($desired, $current, $true) | Should -BeFalse
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 1 -Exactly -Scope It -ParameterFilter {
-                    $Message -like '*Current value is {Or} and is expected to be {And}.*'
+                    & $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ ContentContainsSensitiveInformation = $Desired } -CurrentValues @{ ContentContainsSensitiveInformation = $Current }
                 }
             }
 
-            It 'Should not log drift events when PostProcessing runs in a report context' {
-                $desiredValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '1' }) } }
-                $currentValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '5' }) } }
-                $result = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @(@{ IsReport = $true }))
-                $result.Item1.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 0 -Exactly -Scope It
+            It 'Should treat a null operator and an empty operator as equal' {
+                $result = Invoke-ContentCompare -Desired @{ operator = ''; groups = @() } -Current @{ operator = $null; groups = @() }
+                $result.ValuesToCheck.ContainsKey('ContentContainsSensitiveInformation') | Should -BeFalse
+                $result.Messages | Should -BeNullOrEmpty
             }
 
-            It 'Should log the drift event once when PostProcessing runs outside a report context' {
-                $desiredValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '1' }) } }
-                $currentValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '5' }) } }
-                $result = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @())
-                $result.Item1.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 1 -Exactly -Scope It
+            It 'Should match a sensitive information type and a label with escaped single quotes in the name' {
+                $desired = @{ operator = 'Or'; groups = @(@{ name = 'Group1'; SensitiveInformation = @(@{ name = "Driver''s License"; id = 'id-1' }); labels = @(@{ name = "Driver''s License"; id = 'id-1'; type = 'Sensitivity' }) }) }
+                $current = @{ operator = 'Or'; groups = @(@{ name = 'Group1'; SensitiveInformation = @(@{ name = "Driver's License"; id = 'id-1' }); labels = @(@{ name = "Driver's License"; id = 'id-1'; type = 'Sensitivity' }) }) }
+                (Invoke-ContentCompare -Desired $desired -Current $current).Messages | Should -BeNullOrEmpty
+            }
+
+            It 'Should report drift when a group is missing on the current side' {
+                $result = Invoke-ContentCompare -Desired @{ operator = 'Or'; groups = @(@{ name = 'Group1'; operator = 'And'; SensitiveInformation = @(@{ name = 'ABA Routing Number' }) }) } -Current @{ operator = 'Or'; groups = @() }
+                $result.Desired.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
+                $result.Messages | Should -BeLike '*An action on {Group1} Sensitive Information Type is missing.'
+            }
+
+            It 'Should report drift when maxcount is present on one side only' {
+                $withMaxCount = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; maxcount = '9' }) }
+                $withoutMaxCount = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number' }) }
+                (Invoke-ContentCompare -Desired $withMaxCount -Current $withoutMaxCount).Desired.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
+                (Invoke-ContentCompare -Desired $withoutMaxCount -Current $withMaxCount).Desired.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
+            }
+
+            It 'Should log the current value as current and the desired value as expected, once' {
+                $result = Invoke-ContentCompare -Desired @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '1' }) } -Current @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '5' }) }
+                $result.Messages.Count | Should -Be 1
+                $result.Messages[0] | Should -BeLike '*Current value is {5} and is expected to be {1}.'
+            }
+
+            It 'Should log the current operator as current and the desired operator as expected' {
+                (Invoke-ContentCompare -Desired @{ operator = 'And'; groups = @() } -Current @{ operator = 'Or'; groups = @() }).Messages | Should -BeLike '*Current value is {Or} and is expected to be {And}.'
             }
         }
 

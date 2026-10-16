@@ -914,14 +914,9 @@ class IntuneAppProtectionPolicyAndroid : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.AppGroupType -ne 'SelectedPublicApps')
-                {
-                    $ValuesToCheck.Remove('Apps')
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('Apps'); When = @{ Property = 'AppGroupType'; NotEquals = 'SelectedPublicApps' } }
+            )
         }
     }
 

@@ -552,14 +552,9 @@ class EXOHostedContentFilterPolicy : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($CurrentValues.IntraOrgFilterState -ne $DesiredValues.IntraOrgFilterState -and $DesiredValues.IntraOrgFilterState -eq 'Default')
-                {
-                    $DesiredValues.IntraOrgFilterState = 'HighConfidencePhish'
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'SetWhen'; Side = 'Desired'; Property = 'IntraOrgFilterState'; Value = 'HighConfidencePhish'; When = @{ All = @(@{ Side = 'Desired'; Property = 'IntraOrgFilterState'; Equals = 'Default' }; @{ Side = 'Current'; Property = 'IntraOrgFilterState'; NotEquals = 'Default' }) } }
+            )
         }
     }
 

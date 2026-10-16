@@ -6,8 +6,13 @@
   * Updated the comparison to only resolve permission names if not in a report.
 * EXOHostedContentFilterPolicy
   * Fixed a comparison issue where the value was not correctly updated.
+* IntuneAntivirusPolicyWindows10SettingCatalog
+  * Fixed `TamperProtection` drift being ignored during comparison.
 * IntuneDeviceEnrollmentStatusPageWindows10
   * Updated the comparison to only resolve mobile app names if not in a report.
+* MISC
+  * Added declarative compare rules, applied the same way by every comparer.
+  * Moved 76 resource comparisons from scriptblocks to compare rules.
 
 # 2.26.1015.1
 

@@ -434,38 +434,40 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
         Context -Name 'AdvancedSettings comparison' -Fixture {
             BeforeAll {
-                $postProcessing = (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property @{
+                $compareRules = (New-M365DSCResourceInstance -ResourceName 'SCLabelPolicy' -Property @{
                         Name       = 'TestLabelPolicy'
                         Credential = $Credential
-                    }).GetCompareParameters().PostProcessing
+                    }).GetCompareParameters().CompareRules
             }
 
             It 'Should compare array valued advanced settings as sets' {
                 $desired = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') })
-                [SCLabelPolicy]::TestAdvancedSettings($desired, @(@{ Key = 'AttachmentAction'; Value = @('b', 'a') })) | Should -BeTrue
-                [SCLabelPolicy]::TestAdvancedSettings($desired, @(@{ Key = 'attachmentaction'; Value = @('a') })) | Should -BeFalse
-                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'attachmentaction'; Value = [System.String[]] @('a') }), @(@{ Key = 'attachmentaction'; Value = 'a' })) | Should -BeTrue
-                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'attachmentaction'; Value = 'a' }), @(@{ Key = 'attachmentaction'; Value = @('a', 'b') })) | Should -BeFalse
+                (& $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ AdvancedSettings = $desired } -CurrentValues @{ AdvancedSettings = @(@{ Key = 'AttachmentAction'; Value = @('b', 'a') }) }).ValuesToCheck.ContainsKey('AdvancedSettings') | Should -BeFalse
+                (& $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ AdvancedSettings = $desired } -CurrentValues @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a') }) }).ValuesToCheck.AdvancedSettings.Drift | Should -Be 'desired'
+                (& $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = [System.String[]] @('a') }) } -CurrentValues @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = 'a' }) }).ValuesToCheck.ContainsKey('AdvancedSettings') | Should -BeFalse
+                (& $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = 'a' }) } -CurrentValues @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) }).ValuesToCheck.AdvancedSettings.Drift | Should -Be 'desired'
             }
 
-            It 'Should ignore desired settings the current side does not carry' {
-                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'missing'; Value = 'x' }), @()) | Should -BeTrue
-                [SCLabelPolicy]::TestAdvancedSettings(@(@{ Key = 'missing'; Value = 'x' }), $null) | Should -BeTrue
+            It 'Should ignore desired settings the current side does not have' {
+                (& $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ AdvancedSettings = @(@{ Key = 'missing'; Value = 'x' }) } -CurrentValues @{ AdvancedSettings = @() }).ValuesToCheck.ContainsKey('AdvancedSettings') | Should -BeFalse
+                (& $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ AdvancedSettings = @(@{ Key = 'missing'; Value = 'x' }) } -CurrentValues @{ }).ValuesToCheck.ContainsKey('AdvancedSettings') | Should -BeFalse
             }
 
-            It 'Should flag drift through PostProcessing only when array valued advanced settings differ' {
-                $desiredValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) }
-                $currentValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a') }) }
-                $drifted = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @(@{ IsReport = $true }))
-                $drifted.Item3.AdvancedSettings.Drift | Should -Be 'desired'
+            It 'Should report drift in a compare only when array valued advanced settings differ' {
                 Compare-M365DSCResourceState -ResourceName 'SCLabelPolicy' -DesiredValues @{ Name = 'TestLabelPolicy'; AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) } `
                     -CurrentValues @{ Name = 'TestLabelPolicy'; AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a') }) } `
-                    -PostProcessing $postProcessing -PostProcessingArgs @(@{ IsReport = $true }) | Should -BeFalse
+                    -CompareRules $compareRules | Should -BeFalse
+                Compare-M365DSCResourceState -ResourceName 'SCLabelPolicy' -DesiredValues @{ Name = 'TestLabelPolicy'; AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) } `
+                    -CurrentValues @{ Name = 'TestLabelPolicy'; AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('b', 'a') }) } `
+                    -CompareRules $compareRules | Should -BeTrue
+            }
 
-                $desiredValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('a', 'b') }) }
-                $currentValues = @{ AdvancedSettings = @(@{ Key = 'attachmentaction'; Value = @('b', 'a') }) }
-                $matching = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @())
-                $matching.Item3.ContainsKey('AdvancedSettings') | Should -BeFalse
+            It 'Should compare locations with the added and removed ones applied to the current ones' {
+                $result = & $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules `
+                    -DesiredValues @{ AddExchangeLocation = @('c'); RemoveExchangeLocation = @('a') } `
+                    -CurrentValues @{ ExchangeLocation = @('a', 'b', '') }
+                $result.Desired.ExchangeLocation | Should -Be @('b', 'c')
+                $result.Current.ExchangeLocation | Should -Be @('a', 'b')
             }
         }
 

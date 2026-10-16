@@ -885,18 +885,9 @@ class EXOOrganizationConfig : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.ContainsKey('DelayedDelicensingEnabled'))
-                {
-                    if ($DesiredValues.DelayedDelicensingEnabled -ne $true)
-                    {
-                        $ValuesToCheck.Remove('TenantAdminNotificationForDelayedDelicensingEnabled') | Out-Null
-                        $ValuesToCheck.Remove('EndUserMailNotificationForDelayedDelicensingEnabled') | Out-Null
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('TenantAdminNotificationForDelayedDelicensingEnabled', 'EndUserMailNotificationForDelayedDelicensingEnabled'); When = @{ All = @(@{ Property = 'DelayedDelicensingEnabled'; HasKey = $true }; @{ Property = 'DelayedDelicensingEnabled'; NotEquals = $true }) } }
+            )
         }
     }
 

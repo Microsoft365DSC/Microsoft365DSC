@@ -225,24 +225,9 @@ class EXOATPBuiltInProtectionRule : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                foreach ($key in $ValuesToCheck.Keys)
-                {
-                    if ($null -eq $CurrentValues[$key])
-                    {
-                        switch -regex ($key)
-                        {
-                            '^ExceptIf\w+$'
-                            {
-                                $CurrentValues[$key] = @()
-                                break
-                            }
-                        }
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'NullEqualsEmpty'; PropertyPattern = '^ExceptIf\w+$' }
+            )
         }
     }
 

@@ -811,20 +811,10 @@ class TeamsMeetingPolicy : M365DSCResourceBase
     {
         return @{
             ExcludedProperties = @('AllowAnonymousUsersToDialOut', 'AllowIPVideo', 'AllowUserToJoinExternalMeeting')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.AllowCloudRecording -eq $false -and $DesiredValues.ContainsKey('AllowRecordingStorageOutsideRegion'))
-                {
-                    $ValuesToCheck.Remove('AllowCloudRecording') | Out-Null
-                }
-                elseif ($DesiredValues.AllowCloudRecording -eq $false)
-                {
-                    # AllowRecordingStorageOutsideRegion and RecordingStorageMode only work if AllowCloudRecording is set to True
-                    $ValuesToCheck.Remove('AllowRecordingStorageOutsideRegion') | Out-Null
-                    $ValuesToCheck.Remove('RecordingStorageMode') | Out-Null
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'RemoveWhen'; Properties = @('AllowCloudRecording'); When = @{ All = @(@{ Property = 'AllowCloudRecording'; Equals = $false }; @{ Property = 'AllowRecordingStorageOutsideRegion'; HasKey = $true }) } }
+                @{ Type = 'RemoveWhen'; Properties = @('AllowRecordingStorageOutsideRegion', 'RecordingStorageMode'); When = @{ All = @(@{ Property = 'AllowCloudRecording'; Equals = $false }; @{ Property = 'AllowRecordingStorageOutsideRegion'; NotHasKey = $true }) } }
+            )
         }
     }
 

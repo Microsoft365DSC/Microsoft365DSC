@@ -305,26 +305,10 @@ class TeamsOnlineSchedule : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-
-                foreach ($day in [TeamsOnlineSchedule]::GetDayPropertyNames())
-                {
-                    foreach ($range in $DesiredValues.$day)
-                    {
-                        $range.Start = [TeamsOnlineSchedule]::ConvertToTimeString($range.Start)
-                        $range.End = [TeamsOnlineSchedule]::ConvertToTimeString($range.End)
-                    }
-                }
-
-                foreach ($range in $DesiredValues.DateTimeRanges)
-                {
-                    $range.Start = [TeamsOnlineSchedule]::ConvertToDateTimeString($range.Start)
-                    $range.End = [TeamsOnlineSchedule]::ConvertToDateTimeString($range.End)
-                }
-
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'Normalize'; Paths = @('MondayHours[].Start', 'MondayHours[].End', 'TuesdayHours[].Start', 'TuesdayHours[].End', 'WednesdayHours[].Start', 'WednesdayHours[].End', 'ThursdayHours[].Start', 'ThursdayHours[].End', 'FridayHours[].Start', 'FridayHours[].End', 'SaturdayHours[].Start', 'SaturdayHours[].End', 'SundayHours[].Start', 'SundayHours[].End'); Side = 'Desired'; Using = 'FormatTimeOfDay' }
+                @{ Type = 'Normalize'; Paths = @('DateTimeRanges[].Start', 'DateTimeRanges[].End'); Side = 'Desired'; Using = 'ReformatDateTime'; InputFormats = @('d/M/yyyy H:mm', 'd/M/yyyy'); Format = 'd/M/yyyy H:mm' }
+            )
         }
     }
 

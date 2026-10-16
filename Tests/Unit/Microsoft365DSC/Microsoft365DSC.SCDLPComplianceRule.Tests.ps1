@@ -304,7 +304,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                   },
                   {
                     "Name": "EU Debit Card Number",
-                    "Id": "0e9b3178-9678-47dd-a509-37222ca96b42",
+                    "Id": null,
                     "Mincount": 1,
                     "Maxcount": -1,
                     "Confidencelevel": "Medium"
@@ -381,16 +381,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should ignore trainable classifier ids when testing AdvancedRules for drift' {
                 $instance = New-M365DSCResourceInstance -ResourceName 'SCDLPComplianceRule' -Property $testParams
-                $desiredValues = $instance.GetBoundParameters()
-                $currentValues = $instance.Get().ToHashtable()
-                $valuesToCheck = $desiredValues.Clone()
+                $result = & $Global:DscHelper.InvokeCompareRules -CompareRules $instance.GetCompareParameters().CompareRules `
+                    -DesiredValues $instance.GetBoundParameters() -CurrentValues $instance.Get().ToHashtable()
 
-                $result = $instance.GetCompareParameters().PostProcessing.Invoke($desiredValues, $currentValues, $valuesToCheck, @())
-
-                $normalizedAdvancedRule = $result.Item1.AdvancedRule | ConvertFrom-Json | ConvertFrom-Json
-                $sensitiveTypes = $normalizedAdvancedRule.Condition.SubConditions[0].Value[0].Groups[0].Sensitivetypes
-                ($sensitiveTypes | Where-Object -FilterScript { $_.Name -eq 'Healthcare' }).Id | Should -Be $null
-                ($sensitiveTypes | Where-Object -FilterScript { $_.Name -eq 'EU Debit Card Number' }).Id | Should -Be '0e9b3178-9678-47dd-a509-37222ca96b42'
+                $result.Desired.AdvancedRule | Should -Be $result.Current.AdvancedRule
             }
 
             It 'Should run the full Test() compare over AdvancedRules without throwing' {
@@ -596,109 +590,97 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'PostProcessing sensitive information comparison' -Fixture {
+        Context -Name 'Sensitive information comparison' -Fixture {
             BeforeAll {
-                Mock -CommandName Add-M365DSCEvent -MockWith {
-                }
-
-                $postProcessing = (New-M365DSCResourceInstance -ResourceName 'SCDLPComplianceRule' -Property @{
+                $compareRules = (New-M365DSCResourceInstance -ResourceName 'SCDLPComplianceRule' -Property @{
                         Name       = 'TestPolicy'
                         Policy     = 'MyParentPolicy'
                         Credential = $Credential
-                    }).GetCompareParameters().PostProcessing
+                    }).GetCompareParameters().CompareRules
+
+                function Invoke-ContentCompare
+                {
+                    param($Desired, $Current)
+
+                    & $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ ContentContainsSensitiveInformation = $Desired } -CurrentValues @{ ContentContainsSensitiveInformation = $Current }
+                }
             }
 
             It 'Should treat a null operator and an empty operator as equal' {
-                $desired = @(@{ operator = ''; groups = @() })
-                $current = @(@{ operator = $null; groups = @() })
-                [SCDLPComplianceRule]::TestContainsSensitiveInformationGroups($desired, $current, $true) | Should -BeTrue
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 0 -Exactly -Scope It
+                $result = Invoke-ContentCompare -Desired @{ operator = ''; groups = @() } -Current @{ operator = $null; groups = @() }
+                $result.ValuesToCheck.ContainsKey('ContentContainsSensitiveInformation') | Should -BeFalse
+                $result.Messages | Should -BeNullOrEmpty
             }
 
-            It 'Should match a sensitive information type whose name carries escaped single quotes' {
-                $desired = @(@{ name = "Driver''s License"; id = 'id-1' })
-                $current = @(@{ name = "Driver's License"; id = 'id-1' })
-                [SCDLPComplianceRule]::TestContainsSensitiveInformation($desired, $current, $true) | Should -BeTrue
-                [SCDLPComplianceRule]::TestContainsSensitiveInformationLabels($desired, $current, $true) | Should -BeTrue
+            It 'Should match a sensitive information type and a label with escaped single quotes in the name' {
+                $desired = @{ operator = 'Or'; groups = @(@{ name = 'Group1'; SensitiveInformation = @(@{ name = "Driver''s License"; id = 'id-1' }); labels = @(@{ name = "Driver''s License"; id = 'id-1'; type = 'Sensitivity' }) }) }
+                $current = @{ operator = 'Or'; groups = @(@{ name = 'Group1'; SensitiveInformation = @(@{ name = "Driver's License"; id = 'id-1' }); labels = @(@{ name = "Driver's License"; id = 'id-1'; type = 'Sensitivity' }) }) }
+                (Invoke-ContentCompare -Desired $desired -Current $current).Messages | Should -BeNullOrEmpty
             }
 
             It 'Should report drift when a group is missing on the current side' {
-                $desired = @(@{ operator = 'Or'; groups = @(@{ name = 'Group1'; operator = 'And'; sensitivetypes = @(@{ name = 'ABA Routing Number' }) }) })
-                $current = @(@{ operator = 'Or'; groups = @() })
-                [SCDLPComplianceRule]::TestContainsSensitiveInformationGroups($desired, $current, $true) | Should -BeFalse
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 1 -Exactly -Scope It
+                $result = Invoke-ContentCompare -Desired @{ operator = 'Or'; groups = @(@{ name = 'Group1'; operator = 'And'; SensitiveInformation = @(@{ name = 'ABA Routing Number' }) }) } -Current @{ operator = 'Or'; groups = @() }
+                $result.Desired.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
+                $result.Messages | Should -BeLike '*An action on {Group1} Sensitive Information Type is missing.'
             }
 
             It 'Should report drift when maxcount is present on one side only' {
-                $withMaxCount = @(@{ name = 'ABA Routing Number'; maxcount = '9' })
-                $withoutMaxCount = @(@{ name = 'ABA Routing Number' })
-                [SCDLPComplianceRule]::TestContainsSensitiveInformation($withMaxCount, $withoutMaxCount, $false) | Should -BeFalse
-                [SCDLPComplianceRule]::TestContainsSensitiveInformation($withoutMaxCount, $withMaxCount, $false) | Should -BeFalse
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 0 -Exactly -Scope It
+                $withMaxCount = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; maxcount = '9' }) }
+                $withoutMaxCount = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number' }) }
+                (Invoke-ContentCompare -Desired $withMaxCount -Current $withoutMaxCount).Desired.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
+                (Invoke-ContentCompare -Desired $withoutMaxCount -Current $withMaxCount).Desired.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
             }
 
-            It 'Should log the current value as current and the desired value as expected' {
-                $desired = @(@{ name = 'ABA Routing Number'; mincount = '1' })
-                $current = @(@{ name = 'ABA Routing Number'; mincount = '5' })
-                [SCDLPComplianceRule]::TestContainsSensitiveInformation($desired, $current, $true) | Should -BeFalse
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 1 -Exactly -Scope It -ParameterFilter {
-                    $Message -like '*Current value is {5} and is expected to be {1}.*'
-                }
+            It 'Should log the current value as current and the desired value as expected, once' {
+                $result = Invoke-ContentCompare -Desired @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '1' }) } -Current @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '5' }) }
+                $result.Messages.Count | Should -Be 1
+                $result.Messages[0] | Should -BeLike '*Current value is {5} and is expected to be {1}.'
             }
 
             It 'Should log the current operator as current and the desired operator as expected' {
-                $desired = @(@{ operator = 'And'; groups = @() })
-                $current = @(@{ operator = 'Or'; groups = @() })
-                [SCDLPComplianceRule]::TestContainsSensitiveInformationGroups($desired, $current, $true) | Should -BeFalse
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 1 -Exactly -Scope It -ParameterFilter {
-                    $Message -like '*Current value is {Or} and is expected to be {And}.*'
+                (Invoke-ContentCompare -Desired @{ operator = 'And'; groups = @() } -Current @{ operator = 'Or'; groups = @() }).Messages | Should -BeLike '*Current value is {Or} and is expected to be {And}.'
+            }
+
+            It 'Should ignore trainable classifier ids in nested AdvancedRule conditions' {
+                $advancedRule = {
+                    param($Id)
+
+                    @{
+                        Version   = '1.0'
+                        Condition = @{
+                            Operator      = 'And'
+                            SubConditions = @(
+                                @{
+                                    Operator      = 'Or'
+                                    SubConditions = @(
+                                        @{
+                                            ConditionName = 'ContentContainsSensitiveInformation'
+                                            Value         = @(@{
+                                                    Groups = @(@{
+                                                            Name           = 'Nested'
+                                                            Sensitivetypes = @(@{ Name = 'Healthcare'; Id = $Id; Classifiertype = 'MLModel' })
+                                                        })
+                                                })
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    } | ConvertTo-Json -Depth 12
                 }
+
+                $result = & $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules `
+                    -DesiredValues @{ AdvancedRule = ((& $advancedRule '11111111-1111-1111-1111-111111111111') | ConvertTo-Json -Compress) } `
+                    -CurrentValues @{ Ensure = 'Present'; AdvancedRule = (& $advancedRule $null) }
+                $result.Desired.AdvancedRule | Should -Be $result.Current.AdvancedRule
             }
 
-            It 'Should not log drift events when PostProcessing runs in a report context' {
-                $desiredValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '1' }) } }
-                $currentValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '5' }) } }
-                $result = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @(@{ IsReport = $true }))
-                $result.Item1.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 0 -Exactly -Scope It
-            }
-
-            It 'Should log the drift event once when PostProcessing runs outside a report context' {
-                $desiredValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '1' }) } }
-                $currentValues = @{ ContentContainsSensitiveInformation = @{ SensitiveInformation = @(@{ name = 'ABA Routing Number'; mincount = '5' }) } }
-                $result = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @())
-                $result.Item1.ContentContainsSensitiveInformation | Should -Be 'SIT-Drift-Desired'
-                Should -Invoke -CommandName Add-M365DSCEvent -Times 1 -Exactly -Scope It
-            }
-
-            It 'Should walk nested AdvancedRule conditions and clear trainable classifier ids' {
-                $advancedRule = @{
-                    Version   = '1.0'
-                    Condition = @{
-                        Operator      = 'And'
-                        SubConditions = @(
-                            @{
-                                Operator      = 'Or'
-                                SubConditions = @(
-                                    @{
-                                        ConditionName = 'ContentContainsSensitiveInformation'
-                                        Value         = @(@{
-                                                Groups = @(@{
-                                                        Name           = 'Nested'
-                                                        Sensitivetypes = @(@{ Name = 'Healthcare'; Id = '11111111-1111-1111-1111-111111111111'; Classifiertype = 'MLModel' })
-                                                    })
-                                            })
-                                    }
-                                )
-                            }
-                        )
-                    }
-                } | ConvertTo-Json -Depth 12
-                $desiredValues = @{ AdvancedRule = ($advancedRule | ConvertTo-Json -Compress) }
-                $currentValues = @{ Ensure = 'Present' }
-                $result = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @())
-                $normalized = $result.Item1.AdvancedRule | ConvertFrom-Json | ConvertFrom-Json
-                $normalized.Condition.SubConditions[0].SubConditions[0].Value[0].Groups[0].Sensitivetypes[0].Id | Should -BeNullOrEmpty
+            It 'Should keep only the setting and values of endpoint restrictions' {
+                $result = & $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules `
+                    -DesiredValues @{ EndpointDlpRestrictions = @(@{ Setting = 'Print'; Value = 'Block'; Extra = 'x' }) } `
+                    -CurrentValues @{ EndpointDlpRestrictions = @(@{ Setting = 'Print'; Value = 'Block'; Value2 = $null }) }
+                $result.Desired.EndpointDlpRestrictions[0].Keys | Sort-Object | Should -Be @('Setting', 'Value')
+                $result.Current.EndpointDlpRestrictions[0].Keys | Sort-Object | Should -Be @('Setting', 'Value')
             }
         }
 

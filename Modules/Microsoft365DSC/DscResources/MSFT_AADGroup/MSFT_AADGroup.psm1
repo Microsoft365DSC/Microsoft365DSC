@@ -1187,15 +1187,9 @@ class AADGroup : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.ContainsKey('GroupLifecyclePolicySelectedEnabled') -and -not $CurrentValues.MailEnabled)
-                {
-                    Write-Verbose -Message "Removing 'GroupLifecyclePolicySelectedEnabled' from comparison because group is not a Microsoft 365 Group."
-                    $ValuesToCheck.Remove('GroupLifecyclePolicySelectedEnabled') | Out-Null
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('GroupLifecyclePolicySelectedEnabled'); When = @{ All = @(@{ Property = 'GroupLifecyclePolicySelectedEnabled'; HasKey = $true }; @{ Side = 'Current'; Property = 'MailEnabled'; Falsy = $true }) } }
+            )
         }
     }
 

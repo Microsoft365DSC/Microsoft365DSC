@@ -756,19 +756,10 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.ContainsKey('RecipientFilter') -and -not [System.String]::IsNullOrEmpty($DesiredValues.RecipientFilter))
-                {
-                    $DesiredValues.RecipientFilter = [EXODynamicDistributionGroup]::ToExchangeFilterSyntax($DesiredValues.RecipientFilter)
-
-                    # If RecipientFilter is specified, ignore the conditional properties
-                    $ValuesToCheck.Keys.Clone() | Where-Object { $_ -like "Conditional*" } | Foreach-Object {
-                        $ValuesToCheck.Remove($_) | Out-Null
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'Normalize'; Paths = @('RecipientFilter'); Side = 'Desired'; Using = 'ExchangeFilter' }
+                @{ Type = 'RemoveWhen'; PropertyPattern = '^Conditional'; When = @{ Property = 'RecipientFilter'; NotNullOrEmpty = $true } }
+            )
         }
     }
 
@@ -860,120 +851,6 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
         }
 
         return $Value -replace '(?is)<html>\s*<body>\s*(.*?)\s*</body>\s*</html>\s*', '$1'
-    }
-
-    hidden static [System.String] ToExchangeFilterSyntax([System.String] $Expression)
-    {
-        # Always add one final outer wrapper
-        return '(' + [EXODynamicDistributionGroup]::NormalizeFilterExpression($Expression) + ')'
-    }
-
-    hidden static [System.String] NormalizeFilterExpression([System.String] $Expression)
-    {
-        # Trim outer spaces and redundant parentheses
-        $expression = $Expression.Trim()
-        while ($expression.StartsWith('(') -and $expression.EndsWith(')'))
-        {
-            $inner = $expression.Substring(1, $expression.Length - 2).Trim()
-            $balance = 0
-            $valid = $true
-            foreach ($ch in $inner.ToCharArray())
-            {
-                if ($ch -eq '(')
-                {
-                    $balance++
-                }
-                elseif ($ch -eq ')')
-                {
-                    $balance--
-                }
-
-                if ($balance -lt 0)
-                {
-                    $valid = $false
-                    break
-                }
-            }
-
-            if (-not $valid -or $balance -ne 0)
-            {
-                break
-            }
-            $expression = $inner
-        }
-
-        # Parse into tokens considering nested parentheses
-        $tokens = [System.Collections.Generic.List[string]]::new()
-        $current = ''
-        $depth = 0
-        for ($i = 0; $i -lt $expression.Length; $i++)
-        {
-            $ch = $expression[$i]
-            if ($ch -eq '(')
-            {
-                $depth++
-                $current += $ch
-            }
-            elseif ($ch -eq ')')
-            {
-                $depth--
-                $current += $ch
-            }
-            elseif ($depth -eq 0 -and $expression.Substring($i) -match '^-or\s|^-and\s')
-            {
-                # Split at top-level logical operator
-                $match = $matches[0].Trim()
-                $tokens.Add(($current.Trim()))
-                $tokens.Add($match)
-                $current = ''
-                $i += $match.Length - 1
-            }
-            else
-            {
-                $current += $ch
-            }
-        }
-        if ($current.Trim())
-        {
-            $tokens.Add(($current.Trim()))
-        }
-
-        # Base condition - no logical operators
-        if ($tokens.Count -eq 1)
-        {
-            return $tokens[0]
-        }
-
-        # Handle operator precedence: -and before -or
-        # First handle all -and operations
-        for ($i = 0; $i -lt $tokens.Count; $i++)
-        {
-            if ($tokens[$i] -eq '-and')
-            {
-                $left = [EXODynamicDistributionGroup]::NormalizeFilterExpression($tokens[$i - 1])
-                $right = [EXODynamicDistributionGroup]::NormalizeFilterExpression($tokens[$i + 1])
-                $tokens[$i - 1] = "(($left) -and ($right))"
-                $tokens.RemoveAt($i)    # remove operator
-                $tokens.RemoveAt($i)    # remove right operand
-                $i--
-            }
-        }
-
-        # Then handle -or operations
-        for ($i = 0; $i -lt $tokens.Count; $i++)
-        {
-            if ($tokens[$i] -eq '-or')
-            {
-                $left = [EXODynamicDistributionGroup]::NormalizeFilterExpression($tokens[$i - 1])
-                $right = [EXODynamicDistributionGroup]::NormalizeFilterExpression($tokens[$i + 1])
-                $tokens[$i - 1] = "(($left) -or ($right))"
-                $tokens.RemoveAt($i)
-                $tokens.RemoveAt($i)
-                $i--
-            }
-        }
-
-        return $tokens[0]
     }
 
     hidden [EXODynamicDistributionGroup] AsResult([System.Object] $Values)

@@ -400,16 +400,9 @@ class IntuneAzureNetworkConnectionWindows365 : M365DSCResourceBase
         return @{
             ExcludedProperties = @('SubscriptionName', 'AdDomainPassword')
             IncludedProperties = @('ResourceGroupId', 'SubnetId', 'SubscriptionName', 'VirtualNetworkId')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.ConnectionType -eq 'azureADJoin')
-                {
-                    $ValuesToCheck.Remove('AdDomainName') | Out-Null
-                    $ValuesToCheck.Remove('AdDomainUsername') | Out-Null
-                    $ValuesToCheck.Remove('OrganizationalUnit') | Out-Null
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'RemoveWhen'; Side = 'Desired'; Properties = @('AdDomainName', 'AdDomainUsername', 'OrganizationalUnit'); When = @{ Property = 'ConnectionType'; Equals = 'azureADJoin' } }
+            )
         }
     }
 

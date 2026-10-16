@@ -83,9 +83,51 @@ function New-M365DscUnitTestHelper
         ModuleName = $moduleName
         CurrentStubModulePath = $StubModule
         InitializeScript = [ScriptBlock]::Create($initScript)
+        InvokeCompareRules = ${function:Invoke-M365DSCCompareRules}
         RepoRoot = $repoRoot
         CleanupScript = [ScriptBlock]::Create(@"
             `$global:DSCMachineStatus = 0
 "@)
+    }
+}
+
+function Invoke-M365DSCCompareRules
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Object[]]
+        $CompareRules,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $DesiredValues,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $CurrentValues
+    )
+
+    $messages = [System.Collections.Generic.List[System.String]]::new()
+    $logDrift = [System.Action[System.String]] {
+        param($Message)
+        $messages.Add($Message)
+    }
+    $rewritten = [Microsoft365DSC.Compare.CompareRule]::ApplyAll(
+        [Microsoft365DSC.Compare.CompareRule]::ParseAll($CompareRules),
+        $DesiredValues,
+        $CurrentValues,
+        $DesiredValues.Clone(),
+        [System.Object[]] @(),
+        'Test',
+        $logDrift)
+
+    return @{
+        Desired       = $rewritten.Item1
+        Current       = $rewritten.Item2
+        ValuesToCheck = $rewritten.Item3
+        Messages      = $messages
     }
 }

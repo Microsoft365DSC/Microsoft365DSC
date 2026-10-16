@@ -593,24 +593,9 @@ class IntuneDeviceRemediation : M365DSCResourceBase
     {
         return @{
             ExcludedProperties = @('IsGlobalScript')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($CurrentValues.IsGlobalScript)
-                {
-                    Write-Verbose -Message 'Detected a global script, removing read-only properties from the comparison'
-                    $ValuesToCheck.Remove('DetectionScriptContent') | Out-Null
-                    $ValuesToCheck.Remove('RemediationScriptContent') | Out-Null
-                    $ValuesToCheck.Remove('DetectionScriptParameters') | Out-Null
-                    $ValuesToCheck.Remove('RemediationScriptParameters') | Out-Null
-                    $ValuesToCheck.Remove('DeviceHealthScriptType') | Out-Null
-                    $ValuesToCheck.Remove('Publisher') | Out-Null
-                    $ValuesToCheck.Remove('EnforceSignatureCheck') | Out-Null
-                    $ValuesToCheck.Remove('DisplayName') | Out-Null
-                    $ValuesToCheck.Remove('Description') | Out-Null
-                }
-
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'RemoveWhen'; Properties = @('DetectionScriptContent', 'RemediationScriptContent', 'DetectionScriptParameters', 'RemediationScriptParameters', 'DeviceHealthScriptType', 'Publisher', 'EnforceSignatureCheck', 'DisplayName', 'Description'); When = @{ Side = 'Current'; Property = 'IsGlobalScript'; Truthy = $true } }
+            )
         }
     }
 

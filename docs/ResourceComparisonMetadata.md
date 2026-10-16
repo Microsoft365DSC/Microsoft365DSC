@@ -31,12 +31,11 @@ Both pathways ask the resource class itself for its comparison parameters.
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            ExcludedProperties = @('Action', 'IsValidationOnly', 'Justification', 'TicketInfo')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                # ... transform values as needed ...
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            ExcludedProperties = @('Justification')
+            CompareRules       = @(
+                @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
+                @{ Type = 'DurationMatchesEnd'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
+            )
         }
     }
 ```
@@ -60,6 +59,7 @@ The resource's own `Test()` splats the result:
 * `IncludedProperties` (string[]): Properties to explicitly include in comparison
 * `PostProcessing` (ScriptBlock): Custom transformation logic (must return Tuple[Hashtable, Hashtable, Hashtable])
 * `PostProcessingArgs` (object[]): Additional arguments passed to PostProcessing scriptblock
+* `CompareRules` (object[]): Declarative rules applied before `PostProcessing`, see [Compare Rules](#compare-rules)
 
 The base class also provides `GetSettingsCatalogCompareParameters()`, which the settings-catalog resources delegate to instead of writing their own body.
 
@@ -90,7 +90,7 @@ The delta report compares configurations without loading every resource class. T
 }
 ```
 
-* `CompareParameters` contains the `ExcludedProperties` and `IncludedProperties` a resource returns. Empty lists as well as resources without a `GetCompareParameters()` implementation result in no `CompareParameters` entry.
+* `CompareParameters` contains the `ExcludedProperties`, `IncludedProperties` and `CompareRules` a resource returns. Empty lists as well as resources without a `GetCompareParameters()` implementation result in no `CompareParameters` entry.
 * `HasPostProcessing` is `true` when the resource returns a `PostProcessing` scriptblock. A scriptblock cannot be stored in JSON. The flag tells the report to ask the resource class at runtime.
 
 `Utilities/New-M365DSCSchemaFromClasses.ps1` generates the file from the built class-based resources: for every registered resource it creates an instance with no properties set and reads its `GetCompareParameters()`. `Utilities/Build-Microsoft365DSC.ps1` runs it on every build. The file is not checked in. An override takes effect with the next build.
@@ -107,8 +107,8 @@ The offline comparison then skips the resource-specific parameters for that reso
 
 `New-M365DSCDeltaReport` loads `SchemaDefinition.json` through `Initialize-M365DSCSchemaCache` and compares with `Microsoft365DSC.Compare.ConfigurationComparer`:
 
-* `SchemaIndex.GetCompareParameters()` reads `CompareParameters` from the schema entry.
-* For every resource in the compared configurations whose schema entry has `HasPostProcessing`, the report calls `Get-M365DSCResourceComparisonParameters` and passes the returned `PostProcessing`, `PostProcessingArgs`, `ExcludedProperties` and `IncludedProperties` to the comparer. `IsReport = $true` is appended to `PostProcessingArgs`. A callback uses it to tell a report from `Test()` (`[M365DSCResourceBase]::IsReportContext()`) and skip anything that needs a workload connection.
+* `SchemaIndex.GetCompareParameters()` reads `CompareParameters` from the schema entry, including its `CompareRules`. A resource that only declares rules needs no PowerShell at report time.
+* For every resource in the compared configurations whose schema entry has `HasPostProcessing`, the report calls `Get-M365DSCResourceComparisonParameters` and passes the returned `CompareRules`, `PostProcessing`, `PostProcessingArgs`, `ExcludedProperties` and `IncludedProperties` to the comparer. `IsReport = $true` is appended to `PostProcessingArgs`. A callback uses it to tell a report from `Test()` (`[M365DSCResourceBase]::IsReportContext()`) and skip anything that needs a workload connection.
 * The report's own `-ExcludedProperties` and `-ExcludedResources` apply on top of the resource parameters.
 
 ## Implementation Guide
@@ -135,6 +135,77 @@ The offline comparison then skips the resource-specific parameters for that reso
    * Run `Assert-M365DSCBlueprint` - should now use the same comparison logic
 
 No registration step is needed because the next build writes the override into `SchemaDefinition.json`  and the report resolves the class for `PostProcessing`. An override is picked up on its own. Check the build output for a `GetCompareParameters() failed` warning.
+
+### Compare Rules
+
+Prefer `CompareRules` over a `PostProcessing` scriptblock. Rules are data. The schema stores them, and every comparer applies them the same way, the Microsoft365DSC.Compare library outside PowerShell included. Rules run in declaration order on copies of the desired and current values, before `PostProcessing`.
+
+```powershell
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('BucketId'); When = @{ Property = 'BucketId'; IsNullOrEmpty = $true } }
+                @{ Type = 'Normalize'; Paths = @('Notes'); Using = 'StripNewlines' }
+            )
+        }
+    }
+```
+
+| Type | Members | Effect |
+| --- | --- | --- |
+| `CheckAllSchemaProperties` | | Compares every schema property either side has. Null and an empty collection count as absent. |
+| `RemoveWhen` | `Properties`, `PropertyPattern`, `When`, `AlsoFromDesired` | Stops comparing the listed properties and the ones whose name matches the pattern. |
+| `CheckWhen` | `Property`, `When` | Compares a property the desired values leave out, against null. |
+| `SetWhen` | `Side`, `Property`, `Value`, `When` | Writes a value on one side. `Side` defaults to `Desired`. |
+| `Normalize` | `Paths`, `Side`, `Using`, normalizer options | Rewrites values with the normalizer in `Using`. `Side` defaults to `Both`. |
+| `Equivalent` | `Property`, `Values` | Treats the listed values of a property as equal. |
+| `NullEqualsEmpty` | `PropertyPattern`, `Side` | Reads a missing array as empty. `Side` defaults to `Current`. |
+| `Tolerance` | `Properties`, `Within` | Stops comparing time spans that differ by at most `Within`, such as `00:05:00`. |
+| `IgnoreNested` | `Paths` | Removes nested properties on both sides. |
+| `IgnoreWhenPast` | `Path` | Takes the current date when the desired date differs and lies in the past. |
+| `SameInstant` | `Path` | Takes the current date when both dates are the same instant. |
+| `Rename` | `From`, `To` | Renames a property on both sides. |
+| `DurationMatchesEnd` | `Expiration`, `Start`, `ToleranceMinutes` | Treats an `afterDuration` expiration as equal to an `afterDateTime` one that ends that long after the start. |
+| `AllowCurrentExtras` | `Property`, `MatchKey` | Accepts collection items only the current side has, paired by `MatchKey`. |
+| `CustomCompare` | `Name`, comparer options | Runs a C# comparer registered under `Name`. |
+
+A path is dotted, such as `ScheduleInfo.Expiration`. A segment ending in `[]`, such as `Settings[].Value`, continues into every element of that array. Matching a property ignores case.
+
+`When` is one condition or a combination. A condition has `Property`, an optional `Side` that defaults to `Desired`, and one operator: `Equals`, `NotEquals`, `IsNullOrEmpty`, `NotNullOrEmpty`, `HasKey`, `NotHasKey`, `Truthy` or `Falsy`. Combine conditions with `All = @(...)` or `Any = @(...)`:
+
+```powershell
+When = @{ All = @(
+    @{ Property = 'Mode'; Equals = 'Off' }
+    @{ Side = 'Current'; Property = 'Window'; NotNullOrEmpty = $true }
+) }
+```
+
+The normalizers are:
+
+* `StripNewlines`
+* `RegexReplace` with `Pattern` and `Replacement`
+* `PrefixUnless` with `Pattern` and a `Format` such as `'v:{0}'`
+* `FormatDuration`, the shortest ISO 8601 duration such as `P90D`
+* `FormatDateTime`, a round-trip UTC timestamp
+* `FormatTimeOfDay`, `hh:mm` with a full day as `1.00:00`
+* `FormatSize`, a size such as `10KB` without the byte count
+* `ReformatDateTime` with `InputFormats` and `Format`
+* `ExchangeFilter`, an Exchange filter with `-and` grouped before `-or` and every operand in parentheses
+
+Dates without an offset are read as UTC.
+
+The comparers are:
+
+* `SCLabelPolicy`, `SCSensitivityLabel`, `SCAutoSensitivityLabelRule` and `SCDLPComplianceRule` for the resource of the same name
+* `FeatureUpdateRollout` for the rollout dates of `IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10`
+* `TenantIsolationRules` with `TenantIds`, a hashtable from tenant name to tenant id, for `PPTenantIsolationSettings`
+
+A comparer can explain a drift. `Test()` writes that explanation to the event log as a warning from the resource. The report does not write it.
+
+`[Microsoft365DSC.Compare.CompareRuleRegistry]::RegisterComparer()` and `RegisterNormalizer()` add more. Each takes a factory that receives the rule declaration.
+
+The unit tests fail when a resource declares an unknown rule type, comparer or normalizer, or misses a required member.
 
 ### PostProcessing Script Pattern
 

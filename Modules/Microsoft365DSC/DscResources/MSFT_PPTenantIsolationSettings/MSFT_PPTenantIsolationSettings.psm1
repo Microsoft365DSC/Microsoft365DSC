@@ -484,8 +484,6 @@ class PPTenantIsolationSettings : M365DSCResourceBase
 
     [System.Collections.Hashtable] GetCompareParameters()
     {
-        # Resolved up front because $this does not resolve inside the PostProcessing scriptblock.
-        # TODO: Only do this if not doing a Report. It requires a connection to internet, which is not (always) available when doing a report.
         $tenantIdMap = @{}
         foreach ($rule in (@($this.Rules) + @($this.RulesToInclude) + @($this.RulesToExclude)))
         {
@@ -497,67 +495,9 @@ class PPTenantIsolationSettings : M365DSCResourceBase
 
         return @{
             IncludedProperties = @('Enabled', 'Rules')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                $tenantIdMap = $PostProcessingArgs[0]
-                if ($null -ne $DesiredValues['Rules'])
-                {
-                    $effectiveRules = @()
-                    foreach ($rule in @($DesiredValues['Rules']))
-                    {
-                        $tenantId = if ($tenantIdMap.ContainsKey($rule.TenantName)) { $tenantIdMap[$rule.TenantName] } else { $rule.TenantName }
-                        $effectiveRules += [MSFT_PPTenantRule] @{
-                            TenantName = $tenantId
-                            Direction  = $rule.Direction
-                        }
-                    }
-                    $DesiredValues['Rules'] = $effectiveRules
-                    $ValuesToCheck['Rules'] = $effectiveRules
-                }
-                elseif ($null -ne $DesiredValues['RulesToInclude'] -or $null -ne $DesiredValues['RulesToExclude'])
-                {
-                    $effectiveRules = [ordered]@{}
-                    foreach ($rule in @($CurrentValues['Rules']))
-                    {
-                        if ($null -ne $rule)
-                        {
-                            $effectiveRules[$rule.TenantName] = [MSFT_PPTenantRule] @{
-                                TenantName = $rule.TenantName
-                                Direction  = $rule.Direction
-                            }
-                        }
-                    }
-                    foreach ($rule in @($DesiredValues['RulesToInclude']))
-                    {
-                        if ($null -ne $rule)
-                        {
-                            $tenantId = if ($tenantIdMap.ContainsKey($rule.TenantName)) { $tenantIdMap[$rule.TenantName] } else { $rule.TenantName }
-                            $effectiveRules[$tenantId] = [MSFT_PPTenantRule] @{
-                                TenantName = $tenantId
-                                Direction  = $rule.Direction
-                            }
-                        }
-                    }
-                    foreach ($rule in @($DesiredValues['RulesToExclude']))
-                    {
-                        if ($null -ne $rule)
-                        {
-                            $tenantId = if ($tenantIdMap.ContainsKey($rule.TenantName)) { $tenantIdMap[$rule.TenantName] } else { $rule.TenantName }
-                            $effectiveRules.Remove($tenantId)
-                        }
-                    }
-                    $DesiredValues['Rules'] = @($effectiveRules.Values)
-                    $ValuesToCheck['Rules'] = $DesiredValues['Rules']
-                }
-                foreach ($key in @('RulesToInclude', 'RulesToExclude'))
-                {
-                    $DesiredValues.Remove($key)
-                    $CurrentValues.Remove($key)
-                    $ValuesToCheck.Remove($key)
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
-            PostProcessingArgs = @(, $tenantIdMap)
+            CompareRules       = @(
+                @{ Type = 'CustomCompare'; Name = 'TenantIsolationRules'; TenantIds = $tenantIdMap }
+            )
         }
     }
 

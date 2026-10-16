@@ -1179,29 +1179,9 @@ class AADAccessReviewDefinition : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if (-not [System.String]::IsNullOrEmpty($DesiredValues.Settings.Recurrence.Range.StartDate))
-                {
-                    $parsedDesiredDate = [System.DateTime]::MinValue
-                    $parseResultDesired = [System.DateTime]::TryParse($DesiredValues.Settings.Recurrence.Range.StartDate, [ref]$parsedDesiredDate)
-
-                    $parsedCurrentDate = [System.DateTime]::MinValue
-                    $parseResultCurrent = [System.DateTime]::TryParse($CurrentValues.Settings.Recurrence.Range.StartDate, [ref]$parsedCurrentDate)
-
-                    if ($parseResultDesired -and $parseResultCurrent)
-                    {
-                        Write-Verbose -Message "Parsed Desired StartDateTime: $parsedDesiredDate, Parsed Current StartDateTime: $parsedCurrentDate"
-                        if ($parsedDesiredDate -ne $parsedCurrentDate -and $parsedDesiredDate -lt [System.DateTime]::Now)
-                        {
-                            Write-Verbose -Message 'Ignoring StartDateTime in ScheduleInfo as it is in the past. StartDateTime cannot be set to a past date.'
-                            Write-Verbose -Message 'Aligning the Desired and Current StartDateTime values for comparison.'
-                            $DesiredValues.Settings.Recurrence.Range.StartDate = $CurrentValues.Settings.Recurrence.Range.StartDate
-                        }
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'IgnoreWhenPast'; Path = 'Settings.Recurrence.Range.StartDate' }
+            )
         }
     }
 

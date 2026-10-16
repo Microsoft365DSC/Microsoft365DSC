@@ -37,6 +37,9 @@ $Script:IsPowerShellCore = $PSVersionTable.PSEdition -eq 'Core'
 .PARAMETER PostProcessingArgs
     Specifies an array of additional arguments to pass to the PostProcessing script block or function.
 
+.PARAMETER CompareRules
+    Specifies the declarative compare rules applied before PostProcessing.
+
 .OUTPUTS
     Returns a boolean indicating whether the current state matches the desired state.
 #>
@@ -72,7 +75,11 @@ function Compare-M365DSCResourceState
 
         [Parameter()]
         [System.Object[]]
-        $PostProcessingArgs = @()
+        $PostProcessingArgs = @(),
+
+        [Parameter()]
+        [System.Object[]]
+        $CompareRules
     )
 
     Initialize-M365DSCDllLoader -ErrorAction Stop
@@ -97,9 +104,28 @@ function Compare-M365DSCResourceState
         [Microsoft365DSC.Cache.CacheManager]::LoadSchema($schemaContent)
     }
 
+    $ValuesToCheck = $DesiredValues.Clone()
+    if ($null -ne $CompareRules -and $CompareRules.Count -gt 0)
+    {
+        $logDrift = [System.Action[System.String]] {
+            param($Message)
+            Add-M365DSCEvent -Message $Message -EntryType 'Warning' -EventID 1 -Source $ResourceName
+        }
+        $rewritten = [Microsoft365DSC.Compare.CompareRule]::ApplyAll(
+            [Microsoft365DSC.Compare.CompareRule]::ParseAll($CompareRules),
+            $DesiredValues,
+            $CurrentValues,
+            $ValuesToCheck,
+            [Microsoft365DSC.Cache.CacheManager]::Schema,
+            $ResourceName,
+            $logDrift)
+        $DesiredValues = $rewritten.Item1
+        $CurrentValues = $rewritten.Item2
+        $ValuesToCheck = $rewritten.Item3
+    }
+
     # Apply custom post-processing callback if specified.
     # PostProcessing is a PowerShell Func delegate, so it must be called here (before entering C#).
-    $ValuesToCheck = $DesiredValues.Clone()
     if ($null -ne $PostProcessing)
     {
         Write-Verbose -Message "Applying custom post-processing to CurrentValues and ValuesToCheck for resource $ResourceName"

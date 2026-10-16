@@ -666,14 +666,9 @@ class IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 : M365DSCResourceB
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                if (-not [System.String]::IsNullOrEmpty($DesiredValues.RootCertificateDisplayName))
-                {
-                    $ValuesToCheck.Remove('RootCertificateId') | Out-Null
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('RootCertificateId'); When = @{ Property = 'RootCertificateDisplayName'; NotNullOrEmpty = $true } }
+            )
         }
     }
 

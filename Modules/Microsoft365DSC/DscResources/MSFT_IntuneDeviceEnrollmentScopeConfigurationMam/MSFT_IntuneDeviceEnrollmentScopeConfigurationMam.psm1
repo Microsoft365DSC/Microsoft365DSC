@@ -286,14 +286,9 @@ class IntuneDeviceEnrollmentScopeConfigurationMam : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.AppliesTo -ne 'Selected')
-                {
-                    $ValuesToCheck.Remove('IncludedGroups')
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('IncludedGroups'); When = @{ Property = 'AppliesTo'; NotEquals = 'Selected' } }
+            )
         }
     }
 

@@ -557,6 +557,9 @@ function Test-M365DSCParameterState
 .PARAMETER PostProcessingArgs
     Specifies arguments passed to the post-processing callback.
 
+.PARAMETER CompareRules
+    Specifies the declarative compare rules applied before the post-processing callback.
+
 .PARAMETER PassThru
     Indicates that a detailed result object should be returned instead of only a boolean.
 
@@ -599,6 +602,10 @@ function Test-M365DSCTargetResource
         [Parameter()]
         [System.Object[]]
         $PostProcessingArgs = @(),
+
+        [Parameter()]
+        [System.Object[]]
+        $CompareRules,
 
         [Parameter(
             ParameterSetName = 'PassThru'
@@ -649,6 +656,7 @@ function Test-M365DSCTargetResource
         -IncludedProperties $IncludedProperties `
         -PostProcessing $PostProcessing `
         -PostProcessingArgs $PostProcessingArgs `
+        -CompareRules $CompareRules `
         -Verbose:$VerbosePreference
 
     if (-not $testTargetResource)

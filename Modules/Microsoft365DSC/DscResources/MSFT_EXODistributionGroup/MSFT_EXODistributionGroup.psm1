@@ -625,13 +625,11 @@ class EXODistributionGroup : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
+            CompareRules   = @(
+                @{ Type = 'RemoveWhen'; Properties = @('OrganizationalUnit'); When = @{ Property = 'OrganizationalUnit'; Falsy = $true } }
+            )
             PostProcessing = {
                 param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                if (-not $ValuesToCheck.OrganizationalUnit)
-                {
-                    $ValuesToCheck.Remove('OrganizationalUnit') | Out-Null
-                }
-
                 if ([M365DSCResourceBase]::IsReportContext($PostProcessingArgs))
                 {
                     return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)

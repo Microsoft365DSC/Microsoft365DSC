@@ -101,6 +101,47 @@
                 @{ Name = 'Description'; CIMType = 'String'; Option = 'Write' }
             )
         }
+        @{
+            ClassName         = 'MSFT_TestRules'
+            Parameters        = @(
+                @{ Name = 'Identity'; CIMType = 'String'; Option = 'Key' }
+                @{ Name = 'Mode'; CIMType = 'String'; Option = 'Write' }
+                @{ Name = 'Notes'; CIMType = 'String'; Option = 'Write' }
+                @{ Name = 'Window'; CIMType = 'String'; Option = 'Write' }
+                @{ Name = 'Members'; CIMType = 'StringArray'; Option = 'Write' }
+                @{ Name = 'Owners'; CIMType = 'StringArray'; Option = 'Write' }
+                @{ Name = 'Settings'; CIMType = 'MSFT_TestRuleSetting[]'; Option = 'Write' }
+                @{ Name = 'ScheduleInfo'; CIMType = 'MSFT_TestRuleSchedule'; Option = 'Write' }
+            )
+            CompareParameters = @{
+                CompareRules = @(
+                    @{ Type = 'RemoveWhen'; Properties = @('Notes'); When = @{ Property = 'Mode'; Equals = 'Off' } }
+                )
+            }
+        }
+        @{
+            ClassName  = 'MSFT_TestRuleSetting'
+            Parameters = @(
+                @{ Name = 'Name'; CIMType = 'String'; Option = 'Key' }
+                @{ Name = 'Value'; CIMType = 'String'; Option = 'Write' }
+                @{ Name = 'Version'; CIMType = 'String'; Option = 'Write' }
+            )
+        }
+        @{
+            ClassName  = 'MSFT_TestRuleSchedule'
+            Parameters = @(
+                @{ Name = 'StartDateTime'; CIMType = 'String'; Option = 'Write' }
+                @{ Name = 'Expiration'; CIMType = 'MSFT_TestRuleExpiration'; Option = 'Write' }
+            )
+        }
+        @{
+            ClassName  = 'MSFT_TestRuleExpiration'
+            Parameters = @(
+                @{ Name = 'type'; CIMType = 'String'; Option = 'Write' }
+                @{ Name = 'duration'; CIMType = 'String'; Option = 'Write' }
+                @{ Name = 'endDateTime'; CIMType = 'String'; Option = 'Write' }
+            )
+        }
     )
 
     function New-Resource
@@ -206,6 +247,31 @@
         }
 
         return [Microsoft365DSC.Compare.ResourceComparer]::Compare($Desired, $Current, $ValuesToCheck, $schema, $ResourceName, $ExcludedProperties, $IncludedProperties)
+    }
+
+    function Invoke-RuleCompare
+    {
+        [CmdletBinding()]
+        param
+        (
+            [Parameter(Mandatory = $true)] [AllowEmptyCollection()] [System.Object[]] $Rules,
+            [Parameter(Mandatory = $true)] [System.Collections.Hashtable] $Source,
+            [Parameter(Mandatory = $true)] [System.Collections.Hashtable] $Destination,
+            [Parameter()] [System.Nullable[System.DateTimeOffset]] $Now,
+            [Parameter()] [System.Management.Automation.ScriptBlock] $PostProcessing
+        )
+
+        $parameters = New-CompareParameters -PostProcessing $PostProcessing
+        $parameters.Rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll($Rules)
+        $parameters.Now = $Now
+        $map = New-CompareParameterMap -ResourceName 'TestRules' -Parameters $parameters
+        $Source['Identity'] = 'a'
+        $Destination['Identity'] = 'a'
+        $deltas = Invoke-ConfigurationCompare -CompareParameters $map `
+            -Source @(New-Resource -ResourceName 'TestRules' -InstanceName 'S' -Values $Source) `
+            -Destination @(New-Resource -ResourceName 'TestRules' -InstanceName 'D' -Values $Destination)
+
+        return , [string[]] @($deltas | ForEach-Object -Process { $_['Properties'][0]['ParameterName'] })
     }
 
     function Get-DriftNames
@@ -1027,5 +1093,253 @@ Describe 'ComplexObjectComparer.Compare drift shapes' {
         $result.Item1[0]['CurrentValue'] | Should -Be '1, 3'
         $result.Item1[0]['DesiredValue'] | Should -Be '1, 2'
         $result.Item1[0]['DeltaValue'] | Should -Be '<= 2; => 3'
+    }
+}
+
+Describe 'ConfigurationComparer.Compare with compare rules' {
+    It 'Applies the rules the schema declares when the caller doesn''t supply any' {
+        $source = @(New-Resource -ResourceName 'TestRules' -InstanceName 'S' -Values @{ Identity = 'a'; Mode = 'Off'; Notes = 'x' })
+        $destination = @(New-Resource -ResourceName 'TestRules' -InstanceName 'D' -Values @{ Identity = 'a'; Mode = 'Off'; Notes = 'y' })
+        (Invoke-ConfigurationCompare -Source $source -Destination $destination).Count | Should -Be 0
+
+        $source[0]['Mode'] = 'On'
+        $destination[0]['Mode'] = 'On'
+        $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination
+        $deltas[0]['Properties'][0]['ParameterName'] | Should -Be 'Notes'
+    }
+
+    It 'CheckAllSchemaProperties compares what either side contains and skips empty collections' {
+        $rules = @(@{ Type = 'CheckAllSchemaProperties' })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = 'x'; Members = @(); Owners = @('o') } -Destination @{ Owners = @('o') } |
+            Should -Be @('Notes')
+    }
+
+    It 'RemoveWhen removes listed and matching properties when all or any conditions are met' {
+        $rules = @(
+            @{ Type = 'RemoveWhen'; PropertyPattern = '^Own'; When = @{ All = @(@{ Property = 'Mode'; Equals = 'Off' }, @{ Side = 'Current'; Property = 'Window'; NotNullOrEmpty = $true }) } }
+            @{ Type = 'RemoveWhen'; Properties = @('Notes'); When = @{ Any = @(@{ Property = 'Mode'; Equals = 'Never' }, @{ Side = 'Current'; Property = 'Members'; IsNullOrEmpty = $true }) } }
+        )
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Mode = 'Off'; Window = 'w'; Owners = @('a'); Notes = 'x' } -Destination @{ Mode = 'Off'; Window = 'w'; Owners = @('b'); Notes = 'y' } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Mode = 'On'; Window = 'w'; Owners = @('a'); Notes = 'x' } -Destination @{ Mode = 'On'; Window = 'w'; Owners = @('b'); Notes = 'y' } |
+            Should -Be @('Owners')
+    }
+
+    It 'CheckWhen compares a property the desired side leaves out' {
+        $rules = @(@{ Type = 'CheckWhen'; Property = 'Window'; When = @{ Side = 'Current'; Property = 'Window'; NotNullOrEmpty = $true } })
+
+        Invoke-RuleCompare -Rules @() -Source @{ Window = 'w' } -Destination @{ } | Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Window = 'w' } -Destination @{ } | Should -Be @('Window')
+    }
+
+    It 'SetWhen writes a value on one side when the condition is met' {
+        $rules = @(@{ Type = 'SetWhen'; Side = 'Current'; Property = 'Mode'; Value = 'On'; When = @{ Side = 'Current'; Property = 'Mode'; Equals = 'Default' } })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Mode = 'Default' } -Destination @{ Mode = 'On' } | Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Mode = 'Off' } -Destination @{ Mode = 'On' } | Should -Be @('Mode')
+    }
+
+    It 'Normalize rewrites scalars, array items and nested paths on copies of the caller''s data' {
+        $rules = @(
+            @{ Type = 'Normalize'; Paths = @('Notes'); Using = 'StripNewlines' }
+            @{ Type = 'Normalize'; Paths = @('Members'); Using = 'RegexReplace'; Pattern = '@contoso\.com$'; Replacement = '' }
+            @{ Type = 'Normalize'; Paths = @('Settings[].Value'); Side = 'Current'; Using = 'PrefixUnless'; Pattern = '^v:'; Format = 'v:{0}' }
+        )
+        $setting = @{ Name = 's'; Value = '1' }
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = "a`r`nb"; Members = @('x@contoso.com'); Settings = @($setting) } -Destination @{ Notes = 'ab'; Members = @('x'); Settings = @(@{ Name = 's'; Value = 'v:1' }) } |
+            Should -BeNullOrEmpty
+        $setting['Value'] | Should -Be '1'
+    }
+
+    It 'Normalize formats durations, dates, times of day, sizes and date formats the same way on both sides' {
+        $rules = @(
+            @{ Type = 'Normalize'; Paths = @('Window'); Using = 'FormatDuration' }
+            @{ Type = 'Normalize'; Paths = @('Notes'); Using = 'FormatDateTime' }
+            @{ Type = 'Normalize'; Paths = @('Mode'); Using = 'FormatTimeOfDay' }
+            @{ Type = 'Normalize'; Paths = @('Members'); Using = 'FormatSize' }
+            @{ Type = 'Normalize'; Paths = @('Settings'); Using = 'FormatDuration' }
+            @{ Type = 'Normalize'; Paths = @('Settings[].Value'); Using = 'ReformatDateTime'; InputFormats = @('d/M/yyyy H:mm', 'd/M/yyyy'); Format = 'd/M/yyyy H:mm' }
+        )
+        $source = @{ Window = 'P90DT0H0M0S'; Notes = '2026-05-01T02:00:00+02:00'; Mode = '9:00'; Members = @('10 kb (10,240 bytes)'); Settings = @(@{ Name = 's'; Value = '1/5/2026' }) }
+        $destination = @{ Window = 'P90D'; Notes = '2026-05-01T00:00:00Z'; Mode = '09:00:00'; Members = @('10KB'); Settings = @(@{ Name = 's'; Value = '1/5/2026 0:00' }) }
+
+        Invoke-RuleCompare -Rules @() -Source $source.Clone() -Destination $destination.Clone() | Should -Not -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source $source -Destination $destination | Should -BeNullOrEmpty
+    }
+
+    It 'SameInstant takes the current text of a date that is the same instant' {
+        $rules = @(@{ Type = 'SameInstant'; Path = 'ScheduleInfo.StartDateTime' })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ ScheduleInfo = @{ StartDateTime = '2026-05-01T02:00:00+02:00' } } -Destination @{ ScheduleInfo = @{ StartDateTime = '2026-05-01T00:00:00Z' } } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ ScheduleInfo = @{ StartDateTime = '2026-05-02T00:00:00Z' } } -Destination @{ ScheduleInfo = @{ StartDateTime = '2026-05-01T00:00:00Z' } } |
+            Should -Be @('ScheduleInfo.StartDateTime')
+    }
+
+    It 'Equivalent treats the listed values as one' {
+        $rules = @(@{ Type = 'Equivalent'; Property = 'Mode'; Values = @('Default', 'HighConfidencePhish') })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Mode = 'HighConfidencePhish' } -Destination @{ Mode = 'Default' } | Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Mode = 'Off' } -Destination @{ Mode = 'Default' } | Should -Be @('Mode')
+    }
+
+    It 'NullEqualsEmpty reads a missing current array as empty' {
+        $rules = @(@{ Type = 'NullEqualsEmpty'; PropertyPattern = '^Members$' })
+
+        Invoke-RuleCompare -Rules @() -Source @{ } -Destination @{ Members = @() } | Should -Be @('Members')
+        Invoke-RuleCompare -Rules $rules -Source @{ } -Destination @{ Members = @() } | Should -BeNullOrEmpty
+    }
+
+    It 'Tolerance skips time spans within the allowed difference' {
+        $rules = @(@{ Type = 'Tolerance'; Properties = @('Window'); Within = '00:05:00' })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Window = '01:02:00' } -Destination @{ Window = '01:00:00' } | Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Window = '01:10:00' } -Destination @{ Window = '01:00:00' } | Should -Be @('Window')
+    }
+
+    It 'IgnoreNested leaves nested properties out on both sides, objects that aren''t hashtables included' {
+        $rules = @(@{ Type = 'IgnoreNested'; Paths = @('Settings[].Version') })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Settings = @(@{ Name = 's'; Value = '1'; Version = '2' }) } -Destination @{ Settings = @([PSCustomObject] @{ Name = 's'; Value = '1'; Version = '1' }) } |
+            Should -BeNullOrEmpty
+    }
+
+    It 'IgnoreWhenPast takes the current date when the desired one has passed' {
+        $rules = @(@{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' })
+        $now = [System.DateTimeOffset]::Parse('2026-06-01T00:00:00Z')
+
+        Invoke-RuleCompare -Rules $rules -Now $now -Source @{ ScheduleInfo = @{ StartDateTime = '2026-05-20T00:00:00Z' } } -Destination @{ ScheduleInfo = @{ StartDateTime = '2026-05-01T00:00:00Z' } } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Now $now -Source @{ ScheduleInfo = @{ StartDateTime = '2026-05-20T00:00:00Z' } } -Destination @{ ScheduleInfo = @{ StartDateTime = '2026-07-01T00:00:00Z' } } |
+            Should -Be @('ScheduleInfo.StartDateTime')
+    }
+
+    It 'Rename moves a property to its new name on both sides' {
+        Invoke-RuleCompare -Rules @(@{ Type = 'Rename'; From = 'Notes'; To = 'Window' }) -Source @{ Notes = 'x' } -Destination @{ Notes = 'y' } |
+            Should -Be @('Window')
+    }
+
+    It 'DurationMatchesEnd treats a duration as equal to the end date it reaches' {
+        $rules = @(@{ Type = 'DurationMatchesEnd'; Expiration = 'ScheduleInfo.Expiration'; Start = 'ScheduleInfo.StartDateTime' })
+        $current = { @{ ScheduleInfo = @{ StartDateTime = '2026-05-01T00:00:00Z'; Expiration = @{ type = 'afterDateTime'; endDateTime = '2026-05-31T00:00:00Z' } } } }
+
+        Invoke-RuleCompare -Rules $rules -Source (& $current) -Destination @{ ScheduleInfo = @{ StartDateTime = '2026-05-01T00:00:00Z'; Expiration = @{ type = 'afterDuration'; duration = 'P30D' } } } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source (& $current) -Destination @{ ScheduleInfo = @{ StartDateTime = '2026-05-01T00:00:00Z'; Expiration = @{ type = 'afterDuration'; duration = 'P29D' } } } |
+            Should -Not -BeNullOrEmpty
+    }
+
+    It 'AllowCurrentExtras accepts items only the current side has, when the desired side has the property' {
+        $rules = @(@{ Type = 'AllowCurrentExtras'; Property = 'Settings'; MatchKey = 'Name' })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Settings = @(@{ Name = 'a'; Value = '1' }, @{ Name = 'b'; Value = '2' }) } -Destination @{ Settings = @(@{ Name = 'a'; Value = '1' }) } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules ($rules[0], @{ Type = 'CheckAllSchemaProperties' }) -Source @{ Settings = @(@{ Name = 'b'; Value = '2' }) } -Destination @{ } |
+            Should -Not -BeNullOrEmpty
+    }
+
+    It 'CustomCompare runs the comparer registered under its name with the declaration and refuses an unknown one' {
+        [Microsoft365DSC.Compare.CompareRuleRegistry]::RegisterComparer('TestDropNotes', [System.Func[System.Object, System.Action[Microsoft365DSC.Compare.CompareRuleContext]]] {
+                param($declaration)
+
+                [System.Action[Microsoft365DSC.Compare.CompareRuleContext]] {
+                    param($context)
+                    $context.ValuesToCheck.Remove($declaration.Property)
+                }.GetNewClosure()
+            })
+
+        Invoke-RuleCompare -Rules @(@{ Type = 'CustomCompare'; Name = 'TestDropNotes'; Property = 'Notes' }) -Source @{ Notes = 'x' } -Destination @{ Notes = 'y' } |
+            Should -BeNullOrEmpty
+        { Invoke-RuleCompare -Rules @(@{ Type = 'CustomCompare'; Name = 'TestMissing' }) -Source @{ Notes = 'x' } -Destination @{ Notes = 'y' } } |
+            Should -Throw '*TestMissing*'
+    }
+
+    It 'Normalize groups an Exchange filter with -and before -or' {
+        $rules = @(@{ Type = 'Normalize'; Paths = @('Notes'); Using = 'ExchangeFilter' })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = '((A -eq 1) -and (B -eq 2)) -or (C -eq 3)' } -Destination @{ Notes = '(A -eq 1) -AND (B -eq 2) -or (C -eq 3)' } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = '(A -eq 1) -and ((B -eq 2) -or (C -eq 3))' } -Destination @{ Notes = '(A -eq 1) -AND (B -eq 2) -or (C -eq 3)' } |
+            Should -Be @('Notes')
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = '-and A' } -Destination @{ Notes = '-and A' } | Should -BeNullOrEmpty
+    }
+
+    It 'TenantIsolationRules applies included and excluded rules to the current ones and maps each tenant to its id' {
+        $rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'CustomCompare'; Name = 'TenantIsolationRules'; TenantIds = @{ contoso = 'id-1'; fabrikam = 'id-3' } }))
+        $desired = @{ RulesToInclude = @(@{ TenantName = 'contoso'; Direction = 'Inbound' }); RulesToExclude = @(@{ TenantName = 'fabrikam' }) }
+        $current = @{ Rules = @(@{ TenantName = 'id-2'; Direction = 'Outbound' }, @{ TenantName = 'id-3'; Direction = 'Both' }) }
+
+        $rewritten = [Microsoft365DSC.Compare.CompareRule]::ApplyAll($rules, $desired, $current, $desired.Clone(), [System.Object[]] @(), 'PPTenantIsolationSettings')
+
+        @($rewritten.Item1.Rules | ForEach-Object -Process { $_.TenantName }) | Should -Be @('id-2', 'id-1')
+        $rewritten.Item1.ContainsKey('RulesToInclude') | Should -BeFalse
+        $rewritten.Item3.ContainsKey('RulesToExclude') | Should -BeFalse
+    }
+
+    It 'FeatureUpdateRollout accepts a different start date in the past and reports one in the future' {
+        $rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'CustomCompare'; Name = 'FeatureUpdateRollout' }))
+        $current = @{ RolloutSettings = @{ OfferStartDateTimeInUTC = '2024-01-01T00:00:00Z' } }
+
+        $past = @{ RolloutSettings = @{ OfferStartDateTimeInUTC = '2020-01-01T00:00:00Z' } }
+        [Microsoft365DSC.Compare.CompareRule]::ApplyAll($rules, $past, $current, $past.Clone(), [System.Object[]] @(), 'X').Item3.ContainsKey('RolloutSettings') |
+            Should -BeFalse
+
+        $future = @{ RolloutSettings = @{ OfferStartDateTimeInUTC = '2099-01-01T00:00:00Z' } }
+        [Microsoft365DSC.Compare.CompareRule]::ApplyAll($rules, $future, $current, $future.Clone(), [System.Object[]] @(), 'X').Item3.RolloutSettings.Drift |
+            Should -Be 'desired'
+    }
+
+    It 'Reads the compare rules of every shipped resource' {
+        $schemaPath = "$PSScriptRoot/../../../Modules/Microsoft365DSC/SchemaDefinition.json"
+        if (-not (Test-Path -Path $schemaPath))
+        {
+            Set-ItResult -Skipped -Because 'the schema has not been built'
+            return
+        }
+
+        $declared = @([System.IO.File]::ReadAllText($schemaPath) | ConvertFrom-Json | Where-Object -FilterScript { $null -ne $_.CompareParameters.CompareRules })
+
+        $declared.Count | Should -BeGreaterThan 0
+        foreach ($entry in $declared)
+        {
+            { [Microsoft365DSC.Compare.CompareRule]::ParseAll($entry.CompareParameters.CompareRules) } | Should -Not -Throw -Because $entry.ClassName
+        }
+    }
+
+    It 'Refuses an unknown rule type, a condition on both sides and an unreadable time span' {
+        { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'Nope' })) } | Should -Throw '*Nope*'
+        { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'RemoveWhen'; Properties = @('Notes'); When = @{ Side = 'Both'; Property = 'Mode'; Truthy = $true } })) } | Should -Throw '*Mode*'
+        { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'Tolerance'; Properties = @('Window'); Within = 'soon' })) } | Should -Throw '*Within*'
+    }
+
+    It 'Applies the rules before PostProcessing' {
+        $Script:SeenWindow = $false
+        $postProcessing = {
+            param($DesiredValues, $CurrentValues, $ValuesToCheck, $Arguments)
+            $Script:SeenWindow = $ValuesToCheck.ContainsKey('Window')
+            return $null
+        }
+
+        $null = Invoke-RuleCompare -Rules @(@{ Type = 'Rename'; From = 'Notes'; To = 'Window' }) -PostProcessing $postProcessing -Source @{ Notes = 'x' } -Destination @{ Notes = 'y' }
+        $Script:SeenWindow | Should -BeTrue
+    }
+}
+
+Describe 'Compare-M365DSCResourceState with compare rules' {
+    BeforeAll {
+        Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCCompare.psm1" -Force
+    }
+
+    It 'Applies the rules before the comparison and leaves the caller''s values unchanged' {
+        $desired = @{ DisplayName = 'Group'; MailNickname = 'group'; Description = 'new' }
+        $current = @{ DisplayName = 'Group'; MailNickname = 'group'; Description = 'old' }
+        $rules = @(@{ Type = 'Normalize'; Paths = @('Description'); Side = 'Current'; Using = 'RegexReplace'; Pattern = '^old$'; Replacement = 'new' })
+
+        Compare-M365DSCResourceState -ResourceName 'AADGroup' -DesiredValues $desired -CurrentValues $current | Should -BeFalse
+        Compare-M365DSCResourceState -ResourceName 'AADGroup' -DesiredValues $desired -CurrentValues $current -CompareRules $rules | Should -BeTrue
+        $current['Description'] | Should -Be 'old'
     }
 }

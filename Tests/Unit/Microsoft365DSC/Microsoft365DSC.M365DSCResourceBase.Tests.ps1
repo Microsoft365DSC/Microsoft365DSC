@@ -324,12 +324,6 @@ Describe 'M365DSCResourceBase time helpers' {
         $Script:Resource::FormatDuration('not a duration') | Should -Be 'not a duration'
         $Script:Resource::FormatDuration($null) | Should -BeNullOrEmpty
     }
-
-    It 'Matches a duration against the time between two dates to the minute' {
-        $Script:Resource::IsSameDuration('PT8H', '2030-01-01T00:00:00Z', '2030-01-01T08:00:30Z') | Should -BeTrue
-        $Script:Resource::IsSameDuration('PT8H', '2030-01-01T00:00:00Z', '2030-01-01T09:00:00Z') | Should -BeFalse
-        $Script:Resource::IsSameDuration('not a duration', '2030-01-01T00:00:00Z', '2030-01-01T08:00:00Z') | Should -BeFalse
-    }
 }
 
 Describe 'M365DSCResourceBase deprecation warning' {

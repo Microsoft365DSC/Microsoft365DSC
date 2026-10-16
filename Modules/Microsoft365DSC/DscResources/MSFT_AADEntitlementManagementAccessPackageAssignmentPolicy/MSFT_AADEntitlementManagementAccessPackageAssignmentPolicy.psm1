@@ -835,30 +835,10 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if (-not [System.String]::IsNullOrEmpty($DesiredValues.AccessReviewSettings.StartDateTime))
-                {
-                    $parsedDesiredDate = [M365DSCResourceBase]::ConvertToDateTimeOffset($DesiredValues.AccessReviewSettings.StartDateTime)
-                    $parsedCurrentDate = [M365DSCResourceBase]::ConvertToDateTimeOffset($CurrentValues.AccessReviewSettings.StartDateTime)
-
-                    if ($null -ne $parsedDesiredDate -and $null -ne $parsedCurrentDate)
-                    {
-                        Write-Verbose -Message "Parsed Desired StartDateTime: $parsedDesiredDate, Parsed Current StartDateTime: $parsedCurrentDate"
-                        if ($parsedDesiredDate -eq $parsedCurrentDate)
-                        {
-                            $DesiredValues.AccessReviewSettings.StartDateTime = $CurrentValues.AccessReviewSettings.StartDateTime
-                        }
-                        elseif ($parsedDesiredDate -lt [System.DateTimeOffset]::UtcNow)
-                        {
-                            Write-Verbose -Message 'Ignoring StartDateTime in ScheduleInfo as it is in the past. StartDateTime cannot be set to a past date.'
-                            Write-Verbose -Message 'Aligning the Desired and Current StartDateTime values for comparison.'
-                            $DesiredValues.AccessReviewSettings.StartDateTime = $CurrentValues.AccessReviewSettings.StartDateTime
-                        }
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'SameInstant'; Path = 'AccessReviewSettings.StartDateTime' }
+                @{ Type = 'IgnoreWhenPast'; Path = 'AccessReviewSettings.StartDateTime' }
+            )
         }
     }
 

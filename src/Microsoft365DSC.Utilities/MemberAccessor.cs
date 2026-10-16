@@ -85,30 +85,35 @@ namespace Microsoft365DSC.Utilities
         /// </summary>
         /// <param name="dictionary">The dictionary to search.</param>
         /// <param name="name">The key to find.</param>
-        /// <param name="value">Receives the entry value, already unwrapped.</param>
+        /// <param name="key">The key value as the dictionary stores it, null when not found.</param>
         /// <returns>True when the key exists.</returns>
-        private static bool TryGetDictionaryEntry(IDictionary dictionary, string name, out object? value)
+        public static bool TryFindKey(IDictionary dictionary, string name, out object? key)
         {
-            value = null;
-
             // PowerShell hashtables are already case-insensitive, so this hits first in
             // the common case and the scan below never runs.
             if (dictionary.Contains(name))
             {
-                value = Unwrap(dictionary[name]);
+                key = name;
                 return true;
             }
 
-            foreach (DictionaryEntry entry in dictionary)
+            foreach (object candidate in dictionary.Keys)
             {
-                if (entry.Key is string key && string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                if (candidate is string text && string.Equals(text, name, StringComparison.OrdinalIgnoreCase))
                 {
-                    value = Unwrap(entry.Value);
+                    key = candidate;
                     return true;
                 }
             }
 
+            key = null;
             return false;
+        }
+
+        private static bool TryGetDictionaryEntry(IDictionary dictionary, string name, out object? value)
+        {
+            value = TryFindKey(dictionary, name, out object? key) ? Unwrap(dictionary[key!]) : null;
+            return key is not null;
         }
 
         /// <summary>

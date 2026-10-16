@@ -595,69 +595,16 @@ class SPOSharingSettings : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.DefaultLinkPermission -eq 'None')
-                {
-                    Write-Verbose -Message 'Valid values to set are View and Edit. A value of None will be set to Edit as its the default value.'
-                    $DesiredValues.DefaultLinkPermission = 'Edit'
-                    $ValuesToCheck.DefaultLinkPermission = 'Edit'
-                }
-
-                if ([System.String]::IsNullOrEmpty($DesiredValues.SignInAccelerationDomain))
-                {
-                    $DesiredValues.Remove('SignInAccelerationDomain') | Out-Null
-                    $ValuesToCheck.Remove('SignInAccelerationDomain') | Out-Null
-                    $DesiredValues.Remove('EnableGuestSignInAcceleration') | Out-Null #removing EnableGuestSignInAcceleration since it can only be configured with a configured SignINAccerlation domain
-                    $ValuesToCheck.Remove('EnableGuestSignInAcceleration') | Out-Null
-                }
-
-                if ($DesiredValues.SharingCapability -ne 'ExternalUserAndGuestSharing')
-                {
-                    Write-Warning -Message 'The sharing capabilities for the tenant are not configured to be ExternalUserAndGuestSharing for that the RequireAnonymousLinksExpireInDays property cannot be configured'
-                    $DesiredValues.Remove('RequireAnonymousLinksExpireInDays') | Out-Null
-                    $ValuesToCheck.Remove('RequireAnonymousLinksExpireInDays') | Out-Null
-                }
-
-                if ($DesiredValues.ExternalUserExpireInDays -and $DesiredValues.ExternalUserExpirationRequired -eq $false)
-                {
-                    Write-Warning -Message 'ExternalUserExpirationRequired is set to be false. For that the ExternalUserExpireInDays property cannot be configured'
-                    $DesiredValues.Remove('ExternalUserExpireInDays') | Out-Null
-                    $ValuesToCheck.Remove('ExternalUserExpireInDays') | Out-Null
-                }
-
-                if ($DesiredValues.SharingCapability -ne 'ExternalUserAndGuestSharing' -and ($null -ne $DesiredValues.FileAnonymousLinkType -or $null -ne $DesiredValues.FolderAnonymousLinkType))
-                {
-                    Write-Warning -Message 'If anonymous file or folder links are set, SharingCapability must be set to ExternalUserAndGuestSharing '
-                    $DesiredValues.Remove('FolderAnonymousLinkType') | Out-Null
-                    $ValuesToCheck.Remove('FolderAnonymousLinkType') | Out-Null
-                    $DesiredValues.Remove('FileAnonymousLinkType') | Out-Null
-                    $ValuesToCheck.Remove('FileAnonymousLinkType') | Out-Null
-                }
-
-                if ($DesiredValues.SharingDomainRestrictionMode -eq 'None')
-                {
-                    Write-Warning -Message 'SharingDomainRestrictionMode is set to None. For that SharingAllowedDomainList / SharingBlockedDomainList cannot be configured'
-                    $DesiredValues.Remove('SharingAllowedDomainList') | Out-Null
-                    $ValuesToCheck.Remove('SharingAllowedDomainList') | Out-Null
-                    $DesiredValues.Remove('SharingBlockedDomainList') | Out-Null
-                    $ValuesToCheck.Remove('SharingBlockedDomainList') | Out-Null
-                }
-                elseif ($DesiredValues.SharingDomainRestrictionMode -eq 'AllowList')
-                {
-                    Write-Verbose -Message 'SharingDomainRestrictionMode is set to AllowList. For that SharingBlockedDomainList cannot be configured'
-                    $DesiredValues.Remove('SharingBlockedDomainList') | Out-Null
-                    $ValuesToCheck.Remove('SharingBlockedDomainList') | Out-Null
-                }
-                elseif ($DesiredValues.SharingDomainRestrictionMode -eq 'BlockList')
-                {
-                    Write-Warning -Message 'SharingDomainRestrictionMode is set to BlockList. For that SharingAllowedDomainList cannot be configured'
-                    $DesiredValues.Remove('SharingAllowedDomainList') | Out-Null
-                    $ValuesToCheck.Remove('SharingAllowedDomainList') | Out-Null
-                }
-
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'SetWhen'; Property = 'DefaultLinkPermission'; Value = 'Edit'; When = @{ Property = 'DefaultLinkPermission'; Equals = 'None' } }
+                @{ Type = 'RemoveWhen'; Properties = @('SignInAccelerationDomain', 'EnableGuestSignInAcceleration'); When = @{ Property = 'SignInAccelerationDomain'; IsNullOrEmpty = $true }; AlsoFromDesired = $true }
+                @{ Type = 'RemoveWhen'; Properties = @('RequireAnonymousLinksExpireInDays'); When = @{ Property = 'SharingCapability'; NotEquals = 'ExternalUserAndGuestSharing' }; AlsoFromDesired = $true }
+                @{ Type = 'RemoveWhen'; Properties = @('ExternalUserExpireInDays'); When = @{ All = @(@{ Property = 'ExternalUserExpireInDays'; Truthy = $true }; @{ Property = 'ExternalUserExpirationRequired'; Equals = $false }) }; AlsoFromDesired = $true }
+                @{ Type = 'RemoveWhen'; Properties = @('FolderAnonymousLinkType', 'FileAnonymousLinkType'); When = @{ All = @(@{ Property = 'SharingCapability'; NotEquals = 'ExternalUserAndGuestSharing' }; @{ Any = @(@{ Property = 'FileAnonymousLinkType'; NotNullOrEmpty = $true }; @{ Property = 'FolderAnonymousLinkType'; NotNullOrEmpty = $true }) }) }; AlsoFromDesired = $true }
+                @{ Type = 'RemoveWhen'; Properties = @('SharingAllowedDomainList', 'SharingBlockedDomainList'); When = @{ Property = 'SharingDomainRestrictionMode'; Equals = 'None' }; AlsoFromDesired = $true }
+                @{ Type = 'RemoveWhen'; Properties = @('SharingBlockedDomainList'); When = @{ Property = 'SharingDomainRestrictionMode'; Equals = 'AllowList' }; AlsoFromDesired = $true }
+                @{ Type = 'RemoveWhen'; Properties = @('SharingAllowedDomainList'); When = @{ Property = 'SharingDomainRestrictionMode'; Equals = 'BlockList' }; AlsoFromDesired = $true }
+            )
         }
     }
 

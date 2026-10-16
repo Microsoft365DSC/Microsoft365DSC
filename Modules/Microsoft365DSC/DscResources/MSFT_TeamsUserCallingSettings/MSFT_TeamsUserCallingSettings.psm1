@@ -284,17 +284,9 @@ class TeamsUserCallingSettings : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                foreach ($name in @('CallGroupTargets', 'UnansweredTarget', 'ForwardingTarget'))
-                {
-                    if ($DesiredValues.ContainsKey($name))
-                    {
-                        $DesiredValues[$name] = [TeamsUserCallingSettings]::RemoveSipPrefix($DesiredValues[$name])
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'Normalize'; Paths = @('CallGroupTargets', 'UnansweredTarget', 'ForwardingTarget'); Side = 'Desired'; Using = 'RegexReplace'; Pattern = '^sip:'; Replacement = '' }
+            )
         }
     }
 

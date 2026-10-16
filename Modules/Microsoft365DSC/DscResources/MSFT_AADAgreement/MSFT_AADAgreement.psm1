@@ -336,15 +336,9 @@ class AADAgreement : M365DSCResourceBase
     {
         return @{
             ExcludedProperties = @('FileData')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($null -ne $DesiredValues.TermsExpiration -and $null -ne $CurrentValues.TermsExpiration -and
-                    [M365DSCResourceBase]::IsSameDateTime($DesiredValues.TermsExpiration.StartDateTime, $CurrentValues.TermsExpiration.StartDateTime))
-                {
-                    $DesiredValues.TermsExpiration.StartDateTime = $CurrentValues.TermsExpiration.StartDateTime
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'SameInstant'; Path = 'TermsExpiration.StartDateTime' }
+            )
         }
     }
 

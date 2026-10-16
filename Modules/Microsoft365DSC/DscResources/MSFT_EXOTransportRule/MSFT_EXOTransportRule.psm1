@@ -1190,20 +1190,9 @@ class EXOTransportRule : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                foreach ($sizeProperty in [EXOTransportRule]::GetSizePropertyNames())
-                {
-                    foreach ($values in @($DesiredValues, $CurrentValues, $ValuesToCheck))
-                    {
-                        if ($values.ContainsKey($sizeProperty))
-                        {
-                            $values[$sizeProperty] = [EXOTransportRule]::ConvertToSizeString($values[$sizeProperty])
-                        }
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'Normalize'; Paths = @('AttachmentSizeOver', 'ExceptIfAttachmentSizeOver', 'MessageSizeOver', 'ExceptIfMessageSizeOver'); Using = 'FormatSize' }
+            )
         }
     }
 

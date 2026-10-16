@@ -625,19 +625,9 @@ class PlannerTask : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ([System.String]::IsNullOrEmpty($DesiredValues.BucketId) -and
-                    -not [System.String]::IsNullOrEmpty($CurrentValues.BucketId))
-                {
-                    if (-not $ValuesToCheck.ContainsKey('BucketId'))
-                    {
-                        $DesiredValues.BucketId = $null
-                        $ValuesToCheck.Add('BucketId', $null)
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'CheckWhen'; Property = 'BucketId'; When = @{ All = @(@{ Property = 'BucketId'; IsNullOrEmpty = $true }; @{ Side = 'Current'; Property = 'BucketId'; NotNullOrEmpty = $true }) } }
+            )
         }
     }
 

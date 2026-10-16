@@ -361,50 +361,10 @@ class AADCustomSecurityAttributeDefinition : M365DSCResourceBase
     {
         return @{
             IncludedProperties = @('ValueId', 'IsActive')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.Ensure -eq 'Absent' -and $CurrentValues.Status -eq 'Deprecated')
-                {
-                    $CurrentValues.Ensure = 'Absent'
-                }
-
-                # Values cannot be removed from AllowedValues
-                # Therefore, we add the missing values from CurrentValues to DesiredValues for comparison
-                if ($DesiredValues.ContainsKey('AllowedValues'))
-                {
-                    foreach ($currentValue in $CurrentValues.AllowedValues)
-                    {
-                        $matchingValue = $DesiredValues.AllowedValues | Where-Object { $_.ValueId -eq $currentValue.ValueId }
-                        if ($null -eq $matchingValue)
-                        {
-                            # AllowedValues is either an array of CIM instances or an array of hashtables
-                            # CIM instances is when using Test-DscConfiguration (compiled configuration) and hashtables when creating a report, using values from ConvertTo-DscObject
-                            if ($DesiredValues.AllowedValues -is [CimInstance[]])
-                            {
-                                $DesiredValues.AllowedValues += [MSFT_CustomSecurityAttributeAllowedValue] @{
-                                    IsActive = $currentValue.IsActive
-                                    ValueId  = $currentValue.ValueId
-                                }
-                            }
-                            else
-                            {
-                                $DesiredValues.AllowedValues = @($DesiredValues.AllowedValues)
-                                $DesiredValues.AllowedValues += @{
-                                    CIMInstance = 'MSFT_CustomSecurityAttributeAllowedValue'
-                                    IsActive    = $currentValue.IsActive
-                                    ValueId     = $currentValue.ValueId
-                                }
-                            }
-                        }
-                    }
-
-                    if ($DesiredValues.AllowedValues -is [CimInstance[]])
-                    {
-                        $DesiredValues.AllowedValues = [CimInstance[]]$DesiredValues.AllowedValues
-                    }
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'SetWhen'; Side = 'Current'; Property = 'Ensure'; Value = 'Absent'; When = @{ All = @(@{ Side = 'Desired'; Property = 'Ensure'; Equals = 'Absent' }; @{ Side = 'Current'; Property = 'Status'; Equals = 'Deprecated' }) } }
+                @{ Type = 'AllowCurrentExtras'; Property = 'AllowedValues'; MatchKey = 'ValueId' }
+            )
         }
     }
 

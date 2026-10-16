@@ -492,22 +492,11 @@ class IntuneRoleAssignment : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                if ($DesiredValues.ContainsKey('MembersDisplayNames'))
-                {
-                    $ValuesToCheck.Remove('Members') | Out-Null
-                }
-                if ($DesiredValues.ContainsKey('ResourceScopesDisplayNames'))
-                {
-                    $ValuesToCheck.Remove('ResourceScopes') | Out-Null
-                }
-                if ($DesiredValues.ContainsKey('RoleDefinitionDisplayName'))
-                {
-                    $ValuesToCheck.Remove('RoleDefinition') | Out-Null
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('Members'); When = @{ Property = 'MembersDisplayNames'; HasKey = $true } }
+                @{ Type = 'RemoveWhen'; Properties = @('ResourceScopes'); When = @{ Property = 'ResourceScopesDisplayNames'; HasKey = $true } }
+                @{ Type = 'RemoveWhen'; Properties = @('RoleDefinition'); When = @{ Property = 'RoleDefinitionDisplayName'; HasKey = $true } }
+            )
         }
     }
 

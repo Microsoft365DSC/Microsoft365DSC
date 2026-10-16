@@ -218,10 +218,19 @@ namespace Microsoft365DSC.Compare
             Hashtable currentValues = source;
             Hashtable valuesToCheck = (Hashtable)destination.Clone();
 
-            if (overrides?.PostProcessing is { } postProcessing)
+            if (overrides?.Rules is { Count: > 0 } rules)
+            {
+                (desiredValues, currentValues, valuesToCheck) = CompareRule.ApplyAll(
+                    rules, desiredValues, currentValues, valuesToCheck, index.GetParameterNames(resourceName), overrides.Now ?? DateTimeOffset.Now, null);
+            }
+            else if (overrides?.PostProcessing is not null)
             {
                 desiredValues = (Hashtable)destination.Clone();
                 currentValues = (Hashtable)source.Clone();
+            }
+
+            if (overrides?.PostProcessing is { } postProcessing)
+            {
                 Tuple<Hashtable, Hashtable, Hashtable>? processed = postProcessing(
                     desiredValues, currentValues, valuesToCheck, overrides.PostProcessingArgs ?? []);
 
@@ -471,5 +480,13 @@ namespace Microsoft365DSC.Compare
         public Func<Hashtable, Hashtable, Hashtable, object[], Tuple<Hashtable, Hashtable, Hashtable>>? PostProcessing { get; set; }
 
         public object[]? PostProcessingArgs { get; set; }
+
+        /// <summary>
+        /// Run before <see cref="PostProcessing"/> on copies of both sides.
+        /// </summary>
+        public IReadOnlyList<CompareRule>? Rules { get; set; }
+
+        /// <summary>The current time to use for comparisons. Null reads the system clock.</summary>
+        public DateTimeOffset? Now { get; set; }
     }
 }

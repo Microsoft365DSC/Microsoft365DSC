@@ -363,44 +363,47 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'PostProcessing complex settings comparison' -Fixture {
+        Context -Name 'Complex settings comparison' -Fixture {
             BeforeAll {
-                Mock -CommandName New-M365DSCLogEntry -MockWith {
-                }
-
-                $postProcessing = (New-M365DSCResourceInstance -ResourceName 'SCSensitivityLabel' -Property @{
+                $compareRules = (New-M365DSCResourceInstance -ResourceName 'SCSensitivityLabel' -Property @{
                         Name       = 'TestLabel'
                         Credential = $Credential
-                    }).GetCompareParameters().PostProcessing
+                    }).GetCompareParameters().CompareRules
+
+                function Invoke-SettingCompare
+                {
+                    param($Property, $Desired, $Current)
+
+                    & $Global:DscHelper.InvokeCompareRules -CompareRules $compareRules -DesiredValues @{ $Property = $Desired } -CurrentValues @{ $Property = $Current }
+                }
             }
 
             It 'Should treat null and empty Operator and AutoApplyType as equal' {
                 $desired = @{ Operator = ''; AutoApplyType = $null; Groups = @() }
                 $current = [PSCustomObject]@{ Operator = $null; AutoApplyType = ''; Groups = @() }
-                [SCSensitivityLabel]::TestAutoLabelingSettings($desired, $current, $true) | Should -BeTrue
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 0 -Exactly -Scope It
+                $result = Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $desired -Current $current
+                $result.ValuesToCheck.ContainsKey('AutoLabelingSettings') | Should -BeFalse
+                $result.Messages | Should -BeNullOrEmpty
             }
 
             It 'Should report a group missing on either side' {
                 $withGroup = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number' }) }) }
                 $withoutGroup = @{ Operator = 'And'; Groups = @() }
-                [SCSensitivityLabel]::TestAutoLabelingSettings($withGroup, $withoutGroup, $true) | Should -BeFalse
-                [SCSensitivityLabel]::TestAutoLabelingSettings($withoutGroup, $withGroup, $true) | Should -BeFalse
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 2 -Exactly -Scope It
+                (Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $withGroup -Current $withoutGroup).Messages | Should -BeLike "*Group 'Group1' not found in the current settings.*"
+                (Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $withoutGroup -Current $withGroup).Messages | Should -BeLike "*Group 'Group1' not found in the desired settings.*"
             }
 
             It 'Should compare maxcount only when the desired side specifies it' {
                 $withMaxCount = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number'; maxcount = '9' }) }) }
                 $withoutMaxCount = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number' }) }) }
-                [SCSensitivityLabel]::TestAutoLabelingSettings($withMaxCount, $withoutMaxCount, $false) | Should -BeFalse
-                [SCSensitivityLabel]::TestAutoLabelingSettings($withoutMaxCount, $withMaxCount, $false) | Should -BeTrue
+                (Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $withMaxCount -Current $withoutMaxCount).Desired.AutoLabelingSettings.Drift | Should -Be 'desired'
+                (Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $withoutMaxCount -Current $withMaxCount).Messages | Should -BeNullOrEmpty
             }
 
             It 'Should treat an empty maxcount and a null maxcount as equal' {
                 $desired = @{ Operator = 'And'; Groups = @(@{ Name = 'Default'; Operator = 'And'; SensitiveInformationType = @(@{ name = 'Credit Card Number'; maxcount = '' }) }) }
                 $current = @{ Operator = 'And'; Groups = @(@{ Name = 'Default'; Operator = 'And'; SensitiveInformationType = @(@{ name = 'Credit Card Number'; maxcount = $null }) }) }
-                [SCSensitivityLabel]::TestAutoLabelingSettings($desired, $current, $true) | Should -BeTrue
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 0 -Exactly -Scope It
+                (Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $desired -Current $current).Messages | Should -BeNullOrEmpty
             }
 
             It 'Should read the current side from class instances' {
@@ -421,41 +424,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         }
                     )
                 }
-                [SCSensitivityLabel]::TestAutoLabelingSettings($desired, $current, $true) | Should -BeTrue
+                (Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $desired -Current $current).Messages | Should -BeNullOrEmpty
             }
 
             It 'Should compare array valued advanced settings as sets' {
                 $desired = @(@{ Key = 'contenttype'; Value = @('File', 'Email') })
-                [SCSensitivityLabel]::TestAdvancedSettings($desired, @(@{ Key = 'ContentType'; Value = @('Email', 'File') }), $true) | Should -BeTrue
-                [SCSensitivityLabel]::TestAdvancedSettings($desired, @(@{ Key = 'contenttype'; Value = @('File') }), $true) | Should -BeFalse
-                [SCSensitivityLabel]::TestAdvancedSettings(@(@{ Key = 'color'; Value = @('#FF0000') }), @(@{ Key = 'color'; Value = '#ff0000' }), $true) | Should -BeTrue
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 1 -Exactly -Scope It
+                (Invoke-SettingCompare -Property 'AdvancedSettings' -Desired $desired -Current @(@{ Key = 'ContentType'; Value = @('Email', 'File') })).Messages | Should -BeNullOrEmpty
+                (Invoke-SettingCompare -Property 'AdvancedSettings' -Desired $desired -Current @(@{ Key = 'contenttype'; Value = @('File') })).Messages | Should -Be 'AdvancedSettings do not match: contenttype'
+                (Invoke-SettingCompare -Property 'AdvancedSettings' -Desired @(@{ Key = 'color'; Value = @('#FF0000') }) -Current @(@{ Key = 'color'; Value = '#ff0000' })).Messages | Should -BeNullOrEmpty
             }
 
             It 'Should match a single element locale setting value against a scalar' {
                 $desired = @(@{ LocaleKey = 'DisplayName'; LabelSettings = @(@{ Key = 'en-us'; Value = @('English DisplayName') }) })
-                [SCSensitivityLabel]::TestLocaleSettings($desired, @(@{ LocaleKey = 'DisplayName'; LabelSettings = @(@{ Key = 'EN-US'; Value = 'English DisplayName' }) }), $true) | Should -BeTrue
-                [SCSensitivityLabel]::TestLocaleSettings($desired, @(@{ LocaleKey = 'DisplayName'; LabelSettings = @(@{ Key = 'en-us'; Value = 'Other' }) }), $true) | Should -BeFalse
-                [SCSensitivityLabel]::TestLocaleSettings($desired, @(@{ LocaleKey = 'Tooltip'; LabelSettings = @(@{ Key = 'en-us'; Value = 'English DisplayName' }) }), $true) | Should -BeFalse
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 2 -Exactly -Scope It
+                (Invoke-SettingCompare -Property 'LocaleSettings' -Desired $desired -Current @(@{ LocaleKey = 'DisplayName'; LabelSettings = @(@{ Key = 'EN-US'; Value = 'English DisplayName' }) })).Messages | Should -BeNullOrEmpty
+                (Invoke-SettingCompare -Property 'LocaleSettings' -Desired $desired -Current @(@{ LocaleKey = 'DisplayName'; LabelSettings = @(@{ Key = 'en-us'; Value = 'Other' }) })).Messages | Should -Be 'LocaleSettings do not match: DisplayName (en-us)'
+                (Invoke-SettingCompare -Property 'LocaleSettings' -Desired $desired -Current @(@{ LocaleKey = 'Tooltip'; LabelSettings = @(@{ Key = 'en-us'; Value = 'English DisplayName' }) })).Desired.LocaleSettings.Drift | Should -Be 'desired'
             }
 
-            It 'Should not write log entries when PostProcessing runs in a report context' {
-                $desiredValues = @{ AutoLabelingSettings = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number'; mincount = '1' }) }) } }
-                $currentValues = @{ AutoLabelingSettings = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number'; mincount = '5' }) }) } }
-                $result = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @(@{ IsReport = $true }))
-                $result.Item1.AutoLabelingSettings.Drift | Should -Be 'desired'
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 0 -Exactly -Scope It
-            }
-
-            It 'Should write the log entry once when PostProcessing runs outside a report context' {
-                $desiredValues = @{ AutoLabelingSettings = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number'; mincount = '1' }) }) } }
-                $currentValues = @{ AutoLabelingSettings = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number'; mincount = '5' }) }) } }
-                $result = $postProcessing.Invoke($desiredValues, $currentValues, $desiredValues.Clone(), @())
-                $result.Item1.AutoLabelingSettings.Drift | Should -Be 'desired'
-                Should -Invoke -CommandName New-M365DSCLogEntry -Times 1 -Exactly -Scope It -ParameterFilter {
-                    $Message -like "AutoLabelingSettings do not match: *`r`n- Parameter 'mincount' does not match*Current: '5'. Desired: '1'.*"
-                }
+            It 'Should log the drifted settings once and mark the property as drifted' {
+                $desired = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number'; mincount = '1' }) }) }
+                $current = @{ Operator = 'And'; Groups = @(@{ Name = 'Group1'; Operator = 'Or'; SensitiveInformationType = @(@{ name = 'ABA Routing Number'; mincount = '5' }) }) }
+                $result = Invoke-SettingCompare -Property 'AutoLabelingSettings' -Desired $desired -Current $current
+                $result.ValuesToCheck.AutoLabelingSettings.Drift | Should -Be 'desired'
+                $result.Messages.Count | Should -Be 1
+                $result.Messages[0] | Should -BeLike "AutoLabelingSettings do not match: *`r`n- Parameter 'mincount' does not match*Current: '5'. Desired: '1'.*"
             }
         }
 

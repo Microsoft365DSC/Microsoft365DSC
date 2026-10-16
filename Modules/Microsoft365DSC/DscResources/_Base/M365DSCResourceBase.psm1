@@ -1141,20 +1141,6 @@ class M365DSCResourceBase
         return [System.Xml.XmlConvert]::ToString([System.TimeSpan]$span)
     }
 
-    # True when the time between the two dates matches the ISO 8601 duration to the minute.
-    hidden static [System.Boolean] IsSameDuration([System.Object] $Duration, [System.Object] $StartDateTime, [System.Object] $EndDateTime)
-    {
-        $expectedSpan = [M365DSCResourceBase]::ConvertToTimeSpan($Duration)
-        $start = [M365DSCResourceBase]::ConvertToDateTimeOffset($StartDateTime)
-        $end = [M365DSCResourceBase]::ConvertToDateTimeOffset($EndDateTime)
-        if ($null -eq $expectedSpan -or $null -eq $start -or $null -eq $end)
-        {
-            return $false
-        }
-
-        return [System.Math]::Abs((($end - $start) - $expectedSpan).TotalMinutes) -lt 1
-    }
-
     # Warns that the resource is deprecated, names its replacement and, when given, a link with more information.
     hidden [void] WarnResourceDeprecated([System.String] $Replacement, [System.String] $InformationUrl)
     {
@@ -1216,36 +1202,7 @@ class M365DSCResourceBase
     [Hashtable] GetSettingsCatalogCompareParameters([System.String[]] $ExcludedProperties)
     {
         $result = @{
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                foreach ($name in $PostProcessingArgs[0])
-                {
-                    $currentValue = $CurrentValues[$name]
-                    $desiredValue = $DesiredValues[$name]
-
-                    if ($currentValue -is [System.Collections.ICollection] -and $currentValue.Count -eq 0)
-                    {
-                        $currentValue = $null
-                    }
-                    if ($desiredValue -is [System.Collections.ICollection] -and $desiredValue.Count -eq 0)
-                    {
-                        $desiredValue = $null
-                    }
-
-                    if ($null -ne $currentValue -or $null -ne $desiredValue)
-                    {
-                        $ValuesToCheck[$name] = $null
-                        if (-not $DesiredValues.ContainsKey($name))
-                        {
-                            $DesiredValues.Add($name, $null)
-                        }
-                    }
-                }
-
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
-            # Prevent array unrolling
-            PostProcessingArgs = @(, $this.GetSchemaPropertyNames())
+            CompareRules = @(@{ Type = 'CheckAllSchemaProperties' })
         }
 
         if ($ExcludedProperties.Count -gt 0)

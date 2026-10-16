@@ -787,30 +787,13 @@ class IntuneDeviceConfigurationWiredNetworkPolicyWindows10 : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            PostProcessing = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                if ($DesiredValues.ContainsKey('RootCertificatesForServerValidationDisplayNames'))
-                {
-                    $ValuesToCheck.Remove('RootCertificatesForServerValidationIds') | Out-Null
-                }
-                if ($DesiredValues.ContainsKey('IdentityCertificateForClientAuthenticationDisplayName'))
-                {
-                    $ValuesToCheck.Remove('IdentityCertificateForClientAuthenticationId') | Out-Null
-                }
-                if ($DesiredValues.ContainsKey('SecondaryIdentityCertificateForClientAuthenticationDisplayName'))
-                {
-                    $ValuesToCheck.Remove('SecondaryIdentityCertificateForClientAuthenticationId') | Out-Null
-                }
-                if ($DesiredValues.ContainsKey('RootCertificateForClientValidationDisplayName'))
-                {
-                    $ValuesToCheck.Remove('RootCertificateForClientValidationId') | Out-Null
-                }
-                if ($DesiredValues.ContainsKey('SecondaryRootCertificateForClientValidationDisplayName'))
-                {
-                    $ValuesToCheck.Remove('SecondaryRootCertificateForClientValidationId') | Out-Null
-                }
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('RootCertificatesForServerValidationIds'); When = @{ Property = 'RootCertificatesForServerValidationDisplayNames'; HasKey = $true } }
+                @{ Type = 'RemoveWhen'; Properties = @('IdentityCertificateForClientAuthenticationId'); When = @{ Property = 'IdentityCertificateForClientAuthenticationDisplayName'; HasKey = $true } }
+                @{ Type = 'RemoveWhen'; Properties = @('SecondaryIdentityCertificateForClientAuthenticationId'); When = @{ Property = 'SecondaryIdentityCertificateForClientAuthenticationDisplayName'; HasKey = $true } }
+                @{ Type = 'RemoveWhen'; Properties = @('RootCertificateForClientValidationId'); When = @{ Property = 'RootCertificateForClientValidationDisplayName'; HasKey = $true } }
+                @{ Type = 'RemoveWhen'; Properties = @('SecondaryRootCertificateForClientValidationId'); When = @{ Property = 'SecondaryRootCertificateForClientValidationDisplayName'; HasKey = $true } }
+            )
         }
     }
 

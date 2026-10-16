@@ -598,84 +598,9 @@ class IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 : M365DSCResou
     {
         return @{
             ExcludedProperties = @('InstallLatestWindows10OnWindows11IneligibleDevice')
-            PostProcessing     = {
-                param($DesiredValues, $CurrentValues, $ValuesToCheck, $ignore)
-                # RolloutSettings drift is evaluated with rollout-date rules instead of the generic compare.
-                $desiredRollout = $DesiredValues.RolloutSettings
-                $currentRollout = $CurrentValues.RolloutSettings
-                $testResult = $true
-                if ($null -eq $desiredRollout -or $null -eq $currentRollout)
-                {
-                    $testResult = ($null -eq $desiredRollout -and $null -eq $currentRollout)
-                }
-                else
-                {
-                    $currentTime = Get-Date
-                    [datetime]$offerStartDate = [datetime]::MinValue
-                    [datetime]$offerEndDate = [datetime]::MinValue
-                    [datetime]$currentOfferStartDate = [datetime]::MinValue
-                    [datetime]$currentOfferEndDate = [datetime]::MinValue
-                    [datetime]::TryParse($desiredRollout.OfferStartDateTimeInUTC, [ref]$offerStartDate) | Out-Null
-                    [datetime]::TryParse($desiredRollout.OfferEndDateTimeInUTC, [ref]$offerEndDate) | Out-Null
-                    [datetime]::TryParse($currentRollout.OfferStartDateTimeInUTC, [ref]$currentOfferStartDate) | Out-Null
-                    [datetime]::TryParse($currentRollout.OfferEndDateTimeInUTC, [ref]$currentOfferEndDate) | Out-Null
-
-                    if (($offerEndDate -eq [datetime]::MinValue -and $currentOfferEndDate -ne [datetime]::MinValue) -or `
-                        ($offerEndDate -ne [datetime]::MinValue -and $currentOfferEndDate -eq [datetime]::MinValue))
-                    {
-                        Write-Verbose -Message 'OfferEndDateTimeInUTC is null in either the desired configuration or the current configuration.'
-                        $testResult = $false
-                    }
-
-                    if ($testResult -and $offerStartDate -ne [datetime]::MinValue -and $currentOfferStartDate -ne [datetime]::MinValue)
-                    {
-                        if ($offerStartDate -ne $currentOfferStartDate `
-                                -and $offerStartDate -gt $currentTime)
-                        {
-                            Write-Verbose -Message 'OfferStartDateTimeInUTC is different from current.'
-                            $testResult = $false
-                        }
-
-                        if ($testResult -and $offerEndDate -ne [datetime]::MinValue -and $currentOfferEndDate -ne [datetime]::MinValue)
-                        {
-                            if ($offerStartDate -ne $currentOfferStartDate `
-                                    -and $offerStartDate -gt $currentTime `
-                                    -and $offerStartDate -lt $currentTime.AddDays(2))
-                            {
-                                Write-Verbose -Message 'OfferStartDateTimeInUTC must be greater than the current time + 2 days to be changable if OfferEndDateTimeInUTC is specified, resetting testResult to true.'
-                                $testResult = $true
-                            }
-
-                            if ($offerEndDate -ne $currentOfferEndDate `
-                                    -and $offerEndDate -gt $currentTime `
-                                    -and $offerEndDate -gt $offerStartDate)
-                            {
-                                Write-Verbose -Message 'OfferEndDateTimeInUTC is different from current.'
-                                $testResult = $false
-                            }
-
-                            if ($testResult -and $desiredRollout.OfferIntervalInDays -ne $currentRollout.OfferIntervalInDays)
-                            {
-                                Write-Verbose -Message 'OfferIntervalInDays is different from current.'
-                                $testResult = $false
-                            }
-                        }
-                    }
-                }
-
-                if ($testResult)
-                {
-                    $ValuesToCheck.Remove('RolloutSettings') | Out-Null
-                }
-                else
-                {
-                    $DesiredValues['RolloutSettings'] = @{ Drift = 'desired' }
-                    $CurrentValues['RolloutSettings'] = @{ Drift = 'current' }
-                    $ValuesToCheck['RolloutSettings'] = $DesiredValues['RolloutSettings']
-                }
-
-                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
-            }
+            CompareRules       = @(
+                @{ Type = 'CustomCompare'; Name = 'FeatureUpdateRollout' }
+            )
         }
     }
 

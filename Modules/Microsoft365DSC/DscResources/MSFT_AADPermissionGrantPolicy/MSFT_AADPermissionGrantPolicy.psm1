@@ -494,7 +494,10 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
         # values. Condition set ids are assigned by the service and Set matches sets by content,
         # so they are left out of the comparison.
         return @{
-            PostProcessing = {
+            CompareRules       = @(
+                @{ Type = 'IgnoreNested'; Paths = @('Includes[].Id', 'Excludes[].Id') }
+            )
+            PostProcessing     = {
                 param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
 
                 # Resolving permission ids to names needs a Graph connection, which a report does not have.
