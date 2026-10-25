@@ -348,6 +348,21 @@ class AADServicePrincipal : M365DSCResourceBase
                 $claimsPolicyValue.Remove('id') | Out-Null
                 $claimsPolicyValue = Rename-M365DSCCimInstanceParameter -Properties $claimsPolicyValue `
                     -KeyMapping @{ '@odata.type' = 'odataType' }
+                $claimsPolicyValue.Remove('@odata.type') | Out-Null
+                $claimsPolicyValue.Remove('odataType') | Out-Null
+
+                foreach ($key in @($claimsPolicyValue.Keys))
+                {
+                    if ($key -like '@odata.*')
+                    {
+                        $claimsPolicyValue.Remove($key) | Out-Null
+                    }
+                }
+
+                if ($claimsPolicyValue.Keys.Count -eq 0)
+                {
+                    $claimsPolicyValue = $null
+                }
             }
 
             #Managed Identities in AzureGov return exception when pulling delegatedPermissionClassifications

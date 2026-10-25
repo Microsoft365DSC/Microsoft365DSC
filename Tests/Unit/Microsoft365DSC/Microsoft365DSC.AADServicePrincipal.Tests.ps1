@@ -512,6 +512,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             status = 200
                             body   = @{
                                 '@odata.context'       = 'https://graph.microsoft.com/beta/$metadata#servicePrincipals'
+                                '@odata.type'          = '#microsoft.graph.customClaimProvidingOrganization'
                                 'id'                   = '5dcb2237-c61b-4258-9c85-eae2aaeba9d6'
                                 'includeBasicClaimSet' = $true
                                 'groupFilter'          = @{
@@ -544,6 +545,59 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result | Should -Not -BeNullOrEmpty
                 $result | Should -Match 'employeeid'
                 $result | Should -Match 'groupClaimFilter'
+                $result | Should -Not -Match 'odataType = ''#microsoft.graph.customClaimProvidingOrganization'''
+            }
+
+            It 'Should successfully retrieve claims policy with root @odata.type in Get()' {
+                Mock -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
+                    return @(
+                        @{
+                            id     = 'claimsPolicy'
+                            status = 200
+                            body   = @{
+                                '@odata.context'               = 'https://graph.microsoft.com/beta/$metadata#servicePrincipals'
+                                '@odata.type'                  = '#microsoft.graph.customClaimProvidingOrganization'
+                                'id'                           = 'claimsPolicy'
+                                'audienceOverride'             = 'https://app1.contoso.com'
+                                'includeApplicationIdInIssuer' = $true
+                                'includeBasicClaimSet'         = $true
+                                'groupFilter'                  = @{
+                                    '@odata.type' = '#microsoft.graph.groupClaimFilter'
+                                    'type'        = 'prefix'
+                                    'matchOn'     = 'samAccountName'
+                                    'value'       = 'DSC'
+                                }
+                                'claims'                       = @(
+                                    @{
+                                        '@odata.type'    = '#microsoft.graph.customClaim'
+                                        'name'           = 'employeeid'
+                                        'tokenFormat'    = @('saml')
+                                        'configurations' = @(
+                                            @{
+                                                'attribute' = @{
+                                                    '@odata.type' = '#microsoft.graph.sourcedAttribute'
+                                                    'id'          = 'employeeid'
+                                                }
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    )
+                }
+
+                $getParams = @{
+                    AppId      = 'b4f08c68-7276-4cb8-b9ae-e75fca5ff834'
+                    Credential = $Credential
+                }
+                $instance = (New-M365DSCResourceInstance -ResourceName 'AADServicePrincipal' -Property $getParams).Get()
+                $instance.ClaimsPolicy | Should -Not -BeNullOrEmpty
+                $instance.ClaimsPolicy.audienceOverride | Should -Be 'https://app1.contoso.com'
+                $instance.ClaimsPolicy.Claims.Count | Should -Be 1
+                $instance.ClaimsPolicy.Claims[0].odataType | Should -Be '#microsoft.graph.customClaim'
+                $instance.ClaimsPolicy.Claims[0].name | Should -Be 'employeeid'
+                $instance.ClaimsPolicy.GroupFilter.odataType | Should -Be '#microsoft.graph.groupClaimFilter'
             }
         }
 
