@@ -1,4 +1,10 @@
-﻿# Change log for Microsoft365DSC
+# Change log for Microsoft365DSC
+
+# UNRELEASED
+
+* AADServicePrincipal
+  * Fixed an issue where exporting a claims policy failed due to root `@odata.type` metadata keys.
+    FIXES [#7561](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7561)
 
 # 2.26.1021.1
 
