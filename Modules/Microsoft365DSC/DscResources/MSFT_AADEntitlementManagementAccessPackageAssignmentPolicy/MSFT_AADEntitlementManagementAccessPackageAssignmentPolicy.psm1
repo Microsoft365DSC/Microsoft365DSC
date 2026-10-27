@@ -234,40 +234,81 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
 
             #region Format RequestorSettings
             $formattedRequestorSettings = Get-M365DSCDRGComplexTypeToHashtable -ComplexObject $getValue.RequestorSettings
-            if ($null -ne $formattedRequestorSettings.allowedRequestors -and $formattedRequestorSettings.allowedRequestors.Count -gt 0 )
+            if ($null -ne $formattedRequestorSettings -and $formattedRequestorSettings.Count -gt 0)
             {
-                foreach ($setting in $formattedRequestorSettings.allowedRequestors)
+                $cleanRequestorSettings = @{}
+
+                if ($null -ne $formattedRequestorSettings.acceptRequests)
                 {
-                    $setting.Remove('description') | Out-Null
-                    if (-not $setting.ContainsKey('odataType'))
-                    {
-                        $setting.Add('odataType', $setting.'@odata.type')
-                        $setting.Remove('@odata.type') | Out-Null
-                    }
-                    if (-not [System.String]::IsNullOrEmpty($setting.id))
-                    {
-                        # Check the @odata.type to determine if this is a user or group
-                        $odataType = $setting.'odataType'
-                        if ($odataType -eq '#microsoft.graph.singleUser')
-                        {
-                            # Handle single user - try to resolve to UserPrincipalName
-                            $user = Get-MgUser -UserId $setting.id -ErrorAction SilentlyContinue
-                            if ($null -ne $user)
-                            {
-                                $setting.Id = $user.UserPrincipalName
-                            }
-                        }
-                        elseif ($odataType -eq '#microsoft.graph.groupMembers')
-                        {
-                            # Handle group members - try to resolve group to DisplayName, fallback to GUID
-                            $group = Get-MgGroup -GroupId $setting.id -ErrorAction SilentlyContinue
-                            if ($null -ne $group)
-                            {
-                                $setting.Id = $group.DisplayName
-                            }
-                        }
-                    }
+                    $cleanRequestorSettings.AcceptRequests = [System.Boolean]$formattedRequestorSettings.acceptRequests
                 }
+
+                if (-not [System.String]::IsNullOrEmpty($formattedRequestorSettings.scopeType))
+                {
+                    $cleanRequestorSettings.ScopeType = $formattedRequestorSettings.scopeType
+                }
+
+                if ($null -ne $formattedRequestorSettings.allowedRequestors)
+                {
+                    $cleanAllowedRequestors = @()
+                    foreach ($setting in $formattedRequestorSettings.allowedRequestors)
+                    {
+                        $odataType = $null
+                        if ($setting.ContainsKey('odataType') -and -not [System.String]::IsNullOrEmpty($setting.odataType))
+                        {
+                            $odataType = $setting.odataType
+                        }
+                        elseif ($setting.ContainsKey('@odata.type') -and -not [System.String]::IsNullOrEmpty($setting.'@odata.type'))
+                        {
+                            $odataType = $setting.'@odata.type'
+                        }
+
+                        $resolvedId = if (-not [System.String]::IsNullOrEmpty($setting.id)) { $setting.id } else { $setting.connectedOrganizationId }
+                        if (-not [System.String]::IsNullOrEmpty($resolvedId))
+                        {
+                            if ($odataType -eq '#microsoft.graph.singleUser')
+                            {
+                                $user = Get-MgUser -UserId $resolvedId -ErrorAction SilentlyContinue
+                                if ($null -ne $user)
+                                {
+                                    $resolvedId = $user.UserPrincipalName
+                                }
+                            }
+                            elseif ($odataType -eq '#microsoft.graph.groupMembers')
+                            {
+                                $group = Get-MgGroup -GroupId $resolvedId -ErrorAction SilentlyContinue
+                                if ($null -ne $group)
+                                {
+                                    $resolvedId = $group.DisplayName
+                                }
+                            }
+                        }
+
+                        $cleanSetting = @{
+                            odataType = $odataType
+                            Id        = $resolvedId
+                        }
+
+                        if ($null -ne $setting.isBackup)
+                        {
+                            $cleanSetting.IsBackup = [System.Boolean]$setting.isBackup
+                        }
+
+                        if ($null -ne $setting.managerLevel)
+                        {
+                            $cleanSetting.ManagerLevel = [System.UInt32]$setting.managerLevel
+                        }
+
+                        $cleanAllowedRequestors += $cleanSetting
+                    }
+                    $cleanRequestorSettings.AllowedRequestors = $cleanAllowedRequestors
+                }
+
+                $formattedRequestorSettings = $cleanRequestorSettings
+            }
+            else
+            {
+                $formattedRequestorSettings = $null
             }
             #endregion
 
