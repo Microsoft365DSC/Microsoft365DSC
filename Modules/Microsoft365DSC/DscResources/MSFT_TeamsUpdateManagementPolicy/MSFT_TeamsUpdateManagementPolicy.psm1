@@ -156,7 +156,7 @@ class TeamsUpdateManagementPolicy : M365DSCResourceBase
             }
             if (-not [System.String]::IsNullOrEmpty($policy.UpdateTimeOfDay))
             {
-                $updateTimeOfDayValue = $policy.UpdateTimeOfDay.ToString('h:mm tt', [System.Globalization.CultureInfo]::InvariantCulture)
+                $updateTimeOfDayValue = [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay($policy.UpdateTimeOfDay)
                 $results.Add('UpdateTimeOfDay', $updateTimeOfDayValue)
             }
             return $this.AsResult($results)
@@ -207,7 +207,35 @@ class TeamsUpdateManagementPolicy : M365DSCResourceBase
 
     [bool] Test()
     {
+        if (-not [System.String]::IsNullOrEmpty($this.UpdateTimeOfDay))
+        {
+            $this.UpdateTimeOfDay = [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay($this.UpdateTimeOfDay)
+        }
+
         return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            PostProcessing = {
+                param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
+
+                if ($DesiredValues.ContainsKey('UpdateTimeOfDay') -and $null -ne $DesiredValues.UpdateTimeOfDay)
+                {
+                    $normalizedTime = [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay($DesiredValues.UpdateTimeOfDay)
+                    $DesiredValues.UpdateTimeOfDay = $normalizedTime
+                    $ValuesToCheck.UpdateTimeOfDay = $normalizedTime
+                }
+
+                if ($CurrentValues.ContainsKey('UpdateTimeOfDay') -and $null -ne $CurrentValues.UpdateTimeOfDay)
+                {
+                    $CurrentValues.UpdateTimeOfDay = [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay($CurrentValues.UpdateTimeOfDay)
+                }
+
+                return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+            }
+        }
     }
 
     [string] Export()
@@ -287,5 +315,33 @@ class TeamsUpdateManagementPolicy : M365DSCResourceBase
         }
 
         return $result
+    }
+
+    hidden static [System.String] FormatUpdateTimeOfDay([System.Object] $Value)
+    {
+        if ($null -eq $Value)
+        {
+            return $null
+        }
+
+        if ($Value -is [System.DateTime])
+        {
+            return ([System.DateTime]$Value).ToString('h:mm tt', [System.Globalization.CultureInfo]::InvariantCulture)
+        }
+
+        $stringValue = [System.String]$Value
+        if ([System.String]::IsNullOrEmpty($stringValue))
+        {
+            return $null
+        }
+
+        $parsedDate = [System.DateTime]::MinValue
+        if ([System.DateTime]::TryParse($stringValue, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$parsedDate) -or `
+            [System.DateTime]::TryParse($stringValue, [ref]$parsedDate))
+        {
+            return $parsedDate.ToString('h:mm tt', [System.Globalization.CultureInfo]::InvariantCulture)
+        }
+
+        return $stringValue
     }
 }

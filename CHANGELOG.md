@@ -1,4 +1,10 @@
-﻿# Change log for Microsoft365DSC
+# Change log for Microsoft365DSC
+
+# UNRELEASED
+
+* TeamsUpdateManagementPolicy
+  * Fixed an issue where `UpdateTimeOfDay` reported false positive drift unless specified in `h:mm tt` format.
+    FIXES [#7565](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7565)
 
 # 2.26.1021.1
 

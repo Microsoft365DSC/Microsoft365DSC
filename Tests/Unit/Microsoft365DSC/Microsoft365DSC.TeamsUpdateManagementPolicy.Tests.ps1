@@ -161,6 +161,60 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
+        Context -Name 'Policy exists and is in the Desired State when UpdateTimeOfDay is in 24-hour format' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    AllowManagedUpdates = $False
+                    AllowPreview        = $False
+                    AllowPublicPreview  = 'Enabled'
+                    Description         = 'Test'
+                    Identity            = 'Tag:TestPolicy'
+                    UpdateDayOfWeek     = 1
+                    UpdateTime          = '18:00'
+                    UpdateTimeOfDay     = '18:00'
+                    UseNewTeamsClient   = 'MicrosoftChoice'
+                    Ensure              = 'Present'
+                    Credential          = $Credential
+                }
+            }
+
+            It 'Should return true from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUpdateManagementPolicy' -Property $testParams).Test() | Should -Be $true
+            }
+        }
+
+        Context -Name 'Policy exists but UpdateTimeOfDay differs from Desired State' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    AllowManagedUpdates = $False
+                    AllowPreview        = $False
+                    AllowPublicPreview  = 'Enabled'
+                    Description         = 'Test'
+                    Identity            = 'Tag:TestPolicy'
+                    UpdateDayOfWeek     = 1
+                    UpdateTime          = '18:00'
+                    UpdateTimeOfDay     = '19:00'
+                    UseNewTeamsClient   = 'MicrosoftChoice'
+                    Ensure              = 'Present'
+                    Credential          = $Credential
+                }
+            }
+
+            It 'Should return false from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'TeamsUpdateManagementPolicy' -Property $testParams).Test() | Should -Be $false
+            }
+        }
+
+        Context -Name 'UpdateTimeOfDay format normalization' -Fixture {
+            It 'Should normalize 24-hour and DateTime formats to invariant h:mm tt' {
+                [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay('18:00') | Should -Be '6:00 PM'
+                [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay('08:30') | Should -Be '8:30 AM'
+                [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay('6:00 PM') | Should -Be '6:00 PM'
+                [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay([System.DateTime]::Parse('2022-12-08 6:00:00PM')) | Should -Be '6:00 PM'
+                [TeamsUpdateManagementPolicy]::FormatUpdateTimeOfDay($null) | Should -BeNullOrEmpty
+            }
+        }
+
         Context -Name 'Policy exists but it should not' -Fixture {
             BeforeAll {
                 $testParams = @{
