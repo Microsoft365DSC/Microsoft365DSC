@@ -182,6 +182,18 @@ Describe 'M365DSCResourceBase complex-type hydration' {
         } | Should -Throw -ExpectedMessage '*dataType*not in the valid set*'
     }
 
+    It 'Names the offending member when its key differs in case from the declared property' {
+        {
+            & $Script:NewInstance @{
+                Assignments = @(
+                    @{
+                        DATATYPE = 'not-a-real-target'
+                    }
+                )
+            }
+        } | Should -Throw -ExpectedMessage "*member 'DATATYPE' value 'not-a-real-target' is not in the valid set*"
+    }
+
     It 'Hydrates every element of a complex array when one element carries a $null ValidateSet member' {
         $instance = & $Script:NewInstance @{
             Assignments = @(

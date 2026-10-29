@@ -1058,6 +1058,16 @@ class AADServicePrincipal : M365DSCResourceBase
                                 IsRequired      = $False
                             },
                             @{
+                                Name            = 'input2'
+                                CimInstanceName = 'MSFT_AADServicePrincipalTransformationAttribute'
+                                IsRequired      = $False
+                            },
+                            @{
+                                Name            = 'output'
+                                CimInstanceName = 'MSFT_AADServicePrincipalTransformationAttribute'
+                                IsRequired      = $False
+                            },
+                            @{
                                 Name            = 'configurations'
                                 CimInstanceName = 'AADServicePrincipalCustomClaimConfiguration'
                                 IsRequired      = $False
@@ -1650,8 +1660,40 @@ class MSFT_AADServicePrincipalCustomClaimTransformation
 {
     [DscProperty()]
     [System.ComponentModel.Description('The type of the entity.')]
-    [ValidateSet('#microsoft.graph.regexReplaceTransformation')]
+    [ValidateSet('#microsoft.graph.containsTransformation', '#microsoft.graph.endsWithTransformation', '#microsoft.graph.extractAlphaTransformation', '#microsoft.graph.extractMailPrefixTransformation', '#microsoft.graph.extractNumberTransformation', '#microsoft.graph.extractTransformation', '#microsoft.graph.ifEmptyTransformation', '#microsoft.graph.ifNotEmptyTransformation', '#microsoft.graph.joinTransformation', '#microsoft.graph.regexReplaceTransformation', '#microsoft.graph.startsWithTransformation', '#microsoft.graph.substringTransformation', '#microsoft.graph.toLowercaseTransformation', '#microsoft.graph.toUppercaseTransformation')]
     [System.String] $odataType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The second input used in the join operation.')]
+    [MSFT_AADServicePrincipalTransformationAttribute] $input2
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The output attribute that is used based on the condition applied in this transformation.')]
+    [MSFT_AADServicePrincipalTransformationAttribute] $output
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The separator value to be used.')]
+    [System.String] $separator
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The type of extract transformation to apply.')]
+    [System.String] $type
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The value to be used as part of the transformation.')]
+    [System.String] $value
+
+    [DscProperty()]
+    [System.ComponentModel.Description('An optional secondary value to be used when dealing with between extract operations.')]
+    [System.String] $value2
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The start index of the substring operation, where 0 is the first character in the string.')]
+    [System.Nullable[System.Int32]] $index
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The maximum length of the string, starting from the provided index.')]
+    [System.Nullable[System.Int32]] $length
 
     [DscProperty()]
     [System.ComponentModel.Description('The regular expression to be applied on the input directory attribute or constant.')]

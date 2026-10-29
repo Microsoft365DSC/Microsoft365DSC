@@ -184,6 +184,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOOrganizationConfig' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
+
+            It 'Should retrieve the EWS operation access policy in the Export method' {
+                Invoke-M365DSCResourceMethod -ResourceName 'EXOOrganizationConfig' -MethodName 'Export' -Parameters $testParams
+                Should -Invoke -CommandName 'Get-OrganizationConfig' -Exactly 1 -ParameterFilter { $RetrieveEwsOperationAccessPolicy }
+            }
         }
     }
 }

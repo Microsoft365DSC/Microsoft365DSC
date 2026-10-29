@@ -42,6 +42,7 @@ namespace Microsoft365DSC.Relations
     public static class DependsOnInjector
     {
         private const string BlockIndent = "        ";
+        private const string BlockOpeningBrace = "        {";
         private const string ClosingBrace = "        }";
         private const string NewLine = "\r\n";
         private const string StubHeader = "        # Dependency stubs - minimal resource blocks for referenced resources";
@@ -158,9 +159,50 @@ namespace Microsoft365DSC.Relations
                 return content;
             }
 
+            List<ContentLine> lines = ReadLines(content);
             StringBuilder builder = new(content.Length + (targetsBySource.Count * 64));
             string? pendingSource = null;
+            int closingBraceStart = -1;
             int copiedTo = 0;
+
+            void AppendPendingDependsOn()
+            {
+                if (pendingSource is null || closingBraceStart < 0)
+                {
+                    return;
+                }
+
+                builder.Append(content, copiedTo, closingBraceStart - copiedTo);
+                builder.Append(RenderDependsOnLine(targetsBySource[pendingSource]));
+                builder.Append(NewLine);
+                copiedTo = closingBraceStart;
+            }
+
+            for (int index = 0; index < lines.Count; index++)
+            {
+                ContentLine line = lines[index];
+
+                // The block's own closing brace is the last one before the next block header.
+                if (IsBlockHeader(lines, index))
+                {
+                    AppendPendingDependsOn();
+                    pendingSource = headers.TryGetValue(line.Text, out string? sourceReference) ? sourceReference : null;
+                    closingBraceStart = -1;
+                }
+                else if (pendingSource is not null && line.Text == ClosingBrace)
+                {
+                    closingBraceStart = line.Start;
+                }
+            }
+
+            AppendPendingDependsOn();
+            builder.Append(content, copiedTo, content.Length - copiedTo);
+            return builder.ToString();
+        }
+
+        private static List<ContentLine> ReadLines(string content)
+        {
+            List<ContentLine> lines = [];
             int lineStart = 0;
 
             while (lineStart <= content.Length)
@@ -174,24 +216,7 @@ namespace Microsoft365DSC.Relations
                     trimmedEnd--;
                 }
 
-                string line = content.Substring(lineStart, trimmedEnd - lineStart);
-
-                if (pendingSource is null)
-                {
-                    if (headers.TryGetValue(line, out string? sourceReference))
-                    {
-                        pendingSource = sourceReference;
-                    }
-                }
-                else if (line == ClosingBrace)
-                {
-                    // Emit the DependsOn line immediately above this block's closing brace.
-                    builder.Append(content, copiedTo, lineStart - copiedTo);
-                    builder.Append(RenderDependsOnLine(targetsBySource[pendingSource]));
-                    builder.Append(NewLine);
-                    copiedTo = lineStart;
-                    pendingSource = null;
-                }
+                lines.Add(new ContentLine(lineStart, content.Substring(lineStart, trimmedEnd - lineStart)));
 
                 if (lineBreak < 0)
                 {
@@ -201,8 +226,33 @@ namespace Microsoft365DSC.Relations
                 lineStart = lineBreak + 1;
             }
 
-            builder.Append(content, copiedTo, content.Length - copiedTo);
-            return builder.ToString();
+            return lines;
+        }
+
+        private readonly struct ContentLine
+        {
+            public ContentLine(int start, string text)
+            {
+                Start = start;
+                Text = text;
+            }
+
+            public int Start { get; }
+
+            public string Text { get; }
+        }
+
+        private static bool IsBlockHeader(List<ContentLine> lines, int index)
+        {
+            string line = lines[index].Text;
+
+            return line.Length > BlockIndent.Length + 2 &&
+                line.StartsWith(BlockIndent, StringComparison.Ordinal) &&
+                char.IsLetter(line[BlockIndent.Length]) &&
+                line.EndsWith("\"", StringComparison.Ordinal) &&
+                line.IndexOf(" \"", StringComparison.Ordinal) > BlockIndent.Length &&
+                index + 1 < lines.Count &&
+                lines[index + 1].Text == BlockOpeningBrace;
         }
 
         /// <summary>

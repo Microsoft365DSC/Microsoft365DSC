@@ -133,6 +133,7 @@ class AADDomain : M365DSCResourceBase
                 IsVerified                       = $instance.IsVerified
                 PasswordNotificationWindowInDays = $instance.PasswordNotificationWindowInDays
                 PasswordValidityPeriodInDays     = $instance.PasswordValidityPeriodInDays
+                SupportedServices                = Get-M365DSCArrayFromProperty -PropertyValue $instance.SupportedServices -ElementType ([System.String])
                 Ensure                           = 'Present'
                 Credential                       = $this.Credential
                 ApplicationId                    = $this.ApplicationId

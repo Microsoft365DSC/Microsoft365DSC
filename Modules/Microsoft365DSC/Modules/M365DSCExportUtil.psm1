@@ -1207,6 +1207,9 @@ function Split-M365DSCConfiguration
         throw 'No DSC resources found in the Node block.'
     }
 
+    # Windows PowerShell reads a script without byte order mark in the ANSI code page.
+    $utf8WithBom = [System.Text.UTF8Encoding]::new($true)
+
     # Splitting logic
     $i = 1
     $currentGroup = @()
@@ -1225,7 +1228,7 @@ function Split-M365DSCConfiguration
         {
             $outPath = Join-Path $OutputFolder ('M365TenantConfig_{0}.ps1' -f $i)
             $configText = $header + ($currentGroup -join "`n") + $footer
-            Set-Content -Path $outPath -Value $configText -Encoding UTF8 -Force
+            [System.IO.File]::WriteAllText($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($outPath), $configText, $utf8WithBom)
             Write-M365DSCHost -Message "Created: $outPath" -CommitWrite
             $i++
             $currentGroup = @()
@@ -1241,7 +1244,7 @@ function Split-M365DSCConfiguration
     {
         $outPath = Join-Path $OutputFolder ('M365TenantConfig_{0}.ps1' -f $i)
         $configText = $header + ($currentGroup -join "`n`n") + $footer
-        Set-Content -Path $outPath -Value $configText -Encoding UTF8 -Force
+        [System.IO.File]::WriteAllText($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($outPath), $configText, $utf8WithBom)
         Write-M365DSCHost -Message "Created: $outPath" -CommitWrite
     }
 }

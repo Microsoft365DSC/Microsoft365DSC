@@ -834,7 +834,7 @@ class EXOOrganizationConfig : M365DSCResourceBase
         try
         {
             $dscContent = [System.Text.StringBuilder]::new()
-            $organizationConfig = Get-OrganizationConfig -ErrorAction Stop
+            $organizationConfig = Get-OrganizationConfig -RetrieveEwsOperationAccessPolicy -ErrorAction Stop
             if ($null -ne $Global:M365DSCExportResourceInstancesCount)
             {
                 $Global:M365DSCExportResourceInstancesCount++

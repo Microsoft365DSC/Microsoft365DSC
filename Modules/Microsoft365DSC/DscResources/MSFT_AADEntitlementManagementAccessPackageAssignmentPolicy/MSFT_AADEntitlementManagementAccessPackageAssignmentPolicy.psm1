@@ -1008,7 +1008,7 @@ class MSFT_MicrosoftGraphuserset
 {
     [DscProperty()]
     [System.ComponentModel.Description('The type of the resource')]
-    [ValidateSet('#microsoft.graph.singleUser', '#microsoft.graph.groupMembers', '#microsoft.graph.requestorManager', '#microsoft.graph.internalSponsors', '#microsoft.graph.externalSponsors', '#microsoft.graph.connectedOrganizationMembers')]
+    [ValidateSet('#microsoft.graph.singleUser', '#microsoft.graph.groupMembers', '#microsoft.graph.requestorManager', '#microsoft.graph.internalSponsors', '#microsoft.graph.externalSponsors', '#microsoft.graph.connectedOrganizationMembers', '#microsoft.graph.targetUserSponsors', '#microsoft.graph.targetAgentIdentitySponsorsOrOwners')]
     [System.String] $odataType
 
     [DscProperty()]

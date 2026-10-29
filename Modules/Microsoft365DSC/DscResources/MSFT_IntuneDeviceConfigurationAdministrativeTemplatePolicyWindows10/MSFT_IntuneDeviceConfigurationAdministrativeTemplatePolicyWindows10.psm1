@@ -462,7 +462,11 @@ class IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10 : M365DSCRe
                         $value.Remove('PresentationDefinitionId')
                         $value.Remove('PresentationDefinitionLabel')
                         $value.Remove('id')
-                        $value.Add('id', $currentPresentationValue.Id)
+
+                        if ($null -ne $currentPresentationValue)
+                        {
+                            $value.Add('id', $currentPresentationValue.Id)
+                        }
                         $complexPresentationValues += $value
                     }
                 }

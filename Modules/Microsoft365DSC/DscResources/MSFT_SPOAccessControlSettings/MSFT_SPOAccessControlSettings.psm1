@@ -134,7 +134,7 @@ class SPOAccessControlSettings : M365DSCResourceBase
                 EmailAttestationRequired      = $SPOAccessControlSettings.EmailAttestationRequired
                 EmailAttestationReAuthDays    = $SPOAccessControlSettings.EmailAttestationReAuthDays
                 RestrictResourceAccountAccess = $SPOAccessControlSettings.RestrictResourceAccountAccess
-                EnableRestrictedAccessControl = $SPOAccessControlSettings.RestrictedAccessControl
+                EnableRestrictedAccessControl = $SPOAccessControlSettings.EnableRestrictedAccessControl
                 Credential                    = $this.Credential
                 ApplicationId                 = $this.ApplicationId
                 TenantId                      = $this.TenantId

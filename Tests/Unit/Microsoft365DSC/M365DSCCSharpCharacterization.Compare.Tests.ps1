@@ -1170,6 +1170,15 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
         Invoke-RuleCompare -Rules $rules -Source $source -Destination $destination | Should -BeNullOrEmpty
     }
 
+    It 'ReformatDateTime without InputFormats reads any invariant date and time' {
+        $rules = @(@{ Type = 'Normalize'; Paths = @('Time'); Using = 'ReformatDateTime'; Format = 'h:mm tt' })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Time = '18:00' } -Destination @{ Time = '6:00 PM' } | Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Time = '2026-05-01T18:00:00' } -Destination @{ Time = '6:00 PM' } | Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Time = '17:00' } -Destination @{ Time = '6:00 PM' } | Should -Be @('Time')
+        Invoke-RuleCompare -Rules $rules -Source @{ Time = 'not a time' } -Destination @{ Time = '6:00 PM' } | Should -Be @('Time')
+    }
+
     It 'SameInstant takes the current text of a date that is the same instant' {
         $rules = @(@{ Type = 'SameInstant'; Path = 'ScheduleInfo.StartDateTime' })
 

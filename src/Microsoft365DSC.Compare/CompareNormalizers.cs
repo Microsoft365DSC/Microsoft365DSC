@@ -87,11 +87,16 @@ namespace Microsoft365DSC.Compare
             {
                 null => null,
                 DateTime date => date.ToString(format, CultureInfo.InvariantCulture),
-                _ when DateTime.TryParseExact(RuleValues.ConvertToText(value), inputFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsed)
+                _ when TryParseDateTime(RuleValues.ConvertToText(value), inputFormats, out DateTime parsed)
                     => parsed.ToString(format, CultureInfo.InvariantCulture),
                 _ => RuleValues.ConvertToText(value)
             };
         }
+
+        private static bool TryParseDateTime(string? text, string[] inputFormats, out DateTime parsed) =>
+            inputFormats.Length == 0
+                ? DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)
+                : DateTime.TryParseExact(text, inputFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed);
 
         // Groups -and before -or, wrapping every operand in parentheses.
         private static string NormalizeFilterExpression(string expression)

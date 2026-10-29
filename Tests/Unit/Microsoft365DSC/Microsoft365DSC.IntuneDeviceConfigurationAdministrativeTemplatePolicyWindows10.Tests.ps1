@@ -110,6 +110,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
             }
+            Mock -CommandName Get-MgBetaDeviceManagementAssignmentFilter -ModuleName M365DSCIntuneUtil -MockWith {
+            }
 
             $Script:exportedInstance = $null
             $Script:ExportMode = $false

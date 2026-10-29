@@ -97,6 +97,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
+        Context -Name 'PNP AccessControl settings are already in the desired state' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Credential                    = $Credential
+                    IsSingleInstance              = 'Yes'
+                    EnableRestrictedAccessControl = $true
+                }
+
+                Mock -CommandName Get-PnPTenant -MockWith {
+                    return @{
+                        EnableRestrictedAccessControl = $true
+                    }
+                }
+            }
+
+            It 'Should return the EnableRestrictedAccessControl value from the Get method' {
+                ((New-M365DSCResourceInstance -ResourceName 'SPOAccessControlSettings' -Property $testParams).Get().ToHashtable()).EnableRestrictedAccessControl | Should -Be $true
+            }
+
+            It 'Should return true from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'SPOAccessControlSettings' -Property $testParams).Test() | Should -Be $true
+            }
+        }
+
         Context -Name 'ReverseDSC Tests' -Fixture {
             BeforeAll {
                 $Global:CurrentModeIsExport = $true

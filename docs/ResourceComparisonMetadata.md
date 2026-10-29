@@ -190,7 +190,7 @@ The normalizers are:
 * `FormatDateTime`, a round-trip UTC timestamp
 * `FormatTimeOfDay`, `hh:mm` with a full day as `1.00:00`
 * `FormatSize`, a size such as `10KB` without the byte count
-* `ReformatDateTime` with `InputFormats` and `Format`
+* `ReformatDateTime` with `InputFormats` and `Format`. Without `InputFormats` it reads any date and time in the invariant culture
 * `ExchangeFilter`, an Exchange filter with `-and` grouped before `-or` and every operand in parentheses
 
 Dates without an offset are read as UTC.

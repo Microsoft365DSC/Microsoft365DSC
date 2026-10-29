@@ -545,6 +545,64 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result | Should -Match 'employeeid'
                 $result | Should -Match 'groupClaimFilter'
             }
+
+            It 'Should convert a claims policy with a secondary transformation' {
+                Mock -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
+                    return @(
+                        @{
+                            id     = '5dcb2237-c61b-4258-9c85-eae2aaeba9d6|ClaimsPolicy'
+                            status = 200
+                            body   = @{
+                                'id'     = '5dcb2237-c61b-4258-9c85-eae2aaeba9d6'
+                                'claims' = @(
+                                    @{
+                                        '@odata.type'    = '#microsoft.graph.customClaim'
+                                        'name'           = 'mailprefix'
+                                        'tokenFormat'    = @('saml')
+                                        'configurations' = @(
+                                            @{
+                                                'transformations' = @(
+                                                    @{
+                                                        '@odata.type' = '#microsoft.graph.extractMailPrefixTransformation'
+                                                        'input'       = @{
+                                                            'treatAsMultiValue' = $false
+                                                            'attribute'         = @{
+                                                                '@odata.type' = '#microsoft.graph.sourcedAttribute'
+                                                                'id'          = 'userprincipalname'
+                                                                'source'      = 'user'
+                                                            }
+                                                        }
+                                                    }
+                                                    @{
+                                                        '@odata.type' = '#microsoft.graph.joinTransformation'
+                                                        'separator'   = '.'
+                                                        'input2'      = @{
+                                                            'treatAsMultiValue' = $false
+                                                            'attribute'         = @{
+                                                                '@odata.type' = '#microsoft.graph.valueBasedAttribute'
+                                                                'value'       = 'sandbox'
+                                                            }
+                                                        }
+                                                    }
+                                                    @{
+                                                        '@odata.type' = '#microsoft.graph.toLowercaseTransformation'
+                                                    }
+                                                )
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    )
+                }
+
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADServicePrincipal' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Match 'extractMailPrefixTransformation'
+                $result | Should -Match 'input2 = MSFT_AADServicePrincipalTransformationAttribute'
+                $result | Should -Match 'separator = "\."'
+                $result | Should -Match 'toLowercaseTransformation'
+            }
         }
 
         Context -Name 'AppRoleAssignedTo AppRoleId resolution' -Fixture {

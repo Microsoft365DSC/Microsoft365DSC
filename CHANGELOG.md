@@ -1,5 +1,47 @@
 ﻿# Change log for Microsoft365DSC
 
+# 2.26.1028.1
+
+* AADDomain
+  * Fixed `SupportedServices` missing from the current values.
+    FIXES [#7570](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7570)
+* AADEntitlementManagementAccessPackageAssignmentPolicy
+  * Added the `#microsoft.graph.targetUserSponsors` and
+    `#microsoft.graph.targetAgentIdentitySponsorsOrOwners` user set types.
+* AADServicePrincipal
+  * Added support for every claims transformation type of a claims policy, together with the
+    `input2`, `output`, `separator`, `type`, `value`, `value2`, `index` and `length` properties.
+    FIXES [#7561](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7561)
+* EXOOrganizationConfig
+  * Fixed an issue where the export did not retrieve the EWS operation access policy,
+    which exported `EwsAllowedAppIDs` as an empty list.
+* IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10
+  * Fixed an issue where adding a presentation value to an existing definition value failed
+    because its `id` was sent as null.
+    FIXES [#7572](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7572)
+* SPOAccessControlSettings
+  * Fixed an issue where `EnableRestrictedAccessControl` was read from the wrong tenant property,
+    which reported drift on every run and left the property out of the export.
+* TeamsUpdateManagementPolicy
+  * Fixed an issue where `UpdateTimeOfDay` reported drift on every run unless it was written
+    in the `h:mm tt` format.
+    FIXES [#7565](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7565)
+* M365DSCResourceBase
+  * Fixed an issue where members were not resolved case-insensitively.
+* M365DSCReverse
+  * Fixed an issue where the temporary export file could not be deleted.
+    FIXES [#7556](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7556)
+  * Updated the exported configuration to be written as UTF-8 with a byte order mark.
+    FIXES [#7562](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7562)
+* MISC
+  * Fixed `DependsOn` lines landing inside multiline string values on export.
+  * Updated the `ReformatDateTime` compare normalizer to read any invariant date and
+    time when `InputFormats` is omitted.
+  * Updated `Split-M365DSCConfiguration` to write files as UTF-8 with a byte order mark.
+* DEPENDENCIES
+  * Updated `M365DSC.Mgx` to version 2.1.10.
+    FIXES [#7563](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7563)
+
 # 2.26.1021.1
 
 * AADAuthorizationPolicy

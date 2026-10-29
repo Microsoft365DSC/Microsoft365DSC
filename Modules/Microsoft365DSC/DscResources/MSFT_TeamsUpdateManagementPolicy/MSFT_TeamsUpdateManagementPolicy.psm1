@@ -210,6 +210,15 @@ class TeamsUpdateManagementPolicy : M365DSCResourceBase
         return ([M365DSCResourceBase] $this).Test()
     }
 
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            CompareRules = @(
+                @{ Type = 'Normalize'; Paths = @('UpdateTimeOfDay'); Side = 'Desired'; Using = 'ReformatDateTime'; Format = 'h:mm tt' }
+            )
+        }
+    }
+
     [string] Export()
     {
         if ($this.RequiresPowerShellCore())

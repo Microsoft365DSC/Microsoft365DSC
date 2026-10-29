@@ -247,6 +247,43 @@ Describe 'DependsOn injection' {
         ([regex]::Matches($result, 'DependsOn')).Count | Should -Be 1
     }
 
+    It 'Places the DependsOn line above the closing brace of the block, not one inside a multiline string' {
+        $session = New-TestSession
+        $session.RegisterInstance('IntuneRoleScopeTag', 'IntuneRoleScopeTag-Default', 'Default', @{ DisplayName = 'Default' })
+        $session.RegisterDependency('Policy-Json', 'IntuneDeviceCompliancePolicyWindows10', 'IntuneRoleScopeTag', 'Default')
+
+        $rulesContent = @(
+            '            RulesContent = "{'
+            '    `"Rules`": ['
+            '        {'
+            '            `"Operand`": true'
+            '        }'
+            '    ]'
+            '}";'
+        ) -join "`r`n"
+        $content = @(
+            '        IntuneDeviceCompliancePolicyWindows10 "Policy-Json"'
+            '        {'
+            $rulesContent
+            '            DisplayName = "Policy Json"'
+            '        }'
+            '        IntuneRoleScopeTag "IntuneRoleScopeTag-Default"'
+            '        {'
+            '            DisplayName = "Default"'
+            '        }'
+        ) -join "`r`n"
+        $content += "`r`n"
+
+        $result = $session.InjectDependsOn($content, (New-TestStubOptions))
+
+        $result | Should -Match ([regex]::Escape($rulesContent))
+        $result | Should -Match ([regex]::Escape("DisplayName = `"Policy Json`"`r`n            DependsOn = @(`"[IntuneRoleScopeTag]IntuneRoleScopeTag-Default`")`r`n        }"))
+
+        $errors = $null
+        $null = [System.Management.Automation.Language.Parser]::ParseInput($result, [ref] $null, [ref] $errors)
+        $errors | Should -BeNullOrEmpty
+    }
+
     It 'Emits a stub block for a target that was not exported' {
         $session = New-TestSession
         $session.ResolveRelations('IntuneDeviceConfigurationPolicyWindows10', 'Policy-A', @{

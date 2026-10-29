@@ -54,6 +54,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IsVerified                       = $True;
                     PasswordNotificationWindowInDays = 14;
                     PasswordValidityPeriodInDays     = 2147483647;
+                    SupportedServices                = @('Email', 'OfficeCommunicationsOnline');
                 }
             }
 
@@ -150,6 +151,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IsVerified                       = $true;
                     PasswordNotificationWindowInDays = 14;
                     PasswordValidityPeriodInDays     = 2147483647;
+                    SupportedServices                = @('Email', 'OfficeCommunicationsOnline');
                     Credential                       = $Credential;
                 }
             }

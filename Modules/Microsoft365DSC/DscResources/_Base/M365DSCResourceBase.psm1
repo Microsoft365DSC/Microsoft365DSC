@@ -664,7 +664,7 @@ class M365DSCResourceBase
 
             foreach ($key in $item.Keys)
             {
-                $member = $elementType.GetProperty($key)
+                $member = $elementType.GetProperty($key, [System.Reflection.BindingFlags] 'Public, Instance, IgnoreCase')
                 if ($null -eq $member)
                 {
                     continue
