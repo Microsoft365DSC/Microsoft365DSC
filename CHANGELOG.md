@@ -1,4 +1,10 @@
-﻿# Change log for Microsoft365DSC
+# Change log for Microsoft365DSC
+
+# UNRELEASED
+
+* AADEntitlementManagementAccessPackageAssignmentPolicy
+  * Fixed an issue where exporting an assignment policy with `RequestorSettings` populated failed type conversion to `MSFT_MicrosoftGraphrequestorsettings`.
+    FIXES [#7560](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7560)
 
 # 2.26.1028.1
 
