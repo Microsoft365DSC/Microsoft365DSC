@@ -11,6 +11,8 @@
 * M365DSCReverse
   * Updated the export with the `-WithStatistics` parameter to also return failed
     resources with their error messages.
+* M365DSCUtil
+  * Added parameters from `Export-M365DSCConfiguration` which were missing from `Assert-M365DSCBlueprint`.
 * DEPENDENCIES
   * Updated MSCloudLoginAssistant to version 1.2.10.
 * MISC
