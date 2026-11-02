@@ -19782,6 +19782,158 @@ function Set-M365DataAtRestEncryptionPolicyAssignment
 }
 #endregion
 
+#region M365DSC.mgx
+function Invoke-MgxRequest
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $Uri,
+
+        [Parameter()]
+        [System.String]
+        $Method,
+
+        [Parameter()]
+        [System.Object]
+        $Body,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String]
+        $ConsistencyLevel,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $Headers,
+
+        [Parameter()]
+        [System.String]
+        $ApiVersion,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Raw,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Envelope,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable,
+
+        [Parameter()]
+        [System.String]
+        $CheckpointPath,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $NoPageSize,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.Int32]
+        $Concurrency,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $SkipNotFound,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $SkipForbidden
+    )
+}
+
+function Invoke-MgxBatchRequest
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param
+    (
+        [Parameter()]
+        [System.Object[]]
+        $Uri,
+
+        [Parameter()]
+        [System.String]
+        $Method,
+
+        [Parameter()]
+        [System.Object]
+        $Body,
+
+        [Parameter()]
+        [System.String]
+        $ConsistencyLevel,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $Headers,
+
+        [Parameter()]
+        [System.String]
+        $ThrottlePriority,
+
+        [Parameter()]
+        [System.String]
+        $ApiVersion,
+
+        [Parameter()]
+        [System.String]
+        $DeadLetterPath,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $FollowNextLink,
+
+        [Parameter()]
+        [System.Int32]
+        $MaxPage
+    )
+}
+#endregion
+
 #region Microsoft.Graph.Applications
 function Get-MgApplication
 {

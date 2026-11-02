@@ -249,6 +249,32 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneAppConfigurationDevicePolicy' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
+
+            It 'Should export an iOS policy that uses XML settings' {
+                Mock -CommandName Get-MgBetaDeviceAppManagementMobileApp -MockWith {
+                    return @{
+                        Id            = 'FakeStringValue'
+                        bundleId      = 'com.microsoft.msedge'
+                        '@odata.type' = '#microsoft.graph.iosStoreApp'
+                    }
+                }
+                Mock -CommandName Get-MgBetaDeviceAppManagementMobileAppConfiguration -MockWith {
+                    return @{
+                        '@odata.type'      = '#microsoft.graph.iosMobileAppConfiguration'
+                        encodedSettingXml  = 'PGRpY3Q+PC9kaWN0Pg=='
+                        settings           = @()
+                        description        = ''
+                        displayName        = 'FakeStringValue'
+                        id                 = 'FakeStringValue'
+                        roleScopeTagIds    = @('0')
+                        targetedMobileApps = @('FakeStringValue')
+                    }
+                }
+
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneAppConfigurationDevicePolicy' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Match 'EncodedSettingXml\s+= "PGRpY3Q\+PC9kaWN0Pg=="'
+                $result | Should -Not -Match 'Settings\s+= @\('
+            }
         }
     }
 }
