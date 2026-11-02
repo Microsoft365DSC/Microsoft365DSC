@@ -16,6 +16,8 @@
 * MISC
   * Added the `ScalarAsArray` compare rule.
   * Updated the schema to set `HasPostProcessing` only for `ReportPostProcessing`.
+  * Updated PowerShell being installed in Docker release images to 7.6.9.
+  * Fixed issue in Docker Linux dev image where file was being copied to wrong folder.
 
 # 2.26.1028.1
 
