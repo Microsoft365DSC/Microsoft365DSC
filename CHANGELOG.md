@@ -4,6 +4,9 @@
 
 * AADPermissionGrantPolicy
   * Moved the report-time condition set normalization into compare rules.
+* AADServicePrincipal
+  * Added the `#microsoft.graph.trimTransformation` claims transformation type.
+    FIXES [#7578](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7578)
 * IntuneDeviceEnrollmentStatusPageWindows10
   * Updated the delta report to compare without the PostProcessing scriptblock.
 * M365DSCResourceBase
