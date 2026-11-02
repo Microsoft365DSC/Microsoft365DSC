@@ -4,10 +4,18 @@
 
 * AADPermissionGrantPolicy
   * Moved the report-time condition set normalization into compare rules.
+* AADServicePrincipal
+  * Added the `#microsoft.graph.trimTransformation` claims transformation type.
+    FIXES [#7578](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7578)
+* IntuneAppConfigurationDevicePolicy
+  * Fixed an issue where the export of an iOS policy with XML settings failed because
+    its empty `Settings` were assigned.
+    FIXES [#7582](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7582)
 * IntuneDeviceEnrollmentStatusPageWindows10
   * Updated the delta report to compare without the PostProcessing scriptblock.
 * M365DSCResourceBase
   * Added the `ReportPostProcessing` compare parameter for report-time post-processing.
+  * Updated empty collections to be treated as unset on properties with `ValidateNotNullOrEmpty`.
 * M365DSCReverse
   * Updated the export with the `-WithStatistics` parameter to also return failed
     resources with their error messages.
