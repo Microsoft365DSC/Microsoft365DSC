@@ -1307,6 +1307,12 @@ function Remove-NullEntriesFromHashtable
 .PARAMETER ThrottleLimit
     Specifies the number of parallel workers. Requires Parallel. Default: 5.
 
+.PARAMETER TokenReplacement
+    Specifies token replacement mappings applied to exported content.
+
+.PARAMETER WithStatistics
+    Indicates whether export statistics should be collected.
+
 .EXAMPLE
     PS> Assert-M365DSCBlueprint -BluePrintUrl 'C:\DS\blueprint.m365' -OutputReportPath 'C:\DSC\BlueprintReport.html'
 
@@ -1321,6 +1327,9 @@ function Remove-NullEntriesFromHashtable
 
 .EXAMPLE
     PS> Assert-M365DSCBlueprint -BluePrintUrl 'C:\DS\blueprint.m365' -OutputReportPath 'C:\DSC\BlueprintReport.html' -KeepExport $true -Parallel -ThrottleLimit 2
+
+.EXAMPLE
+    PS> Assert-M365DSCBlueprint -BluePrintUrl 'C:\DS\blueprint.m365' -OutputReportPath 'C:\DSC\BlueprintReport.html' -TokenReplacement @{ 'alternate-email.onmicrosoft.com' = 'AlternateEmail' }
 
 .FUNCTIONALITY
     Public
@@ -1423,7 +1432,15 @@ function Assert-M365DSCBlueprint
         [Parameter()]
         [ValidateRange(1, [System.Int32]::MaxValue)]
         [System.Int32]
-        $ThrottleLimit = 5
+        $ThrottleLimit = 5,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $TokenReplacement,
+
+        [Parameter()]
+        [Switch]
+        $WithStatistics
     )
 
     #Ensure the proper dependencies are installed in the current environment.
@@ -1530,7 +1547,10 @@ function Assert-M365DSCBlueprint
             -CertificatePath $CertificatePath `
             -CertificatePassword $CertificatePassword `
             -ManagedIdentity:$ManagedIdentity.IsPresent `
-            -AccessTokens $AccessTokens @additionalParams
+            -AccessTokens $AccessTokens `
+            -TokenReplacement $TokenReplacement `
+            -WithStatistics:$WithStatistics.IsPresent `
+            @additionalParams
 
         # Call the New-M365DSCDeltaReport configuration to generate the Delta Report between
         # the BluePrint and the extracted resources;
