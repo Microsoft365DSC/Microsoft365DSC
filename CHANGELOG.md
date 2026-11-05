@@ -19,6 +19,10 @@
 * TeamsOnlineVoicemailUserSettings
   * Fixed the export failing when a user's `CallAnswerRule` is `Unknown`.
     FIXES [#7591](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7591)
+* M365DSCPermissions
+  * Fixed `Get-M365DSCCompiledPermissionList` always returning the application
+    update permissions and roles regardless of `PermissionType` and `AccessType`.
+    FIXES [#7589](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7589)
 * M365DSCResourceBase
   * Added the `ReportPostProcessing` compare parameter for report-time post-processing.
   * Updated empty collections to be treated as unset on properties with `ValidateNotNullOrEmpty`.
