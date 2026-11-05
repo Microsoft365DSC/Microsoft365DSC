@@ -682,7 +682,7 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
             return [string] $this.InvokeInPowerShellCore('Export')
         }
 
-       $ConnectionMode = $this.Connect('ExchangeOnline')
+        $ConnectionMode = $this.Connect('ExchangeOnline')
 
         Confirm-M365DSCDependencies
 
@@ -690,7 +690,14 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
 
         try
         {
-            [array]$getValue = Get-DynamicDistributionGroup -Filter $this.Filter -ErrorAction Stop
+            $splat = @{
+                ErrorAction = 'Stop'
+            }
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
+            {
+                $splat.Add('Filter', $this.Filter)
+            }
+            [array]$getValue = Get-DynamicDistributionGroup @splat
 
             $i = 1
             $dscContent = ''

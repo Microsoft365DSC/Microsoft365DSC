@@ -7,6 +7,9 @@
 * AADServicePrincipal
   * Added the `#microsoft.graph.trimTransformation` claims transformation type.
     FIXES [#7578](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7578)
+* EXODynamicDistributionGroup
+  * Fixed issue where resource could not be exported if filter was null or empty.
+    FIXES [#7586](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7586)
 * IntuneAppConfigurationDevicePolicy
   * Fixed an issue where the export of an iOS policy with XML settings failed because
     its empty `Settings` were assigned.
