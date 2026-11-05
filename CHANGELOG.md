@@ -1,6 +1,6 @@
 ﻿# Change log for Microsoft365DSC
 
-# UNRELEASED
+# 2.26.1104.1
 
 * AADPermissionGrantPolicy
   * Moved the report-time condition set normalization into compare rules.
