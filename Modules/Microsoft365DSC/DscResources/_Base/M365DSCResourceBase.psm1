@@ -53,7 +53,7 @@ class M365DSCPropertyMeta
 
     [bool] $TreatsEmptyStringAsNull
 
-    [bool] $HasEnumeratedValidation
+    [bool] $TreatsEmptyCollectionAsNull
 
     [Attribute[]] $Validators
 
@@ -76,9 +76,10 @@ class M365DSCPropertyMeta
                 continue
             }
 
-            if ($attribute -is [ValidateEnumeratedArgumentsAttribute])
+            if ($attribute -is [ValidateEnumeratedArgumentsAttribute] -or
+                $attribute -is [ValidateNotNullOrEmptyAttribute])
             {
-                $this.HasEnumeratedValidation = $true
+                $this.TreatsEmptyCollectionAsNull = $true
             }
 
             if ($attribute -is [ValidateSetAttribute])
@@ -411,7 +412,7 @@ class M365DSCResourceBase
             return
         }
 
-        if ($meta.HasEnumeratedValidation -and $Value -isnot [System.String] -and
+        if ($meta.TreatsEmptyCollectionAsNull -and $Value -isnot [System.String] -and
             $Value -is [System.Collections.IEnumerable] -and @($Value).Count -eq 0)
         {
             $this.SetNullValue($meta)
@@ -1026,6 +1027,7 @@ class M365DSCResourceBase
             $this.AddTelemetry('Test')
 
             $compareParameters = $this.GetCompareParameters()
+            $compareParameters.Remove('ReportPostProcessing')
             return (Test-M365DSCTargetResource -DesiredValues $this.GetBoundParameters() `
                     -ResourceName $this.GetResourceName() `
                     @compareParameters `

@@ -222,7 +222,7 @@ This parameter allows replacing specific tokens that appear in the configuration
 
 ### WithStatistics
 
-This parameter prints a summary of statistics after the export completes.
+This parameter prints a summary of statistics after the export completes. The returned hashtable also lists the resources that failed to export, each with the message of its error, in its FailedResources entry.
 
 ### IncludeDependencies
 

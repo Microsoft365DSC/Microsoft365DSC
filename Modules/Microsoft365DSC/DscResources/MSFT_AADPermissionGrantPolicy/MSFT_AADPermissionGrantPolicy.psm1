@@ -496,12 +496,23 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
         return @{
             CompareRules       = @(
                 @{ Type = 'IgnoreNested'; Paths = @('Includes[].Id', 'Excludes[].Id') }
+                @{
+                    Type  = 'ScalarAsArray'
+                    Paths = @(
+                        'Includes[].ClientApplicationIds', 'Includes[].ClientApplicationPublisherIds',
+                        'Includes[].ClientApplicationTenantIds', 'Includes[].Permissions',
+                        'Excludes[].ClientApplicationIds', 'Excludes[].ClientApplicationPublisherIds',
+                        'Excludes[].ClientApplicationTenantIds', 'Excludes[].Permissions'
+                    )
+                }
             )
             PostProcessing     = {
                 param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
 
-                # Resolving permission ids to names needs a Graph connection, which a report does not have.
-                $resolveNames = -not [M365DSCResourceBase]::IsReportContext($PostProcessingArgs)
+                if ([M365DSCResourceBase]::IsReportContext($PostProcessingArgs))
+                {
+                    return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+                }
 
                 foreach ($propertyName in @('Includes', 'Excludes'))
                 {
@@ -510,7 +521,7 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
                         $normalizedSets = @()
                         foreach ($conditionSet in $ValuesToCheck[$propertyName])
                         {
-                            $normalizedSet = [AADPermissionGrantPolicy]::GetPermissionGrantConditionSetAsHashtable($PostProcessingArgs[0], $conditionSet, $resolveNames)
+                            $normalizedSet = [AADPermissionGrantPolicy]::GetPermissionGrantConditionSetAsHashtable($PostProcessingArgs[0], $conditionSet)
                             $normalizedSet.Remove('Id')
                             $normalizedSets += $normalizedSet
                         }
@@ -523,7 +534,7 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
                         $currentSets = @()
                         foreach ($conditionSet in $CurrentValues[$propertyName])
                         {
-                            $currentSet = [AADPermissionGrantPolicy]::GetPermissionGrantConditionSetAsHashtable($PostProcessingArgs[0], $conditionSet, $resolveNames)
+                            $currentSet = [AADPermissionGrantPolicy]::GetPermissionGrantConditionSetAsHashtable($PostProcessingArgs[0], $conditionSet)
                             $currentSet.Remove('Id')
                             $currentSets += $currentSet
                         }
@@ -712,11 +723,6 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
 
     hidden static [System.Collections.Hashtable] GetPermissionGrantConditionSetAsHashtable([System.Collections.Hashtable] $Cache, [System.Object] $ConditionSet)
     {
-        return [AADPermissionGrantPolicy]::GetPermissionGrantConditionSetAsHashtable($Cache, $ConditionSet, $true)
-    }
-
-    hidden static [System.Collections.Hashtable] GetPermissionGrantConditionSetAsHashtable([System.Collections.Hashtable] $Cache, [System.Object] $ConditionSet, [System.Boolean] $ResolveNames)
-    {
         $result = @{
             Id = $ConditionSet.Id
         }
@@ -766,14 +772,7 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
             $resolvedPermissions = @()
             foreach ($permission in $ConditionSet.Permissions)
             {
-                $resolvedPermissions += if ($ResolveNames)
-                {
-                    [AADPermissionGrantPolicy]::ConvertToPermissionName($Cache, $permission, $ConditionSet.ResourceApplication, $ConditionSet.PermissionType)
-                }
-                else
-                {
-                    $permission
-                }
+                $resolvedPermissions += [AADPermissionGrantPolicy]::ConvertToPermissionName($Cache, $permission, $ConditionSet.ResourceApplication, $ConditionSet.PermissionType)
             }
             $result.Add('Permissions', [string[]]$resolvedPermissions)
         }

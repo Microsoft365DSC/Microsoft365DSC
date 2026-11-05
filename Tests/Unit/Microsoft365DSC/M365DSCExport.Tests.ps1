@@ -20,6 +20,17 @@ Describe 'Export-M365DSCConfiguration' {
     It 'rejects a ThrottleLimit below 1' {
         { Export-M365DSCConfiguration -Parallel -ThrottleLimit 0 -Components 'AADGroup' } | Should -Throw -ExceptionType ([System.Management.Automation.ParameterBindingException])
     }
+
+    It 'returns the failed resources with the statistics' {
+        $statistics = (Get-Command -Name Start-M365DSCConfigurationExtract).ScriptBlock.Ast.FindAll({
+                param($node)
+                $node -is [System.Management.Automation.Language.HashtableAst] -and
+                @($node.KeyValuePairs | ForEach-Object -Process { $_.Item1.Value }) -contains 'ExportDurationInSeconds'
+            }, $true)
+
+        $statistics.Count | Should -Be 1
+        @($statistics[0].KeyValuePairs | ForEach-Object -Process { $_.Item1.Value }) | Should -Contain 'FailedResources'
+    }
 }
 
 Describe 'Get-M365DSCWorkloadForResource' {

@@ -84,6 +84,7 @@ function New-M365DscUnitTestHelper
         CurrentStubModulePath = $StubModule
         InitializeScript = [ScriptBlock]::Create($initScript)
         InvokeCompareRules = ${function:Invoke-M365DSCCompareRules}
+        InvokeDeltaCompare = ${function:Invoke-M365DSCDeltaCompare}
         RepoRoot = $repoRoot
         CleanupScript = [ScriptBlock]::Create(@"
             `$global:DSCMachineStatus = 0
@@ -130,4 +131,83 @@ function Invoke-M365DSCCompareRules
         ValuesToCheck = $rewritten.Item3
         Messages      = $messages
     }
+}
+
+<#
+.SYNOPSIS
+    Compares two parsed configurations of one resource the way New-M365DSCDeltaReport does.
+
+.PARAMETER ReportParameters
+    A GetCompareParameters() result passed to the comparer with IsReport appended to its
+    PostProcessingArgs. Without it the comparer reads the CompareParameters of SchemaDefinition.json.
+
+.OUTPUTS
+    The parameter name of every delta.
+#>
+function Invoke-M365DSCDeltaCompare
+{
+    [CmdletBinding()]
+    [OutputType([System.String[]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ResourceName,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Source,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Destination,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $ReportParameters
+    )
+
+    Initialize-M365DSCDllLoader
+    if (-not [Microsoft365DSC.Cache.CacheManager]::IsSchemaLoaded)
+    {
+        $schemaPath = Join-Path -Path $PSScriptRoot -ChildPath '../../Modules/Microsoft365DSC/SchemaDefinition.json'
+        [Microsoft365DSC.Cache.CacheManager]::LoadSchema(([System.IO.File]::ReadAllText($schemaPath) | ConvertFrom-Json))
+    }
+
+    $compareParameters = [System.Collections.Generic.Dictionary[System.String, Microsoft365DSC.Compare.ResourceCompareParameters]]::new()
+    if ($PSBoundParameters.ContainsKey('ReportParameters'))
+    {
+        $parameters = [Microsoft365DSC.Compare.ResourceCompareParameters]::new()
+        $parameters.ExcludedProperties = [System.String[]] $ReportParameters.ExcludedProperties
+        $parameters.IncludedProperties = [System.String[]] $ReportParameters.IncludedProperties
+        $parameters.PostProcessing = $ReportParameters.PostProcessing
+        $parameters.Rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll($ReportParameters.CompareRules)
+        $existingArgs = @()
+        if ($null -ne $ReportParameters.PostProcessingArgs)
+        {
+            $existingArgs = @($ReportParameters.PostProcessingArgs)
+        }
+        $parameters.PostProcessingArgs = [System.Object[]] ($existingArgs + @{ IsReport = $true })
+        $compareParameters.Add($ResourceName, $parameters)
+    }
+
+    $sides = @()
+    foreach ($values in @($Source, $Destination))
+    {
+        $resource = $values.Clone()
+        $resource['ResourceName'] = $ResourceName
+        $resource['ResourceInstanceName'] = 'Instance'
+        $sides += $resource
+    }
+
+    $deltas = [Microsoft365DSC.Compare.ConfigurationComparer]::Compare(
+        [System.Object[]] @($sides[0]),
+        [System.Object[]] @($sides[1]),
+        [Microsoft365DSC.Cache.CacheManager]::Schema,
+        $null,
+        $null,
+        $compareParameters)
+
+    $deltas = $deltas | ForEach-Object -Process { $_.Properties[0].ParameterName }
+    return Get-M365DSCArrayFromProperty -PropertyValue $deltas -ElementType ([System.String])
 }

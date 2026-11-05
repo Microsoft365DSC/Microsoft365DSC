@@ -1087,6 +1087,51 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
+        Context -Name 'Delta report comparison' -Fixture {
+            BeforeAll {
+                $newPolicy = {
+                    param($ConditionSet)
+
+                    return @{
+                        Id          = 'policy-1'
+                        DisplayName = 'Policy 1'
+                        Ensure      = 'Present'
+                        Includes    = @($ConditionSet)
+                    }
+                }
+            }
+
+            It 'Compares <Name> the same with and without PostProcessing' -ForEach @(
+                @{
+                    Name     = 'names with a single client application against an exported list'
+                    Desired  = @{ CIMInstance = 'MSFT_AADPermissionGrantConditionSet'; Id = 'desired-id'; PermissionType = 'delegated'; ClientApplicationIds = 'all'; Permissions = 'User.Read' }
+                    Current  = @{ CIMInstance = 'MSFT_AADPermissionGrantConditionSet'; Id = 'current-id'; PermissionType = 'delegated'; ClientApplicationIds = @('all'); Permissions = @('User.Read') }
+                    Expected = @()
+                }
+                @{
+                    Name     = 'permission ids against permission names'
+                    Desired  = @{ CIMInstance = 'MSFT_AADPermissionGrantConditionSet'; Id = 'desired-id'; PermissionType = 'delegated'; Permissions = @('e1fe6dd8-ba31-4d61-89e7-88639da4683d') }
+                    Current  = @{ CIMInstance = 'MSFT_AADPermissionGrantConditionSet'; Id = 'current-id'; PermissionType = 'delegated'; Permissions = @('User.Read') }
+                    Expected = @('Includes[0].Permissions')
+                }
+                @{
+                    Name     = 'different permission names'
+                    Desired  = @{ CIMInstance = 'MSFT_AADPermissionGrantConditionSet'; Id = 'desired-id'; PermissionType = 'delegated'; Permissions = @('User.Read') }
+                    Current  = @{ CIMInstance = 'MSFT_AADPermissionGrantConditionSet'; Id = 'current-id'; PermissionType = 'delegated'; Permissions = @('Mail.Send') }
+                    Expected = @('Includes[0].Permissions')
+                }
+            ) {
+                $comparison = @{
+                    ResourceName = 'AADPermissionGrantPolicy'
+                    Source       = & $newPolicy $Current
+                    Destination  = & $newPolicy $Desired
+                }
+
+                (& $Global:DscHelper.InvokeDeltaCompare @comparison -ReportParameters $resource.GetCompareParameters()) -join ', ' | Should -Be ($Expected -join ', ')
+                (& $Global:DscHelper.InvokeDeltaCompare @comparison) -join ', ' | Should -Be ($Expected -join ', ')
+            }
+        }
+
         Context -Name 'ReverseDSC Tests' -Fixture {
             BeforeAll {
                 $Global:CurrentModeIsExport = $true

@@ -587,6 +587,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                                     @{
                                                         '@odata.type' = '#microsoft.graph.toLowercaseTransformation'
                                                     }
+                                                    @{
+                                                        '@odata.type' = '#microsoft.graph.trimTransformation'
+                                                        'type'        = 'leadingAndTrailing'
+                                                        'value'       = '_'
+                                                    }
                                                 )
                                             }
                                         )
@@ -602,6 +607,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result | Should -Match 'input2 = MSFT_AADServicePrincipalTransformationAttribute'
                 $result | Should -Match 'separator = "\."'
                 $result | Should -Match 'toLowercaseTransformation'
+                $result | Should -Match 'trimTransformation'
+                $result | Should -Match 'type = "leadingAndTrailing"'
             }
         }
 

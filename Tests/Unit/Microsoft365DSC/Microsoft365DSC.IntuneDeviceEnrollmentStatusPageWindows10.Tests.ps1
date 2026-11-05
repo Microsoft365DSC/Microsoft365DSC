@@ -308,6 +308,40 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
+        Context -Name 'Delta report comparison' -Fixture {
+            It 'Compares <Name> the same with and without PostProcessing' -ForEach @(
+                @{
+                    Name     = 'app ids against app names'
+                    Desired  = @{ SelectedMobileAppIds = @('app-id-1') }
+                    Current  = @{ SelectedMobileAppIds = @('app-id-2'); SelectedMobileAppNames = @('App 1') }
+                    Expected = @()
+                }
+                @{
+                    Name     = 'equal app names'
+                    Desired  = @{ SelectedMobileAppIds = @('app-id-1'); SelectedMobileAppNames = @('App 1') }
+                    Current  = @{ SelectedMobileAppIds = @('app-id-2'); SelectedMobileAppNames = @('App 1') }
+                    Expected = @()
+                }
+                @{
+                    Name     = 'different app names'
+                    Desired  = @{ SelectedMobileAppNames = @('App 1') }
+                    Current  = @{ SelectedMobileAppNames = @('App 2') }
+                    Expected = @('SelectedMobileAppNames')
+                }
+            ) {
+                $comparison = @{
+                    ResourceName = 'IntuneDeviceEnrollmentStatusPageWindows10'
+                    Source       = $Current + @{ DisplayName = 'Status page'; Ensure = 'Present' }
+                    Destination  = $Desired + @{ DisplayName = 'Status page'; Ensure = 'Present' }
+                }
+                $parameters = [IntuneDeviceEnrollmentStatusPageWindows10]::new().GetCompareParameters()
+
+                (& $Global:DscHelper.InvokeDeltaCompare @comparison -ReportParameters $parameters) -join ', ' | Should -Be ($Expected -join ', ')
+                (& $Global:DscHelper.InvokeDeltaCompare @comparison) -join ', ' | Should -Be ($Expected -join ', ')
+                Should -Invoke -CommandName Get-MgBetaDeviceAppManagementMobileApp -Exactly 0
+            }
+        }
+
         Context -Name 'ReverseDSC Tests' -Fixture {
             BeforeAll {
                 $Global:CurrentModeIsExport = $true

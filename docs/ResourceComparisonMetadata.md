@@ -60,6 +60,7 @@ The resource's own `Test()` splats the result:
 * `PostProcessing` (ScriptBlock): Custom transformation logic (must return Tuple[Hashtable, Hashtable, Hashtable])
 * `PostProcessingArgs` (object[]): Additional arguments passed to PostProcessing scriptblock
 * `CompareRules` (object[]): Declarative rules applied before `PostProcessing`, see [Compare Rules](#compare-rules)
+* `ReportPostProcessing` (bool): `$true` when `PostProcessing` also changes values in a report, see [Integration with New-M365DSCDeltaReport](#4-integration-with-new-m365dscdeltareport). The base `Test()` removes it before splatting.
 
 The base class also provides `GetSettingsCatalogCompareParameters()`, which the settings-catalog resources delegate to instead of writing their own body.
 
@@ -91,7 +92,7 @@ The delta report compares configurations without loading every resource class. T
 ```
 
 * `CompareParameters` contains the `ExcludedProperties`, `IncludedProperties` and `CompareRules` a resource returns. Empty lists as well as resources without a `GetCompareParameters()` implementation result in no `CompareParameters` entry.
-* `HasPostProcessing` is `true` when the resource returns a `PostProcessing` scriptblock. A scriptblock cannot be stored in JSON. The flag tells the report to ask the resource class at runtime.
+* `HasPostProcessing` is `true` when the resource returns a `PostProcessing` scriptblock together with `ReportPostProcessing = $true`. A scriptblock cannot be stored in JSON. The flag tells the report to ask the resource class at runtime. No shipped resource sets it. Every comparer that reads the schema compares like the report.
 
 `Utilities/New-M365DSCSchemaFromClasses.ps1` generates the file from the built class-based resources: for every registered resource it creates an instance with no properties set and reads its `GetCompareParameters()`. `Utilities/Build-Microsoft365DSC.ps1` runs it on every build. The file is not checked in. An override takes effect with the next build.
 
@@ -109,6 +110,7 @@ The offline comparison then skips the resource-specific parameters for that reso
 
 * `SchemaIndex.GetCompareParameters()` reads `CompareParameters` from the schema entry, including its `CompareRules`. A resource that only declares rules needs no PowerShell at report time.
 * For every resource in the compared configurations whose schema entry has `HasPostProcessing`, the report calls `Get-M365DSCResourceComparisonParameters` and passes the returned `CompareRules`, `PostProcessing`, `PostProcessingArgs`, `ExcludedProperties` and `IncludedProperties` to the comparer. `IsReport = $true` is appended to `PostProcessingArgs`. A callback uses it to tell a report from `Test()` (`[M365DSCResourceBase]::IsReportContext()`) and skip anything that needs a workload connection.
+* Every other resource compares with the schema alone. Its `PostProcessing` runs only in `Test()`.
 * The report's own `-ExcludedProperties` and `-ExcludedResources` apply on top of the resource parameters.
 
 ## Implementation Guide
@@ -163,6 +165,7 @@ Prefer `CompareRules` over a `PostProcessing` scriptblock. Rules are data. The s
 | `NullEqualsEmpty` | `PropertyPattern`, `Side` | Reads a missing array as empty. `Side` defaults to `Current`. |
 | `Tolerance` | `Properties`, `Within` | Stops comparing time spans that differ by at most `Within`, such as `00:05:00`. |
 | `IgnoreNested` | `Paths` | Removes nested properties on both sides. |
+| `ScalarAsArray` | `Paths` | Reads a single value as a list of one on both sides. |
 | `IgnoreWhenPast` | `Path` | Takes the current date when the desired date differs and lies in the past. |
 | `SameInstant` | `Path` | Takes the current date when both dates are the same instant. |
 | `Rename` | `From`, `To` | Renames a property on both sides. |
@@ -221,6 +224,11 @@ $postProcessingScript = {
         $PostProcessingArgs  # Optional array - additional context
     )
 
+    if ([M365DSCResourceBase]::IsReportContext($PostProcessingArgs))
+    {
+        return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+    }
+
     # Modify values as needed
     # Example: Normalize datetime values
     if ($DesiredValues.StartDate -lt [DateTime]::Now) {
@@ -237,6 +245,8 @@ $postProcessingScript = {
 ```
 
 The scriptblock is invoked by `Test-M365DSCTargetResource`, outside the instance's scope, so `$this` is not available inside it. State travels via `PostProcessingArgs`.
+
+Its first statement returns the values unchanged in a report, as above. A connection-free step belongs in `CompareRules`, where the schema carries it to every comparer. A scriptblock that has to change values in a report declares `ReportPostProcessing = $true` next to `PostProcessing` and skips the pass-through. `Tests/QA/Microsoft365DSC.ClassResourceConventions.Tests.ps1` fails on a scriptblock that does neither, on a declaration whose scriptblock still passes through, and on a built schema whose `HasPostProcessing` differs from the declarations.
 
 Note that the report path constructs the instance with no properties set, so any state an override reads from `$this` holds its default there.
 

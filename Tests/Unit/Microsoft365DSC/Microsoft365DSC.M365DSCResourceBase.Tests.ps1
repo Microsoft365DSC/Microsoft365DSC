@@ -670,6 +670,12 @@ Describe 'M365DSCResourceBase property validation' {
         @($instance.GetBoundParameters().IncludeGuestOrExternalUserTypes) | Should -Be @('none')
     }
 
+    It 'Nulls an empty collection on a property with ValidateNotNullOrEmpty' {
+        $instance = New-M365DSCResourceInstance -ResourceName 'IntuneAppConfigurationDevicePolicy' -Property @{ Settings = @() }
+        $instance.GetBoundParameters().ContainsKey('Settings') | Should -BeFalse
+        $instance.Settings | Should -BeNullOrEmpty
+    }
+
     It 'Enforces ValidateLength and treats an empty string as unset' {
         { New-M365DSCResourceInstance -ResourceName 'EXORoleGroup' -Property @{ Name = ('n' * 65) } } |
             Should -Throw -ExpectedMessage '*length must be between 1 and 64*'

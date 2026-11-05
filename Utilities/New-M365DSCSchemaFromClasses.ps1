@@ -331,7 +331,7 @@ $payload = & $module {
             $result['CompareParameters'] = $parameters
         }
 
-        if ($declared.ContainsKey('PostProcessing') -and $null -ne $declared['PostProcessing'])
+        if ($null -ne $declared['PostProcessing'] -and $declared['ReportPostProcessing'] -eq $true)
         {
             $result['HasPostProcessing'] = $true
         }

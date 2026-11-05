@@ -9,7 +9,9 @@ SHELL ["bash", "-c"]
 RUN wget -q https://github.com/microsoft/omi/releases/download/v1.9.1-0/omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
     dpkg -i ./omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
     rm ./omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
-    cp /opt/omi/lib/libmi.so /usr/share/powershell/.store/powershell.linux.x64/7.6.6/powershell.linux.x64/7.6.6/tools/net10.0/any/runtimes/linux-x64/native/
+    native_dir="$(pwsh -NoLogo -NoProfile -Command '$PSHOME')/runtimes/linux-x64/native" && \
+    test -d "$native_dir" && \
+    cp /opt/omi/lib/libmi.so "$native_dir/"
 
 RUN wget -q https://github.com/microsoft/PowerShell-DSC-for-Linux/releases/download/v1.2.4-0/dsc-1.2.4-0.ssl_110.x64.deb && \
     dpkg -i ./dsc-1.2.4-0.ssl_110.x64.deb && \

@@ -193,43 +193,43 @@ function Get-M365DSCCompiledPermissionList
                 $apiName = $api.Name
                 Write-Verbose -Message "  Retrieving $apiName permissions"
 
-                foreach ($permissionType in @('Delegated', 'Application'))
+                foreach ($currentPermissionType in @('Delegated', 'Application'))
                 {
-                    foreach ($accessType in @('Read', 'Update'))
+                    foreach ($currentAccessType in @('Read', 'Update'))
                     {
                         Update-M365DSCPermissionsMatrix -Source $apiName `
-                            -PermissionType $permissionType `
-                            -AccessType $accessType `
+                            -PermissionType $currentPermissionType `
+                            -AccessType $currentAccessType `
                             -Matrix ([ref]$targetMatrix) `
                             -Permissions ($api.Value)
                     }
                 }
 
-                foreach ($accessType in @('Read', 'Update'))
+                foreach ($currentAccessType in @('Read', 'Update'))
                 {
-                    foreach ($requiredRole in $api.Value.requiredRoles.$accessType)
+                    foreach ($requiredRole in $api.Value.requiredRoles.$currentAccessType)
                     {
-                        if (-not $targetMatrix.RequiredRoles.$accessType.Contains($requiredRole))
+                        if (-not $targetMatrix.RequiredRoles.$currentAccessType.Contains($requiredRole))
                         {
-                            Write-Verbose -Message "    Found new $accessType Required Role {$($requiredRole)}"
-                            $targetMatrix.RequiredRoles.$accessType += $requiredRole
+                            Write-Verbose -Message "    Found new $currentAccessType Required Role {$($requiredRole)}"
+                            $targetMatrix.RequiredRoles.$currentAccessType += $requiredRole
                         }
                         else
                         {
-                            Write-Verbose -Message "    Required $accessType Role {$($requiredRole)} was already added"
+                            Write-Verbose -Message "    Required $currentAccessType Role {$($requiredRole)} was already added"
                         }
                     }
 
-                    foreach ($requiredRoleGroup in $api.Value.requiredRoleGroups.$accessType)
+                    foreach ($requiredRoleGroup in $api.Value.requiredRoleGroups.$currentAccessType)
                     {
-                        if (-not $targetMatrix.RequiredRoleGroups.$accessType.Contains($requiredRoleGroup))
+                        if (-not $targetMatrix.RequiredRoleGroups.$currentAccessType.Contains($requiredRoleGroup))
                         {
-                            Write-Verbose -Message "    Found new $accessType Required Role Group {$($requiredRoleGroup)}"
-                            $targetMatrix.RequiredRoleGroups.$accessType += $requiredRoleGroup
+                            Write-Verbose -Message "    Found new $currentAccessType Required Role Group {$($requiredRoleGroup)}"
+                            $targetMatrix.RequiredRoleGroups.$currentAccessType += $requiredRoleGroup
                         }
                         else
                         {
-                            Write-Verbose -Message "    Required $accessType Role Group {$($requiredRoleGroup)} was already added"
+                            Write-Verbose -Message "    Required $currentAccessType Role Group {$($requiredRoleGroup)} was already added"
                         }
                     }
                 }

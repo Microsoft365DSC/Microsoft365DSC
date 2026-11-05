@@ -1,5 +1,48 @@
 ﻿# Change log for Microsoft365DSC
 
+# 2.26.1104.1
+
+* AADPermissionGrantPolicy
+  * Moved the report-time condition set normalization into compare rules.
+* AADServicePrincipal
+  * Added the `#microsoft.graph.trimTransformation` claims transformation type.
+    FIXES [#7578](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7578)
+* EXOCalendarProcessing
+  * Fixed the export failing when `BookInPolicy`, `RequestInPolicy` or
+    `RequestOutOfPolicy` contain a group or a recipient that cannot be resolved.
+    FIXES [#7590](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7590)
+* EXODynamicDistributionGroup
+  * Fixed issue where resource could not be exported if filter was null or empty.
+    FIXES [#7586](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7586)
+* IntuneAppConfigurationDevicePolicy
+  * Fixed an issue where the export of an iOS policy with XML settings failed because
+    its empty `Settings` were assigned.
+    FIXES [#7582](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7582)
+* IntuneDeviceEnrollmentStatusPageWindows10
+  * Updated the delta report to compare without the PostProcessing scriptblock.
+* TeamsOnlineVoicemailUserSettings
+  * Fixed the export failing when a user's `CallAnswerRule` is `Unknown`.
+    FIXES [#7591](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7591)
+* M365DSCPermissions
+  * Fixed `Get-M365DSCCompiledPermissionList` always returning the application
+    update permissions and roles regardless of `PermissionType` and `AccessType`.
+    FIXES [#7589](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7589)
+* M365DSCResourceBase
+  * Added the `ReportPostProcessing` compare parameter for report-time post-processing.
+  * Updated empty collections to be treated as unset on properties with `ValidateNotNullOrEmpty`.
+* M365DSCReverse
+  * Updated the export with the `-WithStatistics` parameter to also return failed
+    resources with their error messages.
+* M365DSCUtil
+  * Added parameters from `Export-M365DSCConfiguration` which were missing from `Assert-M365DSCBlueprint`.
+* DEPENDENCIES
+  * Updated MSCloudLoginAssistant to version 1.2.10.
+* MISC
+  * Added the `ScalarAsArray` compare rule.
+  * Updated the schema to set `HasPostProcessing` only for `ReportPostProcessing`.
+  * Updated PowerShell being installed in Docker release images to 7.6.9.
+  * Fixed issue in Docker Linux dev image where file was being copied to wrong folder.
+
 # 2.26.1028.1
 
 * AADDomain

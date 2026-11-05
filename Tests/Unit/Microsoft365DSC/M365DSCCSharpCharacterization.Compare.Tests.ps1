@@ -1216,6 +1216,18 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
             Should -BeNullOrEmpty
     }
 
+    It 'ScalarAsArray reads a single value as a list of one on both sides, nested and on top' {
+        $rules = @(@{ Type = 'ScalarAsArray'; Paths = @('Members', 'Settings[].Value') })
+        $source = { @{ Members = @('a'); Settings = @(@{ Name = 's'; Value = @('1') }) } }
+
+        $withoutRule = Invoke-RuleCompare -Rules @() -Source (& $source) -Destination @{ Members = 'a'; Settings = @(@{ Name = 's'; Value = '1' }) }
+        $withoutRule | Should -Be @('Settings[0].Value', 'Members')
+        Invoke-RuleCompare -Rules $rules -Source (& $source) -Destination @{ Members = 'a'; Settings = @(@{ Name = 's'; Value = '1' }) } |
+            Should -BeNullOrEmpty
+        $drift = Invoke-RuleCompare -Rules $rules -Source (& $source) -Destination @{ Members = 'b'; Settings = @(@{ Name = 's'; Value = '2' }) }
+        $drift | Should -Be @('Settings[0].Value', 'Members')
+    }
+
     It 'IgnoreWhenPast takes the current date when the desired one has passed' {
         $rules = @(@{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' })
         $now = [System.DateTimeOffset]::Parse('2026-06-01T00:00:00Z')
@@ -1350,5 +1362,14 @@ Describe 'Compare-M365DSCResourceState with compare rules' {
         Compare-M365DSCResourceState -ResourceName 'AADGroup' -DesiredValues $desired -CurrentValues $current | Should -BeFalse
         Compare-M365DSCResourceState -ResourceName 'AADGroup' -DesiredValues $desired -CurrentValues $current -CompareRules $rules | Should -BeTrue
         $current['Description'] | Should -Be 'old'
+    }
+
+    It 'Applies ScalarAsArray to nested values' {
+        $desired = @{ Id = 'p'; Includes = @(@{ PermissionType = 'delegated'; ClientApplicationIds = 'all' }) }
+        $current = @{ Id = 'p'; Includes = @(@{ PermissionType = 'delegated'; ClientApplicationIds = @('all') }) }
+        $rules = @(@{ Type = 'ScalarAsArray'; Paths = @('Includes[].ClientApplicationIds') })
+
+        Compare-M365DSCResourceState -ResourceName 'AADPermissionGrantPolicy' -DesiredValues $desired -CurrentValues $current | Should -BeFalse
+        Compare-M365DSCResourceState -ResourceName 'AADPermissionGrantPolicy' -DesiredValues $desired -CurrentValues $current -CompareRules $rules | Should -BeTrue
     }
 }

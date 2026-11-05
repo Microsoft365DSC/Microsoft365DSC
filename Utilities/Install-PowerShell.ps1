@@ -5,7 +5,7 @@ Param(
     $IsSDK
 )
 
-$PSVersion = "7.6.6"
+$PSVersion = "7.6.9"
 $isWindowsPlatform = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
     [System.Runtime.InteropServices.OSPlatform]::Windows)
 

@@ -12,9 +12,9 @@ RUN apt-get update && apt-get install -y \
     libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget -q https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/p/powershell/powershell_7.6.6-1.deb_amd64.deb && \
-    dpkg -i powershell_7.6.6-1.deb_amd64.deb && \
-    rm powershell_7.6.6-1.deb_amd64.deb
+RUN wget -q https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/p/powershell/powershell_7.6.9-1.deb_amd64.deb && \
+    dpkg -i powershell_7.6.9-1.deb_amd64.deb && \
+    rm powershell_7.6.9-1.deb_amd64.deb
 
 RUN wget -q https://github.com/microsoft/omi/releases/download/v1.9.1-0/omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \
     dpkg -i ./omi-1.9.1-0.ssl_300.ulinux.s.x64.deb && \

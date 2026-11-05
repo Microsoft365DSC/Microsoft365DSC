@@ -791,6 +791,7 @@ function Start-M365DSCConfigurationExtract
         [void]$synchronizedHashtable.TryAdd('ResourceCounter', 1)
         [void]$synchronizedHashtable.TryAdd('ResourcesResult', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('ResourceStatus', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
+        [void]$synchronizedHashtable.TryAdd('ResourceErrors', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('InstanceCounts', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.Int32]]::new())
         [void]$synchronizedHashtable.TryAdd('BusyWorkers', 0)
         $resourceDictionary = Get-M365DSCResourcesDictionary
@@ -942,6 +943,7 @@ function Start-M365DSCConfigurationExtract
                         {
                             Write-M365DSCHost -Message "$($Global:M365DSCEmojiRedX)`r`n    An error occurred while exporting resource {$resourceName}: $($_.Exception.Message)" -ForegroundColor Red -CommitWrite
                             [void]$sharedState.ResourceStatus.TryAdd($resourceName, 'Failed')
+                            [void]$sharedState.ResourceErrors.TryAdd($resourceName, $_.Exception.Message)
                             if ($ErrorActionPreference -eq 'Stop')
                             {
                                 throw $_
@@ -1330,6 +1332,14 @@ function Start-M365DSCConfigurationExtract
                 ExportedResourceCount   = $synchronizedHashtable.SuccessfulResources
                 FailedResourceCount     = $synchronizedHashtable.FailedResources
                 TotalResourceCount      = $synchronizedHashtable.SuccessfulResources + $synchronizedHashtable.FailedResources
+                FailedResources         = @(
+                    $synchronizedHashtable.ResourceErrors.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
+                        @{
+                            ResourceName = $_.Key
+                            Message      = $_.Value
+                        }
+                    }
+                )
             }
         }
     }

@@ -516,9 +516,13 @@ class IntuneDeviceEnrollmentStatusPageWindows10 : M365DSCResourceBase
             # Compare on app display names: resolve desired ids to names, then drop the id lists.
             PostProcessing = {
                 param($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-                # Resolving ids needs a Graph connection, which a report does not have.
-                if ($DesiredValues.ContainsKey('SelectedMobileAppIds') -and -not $DesiredValues.ContainsKey('SelectedMobileAppNames') -and
-                    -not [M365DSCResourceBase]::IsReportContext($PostProcessingArgs))
+
+                if ([M365DSCResourceBase]::IsReportContext($PostProcessingArgs))
+                {
+                    return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
+                }
+
+                if ($DesiredValues.ContainsKey('SelectedMobileAppIds') -and -not $DesiredValues.ContainsKey('SelectedMobileAppNames'))
                 {
                     $resolvedNames = @()
                     foreach ($appId in $DesiredValues.SelectedMobileAppIds)

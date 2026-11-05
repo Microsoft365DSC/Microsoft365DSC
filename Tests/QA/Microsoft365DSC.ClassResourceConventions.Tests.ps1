@@ -74,6 +74,49 @@ BeforeDiscovery {
         return $false
     }
 
+    function Test-ReportContextCondition
+    {
+        param([System.Management.Automation.Language.Ast] $Node)
+
+        if ($Node -is [System.Management.Automation.Language.PipelineAst] -and $Node.PipelineElements.Count -eq 1 -and
+            $Node.PipelineElements[0] -is [System.Management.Automation.Language.CommandExpressionAst])
+        {
+            return Test-ReportContextCondition -Node $Node.PipelineElements[0].Expression
+        }
+
+        if ($Node -is [System.Management.Automation.Language.ParenExpressionAst])
+        {
+            return Test-ReportContextCondition -Node $Node.Pipeline
+        }
+
+        if ($Node -is [System.Management.Automation.Language.BinaryExpressionAst])
+        {
+            return $Node.Operator -eq [System.Management.Automation.Language.TokenKind]::Or -and
+                ((Test-ReportContextCondition -Node $Node.Left) -or (Test-ReportContextCondition -Node $Node.Right))
+        }
+
+        return $Node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and $Node.Static -and
+            $Node.Expression.TypeName.Name -eq 'M365DSCResourceBase' -and $Node.Member.Value -eq 'IsReportContext'
+    }
+
+    function Test-ReportContextPassThrough
+    {
+        param([System.Management.Automation.Language.ScriptBlockAst] $ScriptBlock)
+
+        $first = @($ScriptBlock.EndBlock.Statements)[0]
+        if ($first -isnot [System.Management.Automation.Language.IfStatementAst] -or
+            $first.Clauses.Count -ne 1 -or $null -ne $first.ElseClause -or
+            -not (Test-ReportContextCondition -Node $first.Clauses[0].Item1))
+        {
+            return $false
+        }
+
+        $body = @($first.Clauses[0].Item2.Statements)
+        return $body.Count -eq 1 -and $body[0] -is [System.Management.Automation.Language.ReturnStatementAst] -and
+            ($body[0].Pipeline.Extent.Text -replace '\s', '') -eq
+            '[System.Tuple[Hashtable,Hashtable,Hashtable]]::new($DesiredValues,$CurrentValues,$ValuesToCheck)'
+    }
+
     $offlineCommands = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($command in (Get-Command -CommandType Cmdlet -ErrorAction SilentlyContinue |
                 Where-Object -FilterScript {
@@ -104,6 +147,9 @@ BeforeDiscovery {
     $testDoesOwnCompare    = [System.Collections.Generic.List[string]]::new()
     $compareParamsUseThis  = [System.Collections.Generic.List[string]]::new()
     $unguardedPostProcess  = [System.Collections.Generic.List[string]]::new()
+    $reportPostProcessWork = [System.Collections.Generic.List[string]]::new()
+    $staleReportDeclare    = [System.Collections.Generic.List[string]]::new()
+    $reportDeclarations    = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $exportMissingPlumbing = [System.Collections.Generic.List[string]]::new()
 
     foreach ($file in (Get-ChildItem -Path $resourcesPath -Filter 'MSFT_*.psm1' -File -Recurse))
@@ -364,6 +410,49 @@ BeforeDiscovery {
         }
         #endregion
 
+        #region PostProcessing returns its values unchanged in a report unless declared
+        # The schema generator sets HasPostProcessing only for ReportPostProcessing = $true, and without it
+        # New-M365DSCDeltaReport compares with the schema alone.
+        if ($methods.ContainsKey('GetCompareParameters'))
+        {
+            foreach ($declaration in $methods['GetCompareParameters'].Body.FindAll({
+                        param($a) $a -is [System.Management.Automation.Language.HashtableAst] }, $true))
+            {
+                $pairs = @{}
+                foreach ($pair in $declaration.KeyValuePairs)
+                {
+                    if ($pair.Item1 -is [System.Management.Automation.Language.StringConstantExpressionAst])
+                    {
+                        $pairs[$pair.Item1.Value] = $pair.Item2
+                    }
+                }
+
+                if (-not $pairs.ContainsKey('PostProcessing')) { continue }
+
+                $scriptBlock = $pairs['PostProcessing'].Find({
+                        param($a) $a -is [System.Management.Automation.Language.ScriptBlockExpressionAst] }, $true)
+                if ($null -eq $scriptBlock) { continue }
+
+                $isDeclared = $pairs.ContainsKey('ReportPostProcessing') -and
+                    ($pairs['ReportPostProcessing'].Extent.Text -replace '\s', '') -eq '$true'
+                $isPassThrough = Test-ReportContextPassThrough -ScriptBlock $scriptBlock.ScriptBlock
+
+                if ($isDeclared)
+                {
+                    $null = $reportDeclarations.Add($resourceName)
+                    if ($isPassThrough)
+                    {
+                        $staleReportDeclare.Add(('{0} L{1}' -f $resourceName, $declaration.Extent.StartLineNumber))
+                    }
+                }
+                elseif (-not $isPassThrough)
+                {
+                    $reportPostProcessWork.Add(('{0} L{1}' -f $resourceName, $scriptBlock.Extent.StartLineNumber))
+                }
+            }
+        }
+        #endregion
+
         #region Export() plumbing
         # Single-instance resources may legitimately call $this.Get() directly, or splat parameters
         # and use $this.ExportedInstance. Either shape is fine for a resource with one instance.
@@ -381,6 +470,23 @@ BeforeDiscovery {
             }
         }
         #endregion
+    }
+
+    $schemaPath = Join-Path -Path $PSScriptRoot -ChildPath '../../Modules/Microsoft365DSC/SchemaDefinition.json'
+    $isSchemaBuilt = Test-Path -Path $schemaPath
+    $schemaFlagMismatches = [System.Collections.Generic.List[string]]::new()
+    if ($isSchemaBuilt)
+    {
+        foreach ($entry in ([System.IO.File]::ReadAllText($schemaPath) | ConvertFrom-Json))
+        {
+            if ($entry.ClassName -notlike 'MSFT_*' -or $null -eq $entry.Parameters) { continue }
+
+            $isFlagged = $entry.HasPostProcessing -eq $true
+            if ($isFlagged -ne $reportDeclarations.Contains($entry.ClassName))
+            {
+                $schemaFlagMismatches.Add(('{0}: HasPostProcessing is {1}' -f $entry.ClassName, $isFlagged))
+            }
+        }
     }
 
     $conventionRules = @(
@@ -456,6 +562,19 @@ BeforeDiscovery {
                         'connection and no try/catch around the call'
         }
         @{
+            Name      = 'opens PostProcessing with an IsReportContext() pass-through unless it declares ReportPostProcessing'
+            Offenders = @($reportPostProcessWork)
+            Because   = 'the schema says HasPostProcessing false without the declaration, so the report and every ' +
+                        'schema-only comparer skip the scriptblock. Express the step as a compare rule, or declare ' +
+                        'ReportPostProcessing = $true'
+        }
+        @{
+            Name      = 'declares ReportPostProcessing only for a PostProcessing that works in a report'
+            Offenders = @($staleReportDeclare)
+            Because   = 'the scriptblock returns its values unchanged in a report, so the declaration only makes the ' +
+                        'report load the resource class'
+        }
+        @{
             Name      = 'exports through the shared export plumbing'
             Offenders = @($exportMissingPlumbing)
             Because   = 'Get-M365DSCExportContentForResource and Save-M365DSCPartialExport produce the emitted ' +
@@ -474,5 +593,17 @@ Describe 'Class-based resource conventions' {
                          $(if ($Offenders.Count -gt 25) { "`n  ... and $($Offenders.Count - 25) more" } else { '' }) }
 
         $Offenders.Count | Should -Be 0 -Because ($Because + $detail)
+    }
+
+    It 'sets HasPostProcessing in SchemaDefinition.json exactly for the ReportPostProcessing declarations' -ForEach @(
+        @{ IsSchemaBuilt = $isSchemaBuilt; Mismatches = @($schemaFlagMismatches) }
+    ) {
+        if (-not $IsSchemaBuilt)
+        {
+            Set-ItResult -Skipped -Because 'the schema has not been built'
+            return
+        }
+
+        $Mismatches | Should -BeNullOrEmpty -Because 'Utilities/New-M365DSCSchemaFromClasses.ps1 reads the declaration'
     }
 }

@@ -1660,7 +1660,7 @@ class MSFT_AADServicePrincipalCustomClaimTransformation
 {
     [DscProperty()]
     [System.ComponentModel.Description('The type of the entity.')]
-    [ValidateSet('#microsoft.graph.containsTransformation', '#microsoft.graph.endsWithTransformation', '#microsoft.graph.extractAlphaTransformation', '#microsoft.graph.extractMailPrefixTransformation', '#microsoft.graph.extractNumberTransformation', '#microsoft.graph.extractTransformation', '#microsoft.graph.ifEmptyTransformation', '#microsoft.graph.ifNotEmptyTransformation', '#microsoft.graph.joinTransformation', '#microsoft.graph.regexReplaceTransformation', '#microsoft.graph.startsWithTransformation', '#microsoft.graph.substringTransformation', '#microsoft.graph.toLowercaseTransformation', '#microsoft.graph.toUppercaseTransformation')]
+    [ValidateSet('#microsoft.graph.containsTransformation', '#microsoft.graph.endsWithTransformation', '#microsoft.graph.extractAlphaTransformation', '#microsoft.graph.extractMailPrefixTransformation', '#microsoft.graph.extractNumberTransformation', '#microsoft.graph.extractTransformation', '#microsoft.graph.ifEmptyTransformation', '#microsoft.graph.ifNotEmptyTransformation', '#microsoft.graph.joinTransformation', '#microsoft.graph.regexReplaceTransformation', '#microsoft.graph.startsWithTransformation', '#microsoft.graph.substringTransformation', '#microsoft.graph.toLowercaseTransformation', '#microsoft.graph.toUppercaseTransformation', '#microsoft.graph.trimTransformation')]
     [System.String] $odataType
 
     [DscProperty()]
@@ -1676,7 +1676,7 @@ class MSFT_AADServicePrincipalCustomClaimTransformation
     [System.String] $separator
 
     [DscProperty()]
-    [System.ComponentModel.Description('The type of extract transformation to apply.')]
+    [System.ComponentModel.Description('The type of extract or trim transformation to apply.')]
     [System.String] $type
 
     [DscProperty()]

@@ -101,6 +101,7 @@ namespace Microsoft365DSC.Compare
             ["NullEqualsEmpty"] = NullEqualsEmptyRule.From,
             ["Tolerance"] = ToleranceRule.From,
             ["IgnoreNested"] = IgnoreNestedRule.From,
+            ["ScalarAsArray"] = ScalarAsArrayRule.From,
             ["IgnoreWhenPast"] = IgnoreWhenPastRule.From,
             ["SameInstant"] = SameInstantRule.From,
             ["Rename"] = RenameRule.From,
@@ -529,6 +530,32 @@ namespace Microsoft365DSC.Compare
                 foreach (RuleSlot slot in _paths.SelectMany(path => RuleValues.ResolveSlots(values, path)).ToArray())
                 {
                     slot.Remove();
+                }
+            }
+        }
+    }
+
+    internal sealed class ScalarAsArrayRule : CompareRule
+    {
+        private readonly IReadOnlyList<string> _paths;
+
+        public ScalarAsArrayRule(IReadOnlyList<string> paths)
+        {
+            _paths = paths;
+        }
+
+        public static CompareRule From(object declaration) => new ScalarAsArrayRule(RuleValues.ReadStrings(declaration, "Paths"));
+
+        internal override void Apply(CompareRuleContext context)
+        {
+            foreach (Hashtable values in context.ListSides(RuleSide.Both))
+            {
+                foreach (RuleSlot slot in _paths.SelectMany(path => RuleValues.ResolveSlots(values, path)).ToArray())
+                {
+                    if (MemberAccessor.Unwrap(slot.Read()) is { } value && (value is string || value is not IEnumerable))
+                    {
+                        slot.Write(new[] { value });
+                    }
                 }
             }
         }
