@@ -16,6 +16,9 @@
     FIXES [#7582](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7582)
 * IntuneDeviceEnrollmentStatusPageWindows10
   * Updated the delta report to compare without the PostProcessing scriptblock.
+* TeamsOnlineVoicemailUserSettings
+  * Fixed the export failing when a user's `CallAnswerRule` is `Unknown`.
+    FIXES [#7591](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7591)
 * M365DSCResourceBase
   * Added the `ReportPostProcessing` compare parameter for report-time post-processing.
   * Updated empty collections to be treated as unset on properties with `ValidateNotNullOrEmpty`.
