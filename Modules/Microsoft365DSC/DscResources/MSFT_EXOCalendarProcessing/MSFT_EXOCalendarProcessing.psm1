@@ -238,42 +238,22 @@ class EXOCalendarProcessing : M365DSCResourceBase
                 $this.ResourceCache['UsersCache'] = [System.Collections.Generic.Dictionary[System.String, System.String]]::new()
             }
 
-            $RequestInPolicyValue = @()
-            if ($null -ne $calendarProc.RequestInPolicy)
+            $BookInPolicyValue = @()
+            foreach ($recipient in $calendarProc.BookInPolicy)
             {
-                foreach ($user in $calendarProc.RequestInPolicy)
-                {
-                    $userInfo = $null
-                    if ($this.ResourceCache['UsersCache'].TryGetValue($user, [ref]$userInfo))
-                    {
-                        $RequestInPolicyValue += $userInfo
-                    }
-                    else
-                    {
-                        $userInfo = (Get-User -Identity $user).UserPrincipalName
-                        $this.ResourceCache['UsersCache'][$user] = $userInfo
-                        $RequestInPolicyValue += $userInfo
-                    }
-                }
+                $BookInPolicyValue += $this.ResolveRecipientIdentity($recipient)
+            }
+
+            $RequestInPolicyValue = @()
+            foreach ($recipient in $calendarProc.RequestInPolicy)
+            {
+                $RequestInPolicyValue += $this.ResolveRecipientIdentity($recipient)
             }
 
             $RequestOutOfPolicyValue = @()
-            if ($null -ne $calendarProc.RequestOutOfPolicy)
+            foreach ($recipient in $calendarProc.RequestOutOfPolicy)
             {
-                foreach ($user in $calendarProc.RequestOutOfPolicy)
-                {
-                    $userInfo = $null
-                    if ($this.ResourceCache['UsersCache'].TryGetValue($user, [ref]$userInfo))
-                    {
-                        $RequestOutOfPolicyValue += $userInfo
-                    }
-                    else
-                    {
-                        $userInfo = (Get-User -Identity $user).UserPrincipalName
-                        $this.ResourceCache['UsersCache'][$user] = $userInfo
-                        $RequestOutOfPolicyValue += $userInfo
-                    }
-                }
+                $RequestOutOfPolicyValue += $this.ResolveRecipientIdentity($recipient)
             }
 
             $ResourceDelegatesValue = @()
@@ -309,7 +289,7 @@ class EXOCalendarProcessing : M365DSCResourceBase
                 AutomateProcessing                   = $calendarProc.AutomateProcessing
                 BookingType                          = $calendarProc.BookingType
                 BookingWindowInDays                  = $calendarProc.BookingWindowInDays
-                BookInPolicy                         = [Array]$calendarProc.BookInPolicy
+                BookInPolicy                         = $BookInPolicyValue
                 ConflictPercentageAllowed            = $calendarProc.ConflictPercentageAllowed
                 DeleteAttachments                    = $calendarProc.DeleteAttachments
                 DeleteComments                       = $calendarProc.DeleteComments
@@ -489,6 +469,37 @@ class EXOCalendarProcessing : M365DSCResourceBase
 
             throw
         }
+    }
+
+    hidden [System.String] ResolveRecipientIdentity([System.String] $Identity)
+    {
+        $resolvedIdentity = $null
+        if ($this.ResourceCache['UsersCache'].TryGetValue($Identity, [ref]$resolvedIdentity))
+        {
+            return $resolvedIdentity
+        }
+
+        $user = Get-User -Identity $Identity -ErrorAction SilentlyContinue
+        if ($null -ne $user)
+        {
+            $resolvedIdentity = $user.UserPrincipalName
+        }
+        else
+        {
+            $recipient = Get-Recipient -Identity $Identity -ErrorAction SilentlyContinue
+            if ($null -ne $recipient)
+            {
+                $resolvedIdentity = $recipient.PrimarySmtpAddress
+            }
+            else
+            {
+                Write-Warning -Message "Could not resolve recipient {$Identity} in the calendar processing settings of {$($this.Identity)}. Keeping the value as returned by Exchange Online."
+                $resolvedIdentity = $Identity
+            }
+        }
+
+        $this.ResourceCache['UsersCache'][$Identity] = $resolvedIdentity
+        return $resolvedIdentity
     }
 
     hidden [EXOCalendarProcessing] AsResult([System.Object] $Values)

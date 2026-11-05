@@ -7,6 +7,10 @@
 * AADServicePrincipal
   * Added the `#microsoft.graph.trimTransformation` claims transformation type.
     FIXES [#7578](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7578)
+* EXOCalendarProcessing
+  * Fixed the export failing when `BookInPolicy`, `RequestInPolicy` or
+    `RequestOutOfPolicy` contain a group or a recipient that cannot be resolved.
+    FIXES [#7590](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7590)
 * EXODynamicDistributionGroup
   * Fixed issue where resource could not be exported if filter was null or empty.
     FIXES [#7586](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7586)
