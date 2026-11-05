@@ -137,9 +137,16 @@ class TeamsOnlineVoicemailUserSettings : M365DSCResourceBase
             }
 
             Write-Verbose -Message "Found Teams Online Voicemail User Settings for {$($this.Identity)}"
+
+            $callAnswerRuleValue = $null
+            if ($instance.CallAnswerRule -ne 'Unknown')
+            {
+                $callAnswerRuleValue = $instance.CallAnswerRule
+            }
+
             return $this.AsResult(@{
                 Identity                                 = $this.Identity
-                CallAnswerRule                           = $instance.CallAnswerRule
+                CallAnswerRule                           = $callAnswerRuleValue
                 CallToActionDetectionEnabled             = $instance.CallToActionDetectionEnabled
                 CategoryDetectionEnabled                 = $instance.CategoryDetectionEnabled
                 DefaultGreetingPromptOverwrite           = $instance.DefaultGreetingPromptOverwrite

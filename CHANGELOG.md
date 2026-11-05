@@ -7,6 +7,10 @@
 * AADServicePrincipal
   * Added the `#microsoft.graph.trimTransformation` claims transformation type.
     FIXES [#7578](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7578)
+* EXOCalendarProcessing
+  * Fixed the export failing when `BookInPolicy`, `RequestInPolicy` or
+    `RequestOutOfPolicy` contain a group or a recipient that cannot be resolved.
+    FIXES [#7590](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7590)
 * EXODynamicDistributionGroup
   * Fixed issue where resource could not be exported if filter was null or empty.
     FIXES [#7586](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7586)
@@ -16,6 +20,13 @@
     FIXES [#7582](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7582)
 * IntuneDeviceEnrollmentStatusPageWindows10
   * Updated the delta report to compare without the PostProcessing scriptblock.
+* TeamsOnlineVoicemailUserSettings
+  * Fixed the export failing when a user's `CallAnswerRule` is `Unknown`.
+    FIXES [#7591](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7591)
+* M365DSCPermissions
+  * Fixed `Get-M365DSCCompiledPermissionList` always returning the application
+    update permissions and roles regardless of `PermissionType` and `AccessType`.
+    FIXES [#7589](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7589)
 * M365DSCResourceBase
   * Added the `ReportPostProcessing` compare parameter for report-time post-processing.
   * Updated empty collections to be treated as unset on properties with `ValidateNotNullOrEmpty`.
