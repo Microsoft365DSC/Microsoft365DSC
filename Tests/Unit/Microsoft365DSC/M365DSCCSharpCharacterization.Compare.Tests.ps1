@@ -308,6 +308,12 @@ Describe 'ConfigurationComparer.Compare' {
             $deltas[0]['Properties'][0]['ValueInDestination'] | Should -Be 'Present'
         }
 
+        It 'Reports no entries for a destination-only instance whose Ensure is Absent' {
+            $deltas = Invoke-ConfigurationCompare -Destination @(New-Resource -ResourceName 'TestResource' -InstanceName 'Inst' -Values @{ Identity = 'a'; Ensure = 'Absent' })
+
+            $deltas.Count | Should -Be 0
+        }
+
         It 'Reports an instance of a resource without mandatory parameters as missing on both sides' {
             $resource = New-Resource -ResourceName 'TestNoKeyResource' -InstanceName 'Only' -Values @{ Setting = 'v' }
             $deltas = Invoke-ConfigurationCompare -Source @($resource) -Destination @($resource)

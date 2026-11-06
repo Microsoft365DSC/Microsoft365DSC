@@ -105,7 +105,8 @@ namespace Microsoft365DSC.Compare
 
             foreach (KeyedInstance destinationInstance in destinations)
             {
-                if (destinationInstance.Key is null || !sourceKeys.Contains(destinationInstance.Key.Value))
+                if ((destinationInstance.Key is null || !sourceKeys.Contains(destinationInstance.Key.Value))
+                    && !IsSetToAbsent(destinationInstance.Resource))
                 {
                     ConfigurationDelta missing = Presence(destinationInstance.Resource, KeyName(destinationInstance.Keys), KeyValue(destinationInstance.Resource, destinationInstance.Keys), inSource: "Absent", inDestination: "Present");
                     ApplyPresenceAnnotation(missing.Properties[0], destinationInstance.Resource, destinationInstance.Keys);
@@ -114,6 +115,11 @@ namespace Microsoft365DSC.Compare
             }
 
             return delta;
+        }
+
+        private static bool IsSetToAbsent(Hashtable resource)
+        {
+            return string.Equals(resource["Ensure"]?.ToString(), "Absent", StringComparison.OrdinalIgnoreCase);
         }
 
         private sealed class KeyedInstance

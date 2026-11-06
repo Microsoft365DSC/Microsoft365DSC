@@ -1,5 +1,10 @@
 ﻿# Change log for Microsoft365DSC
 
+# UNRELEASED
+
+* MISC
+  * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
+
 # 2.26.1104.1
 
 * AADPermissionGrantPolicy
