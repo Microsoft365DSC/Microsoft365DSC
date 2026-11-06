@@ -921,10 +921,10 @@ class AADUser : M365DSCResourceBase
 
                     $this.ExportedInstance = $user
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
-                    $Results.Password = "New-Object System.Management.Automation.PSCredential('Password', (ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force))"
-                    if ($null -ne $Results.UserPrincipalName)
+                    if ($null -ne $Results -and $null -ne $Results.UserPrincipalName)
                     {
+                        $rawResults = $Results.Clone()
+                        $Results.Password = "New-Object System.Management.Automation.PSCredential('Password', (ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force))"
                         if ($Results.CustomSecurityAttributes.Count -gt 0)
                         {
                             $complexMapping = @(

@@ -752,6 +752,7 @@ function Get-M365DSCExportContentForResource
         $ModulePath,
 
         [Parameter(Mandatory = $true)]
+        [AllowNull()]
         [System.Collections.Hashtable]
         $Results,
 
@@ -779,6 +780,11 @@ function Get-M365DSCExportContentForResource
         [System.Collections.Hashtable]
         $RawResults
     )
+
+    if ($null -eq $Results)
+    {
+        return ''
+    }
 
     $OrganizationName = ''
     if ($ConnectionMode -like 'ServicePrincipal*' -or `

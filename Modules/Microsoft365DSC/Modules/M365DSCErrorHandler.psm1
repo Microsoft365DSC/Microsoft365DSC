@@ -24,6 +24,7 @@ function Save-M365DSCPartialExport
     param
     (
         [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
         [System.String]
         $Content,
 
@@ -31,6 +32,11 @@ function Save-M365DSCPartialExport
         [System.String]
         $FileName
     )
+
+    if ([System.String]::IsNullOrEmpty($Content))
+    {
+        return
+    }
 
     if (-not [System.String]::IsNullOrEmpty($env:TEMP))
     {
@@ -242,6 +248,81 @@ function Test-M365DSCNotFoundError
         foreach ($pattern in $notFoundPatterns)
         {
             if ($detailsMessage -like $pattern)
+            {
+                return $true
+            }
+        }
+    }
+
+    return $false
+}
+
+<#
+.SYNOPSIS
+    Determines whether an error record represents an authentication or authorization error.
+
+.DESCRIPTION
+    Inspects the HTTP status code, the exception message and the error details of a
+    PowerShell ErrorRecord to determine if the error indicates a failed sign-in or missing
+    permissions. A cmdlet that is not available counts as missing permissions, because
+    Exchange Online and Security & Compliance only load the cmdlets the assigned roles allow.
+
+.PARAMETER ErrorRecord
+    The PowerShell ErrorRecord to inspect.
+
+.OUTPUTS
+    [System.Boolean] $true if the error indicates an authentication or authorization failure, $false otherwise.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Test-M365DSCAccessError
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.ErrorRecord]
+        $ErrorRecord
+    )
+
+    if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
+    {
+        $response = $ErrorRecord.Exception.Response
+        if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
+        {
+            if ([int]$response.StatusCode -in @(401, 403))
+            {
+                return $true
+            }
+        }
+    }
+
+    $accessPatterns = @(
+        '*Unauthorized*',
+        '*Forbidden*',
+        '*Authorization_RequestDenied*',
+        '*Insufficient privileges*',
+        '*Access denied*',
+        '*AccessDenied*',
+        '*Access is denied*',
+        '*AADSTS*',
+        '*is not recognized as a name of a cmdlet*',
+        '*is not recognized as the name of a cmdlet*'
+    )
+
+    $messages = @($ErrorRecord.Exception.Message)
+    if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
+    {
+        $messages += $ErrorRecord.ErrorDetails.Message
+    }
+
+    foreach ($message in $messages)
+    {
+        foreach ($pattern in $accessPatterns)
+        {
+            if ($message -like $pattern)
             {
                 return $true
             }
@@ -467,6 +548,7 @@ Export-ModuleMember -Function @(
     'Close-M365DSCPartialExport',
     'Invoke-M365DSCCommand',
     'Save-M365DSCPartialExport',
+    'Test-M365DSCAccessError',
     'Test-M365DSCNotFoundError',
     'Test-M365DSCTransientError',
     'Wait-M365DSCCondition'
