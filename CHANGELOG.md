@@ -2,11 +2,18 @@
 
 # UNRELEASED
 
+* SCLabelPolicy
+  * Fixed locations without a name being exported as empty. Display Name resolution
+    requires the `GroupMember.Read.All` permission.
+    FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
 * M365DSCErrorHandler
   * Added `Test-M365DSCAccessError` to detect authentication and permission errors.
   * Updated `Save-M365DSCPartialExport` to accept empty content.
 * M365DSCExportUtil
   * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
+* M365DSCModuleMgmt
+  * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
+    FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
 * M365DSCResourceBase
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
