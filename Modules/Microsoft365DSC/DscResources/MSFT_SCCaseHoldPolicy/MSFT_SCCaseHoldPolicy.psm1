@@ -331,14 +331,13 @@ class SCCaseHoldPolicy : M365DSCResourceBase
 
                     $this.ExportedInstance = $policy
                     $Results = $this.GetForExport(@{ Name = $policy.Name; Case = $case.Name })
-                    $rawResults = $Results.Clone()
 
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
 
                     Save-M365DSCPartialExport -Content $currentDSCBlock `

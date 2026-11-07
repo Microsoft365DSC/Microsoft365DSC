@@ -497,33 +497,36 @@ class AADCertificateBasedApplicationConfiguration : M365DSCResourceBase
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
 
-                if ($null -ne $Results.TrustedCertificateAuthorities -and $Results.TrustedCertificateAuthorities.Count -gt 0)
+                if ($null -ne $Results)
                 {
-                    $complexMapping = @(
-                        @{
-                            Name            = 'TrustedCertificateAuthorities'
-                            CimInstanceName = 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority'
-                            IsRequired      = $False
-                        }
-                    )
-
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                        -ComplexObject $Results.TrustedCertificateAuthorities `
-                        -CIMInstanceName 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority' `
-                        -ComplexTypeMapping $complexMapping
-
-                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    if ($null -ne $Results.TrustedCertificateAuthorities -and $Results.TrustedCertificateAuthorities.Count -gt 0)
                     {
-                        $Results.TrustedCertificateAuthorities = $complexTypeStringResult
+                        $complexMapping = @(
+                            @{
+                                Name            = 'TrustedCertificateAuthorities'
+                                CimInstanceName = 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority'
+                                IsRequired      = $False
+                            }
+                        )
+
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                            -ComplexObject $Results.TrustedCertificateAuthorities `
+                            -CIMInstanceName 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority' `
+                            -ComplexTypeMapping $complexMapping
+
+                        if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                        {
+                            $Results.TrustedCertificateAuthorities = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('TrustedCertificateAuthorities') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('TrustedCertificateAuthorities') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('TrustedCertificateAuthorities') | Out-Null
                 }
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `

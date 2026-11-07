@@ -1022,7 +1022,6 @@ class AADServicePrincipal : M365DSCResourceBase
                 }
                 $this.ExportedInstance = $AADServicePrincipal
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 if ($Results.Ensure -eq 'Present')
                 {
                     if ($Results.AppRoleAssignedTo.Count -gt 0)
@@ -1199,15 +1198,14 @@ class AADServicePrincipal : M365DSCResourceBase
                         -Results $Results `
                         -Credential $this.Credential `
                         -NoEscape @('AppRoleAssignedTo', 'ClaimsPolicy', 'DelegatedPermissionClassifications', 'KeyCredentials', 'PasswordCredentials', 'CustomSecurityAttributes', 'SamlSingleSignOnSettings') `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
 
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
-
-                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                    $i++
                 }
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
             }
             return $dscContent.ToString()
         }

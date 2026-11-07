@@ -457,7 +457,6 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.Assignments)
                 {
@@ -610,7 +609,7 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
                     -NoEscape @('Assignments', 'IosRestriction', 'WindowsRestriction', 'WindowsHomeSkuRestriction',
                     'WindowsMobileRestriction', 'AndroidRestriction', 'AndroidForWorkRestriction',
                     'MacRestriction', 'MacOSRestriction', 'TvosRestriction', 'VisionOSRestriction') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

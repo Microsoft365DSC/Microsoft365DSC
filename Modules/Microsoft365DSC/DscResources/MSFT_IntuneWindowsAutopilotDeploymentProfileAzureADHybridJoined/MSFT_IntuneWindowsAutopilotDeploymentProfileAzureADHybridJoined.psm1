@@ -419,7 +419,6 @@ class IntuneWindowsAutopilotDeploymentProfileAzureADHybridJoined : M365DSCResour
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.EnrollmentStatusScreenSettings)
                 {
@@ -467,7 +466,7 @@ class IntuneWindowsAutopilotDeploymentProfileAzureADHybridJoined : M365DSCResour
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('EnrollmentStatusScreenSettings', 'OutOfBoxExperienceSetting', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

@@ -508,7 +508,6 @@ class IntuneDeviceFeaturesConfigurationPolicyIOS : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -709,7 +708,7 @@ class IntuneDeviceFeaturesConfigurationPolicyIOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'AirPrintDestinations', 'ContentFilterSettings', 'HomeScreenDockIcons', 'HomeScreenPages', 'WallpaperImage', 'IosSingleSignOnExtension', 'NotificationSettings', 'SingleSignOnSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

@@ -2608,7 +2608,7 @@ function Write-M365DSCHost
     }
 
     # Handle special case for commit write with export instance failure message
-    if ($CommitWrite -and $Message -eq $Global:M365DSCEmojiGreenCheckMark -and
+    if ($CommitWrite -and $Message -in @($Global:M365DSCEmojiGreenCheckMark, $Global:M365DSCEmojiRedX) -and
         -not [System.String]::IsNullOrEmpty($Global:M365DSCExportInstanceFailureMessage))
     {
         $Message = "$($Global:M365DSCEmojiRedX)`r`n        $($Global:M365DSCExportInstanceFailureMessage)"

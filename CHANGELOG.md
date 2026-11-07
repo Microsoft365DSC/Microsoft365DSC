@@ -11,6 +11,7 @@
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
     and authentication or permission errors still stop the export of the resource.
+  * Added `RawExportResults` with an unmodified copy of the last `GetForExport` result.
 * M365DSCReverse
   * Added the `PartiallySucceeded` resource status for resources with skipped instances
     with new statistics information.

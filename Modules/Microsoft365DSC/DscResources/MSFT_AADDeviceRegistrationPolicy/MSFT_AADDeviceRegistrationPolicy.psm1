@@ -493,7 +493,6 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
             }
 
             $Results = $this.GetForExport($Params)
-            $rawResults = $Results.Clone()
 
             if ($null -ne $Results.AzureADRegistration)
             {
@@ -529,7 +528,7 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
                 -ModulePath $this.GetModulePath() `
                 -Results $Results `
                 -Credential $this.Credential `
-                -RawResults $rawResults `
+                -RawResults $this.RawExportResults `
                 -NoEscape @('AzureADRegistration')
 
             [void]$dscContent.Append($currentDSCBlock)

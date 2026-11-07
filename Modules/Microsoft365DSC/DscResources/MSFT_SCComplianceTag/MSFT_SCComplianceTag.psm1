@@ -348,7 +348,6 @@ class SCComplianceTag : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($totalTags)] $($tag.Name)" -DeferWrite
                 $this.ExportedInstance = $tag
                 $Results = $this.GetForExport(@{ Name = $tag.Name })
-                $rawResults = $Results.Clone()
                 if ($Results.FilePlanProperty)
                 {
                     $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
@@ -383,7 +382,7 @@ class SCComplianceTag : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('FilePlanProperty', 'MultiStageReviewProperty') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName

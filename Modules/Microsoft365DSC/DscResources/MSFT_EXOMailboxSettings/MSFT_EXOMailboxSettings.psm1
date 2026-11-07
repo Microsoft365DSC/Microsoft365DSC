@@ -267,7 +267,6 @@ class EXOMailboxSettings : M365DSCResourceBase
 
                     $this.ExportedInstance = $mailbox
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
                     {
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -275,7 +274,7 @@ class EXOMailboxSettings : M365DSCResourceBase
                             -ModulePath $this.GetModulePath() `
                             -Results $Results `
                             -Credential $this.Credential `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `
                             -FileName $Global:PartialExportFileName

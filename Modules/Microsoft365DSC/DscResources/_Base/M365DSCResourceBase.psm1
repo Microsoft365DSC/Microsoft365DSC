@@ -221,6 +221,9 @@ class M365DSCResourceBase
     # $Script:AllSchedules, $Script:exportedGroups, ...).
     hidden [Hashtable] $ResourceCache = @{}
 
+    # Unmodified copy of the last GetForExport result, $null for a skipped instance.
+    hidden [Hashtable] $RawExportResults
+
     # Each runspace compiles its own class types. A PowerShell class instance references only the session
     # state it was created in.
     hidden static [System.Runtime.CompilerServices.ConditionalWeakTable[Runspace, ConcurrentDictionary[String, ConcurrentDictionary[Type, System.Object]]]] $_runspaceTypeCaches = `
@@ -1222,10 +1225,13 @@ class M365DSCResourceBase
     [Hashtable] GetForExport([Hashtable] $Values)
     {
         $Global:M365DSCExportInstanceFailureMessage = $null
+        $this.RawExportResults = $null
         try
         {
             $this.FromHashtable($Values)
-            return $this.Get().ToHashtable()
+            $result = $this.Get().ToHashtable()
+            $this.RawExportResults = $result.Clone()
+            return $result
         }
         catch
         {

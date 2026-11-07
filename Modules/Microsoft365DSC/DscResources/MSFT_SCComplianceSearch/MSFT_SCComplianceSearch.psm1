@@ -270,13 +270,12 @@ class SCComplianceSearch : M365DSCResourceBase
 
                 $this.ExportedInstance = $search
                 $Results = $this.GetForExport(@{ Name = $search.Name })
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 $i++
@@ -306,14 +305,13 @@ class SCComplianceSearch : M365DSCResourceBase
                     }
                     Write-M365DSCHost -Message "        |---[$i/$($searches.Name.Count)] $($search.Name)" -DeferWrite
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
 
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
 
                     Save-M365DSCPartialExport -Content $currentDSCBlock `

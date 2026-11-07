@@ -644,7 +644,6 @@ class IntuneDeviceCompliancePolicyWindows10 : M365DSCResourceBase
 
                 $this.ExportedInstance = $configDeviceWindowsPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.ValidOperatingSystemBuildRanges)
                 {
@@ -734,7 +733,7 @@ class IntuneDeviceCompliancePolicyWindows10 : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('ValidOperatingSystemBuildRanges', 'WslDistributions', 'DeviceCompliancePolicyScript', 'ScheduledActionsForRule', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

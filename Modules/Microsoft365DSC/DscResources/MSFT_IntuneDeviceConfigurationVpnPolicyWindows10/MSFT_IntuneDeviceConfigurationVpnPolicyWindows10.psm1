@@ -683,7 +683,6 @@ class IntuneDeviceConfigurationVpnPolicyWindows10 : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AssociatedApps)
                 {
@@ -889,7 +888,7 @@ class IntuneDeviceConfigurationVpnPolicyWindows10 : M365DSCResourceBase
                     'SingleSignOnEku', 'TrafficRules', 'Servers', 'DeviceManagementApplicabilityRuleDeviceMode',
                     'DeviceManagementApplicabilityRuleOsEdition',
                     'DeviceManagementApplicabilityRuleOsVersion', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

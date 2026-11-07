@@ -1928,7 +1928,6 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.DefenderDetectedMalwareActions)
                 {
@@ -2063,7 +2062,7 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
                     'DeviceManagementApplicabilityRuleOsEdition', 'DeviceManagementApplicabilityRuleOsVersion',
                     'EdgeHomeButtonConfiguration', 'EdgeSearchEngine', 'NetworkProxyServer',
                     'Windows10AppsForceUpdateSchedule', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

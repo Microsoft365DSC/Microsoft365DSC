@@ -658,7 +658,6 @@ class TeamsUserPolicyAssignment : M365DSCResourceBase
                     AccessTokens          = $this.AccessTokens
                 }
                 $results = $this.GetForExport($getParams)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $results -and -not [System.String]::IsNullOrEmpty($results.User))
                 {
@@ -672,7 +671,7 @@ class TeamsUserPolicyAssignment : M365DSCResourceBase
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName

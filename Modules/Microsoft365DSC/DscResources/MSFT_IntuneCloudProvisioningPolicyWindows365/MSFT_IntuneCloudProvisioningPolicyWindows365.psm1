@@ -452,7 +452,6 @@ class IntuneCloudProvisioningPolicyWindows365 : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.Autopatch)
                 {
@@ -544,7 +543,7 @@ class IntuneCloudProvisioningPolicyWindows365 : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'Autopatch', 'AutopilotConfiguration', 'DomainJoinConfigurations', 'WindowsSetting', 'WindowsSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

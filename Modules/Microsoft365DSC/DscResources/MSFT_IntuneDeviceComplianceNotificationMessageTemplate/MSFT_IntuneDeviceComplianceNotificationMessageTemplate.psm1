@@ -362,7 +362,6 @@ class IntuneDeviceComplianceNotificationMessageTemplate : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.LocalizedNotificationMessages)
                 {
@@ -384,7 +383,7 @@ class IntuneDeviceComplianceNotificationMessageTemplate : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('LocalizedNotificationMessages') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName

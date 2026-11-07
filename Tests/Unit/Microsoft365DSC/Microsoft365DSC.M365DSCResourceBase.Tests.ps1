@@ -745,6 +745,7 @@ Describe 'M365DSCResourceBase GetForExport' {
         $Global:M365DSCExportInstanceErrors[0].InstanceName | Should -Be 'Room1@contoso.com'
         $Global:M365DSCExportInstanceErrors[0].Message | Should -Not -BeNullOrEmpty
         $Global:M365DSCExportInstanceFailureMessage | Should -Be $Global:M365DSCExportInstanceErrors[0].Message
+        $instance.RawExportResults | Should -BeNullOrEmpty
     }
 
     It 'Throws outside of an export' {
@@ -787,13 +788,16 @@ Describe 'Export of a skipped instance' {
         $Global:M365DSCTestHostOutput = $null
     }
 
-    It 'Write-M365DSCHost replaces the check mark with the failure message and clears it' {
+    It 'Write-M365DSCHost replaces the <Mark> mark with the failure message and clears it' -ForEach @(
+        @{ Mark = 'GreenCheckMark' }
+        @{ Mark = 'RedX' }
+    ) {
         $Global:M365DSCTestHostOutput = @()
         Mock -CommandName Write-Host -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += [System.String]$Object }
         Mock -CommandName Write-Verbose -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += $Message }
         $Global:M365DSCExportInstanceFailureMessage = 'Simulated failure'
 
-        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+        Write-M365DSCHost -Message (Get-Variable -Name "M365DSCEmoji$Mark" -Scope Global -ValueOnly) -CommitWrite
 
         $Global:M365DSCExportInstanceFailureMessage | Should -BeNullOrEmpty
         ($Global:M365DSCTestHostOutput -join '') | Should -BeLike "$($Global:M365DSCEmojiRedX)*Simulated failure"

@@ -546,46 +546,49 @@ class PlannerTask : M365DSCResourceBase
 
                             $result = $this.GetForExport($params)
 
-                            if ($result.Assignments.Count -eq 0)
+                            if ($null -ne $result)
                             {
-                                $result.Remove('Assignments') | Out-Null
-                            }
+                                if ($result.Assignments.Count -eq 0)
+                                {
+                                    $result.Remove('Assignments') | Out-Null
+                                }
 
-                            if ($result.Attachments)
-                            {
-                                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                                    -ComplexObject $result.Attachments `
-                                    -CIMInstanceName 'PlannerTaskAttachment'
-                                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                if ($result.Attachments)
                                 {
-                                    $result.Attachments = $complexTypeStringResult
+                                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                        -ComplexObject $result.Attachments `
+                                        -CIMInstanceName 'PlannerTaskAttachment'
+                                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                    {
+                                        $result.Attachments = $complexTypeStringResult
+                                    }
+                                    else
+                                    {
+                                        $result.Remove('Attachments') | Out-Null
+                                    }
                                 }
-                                else
-                                {
-                                    $result.Remove('Attachments') | Out-Null
-                                }
-                            }
 
-                            if ($result.Checklist)
-                            {
-                                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                                    -ComplexObject $result.Checklist `
-                                    -CIMInstanceName 'PlannerTaskChecklistItem'
-                                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                if ($result.Checklist)
                                 {
-                                    $result.Checklist = $complexTypeStringResult
+                                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                        -ComplexObject $result.Checklist `
+                                        -CIMInstanceName 'PlannerTaskChecklistItem'
+                                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                    {
+                                        $result.Checklist = $complexTypeStringResult
+                                    }
+                                    else
+                                    {
+                                        $result.Remove('Checklist') | Out-Null
+                                    }
                                 }
-                                else
-                                {
-                                    $result.Remove('Checklist') | Out-Null
-                                }
-                            }
 
-                            # Fix Description which can have multiple lines
-                            if (-not [System.String]::IsNullOrEmpty($result.Description))
-                            {
-                                $result.Description = $result.Description.Replace('"', '``"')
-                                $result.Description = $result.Description.Replace('&', "``&")
+                                # Fix Description which can have multiple lines
+                                if (-not [System.String]::IsNullOrEmpty($result.Description))
+                                {
+                                    $result.Description = $result.Description.Replace('"', '``"')
+                                    $result.Description = $result.Description.Replace('&', "``&")
+                                }
                             }
 
                             $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
