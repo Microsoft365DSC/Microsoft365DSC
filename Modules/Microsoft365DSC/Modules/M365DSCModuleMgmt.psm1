@@ -1291,7 +1291,7 @@ function Update-M365DSCDependencies
                     }
                     if (-not $errorFound)
                     {
-                        if (-not $dependency.PowerShellCore -and $Script:IsPowerShellCore -and $IsWindows)
+                        if ($dependency.PowerShellCore -eq $false -and $Script:IsPowerShellCore -and $IsWindows)
                         {
                             Write-Warning "The dependency {$($dependency.ModuleName)} does not support PowerShell Core. Please run Update-M365DSCDependencies in Windows PowerShell."
                             continue
