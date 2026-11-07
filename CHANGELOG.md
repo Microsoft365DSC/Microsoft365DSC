@@ -19,6 +19,7 @@
   * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
+  * Removed the relation templates of removed resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.
 
