@@ -422,7 +422,6 @@ class IntuneAccountProtectionLocalUserGroupMembershipPolicy : M365DSCResourceBas
 
                 $this.ExportedInstance = $policy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.AccessGroup)
                 {
@@ -458,7 +457,7 @@ class IntuneAccountProtectionLocalUserGroupMembershipPolicy : M365DSCResourceBas
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AccessGroup', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

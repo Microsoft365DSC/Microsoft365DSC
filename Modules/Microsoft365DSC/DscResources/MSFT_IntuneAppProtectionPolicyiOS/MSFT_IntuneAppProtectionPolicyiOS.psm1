@@ -798,7 +798,6 @@ class IntuneAppProtectionPolicyiOS : M365DSCResourceBase
 
                 $this.ExportedInstance = $policy
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -819,7 +818,7 @@ class IntuneAppProtectionPolicyiOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

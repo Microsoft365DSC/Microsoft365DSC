@@ -1336,211 +1336,213 @@ class IntuneDeviceConfigurationPolicyiOS : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
-                if ($Results.AppsSingleAppModeList)
+                if ($null -ne $Results)
                 {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.AppsSingleAppModeList -CIMInstanceName MicrosoftGraphapplistitem
-                    if ($complexTypeStringResult)
+                    if ($Results.AppsSingleAppModeList)
                     {
-                        $Results.AppsSingleAppModeList = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.AppsSingleAppModeList -CIMInstanceName MicrosoftGraphapplistitem
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.AppsSingleAppModeList = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('AppsSingleAppModeList') | Out-Null
+                        }
                     }
-                    else
+                    if ($Results.AppsVisibilityList)
                     {
-                        $Results.Remove('AppsSingleAppModeList') | Out-Null
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.AppsVisibilityList -CIMInstanceName MicrosoftGraphapplistitem
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.AppsVisibilityList = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('AppsVisibilityList') | Out-Null
+                        }
                     }
-                }
-                if ($Results.AppsVisibilityList)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.AppsVisibilityList -CIMInstanceName MicrosoftGraphapplistitem
-                    if ($complexTypeStringResult)
+                    if ($Results.CompliantAppsList)
                     {
-                        $Results.AppsVisibilityList = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.CompliantAppsList -CIMInstanceName MicrosoftGraphapplistitem
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.CompliantAppsList = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('CompliantAppsList') | Out-Null
+                        }
                     }
-                    else
+                    if ($Results.MediaContentRatingAustralia.Count -gt 0)
                     {
-                        $Results.Remove('AppsVisibilityList') | Out-Null
-                    }
-                }
-                if ($Results.CompliantAppsList)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.CompliantAppsList -CIMInstanceName MicrosoftGraphapplistitem
-                    if ($complexTypeStringResult)
-                    {
-                        $Results.CompliantAppsList = $complexTypeStringResult
-                    }
-                    else
-                    {
-                        $Results.Remove('CompliantAppsList') | Out-Null
-                    }
-                }
-                if ($Results.MediaContentRatingAustralia.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingAustralia -CIMInstanceName MicrosoftGraphmediacontentratingaustralia
-                    if ($complexTypeStringResult)
-                    {
-                        $Results.MediaContentRatingAustralia = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingAustralia -CIMInstanceName MicrosoftGraphmediacontentratingaustralia
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingAustralia = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingAustralia') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingAustralia') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingAustralia') | Out-Null
-                }
-                if ($Results.MediaContentRatingCanada.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingCanada -CIMInstanceName MicrosoftGraphmediacontentratingcanada
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingCanada.Count -gt 0)
                     {
-                        $Results.MediaContentRatingCanada = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingCanada -CIMInstanceName MicrosoftGraphmediacontentratingcanada
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingCanada = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingCanada') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingCanada') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingCanada') | Out-Null
-                }
-                if ($Results.MediaContentRatingFrance.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingFrance -CIMInstanceName MicrosoftGraphmediacontentratingfrance
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingFrance.Count -gt 0)
                     {
-                        $Results.MediaContentRatingFrance = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingFrance -CIMInstanceName MicrosoftGraphmediacontentratingfrance
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingFrance = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingFrance') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingFrance') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingFrance') | Out-Null
-                }
-                if ($Results.MediaContentRatingGermany.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingGermany -CIMInstanceName MicrosoftGraphmediacontentratinggermany
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingGermany.Count -gt 0)
                     {
-                        $Results.MediaContentRatingGermany = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingGermany -CIMInstanceName MicrosoftGraphmediacontentratinggermany
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingGermany = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingGermany') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingGermany') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingGermany') | Out-Null
-                }
-                if ($Results.MediaContentRatingIreland.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingIreland -CIMInstanceName MicrosoftGraphmediacontentratingireland
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingIreland.Count -gt 0)
                     {
-                        $Results.MediaContentRatingIreland = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingIreland -CIMInstanceName MicrosoftGraphmediacontentratingireland
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingIreland = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingIreland') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingIreland') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingIreland') | Out-Null
-                }
-                if ($Results.MediaContentRatingJapan.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingJapan -CIMInstanceName MicrosoftGraphmediacontentratingjapan
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingJapan.Count -gt 0)
                     {
-                        $Results.MediaContentRatingJapan = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingJapan -CIMInstanceName MicrosoftGraphmediacontentratingjapan
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingJapan = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingJapan') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingJapan') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingJapan') | Out-Null
-                }
-                if ($Results.MediaContentRatingNewZealand.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingNewZealand -CIMInstanceName MicrosoftGraphmediacontentratingnewzealand
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingNewZealand.Count -gt 0)
                     {
-                        $Results.MediaContentRatingNewZealand = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingNewZealand -CIMInstanceName MicrosoftGraphmediacontentratingnewzealand
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingNewZealand = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingNewZealand') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingNewZealand') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingNewZealand') | Out-Null
-                }
-                if ($Results.MediaContentRatingUnitedKingdom.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingUnitedKingdom -CIMInstanceName MicrosoftGraphmediacontentratingunitedkingdom
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingUnitedKingdom.Count -gt 0)
                     {
-                        $Results.MediaContentRatingUnitedKingdom = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingUnitedKingdom -CIMInstanceName MicrosoftGraphmediacontentratingunitedkingdom
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingUnitedKingdom = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingUnitedKingdom') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingUnitedKingdom') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingUnitedKingdom') | Out-Null
-                }
-                if ($Results.MediaContentRatingUnitedStates.Count -gt 0)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingUnitedStates -CIMInstanceName MicrosoftGraphmediacontentratingunitedstates
-                    if ($complexTypeStringResult)
+                    if ($Results.MediaContentRatingUnitedStates.Count -gt 0)
                     {
-                        $Results.MediaContentRatingUnitedStates = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.MediaContentRatingUnitedStates -CIMInstanceName MicrosoftGraphmediacontentratingunitedstates
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.MediaContentRatingUnitedStates = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('MediaContentRatingUnitedStates') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('MediaContentRatingUnitedStates') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('MediaContentRatingUnitedStates') | Out-Null
-                }
-                if ($Results.NetworkUsageRules)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.NetworkUsageRules -CIMInstanceName MicrosoftGraphiosnetworkusagerule
-                    if ($complexTypeStringResult)
+                    if ($Results.NetworkUsageRules)
                     {
-                        $Results.NetworkUsageRules = $complexTypeStringResult
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.NetworkUsageRules -CIMInstanceName MicrosoftGraphiosnetworkusagerule
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.NetworkUsageRules = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('NetworkUsageRules') | Out-Null
+                        }
                     }
-                    else
-                    {
-                        $Results.Remove('NetworkUsageRules') | Out-Null
-                    }
-                }
 
-                if ($Results.Assignments)
-                {
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
-                    if ($complexTypeStringResult)
+                    if ($Results.Assignments)
                     {
-                        $Results.Assignments = $complexTypeStringResult
-                    }
-                    else
-                    {
-                        $Results.Remove('Assignments') | Out-Null
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject $Results.Assignments -CIMInstanceName DeviceManagementConfigurationPolicyAssignments
+                        if ($complexTypeStringResult)
+                        {
+                            $Results.Assignments = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('Assignments') | Out-Null
+                        }
                     }
                 }
 
@@ -1553,7 +1555,7 @@ class IntuneDeviceConfigurationPolicyiOS : M365DSCResourceBase
                     'MediaContentRatingCanada', 'MediaContentRatingFrance', 'MediaContentRatingGermany', 'MediaContentRatingIreland',
                     'MediaContentRatingJapan', 'MediaContentRatingNewZealand', 'MediaContentRatingUnitedKingdom',
                     'MediaContentRatingUnitedStates', 'NetworkUsageRules', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

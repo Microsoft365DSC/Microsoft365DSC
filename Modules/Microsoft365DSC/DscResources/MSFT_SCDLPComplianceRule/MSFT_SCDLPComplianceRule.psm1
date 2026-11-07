@@ -765,7 +765,6 @@ class SCDLPComplianceRule : M365DSCResourceBase
 
                 $this.ExportedInstance = $rule
                 $Results = $this.GetForExport(@{ Name = $rule.name; Policy = $rule.ParentPolicyName })
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.ContentContainsSensitiveInformation)
                 {
@@ -865,7 +864,7 @@ class SCDLPComplianceRule : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('ContentContainsSensitiveInformation', 'EndpointDlpRestrictions', 'ExceptIfContentContainsSensitiveInformation') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
 

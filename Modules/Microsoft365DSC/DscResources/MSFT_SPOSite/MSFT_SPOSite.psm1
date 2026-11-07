@@ -737,29 +737,32 @@ class SPOSite : M365DSCResourceBase
 
                     $this.ExportedInstance = $site
                     $Results = $this.GetForExport($Params)
-                    if ([System.String]::IsNullOrEmpty($Results.SharingDomainRestrictionMode))
+                    if ($null -ne $Results)
                     {
-                        $Results.Remove('SharingDomainRestrictionMode') | Out-Null
-                    }
-                    if ([System.String]::IsNullOrEmpty($Results.RestrictedToRegion))
-                    {
-                        $Results.Remove('RestrictedToRegion') | Out-Null
-                    }
-                    if ([System.String]::IsNullOrEmpty($Results.SharingAllowedDomainList))
-                    {
-                        $Results.Remove('SharingAllowedDomainList') | Out-Null
-                    }
-                    if ([System.String]::IsNullOrEmpty($Results.SharingBlockedDomainList))
-                    {
-                        $Results.Remove('SharingBlockedDomainList') | Out-Null
-                    }
-                    # Removing the HubUrl parameter if the value is equal to the Url parameter.
-                    # This is to prevent issues if the site col has just been created and not yet
-                    # configured as a hubsite.
-                    if ([System.String]::IsNullOrEmpty($Results.HubUrl) -or `
-                        ($Results.Url.TrimEnd('/') -eq $Results.HubUrl.TrimEnd('/')))
-                    {
-                        $Results.Remove('HubUrl') | Out-Null
+                        if ([System.String]::IsNullOrEmpty($Results.SharingDomainRestrictionMode))
+                        {
+                            $Results.Remove('SharingDomainRestrictionMode') | Out-Null
+                        }
+                        if ([System.String]::IsNullOrEmpty($Results.RestrictedToRegion))
+                        {
+                            $Results.Remove('RestrictedToRegion') | Out-Null
+                        }
+                        if ([System.String]::IsNullOrEmpty($Results.SharingAllowedDomainList))
+                        {
+                            $Results.Remove('SharingAllowedDomainList') | Out-Null
+                        }
+                        if ([System.String]::IsNullOrEmpty($Results.SharingBlockedDomainList))
+                        {
+                            $Results.Remove('SharingBlockedDomainList') | Out-Null
+                        }
+                        # Removing the HubUrl parameter if the value is equal to the Url parameter.
+                        # This is to prevent issues if the site col has just been created and not yet
+                        # configured as a hubsite.
+                        if ([System.String]::IsNullOrEmpty($Results.HubUrl) -or `
+                            ($Results.Url.TrimEnd('/') -eq $Results.HubUrl.TrimEnd('/')))
+                        {
+                            $Results.Remove('HubUrl') | Out-Null
+                        }
                     }
 
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `

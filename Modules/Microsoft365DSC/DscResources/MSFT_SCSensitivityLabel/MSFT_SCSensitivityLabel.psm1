@@ -1081,7 +1081,6 @@ class SCSensitivityLabel : M365DSCResourceBase
 
                 $this.ExportedInstance = $label
                 $Results = $this.GetForExport(@{ Name = $label.Name })
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AdvancedSettings)
                 {
@@ -1181,7 +1180,7 @@ class SCSensitivityLabel : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AdvancedSettings', 'LocaleSettings', 'AutoLabelingSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 $currentDSCBlock = $currentDSCBlock.Replace("''", "'")
 

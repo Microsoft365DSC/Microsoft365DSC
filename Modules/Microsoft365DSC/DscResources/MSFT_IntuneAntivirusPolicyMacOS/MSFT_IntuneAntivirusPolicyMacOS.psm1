@@ -786,7 +786,6 @@ class IntuneAntivirusPolicyMacOS : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.exclusions)
                 {
@@ -849,7 +848,7 @@ class IntuneAntivirusPolicyMacOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('exclusions', 'exclusions_tamperProtection', 'threatTypeSettings', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

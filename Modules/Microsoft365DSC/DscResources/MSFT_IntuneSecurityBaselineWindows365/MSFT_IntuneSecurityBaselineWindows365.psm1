@@ -2181,7 +2181,6 @@ class IntuneSecurityBaselineWindows365 : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.DeviceSettings)
                 {
@@ -2245,7 +2244,7 @@ class IntuneSecurityBaselineWindows365 : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('DeviceSettings', 'UserSettings', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

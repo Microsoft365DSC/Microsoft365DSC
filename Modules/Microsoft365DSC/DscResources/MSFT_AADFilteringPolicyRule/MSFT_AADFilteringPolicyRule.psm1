@@ -314,7 +314,6 @@ class AADFilteringPolicyRule : M365DSCResourceBase
                     }
 
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
 
                     if ($Results.Destinations)
                     {
@@ -334,7 +333,7 @@ class AADFilteringPolicyRule : M365DSCResourceBase
                         -Results $Results `
                         -Credential $this.Credential `
                         -NoEscape @('Destinations') `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
 
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `

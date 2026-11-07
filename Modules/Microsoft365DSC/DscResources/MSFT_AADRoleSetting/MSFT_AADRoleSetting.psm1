@@ -1048,7 +1048,6 @@ class AADRoleSetting : M365DSCResourceBase
 
                 $this.ExportedInstance = $role
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 if ($Results.Ensure -eq 'Present')
                 {
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -1056,7 +1055,7 @@ class AADRoleSetting : M365DSCResourceBase
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName

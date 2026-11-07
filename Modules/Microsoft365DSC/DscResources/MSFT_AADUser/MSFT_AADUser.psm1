@@ -921,10 +921,9 @@ class AADUser : M365DSCResourceBase
 
                     $this.ExportedInstance = $user
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
-                    $Results.Password = "New-Object System.Management.Automation.PSCredential('Password', (ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force))"
-                    if ($null -ne $Results.UserPrincipalName)
+                    if ($null -ne $Results -and $null -ne $Results.UserPrincipalName)
                     {
+                        $Results.Password = "New-Object System.Management.Automation.PSCredential('Password', (ConvertTo-SecureString ((New-Guid).ToString()) -AsPlainText -Force))"
                         if ($Results.CustomSecurityAttributes.Count -gt 0)
                         {
                             $complexMapping = @(
@@ -979,7 +978,7 @@ class AADUser : M365DSCResourceBase
                             -Results $Results `
                             -Credential $this.Credential `
                             -NoEscape @('Password', 'CustomSecurityAttributes', 'OnPremisesExtensionAttributes') `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
 
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `

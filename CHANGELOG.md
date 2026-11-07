@@ -2,8 +2,26 @@
 
 # UNRELEASED
 
+* M365DSCErrorHandler
+  * Added `Test-M365DSCAccessError` to detect authentication and permission errors.
+  * Updated `Save-M365DSCPartialExport` to accept empty content.
+* M365DSCExportUtil
+  * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
+* M365DSCResourceBase
+  * Updated `GetForExport` to skip a failed instance of a multi-instance resource
+    during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
+    and authentication or permission errors still stop the export of the resource.
+  * Added `RawExportResults` with an unmodified copy of the last `GetForExport` result.
+* M365DSCReverse
+  * Added the `PartiallySucceeded` resource status for resources with skipped instances
+    with new statistics information.
+* M365DSCUtil
+  * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
+  * Removed the relation templates of removed resources.
+  * Updated the export to skip an instance that fails to export instead of stopping the
+    export of all instances.
 
 # 2.26.1104.1
 

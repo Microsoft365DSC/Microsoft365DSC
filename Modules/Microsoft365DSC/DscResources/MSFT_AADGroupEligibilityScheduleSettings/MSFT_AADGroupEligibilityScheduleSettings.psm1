@@ -373,7 +373,6 @@ class AADGroupEligibilityScheduleSettings : M365DSCResourceBase
 
                         $this.ExportedInstance = $rule
                         $Results = $this.GetForExport($Params)
-                        $rawResults = $Results.Clone()
 
                         if ($null -ne $Results.ExpirationRule)
                         {
@@ -521,7 +520,7 @@ class AADGroupEligibilityScheduleSettings : M365DSCResourceBase
                             -Results $Results `
                             -Credential $this.Credential `
                             -NoEscape @('ExpirationRule', 'NotificationRule', 'EnablementRule', 'ApprovalRule', 'AuthenticationContextRule') `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
 
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `

@@ -456,7 +456,6 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
 
                 $this.ExportedInstance = $configPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.CustomSettings.Count -gt 0)
                 {
@@ -529,7 +528,7 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('CustomSettings', 'Assignments', 'Apps') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

@@ -221,6 +221,9 @@ class M365DSCResourceBase
     # $Script:AllSchedules, $Script:exportedGroups, ...).
     hidden [Hashtable] $ResourceCache = @{}
 
+    # Unmodified copy of the last GetForExport result, $null for a skipped instance.
+    hidden [Hashtable] $RawExportResults
+
     # Each runspace compiles its own class types. A PowerShell class instance references only the session
     # state it was created in.
     hidden static [System.Runtime.CompilerServices.ConditionalWeakTable[Runspace, ConcurrentDictionary[String, ConcurrentDictionary[Type, System.Object]]]] $_runspaceTypeCaches = `
@@ -1215,10 +1218,48 @@ class M365DSCResourceBase
         return $result
     }
 
+    # During Export-M365DSCConfiguration, returns $null for an instance whose Get() failed,
+    # after recording the failure for the export statistics and the progress output.
+    # Single-instance resources, transient errors and authentication or permission errors
+    # still end the export of the resource. Outside of it, every error is rethrown.
     [Hashtable] GetForExport([Hashtable] $Values)
     {
-        $this.FromHashtable($Values)
-        return $this.Get().ToHashtable()
+        $Global:M365DSCExportInstanceFailureMessage = $null
+        $this.RawExportResults = $null
+        try
+        {
+            $this.FromHashtable($Values)
+            $result = $this.Get().ToHashtable()
+            $this.RawExportResults = $result.Clone()
+            return $result
+        }
+        catch
+        {
+            if ($null -eq $Global:M365DSCExportInstanceErrors -or
+                $this._info.Meta.ContainsKey('IsSingleInstance') -or
+                (Test-M365DSCTransientError -ErrorRecord $_) -or
+                (Test-M365DSCAccessError -ErrorRecord $_))
+            {
+                throw
+            }
+
+            $instanceNameParts = @()
+            foreach ($meta in $this._info.Meta.Values)
+            {
+                if ($meta.IsSchema -and $meta.IsRequired -and $Values.ContainsKey($meta.Property.Name))
+                {
+                    $instanceNameParts += [System.String]$Values[$meta.Property.Name]
+                }
+            }
+
+            $Global:M365DSCExportInstanceErrors.Add(@{
+                ResourceName = $this.GetResourceName()
+                InstanceName = $instanceNameParts -join ', '
+                Message      = $_.Exception.Message
+            })
+            $Global:M365DSCExportInstanceFailureMessage = $_.Exception.Message
+            return $null
+        }
     }
 
     #endregion

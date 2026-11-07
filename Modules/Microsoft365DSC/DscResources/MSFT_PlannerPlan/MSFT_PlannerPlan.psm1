@@ -278,13 +278,12 @@ class PlannerPlan : M365DSCResourceBase
 
                         Write-M365DSCHost -Message "        [$j/$($plans.Length)] $($plan.Title)"
                         $results = $this.GetForExport($params)
-                        $rawResults = $Results.Clone()
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                             -ConnectionMode $ConnectionMode `
                             -ModulePath $this.GetModulePath() `
                             -Results $Results `
                             -Credential $this.Credential `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
                         [void]$dscContent.Append($currentDSCBlock)
 
                         Save-M365DSCPartialExport -Content $currentDSCBlock `

@@ -515,7 +515,6 @@ class IntuneCustomizationBrandingProfile : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.CompanyPortalBlockedActions)
                 {
@@ -607,7 +606,7 @@ class IntuneCustomizationBrandingProfile : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'CompanyPortalBlockedActions', 'LandingPageCustomizedImage', 'LightBackgroundLogo', 'ThemeColor', 'ThemeColorLogo') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

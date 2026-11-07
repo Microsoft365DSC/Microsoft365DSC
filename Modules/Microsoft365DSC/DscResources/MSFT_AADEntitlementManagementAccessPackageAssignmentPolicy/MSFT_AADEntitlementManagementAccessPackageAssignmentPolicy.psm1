@@ -628,7 +628,6 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                 }
 
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AccessReviewSettings)
                 {
@@ -806,7 +805,7 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AccessReviewSettings', 'Questions', 'RequestApprovalSettings', 'RequestorSettings', 'CustomExtensionHandlers', 'AccessPackageNotificationSettings', 'VerifiableCredentialSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

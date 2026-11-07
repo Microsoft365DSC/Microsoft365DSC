@@ -175,6 +175,61 @@ Describe 'Test-M365DSCNotFoundError' {
     }
 }
 
+Describe 'Test-M365DSCAccessError' {
+    Context 'When the error is an authentication or permission error' {
+        It 'Should return $true for "<Message>"' -ForEach @(
+            @{ Message = 'Response status code does not indicate success: 401 (Unauthorized).' }
+            @{ Message = 'Response status code does not indicate success: 403 (Forbidden).' }
+            @{ Message = 'Authorization_RequestDenied: Insufficient privileges to complete the operation.' }
+            @{ Message = 'Access denied. You do not have permission to perform this action or access this resource.' }
+            @{ Message = 'AADSTS7000215: Invalid client secret provided.' }
+            @{ Message = "The term 'Get-CalendarProcessing' is not recognized as a name of a cmdlet, function, script file, or executable program." }
+        ) {
+            try
+            {
+                throw $Message
+            }
+            catch
+            {
+                $result = Test-M365DSCAccessError -ErrorRecord $_
+                $result | Should -BeTrue
+            }
+        }
+
+        It 'Should return $true when the error details carry the permission error' {
+            try
+            {
+                throw 'The request failed.'
+            }
+            catch
+            {
+                $_.ErrorDetails = [System.Management.Automation.ErrorDetails]::new('{"error":{"code":"Authorization_RequestDenied"}}')
+                $result = Test-M365DSCAccessError -ErrorRecord $_
+                $result | Should -BeTrue
+            }
+        }
+    }
+
+    Context 'When the error is NOT an authentication or permission error' {
+        It 'Should return $false for "<Message>"' -ForEach @(
+            @{ Message = "The operation couldn't be performed because object 'Room1' couldn't be found." }
+            @{ Message = "The value 'Unknown' is not valid for property 'CallAnswerRule'." }
+            @{ Message = 'Response status code does not indicate success: 429 (Too Many Requests).' }
+            @{ Message = 'The operation has timed out.' }
+        ) {
+            try
+            {
+                throw $Message
+            }
+            catch
+            {
+                $result = Test-M365DSCAccessError -ErrorRecord $_
+                $result | Should -BeFalse
+            }
+        }
+    }
+}
+
 Describe 'Invoke-M365DSCCommand' {
     Context 'When the scriptblock succeeds' {
         It 'Should return the result of the scriptblock' {

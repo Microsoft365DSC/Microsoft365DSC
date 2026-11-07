@@ -477,7 +477,6 @@ class SCLabelPolicy : M365DSCResourceBase
 
                 $this.ExportedInstance = $policy
                 $Results = $this.GetForExport(@{ Name = $policy.Name })
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AdvancedSettings)
                 {
@@ -509,7 +508,7 @@ class SCLabelPolicy : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AdvancedSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 [void]$dscContent.Append($currentDSCBlock)

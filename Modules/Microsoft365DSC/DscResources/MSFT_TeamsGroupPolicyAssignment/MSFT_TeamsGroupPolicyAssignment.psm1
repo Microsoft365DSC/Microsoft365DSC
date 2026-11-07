@@ -283,13 +283,12 @@ class TeamsGroupPolicyAssignment : M365DSCResourceBase
                     AccessTokens          = $this.AccessTokens
                 }
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName

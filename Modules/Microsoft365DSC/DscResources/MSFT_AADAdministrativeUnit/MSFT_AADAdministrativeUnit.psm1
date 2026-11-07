@@ -807,7 +807,6 @@ class AADAdministrativeUnit : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 if ($null -ne $Results.ScopedRoleMembers)
                 {
                     $complexMapping = @(
@@ -844,7 +843,7 @@ class AADAdministrativeUnit : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Members', 'ScopedRoleMembers') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

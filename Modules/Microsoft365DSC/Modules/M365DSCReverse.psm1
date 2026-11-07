@@ -793,6 +793,7 @@ function Start-M365DSCConfigurationExtract
         [void]$synchronizedHashtable.TryAdd('ResourceStatus', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('ResourceErrors', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('InstanceCounts', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.Int32]]::new())
+        [void]$synchronizedHashtable.TryAdd('InstanceErrors', [System.Collections.Concurrent.ConcurrentQueue[System.Collections.Hashtable]]::new())
         [void]$synchronizedHashtable.TryAdd('BusyWorkers', 0)
         $resourceDictionary = Get-M365DSCResourcesDictionary
         $M365DSCStringReplacementMap = Get-M365DSCStringReplacementMap
@@ -932,12 +933,18 @@ function Start-M365DSCConfigurationExtract
                         $parameters.Add('ErrorAction', $using:ErrorActionPreference)
 
                         $Global:M365DSCExportInstanceTally = 0
+                        $Global:M365DSCExportInstanceErrors = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
                         try
                         {
                             $exportOutput = Invoke-M365DSCResourceMethod -ResourceName $resourceName -MethodName 'Export' -Parameters $parameters
                             $exportString.Append($exportOutput) | Out-Null
                             [void]$sharedState.ResourcesResult.TryAdd($resourceName, $exportString.ToString())
-                            [void]$sharedState.ResourceStatus.TryAdd($resourceName, 'Succeeded')
+                            $resourceStatus = 'Succeeded'
+                            if ($Global:M365DSCExportInstanceErrors.Count -gt 0)
+                            {
+                                $resourceStatus = 'PartiallySucceeded'
+                            }
+                            [void]$sharedState.ResourceStatus.TryAdd($resourceName, $resourceStatus)
                         }
                         catch
                         {
@@ -953,6 +960,12 @@ function Start-M365DSCConfigurationExtract
                         {
                             [void]$sharedState.InstanceCounts.TryAdd($resourceName, $Global:M365DSCExportInstanceTally)
                             $Global:M365DSCExportInstanceTally = $null
+                            foreach ($instanceError in $Global:M365DSCExportInstanceErrors)
+                            {
+                                $sharedState.InstanceErrors.Enqueue($instanceError)
+                            }
+                            $Global:M365DSCExportInstanceErrors = $null
+                            $Global:M365DSCExportInstanceFailureMessage = $null
                             Complete-M365DSCExportCollectionConsumer -ResourceName $resourceName
                         }
                     }
@@ -1076,6 +1089,7 @@ function Start-M365DSCConfigurationExtract
         $Global:M365DSCExportResourceInstancesCount = [System.Int32]($synchronizedHashtable.InstanceCounts.Values | Measure-Object -Sum).Sum
         $Global:M365DSCExportResourceTypes = @($synchronizedHashtable.ResourceStatus.Keys | Sort-Object)
         $synchronizedHashtable['SuccessfulResources'] = @($synchronizedHashtable.ResourceStatus.Values | Where-Object -FilterScript { $_ -eq 'Succeeded' }).Count
+        $synchronizedHashtable['PartiallySucceededResources'] = @($synchronizedHashtable.ResourceStatus.Values | Where-Object -FilterScript { $_ -eq 'PartiallySucceeded' }).Count
         $synchronizedHashtable['FailedResources'] = @($synchronizedHashtable.ResourceStatus.Values | Where-Object -FilterScript { $_ -eq 'Failed' }).Count
 
         foreach ($resource in $($synchronizedHashtable.ResourcesResult.Keys | Sort-Object))
@@ -1149,8 +1163,9 @@ function Start-M365DSCConfigurationExtract
         Write-M365DSCHost -Message "$($Global:M365DSCExportResourceInstancesCount) instances" -DeferWrite -ForegroundColor Magenta
         Write-M365DSCHost -Message '}' -CommitWrite
         Write-M365DSCHost -Message "Successful exports: {$($synchronizedHashtable.SuccessfulResources)}"
+        Write-M365DSCHost -Message "Partially successful exports: {$($synchronizedHashtable.PartiallySucceededResources)}"
         Write-M365DSCHost -Message "Failed exports: {$($synchronizedHashtable.FailedResources)}"
-        if ($($synchronizedHashtable.FailedResources) -eq 0)
+        if ($synchronizedHashtable.FailedResources -eq 0 -and $synchronizedHashtable.PartiallySucceededResources -eq 0)
         {
             $Message = "$($Global:M365DSCEmojiGreenCheckmark) Export completed successfully."
             Write-M365DSCHost -Message $Message -ForegroundColor Green
@@ -1327,19 +1342,26 @@ function Start-M365DSCConfigurationExtract
         Pop-Location
         if ($WithStatistics)
         {
+            $failedResources = @()
+            foreach ($resourceError in $synchronizedHashtable.ResourceErrors.GetEnumerator())
+            {
+                $failedResources += @{
+                    ResourceName = $resourceError.Key
+                    Message      = $resourceError.Value
+                }
+            }
+            foreach ($instanceError in $synchronizedHashtable.InstanceErrors)
+            {
+                $failedResources += $instanceError
+            }
+
             @{
-                ExportDurationInSeconds = $timeTaken.TotalSeconds
-                ExportedResourceCount   = $synchronizedHashtable.SuccessfulResources
-                FailedResourceCount     = $synchronizedHashtable.FailedResources
-                TotalResourceCount      = $synchronizedHashtable.SuccessfulResources + $synchronizedHashtable.FailedResources
-                FailedResources         = @(
-                    $synchronizedHashtable.ResourceErrors.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
-                        @{
-                            ResourceName = $_.Key
-                            Message      = $_.Value
-                        }
-                    }
-                )
+                ExportDurationInSeconds        = $timeTaken.TotalSeconds
+                ExportedResourceCount          = $synchronizedHashtable.SuccessfulResources
+                PartiallyExportedResourceCount = $synchronizedHashtable.PartiallySucceededResources
+                FailedResourceCount            = $synchronizedHashtable.FailedResources
+                TotalResourceCount             = $synchronizedHashtable.SuccessfulResources + $synchronizedHashtable.PartiallySucceededResources + $synchronizedHashtable.FailedResources
+                FailedResources                = @($failedResources | Sort-Object -Property { $_.ResourceName }, { $_.InstanceName })
             }
         }
     }

@@ -605,7 +605,6 @@ class IntuneDeviceConfigurationKioskPolicyWindows10 : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.KioskProfiles)
                 {
@@ -723,7 +722,7 @@ class IntuneDeviceConfigurationKioskPolicyWindows10 : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('KioskProfiles', 'WindowsKioskForceUpdateSchedule', 'Assignments', 'DeviceManagementApplicabilityRuleDeviceMode', 'DeviceManagementApplicabilityRuleOsEdition', 'DeviceManagementApplicabilityRuleOsVersion') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

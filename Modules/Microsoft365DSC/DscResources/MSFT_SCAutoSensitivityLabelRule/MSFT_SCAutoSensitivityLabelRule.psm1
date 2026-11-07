@@ -565,7 +565,6 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($rules.Length)] $($rule.Name)" -DeferWrite
                 $this.ExportedInstance = $rule
                 $Results = $this.GetForExport(@{ Name = $rule.name; Policy = $rule.ParentPolicyName; Workload = $rule.LogicalWorkload })
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.ContentContainsSensitiveInformation)
                 {
@@ -667,7 +666,7 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('ContentContainsSensitiveInformation', 'ExceptIfContentContainsSensitiveInformation', 'HeaderMatchesPatterns', 'ExceptIfHeaderMatchesPatterns') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
 

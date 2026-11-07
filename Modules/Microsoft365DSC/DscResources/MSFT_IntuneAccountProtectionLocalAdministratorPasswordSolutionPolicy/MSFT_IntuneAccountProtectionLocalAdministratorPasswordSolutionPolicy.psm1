@@ -440,7 +440,6 @@ class IntuneAccountProtectionLocalAdministratorPasswordSolutionPolicy : M365DSCR
 
                 $this.ExportedInstance = $policy
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -461,7 +460,7 @@ class IntuneAccountProtectionLocalAdministratorPasswordSolutionPolicy : M365DSCR
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

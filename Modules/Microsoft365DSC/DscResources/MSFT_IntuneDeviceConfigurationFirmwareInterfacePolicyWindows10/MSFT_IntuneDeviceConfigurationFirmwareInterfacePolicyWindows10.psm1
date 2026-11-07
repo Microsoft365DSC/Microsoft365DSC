@@ -474,7 +474,6 @@ class IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10 : M365DSCResourc
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.DeviceManagementApplicabilityRuleDeviceMode)
                 {
@@ -533,7 +532,7 @@ class IntuneDeviceConfigurationFirmwareInterfacePolicyWindows10 : M365DSCResourc
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'DeviceManagementApplicabilityRuleDeviceMode', 'DeviceManagementApplicabilityRuleOsEdition', 'DeviceManagementApplicabilityRuleOsVersion') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

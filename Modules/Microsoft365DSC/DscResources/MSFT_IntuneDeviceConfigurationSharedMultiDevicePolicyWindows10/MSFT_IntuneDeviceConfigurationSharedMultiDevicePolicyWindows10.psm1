@@ -490,7 +490,6 @@ class IntuneDeviceConfigurationSharedMultiDevicePolicyWindows10 : M365DSCResourc
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AccountManagerPolicy)
                 {
@@ -560,7 +559,7 @@ class IntuneDeviceConfigurationSharedMultiDevicePolicyWindows10 : M365DSCResourc
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AccountManagerPolicy', 'Assignments', 'DeviceManagementApplicabilityRuleDeviceMode', 'DeviceManagementApplicabilityRuleOsEdition', 'DeviceManagementApplicabilityRuleOsVersion') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

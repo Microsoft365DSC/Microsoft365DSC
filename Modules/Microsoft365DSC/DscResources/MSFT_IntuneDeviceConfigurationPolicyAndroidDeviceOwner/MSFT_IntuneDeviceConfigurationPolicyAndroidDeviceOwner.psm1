@@ -1263,7 +1263,6 @@ class IntuneDeviceConfigurationPolicyAndroidDeviceOwner : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.AndroidDeviceOwnerDelegatedScopeAppSettings)
                 {
@@ -1530,7 +1529,7 @@ class IntuneDeviceConfigurationPolicyAndroidDeviceOwner : M365DSCResourceBase
                     'DeviceOwnerLockScreenMessage', 'GlobalProxy', 'KioskModeAppPositions', 'KioskModeApps', 'KioskModeManagedFolders',
                     'KioskModeManagedHomeScreenAppSettings', 'PersonalProfilePersonalApplications', 'ShortHelpText',
                     'SystemUpdateFreezePeriods', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

@@ -291,7 +291,6 @@ class AADFilteringProfile : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Policies)
                 {
@@ -312,7 +311,7 @@ class AADFilteringProfile : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Policies') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName

@@ -1111,7 +1111,6 @@ class AADGroup : M365DSCResourceBase
                 }
                 $this.ExportedInstance = $group
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AssignedLicenses)
                 {
@@ -1166,7 +1165,7 @@ class AADGroup : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AssignedLicenses', 'WritebackConfiguration') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName

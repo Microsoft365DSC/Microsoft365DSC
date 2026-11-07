@@ -366,16 +366,19 @@ class AADCustomAuthenticationExtension : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $endpointConfigurationCimString = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.EndpointConfiguration `
-                    -CIMInstanceName 'MSFT_AADCustomAuthenticationExtensionEndPointConfiguration'
+                if ($null -ne $Results)
+                {
+                    $endpointConfigurationCimString = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.EndpointConfiguration `
+                        -CIMInstanceName 'MSFT_AADCustomAuthenticationExtensionEndPointConfiguration'
 
-                $ClaimsForTokenConfigurationCimString = Get-M365DSCDRGComplexTypeToString `
-                    -ComplexObject $Results.ClaimsForTokenConfiguration `
-                    -CIMInstanceName 'MSFT_AADCustomAuthenticationExtensionClaimForTokenConfiguration'
+                    $ClaimsForTokenConfigurationCimString = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.ClaimsForTokenConfiguration `
+                        -CIMInstanceName 'MSFT_AADCustomAuthenticationExtensionClaimForTokenConfiguration'
 
-                $Results.EndPointConfiguration = $endpointConfigurationCimString
-                $Results.ClaimsForTokenConfiguration = $ClaimsForTokenConfigurationCimString
+                    $Results.EndPointConfiguration = $endpointConfigurationCimString
+                    $Results.ClaimsForTokenConfiguration = $ClaimsForTokenConfigurationCimString
+                }
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `

@@ -546,7 +546,6 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
 
                 $this.ExportedInstance = $configDeviceMacOsPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -598,7 +597,7 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'ScheduledActionsForRule', 'DeviceCompliancePolicyScript') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

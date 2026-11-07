@@ -561,7 +561,6 @@ class IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10 : M365DSCRe
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.DefinitionValues)
                 {
@@ -613,7 +612,7 @@ class IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10 : M365DSCRe
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'DefinitionValues', 'PresentationValues', 'KeyValuePairValues') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

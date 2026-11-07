@@ -1793,8 +1793,7 @@ class AADConditionalAccessPolicy : M365DSCResourceBase
                     }
                     $this.ExportedInstance = $Policy
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
-                    if ([System.String]::IsNullOrEmpty($Results.DeviceFilterMode))
+                    if ($null -ne $Results -and [System.String]::IsNullOrEmpty($Results.DeviceFilterMode))
                     {
                         $Results.Remove('DeviceFilterMode') | Out-Null
                     }
@@ -1804,7 +1803,7 @@ class AADConditionalAccessPolicy : M365DSCResourceBase
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
 
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `

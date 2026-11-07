@@ -368,10 +368,9 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
                     $this.ExportedInstance.Add('ApplicationObjectId', $application.Id)
                     $this.ExportedInstance.Add('ApplicationDisplayName', $application.DisplayName)
                     $results = $this.GetForExport($params)
-                    $results.Remove('ApplicationObjectId') | Out-Null
-
                     if ($results.Ensure -eq 'Present')
                     {
+                        $results.Remove('ApplicationObjectId') | Out-Null
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                             -ConnectionMode $ConnectionMode `
                             -ModulePath $this.GetModulePath() `
@@ -380,10 +379,9 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `
                             -FileName $Global:PartialExportFileName
-
-                        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                        $i++
                     }
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $i++
                 }
             }
 

@@ -416,7 +416,6 @@ class IntuneMobileAppsMicrosoftEdge : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.Categories)
                 {
@@ -468,7 +467,7 @@ class IntuneMobileAppsMicrosoftEdge : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'Categories', 'LargeIcon') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

@@ -384,7 +384,6 @@ class IntuneAntivirusExclusionsPolicyMacOS : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 if ($null -ne $Results.Exclusions)
                 {
                     $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
@@ -419,7 +418,7 @@ class IntuneAntivirusExclusionsPolicyMacOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Exclusions', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

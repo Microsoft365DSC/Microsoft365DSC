@@ -368,7 +368,6 @@ class TeamsChannelTab : M365DSCResourceBase
                         $this.ResourceCache['currentTeam'] = $team
                         $this.ResourceCache['currentChannel'] = $channel
                         $Results = $this.GetForExport($Params)
-                        $rawResults = $Results.Clone()
                         if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 3)
                         {
                             if ($null -ne $Results.Configuration)
@@ -392,7 +391,7 @@ class TeamsChannelTab : M365DSCResourceBase
                                 -Results $Results `
                                 -Credential $this.Credential `
                                 -NoEscape @('Configuration') `
-                                -RawResults $rawResults
+                                -RawResults $this.RawExportResults
 
                             [void]$dscContent.Append($currentDSCBlock)
                             Save-M365DSCPartialExport -Content $currentDSCBlock `

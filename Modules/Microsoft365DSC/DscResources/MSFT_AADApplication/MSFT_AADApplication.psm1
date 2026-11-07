@@ -1475,7 +1475,6 @@ class AADApplication : M365DSCResourceBase
                 {
                     $this.ExportedInstance = $AADApp
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     if ($Results.Ensure -eq 'Present')
                     {
                         if ($Results.RequiredResourceAccess.Count -gt 0)
@@ -1714,14 +1713,14 @@ class AADApplication : M365DSCResourceBase
                             -Results $Results `
                             -Credential $this.Credential `
                             -NoEscape @('Api', 'Info', 'RequiredResourceAccess', 'OptionalClaims', 'OnPremisesPublishing', 'AuthenticationBehaviors', 'KeyCredentials', 'PasswordCredentials', 'AppRoles', 'Spa') `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
 
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `
                             -FileName $Global:PartialExportFileName
-                        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                        $i++
                     }
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $i++
                 }
                 catch
                 {

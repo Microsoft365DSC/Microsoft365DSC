@@ -509,7 +509,6 @@ class IntuneWindowsAutopilotDevicePreparationUserDrivenPolicy : M365DSCResourceB
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -530,7 +529,7 @@ class IntuneWindowsAutopilotDevicePreparationUserDrivenPolicy : M365DSCResourceB
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName

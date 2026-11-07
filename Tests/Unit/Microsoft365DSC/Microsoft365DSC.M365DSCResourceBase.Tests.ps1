@@ -722,3 +722,94 @@ Import-Module -Name '$manifestPath' -Global -Force
         $result.SerializationDepth | Should -Be 25
     }
 }
+
+Describe 'M365DSCResourceBase GetForExport' {
+    BeforeEach {
+        $Global:M365DSCExportInstanceErrors = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
+        $Global:M365DSCExportInstanceFailureMessage = $null
+    }
+
+    AfterAll {
+        $Global:M365DSCExportInstanceErrors = $null
+        $Global:M365DSCExportInstanceFailureMessage = $null
+    }
+
+    It 'Returns $null and records the failed instance of a multi-instance resource' {
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+
+        $result = $instance.GetForExport(@{ Identity = 'Room1@contoso.com'; AutomateProcessing = 'Invalid' })
+
+        $result | Should -BeNullOrEmpty
+        $Global:M365DSCExportInstanceErrors.Count | Should -Be 1
+        $Global:M365DSCExportInstanceErrors[0].ResourceName | Should -Be 'EXOCalendarProcessing'
+        $Global:M365DSCExportInstanceErrors[0].InstanceName | Should -Be 'Room1@contoso.com'
+        $Global:M365DSCExportInstanceErrors[0].Message | Should -Not -BeNullOrEmpty
+        $Global:M365DSCExportInstanceFailureMessage | Should -Be $Global:M365DSCExportInstanceErrors[0].Message
+        $instance.RawExportResults | Should -BeNullOrEmpty
+    }
+
+    It 'Throws outside of an export' {
+        $Global:M365DSCExportInstanceErrors = $null
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+
+        { $instance.GetForExport(@{ Identity = 'Room1@contoso.com'; AutomateProcessing = 'Invalid' }) } | Should -Throw
+    }
+
+    It 'Throws for a single-instance resource' {
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOOrganizationConfig' -Property @{ IsSingleInstance = 'Yes' }
+
+        { $instance.GetForExport(@{ IsSingleInstance = 'No' }) } | Should -Throw
+        $Global:M365DSCExportInstanceErrors.Count | Should -Be 0
+    }
+
+    It 'Throws for a <Kind> error' -ForEach @(
+        @{ Kind = 'transient'; CommandName = 'Test-M365DSCTransientError' }
+        @{ Kind = 'access'; CommandName = 'Test-M365DSCAccessError' }
+    ) {
+        Mock -CommandName $CommandName -ModuleName '_Shared' -MockWith { $true }
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+
+        { $instance.GetForExport(@{ Identity = 'Room1@contoso.com'; AutomateProcessing = 'Invalid' }) } | Should -Throw
+        $Global:M365DSCExportInstanceErrors.Count | Should -Be 0
+    }
+
+    It 'Clears the failure message of the previous instance' {
+        $Global:M365DSCExportInstanceFailureMessage = 'Previous failure'
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+
+        { $instance.GetForExport(@{ Identity = 'Room1@contoso.com'; AutomateProcessing = 'Invalid' }) } | Should -Not -Throw
+        $Global:M365DSCExportInstanceFailureMessage | Should -Not -Be 'Previous failure'
+    }
+}
+
+Describe 'Export of a skipped instance' {
+    AfterEach {
+        $Global:M365DSCExportInstanceFailureMessage = $null
+        $Global:M365DSCTestHostOutput = $null
+    }
+
+    It 'Write-M365DSCHost replaces the <Mark> mark with the failure message and clears it' -ForEach @(
+        @{ Mark = 'GreenCheckMark' }
+        @{ Mark = 'RedX' }
+    ) {
+        $Global:M365DSCTestHostOutput = @()
+        Mock -CommandName Write-Host -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += [System.String]$Object }
+        Mock -CommandName Write-Verbose -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += $Message }
+        $Global:M365DSCExportInstanceFailureMessage = 'Simulated failure'
+
+        Write-M365DSCHost -Message (Get-Variable -Name "M365DSCEmoji$Mark" -Scope Global -ValueOnly) -CommitWrite
+
+        $Global:M365DSCExportInstanceFailureMessage | Should -BeNullOrEmpty
+        ($Global:M365DSCTestHostOutput -join '') | Should -BeLike "$($Global:M365DSCEmojiRedX)*Simulated failure"
+    }
+
+    It 'Write-M365DSCHost keeps the check mark without a failure message' {
+        $Global:M365DSCTestHostOutput = @()
+        Mock -CommandName Write-Host -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += [System.String]$Object }
+        Mock -CommandName Write-Verbose -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += $Message }
+
+        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+
+        ($Global:M365DSCTestHostOutput -join '') | Should -Be $Global:M365DSCEmojiGreenCheckMark
+    }
+}

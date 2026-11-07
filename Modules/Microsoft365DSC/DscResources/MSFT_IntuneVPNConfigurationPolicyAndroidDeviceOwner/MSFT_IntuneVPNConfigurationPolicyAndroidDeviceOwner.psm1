@@ -449,7 +449,6 @@ class IntuneVPNConfigurationPolicyAndroidDeviceOwner : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -545,7 +544,7 @@ class IntuneVPNConfigurationPolicyAndroidDeviceOwner : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('servers', 'proxyServer', 'customData', 'customKeyValueData', 'targetedMobileApps', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

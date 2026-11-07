@@ -514,7 +514,6 @@ class IntuneMobileAppsWindowsOfficeSuiteApp : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 #region complex types
                 if ($null -ne $Results.Categories)
@@ -591,7 +590,7 @@ class IntuneMobileAppsWindowsOfficeSuiteApp : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Categories', 'ExcludedApps', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

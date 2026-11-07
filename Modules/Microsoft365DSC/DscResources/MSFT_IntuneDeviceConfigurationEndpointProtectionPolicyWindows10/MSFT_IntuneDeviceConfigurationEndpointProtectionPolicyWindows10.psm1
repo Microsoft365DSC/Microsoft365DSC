@@ -2511,7 +2511,6 @@ class IntuneDeviceConfigurationEndpointProtectionPolicyWindows10 : M365DSCResour
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ( $null -ne $Results.BitLockerFixedDrivePolicy)
                 {
@@ -3536,7 +3535,7 @@ class IntuneDeviceConfigurationEndpointProtectionPolicyWindows10 : M365DSCResour
                     'UserRightsLockMemory', 'UserRightsManageAuditingAndSecurityLogs', 'UserRightsManageVolumes', 'UserRightsModifyFirmwareEnvironment',
                     'UserRightsModifyObjectLabels', 'UserRightsProfileSingleProcess', 'UserRightsRemoteDesktopServicesLogOn', 'UserRightsRemoteShutdown',
                     'UserRightsRestoreData', 'UserRightsTakeOwnership', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

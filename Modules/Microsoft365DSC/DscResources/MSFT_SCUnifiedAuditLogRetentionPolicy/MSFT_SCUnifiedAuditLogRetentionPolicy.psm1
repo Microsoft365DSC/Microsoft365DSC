@@ -265,7 +265,10 @@ class SCUnifiedAuditLogRetentionPolicy : M365DSCResourceBase
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $Results.Remove('Identity') | Out-Null
+                if ($null -ne $Results)
+                {
+                    $Results.Remove('Identity') | Out-Null
+                }
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `

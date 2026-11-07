@@ -502,7 +502,6 @@ class IntuneDeviceCompliancePolicyAndroidDeviceOwner : M365DSCResourceBase
 
                 $this.ExportedInstance = $configDeviceAndroidPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -539,7 +538,7 @@ class IntuneDeviceCompliancePolicyAndroidDeviceOwner : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'ScheduledActionsForRule') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `

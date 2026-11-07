@@ -232,14 +232,13 @@ class SCSecurityFilter : M365DSCResourceBase
                 }
                 $this.ExportedInstance = $filter
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 [void]$dscContent.Append($currentDSCBlock)

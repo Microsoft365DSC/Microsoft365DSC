@@ -585,19 +585,22 @@ class EXODistributionGroup : M365DSCResourceBase
                 }
                 $this.ExportedInstance = $distributionGroup
                 $Results = $this.GetForExport($Params)
-                if ($Results.AcceptMessagesOnlyFromSendersOrMembers.Length -eq 0)
+                if ($null -ne $Results)
                 {
-                    $Results.Remove('AcceptMessagesOnlyFromSendersOrMembers') | Out-Null
-                }
+                    if ($Results.AcceptMessagesOnlyFromSendersOrMembers.Length -eq 0)
+                    {
+                        $Results.Remove('AcceptMessagesOnlyFromSendersOrMembers') | Out-Null
+                    }
 
-                if ($Results.AcceptMessagesOnlyFrom.Length -eq 0)
-                {
-                    $Results.Remove('AcceptMessagesOnlyFrom') | Out-Null
-                }
+                    if ($Results.AcceptMessagesOnlyFrom.Length -eq 0)
+                    {
+                        $Results.Remove('AcceptMessagesOnlyFrom') | Out-Null
+                    }
 
-                if ($Results.AcceptMessagesOnlyFromDLMembers.Length -eq 0)
-                {
-                    $Results.Remove('AcceptMessagesOnlyFromDLMembers') | Out-Null
+                    if ($Results.AcceptMessagesOnlyFromDLMembers.Length -eq 0)
+                    {
+                        $Results.Remove('AcceptMessagesOnlyFromDLMembers') | Out-Null
+                    }
                 }
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `

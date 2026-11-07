@@ -351,7 +351,6 @@ class IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 : M365DSCResourceBa
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.ApprovalSettings)
                 {
@@ -387,7 +386,7 @@ class IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 : M365DSCResourceBa
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'ApprovalSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
