@@ -697,8 +697,6 @@ class IntuneMobileAppsWin32CatalogAppWindows10 : M365DSCResourceBase
         }
         catch
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiRedX
-
             $this.LogError($_, 'Error during Export:')
 
             throw
