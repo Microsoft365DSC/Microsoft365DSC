@@ -6,6 +6,8 @@
   * Fixed locations without a name being exported as empty. Display Name resolution
     requires the `GroupMember.Read.All` permission.
     FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
+* SPOStorageEntity
+  * Fixed the export checking for the `Credential` connection mode instead of `Credentials`.
 * M365DSCErrorHandler
   * Added `Test-M365DSCAccessError` to detect authentication and permission errors.
   * Updated `Save-M365DSCPartialExport` to accept empty content.
@@ -27,6 +29,7 @@
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Removed the relation templates of removed resources.
+  * Removed the duplicate error line from the export of 13 resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.
 

@@ -272,7 +272,7 @@ class SPOStorageEntity : M365DSCResourceBase
             }
 
             # Obtain central administration url from a User Principal Name
-            if ($ConnectionMode -eq 'Credential')
+            if ($ConnectionMode -eq 'Credentials')
             {
                 $centralAdminUrl = Get-SPOAdministrationUrl -Credential $this.Credential
             }
