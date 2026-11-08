@@ -221,6 +221,7 @@ function Add-M365DSCEvent
 
     try
     {
+        $sourceExists = $false
         try
         {
             $sourceExists = [System.Diagnostics.EventLog]::SourceExists($Source)
@@ -256,11 +257,6 @@ function Add-M365DSCEvent
         if ($PSBoundParameters.ContainsKey('TenantId'))
         {
             $outputMessage += "`n`nTenantId: " + $TenantId
-        }
-
-        if ($PSBoundParameters.ContainsKey('Credential'))
-        {
-            $outputMessage += "`n`nCredential: " + $Credential.UserName
         }
 
         if ($outputMessage.Length -gt 32766)
@@ -369,7 +365,7 @@ function Export-M365DSCDiagnosticData
     )
     Write-Host 'Exporting logging information' -ForegroundColor Yellow
 
-    if (($PSEdition -eq 'Desktop' -or $IsWindows) -and ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator') -eq $false)
+    if ($IsWindows -and ([System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator) -eq $false)
     {
         throw 'You need to run this cmdlet with Administrator privileges!'
     }
@@ -390,14 +386,26 @@ function Export-M365DSCDiagnosticData
     $items = Get-ChildItem -Path "$sourceLogPath/*.json" | Where-Object -Property LastWriteTime -GT $afterDate
     Copy-Item -Path $items -Destination $logPath -ErrorAction 'SilentlyContinue' #-ErrorVariable $err
 
+    $anonymizeText = {
+        param
+        (
+            [System.String]
+            $Text
+        )
+
+        $Text -replace [System.Text.RegularExpressions.Regex]::Escape($Url), 'fqdn.com' `
+            -replace [System.Text.RegularExpressions.Regex]::Escape($Domain), '[DOMAIN]' `
+            -replace [System.Text.RegularExpressions.Regex]::Escape($Server), '[SERVER]'
+    }
+
     if ($Anonymize)
     {
         Write-Host '    * Anonymizing DSC Verbose Logs' -ForegroundColor Gray
         foreach ($file in (Get-ChildItem -Path $logPath))
         {
             $content = Get-Content -Path $file.FullName -Raw -Encoding Unicode
-            $content = $content -replace $Domain, '[DOMAIN]' -replace $Url, 'fqdn.com' -replace $Server, '[SERVER]'
-            Set-Content -Path $file.FullName -Value $content
+            $content = & $anonymizeText $content
+            Set-Content -Path $file.FullName -Value $content -Encoding Unicode
         }
     }
 
@@ -407,16 +415,16 @@ function Export-M365DSCDiagnosticData
 
     try
     {
-        Write-Host '    * Anonymizing DSC Event Log' -ForegroundColor Gray
         Get-WinEvent -FilterHashtable @{ LogName = 'M365Dsc'; StartTime = $afterDate } -ErrorAction SilentlyContinue | Export-Csv $evtExportLog -NoTypeInformation
         if ($Anonymize)
         {
+            Write-Host '    * Anonymizing DSC Event Log' -ForegroundColor Gray
             $newLog = Import-Csv $evtExportLog
             foreach ($entry in $newLog)
             {
                 $entry.MachineName = '[SERVER]'
                 $entry.UserName = '[USER]'
-                $entry.Message = $entry.Message -replace $Domain, '[DOMAIN]' -replace $Url, 'fqdn.com' -replace $Server, '[SERVER]'
+                $entry.Message = & $anonymizeText $entry.Message
             }
 
             $newLog | Export-Csv -Path $evtExportLog -NoTypeInformation
@@ -464,6 +472,88 @@ function Export-M365DSCDiagnosticData
 
 <#
 .SYNOPSIS
+    Parses the stored notification endpoint registrations.
+
+.DESCRIPTION
+    Splits the 'Url|EventType;Url|EventType;' value stored in the machine environment
+    variable into objects. Entries without exactly one '|' separator are skipped.
+
+.PARAMETER Value
+    Specifies the raw registration value.
+
+.FUNCTIONALITY
+    Private
+
+.OUTPUTS
+    System.Management.Automation.PSCustomObject[]
+#>
+function ConvertFrom-M365DSCNotificationEndpointRegistration
+{
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.PSCustomObject[]])]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $Value
+    )
+
+    $result = @()
+    if ([System.String]::IsNullOrEmpty($Value))
+    {
+        return ,$result
+    }
+
+    foreach ($entry in $Value.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries))
+    {
+        $parts = $entry.Split('|')
+        if ($parts.Count -ne 2)
+        {
+            continue
+        }
+
+        $result += [PSCustomObject]@{
+            Url       = $parts[0]
+            EventType = $parts[1]
+        }
+    }
+    return ,$result
+}
+
+<#
+.SYNOPSIS
+    Converts notification endpoint registrations back into the stored value.
+
+.PARAMETER Registration
+    Specifies the registrations, as returned by ConvertFrom-M365DSCNotificationEndpointRegistration.
+
+.FUNCTIONALITY
+    Private
+
+.OUTPUTS
+    System.String
+#>
+function ConvertTo-M365DSCNotificationEndpointRegistration
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter()]
+        [System.Object[]]
+        $Registration
+    )
+
+    $value = ''
+    foreach ($entry in $Registration)
+    {
+        $value += "$($entry.Url)|$($entry.EventType);"
+    }
+    return $value
+}
+
+<#
+.SYNOPSIS
     Registers a notification endpoint for M365DSC events.
 
 .DESCRIPTION
@@ -497,21 +587,18 @@ function New-M365DSCNotificationEndpointRegistration
     # Get current notification endpoint registrations from registry and parse them into an object.
     $CurrentNotificationEndpoints = ([System.Environment]::GetEnvironmentVariable('M365DSCNotificationEndPointRegistrations', `
                 [System.EnvironmentVariableTarget]::Machine))
-    if ($null -ne $CurrentNotificationEndpoints)
-    {
-        $template = '{Url*:https://contoso.com}|{EventType:Error};{Url*:https://contoso.com}|{EventType:Error};'
-        $CurrentNotificationEndpointsAsObject = ConvertFrom-String $CurrentNotificationEndpoints -TemplateContent $template
-    }
+    $CurrentNotificationEndpointsAsObject = ConvertFrom-M365DSCNotificationEndpointRegistration -Value $CurrentNotificationEndpoints
 
     # Check to see if a notification endpoint registration with the same url and for the same event type already exists or not
-    $existingInstance = $CurrentNotificationEndpointsAsObject | Where-Object -FilterScript { $_.Url -eq $url -and $_.EventType -eq $EventType }
+    $sanitizedUrl = $Url.Replace('|', '').Replace(';', '')
+    $existingInstance = $CurrentNotificationEndpointsAsObject | Where-Object -FilterScript { $_.Url -eq $sanitizedUrl -and $_.EventType -eq $EventType }
     if ($null -ne $existingInstance)
     {
         throw "An existing endpoint notification registration on {$url} for {$EventType} already exists."
     }
 
     # If no exisiting instances, add the current one to the registry entry
-    $CurrentNotificationEndpoints += "$($Url.Replace('|','').Replace(';',''))|$EventType;"
+    $CurrentNotificationEndpoints += "$sanitizedUrl|$EventType;"
     [System.Environment]::SetEnvironmentVariable('M365DSCNotificationEndPointRegistrations', $CurrentNotificationEndpoints, `
             [System.EnvironmentVariableTarget]::Machine)
 }
@@ -551,21 +638,18 @@ function Remove-M365DSCNotificationEndpointRegistration
     # Get current notification endpoint registrations from registry and parse them into an object.
     $CurrentNotificationEndpoints = ([System.Environment]::GetEnvironmentVariable('M365DSCNotificationEndPointRegistrations', `
                 [System.EnvironmentVariableTarget]::Machine))
-    if ($null -ne $CurrentNotificationEndpoints)
-    {
-        $template = '{Url*:https://contoso.com}|{EventType:Error};{Url*:https://contoso.com}|{EventType:Error};'
-        $CurrentNotificationEndpointsAsObject = ConvertFrom-String $CurrentNotificationEndpoints -TemplateContent $template
-    }
+    $CurrentNotificationEndpointsAsObject = ConvertFrom-M365DSCNotificationEndpointRegistration -Value $CurrentNotificationEndpoints
 
     # Check to see if a notification endpoint registration with the same url and for the same event type already exists or not
-    $existingInstance = $CurrentNotificationEndpointsAsObject | Where-Object -FilterScript { $_.Url -eq $url -and $_.EventType -eq $EventType }
+    $sanitizedUrl = $Url.Replace('|', '').Replace(';', '')
+    $existingInstance = $CurrentNotificationEndpointsAsObject | Where-Object -FilterScript { $_.Url -eq $sanitizedUrl -and $_.EventType -eq $EventType }
     if ($null -eq $existingInstance)
     {
         throw "No existing endpoint notification registration on {$url} for {$EventType} were found."
     }
 
-    $valueToRemove += "$($Url.Replace('|','').Replace(';',''))|$EventType;"
-    $CurrentNotificationEndpoints = $CurrentNotificationEndpoints.Replace($valueToRemove, '')
+    $remaining = $CurrentNotificationEndpointsAsObject | Where-Object -FilterScript { -not ($_.Url -eq $sanitizedUrl -and $_.EventType -eq $EventType) }
+    $CurrentNotificationEndpoints = ConvertTo-M365DSCNotificationEndpointRegistration -Registration $remaining
 
     # If we found an exisiting instance, remove it from registry entry's value.
     [System.Environment]::SetEnvironmentVariable('M365DSCNotificationEndPointRegistrations', $CurrentNotificationEndpoints, `
@@ -608,8 +692,7 @@ function Get-M365DSCNotificationEndpointRegistration
                 [System.EnvironmentVariableTarget]::Machine))
     if ($null -ne $CurrentNotificationEndpoints)
     {
-        $template = '{Url*:https://contoso.com}|{EventType:Error};{Url*:https://contoso.com}|{EventType:Error};'
-        $CurrentNotificationEndpointsAsObject = ConvertFrom-String $CurrentNotificationEndpoints -TemplateContent $template
+        $CurrentNotificationEndpointsAsObject = ConvertFrom-M365DSCNotificationEndpointRegistration -Value $CurrentNotificationEndpoints
 
         # If both Url and EventType are null, return all endpoints
         if ([System.String]::IsNullOrEmpty($Url) -and [System.String]::IsNullOrEmpty($EventType))
@@ -629,7 +712,7 @@ function Get-M365DSCNotificationEndpointRegistration
         elseif (-not [System.String]::IsNullOrEmpty($EventType) -and -not [System.String]::IsNullOrEmpty($Url))
         {
             # If both Url and EventType are specified, return endpoints that match both.
-            return $CurrentNotificationEndpointsAsObject | Where-Object -FilterScript { $_.EventType -eq $EventType -and $Url -eq $Url }
+            return $CurrentNotificationEndpointsAsObject | Where-Object -FilterScript { $_.EventType -eq $EventType -and $_.Url -eq $Url }
         }
     }
     return $null
@@ -679,24 +762,23 @@ function Send-M365DSCNotificationEndPointMessage
     {
         try
         {
-            $variableValue = Get-Variable -Name ('M365DSCNotificationEndpointBearer' + $domain) -Scope Global -ErrorAction SilentlyContinue
+            $domain = $endpoint.Url.Replace('https://', '').Replace('http://', '').Split('/')[0].Split('.')[0]
+            $bearerTokenValue = Get-Variable -Name ('M365DSCNotificationEndpointBearer' + $domain) -Scope Global -ValueOnly -ErrorAction SilentlyContinue
 
-            if (-not [System.String]::IsNullOrEMpty($variableValue))
+            if (-not [System.String]::IsNullOrEmpty($bearerTokenValue))
             {
-                $domain = $endpoint.Url.Replace('https://', '').Replace('http://', '').Split('/')[0].Split('.')[0]
-                $bearerTokenValue = (Get-Variable -Name ('M365DSCNotificationEndpointBearer' + $domain) -Scope Global).Value
                 $Parameters.Headers = @{'Authorization' = "Bearer $bearerTokenValue" }
             }
             else
             {
                 $Parameters.Headers = $null
             }
-            $Parameters.Uri = $endpoint.url
+            $Parameters.Uri = $endpoint.Url
             Invoke-RestMethod @Parameters | Out-Null
         }
         catch
         {
-            Write-Verbose -Message "$_"
+            Write-Verbose -Message "Could not send notification to {$($endpoint.Url)}: $_"
         }
     }
 }
@@ -749,7 +831,7 @@ function Set-M365DSCLoggingOption
         $IncludeNonDrifted
     )
 
-    if ($null -ne $IncludeNonDrifted)
+    if ($PSBoundParameters.ContainsKey('IncludeNonDrifted'))
     {
         [System.Environment]::SetEnvironmentVariable('M365DSCEventLogIncludeNonDrifted', $IncludeNonDrifted, `
                 [System.EnvironmentVariableTarget]::Machine)
@@ -775,16 +857,12 @@ function Get-M365DSCLoggingOption
     [OutputType([System.Collections.Hashtable])]
     param()
 
-    try
-    {
-        return @{
-            IncludeNonDrifted = [Boolean]([System.Environment]::GetEnvironmentVariable('M365DSCEventLogIncludeNonDrifted', `
-                        [System.EnvironmentVariableTarget]::Machine))
-        }
-    }
-    catch
-    {
-        throw $_
+    $rawValue = [System.Environment]::GetEnvironmentVariable('M365DSCEventLogIncludeNonDrifted', [System.EnvironmentVariableTarget]::Machine)
+    $includeNonDrifted = $false
+    $null = [System.Boolean]::TryParse($rawValue, [ref] $includeNonDrifted)
+
+    return @{
+        IncludeNonDrifted = $includeNonDrifted
     }
 }
 

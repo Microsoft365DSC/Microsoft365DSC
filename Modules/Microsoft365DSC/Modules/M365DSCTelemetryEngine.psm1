@@ -137,14 +137,14 @@ function Add-M365DSCTelemetryEvent
         $Metrics
     )
 
-    $dataNew = [System.Collections.Generic.Dictionary[[System.String], [System.String]]]::new()
-    foreach ($key in $Data.Keys)
+    if (Test-IsM365DSCTelemetryEnabled)
     {
-        $dataNew.Add($key, $Data[$key])
-    }
+        $dataNew = [System.Collections.Generic.Dictionary[[System.String], [System.String]]]::new()
+        foreach ($key in $Data.Keys)
+        {
+            $dataNew.Add($key, $Data[$key])
+        }
 
-    if ($null -eq $Script:TelemetryEnabled -or $Script:TelemetryEnabled -eq $true)
-    {
         if ($Type -eq 'DriftEvaluation')
         {
             try
@@ -297,7 +297,7 @@ function Add-M365DSCTelemetryEvent
                 }
             }
 
-            $dataNew.Remove('TenandId') | Out-Null
+            $dataNew.Remove('TenantId') | Out-Null
             $dataNew.Remove('Principal') | Out-Null
 
             # Capture PowerShell Version Info
@@ -335,7 +335,7 @@ function Add-M365DSCTelemetryEvent
             }
             elseif ($host.Name -eq 'ConsoleHost' -and $null -ne $env:WT_SESSION -and -not $dataNew.Keys.Contains('PowerShellAgent'))
             {
-                $dataNew.Add('PowerShellAgent', 'Windows Terminal' -and -not $dataNew.Keys.Contains('PowerShellAgent'))
+                $dataNew.Add('PowerShellAgent', 'Windows Terminal')
             }
             elseif ($host.Name -eq 'ConsoleHost' -and $null -eq $env:WT_SESSION -and `
                     $null -ne $env:BUILD_BUILDID -and $env:SYSTEM -eq 'build' -and -not $dataNew.Keys.Contains('PowerShellAgent'))
@@ -368,7 +368,7 @@ function Add-M365DSCTelemetryEvent
                 {
                     $dataNew.Add('Workload', 'Azure Active Directory')
                 }
-                elseif ($dataNew.Resource.StartsWith('MSFT_Intune') -or $dataNew.Resource.StartsWith('Defender'))
+                elseif ($dataNew.Resource.StartsWith('MSFT_Defender') -or $dataNew.Resource.StartsWith('Defender'))
                 {
                     $dataNew.Add('Workload', 'Defender')
                 }
@@ -448,7 +448,7 @@ function Add-M365DSCTelemetryEvent
             # LCM Metadata Information
             try
             {
-                if ($null -eq $Script:M365DSCCurrentPrincipalIsAdmin -and ($PSEdition -eq 'Desktop' -or $IsWindows))
+                if ($null -eq $Script:M365DSCCurrentPrincipalIsAdmin -and $IsWindows)
                 {
                     $currentPrincipal = New-Object System.Security.Principal.WindowsPrincipal([System.Security.Principal.WindowsIdentity]::GetCurrent())
                     $Script:M365DSCCurrentPrincipalIsAdmin = $currentPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -635,25 +635,26 @@ function Set-M365DSCTelemetryOption
         $ConnectionString
     )
 
-    if ($null -ne $Enabled)
+    if ($PSBoundParameters.ContainsKey('Enabled'))
     {
         [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $Enabled, `
                 [System.EnvironmentVariableTarget]::Machine)
+        $Script:TelemetryEnabled = $Enabled
     }
 
-    if ($null -ne $InstrumentationKey)
+    if ($PSBoundParameters.ContainsKey('InstrumentationKey'))
     {
         [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryInstrumentationKey', $InstrumentationKey, `
                 [System.EnvironmentVariableTarget]::Machine)
     }
 
-    if ($null -ne $ProjectName)
+    if ($PSBoundParameters.ContainsKey('ProjectName'))
     {
         [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryProjectName', $ProjectName, `
                 [System.EnvironmentVariableTarget]::Machine)
     }
 
-    if ($null -ne $ConnectionString)
+    if ($PSBoundParameters.ContainsKey('ConnectionString'))
     {
         [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryConnectionString', $ConnectionString, `
                 [System.EnvironmentVariableTarget]::Machine)
@@ -787,6 +788,5 @@ Export-ModuleMember -Function @(
     'Set-M365DSCTelemetryContext',
     'Set-M365DSCTelemetryOption',
     'Set-M365DSCLCMConfiguration',
-    'Test-IsM365DSCTelemetryEnabled',
-    'Get-M365DSCConnectionParametersFromTelemetry'
+    'Test-IsM365DSCTelemetryEnabled'
 )

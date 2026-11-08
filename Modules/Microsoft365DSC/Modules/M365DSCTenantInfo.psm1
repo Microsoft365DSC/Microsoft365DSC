@@ -1,3 +1,6 @@
+# Resolved API endpoints per tenant, used by Get-M365DSCAPIEndpoint
+$Script:M365DSCAPIEndpointCache = @{}
+
 <#
 .SYNOPSIS
     Resolves the initial onmicrosoft tenant domain.
@@ -75,16 +78,18 @@ function Get-M365DSCTenantDomain
         }
         catch
         {
-            if ($_.Exception.Message -eq 'Insufficient privileges to complete the operation.')
+            if ($_.Exception.Message -like '*Insufficient privileges*' -or
+                $_.ErrorDetails.Message -like '*Insufficient privileges*' -or
+                $_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden)
             {
+                $message = 'Error retrieving Organizational information: Missing Organization.Read.All permission.'
                 New-M365DSCLogEntry `
-                    -Message 'Error retrieving Organizational information: Missing Organization.Read.All permission. ' `
+                    -Message $message `
                     -Exception $_ `
                     -Source $($MyInvocation.MyCommand.Source) `
-                    -TenantId $TenantId `
-                    -Credential $Credential
+                    -TenantId $TenantId
 
-                return [System.String]::Empty
+                throw [System.UnauthorizedAccessException]::new($message, $_.Exception)
             }
 
             throw $_
@@ -229,31 +234,11 @@ function Get-M365TenantName
         $Credential
     )
 
-    $UseMFASwitch = @{}
-    if ($UseMFA)
-    {
-        $UseMFASwitch.Add('UseMFA', $true)
-    }
-
     Write-Verbose -Message 'Connection to Azure AD is required to automatically determine SharePoint Online admin URL...'
     $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
         -InboundParameters $PSBoundParameters
     Write-Verbose -Message 'Getting SharePoint Online admin URL...'
-    $domain = Invoke-MgGraphRequest -Uri 'beta/domains' -Method GET
-    [Array]$defaultDomain = $domain | Where-Object { ($_.id -like '*.onmicrosoft.com' -or $_.id -like '*.onmicrosoft.de' -or $_.id -like '*.onsovcloud.*') -and $_.isInitial -eq $true } # We don't use IsDefault here because the default could be a custom domain
-
-    if ($defaultDomain[0].id -like '*.onmicrosoft.com*')
-    {
-        $tenantName = $defaultDomain[0].id -replace '.onmicrosoft.com', ''
-    }
-    elseif ($defaultDomain[0].id -like '*.onmicrosoft.de*')
-    {
-        $tenantName = $defaultDomain[0].id -replace '.onmicrosoft.de', ''
-    }
-    elseif ($defaultDomain[0].id -like '*.onsovcloud.*')
-    {
-        $tenantName = $defaultDomain[0].id -replace '.onsovcloud.*', ''
-    }
+    $tenantName = Get-M365DSCInitialDomainPrefix
 
     Write-Verbose -Message "M365 tenant name is $tenantName"
     return $tenantName
@@ -289,36 +274,25 @@ function Get-M365DSCAPIEndpoint
         $TenantId
     )
 
-    try
+    if ($Script:M365DSCAPIEndpointCache.ContainsKey($TenantId))
     {
-        $webrequest = Invoke-WebRequest -Uri "https://login.windows.net/$($TenantId)/.well-known/openid-configuration" -UseBasicParsing
-        $response = ConvertFrom-Json $webrequest.Content
-        $tenantRegionScope = $response.'tenant_region_scope'
-
-        $endpoints = @{
-            AzureManagement = $null
-        }
-
-        switch ($tenantRegionScope)
-        {
-            'USGov'
-            {
-                if ($null -ne $response.'tenant_region_sub_scope' -and $response.'tenant_region_sub_scope' -eq 'DODCON')
-                {
-                    $endpoints.AzureManagement = 'https://management.usgovcloudapi.net'
-                }
-            }
-            default
-            {
-                $endpoints.AzureManagement = 'https://management.azure.com'
-            }
-        }
-        return $endpoints
+        return $Script:M365DSCAPIEndpointCache[$TenantId].Clone()
     }
-    catch
+
+    $response = Invoke-RestMethod -Uri "https://login.windows.net/$($TenantId)/.well-known/openid-configuration"
+
+    $endpoints = @{
+        AzureManagement = 'https://management.azure.com'
+    }
+
+    # GCC High (DODCON) and DoD both use the Azure Government endpoints
+    if ($response.'tenant_region_scope' -eq 'USGov')
     {
-        throw $_
+        $endpoints.AzureManagement = 'https://management.usgovcloudapi.net'
     }
+
+    $Script:M365DSCAPIEndpointCache[$TenantId] = $endpoints
+    return $endpoints.Clone()
 }
 
 <#
@@ -352,30 +326,48 @@ function Get-SPOAdministrationUrl
         $Credential
     )
 
-    $UseMFASwitch = @{}
-    if ($UseMFA)
-    {
-        $UseMFASwitch.Add('UseMFA', $true)
-    }
-
     Write-Verbose -Message 'Connection to Azure AD is required to automatically determine SharePoint Online admin URL...'
     $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
         -InboundParameters $PSBoundParameters
     Write-Verbose -Message 'Getting SharePoint Online admin URL...'
-    $domain = Invoke-MgGraphRequest -Uri 'beta/domains' -Method GET
-    [Array]$defaultDomain = $domain | Where-Object { ($_.id -like '*.onmicrosoft.com' -or $_.id -like '*.onmicrosoft.de' -or $_.id -like '*.onmicrosoft.us') -and $_.isInitial -eq $true } # We don't use IsDefault here because the default could be a custom domain
+    $tenantName = Get-M365DSCInitialDomainPrefix
+    $adminUrl = "https://$tenantName-admin.sharepoint.com"
+    Write-Verbose -Message "SharePoint Online admin URL is $adminUrl"
+    return $adminUrl
+}
 
-    if ($defaultDomain[0].id -like '*.onmicrosoft.com*')
+<#
+.SYNOPSIS
+    Returns the tenant prefix of the initial domain (e.g. contoso for contoso.onmicrosoft.com).
+
+.DESCRIPTION
+    Reads the tenant domains from Microsoft Graph and returns the prefix of the initial onmicrosoft or onsovcloud domain.
+    The default domain is not used because it could be a custom domain.
+    Requires an existing Microsoft Graph connection.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.String
+#>
+function Get-M365DSCInitialDomainPrefix
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param()
+
+    $domains = (Invoke-MgGraphRequest -Uri 'beta/domains' -Method GET -ErrorAction Stop).value
+    $initialDomainPattern = '^(?<prefix>[^.]+)\.(onmicrosoft\.(com|de|us)|onsovcloud\..+)$'
+    foreach ($domain in $domains)
     {
-        $global:tenantName = $defaultDomain[0].id -replace '.onmicrosoft.com', ''
+        if ($domain.isInitial -eq $true -and $domain.id -match $initialDomainPattern)
+        {
+            return $Matches['prefix']
+        }
     }
-    elseif ($defaultDomain[0].id -like '*.onmicrosoft.de*')
-    {
-        $global:tenantName = $defaultDomain[0].id -replace '.onmicrosoft.de', ''
-    }
-    $global:AdminUrl = "https://$global:tenantName-admin.sharepoint.com"
-    Write-Verbose -Message "SharePoint Online admin URL is $global:AdminUrl"
-    return $global:AdminUrl
+
+    throw 'Could not determine the initial onmicrosoft domain of the tenant.'
 }
 
 Export-ModuleMember -Function @(
