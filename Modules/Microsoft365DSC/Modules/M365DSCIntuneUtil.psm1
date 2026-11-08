@@ -187,6 +187,230 @@ function Resolve-M365DSCIntuneRoleScopeTagNames
 
 <#
 .SYNOPSIS
+    Loads the Intune assignment filters into the module cache.
+
+.DESCRIPTION
+    Reads the assignment filters once and caches their id and display name. A tenant without filters is
+    cached as an empty list. A failed read leaves the cache unset and the next call reads again.
+
+.PARAMETER Reload
+    Reads the filters again even when they are cached. Read errors then propagate.
+#>
+function Initialize-M365DSCIntuneAssignmentFilterCache
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [switch]
+        $Reload
+    )
+
+    if (-not $Reload -and $null -ne $Script:IntuneAssignmentFilters)
+    {
+        return
+    }
+
+    try
+    {
+        $filters = @()
+        foreach ($filter in (Get-MgBetaDeviceManagementAssignmentFilter -All -ErrorAction Stop))
+        {
+            $filters += @{
+                FilterId    = $filter.Id
+                DisplayName = $filter.DisplayName
+            }
+        }
+        $Script:IntuneAssignmentFilters = $filters
+    }
+    catch
+    {
+        if ($Reload)
+        {
+            throw
+        }
+        Write-Verbose -Message "Could not read the Intune assignment filters: $_"
+    }
+}
+
+<#
+.SYNOPSIS
+    Resolves an Intune assignment filter by id or display name.
+
+.DESCRIPTION
+    Looks the filter up in the module cache by id, then by display name. On a miss, reads the filters
+    again once, since the filter may have been created after the cache was loaded. Throws when the
+    filter still cannot be found, because an assignment without its filter targets more devices.
+
+.PARAMETER FilterId
+    Specifies the assignment filter identifier.
+
+.PARAMETER FilterDisplayName
+    Specifies the assignment filter display name.
+
+.OUTPUTS
+    System.Collections.Hashtable
+#>
+function Resolve-M365DSCIntuneAssignmentFilter
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param (
+        [Parameter()]
+        [System.String]
+        $FilterId,
+
+        [Parameter()]
+        [System.String]
+        $FilterDisplayName
+    )
+
+    foreach ($reload in @($false, $true))
+    {
+        Initialize-M365DSCIntuneAssignmentFilterCache -Reload:$reload
+
+        $filter = $null
+        if (-not [System.String]::IsNullOrEmpty($FilterId))
+        {
+            $filter = $Script:IntuneAssignmentFilters | Where-Object -Property FilterId -EQ $FilterId | Select-Object -First 1
+        }
+        if ($null -eq $filter -and -not [System.String]::IsNullOrEmpty($FilterDisplayName))
+        {
+            $filter = $Script:IntuneAssignmentFilters | Where-Object -Property DisplayName -EQ $FilterDisplayName | Select-Object -First 1
+        }
+        if ($null -ne $filter)
+        {
+            return $filter
+        }
+    }
+
+    $message = "Assignment filter with Id {$FilterId} and DisplayName {$FilterDisplayName} could not be found in the directory. "
+    $message += 'The assignment is not applied without its filter, as it would target more devices. '
+    $message += 'Please update your DSC resource extract with the correct filterId or filterDisplayName.'
+    throw $message
+}
+
+<#
+.SYNOPSIS
+    Resolves the id of the group an Intune assignment targets.
+
+.DESCRIPTION
+    Looks the group up by id, then by display name. Writes a warning and returns $null when the group
+    cannot be found, its display name is not unique, or neither value is given. Lookup errors other
+    than a missing group propagate.
+
+.PARAMETER GroupId
+    Specifies the group identifier from the assignment.
+
+.PARAMETER GroupDisplayName
+    Specifies the group display name from the assignment.
+
+.OUTPUTS
+    System.String
+#>
+function Resolve-M365DSCIntuneAssignmentGroupId
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter()]
+        [System.String]
+        $GroupId,
+
+        [Parameter()]
+        [System.String]
+        $GroupDisplayName
+    )
+
+    if (-not [System.String]::IsNullOrEmpty($GroupId))
+    {
+        $group = Get-M365DSCIntuneGroup -GroupId $GroupId
+        if ($null -ne $group)
+        {
+            return $group.Id
+        }
+
+        if ([System.String]::IsNullOrEmpty($GroupDisplayName))
+        {
+            $message = "Skipping assignment for the group with Id {$GroupId} as it could not be found in the directory. "
+            $message += 'Please update your DSC resource extract with the correct groupId or groupDisplayName.'
+            Write-Warning -Message $message
+            return $null
+        }
+        Write-Verbose -Message "The group with Id {$GroupId} could not be found. Resolving it by DisplayName {$GroupDisplayName}."
+    }
+    elseif ([System.String]::IsNullOrEmpty($GroupDisplayName))
+    {
+        Write-Warning -Message 'Skipping assignment: missing both groupId and groupDisplayName.'
+        return $null
+    }
+
+    [System.Object[]]$groups = Get-M365DSCIntuneGroup -DisplayName $GroupDisplayName
+    if ($null -eq $groups -or $groups.Count -eq 0)
+    {
+        $message = "Skipping assignment for the group with DisplayName {$GroupDisplayName} as it could not be found in the directory. "
+        $message += 'Please update your DSC resource extract with the correct groupId or groupDisplayName.'
+        Write-Warning -Message $message
+        return $null
+    }
+
+    if ($groups.Count -gt 1)
+    {
+        $message = "Skipping assignment for the group with DisplayName {$GroupDisplayName} as it is not unique in the directory. "
+        $message += 'Please update your DSC resource extract with the correct groupId or a unique group DisplayName.'
+        Write-Warning -Message $message
+        return $null
+    }
+
+    return $groups[0].Id
+}
+
+<#
+.SYNOPSIS
+    Tests whether a failed group lookup means the group does not exist.
+
+.DESCRIPTION
+    Returns $true for a 404 or for the 400 Graph returns on a malformed id. Any other failure, such as
+    a missing permission or a network error, returns $false.
+
+.PARAMETER ErrorRecord
+    Specifies the error raised by the group lookup.
+
+.OUTPUTS
+    System.Boolean
+#>
+function Test-M365DSCIntuneGroupNotFoundError
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.ErrorRecord]
+        $ErrorRecord
+    )
+
+    if ($ErrorRecord.FullyQualifiedErrorId -like 'Request_ResourceNotFound*' -or
+        $ErrorRecord.FullyQualifiedErrorId -like 'Request_BadRequest*')
+    {
+        return $true
+    }
+
+    $exception = $ErrorRecord.Exception
+    $statusCode = $null
+    if ($null -ne $exception.PSObject.Properties['StatusCode'])
+    {
+        $statusCode = $exception.StatusCode
+    }
+    elseif ($null -ne $exception.PSObject.Properties['Response'] -and $null -ne $exception.Response)
+    {
+        $statusCode = $exception.Response.StatusCode
+    }
+
+    return ($null -ne $statusCode -and [System.Int32]$statusCode -in @(400, 404))
+}
+
+<#
+.SYNOPSIS
     Converts Microsoft Graph Intune policy assignments into DSC-friendly hashtables.
 
 .DESCRIPTION
@@ -216,15 +440,7 @@ function ConvertFrom-IntunePolicyAssignment
         $IncludeDeviceFilter = $true
     )
 
-    if ($null -eq $Script:IntuneAssignmentFilters)
-    {
-        $Script:IntuneAssignmentFilters = Get-MgBetaDeviceManagementAssignmentFilter -All -ErrorAction SilentlyContinue | ForEach-Object {
-            @{
-                FilterId    = $_.Id
-                DisplayName = $_.DisplayName
-            }
-        }
-    }
+    Initialize-M365DSCIntuneAssignmentFilterCache
 
     $assignmentResult = @()
     foreach ($assignment in $Assignments)
@@ -236,32 +452,9 @@ function ConvertFrom-IntunePolicyAssignment
 
         $groupDisplayName = $null
         $hashAssignment = [ordered]@{}
-        if ($null -ne $assignment.Target.'@odata.type')
-        {
-            $dataType = $assignment.Target.'@odata.type'
-        }
-        else
-        {
-            $dataType = $assignment.Target.'@odata.type'
-        }
-
-        if ($null -ne $assignment.Target.groupId)
-        {
-            $groupId = $assignment.Target.groupId
-        }
-        else
-        {
-            $groupId = $assignment.Target.groupId
-        }
-
-        if ($null -ne $assignment.Target.collectionId)
-        {
-            $collectionId = $assignment.Target.collectionId
-        }
-        else
-        {
-            $collectionId = $assignment.Target.collectionId
-        }
+        $dataType = $assignment.Target.'@odata.type'
+        $groupId = $assignment.Target.groupId
+        $collectionId = $assignment.Target.collectionId
 
         $hashAssignment.Add('dataType', $dataType)
         if (-not [string]::IsNullOrEmpty($groupId))
@@ -331,7 +524,8 @@ function ConvertTo-IntunePolicyAssignment
 {
     [CmdletBinding()]
     [OutputType([Hashtable[]])]
-    param (
+    param
+    (
         [Parameter(Mandatory = $true)]
         [AllowNull()]
         $Assignments,
@@ -340,16 +534,6 @@ function ConvertTo-IntunePolicyAssignment
         [System.Boolean]
         $IncludeDeviceFilter = $true
     )
-
-    if ($null -eq $Script:IntuneAssignmentFilters)
-    {
-        $Script:IntuneAssignmentFilters = Get-MgBetaDeviceManagementAssignmentFilter -All -ErrorAction SilentlyContinue | ForEach-Object {
-            @{
-                FilterId    = $_.Id
-                DisplayName = $_.DisplayName
-            }
-        }
-    }
 
     if ($null -eq $Assignments)
     {
@@ -366,21 +550,10 @@ function ConvertTo-IntunePolicyAssignment
         {
             if ($null -ne $assignment.DeviceAndAppManagementAssignmentFilterType -and $assignment.DeviceAndAppManagementAssignmentFilterType -ne 'none')
             {
-                $filter = $Script:IntuneAssignmentFilters | Where-Object -Property FilterId -EQ $assignment.DeviceAndAppManagementAssignmentFilterId
-                if ($null -eq $filter)
-                {
-                    $filter = $Script:IntuneAssignmentFilters | Where-Object -Property DisplayName -EQ $assignment.DeviceAndAppManagementAssignmentFilterDisplayName
-                    if ($null -eq $filter)
-                    {
-                        Write-Warning -Message "Assignment filter with DisplayName {$($assignment.DeviceAndAppManagementAssignmentFilterDisplayName)} not found in the directory. Please update your DSC resource extract with the correct filterId or filterDisplayName."
-                    }
-                }
-
-                if ($null -ne $filter)
-                {
-                    $target.Add('deviceAndAppManagementAssignmentFilterType', $assignment.DeviceAndAppManagementAssignmentFilterType)
-                    $target.Add('deviceAndAppManagementAssignmentFilterId', $filter.FilterId)
-                }
+                $filter = Resolve-M365DSCIntuneAssignmentFilter -FilterId $assignment.DeviceAndAppManagementAssignmentFilterId `
+                    -FilterDisplayName $assignment.DeviceAndAppManagementAssignmentFilterDisplayName
+                $target.Add('deviceAndAppManagementAssignmentFilterType', $assignment.DeviceAndAppManagementAssignmentFilterType)
+                $target.Add('deviceAndAppManagementAssignmentFilterId', $filter.FilterId)
             }
         }
         if ($assignment.dataType -like '*CollectionAssignmentTarget')
@@ -389,36 +562,14 @@ function ConvertTo-IntunePolicyAssignment
         }
         elseif ($assignment.dataType -like '*GroupAssignmentTarget')
         {
-            $group = $null
-            if (-not [System.String]::IsNullOrEmpty($assignment.groupId))
+            $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $assignment.groupId -GroupDisplayName $assignment.groupDisplayName
+            if ($null -eq $groupId)
             {
-                $group = Get-M365DSCIntuneGroup -GroupId $assignment.groupId
-            }
-            if ($null -eq $group -and -not [System.String]::IsNullOrEmpty($assignment.groupDisplayName))
-            {
-                [array]$group = Get-M365DSCIntuneGroup -DisplayName $assignment.groupDisplayName
-                if ($null -eq $group -or $group.Count -eq 0)
-                {
-                    Write-Warning "Skipping assignment: groupDisplayName '{$($assignment.groupDisplayName)}' not found."
-                    $target = $null
-                    $group = $null
-                }
-                elseif ($group.Count -gt 1)
-                {
-                    Write-Warning "Skipping assignment: groupDisplayName '{$($assignment.groupDisplayName)}' is not unique."
-                    $target = $null
-                    $group = $null
-                }
-            }
-            # If group found, add its ID
-            if ($null -ne $group)
-            {
-                $target.Add('groupId', $group.Id)
-            }
-            elseif ($null -eq $group -and [System.String]::IsNullOrEmpty($assignment.groupDisplayName))
-            {
-                Write-Warning 'Skipping assignment: missing both groupId and groupDisplayName.'
                 $target = $null
+            }
+            else
+            {
+                $target.Add('groupId', $groupId)
             }
         }
 
@@ -452,7 +603,8 @@ function ConvertFrom-IntuneMobileAppAssignment
 {
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable[]])]
-    param (
+    param
+    (
         [Parameter(Mandatory = $true)]
         [Array]
         $Assignments,
@@ -462,38 +614,15 @@ function ConvertFrom-IntuneMobileAppAssignment
         $IncludeDeviceFilter = $true
     )
 
-    if ($null -eq $Script:IntuneAssignmentFilters)
-    {
-        $Script:IntuneAssignmentFilters = Get-MgBetaDeviceManagementAssignmentFilter -All -ErrorAction SilentlyContinue | ForEach-Object {
-            @{
-                FilterId    = $_.Id
-                DisplayName = $_.DisplayName
-            }
-        }
-    }
+    Initialize-M365DSCIntuneAssignmentFilterCache
 
     $assignmentResult = @()
     foreach ($assignment in $Assignments)
     {
         $groupDisplayName = $null
         $hashAssignment = @{}
-        if ($null -ne $assignment.Target.'@odata.type')
-        {
-            $dataType = $assignment.Target.'@odata.type'
-        }
-        else
-        {
-            $dataType = $assignment.Target.'@odata.type'
-        }
-
-        if ($null -ne $assignment.Target.groupId)
-        {
-            $groupId = $assignment.Target.groupId
-        }
-        else
-        {
-            $groupId = $assignment.Target.groupId
-        }
+        $dataType = $assignment.Target.'@odata.type'
+        $groupId = $assignment.Target.groupId
 
         $hashAssignment.Add('dataType', $dataType)
         if (-not [string]::IsNullOrEmpty($groupId))
@@ -575,7 +704,8 @@ function ConvertTo-IntuneMobileAppAssignment
 {
     [CmdletBinding()]
     [OutputType([Hashtable[]])]
-    param (
+    param
+    (
         [Parameter(Mandatory = $true)]
         [AllowNull()]
         $Assignments,
@@ -584,16 +714,6 @@ function ConvertTo-IntuneMobileAppAssignment
         [System.Boolean]
         $IncludeDeviceFilter = $true
     )
-
-    if ($null -eq $Script:IntuneAssignmentFilters)
-    {
-        $Script:IntuneAssignmentFilters = Get-MgBetaDeviceManagementAssignmentFilter -All -ErrorAction SilentlyContinue | ForEach-Object {
-            @{
-                FilterId    = $_.Id
-                DisplayName = $_.DisplayName
-            }
-        }
-    }
 
     if ($null -eq $Assignments)
     {
@@ -614,22 +734,10 @@ function ConvertTo-IntuneMobileAppAssignment
             if ($null -ne $assignment.DeviceAndAppManagementAssignmentFilterType -and
                 $assignment.DeviceAndAppManagementAssignmentFilterType -ne 'none')
             {
-                $filter = $Script:IntuneAssignmentFilters | Where-Object -Property FilterId -EQ $assignment.DeviceAndAppManagementAssignmentFilterId
-
-                if ($null -eq $filter)
-                {
-                    $filter = $Script:IntuneAssignmentFilters | Where-Object -Property DisplayName -EQ $assignment.DeviceAndAppManagementAssignmentFilterDisplayName
-                }
-
-                if ($null -ne $filter)
-                {
-                    $target.Add('deviceAndAppManagementAssignmentFilterType', $assignment.DeviceAndAppManagementAssignmentFilterType)
-                    $target.Add('deviceAndAppManagementAssignmentFilterId', $filter.FilterId)
-                }
-                else
-                {
-                    Write-Warning "Assignment filter with DisplayName {$($assignment.DeviceAndAppManagementAssignmentFilterDisplayName)} not found."
-                }
+                $filter = Resolve-M365DSCIntuneAssignmentFilter -FilterId $assignment.DeviceAndAppManagementAssignmentFilterId `
+                    -FilterDisplayName $assignment.DeviceAndAppManagementAssignmentFilterDisplayName
+                $target.Add('deviceAndAppManagementAssignmentFilterType', $assignment.DeviceAndAppManagementAssignmentFilterType)
+                $target.Add('deviceAndAppManagementAssignmentFilterId', $filter.FilterId)
             }
         }
 
@@ -638,37 +746,14 @@ function ConvertTo-IntuneMobileAppAssignment
 
         if ($assignment.dataType -like '*groupAssignmentTarget')
         {
-            $group = $null
-            if (-not [System.String]::IsNullOrEmpty($assignment.groupId))
+            $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $assignment.groupId -GroupDisplayName $assignment.groupDisplayName
+            if ($null -eq $groupId)
             {
-                $group = Get-M365DSCIntuneGroup -GroupId $assignment.groupId
-            }
-            # If groupId lookup failed, try by display name
-            if ($null -eq $group -and -not [System.String]::IsNullOrEmpty($assignment.groupDisplayName))
-            {
-                [array]$group = Get-M365DSCIntuneGroup -DisplayName $assignment.groupDisplayName
-                if ($null -eq $group -or $group.Count -eq 0)
-                {
-                    Write-Warning "Skipping assignment: groupDisplayName '{$($assignment.groupDisplayName)}' not found."
-                    $target = $null
-                    $group = $null
-                }
-                elseif ($group.Count -gt 1)
-                {
-                    Write-Warning "Skipping assignment: groupDisplayName '{$($assignment.groupDisplayName)}' is not unique."
-                    $target = $null
-                    $group = $null
-                }
-            }
-            # If group found, add its ID
-            if ($null -ne $group)
-            {
-                $target.Add('groupId', $group.Id)
-            }
-            elseif ($null -eq $group -and [System.String]::IsNullOrEmpty($assignment.groupDisplayName))
-            {
-                Write-Warning 'Skipping assignment: missing both groupId and groupDisplayName.'
                 $target = $null
+            }
+            else
+            {
+                $target.Add('groupId', $groupId)
             }
         }
         # Add target if valid
@@ -720,14 +805,18 @@ function Get-M365DSCExportCachedConfigurationPolicies
         $Filter
     )
 
-    # Fetch from cache if the filter is empty or matches the templateId filter
-    if (-not [System.String]::IsNullOrEmpty($Filter) -and $Filter -like 'templateReference/templateId eq ''*''')
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    # Fetch from cache when the filter is the templateId filter
+    if ($Filter -like 'templateReference/templateId eq ''*''' -and [Microsoft365DSC.Intune.ConfigurationPolicyCache]::IsPopulated)
     {
         $cacheValue = [Microsoft365DSC.Intune.ConfigurationPolicyCache]::GetByTemplateId($TemplateId)
-        if ($null -ne $cacheValue)
+        if ($null -eq $cacheValue)
         {
-            return $cacheValue
+            # A missing entry means the template has no policies
+            return ,@()
         }
+        return $cacheValue
     }
 
     if (-not [System.String]::IsNullOrEmpty($Filter))
@@ -807,6 +896,7 @@ function Get-M365DSCIntuneExpandedAssignments
 .DESCRIPTION
     Looks a group up by id or by an exact display name match and returns its id and display name.
     Results are served from the export group cache while an export session is active.
+    Lookup errors other than a missing group, such as a missing permission, are thrown.
 
 .PARAMETER GroupId
     Specifies the group identifier. Returns a single group, or $null when not found.
@@ -841,7 +931,20 @@ function Get-M365DSCIntuneGroup
             return $group
         }
 
-        $group = Get-MgGroup -GroupId $GroupId -Property 'id,displayName' -ErrorAction SilentlyContinue
+        try
+        {
+            $group = Get-MgGroup -GroupId $GroupId -Property 'id,displayName' -ErrorAction Stop
+        }
+        catch
+        {
+            # A permission or transport failure must not look like a deleted group
+            if (-not (Test-M365DSCIntuneGroupNotFoundError -ErrorRecord $_))
+            {
+                throw
+            }
+            $group = $null
+        }
+
         if ($cacheAvailable)
         {
             [Microsoft365DSC.Intune.IntuneGroupCache]::SetById($GroupId, $group)
@@ -856,7 +959,7 @@ function Get-M365DSCIntuneGroup
     }
 
     $escapedName = $DisplayName -replace "'", "''"
-    [System.Object[]]$groups = @(Get-MgGroup -Filter "displayName eq '$escapedName'" -Property 'id,displayName' -All -ErrorAction SilentlyContinue | Where-Object -FilterScript { $null -ne $_ })
+    [System.Object[]]$groups = @(Get-MgGroup -Filter "displayName eq '$escapedName'" -Property 'id,displayName' -All -ErrorAction Stop | Where-Object -FilterScript { $null -ne $_ })
     if ($cacheAvailable)
     {
         [Microsoft365DSC.Intune.IntuneGroupCache]::SetByName($DisplayName, $groups)
@@ -943,42 +1046,14 @@ function Update-DeviceConfigurationPolicyAssignment
             {
                 $formattedTarget.'@odata.type' = $target.'@odata.type'
             }
-            if ($target.groupId)
+            if ($target.groupId -or ($target.groupDisplayName -and $formattedTarget.'@odata.type' -like '*GroupAssignmentTarget'))
             {
-                $group = Get-M365DSCIntuneGroup -GroupId $target.groupId
-                if ($null -eq $group)
+                $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $target.groupId -GroupDisplayName $target.groupDisplayName
+                if ($null -eq $groupId)
                 {
-                    if ($target.groupDisplayName)
-                    {
-                        [array]$group = Get-M365DSCIntuneGroup -DisplayName $target.groupDisplayName
-                        if ($null -eq $group -or $group.Count -eq 0)
-                        {
-                            $message = "Skipping assignment for the group with DisplayName {$($target.groupDisplayName)} as it could not be found in the directory.`r`n"
-                            $message += 'Please update your DSC resource extract with the correct groupId or groupDisplayName.'
-                            Write-Warning -Message $message
-                            continue
-                        }
-                        if ($group -and $group.Count -gt 1)
-                        {
-                            $message = "Skipping assignment for the group with DisplayName {$($target.groupDisplayName)} as it is not unique in the directory.`r`n"
-                            $message += 'Please update your DSC resource extract with the correct groupId or a unique group DisplayName.'
-                            Write-Warning -Message $message
-                            continue
-                        }
-                    }
-                    else
-                    {
-                        $message = "Skipping assignment for the group with Id {$($target.groupId)} as it could not be found in the directory.`r`n"
-                        $message += 'Please update your DSC resource extract with the correct groupId or a unique group DisplayName.'
-                        Write-Warning -Message $message
-                        continue
-                    }
+                    continue
                 }
-                #Skipping assignment if group not found from either groupId or groupDisplayName
-                if ($null -ne $group)
-                {
-                    $formattedTarget.Add('groupId', $group.Id)
-                }
+                $formattedTarget.Add('groupId', $groupId)
             }
             if ($target.collectionId)
             {
@@ -1084,52 +1159,21 @@ function Update-DeviceAppManagementPolicyAssignment
                 $formattedAssignment.Add('settings', $assignment.settings)
             }
 
-            if ($assignment.target -is [hashtable])
-            {
-                $target = $assignment.target
-            }
+            $target = $assignment.target
 
             $formattedTarget = @{'@odata.type' = $target.dataType }
             if (-not $formattedTarget.'@odata.type' -and $target.'@odata.type')
             {
                 $formattedTarget.'@odata.type' = $target.'@odata.type'
             }
-            if ($target.groupId)
+            if ($target.groupId -or ($target.groupDisplayName -and $formattedTarget.'@odata.type' -like '*GroupAssignmentTarget'))
             {
-                $group = Get-M365DSCIntuneGroup -GroupId $target.groupId
-                if ($null -eq $group)
+                $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $target.groupId -GroupDisplayName $target.groupDisplayName
+                if ($null -eq $groupId)
                 {
-                    if ($target.groupDisplayName)
-                    {
-                        [array]$group = Get-M365DSCIntuneGroup -DisplayName $target.groupDisplayName
-                        if ($null -eq $group -or $group.Count -eq 0)
-                        {
-                            $message = "Skipping assignment for the group with DisplayName {$($target.groupDisplayName)} as it could not be found in the directory.`r`n"
-                            $message += 'Please update your DSC resource extract with the correct groupId or groupDisplayName.'
-                            Write-Warning -Message $message
-                            continue
-                        }
-                        if ($group -and $group.Count -gt 1)
-                        {
-                            $message = "Skipping assignment for the group with DisplayName {$($target.groupDisplayName)} as it is not unique in the directory.`r`n"
-                            $message += 'Please update your DSC resource extract with the correct groupId or a unique group DisplayName.'
-                            Write-Warning -Message $message
-                            continue
-                        }
-                    }
-                    else
-                    {
-                        $message = "Skipping assignment for the group with Id {$($target.groupId)} as it could not be found in the directory.`r`n"
-                        $message += 'Please update your DSC resource extract with the correct groupId or a unique group DisplayName.'
-                        Write-Warning -Message $message
-                        continue
-                    }
+                    continue
                 }
-                #Skipping assignment if group not found from either groupId or groupDisplayName
-                if ($null -ne $group)
-                {
-                    $formattedTarget.Add('groupId', $group.Id)
-                }
+                $formattedTarget.Add('groupId', $groupId)
             }
             if ($target.deviceAndAppManagementAssignmentFilterType)
             {
@@ -1238,6 +1282,9 @@ function Update-DeviceAppManagementAppCategory
         $Compare
     )
 
+    $resourceUrl = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl
+    $categoryRefUri = "/beta/deviceAppManagement/mobileApps/$($App.Id)/categories/`$ref"
+
     if ($Compare)
     {
         [array]$referenceObject = if ($null -ne $App.Categories.DisplayName)
@@ -1261,24 +1308,10 @@ function Update-DeviceAppManagementAppCategory
         {
             if ($diff.SideIndicator -eq '=>')
             {
-                $category = $Categories | Where-Object -Property DisplayName -EQ $diff
-                if ($category.Id)
-                {
-                    $currentCategory = Get-MgBetaDeviceAppManagementMobileAppCategory -MobileAppCategoryId $category.Id -ErrorAction SilentlyContinue
-                }
-
-                if ($null -eq $currentCategory)
-                {
-                    $currentCategory = Get-MgBetaDeviceAppManagementMobileAppCategory -Filter "DisplayName eq '$($category.DisplayName -replace "'", "''")'"
-                }
-
-                if ($null -eq $currentCategory -or $currentCategory.Count -eq 0)
-                {
-                    throw "Mobile App Category with DisplayName $($category.DisplayName) not found."
-                }
-
-                Invoke-MgGraphRequest -Uri "/beta/deviceAppManagement/mobileApps/$($App.Id)/categories/`$ref" -Method 'POST' -Body @{
-                    '@odata.id' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)beta/deviceAppManagement/mobileAppCategories/$($currentCategory.Id)"
+                $category = $Categories | Where-Object -Property DisplayName -EQ $diff | Select-Object -First 1
+                $currentCategory = Resolve-M365DSCIntuneMobileAppCategory -Category $category
+                Invoke-MgGraphRequest -Uri $categoryRefUri -Method 'POST' -Body @{
+                    '@odata.id' = "$($resourceUrl)beta/deviceAppManagement/mobileAppCategories/$($currentCategory.Id)"
                 }
             }
             else
@@ -1292,26 +1325,60 @@ function Update-DeviceAppManagementAppCategory
     {
         foreach ($category in $Categories)
         {
-            if ($category.Id)
-            {
-                $currentCategory = Get-MgBetaDeviceAppManagementMobileAppCategory -MobileAppCategoryId $category.Id -ErrorAction SilentlyContinue
-            }
-
-            if ($null -eq $currentCategory)
-            {
-                $currentCategory = Get-MgBetaDeviceAppManagementMobileAppCategory -Filter "DisplayName eq '$($category.DisplayName -replace "'", "''")'"
-            }
-
-            if ($null -eq $currentCategory -or $currentCategory.Count -eq 0)
-            {
-                throw "Mobile App Category with DisplayName $($category.DisplayName) not found."
-            }
-
-            Invoke-MgGraphRequest -Uri "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)beta/deviceAppManagement/mobileApps/$($App.Id)/categories/`$ref" -Method 'POST' -Body @{
-                '@odata.id' = "$((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl)beta/deviceAppManagement/mobileAppCategories/$($currentCategory.Id)"
+            $currentCategory = Resolve-M365DSCIntuneMobileAppCategory -Category $category
+            Invoke-MgGraphRequest -Uri $categoryRefUri -Method 'POST' -Body @{
+                '@odata.id' = "$($resourceUrl)beta/deviceAppManagement/mobileAppCategories/$($currentCategory.Id)"
             }
         }
     }
+}
+
+<#
+.SYNOPSIS
+    Resolves a desired mobile app category to exactly one existing category.
+
+.DESCRIPTION
+    Looks the category up by Id first and falls back to an exact DisplayName match.
+    Throws when no category or more than one category matches.
+
+.PARAMETER Category
+    Specifies the desired category with a DisplayName and an optional Id.
+
+.OUTPUTS
+    System.Object
+#>
+function Resolve-M365DSCIntuneMobileAppCategory
+{
+    [CmdletBinding()]
+    [OutputType([System.Object])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Object]
+        $Category
+    )
+
+    $currentCategory = $null
+    if (-not [System.String]::IsNullOrEmpty($Category.Id))
+    {
+        $currentCategory = Get-MgBetaDeviceAppManagementMobileAppCategory -MobileAppCategoryId $Category.Id -ErrorAction SilentlyContinue
+    }
+
+    if ($null -eq $currentCategory)
+    {
+        $currentCategory = Get-MgBetaDeviceAppManagementMobileAppCategory -Filter "DisplayName eq '$($Category.DisplayName -replace "'", "''")'"
+    }
+
+    $currentCategory = @($currentCategory | Where-Object -FilterScript { $null -ne $_ })
+    if ($currentCategory.Count -eq 0)
+    {
+        throw "Mobile App Category with DisplayName $($Category.DisplayName) not found."
+    }
+    if ($currentCategory.Count -gt 1)
+    {
+        throw "Multiple Mobile App Categories with DisplayName $($Category.DisplayName) found."
+    }
+
+    return $currentCategory[0]
 }
 
 <#
@@ -1346,10 +1413,13 @@ function Get-M365DSCIntuneDeviceConfigurationSettings
         $TemplateId
     )
 
-    $templateCategoryId = (Get-MgBetaDeviceManagementTemplateCategory -DeviceManagementTemplateId $TemplateId).Id
-    $templateSettings = Get-MgBetaDeviceManagementTemplateCategoryRecommendedSetting `
-        -DeviceManagementTemplateId $TemplateId `
-        -DeviceManagementTemplateSettingCategoryId $templateCategoryId
+    $templateSettings = @()
+    foreach ($templateCategoryId in (Get-MgBetaDeviceManagementTemplateCategory -DeviceManagementTemplateId $TemplateId).Id)
+    {
+        $templateSettings += Get-MgBetaDeviceManagementTemplateCategoryRecommendedSetting `
+            -DeviceManagementTemplateId $TemplateId `
+            -DeviceManagementTemplateSettingCategoryId $templateCategoryId
+    }
 
     $results = @()
     foreach ($setting in $templateSettings)
@@ -1357,7 +1427,10 @@ function Get-M365DSCIntuneDeviceConfigurationSettings
         $result = @{}
         $settingType = $setting.'@odata.type'
         $settingValue = $null
-        $currentValueKey = $Properties.keys | Where-Object -FilterScript { $setting.DefinitionId -like "*$_" }
+        # The longest matching suffix wins. 'BlockEnabled' is preferred over 'Enabled'
+        $currentValueKey = $Properties.Keys | Where-Object -FilterScript {
+            ([System.String]$setting.DefinitionId).EndsWith([System.String]$_, [System.StringComparison]::OrdinalIgnoreCase)
+        } | Sort-Object -Property Length -Descending | Select-Object -First 1
         if ($null -ne $currentValueKey)
         {
             $settingValue = $Properties.$currentValueKey
@@ -1677,25 +1750,15 @@ function Set-M365DSCCachedSettingCatalogTemplate
 
 .DESCRIPTION
     Converts setting catalog instances from Graph into the return hashtable used by export routines.
-    It supports root export execution and nested setting processing flows.
 
 .PARAMETER Settings
-    Specifies the settings collection to export in the Start parameter set.
+    Specifies the settings collection to export.
 
 .PARAMETER ReturnHashtable
     Specifies the hashtable that receives exported values.
 
-.PARAMETER SettingInstance
-    Specifies the current setting instance to process in the Setting parameter set.
-
-.PARAMETER SettingDefinitions
-    Specifies setting definitions used when processing a single setting instance.
-
 .PARAMETER AllSettingDefinitions
     Specifies all available setting definitions for name and value resolution.
-
-.PARAMETER IsRoot
-    Indicates that the current setting instance is processed as a root node.
 
 .PARAMETER ContainsDeviceAndUserSettings
     Indicates whether the policy contains both device and user settings.
@@ -1708,48 +1771,20 @@ function Export-IntuneSettingCatalogPolicySettings
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
     param(
-        [Parameter(
-            Mandatory = $true,
-            ParameterSetName = 'Start'
-        )]
+        [Parameter(Mandatory = $true)]
         $Settings,
 
-        [Parameter(
-            Mandatory = $true
-        )]
-        [System.Collections.Hashtable]$ReturnHashtable,
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $ReturnHashtable,
 
-        [Parameter(
-            Mandatory = $true,
-            ParameterSetName = 'Setting'
-        )]
-        $SettingInstance,
-
-        [Parameter(
-            Mandatory = $true,
-            ParameterSetName = 'Setting'
-        )]
-        $SettingDefinitions,
-
-        [Parameter(
-            Mandatory = $true,
-            ParameterSetName = 'Setting'
-        )]
-        [Parameter(
-            ParameterSetName = 'Start'
-        )]
+        [Parameter()]
         [System.Array]
         $AllSettingDefinitions,
 
-        [Parameter(
-            ParameterSetName = 'Setting'
-        )]
-        [switch]$IsRoot,
-
-        [Parameter(
-            ParameterSetName = 'Start'
-        )]
-        [switch]$ContainsDeviceAndUserSettings
+        [Parameter()]
+        [switch]
+        $ContainsDeviceAndUserSettings
     )
 
     Initialize-M365DSCDllLoader -ErrorAction Stop
@@ -1878,6 +1913,9 @@ function Update-IntuneDeviceConfigurationPolicy
     }
 }
 
+# Matches the startswith/endswith/contains filter functions that Graph does not support server-side
+$Script:M365DSCComplexFilterFunctionsRegex = "startswith\((.*?),\s*'(.*?)'\)|endswith\((.*?),\s*'(.*?)'\)|contains\((.*?),\s*'(.*?)'\)"
+
 <#
 .SYNOPSIS
     Extracts startswith, endswith, and contains clauses from a filter query.
@@ -1900,8 +1938,7 @@ function Get-ComplexFunctionsFromFilterQuery
         [string]$FilterQuery
     )
 
-    $complexFunctionsRegex = "startswith\((.*?),\s*'(.*?)'\)|endswith\((.*?),\s*'(.*?)'\)|contains\((.*?),\s*'(.*?)'\)"
-    [array]$complexFunctions = [regex]::Matches($FilterQuery, $complexFunctionsRegex) | ForEach-Object {
+    [array]$complexFunctions = [System.Text.RegularExpressions.Regex]::Matches($FilterQuery, $Script:M365DSCComplexFilterFunctionsRegex) | ForEach-Object {
         $_.Value
     }
 
@@ -1930,11 +1967,39 @@ function Remove-ComplexFunctionsFromFilterQuery
         [string]$FilterQuery
     )
 
-    $complexFunctionsRegex = "startswith\((.*?),\s*'(.*?)'\)|endswith\((.*?),\s*'(.*?)'\)|contains\((.*?),\s*'(.*?)'\)"
-    $basicFilterQuery = [regex]::Replace($FilterQuery, $complexFunctionsRegex, '').Trim()
-    $basicFilterQuery = $basicFilterQuery -replace '^and\s', '' -replace '\sand$', '' -replace '\sand\s+', ' and ' -replace '\sor\s+', ' or '
+    $functionsRegex = $Script:M365DSCComplexFilterFunctionsRegex
+    $connectorRegex = '\s+(?i:and|or)\s+'
+    if (-not [System.Text.RegularExpressions.Regex]::IsMatch($FilterQuery, $functionsRegex))
+    {
+        return $FilterQuery
+    }
 
-    return $basicFilterQuery
+    if ([System.Text.RegularExpressions.Regex]::IsMatch($FilterQuery, "(?i:\bor)\s+(?:$functionsRegex)|(?:$functionsRegex)\s+(?i:or\b)"))
+    {
+        Write-Warning -Message "Filter clauses combined with 'or' and startswith/endswith/contains are evaluated as 'and'."
+    }
+
+    # Remove each function together with one adjacent connector
+    $basicFilterQuery = [System.Text.RegularExpressions.Regex]::Replace($FilterQuery, "$connectorRegex(?:$functionsRegex)", '')
+    $basicFilterQuery = [System.Text.RegularExpressions.Regex]::Replace($basicFilterQuery, "(?:$functionsRegex)(?:$connectorRegex)?", '')
+
+    # Remove empty groups outside string literals until none are left, then leftover connectors
+    $emptyGroupRegex = "'(?:[^']|'')*'|(?<empty>(?<=^|[\s(])\(\s*\)(?=$|[\s)]))"
+    do
+    {
+        $previousFilterQuery = $basicFilterQuery
+        $basicFilterQuery = [System.Text.RegularExpressions.Regex]::Replace($basicFilterQuery, $emptyGroupRegex, {
+            param($match)
+            if ($match.Groups['empty'].Success)
+            {
+                return ''
+            }
+            return $match.Value
+        })
+    } while ($basicFilterQuery -ne $previousFilterQuery)
+    $basicFilterQuery = $basicFilterQuery.Trim() -replace '^(and|or)\s+', '' -replace '\s+(and|or)$', ''
+
+    return $basicFilterQuery.Trim()
 }
 
 <#
@@ -1963,25 +2028,26 @@ function Find-GraphDataUsingComplexFunctions
         [array]$ComplexFunctions
     )
 
+    $comparison = [System.StringComparison]::OrdinalIgnoreCase
     foreach ($function in $ComplexFunctions)
     {
-        if ($function -match "startswith\((.*?),\s*'(.*?)'")
+        if ($function -match "startswith\((.*?),\s*'(.*?)'\)")
         {
-            $property = $matches[1]
-            $value = $matches[2]
-            $Policies = $Policies | Where-Object -Property $property -Like "$value*"
+            $property = $matches[1].Trim()
+            $value = $matches[2].Replace("''", "'")
+            $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).StartsWith($value, $comparison) }
         }
-        elseif ($function -match "endswith\((.*?),\s*'(.*?)'")
+        elseif ($function -match "endswith\((.*?),\s*'(.*?)'\)")
         {
-            $property = $matches[1]
-            $value = $matches[2]
-            $Policies = $Policies | Where-Object -Property $property -Like "*$value"
+            $property = $matches[1].Trim()
+            $value = $matches[2].Replace("''", "'")
+            $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).EndsWith($value, $comparison) }
         }
-        elseif ($function -match "contains\((.*?),\s*'(.*?)'")
+        elseif ($function -match "contains\((.*?),\s*'(.*?)'\)")
         {
-            $property = $matches[1]
-            $value = $matches[2]
-            $Policies = $Policies | Where-Object -Property $property -Like "*$value*"
+            $property = $matches[1].Trim()
+            $value = $matches[2].Replace("''", "'")
+            $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).Contains($value, $comparison) }
         }
     }
 
@@ -2060,16 +2126,6 @@ function Invoke-M365DSCIntuneMobileAppInitialUpload
     }
 
     $fileUri = "beta/deviceAppManagement/mobileApps/$($AppId)/$OdataType/contentVersions/$($contentVersion.id)/files"
-    if ($OdataType -eq 'microsoft.graph.windowsUniversalAppx')
-    {
-        # Manifest is required for Windows Universal Appx
-        $manifest = $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("Sample.$($FileExtension)".ToUpper())))
-    }
-    elseif ($OdataType -eq 'microsoft.graph.windowsMobileMSI')
-    {
-        # Manifest is required for Windows Mobile MSI
-        $manifest = $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes('<MobileMsiData MsiExecutionContext="User" MsiRequiresReboot="false" MsiUpgradeCode="{00000000-0000-0000-0000-000000000000}" MsiIsMachineInstall="false" MsiIsUserInstall="true" MsiRequiresLogon="true" MsiIncludesServices="false" MsiContainsSystemRegistryKeys="false" MsiContainsSystemFolders="false"></MobileMsiData>')))
-    }
     $file = Invoke-MgGraphRequest -Method POST `
         -Uri $fileUri `
         -Body @{
@@ -2084,18 +2140,20 @@ function Invoke-M365DSCIntuneMobileAppInitialUpload
     $file = Wait-ForFileProcessing -AppId $AppId -OdataType $OdataType -FileId $file.id -ContentVersionId $contentVersion.id -UploadStatePrefix 'AzureStorageUriRequest'
 
     # Upload the encrypted Sample file to Azure Storage
+    $sasUri = $file.azureStorageUri
+    $uri = "$($sasUri)&comp=block&blockid=0001"
+    $iso = [System.Text.Encoding]::GetEncoding('iso-8859-1')
+    $encodedBody = $iso.GetString([System.Convert]::FromBase64String($base64File))
+    $maxUploadAttempts = 5
     $success = $false
     $breakCounter = 0
     do
     {
+        $breakCounter++
         try
         {
-            Write-Verbose "Uploading file to Azure Storage: $($file.azureStorageUri)"
-            $sasUri = $file.azureStorageUri
-            $uri = "$($sasUri)&comp=block&blockid=0001"
-            $iso = [System.Text.Encoding]::GetEncoding('iso-8859-1')
-            $body = [System.Convert]::FromBase64String($base64File)
-            $encodedBody = $iso.GetString($body)
+            # Strip the SAS token to prevent it from being logged
+            Write-Verbose -Message "Uploading file to Azure Storage: $(($sasUri -split '\?', 2)[0])"
             Invoke-WebRequest -Uri $uri -Method PUT -Body $encodedBody -Headers @{
                 'content-type' = 'text/plain; charset=iso-8859-1'
                 'x-ms-blob-type' = 'BlockBlob'
@@ -2105,10 +2163,18 @@ function Invoke-M365DSCIntuneMobileAppInitialUpload
         }
         catch
         {
-            Write-Warning -Message "Failed to upload file to Azure Storage: $($_.Exception.Message)"
-            Start-Sleep -Seconds 2
+            Write-Warning -Message "Failed to upload file to Azure Storage (attempt $breakCounter of $maxUploadAttempts): $($_.Exception.Message)"
+            if ($breakCounter -lt $maxUploadAttempts)
+            {
+                Start-Sleep -Seconds 2
+            }
         }
-    } while ($success -eq $false -and $breakCounter -lt 5)
+    } while (-not $success -and $breakCounter -lt $maxUploadAttempts)
+
+    if (-not $success)
+    {
+        throw "Failed to upload the initial content of app {$AppId} to Azure Storage after $breakCounter attempts."
+    }
 
     # Finalize the upload to Azure Storage
     $uri = "$($sasUri)&comp=blocklist"
@@ -2145,7 +2211,8 @@ function Invoke-M365DSCIntuneMobileAppInitialUpload
 
 .DESCRIPTION
     Polls the mobile app content file endpoint until the upload state reaches the expected success state.
-    Throws when the upload state enters a failure state.
+    Throws when the upload state enters a failed, timed out or error state, or when the state does not
+    reach success within 120 attempts.
 
 .PARAMETER AppId
     Specifies the target mobile app identifier.
@@ -2196,11 +2263,19 @@ function Wait-ForFileProcessing
     Write-Verbose "Waiting for file processing to complete for AppId: $AppId, OdataType: $OdataType, FileId: $FileId, ContentVersionId: $ContentVersionId"
     $file = Invoke-MgGraphRequest -Method GET -Uri $fileUri
 
+    $maxAttempts = 120
+    $attempt = 0
     while ($file.uploadState -ne "$($UploadStatePrefix)Success")
     {
-        if ($file.uploadState -like '*Failed')
+        if ($file.uploadState -like '*Failed' -or $file.uploadState -like '*TimedOut' -or $file.uploadState -eq 'error')
         {
             throw "File upload failed with state: $($file.uploadState). Please check the file and try again."
+        }
+
+        $attempt++
+        if ($attempt -ge $maxAttempts)
+        {
+            throw "File processing did not reach $($UploadStatePrefix)Success after $maxAttempts attempts (last state: $($file.uploadState))."
         }
 
         Start-Sleep -Seconds 1
@@ -2229,7 +2304,6 @@ function Clear-M365DSCIntuneAssignmentFilterCache
 
 Export-ModuleMember -Function @(
     'Clear-M365DSCIntuneAssignmentFilterCache',
-    'Compare-M365DSCIntunePolicyAssignment',
     'ConvertFrom-IntuneMobileAppAssignment',
     'ConvertFrom-IntunePolicyAssignment',
     'ConvertTo-IntuneMobileAppAssignment',
