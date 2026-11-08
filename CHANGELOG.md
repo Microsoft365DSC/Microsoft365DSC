@@ -16,11 +16,6 @@
 * M365DSCIntuneUtil
   * Fixed handling of group lookup failures, such as missing permissions or network errors.
   * Fixed an assignment with an unresolved assignment filter being created without the filter.
-  * Fixed the assignment filter cache not being populated for tenants without filters.
-  * Fixed the warning about a missing `groupId` and `groupDisplayName` when the group
-    of a given `groupId` does not exist.
-  * Fixed the export of a settings catalog template without policies calling Graph
-    instead of using the export cache.
   * Fixed the Azure Storage upload retrying without limit.
   * Fixed the writable Azure Storage SAS URI being written to the verbose stream.
   * Fixed `Wait-ForFileProcessing` waiting forever on timed-out or failed uploads.
@@ -30,10 +25,16 @@
   * Fixed `Find-GraphDataUsingComplexFunctions` treating filter values as wildcard patterns.
   * Fixed `Get-M365DSCIntuneDeviceConfigurationSettings` reading only the first template
     category and matching the wrong property when several property names share a suffix.
-  * Updated the assignment conversion to resolve each group only once per assignment.
   * Removed the `Setting` parameter set of `Export-IntuneSettingCatalogPolicySettings`
     with the `SettingInstance`, `SettingDefinitions` and `IsRoot` parameters.
-  * Removed the stale export of `Compare-M365DSCIntunePolicyAssignment` and duplicated code.
+* M365DSCLogEngine
+  * Fixed the notification bearer token lookup using the domain before it was computed.
+  * Fixed the notification endpoint registry parsing to work correctly in PowerShell 7.
+  * Fixed `Get-M365DSCLoggingOption` reporting `IncludeNonDrifted` as `$true` after it
+    was set to `$false`.
+  * Fixed `Get-M365DSCNotificationEndpointRegistration` ignoring `-Url` when both
+    filters are given.
+  * Fixed the diagnostic anonymization never replacing URLs.
 * M365DSCModuleMgmt
   * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
     FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
@@ -45,12 +46,19 @@
 * M365DSCReverse
   * Added the `PartiallySucceeded` resource status for resources with skipped instances
     with new statistics information.
+* M365DSCTelemetryEngine
+  * Fixed `Set-M365DSCTelemetryOption` overwriting options that were not passed.
+* M365DSCTenantInfo
+  * Fixed `Get-M365TenantName` and `Get-SPOAdministrationUrl` always returning an empty
+    tenant name.
+  * Fixed `Get-M365DSCAPIEndpoint` returning no Azure management URL for US DoD tenants.
+  * Fixed `Get-M365DSCTenantDomain` not detecting a missing `Organization.Read.All`
+    permission.
 * M365DSCUtil
   * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Removed the relation templates of removed resources.
-  * Removed the duplicate error line from the export of 13 resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.
 
