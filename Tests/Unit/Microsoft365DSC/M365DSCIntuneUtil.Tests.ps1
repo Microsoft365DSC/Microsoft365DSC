@@ -1,37 +1,33 @@
 BeforeAll {
     $Script:IntuneUtilModule = $null
     $Script:ErrorHandlerModule = $null
-    $Script:DefinedStubs = @()
+
+    $stubFunctions = @{
+        'Microsoft365.psm1' = @(
+            'Invoke-MgGraphRequest',
+            'Get-MgGroup',
+            'Get-MgBetaDeviceManagementAssignmentFilter',
+            'Get-MgBetaDeviceAppManagementMobileAppCategory',
+            'Get-MgBetaDeviceManagementTemplateCategory',
+            'Get-MgBetaDeviceManagementTemplateCategoryRecommendedSetting'
+        )
+        'Generic.psm1'      = @(
+            'New-M365DSCLogEntry',
+            'Get-MSCloudLoginConnectionProfile'
+        )
+    }
+
+    foreach ($stubModule in $stubFunctions.Keys)
+    {
+        $missingFunctions = @($stubFunctions[$stubModule] | Where-Object -FilterScript { -not (Test-Path -Path "Function:\$_") })
+        if ($missingFunctions.Count -gt 0)
+        {
+            Import-Module -Name "$PSScriptRoot/../Stubs/$stubModule" -Function $missingFunctions -Global -WarningAction SilentlyContinue
+        }
+    }
+
     if ($null -eq (Get-Module -Name 'Microsoft365DSC'))
     {
-        $stubs = @{
-            'Invoke-MgGraphRequest'                                        = { param ($Method, $Uri, $Body, $Message, $Exception, $Source, $TenantId, $Credential) }
-            'New-M365DSCLogEntry'                                          = { param ($Method, $Uri, $Body, $Message, $Exception, $Source, $TenantId, $Credential) }
-            'Get-MSCloudLoginConnectionProfile'                            = { param ($Workload) }
-            'Get-MgBetaDeviceAppManagementMobileAppCategory'               = { param ($MobileAppCategoryId, $Filter) }
-            'Get-MgBetaDeviceManagementTemplateCategory'                   = { param ($DeviceManagementTemplateId) }
-            'Get-MgBetaDeviceManagementTemplateCategoryRecommendedSetting' = { param ($DeviceManagementTemplateId, $DeviceManagementTemplateSettingCategoryId) }
-        }
-        foreach ($stubName in $stubs.Keys)
-        {
-            if (-not (Test-Path -Path "Function:\$stubName"))
-            {
-                New-Item -Path "Function:\global:$stubName" -Value $stubs[$stubName] | Out-Null
-                $Script:DefinedStubs += $stubName
-            }
-        }
-        $graphStubs = @{
-            'Get-MgGroup'                                 = { [CmdletBinding()] param ($GroupId, $Filter, $Property, [switch] $All) }
-            'Get-MgBetaDeviceManagementAssignmentFilter' = { [CmdletBinding()] param ([switch] $All) }
-        }
-        foreach ($stubName in $graphStubs.Keys)
-        {
-            if (-not (Test-Path -Path "Function:\$stubName"))
-            {
-                New-Item -Path "Function:\global:$stubName" -Value $graphStubs[$stubName] | Out-Null
-                $Script:DefinedStubs += $stubName
-            }
-        }
         $Script:ErrorHandlerModule = Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCErrorHandler.psm1" -Global -PassThru
         $Script:IntuneUtilModule = Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCIntuneUtil.psm1" -DisableNameChecking -PassThru
     }
