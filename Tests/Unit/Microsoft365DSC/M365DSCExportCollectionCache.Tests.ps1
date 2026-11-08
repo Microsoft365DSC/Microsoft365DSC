@@ -436,3 +436,65 @@ Describe 'SettingTemplateCache' {
         Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate -ModuleName M365DSCIntuneUtil -Times 2 -Exactly
     }
 }
+
+Describe 'Get-M365DSCExportCachedConfigurationPolicies' {
+    BeforeAll {
+        function global:Get-MgBetaDeviceManagementConfigurationPolicy
+        {
+            [CmdletBinding()]
+            param ($Filter, $ExpandProperty, [switch] $All)
+        }
+
+        $Script:PolicyCache = [Microsoft365DSC.Intune.ConfigurationPolicyCache]
+        $Script:TemplateSelector = [System.Func[System.Object, System.String]] { param($policy) $policy.templateReference.templateId }
+    }
+
+    BeforeEach {
+        Mock -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -MockWith {
+            return @(@{ id = 'live'; templateReference = @{ templateId = 'tmpl_b' } })
+        }
+    }
+
+    AfterEach {
+        $Script:PolicyCache::Reset()
+    }
+
+    It 'Returns no policies for a template without policies once the cache is populated' {
+        $Script:PolicyCache::Populate([object[]] @(@{ id = 'p1'; templateReference = @{ templateId = 'tmpl_a' } }), $Script:TemplateSelector)
+        $Script:PolicyCache::IsPopulated | Should -BeTrue
+
+        [array] $result = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_b' -Filter "templateReference/TemplateId eq 'tmpl_b'"
+
+        $result.Length | Should -Be 0
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 0 -Exactly
+    }
+
+    It 'Matches the template id without regard to case' {
+        $Script:PolicyCache::Populate([object[]] @(@{ id = 'p1'; templateReference = @{ templateId = 'TMPL_A' } }), $Script:TemplateSelector)
+
+        $result = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_a' -Filter "templateReference/templateId eq 'tmpl_a'"
+
+        @($result).Count | Should -Be 1
+        @($result)[0].id | Should -Be 'p1'
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 0 -Exactly
+    }
+
+    It 'Calls Graph once a reset cleared the populated state' {
+        $Script:PolicyCache::Populate([object[]] @(), $Script:TemplateSelector)
+        $Script:PolicyCache::Reset()
+        $Script:PolicyCache::IsPopulated | Should -BeFalse
+
+        $result = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_b' -Filter "templateReference/templateId eq 'tmpl_b'"
+
+        @($result)[0].id | Should -Be 'live'
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 1 -Exactly
+    }
+
+    It 'Calls Graph for a filter other than the templateId filter' {
+        $Script:PolicyCache::Populate([object[]] @(), $Script:TemplateSelector)
+
+        $null = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_b' -Filter "name eq 'Policy'"
+
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 1 -Exactly
+    }
+}

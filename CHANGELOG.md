@@ -13,6 +13,27 @@
   * Updated `Save-M365DSCPartialExport` to accept empty content.
 * M365DSCExportUtil
   * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
+* M365DSCIntuneUtil
+  * Fixed handling of group lookup failures, such as missing permissions or network errors.
+  * Fixed an assignment with an unresolved assignment filter being created without the filter.
+  * Fixed the assignment filter cache not being populated for tenants without filters.
+  * Fixed the warning about a missing `groupId` and `groupDisplayName` when the group
+    of a given `groupId` does not exist.
+  * Fixed the export of a settings catalog template without policies calling Graph
+    instead of using the export cache.
+  * Fixed the Azure Storage upload retrying without limit.
+  * Fixed the writable Azure Storage SAS URI being written to the verbose stream.
+  * Fixed `Wait-ForFileProcessing` waiting forever on timed-out or failed uploads.
+  * Fixed `Update-DeviceAppManagementAppCategory` reusing the category of the previous item.
+  * Fixed `Remove-ComplexFunctionsFromFilterQuery` leaving a dangling `and` or `or` in
+    the filter.
+  * Fixed `Find-GraphDataUsingComplexFunctions` treating filter values as wildcard patterns.
+  * Fixed `Get-M365DSCIntuneDeviceConfigurationSettings` reading only the first template
+    category and matching the wrong property when several property names share a suffix.
+  * Updated the assignment conversion to resolve each group only once per assignment.
+  * Removed the `Setting` parameter set of `Export-IntuneSettingCatalogPolicySettings`
+    with the `SettingInstance`, `SettingDefinitions` and `IsRoot` parameters.
+  * Removed the stale export of `Compare-M365DSCIntunePolicyAssignment` and duplicated code.
 * M365DSCModuleMgmt
   * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
     FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
