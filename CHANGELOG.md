@@ -8,6 +8,9 @@
     FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
 * SPOStorageEntity
   * Fixed the export checking for the `Credential` connection mode instead of `Credentials`.
+* M365DSCDRGUtil
+  * Fixed the drift event XML not escaping values and showing type names instead of
+    the desired and current values.
 * M365DSCErrorHandler
   * Added `Test-M365DSCAccessError` to detect authentication and permission errors.
   * Updated `Save-M365DSCPartialExport` to accept empty content.
@@ -61,6 +64,16 @@
 * M365DSCUtil
   * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
   * Fixed throttling and retry handling of `Invoke-M365DSCGraphBatchRequest`.
+  * Fixed `Assert-M365DSCBlueprint` ending the loop of the caller when every resource
+    is excluded.
+  * Fixed the blueprint `ModuleVersion` removal failing on files with LF line endings.
+  * Fixed the LCM state being reported as `Unauthorized` after the first drift in a session.
+  * Fixed `Get-M365DSCArrayFromProperty` losing the requested element type.
+  * Fixed `Get-M365DSCGroupIdByDisplayName` returning several ids for an ambiguous display name.
+  * Fixed user principal names with an apostrophe not resolving to a user id.
+  * Fixed `Install-M365DSCDevBranch` reporting a failure after a successful install.
+  * Fixed `Get-TeamByName` waiting 30 seconds for a missing team. Added `RetryCount`.
+  * Fixed `Get-M365DSCConfigurationConflict` missing conflicts that differ only in case.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Removed the relation templates of removed resources.

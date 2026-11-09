@@ -2057,6 +2057,7 @@ function Initialize-M365DSCExportCollectionCache
     [Microsoft365DSC.Intune.SettingTemplateCache]::Reset()
     [Microsoft365DSC.Intune.RoleScopeTagCache]::Reset()
     Clear-M365DSCIntuneAssignmentFilterCache
+    Clear-M365DSCDirectoryNameCache
     [Microsoft365DSC.Cache.ExportCollectionCache]::Enable()
 }
 
@@ -2073,6 +2074,7 @@ function Reset-M365DSCExportCollectionCache
     param ()
 
     Clear-M365DSCIntuneAssignmentFilterCache
+    Clear-M365DSCDirectoryNameCache
     if ($null -ne ('Microsoft365DSC.Cache.ExportCollectionCache' -as [System.Type]))
     {
         [Microsoft365DSC.Cache.ExportCollectionCache]::Reset()
