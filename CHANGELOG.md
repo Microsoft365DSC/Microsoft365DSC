@@ -60,6 +60,7 @@
     permission.
 * M365DSCUtil
   * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
+  * Fixed throttling and retry handling of `Invoke-M365DSCGraphBatchRequest`.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Removed the relation templates of removed resources.
