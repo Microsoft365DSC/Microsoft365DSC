@@ -283,6 +283,28 @@ Describe 'M365DSCExportCollectionCache' {
             Reset-M365DSCExportCollectionCache
             [Microsoft365DSC.Cache.ExportCollectionCache]::IsEnabled | Should -BeFalse
         }
+
+        It 'clears the directory name cache when the export cache is reset' {
+            Mock -ModuleName M365DSCUtil -CommandName Get-MgGroup -MockWith { return [PSCustomObject] @{ DisplayName = 'Group Name' } }
+            $previousExportFlag = $Global:M365DSCExportInProgress
+            try
+            {
+                $Global:M365DSCExportInProgress = $true
+                Initialize-M365DSCExportCollectionCache
+                $null = Get-M365DSCGroupDisplayNameById -GroupId 'aaaa'
+                $null = Get-M365DSCGroupDisplayNameById -GroupId 'aaaa'
+                Should -Invoke -ModuleName M365DSCUtil -CommandName Get-MgGroup -Exactly -Times 1 -Scope It
+
+                Reset-M365DSCExportCollectionCache
+                $null = Get-M365DSCGroupDisplayNameById -GroupId 'aaaa'
+                Should -Invoke -ModuleName M365DSCUtil -CommandName Get-MgGroup -Exactly -Times 2 -Scope It
+            }
+            finally
+            {
+                $Global:M365DSCExportInProgress = $previousExportFlag
+                Reset-M365DSCExportCollectionCache
+            }
+        }
     }
 
     Context 'Intune assignment filter cache' {

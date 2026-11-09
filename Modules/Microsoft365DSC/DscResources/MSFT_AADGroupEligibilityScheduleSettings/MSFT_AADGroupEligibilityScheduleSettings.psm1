@@ -291,7 +291,7 @@ class AADGroupEligibilityScheduleSettings : M365DSCResourceBase
                 }
                 elseif ($approver.'@odata.type' -eq '#microsoft.graph.groupMembers')
                 {
-                    [array]$ids = Get-M365DSCGroupIdByDisplayName -GroupDisplayName ($approver.id -replace "'", "''")
+                    [array]$ids = Get-M365DSCGroupIdByDisplayName -GroupDisplayName $approver.id
                 }
 
                 if ($ids.Count -ne 1 -or [System.String]::IsNullOrEmpty($ids[0]))

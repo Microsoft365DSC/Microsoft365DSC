@@ -519,49 +519,13 @@ function Write-M365DSCDriftsToEventLog
         $DesiredValues
     )
 
-    $CurrentValues = Set-M365DSCAuthenticationParameterMask -BoundParameters $CurrentValues
-    $DesiredValues = Set-M365DSCAuthenticationParameterMask -BoundParameters $DesiredValues
+    $CurrentValues = Set-M365DSCAuthenticationParameterMask -BoundParameters $CurrentValues.Clone()
+    $DesiredValues = Set-M365DSCAuthenticationParameterMask -BoundParameters ([System.Collections.Hashtable]$DesiredValues).Clone()
 
     # If ExistingDrifts is null, then this is the main call and not a recursive one. Write to the Event log.
     if ($null -ne $Drifts -and $Drifts.DriftInfo.Length -gt 0)
     {
-
-        if ($PSEdition -eq 'Desktop' -or $IsWindows)
-        {
-            # Get LCMState
-            $LCMState = $null
-            try
-            {
-                if (([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
-                {
-                    $LCMInfo = Get-DscLocalConfigurationManager -ErrorAction Stop
-
-                    if ($LCMInfo.LCMStateDetail -eq 'LCM is performing a consistency check.' -or `
-                            $LCMInfo.LCMStateDetail -eq 'LCM exécute une vérification de cohérence.' -or `
-                            $LCMInfo.LCMStateDetail -eq 'LCM führt gerade eine Konsistenzüberprüfung durch.')
-                    {
-                        $LCMState = 'ConsistencyCheck'
-                    }
-                    elseif ($LCMInfo.LCMStateDetail -eq 'LCM is testing node against the configuration.')
-                    {
-                        $LCMState = 'ManualTestDSCConfiguration'
-                    }
-                    elseif ($LCMInfo.LCMStateDetail -eq 'LCM is applying a new configuration.' -or `
-                            $LCMInfo.LCMStateDetail -eq 'LCM applique une nouvelle configuration.')
-                    {
-                        $LCMState = 'Initial'
-                    }
-                }
-                else
-                {
-                    $LCMState = 'Unauthorized'
-                }
-            }
-            catch
-            {
-                Write-Verbose -Message $_.Exception
-            }
-        }
+        $LCMState = Get-M365DSCLCMState
 
         if (-not $ResourceName.StartsWith('MSFT_'))
         {
@@ -570,7 +534,7 @@ function Write-M365DSCDriftsToEventLog
 
         $EventMessage = [System.Text.StringBuilder]::new()
         $EventMessage.Append("<M365DSCEvent>`r`n") | Out-Null
-        $EventMessage.Append("    <ConfigurationDrift Source=`"$ResourceName`" TenantId=`"$TenantName`"") | Out-Null
+        $EventMessage.Append("    <ConfigurationDrift Source=`"$(ConvertTo-M365DSCXmlEscapedString -Value $ResourceName)`" TenantId=`"$(ConvertTo-M365DSCXmlEscapedString -Value $TenantName)`"") | Out-Null
         if (-not [System.String]::IsNullOrEmpty($LCMState))
         {
             $EventMessage.Append(" LCMState=`"" + $LCMState + "`"") | Out-Null
@@ -579,32 +543,33 @@ function Write-M365DSCDriftsToEventLog
         $EventMessage.Append("        <ParametersNotInDesiredState>`r`n") | Out-Null
         foreach ($drift in $Drifts.DriftInfo)
         {
-            $currentText = Convert-M365DSCDriftValueToString -Value $drift.CurrentValue
-            $desiredText = Convert-M365DSCDriftValueToString -Value $drift.DesiredValue
-            $EventMessage.Append("            <Param Name=`"$($drift.PropertyName.Replace('..', '.'))`"><CurrentValue>$currentText</CurrentValue><DesiredValue>$desiredText</DesiredValue></Param>`r`n") | Out-Null
+            $currentText = ConvertTo-M365DSCXmlEscapedString -Value (Convert-M365DSCDriftValueToString -Value $drift.CurrentValue)
+            $desiredText = ConvertTo-M365DSCXmlEscapedString -Value (Convert-M365DSCDriftValueToString -Value $drift.DesiredValue)
+            $propertyName = ConvertTo-M365DSCXmlEscapedString -Value ([System.String]$drift.PropertyName).Replace('..', '.')
+            $EventMessage.Append("            <Param Name=`"$propertyName`"><CurrentValue>$currentText</CurrentValue><DesiredValue>$desiredText</DesiredValue></Param>`r`n") | Out-Null
         }
         $EventMessage.Append("        </ParametersNotInDesiredState>`r`n") | Out-Null
         $EventMessage.Append("    </ConfigurationDrift>`r`n") | Out-Null
         $EventMessage.Append("    <DesiredValues>`r`n") | Out-Null
         foreach ($Key in $DesiredValues.Keys)
         {
-            $Value = $DesiredValues.$Key
+            $Value = Convert-M365DSCDriftValueToString -Value $DesiredValues.$Key
             if ([System.String]::IsNullOrEmpty($Value))
             {
                 $Value = "`$null"
             }
-            $EventMessage.Append("        <Param Name =`"$($key)`">$Value</Param>`r`n") | Out-Null
+            $EventMessage.Append("        <Param Name=`"$(ConvertTo-M365DSCXmlEscapedString -Value $key)`">$(ConvertTo-M365DSCXmlEscapedString -Value $Value)</Param>`r`n") | Out-Null
         }
         $EventMessage.Append("    </DesiredValues>`r`n") | Out-Null
         $EventMessage.Append("    <CurrentValues>`r`n") | Out-Null
         foreach ($Key in $CurrentValues.Keys)
         {
-            $Value = $CurrentValues.$Key
+            $Value = Convert-M365DSCDriftValueToString -Value $CurrentValues.$Key
             if ([System.String]::IsNullOrEmpty($Value))
             {
                 $Value = "`$null"
             }
-            $EventMessage.Append("        <Param Name =`"$key`">$Value</Param>`r`n") | Out-Null
+            $EventMessage.Append("        <Param Name=`"$(ConvertTo-M365DSCXmlEscapedString -Value $key)`">$(ConvertTo-M365DSCXmlEscapedString -Value $Value)</Param>`r`n") | Out-Null
         }
         $EventMessage.Append("    </CurrentValues>`r`n") | Out-Null
         $EventMessage.Append('</M365DSCEvent>') | Out-Null
