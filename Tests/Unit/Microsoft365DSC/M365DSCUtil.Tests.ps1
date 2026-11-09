@@ -16,28 +16,7 @@ BeforeAll {
         }
     }
 
-    $Script:DefinedStubs = @()
-    $stubs = @{
-        'Get-DscLocalConfigurationManager' = { param () }
-        'ConvertTo-DSCObject'              = { param ($Content, $Path) }
-    }
-    foreach ($stubName in $stubs.Keys)
-    {
-        if (-not (Test-Path -Path "Function:\$stubName"))
-        {
-            New-Item -Path "Function:\global:$stubName" -Value $stubs[$stubName] | Out-Null
-            $Script:DefinedStubs += $stubName
-        }
-    }
-
     $Script:UtilModule = Get-Module -Name 'M365DSCUtil' -All | Select-Object -First 1
-}
-
-AfterAll {
-    foreach ($stubName in $Script:DefinedStubs)
-    {
-        Remove-Item -Path "Function:\global:$stubName" -ErrorAction SilentlyContinue
-    }
 }
 
 Describe 'Get-M365DSCArrayFromProperty' {
