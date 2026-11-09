@@ -2729,17 +2729,34 @@ function Resolve-M365DSCBatchResponsePaging
         return
     }
 
-    $value = [System.Collections.Generic.List[System.Object]]::new($Response.body.value)
+    $value = @()
+    if ($null -ne $Response.body.value)
+    {
+        $value += @($Response.body.value)
+    }
     $nextLink = $Response.body.'@odata.nextLink'
     while ($nextLink)
     {
         Write-Verbose -Message "Fetching next page of results from $nextLink..."
-        $nextPageResponse = Invoke-MgGraphRequest -Method GET -Uri $nextLink -ErrorAction SilentlyContinue
-        $value.AddRange($nextPageResponse.value)
+        try
+        {
+            $nextPageResponse = Invoke-MgGraphRequest -Method GET -Uri $nextLink -ErrorAction Stop
+        }
+        catch
+        {
+            # Keep the already read pages and flag the collection as partial like Mgx does
+            Write-Warning -Message "Paging stopped at $nextLink. The exported data for this sub-request is partial. Error: $($_.Exception.Message)"
+            $Response.pagingIncomplete = $true
+            break
+        }
+        if ($null -ne $nextPageResponse.value)
+        {
+            $value += @($nextPageResponse.value)
+        }
         $nextLink = $nextPageResponse.'@odata.nextLink'
     }
 
-    $Response.body.value = $value.ToArray()
+    $Response.body.value = $value
 }
 
 <#
@@ -2797,7 +2814,26 @@ function Invoke-M365DSCMgxBatchRequest
     }
 
     Write-Verbose -Message "Sending BATCH Request with $($Requests.Count) sub-requests through Mgx..."
-    $results = @($items | & $BatchCommand -ApiVersion 'beta' -FollowNextLink -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)
+    $batchErrors = @()
+    $results = @($items | & $BatchCommand -ApiVersion 'beta' -FollowNextLink -ErrorAction SilentlyContinue -ErrorVariable batchErrors -WarningAction SilentlyContinue)
+
+    $perItemErrorIds = @('BatchItemError', 'BatchItemNotSent', 'BatchNextLinkRefused', 'BatchPagingFailed', 'BatchPagingTruncated')
+    foreach ($batchError in $batchErrors)
+    {
+        $errorId = ([System.String] $batchError.FullyQualifiedErrorId).Split(',')[0]
+        if ($perItemErrorIds -contains $errorId)
+        {
+            continue
+        }
+        Write-Warning -Message "Batch request failed: $($batchError.Exception.Message)"
+    }
+
+    if ($results.Count -lt $Requests.Count)
+    {
+        $returnedIds = @($results.Id)
+        $missingIds = @(($Requests | Where-Object -FilterScript { $returnedIds -notcontains [System.String] $_.id }).id)
+        Write-Verbose -Message "Batch sub-requests without a response: $($missingIds -join ', ')"
+    }
 
     foreach ($result in $results)
     {
@@ -2821,11 +2857,52 @@ function Invoke-M365DSCMgxBatchRequest
 
 <#
 .SYNOPSIS
+    Reads the Retry-After header of a throttled batch sub-response.
+
+.PARAMETER Response
+    Specifies the batch sub-response.
+
+.OUTPUTS
+    System.Int32. The delay in seconds, or 0 when the header is missing or not a number of seconds.
+#>
+function Get-M365DSCBatchResponseRetryAfter
+{
+    [CmdletBinding()]
+    [OutputType([System.Int32])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [System.Object]
+        $Response
+    )
+
+    $headers = $Response.headers
+    if ($headers -isnot [System.Collections.IDictionary])
+    {
+        return 0
+    }
+
+    foreach ($headerName in @($headers.Keys))
+    {
+        $seconds = 0
+        if ($headerName -eq 'Retry-After' -and [System.Int32]::TryParse([System.String] $headers[$headerName], [ref] $seconds) -and $seconds -gt 0)
+        {
+            return $seconds
+        }
+    }
+
+    return 0
+}
+
+<#
+.SYNOPSIS
     Sends Graph batch requests through the Microsoft Graph SDK.
 
 .DESCRIPTION
-    Splits requests into batch payloads, sends them to Graph, detects throttling responses, and retries
-    with reduced batch size when needed. Used when the Mgx batch cmdlet is unavailable.
+    Splits requests into batch payloads and sends them to Graph. Throttled sub-requests are retried up
+    to five times with Retry-After or exponential backoff. Rows still throttled after the last retry are
+    returned with status 429. Used when the Mgx batch cmdlet is unavailable.
 
 .PARAMETER Requests
     Specifies the requests, as hashtables with id, method and url members.
@@ -2859,45 +2936,98 @@ function Invoke-M365DSCLegacyBatchRequest
     )
 
     $batchResponses = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
-    $halfBatchSize = [Math]::Ceiling($BatchRequestSize / 2)
-    :outer for ($i = 0; $i -lt $Requests.Count; $i += $BatchRequestSize)
+    $halfBatchSize = [System.Math]::Ceiling($BatchRequestSize / 2)
+    $maxRetryCount = 5
+    $i = 0
+    while ($i -lt $Requests.Count)
     {
-        $batchRequestSized = $Requests[$i..([Math]::Min($i + $BatchRequestSize - 1, $Requests.Count - 1))]
+        $pendingRequests = @($Requests[$i..([System.Math]::Min($i + $BatchRequestSize - 1, $Requests.Count - 1))])
+        $windowSize = $pendingRequests.Count
+        $retryCount = 0
+        $throttledResponses = @()
 
-        $request = @{
-            requests = $batchRequestSized
-        }
-
-        Write-Verbose -Message "Sending BATCH Request with $($request.requests.Count) sub-requests (starting at index $i)..."
-        $apiResponse = Invoke-MgGraphRequest -Method POST `
-            -Uri 'beta/$batch' `
-            -Body ($request | ConvertTo-Json -Depth 10) `
-            -ErrorAction SilentlyContinue
-
-        if ($null -eq $apiResponse.responses)
+        while ($pendingRequests.Count -gt 0)
         {
-            Write-Verbose -Message "Batch request starting at index $i returned no responses."
-            continue outer
-        }
+            $request = @{
+                requests = $pendingRequests
+            }
 
-        :inner foreach ($response in $apiResponse.responses)
-        {
-            switch ($response.status)
+            Write-Verbose -Message "Sending BATCH Request with $($pendingRequests.Count) sub-requests (starting at index $i)..."
+            $apiResponse = Invoke-MgGraphRequest -Method POST `
+                -Uri 'beta/$batch' `
+                -Body ($request | ConvertTo-Json -Depth 10) `
+                -ErrorAction SilentlyContinue
+
+            if ($null -eq $apiResponse.responses)
             {
-                200 {
+                Write-Verbose -Message "Batch request starting at index $i returned no responses."
+                if ($retryCount -gt 0)
+                {
+                    $throttledIds = @($throttledResponses.id)
+                    Write-Warning -Message "Batch retry returned no responses. Giving up on batch sub-requests: $($throttledIds -join ', ')."
+                    foreach ($throttledResponse in $throttledResponses)
+                    {
+                        $batchResponses.Add($throttledResponse)
+                    }
+                }
+                break
+            }
+
+            $throttledResponses = @()
+            $retryAfterInSeconds = 0
+            foreach ($response in $apiResponse.responses)
+            {
+                if ($response.status -eq 429)
+                {
+                    $throttledResponses += $response
+                    $retryAfterInSeconds = [System.Math]::Max($retryAfterInSeconds, (Get-M365DSCBatchResponseRetryAfter -Response $response))
+                    continue
+                }
+
+                if ($response.status -eq 200)
+                {
                     Resolve-M365DSCBatchResponsePaging -Response $response
                 }
-                429 {
-                    Write-Warning -Message 'Throttling encountered, pausing and repeating request...'
-                    Start-Sleep -Seconds $ThrottlingDelayInSeconds
-                    $BatchRequestSize = [Math]::Max($halfBatchSize, [Math]::Floor($BatchRequestSize / 2))
-                    $i = if ($i -ge $BatchRequestSize) { $i - $BatchRequestSize } else { 0 }
-                    continue outer
+                $batchResponses.Add($response)
+            }
+
+            if ($throttledResponses.Count -eq 0)
+            {
+                break
+            }
+
+            $throttledIds = @($throttledResponses.id)
+            if ($retryCount -ge $maxRetryCount)
+            {
+                Write-Warning -Message "Throttling persisted after $maxRetryCount retries. Giving up on batch sub-requests: $($throttledIds -join ', ')."
+                foreach ($throttledResponse in $throttledResponses)
+                {
+                    $batchResponses.Add($throttledResponse)
+                }
+                break
+            }
+
+            $delayInSeconds = $retryAfterInSeconds
+            if ($delayInSeconds -le 0)
+            {
+                $delayInSeconds = $ThrottlingDelayInSeconds * [System.Math]::Pow(2, $retryCount)
+            }
+            $retryCount++
+
+            Write-Warning -Message "Throttling encountered, pausing $delayInSeconds seconds and repeating $($throttledIds.Count) sub-requests..."
+            Start-Sleep -Seconds $delayInSeconds
+            $BatchRequestSize = [System.Math]::Max($halfBatchSize, [System.Math]::Floor($BatchRequestSize / 2))
+            $pendingRequests = @($pendingRequests | Where-Object -FilterScript { $throttledIds -contains $_.id })
+            if ($pendingRequests.Count -eq 0)
+            {
+                foreach ($throttledResponse in $throttledResponses)
+                {
+                    $batchResponses.Add($throttledResponse)
                 }
             }
         }
 
-        $batchResponses.AddRange([System.Collections.Hashtable[]]$apiResponse.responses)
+        $i += $windowSize
     }
 
     return , $batchResponses
