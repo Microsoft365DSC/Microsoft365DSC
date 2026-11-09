@@ -38,6 +38,10 @@
 * M365DSCModuleMgmt
   * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
     FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
+  * Fixed `Test-M365DSCDependenciesForNewVersions` reusing the installed versions of the
+    previous dependency.
+  * Fixed `Uninstall-M365DSCOutdatedDependencies` using an undefined scope.
+  * Fixed `Update-M365DSCDependencies -ValidateOnly` failing without PSResourceGet.
 * M365DSCResourceBase
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
