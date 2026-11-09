@@ -36,7 +36,8 @@ BeforeAll {
             -CsdlPathBeta (Join-Path -Path $script:fixtureRoot -ChildPath 'csdl-beta.xml') `
             -UnresolvedPath $unresolvedPath `
             -ResourceFilter $ResourceFilter `
-            -Force:$Force
+            -Force:$Force `
+            -InformationAction Ignore
 
         return @{
             Root       = $resourceRoot

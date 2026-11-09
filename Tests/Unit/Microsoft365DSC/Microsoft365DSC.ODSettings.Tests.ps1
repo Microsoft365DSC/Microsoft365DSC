@@ -32,6 +32,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return 'Credentials'
             }
 
+            Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
+            }
+
             Mock -CommandName Get-PnPTenant -MockWith {
                 return @{
                     OneDriveStorageQuota = '1024'

@@ -75,13 +75,19 @@ function New-M365DSCAdditionalMockBlock
         'Get-MgBetaDeviceManagementDeviceEnrollmentConfiguration'
     )
     $usesCachedCollection = $ResourceModel.IsAdditionalProperty -and $cachedCollectionCmdlets -contains $ResourceModel.Cmdlets.GetCmdlet
-    if (-not $ResourceModel.HasAssignments -and -not $usesCachedCollection)
+    $hasRoleScopeTags = @($ResourceModel.SchemaProperties).Name -contains 'RoleScopeTagIds'
+    if (-not $ResourceModel.HasAssignments -and -not $usesCachedCollection -and -not $hasRoleScopeTags)
     {
         return ''
     }
 
     $indent = ' ' * 12
     $builder = [System.Text.StringBuilder]::new()
+    if ($hasRoleScopeTags)
+    {
+        $null = $builder.AppendLine('')
+        $null = $builder.Append("${indent}Invoke-Command -ScriptBlock `$Global:DscHelper.InitializeRoleScopeTagCache")
+    }
     if ($usesCachedCollection)
     {
         $null = $builder.AppendLine('')
