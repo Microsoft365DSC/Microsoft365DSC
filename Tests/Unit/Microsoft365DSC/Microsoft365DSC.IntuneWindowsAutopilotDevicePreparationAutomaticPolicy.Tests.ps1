@@ -237,6 +237,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return "Credentials"
             }
 
+            Invoke-Command -ScriptBlock $Global:DscHelper.InitializeRoleScopeTagCache
+
             # Mock Write-M365DSCHost to hide output during the tests
             Mock -CommandName Write-M365DSCHost -MockWith {
             }

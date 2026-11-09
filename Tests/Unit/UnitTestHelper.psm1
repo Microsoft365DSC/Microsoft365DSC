@@ -85,11 +85,41 @@ function New-M365DscUnitTestHelper
         InitializeScript = [ScriptBlock]::Create($initScript)
         InvokeCompareRules = ${function:Invoke-M365DSCCompareRules}
         InvokeDeltaCompare = ${function:Invoke-M365DSCDeltaCompare}
+        InitializeRoleScopeTagCache = ${function:Initialize-M365DSCTestRoleScopeTagCache}
         RepoRoot = $repoRoot
         CleanupScript = [ScriptBlock]::Create(@"
             `$global:DSCMachineStatus = 0
 "@)
     }
+}
+
+<#
+.SYNOPSIS
+    Seeds the Intune role scope tag cache with the tag values used by the unit tests.
+
+.DESCRIPTION
+    Every tag uses its value as id and display name. Resolve-M365DSCIntuneRoleScopeTagIds and
+    Resolve-M365DSCIntuneRoleScopeTagNames return the values unchanged and do not query Graph.
+#>
+function Initialize-M365DSCTestRoleScopeTagCache
+{
+    [CmdletBinding()]
+    param()
+
+    Initialize-M365DSCDllLoader
+
+    $tagValues = @('0', '1', '2', 'Tag1', 'Tag2', 'FakeStringValue', 'FakeStringValue_New', 'FakeStringArrayValue1', 'FakeStringArrayValue2')
+    $tags = @()
+    foreach ($tagValue in $tagValues)
+    {
+        $tags += [PSCustomObject]@{ Id = $tagValue; DisplayName = $tagValue }
+    }
+
+    [Microsoft365DSC.Intune.RoleScopeTagCache]::Reset()
+    [Microsoft365DSC.Intune.RoleScopeTagCache]::Populate(
+        [System.Object[]]$tags,
+        [System.Func[System.Object, System.String]] { param($tag) [System.String]$tag.Id },
+        [System.Func[System.Object, System.String]] { param($tag) [System.String]$tag.DisplayName })
 }
 
 function Invoke-M365DSCCompareRules

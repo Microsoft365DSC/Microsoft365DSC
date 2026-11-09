@@ -145,9 +145,10 @@ Describe 'M365DSCModuleMgmt' {
             $Script:FakeModule = Test-ModuleManifest -Path (Join-Path -Path $moduleFolder -ChildPath 'Test.Fake.psd1')
         }
 
-        It 'Reports the module and adds the administrator hint for an access-denied error under Program Files' -Skip:(-not $IsWindows -or ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        It 'Reports the module and adds the administrator hint for an access-denied error under Program Files' -Skip:(-not $IsWindows) {
             Mock -ModuleName M365DSCModuleMgmt -CommandName Remove-Item -MockWith { throw [System.UnauthorizedAccessException]::new('Access to the path is denied.') }
             Mock -ModuleName M365DSCModuleMgmt -CommandName New-M365DSCLogEntry -MockWith {}
+            Mock -ModuleName M365DSCModuleMgmt -CommandName Test-M365DSCCurrentUserIsAdministrator -MockWith { $false }
             $originalProgramFiles = $env:ProgramFiles
             try
             {

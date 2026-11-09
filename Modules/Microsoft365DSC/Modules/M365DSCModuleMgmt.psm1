@@ -869,13 +869,13 @@ function Test-M365DSCDependenciesForNewVersions
     }
     catch
     {
-        Write-Error -Message "Could not query the gallery for dependency versions: $($_.Exception.Message)" -ErrorAction Continue
+        Write-Error -Message "Could not query the gallery for dependency versions: $($_.Exception.Message)"
         return
     }
 
     if (@($galleryModules).Count -eq 0 -and @($galleryErrors).Count -gt 0)
     {
-        Write-Error -Message "Could not query the gallery for dependency versions: $(@($galleryErrors)[0].Exception.Message)" -ErrorAction Continue
+        Write-Error -Message "Could not query the gallery for dependency versions: $(@($galleryErrors)[0].Exception.Message)"
         return
     }
 
@@ -965,6 +965,25 @@ function Test-M365DSCModuleValidity
 
 <#
 .SYNOPSIS
+    Tests whether the current Windows identity is a local administrator.
+
+.FUNCTIONALITY
+    Private
+
+.OUTPUTS
+    System.Boolean
+#>
+function Test-M365DSCCurrentUserIsAdministrator
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param()
+
+    $principal = [System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+<#
+.SYNOPSIS
     Removes one installed module version.
 
 .DESCRIPTION
@@ -1001,7 +1020,7 @@ function Remove-M365DSCInstalledModuleVersion
         $isAccessDenied = $_.Exception -is [System.UnauthorizedAccessException] -or $_.Exception.Message -like '*Access to the path*denied*'
         if ($isAccessDenied -and $IsWindows -and
             -not [System.String]::IsNullOrEmpty($env:ProgramFiles) -and $Module.ModuleBase -like "$($env:ProgramFiles)*" -and
-            -not ([System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+            -not (Test-M365DSCCurrentUserIsAdministrator))
         {
             $message += '. You need to run this command as a local administrator.'
         }
