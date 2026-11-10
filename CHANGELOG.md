@@ -2,6 +2,8 @@
 
 # UNRELEASED
 
+* PlannerPlan
+  * Updated the export to show the plan line before the plan export completes.
 * SCLabelPolicy
   * Fixed locations without a name being exported as empty. Display Name resolution
     requires the `GroupMember.Read.All` permission.
@@ -66,6 +68,7 @@
   * Fixed the `[x/y]` total counting resources without a definition.
   * Fixed the generated parameter block and authentication prompts of a combined
     credential and certificate export.
+  * Fixed the output lines of parallel exports being interleaved.
 * M365DSCTelemetryEngine
   * Fixed `Set-M365DSCTelemetryOption` overwriting options that were not passed.
 * M365DSCTenantInfo
@@ -76,6 +79,8 @@
     permission.
 * M365DSCUtil
   * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
+  * Updated `Write-M365DSCHost` to show the `[x/y] Extracting ...` line as soon as the
+    export of a resource starts and to append the check mark to it when it completes.
   * Fixed throttling and retry handling of `Invoke-M365DSCGraphBatchRequest`.
   * Fixed `Assert-M365DSCBlueprint` ending the loop of the caller when every resource
     is excluded.
