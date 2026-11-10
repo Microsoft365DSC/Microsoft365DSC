@@ -380,16 +380,17 @@ class IntuneMobileThreatDefenseConnector : M365DSCResourceBase
             'd3ddeae8-441f-4681-b80f-aef644f7195a' = 'Check Point Harmony Mobile'
             '8d0ed095-8191-4bd3-8a41-953b22d51ff7' = 'Pradeo'
             '1f58d6d2-02cc-4c80-b008-1bfe7396a10a' = 'Jamf Trust'
-            '4873197-ffec-4dfc-9816-db65f34c7cb9'  = 'Trellix Mobile Security'
+            '74873197-ffec-4dfc-9816-db65f34c7cb9' = 'Trellix Mobile Security'
             'a447eca6-a986-4d3f-9838-5862bf50776c' = 'CylancePROTECT Mobile'
             '4928f0f6-2660-4f69-b4c5-5170ec921f7b' = 'Trend Micro'
             'bb13fe25-ce1f-45aa-b278-cabbc6b9072e' = 'SentinelOne'
-            'e6f777f8-e4c2-4a5b-be01-50b5c124bc7f' = 'Windows Security Center'
+            'c2b688fe-48c0-464b-a89c-67041aa8fcb2' = 'Windows Security Center'
             '29ee2d98-e795-475f-a0f8-0802dc3384a9' = 'CrowdStrike Falcon for Mobile'
             '870b252b-0ef0-4707-8847-50fc571472b3' = 'Sophos'
             '2c7790de-8b02-4814-85cf-e0c59380dee8' = 'Lookout for Work'
             '28fd67fd-b179-4629-a8b0-dad420b697c7' = 'Symantec Endpoint Protection'
             '08a8455c-48dd-45ff-ad82-7211355354f3' = 'Zimperium'
+            'fc06ff9b-e2f9-4221-9a68-465684ee8662' = 'iVerify'
         }
 
         # If Id is provided, look up the DisplayName

@@ -2,6 +2,10 @@
 
 # UNRELEASED
 
+* IntuneMobileThreatDefenseConnector
+  * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
+    added Id for `iVerify`.
+    FIXES [#7609](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7609)
 * SCLabelPolicy
   * Fixed locations without a name being exported as empty. Display Name resolution
     requires the `GroupMember.Read.All` permission.
