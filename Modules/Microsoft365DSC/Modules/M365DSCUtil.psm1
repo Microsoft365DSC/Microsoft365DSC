@@ -2626,6 +2626,219 @@ function Initialize-PowerShellCoreSession
 function Clear-M365DSCHostMessageCache
 {
     $Script:M365DSCHostMessages = @()
+    $Script:M365DSCHostCursor = $null
+    $Script:M365DSCHostLineWritten = $false
+}
+
+<#
+.SYNOPSIS
+    Returns whether deferred host messages can be written right away.
+
+.DESCRIPTION
+    True in an interactive console whose output is not redirected and whose cursor position can
+    be read. False in parallel export workers, whose host output is marshalled to the parent and
+    would interleave with the output of other workers.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.Boolean
+#>
+function Test-M365DSCHostLiveOutput
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param()
+
+    if ($Global:M365DSCHostBufferOutput)
+    {
+        return $false
+    }
+
+    if ($null -eq $Script:M365DSCHostLiveOutput)
+    {
+        $live = $false
+        if ([System.Environment]::UserInteractive -and -not [System.Console]::IsOutputRedirected)
+        {
+            try
+            {
+                $null = [System.Console]::CursorLeft
+                $live = $true
+            }
+            catch
+            {
+                Write-Verbose -Message "The console cursor position can't be read. Host messages are buffered."
+            }
+        }
+        $Script:M365DSCHostLiveOutput = $live
+    }
+
+    return $Script:M365DSCHostLiveOutput
+}
+
+<#
+.SYNOPSIS
+    Joins host message segments to one string.
+
+.DESCRIPTION
+    Adds the escape sequences for the segment colors when the output is a console that renders
+    them for the line to be written with a single Write-Host call.
+
+.PARAMETER Segments
+    Specifies the segments, hashtables with Message and ForegroundColor.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.String
+#>
+function Join-M365DSCHostSegment
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter()]
+        [System.Collections.Hashtable[]]
+        $Segments
+    )
+
+    $useColor = -not [System.Console]::IsOutputRedirected -and $PSStyle.OutputRendering -ne 'PlainText'
+    $text = ''
+    foreach ($segment in $Segments)
+    {
+        if ($useColor)
+        {
+            $text += [System.Management.Automation.PSStyle]::MapForegroundColorToEscapeSequence($segment.ForegroundColor) + $segment.Message + $PSStyle.Reset
+        }
+        else
+        {
+            $text += $segment.Message
+        }
+    }
+
+    return $text
+}
+
+<#
+.SYNOPSIS
+    Writes host messages to the console right away, keeping deferred messages on one open line.
+
+.DESCRIPTION
+    The open line is the text written by deferred messages since the last line break. After it,
+    the cursor is placed on the next line. The next deferred or commit message moves the cursor back to the end of the open line,
+    or writes the open line again when other output was written in between.
+
+.PARAMETER Message
+    Specifies the message text to write.
+
+.PARAMETER ForegroundColor
+    Specifies the foreground color.
+
+.PARAMETER DeferWrite
+    Indicates that the message continues the open line.
+
+.PARAMETER CommitWrite
+    Indicates that the message completes the open line.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Write-M365DSCHostLive
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Message,
+
+        [Parameter(Mandatory = $true)]
+        [System.ConsoleColor]
+        $ForegroundColor,
+
+        [Parameter()]
+        [switch]
+        $DeferWrite,
+
+        [Parameter()]
+        [switch]
+        $CommitWrite
+    )
+
+    $openLine = $Script:M365DSCHostMessages
+    $lineEnd = $Script:M365DSCHostCursor
+    $untouched = $openLine.Count -gt 0 -and $null -ne $lineEnd -and
+        [System.Console]::CursorLeft -eq 0 -and [System.Console]::CursorTop -eq $lineEnd[1] + 1
+
+    if (-not $DeferWrite -and -not $CommitWrite)
+    {
+        # The message goes below the open line, which the next deferred or commit message writes again
+        if ($untouched -and $Message -match '^\r?\n')
+        {
+            # The cursor is already on a new line
+            $Message = $Message -replace '^\r?\n', ''
+        }
+        Write-Host -Object $Message -ForegroundColor $ForegroundColor
+        return
+    }
+
+    if ($openLine.Count -gt 0)
+    {
+        if ($untouched)
+        {
+            [System.Console]::SetCursorPosition($lineEnd[0], $lineEnd[1])
+        }
+        else
+        {
+            # Other output was written after the open line. Write it again below that output.
+            if ([System.Console]::CursorLeft -ne 0)
+            {
+                Write-Host -Object ''
+            }
+            Write-Host -Object (Join-M365DSCHostSegment -Segments $openLine) -NoNewline
+        }
+    }
+
+    if ($CommitWrite)
+    {
+        Write-Host -Object $Message -ForegroundColor $ForegroundColor
+        $Script:M365DSCHostMessages = @()
+        $Script:M365DSCHostCursor = $null
+        return
+    }
+
+    Write-Host -Object $Message -ForegroundColor $ForegroundColor -NoNewline
+
+    # Only the text after the last line break stays on the open line
+    $lineBreak = $Message.LastIndexOf("`n")
+    if ($lineBreak -ge 0)
+    {
+        $openLine = @()
+        $Message = $Message.Substring($lineBreak + 1)
+    }
+
+    if ($Message.Length -gt 0)
+    {
+        $openLine += @{
+            Message         = $Message
+            ForegroundColor = $ForegroundColor
+        }
+    }
+    $Script:M365DSCHostMessages = $openLine
+
+    if ($openLine.Count -eq 0)
+    {
+        $Script:M365DSCHostCursor = $null
+        return
+    }
+
+    $column = [System.Console]::CursorLeft
+    Write-Host -Object ''
+    # Read the row after the line break because the buffer may have scrolled
+    $Script:M365DSCHostCursor = @($column, ([System.Console]::CursorTop - 1))
 }
 
 <#
@@ -2634,7 +2847,10 @@ function Clear-M365DSCHostMessageCache
 
 .DESCRIPTION
     Writes messages to host output in interactive sessions and to verbose output in non-interactive sessions.
-    Supports deferred message accumulation and explicit commit behavior.
+    In an interactive console, deferred messages are written right away and a commit completes their line.
+    Elsewhere, deferred messages are queued and written together with the commit, as one line.
+    Other messages go below the open line, which the commit writes again. Complete-M365DSCHostLine
+    ends a line that no commit completes.
 
 .PARAMETER Message
     Specifies the message text to write.
@@ -2643,10 +2859,10 @@ function Clear-M365DSCHostMessageCache
     Specifies the foreground color for interactive host output.
 
 .PARAMETER DeferWrite
-    Indicates that the message should be queued instead of written immediately.
+    Indicates that the message continues the current line, which a later commit completes.
 
 .PARAMETER CommitWrite
-    Indicates that queued deferred messages should be flushed before writing the current message.
+    Indicates that the message completes the current line.
 
 .EXAMPLE
     PS> Write-M365DSCHost -Message "This is a message."
@@ -2664,7 +2880,7 @@ function Write-M365DSCHost
         $Message,
 
         [Parameter()]
-        [ConsoleColor]
+        [System.ConsoleColor]
         $ForegroundColor = [System.Console]::ForegroundColor,
 
         [Parameter(ParameterSetName = 'DeferWrite')]
@@ -2676,7 +2892,7 @@ function Write-M365DSCHost
         $CommitWrite
     )
 
-    if ([int]$ForegroundColor -eq -1)
+    if ([System.Int32]$ForegroundColor -eq -1)
     {
         $ForegroundColor = [System.ConsoleColor]::Gray
     }
@@ -2690,54 +2906,126 @@ function Write-M365DSCHost
         $Global:M365DSCExportInstanceFailureMessage = $null
     }
 
-    if (-not [System.String]::IsNullOrEmpty($Message))
+    if ([System.String]::IsNullOrEmpty($Message))
     {
-        if ($null -eq $Script:M365DSCHostMessages)
-        {
-            $Script:M365DSCHostMessages = @()
-        }
+        return
+    }
 
-        if ($DeferWrite)
-        {
-            $Script:M365DSCHostMessages += @{
-                Message         = $Message
-                ForegroundColor = $ForegroundColor
-            }
-            return
-        }
+    if ($null -eq $Script:M365DSCHostMessages)
+    {
+        $Script:M365DSCHostMessages = @()
+    }
 
-        if ([Environment]::UserInteractive)
+    if (Test-M365DSCHostLiveOutput)
+    {
+        Write-M365DSCHostLive -Message $Message -ForegroundColor $ForegroundColor -DeferWrite:$DeferWrite -CommitWrite:$CommitWrite
+        return
+    }
+
+    if ($DeferWrite)
+    {
+        $Script:M365DSCHostMessages += @{
+            Message         = $Message
+            ForegroundColor = $ForegroundColor
+        }
+        return
+    }
+
+    $segments = $Script:M365DSCHostMessages
+    if ($CommitWrite)
+    {
+        $Script:M365DSCHostMessages = @()
+        $Script:M365DSCHostLineWritten = $false
+    }
+    else
+    {
+        # The queued messages are written before the message. The text after their last
+        # line break stays queued. The commit writes that line again.
+        $open = @()
+        for ($i = $segments.Count - 1; $i -ge 0; $i--)
         {
-            if ($CommitWrite -and $Script:M365DSCHostMessages.Count -gt 0)
+            $lineBreak = $segments[$i].Message.LastIndexOf("`n")
+            if ($lineBreak -ge 0)
             {
-                for ($i = 0; $i -lt $Script:M365DSCHostMessages.Count - 1; $i++)
+                $rest = $segments[$i].Message.Substring($lineBreak + 1)
+                if ($rest.Length -gt 0)
                 {
-                    Write-Host -Object $Script:M365DSCHostMessages[$i].Message -ForegroundColor $Script:M365DSCHostMessages[$i].ForegroundColor -NoNewline
+                    $open = @(@{
+                            Message         = $rest
+                            ForegroundColor = $segments[$i].ForegroundColor
+                        }) + $open
                 }
-                Write-Host -Object $Script:M365DSCHostMessages[-1].Message -ForegroundColor $Script:M365DSCHostMessages[-1].ForegroundColor -NoNewline
-                $Script:M365DSCHostMessages = @()
+                break
             }
+            $open = @($segments[$i]) + $open
+        }
+        $Script:M365DSCHostMessages = $open
+        $Script:M365DSCHostLineWritten = $open.Count -gt 0
 
-            if (-not [System.String]::IsNullOrEmpty($Message))
-            {
-                Write-Host -Object $Message -ForegroundColor $ForegroundColor
-            }
+        if ($open.Count -gt 0 -and $Message -notmatch '^\r?\n')
+        {
+            $Message = "`r`n" + $Message
+        }
+    }
+    $segments += @{
+        Message         = $Message
+        ForegroundColor = $ForegroundColor
+    }
+
+    if ([System.Environment]::UserInteractive)
+    {
+        Write-Host -Object (Join-M365DSCHostSegment -Segments $segments)
+    }
+    else
+    {
+        Write-Verbose -Message ($segments.Message -join '') -Verbose
+    }
+}
+
+<#
+.SYNOPSIS
+    Completes a line of deferred host messages that no commit completed.
+
+.DESCRIPTION
+    Writes the queued messages, or moves past the open line in a console.
+    New messages start on a new line.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Complete-M365DSCHostLine
+{
+    [CmdletBinding()]
+    param()
+
+    if ($null -eq $Script:M365DSCHostMessages -or $Script:M365DSCHostMessages.Count -eq 0)
+    {
+        return
+    }
+
+    if (Test-M365DSCHostLiveOutput)
+    {
+        # The open line is already written and the cursor is below it, unless other output ended mid-line
+        if ([System.Console]::CursorLeft -ne 0)
+        {
+            Write-Host -Object ''
+        }
+    }
+    elseif (-not $Script:M365DSCHostLineWritten)
+    {
+        if ([System.Environment]::UserInteractive)
+        {
+            Write-Host -Object (Join-M365DSCHostSegment -Segments $Script:M365DSCHostMessages)
         }
         else
         {
-            $outputMessage = ''
-            if ($CommitWrite)
-            {
-                $outputMessage += $Script:M365DSCHostMessages.Message -join ''
-                $Script:M365DSCHostMessages = @()
-            }
-            $finalMessage = $outputMessage + $Message
-            if (-not [System.String]::IsNullOrEmpty($Message))
-            {
-                Write-Verbose -Message $finalMessage -Verbose
-            }
+            Write-Verbose -Message ($Script:M365DSCHostMessages.Message -join '') -Verbose
         }
     }
+
+    $Script:M365DSCHostMessages = @()
+    $Script:M365DSCHostCursor = $null
+    $Script:M365DSCHostLineWritten = $false
 }
 
 <#
@@ -4166,6 +4454,7 @@ Export-ModuleMember -Function @(
     'Assert-M365DSCBlueprint',
     'Clear-M365DSCDirectoryNameCache',
     'Clear-M365DSCHostMessageCache',
+    'Complete-M365DSCHostLine',
     'Confirm-ImportedCmdletIsAvailable',
     'Convert-M365DscHashtableToString',
     'ConvertTo-M365DSCXmlEscapedString',

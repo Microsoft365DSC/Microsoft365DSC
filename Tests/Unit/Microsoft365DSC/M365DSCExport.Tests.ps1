@@ -191,6 +191,81 @@ Describe 'Get-M365DSCResourceSetting' {
     }
 }
 
+Describe 'Write-M365DSCHost' {
+    AfterEach {
+        InModuleScope -ModuleName 'M365DSCUtil' -ScriptBlock { Clear-M365DSCHostMessageCache }
+        $Global:M365DSCHostBufferOutput = $null
+        $Global:M365DSCTestHostOutput = $null
+    }
+
+    It 'writes the deferred messages and the commit with one Write-Host call when buffered' {
+        $Global:M365DSCHostBufferOutput = $true
+        Mock -CommandName Write-Host -ModuleName 'M365DSCUtil' -MockWith { }
+
+        Write-M365DSCHost -Message '[1/1] Extracting [' -DeferWrite
+        Write-M365DSCHost -Message 'AADGroup' -ForegroundColor Green -DeferWrite
+        Write-M365DSCHost -Message ']...' -DeferWrite
+        Write-M365DSCHost -Message 'done' -CommitWrite
+
+        Should -Invoke -CommandName Write-Host -ModuleName 'M365DSCUtil' -Exactly 1 -Scope It
+        Should -Invoke -CommandName Write-Host -ModuleName 'M365DSCUtil' -Exactly 1 -Scope It -ParameterFilter {
+            ($Object -replace '\x1b\[[0-9;]*m', '') -eq '[1/1] Extracting [AADGroup]...done'
+        }
+    }
+
+    It 'writes the queued line with a message that has no commit and again with the commit when buffered' {
+        $Global:M365DSCHostBufferOutput = $true
+        $Global:M365DSCTestHostOutput = @()
+        Mock -CommandName Write-Host -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += ($Object -replace '\x1b\[[0-9;]*m', '') }
+
+        Write-M365DSCHost -Message '[1/1] Extracting [SPOSite]...' -DeferWrite
+        Write-M365DSCHost -Message "`r`n" -DeferWrite
+        Write-M365DSCHost -Message '    |---[1/1] HR' -DeferWrite
+        Write-M365DSCHost -Message 'Site HR is locked.'
+        Write-M365DSCHost -Message 'done' -CommitWrite
+
+        $Global:M365DSCTestHostOutput | Should -Be @(
+            "[1/1] Extracting [SPOSite]...`r`n    |---[1/1] HR`r`nSite HR is locked."
+            '    |---[1/1] HRdone'
+        )
+    }
+
+    It 'completes a queued line that no commit completed' {
+        $Global:M365DSCHostBufferOutput = $true
+        $Global:M365DSCTestHostOutput = @()
+        Mock -CommandName Write-Host -ModuleName 'M365DSCUtil' -MockWith { $Global:M365DSCTestHostOutput += ($Object -replace '\x1b\[[0-9;]*m', '') }
+
+        Write-M365DSCHost -Message '[1/2] Extracting [IntuneA]...' -DeferWrite
+        Complete-M365DSCHostLine
+        Write-M365DSCHost -Message '[2/2] Extracting [IntuneB]...' -DeferWrite
+        Write-M365DSCHost -Message "`r`n    The current tenant is not registered for Intune."
+        Complete-M365DSCHostLine
+
+        $Global:M365DSCTestHostOutput | Should -Be @(
+            '[1/2] Extracting [IntuneA]...'
+            "[2/2] Extracting [IntuneB]...`r`n    The current tenant is not registered for Intune."
+        )
+    }
+
+    It 'joins segments without escape sequences for plain text rendering' {
+        InModuleScope -ModuleName 'M365DSCUtil' -ScriptBlock {
+            $rendering = $PSStyle.OutputRendering
+            try
+            {
+                $PSStyle.OutputRendering = 'PlainText'
+                Join-M365DSCHostSegment -Segments @(
+                    @{ Message = 'a'; ForegroundColor = [System.ConsoleColor]::Green }
+                    @{ Message = 'b'; ForegroundColor = [System.ConsoleColor]::Cyan }
+                ) | Should -Be 'ab'
+            }
+            finally
+            {
+                $PSStyle.OutputRendering = $rendering
+            }
+        }
+    }
+}
+
 Describe 'Export-M365DSCConfiguration dispatch' {
     BeforeAll {
         $password = ConvertTo-SecureString -String 'Pass@word1' -AsPlainText -Force

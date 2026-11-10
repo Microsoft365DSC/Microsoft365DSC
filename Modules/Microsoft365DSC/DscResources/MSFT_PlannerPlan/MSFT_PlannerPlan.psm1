@@ -276,7 +276,7 @@ class PlannerPlan : M365DSCResourceBase
                             AccessTokens          = $this.AccessTokens
                         }
 
-                        Write-M365DSCHost -Message "        [$j/$($plans.Length)] $($plan.Title)"
+                        Write-M365DSCHost -Message "        [$j/$($plans.Length)] $($plan.Title)" -DeferWrite
                         $results = $this.GetForExport($params)
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                             -ConnectionMode $ConnectionMode `
