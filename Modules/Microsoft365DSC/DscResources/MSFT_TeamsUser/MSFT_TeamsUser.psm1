@@ -156,7 +156,7 @@ class TeamsUser : M365DSCResourceBase
 
         $null = $this.Connect('MicrosoftTeams')
 
-        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName))
+        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName)) -RetryCount 5
 
         Write-Verbose -Message "Retrieve team GroupId: $($team.GroupId)"
 
