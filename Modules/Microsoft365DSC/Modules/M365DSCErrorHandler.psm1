@@ -199,15 +199,28 @@ function Test-M365DSCNotFoundError
         $ErrorRecord
     )
 
+    # If it's a missing cmdlet, it could be missing RBAC roles in EXO/SCC
+    if (Test-M365DSCAccessError -ErrorRecord $ErrorRecord)
+    {
+        return $false
+    }
+
     # Check for HTTP 404 status code on the response object
     if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
     {
         $response = $ErrorRecord.Exception.Response
         if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
         {
-            if ([int]$response.StatusCode -eq 404)
+            $statusCodeInt = [System.Int32]$response.StatusCode
+            if ($statusCodeInt -eq 404)
             {
                 return $true
+            }
+
+            # Throttling and server errors are never "not found", whatever the message says
+            if ($statusCodeInt -eq 429 -or $statusCodeInt -ge 500)
+            {
+                return $false
             }
         }
     }
@@ -226,31 +239,32 @@ function Test-M365DSCNotFoundError
         '*could not be found*',
         '*couldn''t be found*',
         '*cannot be found*',
-        '*is not recognized*',
         '*Item not found*',
         '*File Not Found*',
         '*Not Found*',
-        '*Cannot find*',
-        '*404*'
+        '*Cannot find*'
     )
-    foreach ($pattern in $notFoundPatterns)
-    {
-        if ($message -like $pattern)
-        {
-            return $true
-        }
-    }
 
-    # Check ErrorDetails.Message for JSON error bodies
+    $messages = @($message)
     if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
     {
-        $detailsMessage = $ErrorRecord.ErrorDetails.Message
+        # JSON error bodies (common in Graph/Intune)
+        $messages += $ErrorRecord.ErrorDetails.Message
+    }
+
+    foreach ($currentMessage in $messages)
+    {
         foreach ($pattern in $notFoundPatterns)
         {
-            if ($detailsMessage -like $pattern)
+            if ($currentMessage -like $pattern)
             {
                 return $true
             }
+        }
+
+        if ($currentMessage -match '\b404\b')
+        {
+            return $true
         }
     }
 
@@ -351,8 +365,9 @@ function Test-M365DSCAccessError
     report resources as absent.
 
 .PARAMETER ScriptBlock
-    The scriptblock containing the cmdlet call to execute. The cmdlet inside should
-    use -ErrorAction Stop to ensure errors are catchable.
+    The scriptblock containing the cmdlet call to execute. Non-terminating errors are
+    promoted to terminating errors, but only after the scriptblock finishes. Use
+    -ErrorAction Stop inside it when later statements must not run after a failure.
 
 .PARAMETER SuppressNotFoundError
     When specified, errors classified as "resource not found" (HTTP 404, various
@@ -424,31 +439,37 @@ function Invoke-M365DSCCommand
     )
 
     $retryCount = 0
-    $previousErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Stop' # Ensure all errors are catchable
     while ($true)
     {
         try
         {
-            $result = (& $ScriptBlock)
-            $ErrorActionPreference = $previousErrorActionPreference
-            return $result
+            # The scriptblock resolves $ErrorActionPreference in the caller's scope.
+            # Promote non-terminating errors explicitly.
+            $output = & $ScriptBlock 2>&1
+            $errorRecord = $output | Where-Object -FilterScript { $_ -is [System.Management.Automation.ErrorRecord] } | Select-Object -First 1
+            if ($null -ne $errorRecord)
+            {
+                throw $errorRecord
+            }
+            return $output
         }
         catch
         {
+            $isTransient = Test-M365DSCTransientError -ErrorRecord $_
+
             # Check if this is a "not found" error that should return $null
-            if ($SuppressNotFoundError -and -not $RetryOnNotFoundError -and (Test-M365DSCNotFoundError -ErrorRecord $_))
+            # Transient errors are never suppressed.
+            if ($SuppressNotFoundError -and -not $RetryOnNotFoundError -and -not $isTransient -and (Test-M365DSCNotFoundError -ErrorRecord $_))
             {
                 Write-Verbose -Message "Resource not found (expected): $($_.Exception.Message)"
-                $ErrorActionPreference = $previousErrorActionPreference
                 return $null
             }
 
             # Check if this is a transient error that warrants retry
-            if ((Test-M365DSCTransientError -ErrorRecord $_) -and $retryCount -lt $MaxRetries -or ($RetryOnNotFoundError -and (Test-M365DSCNotFoundError -ErrorRecord $_) -and $retryCount -lt $MaxRetries))
+            if ($isTransient -and $retryCount -lt $MaxRetries -or ($RetryOnNotFoundError -and (Test-M365DSCNotFoundError -ErrorRecord $_) -and $retryCount -lt $MaxRetries))
             {
                 $retryCount++
-                $delay = $BaseDelayInSeconds * [Math]::Pow(2, $retryCount - 1)
+                $delay = $BaseDelayInSeconds * [System.Math]::Pow(2, $retryCount - 1)
                 Write-Verbose -Message "Transient error detected (attempt $retryCount/$MaxRetries). Retrying after ${delay}s: $($_.Exception.Message)"
                 Start-Sleep -Seconds $delay
                 continue
@@ -456,7 +477,6 @@ function Invoke-M365DSCCommand
 
             # Permanent error or retries exhausted. Throw the exception to be handled by the caller.
             Write-Verbose -Message "Permanent error or max retries reached: $($_.Exception.Message)"
-            $ErrorActionPreference = $previousErrorActionPreference
             throw
         }
     }

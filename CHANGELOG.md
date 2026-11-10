@@ -8,6 +8,10 @@
     FIXES [#7609](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7609)
 * PlannerPlan
   * Updated the export to show the plan line before the plan export completes.
+* SCAutoSensitivityLabelPolicy
+  * Fixed the export not detecting a tenant that is not registered for the feature.
+* SCAutoSensitivityLabelRule
+  * Fixed the export not detecting a tenant that is not registered for the feature.
 * SCLabelPolicy
   * Fixed locations without a name being exported as empty. Display Name resolution
     requires the `GroupMember.Read.All` permission.
@@ -20,6 +24,8 @@
 * M365DSCErrorHandler
   * Added `Test-M365DSCAccessError` to detect authentication and permission errors.
   * Updated `Save-M365DSCPartialExport` to accept empty content.
+  * Fixed `Invoke-M365DSCCommand` not retrying or suppressing non-terminating errors.
+  * Fixed resources being reported as absent on missing roles, throttling or server errors.
 * M365DSCExportUtil
   * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
   * Fixed the export session state not being restored when the export fails or uses `-LaunchWebUI`.

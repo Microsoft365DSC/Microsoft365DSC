@@ -96,7 +96,7 @@ class O365SearchAndIntelligenceConfigurations : M365DSCResourceBase
             $itemInsightsDisabledForGroupValue = $null
             if (-not [System.String]::IsNullOrEmpty($ItemInsights.DisabledForGroup))
             {
-                $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($ItemInsights.DisabledForGroup) }
+                $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($ItemInsights.DisabledForGroup) -ErrorAction Stop } -SuppressNotFoundError
                 $itemInsightsDisabledForGroupValue = $group.DisplayName
             }
 
@@ -107,7 +107,7 @@ class O365SearchAndIntelligenceConfigurations : M365DSCResourceBase
                 $PersonInsightsDisabledForGroupValue = $null
                 if (-not [System.String]::IsNullOrEmpty($PersonInsights.DisabledForGroup))
                 {
-                    $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($PersonInsights.DisabledForGroup) }
+                    $group = Invoke-M365DSCCommand -ScriptBlock { Get-MgGroup -GroupId ($PersonInsights.DisabledForGroup) -ErrorAction Stop } -SuppressNotFoundError
                     $PersonInsightsDisabledForGroupValue = $group.DisplayName
                 }
             }
