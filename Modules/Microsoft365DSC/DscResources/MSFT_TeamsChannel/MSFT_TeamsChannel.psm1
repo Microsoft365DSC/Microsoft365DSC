@@ -176,7 +176,7 @@ class TeamsChannel : M365DSCResourceBase
 
         $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
-        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName))
+        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName)) -RetryCount 5
 
         if ($team.Length -gt 1)
         {
