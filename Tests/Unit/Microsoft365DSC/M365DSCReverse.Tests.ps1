@@ -19,6 +19,12 @@ Describe 'Start-M365DSCConfigurationExtract' {
         Mock -ModuleName M365DSCReverse -CommandName Confirm-M365DSCDependencies
         Mock -ModuleName M365DSCReverse -CommandName Register-M365DSCExportCollectionConsumers
         Mock -ModuleName M365DSCReverse -CommandName Complete-M365DSCExportCollectionConsumer
+        Mock -ModuleName M365DSCReverse -CommandName Get-M365DSCAllResources -MockWith {
+            [System.String[]] @('AADGroup', 'AADUser')
+        }
+        Mock -ModuleName M365DSCReverse -CommandName Get-M365DSCResourcesDictionary -MockWith {
+            [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.Object]]::new()
+        }
         Mock -ModuleName M365DSCReverse -CommandName Set-M365DSCResourcesDictionary
         Mock -ModuleName M365DSCReverse -CommandName Send-M365DSCPushNotification
         Mock -ModuleName M365DSCReverse -CommandName Write-M365DSCHost
