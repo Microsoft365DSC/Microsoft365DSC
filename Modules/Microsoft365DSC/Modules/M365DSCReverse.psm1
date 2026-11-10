@@ -218,6 +218,7 @@ function Start-M365DSCConfigurationExtract
         Add-M365DSCEvent -Message $_ -Source 'M365DSCReverse::Test-M365DSCModuleValidity'
     }
 
+    $pushedLocation = $false
     try
     {
         $shouldOpenOutputDirectory = $false
@@ -261,6 +262,7 @@ function Start-M365DSCConfigurationExtract
             $OutputDSCPath += [System.IO.Path]::DirectorySeparatorChar
         }
         Push-Location -Path $OutputDSCPath
+        $pushedLocation = $true
         #endregion
 
         $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
@@ -441,10 +443,16 @@ function Start-M365DSCConfigurationExtract
             Write-Verbose -Message $_
         }
 
+        $authMethodByResource = @{}
+        foreach ($entry in ($allSupportedResourcesWithMostSecureAuthMethod | Where-Object -FilterScript { $null -ne $_ }))
+        {
+            $authMethodByResource[$entry.Resource] = $entry.AuthMethod
+        }
+
         if ($null -ne $compareResourcesResult)
         {
             # The client is trying to extract at least one resource which is not supported
-            # using only the provided authentication parameters;
+            # using only the provided authentication parameters
             $resourcesNotSupported = @()
             foreach ($resource in $compareResourcesResult)
             {
@@ -458,8 +466,8 @@ function Start-M365DSCConfigurationExtract
             $warningMessage += $resourcesNotSupported -join ','
             Write-Warning -Message $warningMessage
 
-            # If all selected resources are not valid based on the authentication method used, simply return.
-            if ($ComponentsToSkip.Length -eq $selectedResources.Length)
+            # If no selected resource is left to export (excluded, invalid or unsupported), simply return.
+            if (@($selectedResources | Where-Object -FilterScript { $ComponentsToSkip -notcontains $_ }).Count -eq 0)
             {
                 return
             }
@@ -471,14 +479,6 @@ function Start-M365DSCConfigurationExtract
                 $AuthMethods -contains 'CertificatePath' -or `
                 $AuthMethods -contains 'ApplicationWithSecret')
         {
-            $AppSecretAsPSCredential = $null
-            # TODO: Remove during next breaking change, when ApplicationSecret is changed to PSCredential
-            if (-not [System.String]::IsNullOrEmpty($ApplicationSecret))
-            {
-                [SecureString]$secStringPassword = ConvertTo-SecureString $ApplicationSecret -AsPlainText -Force
-                [PSCredential]$AppSecretAsPSCredential = New-Object System.Management.Automation.PSCredential ('ApplicationSecret', $secStringPassword)
-            }
-
             $organization = $TenantId
         }
         elseif ($AuthMethods -contains 'Credentials' -or `
@@ -508,8 +508,6 @@ function Start-M365DSCConfigurationExtract
             }
         }
 
-        $AzureAutomation = $false
-
         [array] $version = Get-Module 'Microsoft365DSC'
         $version = $version[0].Version
         $DSCContent = [System.Text.StringBuilder]::new()
@@ -526,26 +524,30 @@ function Start-M365DSCConfigurationExtract
             {
                 if ($newline)
                 {
-                    $DSCContent.Append("`r`n") | Out-Null
+                    $DSCContent.Append(",`r`n`r`n") | Out-Null
                 }
                 $DSCContent.Append("    [Parameter()]`r`n") | Out-Null
                 $DSCContent.Append("    [System.Management.Automation.PSCredential]`r`n") | Out-Null
-                $DSCContent.Append("    `$CertificatePassword`r`n") | Out-Null
+                $DSCContent.Append("    `$CertificatePassword") | Out-Null
                 $newline = $true
             }
             { $_ -in 'Credentials', 'CredentialsWithApplicationId' }
             {
                 if ($newline)
                 {
-                    $DSCContent.Append("`r`n") | Out-Null
+                    $DSCContent.Append(",`r`n`r`n") | Out-Null
                 }
                 $DSCContent.Append("    [Parameter()]`r`n") | Out-Null
                 $DSCContent.Append("    [System.Management.Automation.PSCredential]`r`n") | Out-Null
-                $DSCContent.Append("    `$Credential`r`n") | Out-Null
+                $DSCContent.Append("    `$Credential") | Out-Null
                 $newline = $true
             }
         }
 
+        if ($newline)
+        {
+            $DSCContent.Append("`r`n") | Out-Null
+        }
         $DSCContent.Append(")`r`n`r`n") | Out-Null
 
         # Create Configuration section
@@ -568,6 +570,7 @@ function Start-M365DSCConfigurationExtract
         $DSCContent.Append("    param (`r`n") | Out-Null
 
         $newline = $false
+        $credentialParameterAdded = $false
         $postParamContent = [System.Text.StringBuilder]::new()
         switch ($AuthMethods)
         {
@@ -599,11 +602,11 @@ function Start-M365DSCConfigurationExtract
             {
                 if ($newline)
                 {
-                    $DSCContent.Append("`r`n") | Out-Null
+                    $DSCContent.Append(",`r`n`r`n") | Out-Null
                 }
                 $DSCContent.Append("        [Parameter()]`r`n") | Out-Null
                 $DSCContent.Append("        [System.Management.Automation.PSCredential]`r`n") | Out-Null
-                $DSCContent.Append("        `$CertificatePassword`r`n") | Out-Null
+                $DSCContent.Append("        `$CertificatePassword") | Out-Null
 
                 if ($newline)
                 {
@@ -648,13 +651,19 @@ function Start-M365DSCConfigurationExtract
             }
             { $_ -in 'Credentials', 'CredentialsWithApplicationId', 'CredentialsWithTenantId' }
             {
+                # Credentials and CredentialsWithTenantId are both present when a TenantId is passed.
+                if ($credentialParameterAdded)
+                {
+                    continue
+                }
+                $credentialParameterAdded = $true
                 if ($newline)
                 {
-                    $DSCContent.Append("`r`n") | Out-Null
+                    $DSCContent.Append(",`r`n`r`n") | Out-Null
                 }
                 $DSCContent.Append("        [Parameter()]`r`n") | Out-Null
                 $DSCContent.Append("        [System.Management.Automation.PSCredential]`r`n") | Out-Null
-                $DSCContent.Append("        `$Credential`r`n") | Out-Null
+                $DSCContent.Append("        `$Credential") | Out-Null
 
                 if ($newline)
                 {
@@ -689,6 +698,10 @@ function Start-M365DSCConfigurationExtract
                 Set-M365DSCStringReplacementMap -Map @{ $TenantId = 'TenantId' }
             }
         }
+        if ($newline)
+        {
+            $DSCContent.Append("`r`n") | Out-Null
+        }
 
         $DSCContent.Append("    )`r`n`r`n") | Out-Null
         $DSCContent.Append($postParamContent.ToString()) | Out-Null
@@ -711,13 +724,7 @@ function Start-M365DSCConfigurationExtract
 
         $containsConfigurationPolicies = $false
         $requestedConfigurationPolicyTemplateIds = @()
-        # TODO: Update to -AsHashtable once PowerShell 7 is enforced
-        $intuneTemplateRegistryObject = Get-Content -Path (Join-Path -Path $PSScriptRoot -ChildPath '../IntuneTemplateRegistry.json') -Raw | ConvertFrom-Json
-        $intuneTemplateRegistry = @{}
-        foreach ($property in $intuneTemplateRegistryObject.psobject.properties)
-        {
-            $intuneTemplateRegistry.Add($property.Name, $property.Value)
-        }
+        $intuneTemplateRegistry = Get-Content -Path (Join-Path -Path $PSScriptRoot -ChildPath '../IntuneTemplateRegistry.json') -Raw | ConvertFrom-Json -AsHashtable
 
         foreach ($resourceModule in $Script:allM365DSCResources)
         {
@@ -729,16 +736,15 @@ function Start-M365DSCConfigurationExtract
                         $resourcesNotSupported -notcontains $resourceModule -and `
                         -not $resourceModule.StartsWith('M365DSC'))
                 {
-                    $authMethod = $allSupportedResourcesWithMostSecureAuthMethod | Where-Object -Property Resource -EQ $resourceModule
                     $resourceInfo = @{
                         Name                 = $resourceModule
-                        AuthenticationMethod = $authMethod.AuthMethod
+                        AuthenticationMethod = $authMethodByResource[$resourceModule]
                     }
-                    $resourcesToExport.Add($resourceInfo)
 
                     $resourceDefinition = Get-M365DSCResourceDefinition -ResourceName $resourceModule
                     if ($null -ne $resourceDefinition)
                     {
+                        $resourcesToExport.Add($resourceInfo)
                         $resourcesToProcess.Add($resourceDefinition)
                     }
                     else
@@ -805,18 +811,18 @@ function Start-M365DSCConfigurationExtract
             {
                 Import-Module -Name $using:m365dscModulePath -DisableNameChecking -ErrorAction Stop
             }
-            $Global:MaximumFunctionCount = 32768
             $Global:PartialExportFileName = $using:partialExportName
             if ($using:Parallel)
             {
                 $Global:M365DSCSkipDependenciesValidation = $true
-                $Global:M365DSCStringReplacementMap = $using:M365DSCStringReplacementMap
+                Set-M365DSCStringReplacementMap -Map $using:M365DSCStringReplacementMap
             }
             $Global:M365DSCExportInProgress = $true
             Set-M365DSCResourcesDictionary -DscResourceDictionary $using:resourceDictionary
             Set-M365DSCTelemetryContext -Context $using:telemetryContext
             $sharedState = $using:synchronizedHashtable
             $workQueue = $using:workQueue
+            $exportErrorAction = $using:ErrorActionPreference
             [System.Threading.Monitor]::Enter($sharedState)
             try
             {
@@ -832,7 +838,7 @@ function Start-M365DSCConfigurationExtract
                 while ($workQueue.TryDequeue([ref] $resource))
                 {
                     $resourceName = $resource.Name
-                    $mostSecureAuthMethod = ($using:allSupportedResourcesWithMostSecureAuthMethod | Where-Object -Property Resource -EQ $resourceName).AuthMethod
+                    $mostSecureAuthMethod = ($using:authMethodByResource)[$resourceName]
 
                     $parameters = @{}
                     switch ($mostSecureAuthMethod)
@@ -907,9 +913,9 @@ function Start-M365DSCConfigurationExtract
 
                         # Check if filters for the current resource were specified.
                         $resourceFilter = $null
-                        $filterExists = Test-M365DSCResourceProperty -ResourceName $resourceName -PropertyName 'Filter'
-                        if ($filterExists -and $null -ne $using:Filters -and ($using:Filters).Keys.Where({ $_ -eq $resourceName }))
+                        if ($null -ne $using:Filters -and ($using:Filters).Keys.Where({ $_ -eq $resourceName }))
                         {
+                            $filterExists = Test-M365DSCResourceProperty -ResourceName $resourceName -PropertyName 'Filter'
                             $resourceFilter = ($using:Filters).$resourceName
                             if ($filterExists)
                             {
@@ -930,7 +936,7 @@ function Start-M365DSCConfigurationExtract
                         }
 
                         # Check for ErrorAction Preference
-                        $parameters.Add('ErrorAction', $using:ErrorActionPreference)
+                        $parameters.Add('ErrorAction', $exportErrorAction)
 
                         $Global:M365DSCExportInstanceTally = 0
                         $Global:M365DSCExportInstanceErrors = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
@@ -951,7 +957,7 @@ function Start-M365DSCConfigurationExtract
                             Write-M365DSCHost -Message "$($Global:M365DSCEmojiRedX)`r`n    An error occurred while exporting resource {$resourceName}: $($_.Exception.Message)" -ForegroundColor Red -CommitWrite
                             [void]$sharedState.ResourceStatus.TryAdd($resourceName, 'Failed')
                             [void]$sharedState.ResourceErrors.TryAdd($resourceName, $_.Exception.Message)
-                            if ($ErrorActionPreference -eq 'Stop')
+                            if ($exportErrorAction -eq 'Stop')
                             {
                                 throw $_
                             }
@@ -1014,33 +1020,41 @@ function Start-M365DSCConfigurationExtract
                 ManagedIdentity = $ManagedIdentity
                 AccessTokens = $AccessTokens
             }
-            $allRequestedConfigurationPolicies = Get-M365DSCArrayFromProperty -PropertyValue (Get-MgBetaDeviceManagementConfigurationPolicy -All `
-                -Filter "templateReference/templateFamily ne 'none'" -Property creationSource, description, templateReference, name, technologies, id, roleScopeTagIds, platforms `
-                -ExpandProperty 'assignments' | Where-Object {
-                    $_.templateReference.templateId -in $requestedConfigurationPolicyTemplateIds
-                }
-            )
-            $policiesById = [System.Collections.Generic.Dictionary[System.String, System.Object]]::new([System.StringComparer]::OrdinalIgnoreCase)
-            $batchRequests = @()
-            foreach ($policy in $allRequestedConfigurationPolicies)
+
+            try
             {
-                $policiesById[[System.String]$policy.id] = $policy
-                $batchRequests += @{
-                    Id = $policy.id
-                    Method = 'GET'
-                    Url = "/deviceManagement/configurationPolicies/$($policy.id)/settings?`$expand=settingDefinitions&`$top=1000"
-                }
-            }
-            $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
-            foreach ($policySettings in $batchResponses)
-            {
-                $policy = $null
-                if ($policiesById.TryGetValue([System.String]$policySettings.id, [ref] $policy))
+                $allRequestedConfigurationPolicies = Get-M365DSCArrayFromProperty -PropertyValue (Get-MgBetaDeviceManagementConfigurationPolicy -All `
+                    -Filter "templateReference/templateFamily ne 'none'" -Property creationSource, description, templateReference, name, technologies, id, roleScopeTagIds, platforms `
+                    -ExpandProperty 'assignments' -ErrorAction Stop | Where-Object -FilterScript {
+                        $_.templateReference.templateId -in $requestedConfigurationPolicyTemplateIds
+                    }
+                )
+                $policiesById = [System.Collections.Generic.Dictionary[System.String, System.Object]]::new([System.StringComparer]::OrdinalIgnoreCase)
+                $batchRequests = @()
+                foreach ($policy in $allRequestedConfigurationPolicies)
                 {
-                    $policy.settings = $policySettings.body.value
+                    $policiesById[[System.String]$policy.id] = $policy
+                    $batchRequests += @{
+                        Id     = $policy.id
+                        Method = 'GET'
+                        Url    = "/deviceManagement/configurationPolicies/$($policy.id)/settings?`$expand=settingDefinitions&`$top=1000"
+                    }
                 }
+                $batchResponses = Invoke-M365DSCGraphBatchRequest -Requests $batchRequests
+                foreach ($policySettings in $batchResponses)
+                {
+                    $policy = $null
+                    if ($policiesById.TryGetValue([System.String]$policySettings.id, [ref] $policy))
+                    {
+                        $policy.settings = $policySettings.body.value
+                    }
+                }
+                [Microsoft365DSC.Intune.ConfigurationPolicyCache]::Populate($allRequestedConfigurationPolicies, [System.Func[System.Object, System.String]]{ param($policy) $policy.templateReference.templateId })
             }
-            [Microsoft365DSC.Intune.ConfigurationPolicyCache]::Populate($allRequestedConfigurationPolicies, [System.Func[System.Object, System.String]]{ param($policy) $policy.templateReference.templateId })
+            catch
+            {
+                Write-Warning -Message "Could not prefetch the Intune configuration policies: $_"
+            }
         }
 
         if ($Parallel)
@@ -1126,6 +1140,8 @@ function Start-M365DSCConfigurationExtract
         }
 
         $launchCommand = "$ConfigurationName -ConfigurationData .\ConfigurationData.psd1"
+        $credentialsMarker = '<# Credentials #>'
+        $credentialPromptAdded = $false
         switch ($AuthMethods)
         {
             'CertificatePath'
@@ -1133,17 +1149,26 @@ function Start-M365DSCConfigurationExtract
                 $credsContent = ''
                 $credsContent += '        $CredsCertificatePassword = Get-Credential -Message "Certificate Password"'
                 $credsContent += "`r`n"
-                $startPosition = $DSCContent.ToString().IndexOf('<# Credentials #>') + 19
+                $currentContent = $DSCContent.ToString()
+                $blockPosition = $currentContent.IndexOf('if ($null -eq $CertificatePassword)')
+                $startPosition = $currentContent.IndexOf($credentialsMarker, $blockPosition) + $credentialsMarker.Length + 2
                 $DSCContent = $DSCContent.Insert($startPosition, $credsContent)
                 $launchCommand += " -CertificatePassword `$CredsCertificatePassword"
             }
-            { $_ -in 'Credentials', 'CredentialsWithApplicationId' }
+            { $_ -in 'Credentials', 'CredentialsWithApplicationId', 'CredentialsWithTenantId' }
             {
+                if ($credentialPromptAdded)
+                {
+                    continue
+                }
+                $credentialPromptAdded = $true
                 #region Add the Prompt for Required Credentials at the top of the Configuration
                 $credsContent = ''
                 $credsContent += '        $CredsCredential ' + "= Get-Credential -Message `"Credentials`"`r`n"
                 $credsContent += "`r`n"
-                $startPosition = $DSCContent.ToString().IndexOf('<# Credentials #>') + 19
+                $currentContent = $DSCContent.ToString()
+                $blockPosition = $currentContent.IndexOf('if ($null -eq $Credential)')
+                $startPosition = $currentContent.IndexOf($credentialsMarker, $blockPosition) + $credentialsMarker.Length + 2
                 $DSCContent = $DSCContent.Insert($startPosition, $credsContent)
                 $launchCommand += " -Credential `$CredsCredential"
                 #endregion
@@ -1152,6 +1177,31 @@ function Start-M365DSCConfigurationExtract
 
         $DSCContent.Append("`r`n") | Out-Null
         $DSCContent.Append("$launchCommand") | Out-Null
+
+        if (-not [System.String]::IsNullOrEmpty($FileName))
+        {
+            $outputDSCFile = $FileName
+        }
+        else
+        {
+            $outputDSCFile = 'M365TenantConfig.ps1'
+        }
+
+        # Clean empty lines with semi-colons, normally generated from CIMInstances convertions to String
+        $DSCContent = $DSCContent.Replace("`r`n;`r`n", ";`r`n")
+
+        # Windows PowerShell reads a script without byte order mark in the ANSI code page.
+        [System.IO.File]::WriteAllText($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($outputDSCFile),
+            $DSCContent.ToString(), [System.Text.UTF8Encoding]::new($true))
+
+        try
+        {
+            $Global:M365DSCExportContentSize = $DSCContent.Length
+        }
+        catch
+        {
+            Write-Verbose -Message $_
+        }
 
         #region Benchmarks
         $M365DSCExportEndTime = [System.DateTime]::Now
@@ -1197,79 +1247,75 @@ function Start-M365DSCConfigurationExtract
         if ($Validate.IsPresent)
         {
             Write-M365DSCHost -Message "$($Global:M365DSCMagnifyingGlass) Starting configuration validation..."
-            [Array]$results = Get-M365DSCConfigurationConflict -ConfigurationContent $DSCContent.ToString()
-            Write-M365DSCHost -Message 'Results:'
-            if ($results.Count -gt 0)
+            try
             {
-                $errorMessage = ''
-                foreach ($issue in $results)
+                [Array]$results = Get-M365DSCConfigurationConflict -ConfigurationContent $DSCContent.ToString()
+                Write-M365DSCHost -Message 'Results:'
+                if ($results.Count -gt 0)
                 {
-                    $errorMessage += "    - [$($issue.Reason)]: $($issue.InstanceName)`r`n"
+                    $errorMessage = ''
+                    foreach ($issue in $results)
+                    {
+                        $errorMessage += "    - [$($issue.Reason)]: $($issue.InstanceName)`r`n"
+                    }
+                    Write-Error -Message $errorMessage -ErrorAction Continue
                 }
-                Write-Error -Message $errorMessage -ErrorAction Continue
+                else
+                {
+                    Write-M365DSCHost -Message 'No conflicts detected'
+                }
             }
-            else
+            catch
             {
-                Write-M365DSCHost -Message 'No conflicts detected'
+                Write-Warning -Message "Configuration validation failed: $($_.Exception.Message)"
             }
         }
 
         #region Copy Downloaded files back into output folder
-        if (($null -ne $Components -and $Components.Contains('SPOApp') -and -not $ComponentsToSkip.Contains('SPOApp')) -or $AllComponents)
+        $spoAppStatus = $null
+        if ($synchronizedHashtable.ResourceStatus.TryGetValue('SPOApp', [ref] $spoAppStatus) -and `
+                $spoAppStatus -in @('Succeeded', 'PartiallySucceeded'))
         {
-            if ($AuthMethods -contains 'Credentials')
+            try
             {
-                $filesToDownload = Get-AllSPOPackages -Credential $Credential
-            }
-            else
-            {
-                $filesToDownload = Get-AllSPOPackages -ApplicationId $ApplicationId -CertificateThumbprint $CertificateThumbprint `
-                    -CertificatePassword $CertificatePassword -TenantId $TenantId -CertificatePath $CertificatePath -ManagedIdentity:$ManagedIdentity.IsPresent
-            }
-            if ($filesToDownload.Count -gt 0)
-            {
-                foreach ($fileToCopy in $filesToDownload)
+                if ($AuthMethods -contains 'Credentials')
                 {
-                    if (-not [System.String]::IsNullOrEmpty($env:TEMP))
+                    $filesToDownload = Get-AllSPOPackages -Credential $Credential
+                }
+                else
+                {
+                    $filesToDownload = Get-AllSPOPackages -ApplicationId $ApplicationId -CertificateThumbprint $CertificateThumbprint `
+                        -CertificatePassword $CertificatePassword -TenantId $TenantId -CertificatePath $CertificatePath -ManagedIdentity:$ManagedIdentity.IsPresent
+                }
+                if ($filesToDownload.Count -gt 0 -and -not [System.String]::IsNullOrEmpty($env:TEMP))
+                {
+                    foreach ($fileToCopy in $filesToDownload)
                     {
-                        $filePath = Join-Path $env:TEMP $fileToCopy.Name -Resolve
-                        $destPath = Join-Path $OutputDSCPath $fileToCopy.Name
-                        Copy-Item -Path $filePath -Destination $destPath -Force
+                        $filePath = Join-Path -Path $env:TEMP -ChildPath $fileToCopy.Name
+                        if (Test-Path -LiteralPath $filePath)
+                        {
+                            $destPath = Join-Path -Path $OutputDSCPath -ChildPath $fileToCopy.Name
+                            Copy-Item -LiteralPath $filePath -Destination $destPath -Force
+                        }
+                        else
+                        {
+                            Write-Warning -Message "SharePoint app package '$($fileToCopy.Name)' was not found in '$($env:TEMP)' and was not copied."
+                        }
                     }
                 }
             }
+            catch
+            {
+                Write-Warning -Message "Could not copy the SharePoint app packages to the output folder: $($_.Exception.Message)"
+            }
         }
         #endregion
-
-        if (-not [System.String]::IsNullOrEmpty($FileName))
-        {
-            $outputDSCFile = $FileName
-        }
-        else
-        {
-            $outputDSCFile = 'M365TenantConfig.ps1'
-        }
-
-        # Clean empty lines with semi-colons, normally generated from CIMInstances convertions to String.
-        $DSCContent = $DSCContent.Replace("`r`n;`r`n", ";`r`n")
-        # Windows PowerShell reads a script without byte order mark in the ANSI code page.
-        [System.IO.File]::WriteAllText($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($outputDSCFile),
-            $DSCContent.ToString(), [System.Text.UTF8Encoding]::new($true))
-
-        try
-        {
-            $Global:M365DSCExportContentSize = $DSCContent.Length
-        }
-        catch
-        {
-            Write-Verbose -Message $_
-        }
 
         if (-not $AzureAutomation -and -not $ManagedIdentity.IsPresent)
         {
             try
             {
-                if ($PSEdition -eq 'Desktop' -or $IsWindows -and ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
+                if ($IsWindows -and ([System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
                 {
                     $LCMConfig = Get-DscLocalConfigurationManager
                     if ($null -ne $LCMConfig.CertificateID)
@@ -1339,7 +1385,6 @@ function Start-M365DSCConfigurationExtract
             }
         }
 
-        Pop-Location
         if ($WithStatistics)
         {
             $failedResources = @()
@@ -1377,6 +1422,13 @@ function Start-M365DSCConfigurationExtract
         }
 
         throw
+    }
+    finally
+    {
+        if ($pushedLocation)
+        {
+            Pop-Location
+        }
     }
 }
 
