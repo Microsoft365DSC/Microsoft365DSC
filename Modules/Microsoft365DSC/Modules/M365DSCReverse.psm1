@@ -815,6 +815,7 @@ function Start-M365DSCConfigurationExtract
             if ($using:Parallel)
             {
                 $Global:M365DSCSkipDependenciesValidation = $true
+                $Global:M365DSCHostBufferOutput = $true
                 Set-M365DSCStringReplacementMap -Map $using:M365DSCStringReplacementMap
             }
             $Global:M365DSCExportInProgress = $true
@@ -972,6 +973,7 @@ function Start-M365DSCConfigurationExtract
                             }
                             $Global:M365DSCExportInstanceErrors = $null
                             $Global:M365DSCExportInstanceFailureMessage = $null
+                            Complete-M365DSCHostLine
                             Complete-M365DSCExportCollectionConsumer -ResourceName $resourceName
                         }
                     }
