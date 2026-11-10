@@ -16,6 +16,11 @@
   * Updated `Save-M365DSCPartialExport` to accept empty content.
 * M365DSCExportUtil
   * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
+  * Fixed the export session state not being restored when the export fails or uses `-LaunchWebUI`.
+  * Fixed the organization name and token replacement targets not being replaced sometimes.
+  * Fixed a partial or empty Exchange user list being cached when its retrieval failed.
+  * Fixed `Split-M365DSCConfiguration` using a hard-coded configuration name and
+    dropping the credential arguments.
 * M365DSCIntuneUtil
   * Fixed handling of group lookup failures, such as missing permissions or network errors.
   * Fixed an assignment with an unresolved assignment filter being created without the filter.
@@ -53,6 +58,14 @@
 * M365DSCReverse
   * Added the `PartiallySucceeded` resource status for resources with skipped instances
     with new statistics information.
+  * Fixed `-ErrorAction Stop` being ignored in parallel mode.
+  * Fixed a failure in the validation or SharePoint app steps losing the export.
+  * Fixed the early return when no selected resource can be exported, and the working
+    directory not being restored on failure.
+  * Fixed the warning for resources that do not support filters never being shown.
+  * Fixed the `[x/y]` total counting resources without a definition.
+  * Fixed the generated parameter block and authentication prompts of a combined
+    credential and certificate export.
 * M365DSCTelemetryEngine
   * Fixed `Set-M365DSCTelemetryOption` overwriting options that were not passed.
 * M365DSCTenantInfo
