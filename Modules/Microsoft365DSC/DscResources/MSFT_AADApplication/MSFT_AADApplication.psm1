@@ -910,13 +910,13 @@ class AADApplication : M365DSCResourceBase
             if (-not [System.String]::IsNullOrEmpty($this.AppId))
             {
                 Write-Verbose "Trying to retrieve existing deleted Applications from soft delete by Id {$($this.AppId)}."
-                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -DirectoryObjectId $this.AppId -ErrorAction SilentlyContinue
+                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -Filter "AppId eq '$($this.AppId)'" -ErrorAction Stop
             }
 
             if ($null -eq $deletedApp)
             {
                 Write-Verbose "Trying to retrieve existing deleted Applications from soft delete by DisplayName {$($this.DisplayName)}."
-                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" -ErrorAction SilentlyContinue
+                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" -ErrorAction Stop
             }
 
             if ($null -ne $deletedApp -and $deletedApp.Length -eq 1)
@@ -951,12 +951,12 @@ class AADApplication : M365DSCResourceBase
                 }
                 else
                 {
-                    Write-Verbose -Message "Found existing deleted instance of {$($this.DisplayName)}. However, the deleted date was over days ago and it cannot be restored. Will recreate a new instance instead."
+                    Write-Verbose -Message "Found existing deleted instance of {$($this.DisplayName)}. However, the deleted date was over 30 days ago and it cannot be restored. Will recreate a new instance instead."
                 }
             }
             elseif ($deletedApp.Length -gt 1)
             {
-                Write-Verbose -Message "Multiple instances of a deleted application with name {$($this.DisplayName)} wehre found. Creating a new instance since we can't determine what instance to restore."
+                Write-Verbose -Message "Multiple instances of a deleted application with name {$($this.DisplayName)} were found. Creating a new instance since we can't determine what instance to restore."
             }
         }
 
