@@ -5,8 +5,6 @@
     primary-key alignment, and drift detection.
 #>
 
-$Script:IsPowerShellCore = $PSVersionTable.PSEdition -eq 'Core'
-
 <#
 .SYNOPSIS
     Compares the current state of a resource with the desired state and returns whether they match.
@@ -82,7 +80,7 @@ function Compare-M365DSCResourceState
         $CompareRules
     )
 
-    Initialize-M365DSCDllLoader -ErrorAction Stop
+    Initialize-M365DSCSchemaCache -ErrorAction Stop
 
     $Global:AllDrifts = @{
         DriftInfo     = @()
@@ -90,19 +88,6 @@ function Compare-M365DSCResourceState
         DesiredValues = @{}
     }
     $Global:PotentialDrifts = @()
-
-    # Load the schema once via the C# CacheManager (avoids boxing on every call).
-    $currentPath = $PSScriptRoot
-    if (-not [Microsoft365DSC.Cache.CacheManager]::IsSchemaLoaded)
-    {
-        $schemaPath = Join-Path -Path $currentPath -ChildPath '../SchemaDefinition.json'
-        if (-not (Test-Path -Path $schemaPath))
-        {
-            throw "SchemaDefinition.json not found at expected path: $schemaPath. Ensure that the schema was properly included during module build and that the module is not being run from a non-standard location."
-        }
-        $schemaContent = [System.IO.File]::ReadAllText($schemaPath) | ConvertFrom-Json
-        [Microsoft365DSC.Cache.CacheManager]::LoadSchema($schemaContent)
-    }
 
     $ValuesToCheck = $DesiredValues.Clone()
     if ($null -ne $CompareRules -and $CompareRules.Count -gt 0)
