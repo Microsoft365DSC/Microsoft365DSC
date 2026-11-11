@@ -6,6 +6,9 @@
   * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
     added Id for `iVerify`.
     FIXES [#7609](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7609)
+* M365DSCRuleEvaluation
+  * Fixed `CertificatePath` and `CertificatePassword` not being passed to the evaluated
+    resource.
 * PlannerPlan
   * Updated the export to show the plan line before the plan export completes.
 * SCAutoSensitivityLabelPolicy

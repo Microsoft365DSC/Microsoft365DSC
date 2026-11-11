@@ -2189,19 +2189,9 @@ function Remove-M365DSCAuthenticationParameter
         $BoundParameters
     )
 
-    $keysToRemove = @(
-        'Ensure',
-        'Credential',
-        'ApplicationId',
-        'ApplicationSecret',
-        'TenantId',
-        'CertificatePassword',
-        'CertificatePath',
-        'CertificateThumbprint',
-        'ManagedIdentity',
-        'Verbose',
-        'AccessTokens'
-    )
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    $keysToRemove = @([Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames) + @('Ensure', 'Verbose')
 
     foreach ($key in $keysToRemove)
     {
@@ -2212,6 +2202,46 @@ function Remove-M365DSCAuthenticationParameter
     }
 
     return $BoundParameters
+}
+
+<#
+.SYNOPSIS
+    Returns the authentication parameters from a bound parameter hashtable.
+
+.DESCRIPTION
+    Returns a new hashtable with every authentication parameter of the bound parameters that has a value.
+
+.PARAMETER BoundParameters
+    Specifies the hashtable to read the authentication parameters from.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.Collections.Hashtable
+#>
+function Get-M365DSCAuthenticationParameter
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $BoundParameters
+    )
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    $result = @{}
+    foreach ($key in [Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames)
+    {
+        if ($null -ne $BoundParameters[$key])
+        {
+            $result.Add($key, $BoundParameters[$key])
+        }
+    }
+
+    return $result
 }
 
 <#
@@ -4463,6 +4493,7 @@ Export-ModuleMember -Function @(
     'Get-M365DSCAllResources',
     'Get-M365DSCResourcesDictionary',
     'Get-M365DSCArrayFromProperty',
+    'Get-M365DSCAuthenticationParameter',
     'Get-M365DSCConfigurationConflict',
     'Get-M365DSCGroupDisplayNameById',
     'Get-M365DSCGroupIdByDisplayName',
