@@ -1357,6 +1357,7 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
 
 Describe 'Compare-M365DSCResourceState with compare rules' {
     BeforeAll {
+        Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Microsoft365DSC.psd1" -Global
         Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCCompare.psm1" -Force
     }
 

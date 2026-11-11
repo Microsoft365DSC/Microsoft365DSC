@@ -37,6 +37,8 @@
 * M365DSCConfigurationHelper
   * Fixed `Get-M365DSCEvaluationRulesForConfiguration` generating configurations that do
     not compile.
+* M365DSCDocGenerator
+  * Fixed stale documentation pages being published after an aborted run.
 * M365DSCDRGUtil
   * Fixed the drift event XML not escaping values and showing type names instead of
     the desired and current values.
@@ -81,6 +83,22 @@
     previous dependency.
   * Fixed `Uninstall-M365DSCOutdatedDependencies` using an undefined scope.
   * Fixed `Update-M365DSCDependencies -ValidateOnly` failing without PSResourceGet.
+* M365DSCReport
+  * Fixed HTML reports not encoding tenant values and writing broken list tags.
+  * Fixed array values containing commas being shown as several items.
+  * Fixed CSV and Excel reports removing `@`, `(` and `)` from values and leaving a row
+    blank when the key is the first property.
+  * Fixed the Excel process not being released after a report.
+  * Fixed `New-M365DSCReportFromConfiguration` returning status messages.
+  * Fixed `New-M365DSCDeltaReport` miscounting drifted resources and changing the passed `Delta`.
+  * Fixed `New-M365DSCDeltaReport` replacing longer variable names during substitution
+    and leaving temporary files behind.
+  * Fixed `New-M365DSCDeltaReport` losing the line breaks of the custom header file.
+  * Fixed `New-M365DSCDeltaReport` writing `null` to a JSON report without drift and an
+    empty body with `-DriftOnly` and only missing resources.
+  * Fixed `New-M365DSCDeltaReport` comparing `AccessTokens`.
+  * Fixed `Get-M365DSCCIMInstanceKey` returning all keys instead of the first.
+  * Fixed Commerce, Fabric and Viva resources not being grouped under their workload.
 * M365DSCResourceBase
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
