@@ -442,6 +442,117 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
+
+        Context -Name 'ReverseDSC Tests with RequestorSettings and AllowedRequestors' -Fixture {
+            BeforeAll {
+                Mock -CommandName Get-MgBetaEntitlementManagementAccessPackageAssignmentPolicy -MockWith {
+                    return @(
+                        @{
+                            AccessPackageId                   = 'FakeStringValue'
+                            AccessPackageNotificationSettings = @{
+                                isAssignmentNotificationDisabled = $True
+                            }
+                            AccessReviewSettings              = @{
+                                isEnabled                       = $True
+                                isAccessRecommendationEnabled   = $True
+                                isAgenticExperienceEnabled      = $True
+                                isApprovalJustificationRequired = $True
+                                recurrenceType                  = 'FakeStringValue'
+                                reviewerType                    = 'FakeStringValue'
+                                durationInDays                  = 25
+                                startDateTime                   = [System.DateTime]::new(2032, 12, 17, 23, 59, 59, [System.DateTimeKind]::Utc)
+                            }
+                            CanExtend                         = $True
+                            CustomExtensionHandlers           = @(
+                                @{
+                                    CustomExtension = @{
+                                        AuthenticationConfiguration = @{
+                                            ResourceId = 'MyResourceId'
+                                        }
+                                        ClientConfiguration         = @{
+                                            TimeoutInMilliseconds = 10
+                                        }
+                                        Description                 = 'MyCustomExtensionDescription'
+                                        DisplayName                 = 'MyCustomExtensionDisplayName'
+                                        EndpointConfiguration       = @{
+                                            LogicAppWorkflowName = 'MyLogicAppWorkflowName'
+                                            ResourceGroupName    = 'MyResourceGroupName'
+                                            SubscriptionId       = 'MySubscriptionId'
+                                        }
+                                        Id                          = 'MyCustomExtensionId'
+                                    }
+                                    Stage           = 'assignmentRequestCreated'
+                                    Id              = 'MyCustomExtensionHandlersId'
+                                }
+                            )
+                            Description                       = 'FakeStringValue'
+                            DisplayName                       = 'FakeStringValue'
+                            DurationInDays                    = 25
+                            Id                                = 'FakeStringValue'
+                            Questions                         = @(
+                                @{
+                                    isAnswerEditable        = $True
+                                    id                      = 'FakeStringValue'
+                                    isRequired              = $True
+                                    sequence                = 25
+                                    '@odata.type'           = '#microsoft.graph.accessPackageMultipleChoiceQuestion'
+                                    allowsMultipleSelection = $True
+                                }
+                            )
+                            RequestApprovalSettings           = @{
+                                approvalMode                     = 'NoApproval'
+                                isRequestorJustificationRequired = $True
+                                isApprovalRequiredForExtension   = $False
+                                isApprovalRequired               = $False
+                            }
+                            RequestorSettings                 = @{
+                                '@odata.type'     = '#microsoft.graph.requestorSettings'
+                                scopeType         = 'SpecificDirectorySubjects'
+                                acceptRequests    = $True
+                                allowedRequestors = @(
+                                    @{
+                                        '@odata.type' = '#microsoft.graph.singleUser'
+                                        id            = 'user1@example.com'
+                                        description   = 'Test User'
+                                        isBackup      = $False
+                                    },
+                                    @{
+                                        '@odata.type' = '#microsoft.graph.groupMembers'
+                                        id            = 'FakeGroupId'
+                                        description   = 'Test Group'
+                                    }
+                                )
+                            }
+                            VerifiableCredentialSettings      = @{
+                                credentialTypes = @(
+                                    @{
+                                        credentialType = 'FakeStringValue'
+                                        issuers        = @('FakeStringValue')
+                                    }
+                                )
+                            }
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-MgGroup -MockWith {
+                    return @{
+                        DisplayName = 'Test Group'
+                    }
+                }
+
+                $Global:CurrentModeIsExport = $true
+                $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
+                $testParams = @{
+                    Credential = $Credential
+                }
+            }
+
+            It 'Should Reverse Engineer resource from the Export method with populated RequestorSettings' {
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'AADEntitlementManagementAccessPackageAssignmentPolicy' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Not -BeNullOrEmpty
+            }
+        }
     }
 }
 
