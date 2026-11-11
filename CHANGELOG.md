@@ -37,6 +37,9 @@
 * M365DSCConfigurationHelper
   * Fixed `Get-M365DSCEvaluationRulesForConfiguration` generating configurations that do
     not compile.
+* M365DSCConnection
+  * Fixed `New-M365DSCConnection` replacing the `ApplicationSecret` credential of the
+    caller with its plain text value.
 * M365DSCDocGenerator
   * Fixed stale documentation pages being published after an aborted run.
 * M365DSCDRGUtil
@@ -83,6 +86,9 @@
     previous dependency.
   * Fixed `Uninstall-M365DSCOutdatedDependencies` using an undefined scope.
   * Fixed `Update-M365DSCDependencies -ValidateOnly` failing without PSResourceGet.
+* M365DSCPermissions
+  * Fixed several issues in `Update-M365DSCAzureAdApplication` regarding API permissions
+    and certificate handling.
 * M365DSCReport
   * Fixed HTML reports not encoding tenant values and writing broken list tags.
   * Fixed array values containing commas being shown as several items.

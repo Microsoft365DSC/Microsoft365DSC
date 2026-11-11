@@ -265,12 +265,10 @@ function New-M365DSCConnection
     }
 
     # Convert ApplicationSecret from SecureString to plain string for MSCloudLoginAssistant
-    if (-not [System.String]::IsNullOrEmpty($InboundParameters.ApplicationSecret))
+    $applicationSecretPlain = $InboundParameters.ApplicationSecret
+    if ($InboundParameters.ApplicationSecret -is [System.Management.Automation.PSCredential])
     {
-        if ($InboundParameters.ApplicationSecret -is [System.Management.Automation.PSCredential])
-        {
-            $InboundParameters.ApplicationSecret = ConvertFrom-SecureString -SecureString $InboundParameters.ApplicationSecret.Password -AsPlainText
-        }
+        $applicationSecretPlain = ConvertFrom-SecureString -SecureString $InboundParameters.ApplicationSecret.Password -AsPlainText
     }
 
     #region Validation
@@ -361,7 +359,7 @@ function New-M365DSCConnection
         {
             $connectParams.ApplicationId = $InboundParameters.ApplicationId
             $connectParams.TenantId = $InboundParameters.TenantId
-            $connectParams.ApplicationSecret = $InboundParameters.ApplicationSecret
+            $connectParams.ApplicationSecret = $applicationSecretPlain
         }
         'ServicePrincipalWithThumbprint'
         {
@@ -404,7 +402,7 @@ function New-M365DSCConnection
         'CredentialsWithApplicationId'   { @('Credential', 'ApplicationId') }
         'CredentialsWithTenantId'        { @('Credential', 'TenantId') }
         'ServicePrincipalWithPath'       { @('ApplicationId', 'TenantId', 'CertificatePath') }
-        'ServicePrincipalWithSecret'     { @('ApplicationId', 'TenantId', 'ApplicationSecret') }
+        'ServicePrincipalWithSecret'     { @('ApplicationId', 'TenantId') }
         'ServicePrincipalWithThumbprint' { @('ApplicationId', 'TenantId', 'CertificateThumbprint') }
         'ManagedIdentity'                { @('TenantId') }
         'AccessTokens'                   { @('AccessTokens', 'TenantId') }
@@ -425,10 +423,9 @@ function New-M365DSCConnection
     {
         $Script:M365DSCTelemetryConnectionToGraphParams.Add('Identity', $true)
     }
-    if ($ConnectionMode -eq 'ServicePrincipalWithSecret' -and
-        -not $Script:M365DSCTelemetryConnectionToGraphParams.ContainsKey('ApplicationSecret'))
+    if ($connectionMode -eq 'ServicePrincipalWithSecret' -and $null -ne $applicationSecretPlain)
     {
-        $Script:M365DSCTelemetryConnectionToGraphParams.Add('ApplicationSecret', $InboundParameters.ApplicationSecret.Password)
+        $Script:M365DSCTelemetryConnectionToGraphParams.ApplicationSecret = $applicationSecretPlain
     }
     if ($connectionMode -eq 'ServicePrincipalWithPath' -and
         -not $Script:M365DSCTelemetryConnectionToGraphParams.ContainsKey('CertificatePassword'))
