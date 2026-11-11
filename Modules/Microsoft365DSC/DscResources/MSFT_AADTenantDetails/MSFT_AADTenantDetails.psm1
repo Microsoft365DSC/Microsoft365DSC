@@ -33,6 +33,10 @@ class AADTenantDetails : M365DSCResourceBase
     [MSFT_privacyProfile] $PrivacyProfile
 
     [DscProperty()]
+    [System.ComponentModel.Description('The quota configurations for resource types in the Microsoft Entra organization.')]
+    [MSFT_AADTenantDetailsResourceQuota[]] $ResourceQuotas
+
+    [DscProperty()]
     [System.ComponentModel.Description('Email-addresses from the people who should receive Security Compliance Notifications')]
     [System.String[]] $SecurityComplianceNotificationMails
 
@@ -122,6 +126,16 @@ class AADTenantDetails : M365DSCResourceBase
                 $complexPrivacyProfile = $null
             }
 
+            $quotaResponse = Get-MgBetaOrganization -OrganizationId $aadTenantDetails.Id -Property 'resourceQuotas' -ErrorAction Stop
+            $complexResourceQuotas = @()
+            foreach ($quota in $quotaResponse.ResourceQuotas)
+            {
+                $complexResourceQuotas += @{
+                    ResourceType  = $quota.ResourceType
+                    MaxPercentage = $quota.MaxPercentage
+                }
+            }
+
             $result = @{
                 IsSingleInstance                     = 'Yes'
                 BusinessPhones                       = $aadTenantDetails.BusinessPhones
@@ -130,6 +144,7 @@ class AADTenantDetails : M365DSCResourceBase
                 PostalCode                           = $aadTenantDetails.PostalCode
                 PreferredLanguage                    = $aadTenantDetails.PreferredLanguage
                 PrivacyProfile                       = $complexPrivacyProfile
+                ResourceQuotas                       = $complexResourceQuotas
                 SecurityComplianceNotificationMails  = $aadTenantDetails.SecurityComplianceNotificationMails
                 SecurityComplianceNotificationPhones = $aadTenantDetails.SecurityComplianceNotificationPhones
                 State                                = $aadTenantDetails.State
@@ -177,6 +192,11 @@ class AADTenantDetails : M365DSCResourceBase
         if ($null -ne $this.PrivacyProfile)
         {
             $currentParameters.PrivacyProfile = Rename-M365DSCCimInstanceParameter -Properties $this.PrivacyProfile
+        }
+
+        if ($null -ne $this.ResourceQuotas)
+        {
+            $currentParameters.ResourceQuotas = Rename-M365DSCCimInstanceParameter -Properties $this.ResourceQuotas
         }
 
         try
@@ -263,11 +283,31 @@ class AADTenantDetails : M365DSCResourceBase
                     }
                 }
 
+                if ($Results.ResourceQuotas.Count -gt 0)
+                {
+                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                        -ComplexObject $Results.ResourceQuotas `
+                        -CIMInstanceName 'AADTenantDetailsResourceQuota'
+
+                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    {
+                        $Results.ResourceQuotas = $complexTypeStringResult
+                    }
+                    else
+                    {
+                        $Results.Remove('ResourceQuotas') | Out-Null
+                    }
+                }
+                else
+                {
+                    $Results.Remove('ResourceQuotas') | Out-Null
+                }
+
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -NoEscape @('PrivacyProfile')
+                    -NoEscape @('PrivacyProfile', 'ResourceQuotas')
                 [void]$dscContent.Append($currentDSCBlock)
 
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -317,4 +357,17 @@ class MSFT_privacyProfile
     [DscProperty()]
     [System.ComponentModel.Description('A valid URL format that begins with http:// or https://. Maximum length is 255 characters. The URL that directs to the company''s privacy statement. Not required.')]
     [System.String] $StatementUrl
+}
+
+class MSFT_AADTenantDetailsResourceQuota
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The resource type to which the quota applies. Each value must be unique within the organization''s resourceQuotas collection. The possible values are: agentIdentityBlueprint, agentIdentity, managedIdentity.')]
+    [ValidateSet('agentIdentityBlueprint', 'agentIdentity', 'managedIdentity')]
+    [System.String] $ResourceType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The maximum percentage of the organization''s directorySizeQuota.total that this resource type can consume. The value must be between 0 and 100. A value of 0 blocks creation of new resources of this type. If omitted for supported resource types, the default is 80.')]
+    [ValidateRange(0, 100)]
+    [System.Nullable[System.Int32]] $MaxPercentage
 }

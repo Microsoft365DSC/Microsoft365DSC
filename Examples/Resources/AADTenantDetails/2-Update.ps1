@@ -40,6 +40,16 @@ Configuration Example {
                 ContactEmail = "privacy@contoso.com"
                 StatementUrl = "https://www.contoso.com/privacy"
             };
+            ResourceQuotas                       = @(
+                MSFT_AADTenantDetailsResourceQuota{
+                    ResourceType  = "agentIdentity"
+                    MaxPercentage = 80
+                }
+                MSFT_AADTenantDetailsResourceQuota{
+                    ResourceType  = "agentIdentityBlueprint"
+                    MaxPercentage = 80
+                }
+            );
             ApplicationId                        = $ApplicationId
             TenantId                             = $TenantId
             CertificateThumbprint                = $CertificateThumbprint

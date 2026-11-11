@@ -129,6 +129,9 @@ Configuration Example
                 UserSyncInbound  = MSFT_AADCrossTenantUserSyncInbound{
                     IsSyncAllowed = $True
                 }
+                RoleEnabledGroupSyncInbound = MSFT_AADCrossTenantRoleEnabledGroupSyncInbound{
+                    IsSyncAllowed = $false
+                }
             };
             InboundTrust                       = MSFT_AADCrossTenantAccessPolicyInboundTrust{
                 IsCompliantDeviceAccepted           = $True
