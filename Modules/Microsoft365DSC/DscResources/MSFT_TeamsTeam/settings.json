@@ -70,6 +70,8 @@
     {
       "module": "Microsoft.Graph.Groups",
       "cmdlets": [
+        "Get-MgGroup",
+        "Get-MgGroupOwner",
         "New-MgGroup",
         "New-MgGroupOwnerByRef"
       ]

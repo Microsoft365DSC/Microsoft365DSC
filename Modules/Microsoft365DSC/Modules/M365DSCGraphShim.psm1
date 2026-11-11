@@ -1319,6 +1319,98 @@ function Get-MgApplicationFederatedIdentityCredential
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/applications/$($ApplicationId)/federatedIdentityCredentials" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
 }
 
+function Get-MgApplicationOwner
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $ApplicationId,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.String]
+        $ConsistencyLevel,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $NoPageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable
+    )
+
+    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/applications/$($ApplicationId)/owners" -ErrorAction $ErrorActionPreference
+}
+
 function Get-MgBetaAdminReportSetting
 {
     [CmdletBinding()]
@@ -20767,6 +20859,10 @@ function New-MgBetaDeviceAppManagementAndroidManagedAppProtection
 
         [Parameter()]
         [System.Object]
+        $AppActionIfDeveloperOptionsEnabled,
+
+        [Parameter()]
+        [System.Object]
         $AppActionIfDeviceComplianceRequired,
 
         [Parameter()]
@@ -22211,11 +22307,19 @@ function New-MgBetaDeviceAppManagementWindowsManagedAppProtection
 
         [Parameter()]
         [System.Object]
+        $AllowedInboundDataTransferSourceApps,
+
+        [Parameter()]
+        [System.Object]
         $AllowedInboundDataTransferSources,
 
         [Parameter()]
         [System.Object]
         $AllowedOutboundClipboardSharingLevel,
+
+        [Parameter()]
+        [System.Object]
+        $AllowedOutboundDataTransferDestinationApps,
 
         [Parameter()]
         [System.Object]
@@ -26415,6 +26519,10 @@ function New-MgBetaEntitlementManagementAccessPackageCatalog
 
         [Parameter()]
         [System.String]
+        $PrivilegeLevel,
+
+        [Parameter()]
+        [System.String]
         $UniqueName,
 
         [Parameter()]
@@ -28331,7 +28439,27 @@ function New-MgBetaIdentityGovernanceLifecycleWorkflow
 
         [Parameter()]
         [System.Object]
+        $PreviewScope,
+
+        [Parameter()]
+        [System.Object]
+        $QuarantineDetails,
+
+        [Parameter()]
+        [System.Object]
         $Runs,
+
+        [Parameter()]
+        [System.Object]
+        $Settings,
+
+        [Parameter()]
+        [System.Object]
+        $SubjectProcessingResults,
+
+        [Parameter()]
+        [System.String]
+        $TargetSubjectType,
 
         [Parameter()]
         [System.Object]
@@ -28444,6 +28572,10 @@ function New-MgBetaIdentityGovernanceLifecycleWorkflowCustomTaskExtension
         [Parameter()]
         [System.DateTime]
         $LastModifiedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $ReplyMode,
 
         [Parameter()]
         [System.Management.Automation.SwitchParameter]
@@ -29640,6 +29772,10 @@ function New-MgBetaPolicyAuthenticationStrengthPolicy
         [Parameter()]
         [System.DateTime]
         $CreatedDateTime,
+
+        [Parameter()]
+        [System.DateTime]
+        $DeletedDateTime,
 
         [Parameter()]
         [System.String]
@@ -32526,6 +32662,10 @@ function New-MgGroup
         $Onenote,
 
         [Parameter()]
+        [System.String]
+        $OrganizationId,
+
+        [Parameter()]
         [System.Object]
         $Owners,
 
@@ -33779,6 +33919,10 @@ function New-MgUser
 
         [Parameter()]
         [System.Object]
+        $Notes,
+
+        [Parameter()]
+        [System.Object]
         $Oauth2PermissionGrants,
 
         [Parameter()]
@@ -33964,6 +34108,10 @@ function New-MgUser
         [Parameter()]
         [System.Object]
         $Solutions,
+
+        [Parameter()]
+        [System.Object]
+        $SponsorOf,
 
         [Parameter()]
         [System.Object]
@@ -41410,6 +41558,10 @@ function Set-MgBetaPolicyCrossTenantAccessPolicyPartnerIdentitySynchronization
         $GroupSyncInbound,
 
         [Parameter()]
+        [System.Object]
+        $RoleEnabledGroupSyncInbound,
+
+        [Parameter()]
         [System.String]
         $TenantId,
 
@@ -42198,6 +42350,10 @@ function Update-MgBetaAdminReportSetting
         $Id,
 
         [Parameter()]
+        [System.Object]
+        $SharePoint,
+
+        [Parameter()]
         [System.Management.Automation.SwitchParameter]
         $Break,
 
@@ -42668,6 +42824,10 @@ function Update-MgBetaDeviceAppManagementAndroidManagedAppProtection
         [Parameter()]
         [System.Object]
         $AppActionIfAndroidSafetyNetDeviceAttestationFailed,
+
+        [Parameter()]
+        [System.Object]
+        $AppActionIfDeveloperOptionsEnabled,
 
         [Parameter()]
         [System.Object]
@@ -44255,11 +44415,19 @@ function Update-MgBetaDeviceAppManagementWindowsManagedAppProtection
 
         [Parameter()]
         [System.Object]
+        $AllowedInboundDataTransferSourceApps,
+
+        [Parameter()]
+        [System.Object]
         $AllowedInboundDataTransferSources,
 
         [Parameter()]
         [System.Object]
         $AllowedOutboundClipboardSharingLevel,
+
+        [Parameter()]
+        [System.Object]
+        $AllowedOutboundDataTransferDestinationApps,
 
         [Parameter()]
         [System.Object]
@@ -48951,6 +49119,10 @@ function Update-MgBetaEntitlementManagementAccessPackageCatalog
 
         [Parameter()]
         [System.String]
+        $PrivilegeLevel,
+
+        [Parameter()]
+        [System.String]
         $UniqueName,
 
         [Parameter()]
@@ -50226,6 +50398,10 @@ function Update-MgBetaIdentityGovernanceLifecycleWorkflowCustomTaskExtension
         $LastModifiedDateTime,
 
         [Parameter()]
+        [System.String]
+        $ReplyMode,
+
+        [Parameter()]
         [System.Management.Automation.SwitchParameter]
         $Break,
 
@@ -50280,6 +50456,10 @@ function Update-MgBetaIdentityGovernanceLifecycleWorkflowSetting
         [Parameter()]
         [System.String]
         $Id,
+
+        [Parameter()]
+        [System.Object]
+        $QuarantineConfiguration,
 
         [Parameter()]
         [System.Int32]
@@ -51126,6 +51306,10 @@ function Update-MgBetaOrganization
         $ProvisionedPlans,
 
         [Parameter()]
+        [System.Object]
+        $ResourceQuotas,
+
+        [Parameter()]
         [System.String[]]
         $SecurityComplianceNotificationMails,
 
@@ -51642,6 +51826,10 @@ function Update-MgBetaPolicyAuthenticationMethodPolicy
         $AuthenticationMethodConfigurations,
 
         [Parameter()]
+        [System.DateTime]
+        $DeletedDateTime,
+
+        [Parameter()]
         [System.String]
         $Description,
 
@@ -51820,6 +52008,10 @@ function Update-MgBetaPolicyAuthenticationStrengthPolicy
         [Parameter()]
         [System.DateTime]
         $CreatedDateTime,
+
+        [Parameter()]
+        [System.DateTime]
+        $DeletedDateTime,
 
         [Parameter()]
         [System.String]
@@ -55475,6 +55667,10 @@ function Update-MgUser
 
         [Parameter()]
         [System.Object]
+        $Notes,
+
+        [Parameter()]
+        [System.Object]
         $Oauth2PermissionGrants,
 
         [Parameter()]
@@ -55663,6 +55859,10 @@ function Update-MgUser
 
         [Parameter()]
         [System.Object]
+        $SponsorOf,
+
+        [Parameter()]
+        [System.Object]
         $Sponsors,
 
         [Parameter()]
@@ -55742,6 +55942,7 @@ Export-ModuleMember -Function @(
     'Get-MgAdminSharepointSetting',
     'Get-MgApplication',
     'Get-MgApplicationFederatedIdentityCredential',
+    'Get-MgApplicationOwner',
     'Get-MgBetaAdminReportSetting',
     'Get-MgBetaAgreement',
     'Get-MgBetaApplication',

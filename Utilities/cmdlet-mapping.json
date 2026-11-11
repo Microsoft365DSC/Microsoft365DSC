@@ -86,6 +86,17 @@
       }
     ]
   },
+  "Get-MgApplicationOwner": {
+    "SourceModule": "Microsoft.Graph.Applications",
+    "ApiVersion": "v1.0",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/applications/{application-id}/owners",
+        "ApiVersion": "v1.0"
+      }
+    ]
+  },
   "Get-MgBetaAdminReportSetting": {
     "SourceModule": "Microsoft.Graph.Beta.Reports",
     "ApiVersion": "beta",

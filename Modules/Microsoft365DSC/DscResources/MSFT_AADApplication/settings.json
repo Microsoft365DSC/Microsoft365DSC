@@ -148,6 +148,7 @@
     {
       "module": "Microsoft.Graph.Applications",
       "cmdlets": [
+        "Get-MgApplicationOwner",
         "Get-MgServicePrincipal",
         "New-MgApplicationOwnerByRef",
         "New-MgApplicationTokenLifetimePolicyByRef",

@@ -32,6 +32,7 @@
   "New-MgBetaAgreement": "Microsoft.Graph.Beta.Identity.Governance",
   "Remove-MgBetaAgreement": "Microsoft.Graph.Beta.Identity.Governance",
   "Update-MgBetaAgreement": "Microsoft.Graph.Beta.Identity.Governance",
+  "Get-MgApplicationOwner": "Microsoft.Graph.Applications",
   "New-MgApplicationOwnerByRef": "Microsoft.Graph.Applications",
   "New-MgApplicationTokenLifetimePolicyByRef": "Microsoft.Graph.Applications",
   "Remove-MgApplicationOwnerDirectoryObjectByRef": "Microsoft.Graph.Applications",
