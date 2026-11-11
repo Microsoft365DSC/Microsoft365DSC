@@ -18,6 +18,13 @@
     FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
 * SPOStorageEntity
   * Fixed the export checking for the `Credential` connection mode instead of `Credentials`.
+* M365DSCConfigurationCompiler
+  * Fixed `Invoke-M365DSCConfigurationBuild` resetting the recursion guard of an outer build.
+  * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
+    pipeline without `ConfigurationName` ignores.
+* M365DSCConfigurationHelper
+  * Fixed `Get-M365DSCEvaluationRulesForConfiguration` generating configurations that do
+    not compile.
 * M365DSCDRGUtil
   * Fixed the drift event XML not escaping values and showing type names instead of
     the desired and current values.
