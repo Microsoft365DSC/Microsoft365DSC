@@ -5,6 +5,8 @@
 * AADApplication
   * Fixed `Get()` failing for an application without owners.
     FIXES [#7615](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7615)
+  * Fixed `Set()` creating a new application instead of restoring a soft-deleted one.
+    FIXES [#7617](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7617)
 * IntuneMobileThreatDefenseConnector
   * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
     added Id for `iVerify`.

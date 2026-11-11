@@ -8951,8 +8951,8 @@ function Get-MgBetaDirectoryDeletedItemAsApplication
     )
 
     if ($PSBoundParameters.ContainsKey('DirectoryObjectId') -and [System.String]::IsNullOrEmpty($DirectoryObjectId)) { Write-Error -Message "Cannot bind argument to parameter 'DirectoryObjectId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
-    $singleItemUri = if ($PSBoundParameters.ContainsKey('DirectoryObjectId') -and -not [System.String]::IsNullOrEmpty($DirectoryObjectId)) { "/beta/directory/deletedItems/$($DirectoryObjectId)/application" } else { $null }
-    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/directory/deletedItems/application" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
+    $singleItemUri = if ($PSBoundParameters.ContainsKey('DirectoryObjectId') -and -not [System.String]::IsNullOrEmpty($DirectoryObjectId)) { "/beta/directory/deletedItems/$($DirectoryObjectId)/microsoft.graph.application" } else { $null }
+    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/directory/deletedItems/microsoft.graph.application" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
 }
 
 function Get-MgBetaDirectoryDeletedItemAsGroup
@@ -9044,7 +9044,9 @@ function Get-MgBetaDirectoryDeletedItemAsGroup
         $CountVariable
     )
 
-    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/directory/deletedItems/microsoft.graph.group" -ErrorAction $ErrorActionPreference
+    if ($PSBoundParameters.ContainsKey('DirectoryObjectId') -and [System.String]::IsNullOrEmpty($DirectoryObjectId)) { Write-Error -Message "Cannot bind argument to parameter 'DirectoryObjectId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    $singleItemUri = if ($PSBoundParameters.ContainsKey('DirectoryObjectId') -and -not [System.String]::IsNullOrEmpty($DirectoryObjectId)) { "/beta/directory/deletedItems/$($DirectoryObjectId)/microsoft.graph.group" } else { $null }
+    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/directory/deletedItems/microsoft.graph.group" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
 }
 
 function Get-MgBetaDirectoryObject
