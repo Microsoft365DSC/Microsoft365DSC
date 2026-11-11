@@ -261,6 +261,7 @@ class AADApplication : M365DSCResourceBase
                     Write-Verbose -Message 'Could not retrieve and instance of the Azure AD App in the Get() method.'
                     return $this.AsResult($nullReturn)
                 }
+                $AADApp = $AADApp[0]
             }
             else
             {
