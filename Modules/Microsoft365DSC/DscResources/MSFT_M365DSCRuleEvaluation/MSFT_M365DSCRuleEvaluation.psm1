@@ -99,25 +99,7 @@ class M365DSCRuleEvaluation : M365DSCResourceBase
         if ($null -ne $targetType)
         {
             $boundParameters = $this.GetBoundParameters()
-            $params = @{
-                Credential            = $boundParameters.Credential
-                ApplicationId         = $boundParameters.ApplicationId
-                TenantId              = $boundParameters.TenantId
-                CertificateThumbprint = $boundParameters.CertificateThumbprint
-            }
-
-            if ($null -ne $boundParameters.ApplicationSecret)
-            {
-                $params.Add('ApplicationSecret', $boundParameters.ApplicationSecret)
-            }
-            if ($null -ne $boundParameters.AccessTokens)
-            {
-                $params.Add('AccessTokens', $boundParameters.AccessTokens)
-            }
-            if ($null -ne $boundParameters.ManagedIdentity)
-            {
-                $params.Add('ManagedIdentity', $boundParameters.ManagedIdentity)
-            }
+            $params = Get-M365DSCAuthenticationParameter -BoundParameters $boundParameters
             if ($null -ne $boundParameters.Filter)
             {
                 $params.Add('Filter', $this.Filter)
