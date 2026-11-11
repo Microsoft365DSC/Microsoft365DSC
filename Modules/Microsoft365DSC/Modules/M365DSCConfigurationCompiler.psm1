@@ -90,6 +90,9 @@ function Import-M365DSCDscEngine
 .PARAMETER OutputPath
     Folder for the generated MOF files.
 
+.NOTES
+    The standard pipeline without ConfigurationName runs the script's own invocation.
+
 .EXAMPLE
     Invoke-M365DSCConfigurationBuild -Path .\M365TenantConfig.ps1
 
@@ -140,7 +143,7 @@ function Invoke-M365DSCConfigurationBuild
         $OutputPath
     )
 
-    $Path = (Resolve-Path -Path $Path).ProviderPath
+    $Path = (Resolve-Path -Path $Path -ErrorAction Stop).ProviderPath
     if (-not $ConfigurationDataPath -and $null -eq $ConfigurationData)
     {
         $candidate = Join-Path -Path (Split-Path -Path $Path -Parent) -ChildPath 'ConfigurationData.psd1'
@@ -223,6 +226,7 @@ function Invoke-M365DSCConfigurationBuild
 
     # Standard pipeline: run the script itself. The recursion guard makes its
     # trailer take the plain invocation branch.
+    $previousGuard = Get-Variable -Name 'PSDscFastCompileActive' -Scope Global -ValueOnly -ErrorAction 'SilentlyContinue'
     $Global:PSDscFastCompileActive = $true
     try
     {
@@ -232,6 +236,19 @@ function Invoke-M365DSCConfigurationBuild
         {
             if (-not $ConfigurationName)
             {
+                $ignoredParameters = @()
+                foreach ($parameterName in @('OutputPath', 'ConfigurationData', 'ConfigurationDataPath'))
+                {
+                    if ($PSBoundParameters.ContainsKey($parameterName))
+                    {
+                        $ignoredParameters += $parameterName
+                    }
+                }
+                if ($ignoredParameters.Count -gt 0)
+                {
+                    Write-Warning -Message "The standard pipeline without -ConfigurationName runs the script's own invocation, which decides the MOF location and configuration data. Ignoring: $($ignoredParameters -join ', '). Specify -ConfigurationName or use the fast host to apply them."
+                }
+
                 return (& $Path @invokeParameters)
             }
 
@@ -276,7 +293,7 @@ function Invoke-M365DSCConfigurationBuild
     }
     finally
     {
-        $Global:PSDscFastCompileActive = $false
+        $Global:PSDscFastCompileActive = [System.Boolean]$previousGuard
     }
 }
 
