@@ -1,5 +1,83 @@
 <#
 .SYNOPSIS
+    Sends a request to the Azure Billing REST API.
+
+.DESCRIPTION
+    Calls Invoke-AzRestMethod against the Azure management endpoint and returns the parsed response.
+
+.PARAMETER Method
+    Specifies the HTTP method.
+
+.PARAMETER Path
+    Specifies the request path and query string, relative to the Azure management endpoint.
+
+.PARAMETER Body
+    Specifies the request payload, sent as JSON.
+
+.FUNCTIONALITY
+    Private
+
+.OUTPUTS
+    System.Object
+#>
+function Invoke-M365DSCAzureBillingRequest
+{
+    [CmdletBinding()]
+    [OutputType([System.Object])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('GET', 'PUT', 'POST', 'DELETE')]
+        [System.String]
+        $Method,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Path,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $Body
+    )
+
+    $requestParams = @{
+        Method = $Method
+        Uri    = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)$Path"
+    }
+    if ($PSBoundParameters.ContainsKey('Body'))
+    {
+        $requestParams.Payload = ConvertTo-Json $Body -Depth 10 -Compress
+    }
+    $response = Invoke-AzRestMethod @requestParams
+
+    $statusCode = [System.Int32]$response.StatusCode
+    if ($statusCode -ge 400)
+    {
+        $errorDetails = $response.Content
+        try
+        {
+            $errorContent = ConvertFrom-Json $response.Content -ErrorAction Stop
+            if ($null -ne $errorContent.error)
+            {
+                $errorDetails = "$($errorContent.error.code) $($errorContent.error.message)"
+            }
+        }
+        catch
+        {
+            Write-Verbose -Message "Could not parse the error response: $_"
+        }
+        $statusText = "$statusCode $([System.Enum]::GetName([System.Net.HttpStatusCode], $statusCode))".TrimEnd()
+        throw "Azure Billing $Method $Path failed ($statusText): $errorDetails"
+    }
+
+    if ([System.String]::IsNullOrEmpty($response.Content))
+    {
+        return $null
+    }
+    return ConvertFrom-Json $response.Content
+}
+
+<#
+.SYNOPSIS
     Gets Azure billing accounts.
 
 .DESCRIPTION
@@ -14,10 +92,8 @@ function Get-M365DSCAzureBillingAccount
     [OutputType([System.Collections.Hashtable])]
     param()
 
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts?api-version=2024-04-01&?includeAll=true"
-    $response = Invoke-AzRestMethod -Method GET -Uri $uri
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method GET `
+        -Path 'providers/Microsoft.Billing/billingAccounts?api-version=2024-04-01&includeAll=true'
 }
 
 <#
@@ -43,10 +119,8 @@ function Get-M365DSCAzureBillingAccountsAssociatedTenant
         $BillingAccountId
     )
 
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/associatedTenants?api-version=2024-04-01"
-    $response = Invoke-AzRestMethod -Method GET -Uri $uri
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method GET `
+        -Path "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/associatedTenants?api-version=2024-04-01"
 }
 
 <#
@@ -79,10 +153,8 @@ function Remove-M365DSCAzureBillingAccountsAssociatedTenant
         $AssociatedTenantId
     )
 
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/associatedTenants/$($AssociatedTenantId)?api-version=2024-04-01"
-    $response = Invoke-AzRestMethod -Method DELETE -Uri $uri
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method DELETE `
+        -Path "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/associatedTenants/$($AssociatedTenantId)?api-version=2024-04-01"
 }
 
 <#
@@ -122,11 +194,9 @@ function New-M365DSCAzureBillingAccountsAssociatedTenant
         $Body
     )
 
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/associatedTenants/$($AssociatedTenantId)?api-version=2024-04-01"
-    $payload = ConvertTo-Json $body -Depth 10 -Compress
-    $response = Invoke-AzRestMethod -Method PUT -Uri $uri -Payload $payload
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method PUT `
+        -Path "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/associatedTenants/$($AssociatedTenantId)?api-version=2024-04-01" `
+        -Body $Body
 }
 
 <#
@@ -152,10 +222,8 @@ function Get-M365DSCAzureBillingAccountsRoleAssignment
         $BillingAccountId
     )
 
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleAssignments?api-version=2024-04-01"
-    $response = Invoke-AzRestMethod -Method GET -Uri $uri
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method GET `
+        -Path "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleAssignments?api-version=2024-04-01"
 }
 
 <#
@@ -188,17 +256,15 @@ function Get-M365DSCAzureBillingAccountsRoleDefinition
         $RoleDefinitionId
     )
 
-    if ($null -eq $RoleDefinitionId)
+    if ([System.String]::IsNullOrEmpty($RoleDefinitionId))
     {
-        $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleDefinitions?api-version=2024-04-01"
+        $path = "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleDefinitions?api-version=2024-04-01"
     }
     else
     {
-        $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleDefinitions/$($RoleDefinitionId)?api-version=2024-04-01"
+        $path = "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleDefinitions/$($RoleDefinitionId)?api-version=2024-04-01"
     }
-    $response = Invoke-AzRestMethod -Method GET -Uri $uri
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method GET -Path $path
 }
 
 <#
@@ -231,11 +297,9 @@ function New-M365DSCAzureBillingAccountsRoleAssignment
         $Body
     )
 
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/createBillingRoleAssignment?api-version=2024-04-01"
-    $payload = ConvertTo-Json $Body -Depth 10 -Compress
-    $response = Invoke-AzRestMethod -Method POST -Uri $uri -Payload $payload
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method POST `
+        -Path "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/createBillingRoleAssignment?api-version=2024-04-01" `
+        -Body $Body
 }
 
 <#
@@ -268,8 +332,17 @@ function Remove-M365DSCAzureBillingAccountsRoleAssignment
         $AssignmentId
     )
 
-    $uri = "$((Get-MSCloudLoginConnectionProfile -Workload Azure).ManagementUrl)providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleAssignments/$($AssignmentId)?api-version=2024-04-01"
-    $response = Invoke-AzRestMethod -Method DELETE -Uri $uri
-    $result = ConvertFrom-Json $response.Content
-    return $result
+    return Invoke-M365DSCAzureBillingRequest -Method DELETE `
+        -Path "providers/Microsoft.Billing/billingAccounts/$($BillingAccountId)/billingRoleAssignments/$($AssignmentId)?api-version=2024-04-01"
 }
+
+Export-ModuleMember -Function @(
+    'Get-M365DSCAzureBillingAccount',
+    'Get-M365DSCAzureBillingAccountsAssociatedTenant',
+    'Get-M365DSCAzureBillingAccountsRoleAssignment',
+    'Get-M365DSCAzureBillingAccountsRoleDefinition',
+    'New-M365DSCAzureBillingAccountsAssociatedTenant',
+    'New-M365DSCAzureBillingAccountsRoleAssignment',
+    'Remove-M365DSCAzureBillingAccountsAssociatedTenant',
+    'Remove-M365DSCAzureBillingAccountsRoleAssignment'
+)

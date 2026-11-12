@@ -199,6 +199,70 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
+
+        Context -Name 'ReverseDSC Tests when the role assignments of one billing account cannot be read' -Fixture {
+            BeforeAll {
+                $Global:CurrentModeIsExport = $true
+                $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
+                $testParams = @{
+                    SubscriptionId = "00000000-0000-0000-0000-000000000000"
+                    Credential     = $Credential;
+                }
+
+                Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
+                }
+
+                Mock -CommandName Get-M365DSCAzureBillingAccount -MockWith {
+                    return @{
+                        value = @(
+                            @{
+                                name       = 'unreadable-account'
+                                properties = @{
+                                    displayName = 'UnreadableAccount'
+                                }
+                            }
+                            @{
+                                name       = "12345-12345-12345-12345-12345"
+                                properties = @{
+                                    displayName = 'MyBillingAccount'
+                                }
+                            }
+                        )
+                    }
+                }
+
+                Mock -CommandName Get-M365DSCAzureBillingAccountsRoleAssignment -ParameterFilter { $BillingAccountId -eq 'unreadable-account' } -MockWith {
+                    throw 'Azure Billing GET failed (403 Forbidden): AuthorizationFailed'
+                }
+            }
+
+            It 'Should export the role assignments of the other billing accounts' {
+                $Global:M365DSCExportInstanceErrors = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
+                try
+                {
+                    $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureBillingAccountsRoleAssignment' -MethodName 'Export' -Parameters $testParams
+                    $result | Should -Match 'MyBillingAccount'
+                    $result | Should -Not -Match 'UnreadableAccount'
+                    Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Exactly 1
+                    $Global:M365DSCExportInstanceErrors.Count | Should -Be 1
+                    $Global:M365DSCExportInstanceErrors[0].ResourceName | Should -Be 'AzureBillingAccountsRoleAssignment'
+                    $Global:M365DSCExportInstanceErrors[0].InstanceName | Should -Be 'UnreadableAccount'
+                }
+                finally
+                {
+                    $Global:M365DSCExportInstanceErrors = $null
+                }
+            }
+
+            It 'Should fail the export when the error is transient' {
+                Mock -CommandName Get-M365DSCAzureBillingAccountsRoleAssignment -ParameterFilter { $BillingAccountId -eq 'unreadable-account' } -MockWith {
+                    throw 'Azure Billing GET failed (429 TooManyRequests): Throttled'
+                }
+
+                { Invoke-M365DSCResourceMethod -ResourceName 'AzureBillingAccountsRoleAssignment' -MethodName 'Export' -Parameters $testParams } |
+                    Should -Throw -ExpectedMessage '*429*'
+            }
+        }
     }
 }
 

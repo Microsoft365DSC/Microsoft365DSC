@@ -13,6 +13,10 @@
   * Fixed `Set()` failing to remove incompatible access packages and groups.
 * AADTenantDetails
   * Added the `ResourceQuotas` property.
+* AzureBillingAccountsAssociatedTenant
+  * Fixed the export stopping at billing accounts which do not support associated tenants.
+* AzureBillingAccountsRoleAssignment
+  * Fixed the export stopping at a billing account with unreadable role assignments.
 * IntuneMobileThreatDefenseConnector
   * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
     added Id for `iVerify`.
@@ -36,6 +40,9 @@
   * Fixed `Test-M365DSCAgent` numbering every issue and recommendation as the first one.
   * Fixed several issues in `Set-M365DSCAgentCertificateConfiguration` regarding
     certificate creation and storing handling.
+* M365DSCAzureHelper
+  * Fixed failed Azure Billing requests being treated as empty results.
+  * Fixed the billing account list ignoring the `includeAll` parameter.
 * M365DSCConfigurationCompiler
   * Fixed `Invoke-M365DSCConfigurationBuild` resetting the recursion guard of an outer build.
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
@@ -135,6 +142,8 @@
   * Fixed the generated parameter block and authentication prompts of a combined
     credential and certificate export.
   * Fixed the output lines of parallel exports being interleaved.
+* M365DSCServicesHubHelper
+  * Fixed HTTP errors being replaced by a method invocation error.
 * M365DSCTelemetryEngine
   * Fixed `Set-M365DSCTelemetryOption` overwriting options that were not passed.
 * M365DSCTenantInfo
