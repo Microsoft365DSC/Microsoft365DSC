@@ -434,7 +434,7 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
             {
                 Remove-MgBetaEntitlementManagementAccessPackageIncompatibleAccessPackageByRef `
                     -AccessPackageId $currentInstance.Id `
-                    -AccessPackageId1 $incompatibleAccessPackage
+                    -Id ((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/identityGovernance/entitlementManagement/accessPackages/$incompatibleAccessPackage")
             }
             #endregion
 
@@ -471,7 +471,7 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
             {
                 Remove-MgBetaEntitlementManagementAccessPackageIncompatibleGroupByRef `
                     -AccessPackageId $currentInstance.Id `
-                    -GroupId $incompatibleGroup
+                    -Id ((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/groups/$incompatibleGroup")
             }
             #endregion
 

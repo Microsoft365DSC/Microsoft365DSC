@@ -101,6 +101,120 @@ Describe 'M365DSCGraphShim' {
             $result | Should -HaveCount 2
             Should -Invoke -ModuleName M365DSCGraphShim -CommandName Invoke-MgxRequest -Exactly 1 -ParameterFilter { -not $NoPageSize -and -not $Top }
         }
+
+        It 'Reports Multi Admin Approval when the exception has no status code' {
+            Mock -ModuleName M365DSCGraphShim -CommandName Invoke-MgxRequest -MockWith {
+                throw "Response status code does not indicate success: 400. Header 'x-msft-approval-justification' is required to request approval."
+            }
+
+            {
+                InModuleScope -ModuleName M365DSCGraphShim {
+                    Invoke-M365DSCGraphShimRequestV76 -Method DELETE -Uri '/beta/deviceManagement/configurationPolicies/policy' -ErrorAction Stop
+                }
+            } | Should -Throw '*Multi Admin Approval*'
+        }
+    }
+
+    Context 'Write and delete wrappers' {
+        BeforeAll {
+            $Script:RequestCommand = InModuleScope -ModuleName M365DSCGraphShim {
+                if ($Script:IsPowerShell76OrGreater)
+                {
+                    return 'Invoke-M365DSCGraphShimRequestV76'
+                }
+                return 'Invoke-M365DSCGraphShimRequest'
+            }
+        }
+
+        BeforeEach {
+            Mock -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -MockWith {
+            }
+        }
+
+        It 'Sends the removed reference of a collection-level $ref DELETE as @id' {
+            $target = 'https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackages/package2'
+            M365DSCGraphShim\Remove-MgBetaEntitlementManagementAccessPackageIncompatibleAccessPackageByRef -AccessPackageId 'package1' -Id $target -IfMatch 'W/"1"' -ErrorAction Stop
+
+            $expectedUri = '/beta/identityGovernance/entitlementManagement/accessPackages/package1/incompatibleAccessPackages/$ref?@id=' + [System.Uri]::EscapeDataString($target)
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 1 -ParameterFilter {
+                $Method -eq 'DELETE' -and $Uri -eq $expectedUri -and $Headers['If-Match'] -eq 'W/"1"'
+            }
+        }
+
+        It 'Rejects an empty identity value before sending a DELETE' {
+            {
+                M365DSCGraphShim\Remove-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId '' -ErrorAction Stop
+            } | Should -Throw "*parameter 'DeviceManagementConfigurationPolicyId' because it is an empty string*"
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 0
+        }
+
+        It 'Rejects every empty identity value before sending a PATCH' {
+            {
+                M365DSCGraphShim\Update-MgApplicationFederatedIdentityCredential -ApplicationId 'app' -FederatedIdentityCredentialId '' -BodyParameter @{ Name = 'Phoenix' } -ErrorAction Stop
+            } | Should -Throw "*parameter 'FederatedIdentityCredentialId' because it is an empty string*"
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 0
+        }
+
+        It 'Throws for an empty identity of a DELETE without ErrorAction' {
+            {
+                M365DSCGraphShim\Remove-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId ''
+            } | Should -Throw "*parameter 'DeviceManagementConfigurationPolicyId' because it is an empty string*"
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 0
+        }
+
+        It 'Throws for an empty identity of a PATCH without ErrorAction' {
+            {
+                M365DSCGraphShim\Update-MgApplicationFederatedIdentityCredential -ApplicationId 'app' -FederatedIdentityCredentialId '' -BodyParameter @{ Name = 'Phoenix' }
+            } | Should -Throw "*parameter 'FederatedIdentityCredentialId' because it is an empty string*"
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 0
+        }
+
+        It 'Does not throw for an empty identity of a DELETE when errors are silenced' {
+            {
+                M365DSCGraphShim\Remove-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId '' -ErrorAction SilentlyContinue
+            } | Should -Not -Throw
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 0
+        }
+
+        It 'Encodes # in the identity of a DELETE' {
+            M365DSCGraphShim\Remove-MgBetaDeviceManagementConfigurationPolicy -DeviceManagementConfigurationPolicyId 'policy#1' -ErrorAction Stop
+
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 1 -ParameterFilter {
+                $Uri -eq '/beta/deviceManagement/configurationPolicies/policy%231'
+            }
+        }
+
+        It 'Encodes # in the identity of a PATCH' {
+            M365DSCGraphShim\Update-MgApplicationFederatedIdentityCredential -ApplicationId 'app#1' -FederatedIdentityCredentialId 'credential' -BodyParameter @{ Name = 'Phoenix' } -ErrorAction Stop
+
+            Should -Invoke -ModuleName M365DSCGraphShim -CommandName $Script:RequestCommand -Exactly 1 -ParameterFilter {
+                $Method -eq 'PATCH' -and $Uri -eq '/v1.0/applications/app%231/federatedIdentityCredentials/credential'
+            }
+        }
+    }
+
+    Context 'Shared request helpers' {
+        It 'Encodes # in the path only and leaves the query unchanged' {
+            $result = InModuleScope -ModuleName M365DSCGraphShim {
+                ConvertTo-M365DSCGraphShimSafeUri -Uri '/beta/groups/a#b?$filter=displayName eq ''c#d'''
+            }
+
+            $result | Should -Be '/beta/groups/a%23b?$filter=displayName eq ''c#d'''
+        }
+
+        It 'Does not change the Headers dictionary of the caller' {
+            $headers = @{ 'x-custom' = 'value' }
+            $result = InModuleScope -ModuleName M365DSCGraphShim -Parameters @{ CallerHeaders = $headers } {
+                param($CallerHeaders)
+
+                $copy = Get-M365DSCGraphShimRequestHeaders -BoundParameters @{ Headers = $CallerHeaders }
+                $copy['ConsistencyLevel'] = 'eventual'
+                return $copy
+            }
+
+            $result['x-custom'] | Should -Be 'value'
+            $headers.ContainsKey('ConsistencyLevel') | Should -BeFalse
+        }
     }
 
     Context 'Get cmdlets with the NoPageSize switch' {
