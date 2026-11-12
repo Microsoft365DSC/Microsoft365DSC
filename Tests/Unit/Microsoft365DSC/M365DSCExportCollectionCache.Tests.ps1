@@ -199,9 +199,11 @@ Describe 'M365DSCExportCollectionCache' {
             Mock -ModuleName M365DSCExportUtil -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
                 return @(
                     @{ id = 'g1'; status = 200; body = @{ id = 'g1'; displayName = 'Group 1' } },
-                    @{ id = 'g2'; status = 404; body = @{ error = @{ code = 'Request_ResourceNotFound' } } }
+                    @{ id = 'g2'; status = 404; body = @{ error = @{ code = 'Request_ResourceNotFound' } } },
+                    @{ id = 'g3'; status = 503; body = @{ error = @{ code = 'ServiceUnavailable' } } }
                 )
             }
+            Mock -ModuleName M365DSCExportUtil -CommandName Write-Warning
         }
 
         It 'lists the PIM group resources and resolves their display names' {
@@ -215,6 +217,9 @@ Describe 'M365DSCExportCollectionCache' {
             @($result).Count | Should -Be 1
             @($result)[0].Id | Should -Be 'g1'
             @($result)[0].DisplayName | Should -Be 'Group 1'
+            Should -Invoke -ModuleName M365DSCExportUtil -CommandName Write-Warning -Times 1 -Exactly -ParameterFilter {
+                $Message -like '*{g3}*503*'
+            }
         }
 
         It 'returns an empty array when no group is enabled in PIM' {

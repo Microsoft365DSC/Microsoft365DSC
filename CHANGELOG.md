@@ -77,11 +77,21 @@
     contains a status code or `Timeout`.
 * M365DSCExportUtil
   * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
+  * Updated `-TokenReplacement` to reject names that are not valid ConfigurationData property names.
   * Fixed the export session state not being restored when the export fails or uses `-LaunchWebUI`.
   * Fixed the organization name and token replacement targets not being replaced sometimes.
   * Fixed a partial or empty Exchange user list being cached when its retrieval failed.
   * Fixed `Split-M365DSCConfiguration` using a hard-coded configuration name and
     dropping the credential arguments.
+  * Fixed `Split-M365DSCConfiguration` failing for a file in the current folder or a
+    missing output folder.
+  * Fixed `Join-M365DSCConfiguration` corrupting values that contain `$`.
+  * Fixed the dependency stub blocks missing the credential when it was prompted.
+  * Fixed `CertificateThumbprint` without `ApplicationId` being ignored when a credential is passed.
+  * Fixed overlapping `-TokenReplacement` targets replacing each other.
+  * Fixed failed lookups of PIM-enabled groups being skipped without a warning.
+  * Fixed filters with `&`, `#` or `+` breaking the export of Intune reusable policy settings.
+  * Fixed `-LaunchWebUI` writing its status to the output.
 * M365DSCGraphShim
   * Fixed update and remove cmdlets sending the request without the item ID when an
     identity parameter is empty.
@@ -161,6 +171,17 @@
   * Fixed the generated parameter block and authentication prompts of a combined
     credential and certificate export.
   * Fixed the output lines of parallel exports being interleaved.
+  * Fixed a `-Components` wildcard that matches no resource failing the export.
+  * Fixed invalid `-Components` names being reported as unsupported by the authentication
+    parameters.
+  * Fixed the Intune configuration policy prefetch failing exports with several
+    authentication methods.
+  * Fixed the parallel export failing when no resource is left to export.
+  * Fixed the generated configuration ignoring the `Credential` and `CertificatePassword`
+    passed to the script.
+  * Fixed relative export paths for the SharePoint app packages and the LCM certificate.
+  * Fixed verbose output being lost in parallel mode.
+  * Fixed the export duration being rounded to whole seconds.
 * M365DSCServicesHubHelper
   * Fixed HTTP errors being replaced by a method invocation error.
 * M365DSCTelemetryEngine
