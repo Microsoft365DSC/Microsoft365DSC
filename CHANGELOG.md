@@ -30,6 +30,10 @@
     FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
 * SPOStorageEntity
   * Fixed the export checking for the `Credential` connection mode instead of `Credentials`.
+* M365DSCAgent
+  * Fixed `Test-M365DSCAgent` numbering every issue and recommendation as the first one.
+  * Fixed several issues in `Set-M365DSCAgentCertificateConfiguration` regarding
+    certificate creation and storing handling.
 * M365DSCConfigurationCompiler
   * Fixed `Invoke-M365DSCConfigurationBuild` resetting the recursion guard of an outer build.
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
