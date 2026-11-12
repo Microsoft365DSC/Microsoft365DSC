@@ -83,6 +83,7 @@ function New-M365DSCLogEntry
             Add-M365DSCEvent -Message $errorMessage `
                 -EntryType 'Error' `
                 -EventID 1 `
+                -EventType 'Error' `
                 -Source $Source
         }
         else
@@ -90,6 +91,7 @@ function New-M365DSCLogEntry
             Add-M365DSCEvent -Message $errorMessage `
                 -EntryType 'Error' `
                 -EventID 1 `
+                -EventType 'Error' `
                 -Source $Source `
                 -TenantId $tenantIdValue
         }
@@ -252,16 +254,17 @@ function Add-M365DSCEvent
             }
         }
 
-        # Limit the size of the message. Maximum is about 32,766
+        # Limit the size of the message. The event log accepts at most 31,839 characters.
+        $maxMessageLength = 31839
         $outputMessage = $Message
         if ($PSBoundParameters.ContainsKey('TenantId'))
         {
             $outputMessage += "`n`nTenantId: " + $TenantId
         }
 
-        if ($outputMessage.Length -gt 32766)
+        if ($outputMessage.Length -gt $maxMessageLength)
         {
-            $outputMessage = $outputMessage.Substring(0, 32766)
+            $outputMessage = $outputMessage.Substring(0, $maxMessageLength)
         }
 
         if (-not [System.String]::IsNullOrEmpty($EventType))
@@ -384,7 +387,10 @@ function Export-M365DSCDiagnosticData
 
     $sourceLogPath = Join-Path -Path $env:windir -ChildPath 'System32/Configuration/ConfigurationStatus'
     $items = Get-ChildItem -Path "$sourceLogPath/*.json" | Where-Object -Property LastWriteTime -GT $afterDate
-    Copy-Item -Path $items -Destination $logPath -ErrorAction 'SilentlyContinue' #-ErrorVariable $err
+    if ($null -ne $items)
+    {
+        Copy-Item -Path $items.FullName -Destination $logPath -ErrorAction 'SilentlyContinue'
+    }
 
     $anonymizeText = {
         param
@@ -409,31 +415,41 @@ function Export-M365DSCDiagnosticData
         }
     }
 
-    # Export M365Dsc event log
+    # Export M365DSC event log
     Write-Host '  * Exporting DSC Event Log' -ForegroundColor Gray
-    $evtExportLog = Join-Path -Path $tempPath -ChildPath 'M365Dsc.csv'
+    $evtExportLog = Join-Path -Path $tempPath -ChildPath 'M365DSC.csv'
 
     try
     {
-        Get-WinEvent -FilterHashtable @{ LogName = 'M365Dsc'; StartTime = $afterDate } -ErrorAction SilentlyContinue | Export-Csv $evtExportLog -NoTypeInformation
-        if ($Anonymize)
+        Get-WinEvent -FilterHashtable @{ LogName = 'M365DSC'; StartTime = $afterDate } -ErrorAction SilentlyContinue | Export-Csv $evtExportLog -NoTypeInformation
+    }
+    catch
+    {
+        $txtExportLog = Join-Path -Path $tempPath -ChildPath 'M365DSC.txt'
+        Add-Content -Value 'M365DSC event log does not exist!' -Path $txtExportLog
+    }
+
+    if ($Anonymize -and (Test-Path -Path $evtExportLog))
+    {
+        Write-Host '    * Anonymizing DSC Event Log' -ForegroundColor Gray
+        try
         {
-            Write-Host '    * Anonymizing DSC Event Log' -ForegroundColor Gray
             $newLog = Import-Csv $evtExportLog
             foreach ($entry in $newLog)
             {
                 $entry.MachineName = '[SERVER]'
-                $entry.UserName = '[USER]'
+                $entry.UserId = '[USER]'
                 $entry.Message = & $anonymizeText $entry.Message
             }
 
             $newLog | Export-Csv -Path $evtExportLog -NoTypeInformation
         }
-    }
-    catch
-    {
-        $txtExportLog = Join-Path -Path $tempPath -ChildPath 'M365Dsc.txt'
-        Add-Content -Value 'M365Dsc event log does not exist!' -Path $txtExportLog
+        catch
+        {
+            # The raw event log must not be packaged when anonymization fails.
+            Remove-Item -Path $evtExportLog -Force -ErrorAction SilentlyContinue
+            Write-Warning -Message "The M365DSC event log could not be anonymized and is not included: $_"
+        }
     }
 
     # PowerShell Version
@@ -751,11 +767,13 @@ function Send-M365DSCNotificationEndPointMessage
     }
 
     $Parameters = @{
-        Method      = 'POST'
-        Uri         = ''
-        Body        = ($messageBody | ConvertTo-Json)
-        Headers     = $null
-        ContentType = 'application/json'
+        Method                   = 'POST'
+        Uri                      = ''
+        Body                     = ($messageBody | ConvertTo-Json)
+        Headers                  = $null
+        ContentType              = 'application/json'
+        ConnectionTimeoutSeconds = 10
+        OperationTimeoutSeconds  = 30
     }
 
     foreach ($endpoint in $endpointsToContact)
@@ -781,32 +799,6 @@ function Send-M365DSCNotificationEndPointMessage
             Write-Verbose -Message "Could not send notification to {$($endpoint.Url)}: $_"
         }
     }
-}
-
-<#
-.SYNOPSIS
-    Determines whether the current shell is non-interactive.
-
-.DESCRIPTION
-    Checks command-line arguments and host interaction mode to identify unattended execution contexts.
-
-.FUNCTIONALITY
-    Private
-#>
-function Assert-M365DSCIsNonInteractiveShell
-{
-    param ()
-
-    # Test each Arg for match of abbreviated '-NonInteractive' command.
-    $NonInteractive = [Environment]::GetCommandLineArgs() -like '-NonI*'
-
-    if ([Environment]::UserInteractive -and -not $NonInteractive)
-    {
-        # We are in an interactive shell.
-        return $false
-    }
-
-    return $true
 }
 
 <#
@@ -868,7 +860,6 @@ function Get-M365DSCLoggingOption
 
 Export-ModuleMember -Function @(
     'Add-M365DSCEvent',
-    'Assert-M365DSCIsNonInteractiveShell',
     'Export-M365DSCDiagnosticData',
     'Get-M365DSCLoggingOption',
     'New-M365DSCLogEntry',

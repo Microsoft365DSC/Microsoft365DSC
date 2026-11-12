@@ -101,6 +101,7 @@
   * Removed the `Setting` parameter set of `Export-IntuneSettingCatalogPolicySettings`
     with the `SettingInstance`, `SettingDefinitions` and `IsRoot` parameters.
 * M365DSCLogEngine
+  * Updated notification requests to time out instead of blocking the run.
   * Fixed the notification bearer token lookup using the domain before it was computed.
   * Fixed the notification endpoint registry parsing to work correctly in PowerShell 7.
   * Fixed `Get-M365DSCLoggingOption` reporting `IncludeNonDrifted` as `$true` after it
@@ -108,6 +109,11 @@
   * Fixed `Get-M365DSCNotificationEndpointRegistration` ignoring `-Url` when both
     filters are given.
   * Fixed the diagnostic anonymization never replacing URLs.
+  * Fixed `Export-M365DSCDiagnosticData -Anonymize` packaging the event log without
+    anonymizing it.
+  * Fixed `Export-M365DSCDiagnosticData` failing without recent DSC status files.
+  * Fixed notification endpoints registered for `Error` never being notified.
+  * Fixed long event messages not being written to the event log.
 * M365DSCModuleMgmt
   * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
     FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
@@ -156,6 +162,10 @@
   * Fixed HTTP errors being replaced by a method invocation error.
 * M365DSCTelemetryEngine
   * Fixed `Set-M365DSCTelemetryOption` overwriting options that were not passed.
+  * Fixed `Set-M365DSCTelemetryOption` not applying a new instrumentation key or
+    connection string to the current session.
+  * Fixed a telemetry client failure, such as an invalid connection string, stopping
+    resource operations and exports.
 * M365DSCTenantInfo
   * Fixed `Get-M365TenantName` and `Get-SPOAdministrationUrl` always returning an empty
     tenant name.

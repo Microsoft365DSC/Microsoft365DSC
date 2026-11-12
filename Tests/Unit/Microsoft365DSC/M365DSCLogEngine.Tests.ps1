@@ -85,5 +85,8 @@ Describe 'Send-M365DSCNotificationEndPointMessage' {
         Should -Invoke -ModuleName M365DSCLogEngine -CommandName Invoke-RestMethod -Exactly 1 -Scope Describe -ParameterFilter {
             $Uri.AbsoluteUri -eq 'https://bar.example.com/hook' -and $null -eq $Headers
         }
+        Should -Invoke -ModuleName M365DSCLogEngine -CommandName Invoke-RestMethod -Exactly 2 -Scope Describe -ParameterFilter {
+            $ConnectionTimeoutSeconds -eq 10 -and $OperationTimeoutSeconds -eq 30
+        }
     }
 }
