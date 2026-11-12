@@ -1375,7 +1375,7 @@ function Start-M365DSCConfigurationExtract
         }
 
         # Close the partial export StreamWriter
-        Close-M365DSCPartialExport
+        Close-M365DSCPartialExport -FileName $Global:PartialExportFileName
 
         # Remove Temp Partial Export File
         if (-not [System.String]::IsNullOrEmpty($env:TEMP))
@@ -1415,7 +1415,7 @@ function Start-M365DSCConfigurationExtract
     catch
     {
         # Close the partial export StreamWriter
-        Close-M365DSCPartialExport
+        Close-M365DSCPartialExport -FileName $Global:PartialExportFileName
 
         if (-not [System.String]::IsNullOrEmpty($env:TEMP))
         {

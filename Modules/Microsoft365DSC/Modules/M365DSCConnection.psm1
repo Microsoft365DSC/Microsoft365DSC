@@ -43,6 +43,12 @@ function Get-M365DSCComponentsWithMostSecureAuthenticationType
     $propertyNames = Get-M365DSCResourcePropertyNameMap -Resources $Resources
     if ($propertyNames.Count -eq 0)
     {
+        if ($null -ne $Resources -and $Resources.Count -gt 0)
+        {
+            # None of the requested resources exists
+            return @()
+        }
+
         throw 'The schema cache does not contain any of the requested resources. Run Utilities/New-M365DSCDscSchemaCache.ps1 to regenerate SchemaDefinition.json.'
     }
 
@@ -306,11 +312,18 @@ function New-M365DSCConnection
     $connectionMode = Get-M365DSCAuthenticationMode -Parameters $InboundParameters
     if ($connectionMode -eq 'Interactive')
     {
-        throw 'Could not determine authentication method'
+        $message = 'Could not determine authentication method'
+        Write-Verbose -Message $message
+        $message += "`r`nProvided Keys --> $($InboundParameters.Keys)"
+        $data.Add('Exception', $message)
+        $errorText = 'Could not determine the authentication method. Specify Credential, ManagedIdentity, AccessTokens, or ApplicationId and TenantId with CertificateThumbprint, ApplicationSecret or CertificatePath and CertificatePassword.'
+        $data.Add('CustomMessage', $errorText)
+        Add-M365DSCTelemetryEvent -Type 'Error' -Data $data
+        throw $errorText
     }
     Write-Verbose -Message "Connecting via $connectionMode"
 
-    $failureKey = "$Workload-$connectionMode"
+    $failureKey = "$Workload-$connectionMode-$Url-$($EnableSearchOnlySession.IsPresent)"
     if ($Global:M365DSCExportInProgress -and $Script:M365DSCConnectionFailures.ContainsKey($failureKey))
     {
         throw "Connection to $Workload failed earlier in this session: $($Script:M365DSCConnectionFailures[$failureKey]) Skipping."

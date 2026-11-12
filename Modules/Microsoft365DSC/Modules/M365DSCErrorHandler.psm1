@@ -1,5 +1,3 @@
-$Script:M365DSCPartialExportPath = $null
-
 <#
 .SYNOPSIS
     Saves the already exported configuration to a temporary file to prevent data loss
@@ -41,7 +39,6 @@ function Save-M365DSCPartialExport
     if (-not [System.String]::IsNullOrEmpty($env:TEMP))
     {
         $tempPath = Join-Path -Path $env:TEMP -ChildPath $FileName
-        $Script:M365DSCPartialExportPath = $tempPath
         [Microsoft365DSC.Cache.PartialExportWriter]::Append($tempPath, $Content)
     }
 }
@@ -50,18 +47,25 @@ function Save-M365DSCPartialExport
 .DESCRIPTION
     Releases the lock used by Save-M365DSCPartialExport. Call at export completion or on error.
 
+.PARAMETER FileName
+    Specifies the name of the partial export file in the temp folder.
+
 .FUNCTIONALITY
     Internal
 #>
 function Close-M365DSCPartialExport
 {
     [CmdletBinding()]
-    param()
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $FileName
+    )
 
-    if ($null -ne $Script:M365DSCPartialExportPath)
+    if (-not [System.String]::IsNullOrEmpty($env:TEMP))
     {
-        [Microsoft365DSC.Cache.PartialExportWriter]::Release($Script:M365DSCPartialExportPath)
-        $Script:M365DSCPartialExportPath = $null
+        [Microsoft365DSC.Cache.PartialExportWriter]::Release((Join-Path -Path $env:TEMP -ChildPath $FileName))
     }
 }
 
@@ -96,18 +100,8 @@ function Test-M365DSCTransientError
     )
 
     $message = $ErrorRecord.Exception.Message
-
-    # HTTP status code patterns (5XX server errors + 429 throttling)
     $transientStatusCodes = @(429, 500, 502, 503, 504)
-    foreach ($code in $transientStatusCodes)
-    {
-        if ($message -match "\b$code\b")
-        {
-            return $true
-        }
-    }
 
-    # Check for HttpResponseException or similar with a Response.StatusCode property
     $response = $null
     if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
     {
@@ -115,8 +109,25 @@ function Test-M365DSCTransientError
     }
     if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
     {
-        $statusCodeInt = [int]$response.StatusCode
-        if ($statusCodeInt -in $transientStatusCodes)
+        $statusCodeInt = [System.Int32]$response.StatusCode
+        if ($statusCodeInt -gt 0)
+        {
+            return ($statusCodeInt -in $transientStatusCodes)
+        }
+    }
+
+    # Status codes in the message count only where the message reports a status, e.g. 'Status: 503',
+    # '(503)', 'does not indicate success: 503' or '429 (Too Many Requests)'
+    $codes = $transientStatusCodes -join '|'
+    $statusCodePatterns = @(
+        "(?i)\bstatus(\s*code)?\s*[:=]?\s*($codes)\b",
+        "\(\s*($codes)\s*\)",
+        "(?i)does not indicate success:\s*($codes)\b",
+        "\b($codes)\s*\("
+    )
+    foreach ($pattern in $statusCodePatterns)
+    {
+        if ($message -match $pattern)
         {
             return $true
         }
@@ -125,8 +136,6 @@ function Test-M365DSCTransientError
     # Common transient error message patterns across all workloads
     $transientPatterns = @(
         '*timed out*',
-        '*timeout*',
-        '*time out*',
         '*Too Many Requests*',
         '*throttled*',
         '*Service Unavailable*',
@@ -152,6 +161,12 @@ function Test-M365DSCTransientError
         }
     }
 
+    # match 'timeout' as a whole word
+    if ($message -match '(?i)\btime\s?outs?\b')
+    {
+        return $true
+    }
+
     # Check ErrorDetails.Message for JSON error bodies (common in Graph/Intune)
     if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
     {
@@ -162,6 +177,11 @@ function Test-M365DSCTransientError
             {
                 return $true
             }
+        }
+
+        if ($detailsMessage -match '(?i)\btime\s?outs?\b')
+        {
+            return $true
         }
     }
 
@@ -212,20 +232,33 @@ function Test-M365DSCNotFoundError
         if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
         {
             $statusCodeInt = [System.Int32]$response.StatusCode
-            if ($statusCodeInt -eq 404)
+            if ($statusCodeInt -gt 0)
             {
-                return $true
-            }
-
-            # Throttling and server errors are never "not found", whatever the message says
-            if ($statusCodeInt -eq 429 -or $statusCodeInt -ge 500)
-            {
-                return $false
+                return ($statusCodeInt -eq 404)
             }
         }
     }
 
+    if ($ErrorRecord.Exception -is [System.Management.Automation.ParameterBindingException] -or
+        $ErrorRecord.Exception -is [System.Management.Automation.ItemNotFoundException])
+    {
+        return $false
+    }
+
     $message = $ErrorRecord.Exception.Message
+
+    # Remote sessions return binding and validation errors as plain messages
+    $otherErrorPatterns = @(
+        '*A parameter cannot be found that matches parameter name*',
+        '*does not exist as a declared property*'
+    )
+    foreach ($pattern in $otherErrorPatterns)
+    {
+        if ($message -like $pattern)
+        {
+            return $false
+        }
+    }
 
     # Common "not found" patterns across all workloads
     $notFoundPatterns = @(

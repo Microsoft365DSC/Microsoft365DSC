@@ -119,6 +119,15 @@ Describe 'New-M365DSCConnection' {
             Should -Invoke -ModuleName M365DSCConnection -CommandName Connect-M365Tenant -Exactly -Times 3
         }
 
+        It 'keys the failure per url' {
+            Mock -ModuleName M365DSCConnection -CommandName Connect-M365Tenant -MockWith { throw 'Access denied' } -ParameterFilter { $Url -eq 'https://contoso.sharepoint.com/sites/locked' }
+            { New-M365DSCConnection -Workload 'PnP' -Url 'https://contoso.sharepoint.com/sites/locked' -InboundParameters $Script:SpThumbprint.Clone() } | Should -Throw -ExpectedMessage 'Access denied'
+            New-M365DSCConnection -Workload 'PnP' -Url 'https://contoso.sharepoint.com/sites/open' -InboundParameters $Script:SpThumbprint.Clone() | Should -Be 'ServicePrincipalWithThumbprint'
+            { New-M365DSCConnection -Workload 'PnP' -Url 'https://contoso.sharepoint.com/sites/locked' -InboundParameters $Script:SpThumbprint.Clone() } |
+                Should -Throw -ExpectedMessage '*failed earlier in this session: Access denied*'
+            Should -Invoke -ModuleName M365DSCConnection -CommandName Connect-M365Tenant -Exactly -Times 2
+        }
+
         It 'attempts again after Reset-M365DSCConnectionFailureCache' {
             { New-M365DSCConnection -Workload 'Azure' -InboundParameters $Script:SpThumbprint.Clone() } | Should -Throw
             Reset-M365DSCConnectionFailureCache

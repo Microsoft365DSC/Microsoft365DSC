@@ -84,6 +84,8 @@ Describe 'Test-M365DSCTransientError' {
             @{ Message = 'Access denied.' }
             @{ Message = 'The specified object was not found.' }
             @{ Message = 'Parameter validation failed.' }
+            @{ Message = "The operation couldn't be performed because object 'Block 500 users' couldn't be found on 'EXSERVER'." }
+            @{ Message = "Property 'sessionTimeoutInMinutes' is invalid." }
         ) {
             try
             {
@@ -94,6 +96,13 @@ Describe 'Test-M365DSCTransientError' {
                 $result = Test-M365DSCTransientError -ErrorRecord $_
                 $result | Should -BeFalse
             }
+        }
+
+        It 'Should return $false for a 400 response whose message matches a transient pattern' {
+            $exception = [System.Exception]::new('The operation has timed out.')
+            $exception | Add-Member -MemberType NoteProperty -Name Response -Value ([pscustomobject]@{ StatusCode = 400 })
+            $errorRecord = [System.Management.Automation.ErrorRecord]::new($exception, 'Test', 'NotSpecified', $null)
+            Test-M365DSCTransientError -ErrorRecord $errorRecord | Should -BeFalse
         }
     }
 }
@@ -165,6 +174,8 @@ Describe 'Test-M365DSCNotFoundError' {
             @{ Message = 'Access denied. The requested object was not found or you do not have permission.' }
             @{ Message = 'The request failed. client-request-id: 7f3a9c2e-404b-4d1e-9a40-1c2d3e4f5a6b' }
             @{ Message = "Error on server 'AM9PR04MB4049.eurprd04.prod.outlook.com'." }
+            @{ Message = "A parameter cannot be found that matches parameter name 'IncludeHidden'." }
+            @{ Message = "Property 'foo' does not exist as a declared property or extension property." }
         ) {
             try
             {
@@ -178,6 +189,8 @@ Describe 'Test-M365DSCNotFoundError' {
         }
 
         It 'Should return $false for a <StatusCode> response whose message matches a not-found pattern' -ForEach @(
+            @{ StatusCode = 400 }
+            @{ StatusCode = 409 }
             @{ StatusCode = 429 }
             @{ StatusCode = 503 }
         ) {
@@ -185,6 +198,18 @@ Describe 'Test-M365DSCNotFoundError' {
             $exception | Add-Member -MemberType NoteProperty -Name Response -Value ([pscustomobject]@{ StatusCode = $StatusCode })
             $errorRecord = [System.Management.Automation.ErrorRecord]::new($exception, 'Test', 'NotSpecified', $null)
             Test-M365DSCNotFoundError -ErrorRecord $errorRecord | Should -BeFalse
+        }
+
+        It 'Should return $false for local parameter binding and provider errors' {
+            $errorRecords = @()
+            try { Get-Date -NoSuchParameter 'x' -ErrorAction Stop } catch { $errorRecords += $_ }
+            try { Get-Item -Path (Join-Path -Path $TestDrive -ChildPath 'missing.txt') -ErrorAction Stop } catch { $errorRecords += $_ }
+
+            $errorRecords.Count | Should -Be 2
+            foreach ($errorRecord in $errorRecords)
+            {
+                Test-M365DSCNotFoundError -ErrorRecord $errorRecord | Should -BeFalse
+            }
         }
     }
 
@@ -293,6 +318,13 @@ Describe 'Invoke-M365DSCCommand' {
             $result = Invoke-M365DSCCommand -ScriptBlock {
                 throw "Request_ResourceNotFound: Resource does not exist."
             } -SuppressNotFoundError
+            $result | Should -BeNullOrEmpty
+        }
+
+        It 'Should return $null when the name of the object contains a status code' {
+            $result = Invoke-M365DSCCommand -ScriptBlock {
+                throw "The operation couldn't be performed because object 'Block 500 users' couldn't be found on 'EXSERVER'."
+            } -SuppressNotFoundError -BaseDelayInSeconds 0
             $result | Should -BeNullOrEmpty
         }
     }
@@ -563,6 +595,30 @@ Describe 'Save-M365DSCPartialExport' {
         finally
         {
             $workers | ForEach-Object -Process { $_.PowerShell.Dispose() }
+            Remove-Item -Path $filePath -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'releases the lock of a file written by another runspace' {
+        $fileName = "$(New-Guid).partial.ps1"
+        $filePath = [System.IO.Path]::GetFullPath((Join-Path -Path $env:TEMP -ChildPath $fileName))
+        $locks = [Microsoft365DSC.Cache.PartialExportWriter].GetField('_locks', [System.Reflection.BindingFlags] 'NonPublic, Static').GetValue($null)
+        $powershell = [System.Management.Automation.PowerShell]::Create()
+        try
+        {
+            $null = $powershell.AddScript({
+                    param ($ModulePath, $FileName)
+                    Import-Module $ModulePath
+                    Save-M365DSCPartialExport -Content 'instance' -FileName $FileName
+                }).AddArgument($Script:ErrorHandlerPath).AddArgument($fileName).Invoke()
+            $locks.ContainsKey($filePath) | Should -BeTrue
+
+            Close-M365DSCPartialExport -FileName $fileName
+            $locks.ContainsKey($filePath) | Should -BeFalse
+        }
+        finally
+        {
+            $powershell.Dispose()
             Remove-Item -Path $filePath -Force -ErrorAction SilentlyContinue
         }
     }
