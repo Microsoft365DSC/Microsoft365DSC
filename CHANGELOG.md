@@ -53,6 +53,12 @@
 * M365DSCConnection
   * Fixed `New-M365DSCConnection` replacing the `ApplicationSecret` credential of the
     caller with its plain text value.
+  * Fixed a failed connection to one SharePoint site during an export blocking the
+    connections to all other sites.
+  * Fixed `New-M365DSCConnection` not naming the valid parameter combinations when the
+    authentication parameters are incomplete.
+  * Fixed `Export-M365DSCConfiguration` with only invalid components failing with a schema
+    cache error.
 * M365DSCDocGenerator
   * Fixed stale documentation pages being published after an aborted run.
 * M365DSCDRGUtil
@@ -63,6 +69,9 @@
   * Updated `Save-M365DSCPartialExport` to accept empty content.
   * Fixed `Invoke-M365DSCCommand` not retrying or suppressing non-terminating errors.
   * Fixed resources being reported as absent on missing roles, throttling or server errors.
+  * Fixed resources being reported as absent on parameter binding or invalid property errors.
+  * Fixed permanent errors being retried as transient when an object or property name
+    contains a status code or `Timeout`.
 * M365DSCExportUtil
   * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
   * Fixed the export session state not being restored when the export fails or uses `-LaunchWebUI`.
