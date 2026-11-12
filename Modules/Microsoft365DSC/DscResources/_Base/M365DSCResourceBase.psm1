@@ -659,7 +659,7 @@ class M365DSCResourceBase
                 return "$where of type '$($item.GetType().FullName)' does not convert to '$($elementType.FullName)'."
             }
 
-            $known = @($elementType.GetProperties() | ForEach-Object { $_.Name })
+            $known = @($elementType.GetProperties().Name)
             $unknown = @($item.Keys | Where-Object { $_ -notin $known })
             if ($unknown.Count -gt 0)
             {
@@ -1252,13 +1252,22 @@ class M365DSCResourceBase
                 }
             }
 
-            $Global:M365DSCExportInstanceErrors.Add(@{
-                ResourceName = $this.GetResourceName()
-                InstanceName = $instanceNameParts -join ', '
-                Message      = $_.Exception.Message
-            })
+            $this.AddExportInstanceError(($instanceNameParts -join ', '), $_.Exception.Message)
             $Global:M365DSCExportInstanceFailureMessage = $_.Exception.Message
             return $null
+        }
+    }
+
+    # Records a skipped export instance.
+    hidden [void] AddExportInstanceError([System.String] $InstanceName, [System.String] $Message)
+    {
+        if ($null -ne $Global:M365DSCExportInstanceErrors)
+        {
+            $Global:M365DSCExportInstanceErrors.Add(@{
+                ResourceName = $this.GetResourceName()
+                InstanceName = $InstanceName
+                Message      = $Message
+            })
         }
     }
 

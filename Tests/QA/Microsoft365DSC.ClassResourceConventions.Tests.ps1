@@ -21,7 +21,7 @@ BeforeDiscovery {
         'M365DSCExportResourceInstancesCount', 'PartialExportFileName', 'CurrentModeIsExport',
         'AllDrifts', 'PotentialDrifts', 'MaximumFunctionCount', 'ConfigurationData',
         'M365DSCEmojiGreenCheckMark', 'M365DSCEmojiRedX', 'M365DSCEmojiYellowCircle',
-        'M365DSCEmojiHourglass', 'M365DSCEmojiStopSign', 'M365DSCEmojiInformation',
+        'M365DSCEmojiHourglass', 'M365DSCEmojiInformation',
         'M365DSCExportRelations',
         # PowerShell's own automatic variable; the base class reads it for the 5.1 dispatch.
         'PSVersionTable'

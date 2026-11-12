@@ -222,7 +222,24 @@ class AzureBillingAccountsAssociatedTenant : M365DSCResourceBase
                 $displayedKey = $config.properties.displayName
                 Write-M365DSCHost -Message "    |---[$i/$($accounts.Count)] $displayedKey"
 
-                [array]$associatedTenants = Get-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $config.name
+                try
+                {
+                    [array]$associatedTenants = Get-M365DSCAzureBillingAccountsAssociatedTenant -BillingAccountId $config.name
+                }
+                catch
+                {
+                    # Only MCA billing accounts support associated tenants
+                    # Skip the others unless the error is transient.
+                    if (Test-M365DSCTransientError -ErrorRecord $_)
+                    {
+                        throw
+                    }
+                    $this.AddExportInstanceError($displayedKey, $_.Exception.Message)
+                    $this.LogError($_, "Error retrieving associated tenants for billing account {$displayedKey}:")
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+                    $i++
+                    continue
+                }
 
                 $j = 1
                 foreach ($associatedTenant in $associatedTenants.value)

@@ -56,10 +56,11 @@ function Invoke-M365DSCServicesHubWebRequest
     }
     catch
     {
-        $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
-        $ErrResp = $streamReader.ReadToEnd() | ConvertFrom-Json
-        $streamReader.Close()
-        throw $ErrResp
+        if (-not [System.String]::IsNullOrEmpty($_.ErrorDetails.Message))
+        {
+            throw "$($_.Exception.Message) $($_.ErrorDetails.Message)"
+        }
+        throw $_
     }
     $result = $null
     if ($response.Content.Length -gt 0)

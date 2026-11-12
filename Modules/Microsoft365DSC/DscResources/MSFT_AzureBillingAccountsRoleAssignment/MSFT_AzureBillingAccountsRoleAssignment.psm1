@@ -192,7 +192,7 @@ class AzureBillingAccountsRoleAssignment : M365DSCResourceBase
             $instances = Get-M365DSCAzureBillingAccountsRoleAssignment -BillingAccountId $account.Name -ErrorAction Stop
             $instance = $instances.value | Where-Object -FilterScript { $_.properties.principalId -eq $PrincipalIdValue }
             $AssignmentId = $instance.Id.Split('/')
-            $AssignmentId = $AssignmentId[$roleDefinitionId.Length - 1]
+            $AssignmentId = $AssignmentId[$AssignmentId.Length - 1]
             Write-Verbose -Message "Removing role assignment for user {$($this.PrincipalName)} for role {$($this.RoleDefinition)}"
             Remove-M365DSCAzureBillingAccountsRoleAssignment -BillingAccountId $account.Name `
                 -AssignmentId $AssignmentId
@@ -239,7 +239,22 @@ class AzureBillingAccountsRoleAssignment : M365DSCResourceBase
                 $displayedKey = $config.properties.displayName
                 Write-M365DSCHost -Message "    |---[$i/$($accounts.Count)] $displayedKey"
 
-                $assignments = Get-M365DSCAzureBillingAccountsRoleAssignment -BillingAccountId $config.name
+                try
+                {
+                    $assignments = Get-M365DSCAzureBillingAccountsRoleAssignment -BillingAccountId $config.name
+                }
+                catch
+                {
+                    if (Test-M365DSCTransientError -ErrorRecord $_)
+                    {
+                        throw
+                    }
+                    $this.AddExportInstanceError($displayedKey, $_.Exception.Message)
+                    $this.LogError($_, "Error retrieving role assignments for billing account {$displayedKey}:")
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+                    $i++
+                    continue
+                }
 
                 $j = 1
                 foreach ($assignment in $assignments.value)
