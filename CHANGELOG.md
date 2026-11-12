@@ -9,6 +9,8 @@
     FIXES [#7617](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7617)
 * AADCrossTenantAccessPolicyConfigurationPartner
   * Added `RoleEnabledGroupSyncInbound` to `IdentitySynchronization`.
+* AADEntitlementManagementAccessPackage
+  * Fixed `Set()` failing to remove incompatible access packages and groups.
 * AADTenantDetails
   * Added the `ResourceQuotas` property.
 * IntuneMobileThreatDefenseConnector
@@ -61,6 +63,13 @@
   * Fixed a partial or empty Exchange user list being cached when its retrieval failed.
   * Fixed `Split-M365DSCConfiguration` using a hard-coded configuration name and
     dropping the credential arguments.
+* M365DSCGraphShim
+  * Fixed update and remove cmdlets sending the request without the item ID when an
+    identity parameter is empty.
+  * Fixed IDs containing `#` not being encoded in update and remove requests.
+  * Fixed remove cmdlets not sending the `If-Match` header.
+  * Fixed the Multi Admin Approval error not being reported when the response has no
+    status code.
 * M365DSCIntuneUtil
   * Fixed handling of group lookup failures, such as missing permissions or network errors.
   * Fixed an assignment with an unresolved assignment filter being created without the filter.

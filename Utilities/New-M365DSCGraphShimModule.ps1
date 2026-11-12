@@ -212,60 +212,33 @@ $bodyMetaParams = @(
 )
 #endregion
 
-#region Helper: convert PascalCase identity param name to URI placeholder
-function ConvertTo-UriPlaceholder {
-    param([string]$ParamName)
-    # Strip trailing 'Id' or '_Id'
-    $base = $ParamName -replace 'Id$', '' -replace '_Id$', ''
-    # Insert hyphens before uppercase letters (PascalCase → kebab-case)
-    $kebab = ($base -creplace '([a-z])([A-Z])', '$1-$2').ToLower()
-    return "{$kebab-id}"
-}
-#endregion
-
-#region Helper: determine identity parameters and their URI placeholders for a cmdlet
-function Get-IdentityParamMapping {
+#region Helper: create the guards that reject an empty identity parameter value
+<#
+    Returns one guard line per parameter in ParamName. When UriExpression is given, only the
+    parameters that the URI expression substitutes get a guard. With Terminating, the guard
+    throws unless the caller silenced errors, as the SDK binder and the request helper do.
+#>
+function Get-ShimEmptyIdentityGuard {
     param(
-        [string]$CmdletName,
-        [array]$Variants,
-        [array]$ParamList
+        [System.String[]]$ParamName,
+        [System.String]$UriExpression,
+        [switch]$Terminating
     )
 
-    # Find URI variant with placeholders (single-item endpoint)
-    $singleItemVariant = $Variants | Where-Object { $_.URI -match '\{[^}]+\}' } | Select-Object -First 1
-    if (-not $singleItemVariant) { return @{} }
-
-    $uri = $singleItemVariant.URI
-    # Extract all placeholders like {application-id}
-    $placeholders = [regex]::Matches($uri, '\{([^}]+)\}') | ForEach-Object { $_.Groups[1].Value }
-
-    $paramMapping = [ordered]@{}
-    foreach ($placeholder in $placeholders) {
-        # Try to find matching parameter: convert placeholder to PascalCase + 'Id'
-        # {application-id} → ApplicationId
-        # {conditionalAccessPolicy-id} → ConditionalAccessPolicyId
-        $pascalCase = ($placeholder -replace '-id$', '' -split '-' | ForEach-Object {
-            $_.Substring(0, 1).ToUpper() + $_.Substring(1)
-        }) -join ''
-        $paramName = $pascalCase + 'Id'
-
-        # Check if this parameter exists in the stub signature
-        $matchingParam = $ParamList | Where-Object { $_.Name -eq $paramName }
-        if ($matchingParam) {
-            $paramMapping[$paramName] = $placeholder
+    $lines = @()
+    foreach ($name in $ParamName) {
+        if (-not [System.String]::IsNullOrEmpty($UriExpression) -and -not $UriExpression.Contains("`$(`$$name)")) {
+            continue
+        }
+        $message = "Cannot bind argument to parameter '$name' because it is an empty string."
+        if ($Terminating) {
+            $lines += "    if (`$PSBoundParameters.ContainsKey('$name') -and [System.String]::IsNullOrEmpty(`$$name)) { `$guardAction = if (`$ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { `$ErrorActionPreference } else { 'Stop' }; Write-Error -Message `"$message`" -ErrorAction `$guardAction; return }"
         }
         else {
-            # Try common alternatives: Id, DirectoryObjectId
-            foreach ($alt in @('Id', $CmdletName -replace '^(Get|New|Update|Remove|Set|Invoke)-Mg(Beta)?', '' -replace '([A-Z])', '$1' | ForEach-Object { $_ + 'Id' })) {
-                $altMatch = $ParamList | Where-Object { $_.Name -eq $alt }
-                if ($altMatch) {
-                    $paramMapping[$alt] = $placeholder
-                    break
-                }
-            }
+            $lines += "    if (`$PSBoundParameters.ContainsKey('$name') -and [System.String]::IsNullOrEmpty(`$$name)) { Write-Error -Message `"$message`" -ErrorAction `$ErrorActionPreference; return }"
         }
     }
-    return $paramMapping
+    return $lines
 }
 #endregion
 
@@ -503,23 +476,30 @@ function Invoke-M365DSCGraphShimRequestV76
     }
 
     $pageSizeLimitPattern = "The limit of '(\d+)' for Top query has been exceeded"
+    # Repeats the request with the page size limit the collection reported, or without a page size when it is 0.
+    $invokeWithPageSizeLimit = {
+        param([System.Int32] $Limit)
+
+        Write-Warning -Message "The limit for Top query has been exceeded. Retrying with PageSize set to $Limit."
+        $invokeParams.Remove('NoPageSize') | Out-Null
+        $invokeParams.Remove('PageSize') | Out-Null
+        if ($Limit -gt 0)
+        {
+            $invokeParams['PageSize'] = $Limit
+        }
+        else
+        {
+            $invokeParams['NoPageSize'] = $true
+        }
+        return Invoke-MgxRequest @invokeParams
+    }
+
     try
     {
         $response = Invoke-MgxRequest @invokeParams -ErrorVariable mgxErrors
         if ($All -and $mgxErrors.Count -gt 0 -and "$($mgxErrors[0])" -match $pageSizeLimitPattern)
         {
-            Write-Warning -Message "The limit for Top query has been exceeded. Retrying with PageSize set to $($Matches[1])."
-            $invokeParams.Remove('NoPageSize') | Out-Null
-            $invokeParams.Remove('PageSize') | Out-Null
-            if ([int]$Matches[1] -gt 0)
-            {
-                $invokeParams['PageSize'] = [int]$Matches[1]
-            }
-            else
-            {
-                $invokeParams['NoPageSize'] = $true
-            }
-            $response = Invoke-MgxRequest @invokeParams
+            $response = & $invokeWithPageSizeLimit ([System.Int32]$Matches[1])
         }
         return $response
     }
@@ -527,22 +507,11 @@ function Invoke-M365DSCGraphShimRequestV76
     {
         if ($All -and $_.Exception.Message -match $pageSizeLimitPattern)
         {
-            Write-Warning -Message "The limit for Top query has been exceeded. Retrying with PageSize set to $($Matches[1])."
-            $invokeParams.Remove('NoPageSize') | Out-Null
-            $invokeParams.Remove('PageSize') | Out-Null
-            if ([int]$Matches[1] -gt 0)
-            {
-                $invokeParams['PageSize'] = [int]$Matches[1]
-            }
-            else
-            {
-                $invokeParams['NoPageSize'] = $true
-            }
-            return Invoke-MgxRequest @invokeParams
+            return & $invokeWithPageSizeLimit ([System.Int32]$Matches[1])
         }
 
         $statusCode = $null
-        if ($_.Exception)
+        if ($null -ne $_.Exception.StatusCode)
         {
             $statusCode = [int]$_.Exception.StatusCode
         }
@@ -926,6 +895,54 @@ $script:GraphShimExcludeFromBody = @(
 
 <#
 .SYNOPSIS
+    Encodes '#' in the path of a Graph URI.
+    The query string is left unchanged.
+#>
+function ConvertTo-M365DSCGraphShimSafeUri
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Uri
+    )
+
+    $queryIndex = $Uri.IndexOf('?')
+    if ($queryIndex -lt 0)
+    {
+        return $Uri.Replace('#', '%23')
+    }
+    return $Uri.Substring(0, $queryIndex).Replace('#', '%23') + $Uri.Substring($queryIndex)
+}
+
+<#
+.SYNOPSIS
+    Returns a copy of the bound request headers.
+#>
+function Get-M365DSCGraphShimRequestHeaders
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]
+        $BoundParameters
+    )
+
+    $requestHeaders = @{}
+    if ($BoundParameters.ContainsKey('Headers') -and $null -ne $BoundParameters['Headers'])
+    {
+        foreach ($key in $BoundParameters['Headers'].Keys)
+        {
+            $requestHeaders[$key] = $BoundParameters['Headers'][$key]
+        }
+    }
+    return $requestHeaders
+}
+
+<#
+.SYNOPSIS
     Centralized GET dispatcher that handles single-item vs. collection retrieval,
     OData query options, and paging — replacing the identical code block that was
     duplicated in every Get-* wrapper function.
@@ -947,15 +964,13 @@ function Invoke-M365DSCGraphShimGetResource
         $SingleItemUri
     )
 
-    # Build headers
-    $requestHeaders = @{}
-    if ($BoundParameters.ContainsKey('Headers')) { $requestHeaders = $BoundParameters['Headers'] }
+    $requestHeaders = Get-M365DSCGraphShimRequestHeaders -BoundParameters $BoundParameters
     if ($BoundParameters.ContainsKey('ConsistencyLevel')) { $requestHeaders['ConsistencyLevel'] = $BoundParameters['ConsistencyLevel'] }
 
     # Single-item retrieval when a resolved SingleItemUri is supplied
     if (-not [System.String]::IsNullOrEmpty($SingleItemUri))
     {
-        $uri = $SingleItemUri.Replace("#", "%23") # Encode '#' in IDs to prevent confusion with URI fragments
+        $uri = ConvertTo-M365DSCGraphShimSafeUri -Uri $SingleItemUri
         $queryParts = @()
         if ($BoundParameters['Property']) { $queryParts += "`$select=$($BoundParameters['Property'] -join ',')" }
         if ($BoundParameters['ExpandProperty']) { $queryParts += "`$expand=$($BoundParameters['ExpandProperty'] -join ',')" }
@@ -969,7 +984,7 @@ function Invoke-M365DSCGraphShimGetResource
     }
 
     # Collection retrieval
-    $uriParams = @{ UriTemplate = $CollectionUri }
+    $uriParams = @{ UriTemplate = (ConvertTo-M365DSCGraphShimSafeUri -Uri $CollectionUri) }
     if ($BoundParameters['Filter'])         { $uriParams['Filter'] = $BoundParameters['Filter'] }
     if ($BoundParameters['Property'])       { $uriParams['Property'] = $BoundParameters['Property'] }
     if ($BoundParameters['ExpandProperty']) { $uriParams['ExpandProperty'] = $BoundParameters['ExpandProperty'] }
@@ -1066,8 +1081,8 @@ function Invoke-M365DSCGraphShimWriteResource
         $ExtraExcludeParams = @()
     )
 
-    $requestHeaders = @{}
-    if ($BoundParameters.ContainsKey('Headers')) { $requestHeaders = $BoundParameters['Headers'] }
+    $requestHeaders = Get-M365DSCGraphShimRequestHeaders -BoundParameters $BoundParameters
+    $Uri = ConvertTo-M365DSCGraphShimSafeUri -Uri $Uri
 
     $excludeFromBody = $script:GraphShimExcludeFromBody + $ExtraExcludeParams
     $namedParams = @{}
@@ -1113,8 +1128,13 @@ function Invoke-M365DSCGraphShimDeleteResource
         $Uri
     )
 
-    $requestHeaders = @{}
-    if ($BoundParameters.ContainsKey('Headers')) { $requestHeaders = $BoundParameters['Headers'] }
+    $requestHeaders = Get-M365DSCGraphShimRequestHeaders -BoundParameters $BoundParameters
+    if (-not [System.String]::IsNullOrEmpty($BoundParameters['IfMatch']))
+    {
+        $requestHeaders['If-Match'] = $BoundParameters['IfMatch']
+    }
+    $Uri = ConvertTo-M365DSCGraphShimSafeUri -Uri $Uri
+
     if ($Script:IsPowerShell76OrGreater)
     {
         Invoke-M365DSCGraphShimRequestV76 -Method 'DELETE' -Uri $Uri -Headers $requestHeaders -ErrorAction $ErrorActionPreference
@@ -1253,7 +1273,9 @@ foreach ($cmdletName in $cmdletNames) {
                 }
 
                 $lastIdParam = $identityParamNames[-1]
-                [void]$bodyLines.AppendLine("    if (`$PSBoundParameters.ContainsKey('$lastIdParam') -and [System.String]::IsNullOrEmpty(`$$lastIdParam)) { Write-Error -Message `"Cannot bind argument to parameter '$lastIdParam' because it is an empty string.`" -ErrorAction `$ErrorActionPreference; return }")
+                foreach ($guardLine in (Get-ShimEmptyIdentityGuard -ParamName $lastIdParam)) {
+                    [void]$bodyLines.AppendLine($guardLine)
+                }
                 [void]$bodyLines.AppendLine("    `$singleItemUri = if (`$PSBoundParameters.ContainsKey('$lastIdParam') -and -not [System.String]::IsNullOrEmpty(`$$lastIdParam)) { `"$singleUriExpr`" } else { `$null }")
             }
 
@@ -1291,6 +1313,9 @@ foreach ($cmdletName in $cmdletNames) {
 
             $httpMethod = if ($method -eq 'PUT') { 'PUT' } else { 'POST' }
             [void]$bodyLines.AppendLine('')
+            foreach ($guardLine in (Get-ShimEmptyIdentityGuard -ParamName $identityParamNames -UriExpression $uriExpr -Terminating)) {
+                [void]$bodyLines.AppendLine($guardLine)
+            }
 
             if ($identityParamNames.Count -gt 0) {
                 $extraExclude = ($identityParamNames | ForEach-Object { "'$_'" }) -join ', '
@@ -1310,6 +1335,9 @@ foreach ($cmdletName in $cmdletNames) {
             }
 
             [void]$bodyLines.AppendLine('')
+            foreach ($guardLine in (Get-ShimEmptyIdentityGuard -ParamName $identityParamNames -UriExpression $uriExpr -Terminating)) {
+                [void]$bodyLines.AppendLine($guardLine)
+            }
 
             if ($identityParamNames.Count -gt 0) {
                 $extraExclude = ($identityParamNames | ForEach-Object { "'$_'" }) -join ', '
@@ -1328,8 +1356,27 @@ foreach ($cmdletName in $cmdletNames) {
                 $uriExpr = $uriExpr -replace [regex]::Escape("{$($entry.Value)}"), "`$(`$$($entry.Key))"
             }
 
+            $refTargetParam = $null
+            if ($targetUri -match '/`?\$ref$' -and 'Id' -notin $identityParamNames -and ($functionEntry | Where-Object { $_.Name -eq 'Id' })) {
+                $refTargetParam = 'Id'
+            }
+
+            $guardParams = @($identityParamNames | Where-Object { $uriExpr.Contains("`$(`$$_)") })
+            if ($refTargetParam) { $guardParams += $refTargetParam }
+
             [void]$bodyLines.AppendLine('')
-            [void]$bodyLines.AppendLine("    Invoke-M365DSCGraphShimDeleteResource -BoundParameters `$PSBoundParameters -Uri `"$uriExpr`" -ErrorAction `$ErrorActionPreference")
+            foreach ($guardLine in (Get-ShimEmptyIdentityGuard -ParamName $guardParams -Terminating)) {
+                [void]$bodyLines.AppendLine($guardLine)
+            }
+
+            if ($refTargetParam) {
+                [void]$bodyLines.AppendLine("    `$uri = `"$uriExpr`"")
+                [void]$bodyLines.AppendLine("    if (`$PSBoundParameters.ContainsKey('$refTargetParam')) { `$uri += '?@id=' + [System.Uri]::EscapeDataString(`$$refTargetParam) }")
+                [void]$bodyLines.AppendLine("    Invoke-M365DSCGraphShimDeleteResource -BoundParameters `$PSBoundParameters -Uri `$uri -ErrorAction `$ErrorActionPreference")
+            }
+            else {
+                [void]$bodyLines.AppendLine("    Invoke-M365DSCGraphShimDeleteResource -BoundParameters `$PSBoundParameters -Uri `"$uriExpr`" -ErrorAction `$ErrorActionPreference")
+            }
         }
     }
 
