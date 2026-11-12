@@ -68,7 +68,7 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
                 $this.AddTelemetry('Get')
 
-                $instance = Get-M365DataAtRestEncryptionPolicyAssignment -ErrorAction SilentlyContinue
+                $instance = Invoke-M365DSCCommand -ScriptBlock { Get-M365DataAtRestEncryptionPolicyAssignment -ErrorAction Stop }
             }
             else
             {
@@ -101,11 +101,11 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
         Write-Verbose -Message "Setting configuration for DataAtRestEncryptionPolicyAssignment with DataEncryptionPolicy $($this.DataEncryptionPolicy)"
 
+        $null = $this.Connect('ExchangeOnline')
+
         Confirm-M365DSCDependencies
 
         $this.AddTelemetry('Set')
-
-        $null = $this.Get().ToHashtable()
 
         $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
         $setParameters.Remove('IsSingleInstance') | Out-Null

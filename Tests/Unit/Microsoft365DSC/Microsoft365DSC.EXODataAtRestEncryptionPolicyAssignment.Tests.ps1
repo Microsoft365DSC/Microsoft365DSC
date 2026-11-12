@@ -86,6 +86,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 (New-M365DSCResourceInstance -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -Property $testParams).Test() | Should -Be $false
             }
 
+            It 'Should throw from the Test method when the service fails' {
+                Mock -CommandName Get-M365DataAtRestEncryptionPolicyAssignment -MockWith {
+                    Write-Error -Message "Value cannot be null. (Parameter 'scopeSet')"
+                }
+                { (New-M365DSCResourceInstance -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -Property $testParams).Test() } |
+                    Should -Throw -ExpectedMessage "*scopeSet*"
+                Should -Invoke -CommandName Set-M365DataAtRestEncryptionPolicyAssignment -Exactly 0
+            }
+
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-M365DataAtRestEncryptionPolicyAssignment -Exactly 1
