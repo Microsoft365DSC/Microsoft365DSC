@@ -142,13 +142,6 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
             $returnHashtable.Add('RoleScopeTags', $assignmentFilter.RoleScopeTags)
             $returnHashtable.Add('Rule', $assignmentFilter.Rule)
             $returnHashtable.Add('Ensure', 'Present')
-            $returnHashtable.Add('Credential', $this.Credential)
-            $returnHashtable.Add('ApplicationId', $this.ApplicationId)
-            $returnHashtable.Add('TenantId', $this.TenantId)
-            $returnHashtable.Add('ApplicationSecret', $this.ApplicationSecret)
-            $returnHashtable.Add('CertificateThumbprint', $this.CertificateThumbprint)
-            $returnHashtable.Add('ManagedIdentity', $this.ManagedIdentity)
-            $returnHashtable.Add('AccessTokens', $this.AccessTokens)
 
             return $this.AsResult($returnHashtable)
         }
@@ -268,17 +261,8 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($assignmentFilters.Count)] $($assignmentFilter.displayName)" -DeferWrite
 
                 $params = @{
-                    DisplayName           = $assignmentFilter.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $assignmentFilter.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $assignmentFilter
@@ -317,22 +301,5 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceAndAppManagementAssignmentFilter] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceAndAppManagementAssignmentFilter])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceAndAppManagementAssignmentFilter]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

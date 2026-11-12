@@ -108,19 +108,11 @@ class EXOServicePrincipal : M365DSCResourceBase
             Write-Verbose -Message "Found Service Principal with AppName {$($this.AppName)}"
 
             $results = @{
-                Identity              = $servicePrincipal.Id
-                AppName               = $servicePrincipal.AppDisplayName
-                DisplayName           = $instance.DisplayName
-                AppId                 = $instance.AppId
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity    = $servicePrincipal.Id
+                AppName     = $servicePrincipal.AppDisplayName
+                DisplayName = $instance.DisplayName
+                AppId       = $instance.AppId
+                Ensure      = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -223,15 +215,7 @@ class EXOServicePrincipal : M365DSCResourceBase
                 $displayedKey = $appDisplayName
                 Write-M365DSCHost -Message "    |---[$i/$($servicePrincipals.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    AppName               = $appDisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    AppName = $appDisplayName
                 }
                 $this.ExportedInstance = $config
                 $this.ResourceCache['exportedInstance2'] = $graphServicePrincipal
@@ -255,22 +239,5 @@ class EXOServicePrincipal : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOServicePrincipal] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOServicePrincipal])
-        {
-            return $Values
-        }
-
-        $result = [EXOServicePrincipal]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

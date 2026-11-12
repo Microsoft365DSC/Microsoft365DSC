@@ -183,20 +183,14 @@ class TeamsChannelTab : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                DisplayName           = $tabInstance.DisplayName
-                TeamName              = $this.TeamName
-                TeamId                = $teamInstance.Id
-                ChannelName           = $channelInstance.DisplayName
-                SortOrderIndex        = $tabInstance.SortOrderIndex
-                Configuration         = $complexConfiguration
-                TeamsApp              = $tabInstance.teamsApp.id
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantID
-                CertificateThumbprint = $this.CertificateThumbprint
-                Ensure                = 'Present'
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName    = $tabInstance.DisplayName
+                TeamName       = $this.TeamName
+                TeamId         = $teamInstance.Id
+                ChannelName    = $channelInstance.DisplayName
+                SortOrderIndex = $tabInstance.SortOrderIndex
+                Configuration  = $complexConfiguration
+                TeamsApp       = $tabInstance.teamsApp.id
+                Ensure         = 'Present'
             })
         }
         catch
@@ -350,18 +344,10 @@ class TeamsChannelTab : M365DSCResourceBase
 
                         Write-M365DSCHost -Message "            |---[$k/$($tabs.Length)] $($tab.DisplayName)" -DeferWrite
                         $params = @{
-                            TeamName              = $team.DisplayName
-                            TeamId                = $team.Id
-                            ChannelName           = $channel.DisplayName
-                            DisplayName           = $tab.DisplayName
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            CertificatePath       = $this.CertificatePath
-                            CertificatePassword   = $this.CertificatePassword
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            TeamName    = $team.DisplayName
+                            TeamId      = $team.Id
+                            ChannelName = $channel.DisplayName
+                            DisplayName = $tab.DisplayName
                         }
 
                         $this.ExportedInstance = $tab
@@ -418,23 +404,6 @@ class TeamsChannelTab : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsChannelTab] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsChannelTab])
-        {
-            return $Values
-        }
-
-        $result = [TeamsChannelTab]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

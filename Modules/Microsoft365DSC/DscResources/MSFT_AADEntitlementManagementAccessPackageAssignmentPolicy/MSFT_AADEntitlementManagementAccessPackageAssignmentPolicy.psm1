@@ -354,15 +354,6 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                 RequestorSettings                 = $formattedRequestorSettings
                 VerifiableCredentialSettings      = $formattedVerifiableCredentialSettings
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                ApplicationSecret                 = $this.ApplicationSecret
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -613,18 +604,9 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    id                    = $config.id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    id          = $config.id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -839,23 +821,6 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                 @{ Type = 'IgnoreWhenPast'; Path = 'AccessReviewSettings.StartDateTime' }
             )
         }
-    }
-
-    hidden [AADEntitlementManagementAccessPackageAssignmentPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementAccessPackageAssignmentPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementAccessPackageAssignmentPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

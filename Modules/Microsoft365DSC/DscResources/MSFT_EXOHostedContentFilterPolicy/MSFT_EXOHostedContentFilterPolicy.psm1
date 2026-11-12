@@ -369,14 +369,6 @@ class EXOHostedContentFilterPolicy : M365DSCResourceBase
                 TestModeBccToRecipients              = $HostedContentFilterPolicy.TestModeBccToRecipients
                 PhishZapEnabled                      = $HostedContentFilterPolicy.PhishZapEnabled
                 SpamZapEnabled                       = $HostedContentFilterPolicy.SpamZapEnabled
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                TenantId                             = $this.TenantId
-                AccessTokens                         = $this.AccessTokens
             }
 
             if ($HostedContentFilterPolicy.IsDefault)
@@ -513,15 +505,7 @@ class EXOHostedContentFilterPolicy : M365DSCResourceBase
                 }
 
                 $Params = @{
-                    Credential            = $this.Credential
-                    Identity              = $HostedContentFilterPolicy.Identity
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $HostedContentFilterPolicy.Identity
                 }
                 $this.ExportedInstance = $HostedContentFilterPolicy
                 Write-M365DSCHost -Message "    |---[$i/$($HostedContentFilterPolicies.Length)] $($HostedContentFilterPolicy.Identity)" -DeferWrite
@@ -555,22 +539,5 @@ class EXOHostedContentFilterPolicy : M365DSCResourceBase
                 @{ Type = 'SetWhen'; Side = 'Desired'; Property = 'IntraOrgFilterState'; Value = 'HighConfidencePhish'; When = @{ All = @(@{ Side = 'Desired'; Property = 'IntraOrgFilterState'; Equals = 'Default' }; @{ Side = 'Current'; Property = 'IntraOrgFilterState'; NotEquals = 'Default' }) } }
             )
         }
-    }
-
-    hidden [EXOHostedContentFilterPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOHostedContentFilterPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOHostedContentFilterPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

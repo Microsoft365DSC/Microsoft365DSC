@@ -190,13 +190,6 @@ class IntuneAccountProtectionLocalUserGroupMembershipPolicy : M365DSCResourceBas
             Write-Verbose -Message "Found Account Protection Local User Group Membership Policy {$($this.DisplayName)}"
 
             $returnHashtable.Add('Ensure', 'Present')
-            $returnHashtable.Add('Credential', $this.Credential)
-            $returnHashtable.Add('ApplicationId', $this.ApplicationId)
-            $returnHashtable.Add('TenantId', $this.TenantId)
-            $returnHashtable.Add('ApplicationSecret', $this.ApplicationSecret)
-            $returnHashtable.Add('CertificateThumbprint', $this.CertificateThumbprint)
-            $returnHashtable.Add('ManagedIdentity', $this.ManagedIdentity)
-            $returnHashtable.Add('AccessTokens', $this.AccessTokens)
 
             $returnAssignments = @()
             $graphAssignments = Get-M365DSCIntuneExpandedAssignments -Instance $policy
@@ -406,18 +399,9 @@ class IntuneAccountProtectionLocalUserGroupMembershipPolicy : M365DSCResourceBas
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Name)" -DeferWrite
 
                 $params = @{
-                    Identity              = $policy.Id
-                    DisplayName           = $policy.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $policy.Id
+                    DisplayName = $policy.Name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
@@ -487,23 +471,6 @@ class IntuneAccountProtectionLocalUserGroupMembershipPolicy : M365DSCResourceBas
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneAccountProtectionLocalUserGroupMembershipPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAccountProtectionLocalUserGroupMembershipPolicy])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAccountProtectionLocalUserGroupMembershipPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

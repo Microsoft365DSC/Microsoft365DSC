@@ -185,14 +185,6 @@ class EXOOrganizationRelationship : M365DSCResourceBase
                 OrganizationContact        = $OrganizationRelationship.OrganizationContact
                 PhotosEnabled              = $OrganizationRelationship.PhotosEnabled
                 Ensure                     = 'Present'
-                Credential                 = $this.Credential
-                ApplicationId              = $this.ApplicationId
-                CertificateThumbprint      = $this.CertificateThumbprint
-                CertificatePath            = $this.CertificatePath
-                CertificatePassword        = $this.CertificatePassword
-                ManagedIdentity            = $this.ManagedIdentity
-                TenantId                   = $this.TenantId
-                AccessTokens               = $this.AccessTokens
             }
 
             if ($OrganizationRelationship.TargetApplicationUri)
@@ -378,15 +370,7 @@ class EXOOrganizationRelationship : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllOrgRelationships.Length)] $($relationship.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $relationship.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $relationship.Name
                 }
                 $this.ExportedInstance = $relationship
                 $Results = $this.GetForExport($Params)
@@ -409,22 +393,5 @@ class EXOOrganizationRelationship : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOOrganizationRelationship] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOOrganizationRelationship])
-        {
-            return $Values
-        }
-
-        $result = [EXOOrganizationRelationship]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

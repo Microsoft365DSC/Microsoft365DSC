@@ -158,15 +158,6 @@ class IntuneDeviceConfigurationPlatformScriptWindows : M365DSCResourceBase
                 ScriptContent         = $getValue.ScriptContent
                 Id                    = $getValue.Id
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
                 #endregion
             }
 
@@ -314,18 +305,9 @@ class IntuneDeviceConfigurationPlatformScriptWindows : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -364,23 +346,6 @@ class IntuneDeviceConfigurationPlatformScriptWindows : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneDeviceConfigurationPlatformScriptWindows] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationPlatformScriptWindows])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationPlatformScriptWindows]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

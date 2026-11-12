@@ -204,14 +204,6 @@ class EXOAddressList : M365DSCResourceBase
                 IncludedRecipients           = $includedRecipientsValue
                 RecipientFilter              = $AddressList.RecipientFilter
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                TenantId                     = $this.TenantId
-                AccessTokens                 = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -393,15 +385,7 @@ class EXOAddressList : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $($addressList.Name)" -DeferWrite
                 $params = @{
-                    Name                  = $addressList.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $addressList.Name
                 }
                 $this.ExportedInstance = $addressList
                 $Results = $this.GetForExport($Params)
@@ -425,22 +409,5 @@ class EXOAddressList : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAddressList] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAddressList])
-        {
-            return $Values
-        }
-
-        $result = [EXOAddressList]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

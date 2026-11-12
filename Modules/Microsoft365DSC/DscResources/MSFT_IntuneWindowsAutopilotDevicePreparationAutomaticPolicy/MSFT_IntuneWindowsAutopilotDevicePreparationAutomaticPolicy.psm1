@@ -181,21 +181,13 @@ class IntuneWindowsAutopilotDevicePreparationAutomaticPolicy : M365DSCResourceBa
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.Description
-                DisplayName           = $getValue.Name
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Id                    = $getValue.Id
-                AllowedApplications   = Get-M365DSCArrayFromProperty -PropertyValue ($batchResponsesApps | ForEach-Object { $_.body.displayName }) -ElementType ([System.String])
-                AllowedScripts        = Get-M365DSCArrayFromProperty -PropertyValue ($batchResponsesScripts | ForEach-Object { $_.body.displayName }) -ElementType ([System.String])
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Description         = $getValue.Description
+                DisplayName         = $getValue.Name
+                RoleScopeTagIds     = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Id                  = $getValue.Id
+                AllowedApplications = Get-M365DSCArrayFromProperty -PropertyValue ($batchResponsesApps | ForEach-Object { $_.body.displayName }) -ElementType ([System.String])
+                AllowedScripts      = Get-M365DSCArrayFromProperty -PropertyValue ($batchResponsesScripts | ForEach-Object { $_.body.displayName }) -ElementType ([System.String])
+                Ensure              = 'Present'
                 #endregion
             }
 
@@ -417,17 +409,8 @@ class IntuneWindowsAutopilotDevicePreparationAutomaticPolicy : M365DSCResourceBa
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -453,23 +436,6 @@ class IntuneWindowsAutopilotDevicePreparationAutomaticPolicy : M365DSCResourceBa
 
             throw
         }
-    }
-
-    hidden [IntuneWindowsAutopilotDevicePreparationAutomaticPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsAutopilotDevicePreparationAutomaticPolicy])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsAutopilotDevicePreparationAutomaticPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 
     hidden static [void] SetAssignmentTarget([System.String] $PolicyId, [System.String] $GroupDisplayName)

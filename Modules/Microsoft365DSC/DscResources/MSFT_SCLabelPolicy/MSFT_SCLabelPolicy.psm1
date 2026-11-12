@@ -184,19 +184,12 @@ class SCLabelPolicy : M365DSCResourceBase
                 Name                         = $policy.Name
                 Comment                      = $policy.Comment
                 AdvancedSettings             = $advancedSettingsValue
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
                 Ensure                       = 'Present'
                 Labels                       = $policy.Labels
                 ExchangeLocation             = $this.GetLocationIdentities($policy.ExchangeLocation)
                 ExchangeLocationException    = $this.GetLocationIdentities($policy.ExchangeLocationException)
                 ModernGroupLocation          = $this.GetLocationIdentities($policy.ModernGroupLocation)
                 ModernGroupLocationException = $this.GetLocationIdentities($policy.ModernGroupLocationException)
-                AccessTokens                 = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -719,23 +712,6 @@ class SCLabelPolicy : M365DSCResourceBase
 
             $Parameters[$key] = $identities
         }
-    }
-
-    hidden [SCLabelPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCLabelPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCLabelPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

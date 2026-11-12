@@ -153,15 +153,6 @@ class AADAdministrativeUnit : M365DSCResourceBase
                 IsMemberManagementRestricted = $getValue.IsMemberManagementRestricted
                 Id                           = $getValue.Id
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                ApplicationSecret            = $this.ApplicationSecret
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                AccessTokens                 = $this.AccessTokens
                 #endregion
             }
 
@@ -791,18 +782,9 @@ class AADAdministrativeUnit : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    Id                    = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.DisplayName
+                    Id          = $config.Id
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -866,23 +848,6 @@ class AADAdministrativeUnit : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Visibility')
         }
-    }
-
-    hidden [AADAdministrativeUnit] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAdministrativeUnit])
-        {
-            return $Values
-        }
-
-        $result = [AADAdministrativeUnit]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

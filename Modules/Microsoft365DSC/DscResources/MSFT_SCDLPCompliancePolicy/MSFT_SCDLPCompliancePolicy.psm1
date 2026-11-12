@@ -267,14 +267,6 @@ class SCDLPCompliancePolicy : M365DSCResourceBase
                 TeamsLocationException                = $PolicyObject.TeamsLocationException
                 ThirdPartyAppDlpLocation              = Get-M365DSCArrayFromProperty -PropertyValue $PolicyObject.ThirdPartyAppDlpLocation.Name -ElementType ([System.String])
                 ThirdPartyAppDlpLocationException     = $PolicyObject.ThirdPartyAppDlpLocationException
-                Credential                            = $this.Credential
-                ApplicationId                         = $this.ApplicationId
-                TenantId                              = $this.TenantId
-                CertificateThumbprint                 = $this.CertificateThumbprint
-                CertificatePath                       = $this.CertificatePath
-                CertificatePassword                   = $this.CertificatePassword
-                ManagedIdentity                       = $this.ManagedIdentity
-                AccessTokens                          = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -780,22 +772,5 @@ class SCDLPCompliancePolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCDLPCompliancePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCDLPCompliancePolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCDLPCompliancePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

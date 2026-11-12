@@ -265,15 +265,6 @@ class AADAuthenticationMethodPolicyFido2 : M365DSCResourceBase
                 State                            = $getValue.State
                 Id                               = $getValue.Id
                 Ensure                           = 'Present'
-                Credential                       = $this.Credential
-                ApplicationId                    = $this.ApplicationId
-                TenantId                         = $this.TenantId
-                ApplicationSecret                = $this.ApplicationSecret
-                CertificateThumbprint            = $this.CertificateThumbprint
-                CertificatePath                  = $this.CertificatePath
-                CertificatePassword              = $this.CertificatePassword
-                ManagedIdentity                  = $this.ManagedIdentity
-                AccessTokens                     = $this.AccessTokens
                 #endregion
             }
 
@@ -388,17 +379,8 @@ class AADAuthenticationMethodPolicyFido2 : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -495,23 +477,6 @@ class AADAuthenticationMethodPolicyFido2 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationMethodPolicyFido2] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationMethodPolicyFido2])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationMethodPolicyFido2]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

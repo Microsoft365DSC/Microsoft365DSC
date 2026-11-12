@@ -98,17 +98,9 @@ class SCFilePlanPropertySubCategory : M365DSCResourceBase
             Write-Verbose "Found existing SCFilePlanPropertySubCategory $($this.Name)"
 
             $result = @{
-                Name                  = $property.DisplayName
-                Category              = $this.Category
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name     = $property.DisplayName
+                Category = $this.Category
+                Ensure   = 'Present'
             }
 
             return $this.AsResult($result)
@@ -251,22 +243,5 @@ class SCFilePlanPropertySubCategory : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCFilePlanPropertySubCategory] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCFilePlanPropertySubCategory])
-        {
-            return $Values
-        }
-
-        $result = [SCFilePlanPropertySubCategory]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

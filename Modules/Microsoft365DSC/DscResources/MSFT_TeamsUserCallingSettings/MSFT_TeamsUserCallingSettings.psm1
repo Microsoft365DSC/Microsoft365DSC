@@ -152,14 +152,6 @@ class TeamsUserCallingSettings : M365DSCResourceBase
                 BusyOnBusyOption          = $instance.BusyOnBusyOption
                 MaximumConcurrentCalls    = $instance.MaximumConcurrentCalls
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
             })
         }
         catch
@@ -331,16 +323,8 @@ class TeamsUserCallingSettings : M365DSCResourceBase
             {
                 Write-M365DSCHost -Message "    |---[$i/$($allUsers.Length)] $($user.UserPrincipalName)" -DeferWrite
                 $params = @{
-                    Identity              = $user.UserPrincipalName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $user.UserPrincipalName
+                    Ensure   = 'Present'
                 }
                 $Results = $this.GetForExport($Params)
                 if ($Results.Ensure -eq 'Present')
@@ -370,22 +354,5 @@ class TeamsUserCallingSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsUserCallingSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsUserCallingSettings])
-        {
-            return $Values
-        }
-
-        $result = [TeamsUserCallingSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

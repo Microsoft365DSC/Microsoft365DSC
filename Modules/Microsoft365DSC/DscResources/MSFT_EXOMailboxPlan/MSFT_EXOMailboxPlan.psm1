@@ -144,14 +144,6 @@ class EXOMailboxPlan : M365DSCResourceBase
                 RetainDeletedItemsFor    = $MailboxPlan.RetainDeletedItemsFor
                 RetentionPolicy          = $MailboxPlan.RetentionPolicy
                 RoleAssignmentPolicy     = $MailboxPlan.RoleAssignmentPolicy
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                TenantId                 = $this.TenantId
-                AccessTokens             = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -237,16 +229,8 @@ class EXOMailboxPlan : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($MailboxPlans.Count)] $($MailboxPlan.Identity.Split('-')[0])" -DeferWrite
                 $Params = @{
-                    Identity              = $MailboxPlan.Identity
-                    DisplayName           = $MailboxPlan.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $MailboxPlan.Identity
+                    DisplayName = $MailboxPlan.DisplayName
                 }
                 $this.ExportedInstance = $MailboxPlan
                 $Results = $this.GetForExport($Params)
@@ -280,22 +264,5 @@ class EXOMailboxPlan : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxPlan] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxPlan])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxPlan]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -859,6 +859,41 @@ class M365DSCResourceBase
         }
     }
 
+    # Sets the authentication properties of this instance on Result, except the ones Values contains.
+    hidden [void] CopyAuthenticationProperties([M365DSCResourceBase] $Result, [System.Object] $Values)
+    {
+        $authenticationParameters = Get-M365DSCAuthenticationParameter -BoundParameters $this.ReadBoundParameters()
+        foreach ($entry in $authenticationParameters.GetEnumerator())
+        {
+            if ($Values -is [Hashtable] -and $Values.ContainsKey($entry.Key))
+            {
+                continue
+            }
+
+            $Result._SetProperty($entry.Key, $entry.Value)
+        }
+    }
+
+    # Returns Values as an instance of the resource type, with the authentication properties of this instance.
+    hidden [M365DSCResourceBase] AsResult([System.Object] $Values)
+    {
+        $resourceType = $this.GetType()
+        if ($resourceType.IsInstanceOfType($Values))
+        {
+            return $Values
+        }
+
+        $result = $resourceType::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+        $this.CopyAuthenticationProperties($result, $Values)
+
+        return $result
+    }
+
     #endregion
 
     #region Identity

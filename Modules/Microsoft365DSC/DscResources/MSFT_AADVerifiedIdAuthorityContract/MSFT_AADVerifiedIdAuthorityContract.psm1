@@ -130,19 +130,13 @@ class AADVerifiedIdAuthorityContract : M365DSCResourceBase
             }
 
             $results = @{
-                id                    = $contract.id
-                name                  = $contract.name
-                linkedDomainUrl       = $this.linkedDomainUrl
-                authorityId           = $authority.Id
-                displays              = $contract.displays
-                rules                 = $contract.rules
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                ApplicationSecret     = $this.ApplicationSecret
-                AccessTokens          = $this.AccessTokens
+                id              = $contract.id
+                name            = $contract.name
+                linkedDomainUrl = $this.linkedDomainUrl
+                authorityId     = $authority.Id
+                displays        = $contract.displays
+                rules           = $contract.rules
+                Ensure          = 'Present'
             }
             return $this.AsResult($results)
 
@@ -264,17 +258,8 @@ class AADVerifiedIdAuthorityContract : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $($contract.name)" -DeferWrite
                     $Params = @{
-                        linkedDomainUrl       = $authority.didModel.linkedDomainUrls[0]
-                        name                  = $contract.name
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        linkedDomainUrl = $authority.didModel.linkedDomainUrls[0]
+                        name            = $contract.name
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -669,23 +654,6 @@ class AADVerifiedIdAuthorityContract : M365DSCResourceBase
             return $null
         }
         $result = ConvertFrom-Json $response.Content
-        return $result
-    }
-
-    hidden [AADVerifiedIdAuthorityContract] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADVerifiedIdAuthorityContract])
-        {
-            return $Values
-        }
-
-        $result = [AADVerifiedIdAuthorityContract]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

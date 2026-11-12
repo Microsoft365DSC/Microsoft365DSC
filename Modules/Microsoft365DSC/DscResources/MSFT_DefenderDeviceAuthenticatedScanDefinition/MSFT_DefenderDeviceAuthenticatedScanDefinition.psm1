@@ -169,14 +169,6 @@ class DefenderDeviceAuthenticatedScanDefinition : M365DSCResourceBase
                 ScannerAgent             = $ScannerAgentValue
                 ScanAuthenticationParams = $ScanAuthenticationParamsValue
                 Ensure                   = 'Present'
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                TenantId                 = $this.TenantId
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                AccessTokens             = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -337,16 +329,8 @@ class DefenderDeviceAuthenticatedScanDefinition : M365DSCResourceBase
                 $displayedKey = $config.scanName
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Name                  = $config.scanName
-                    id                    = $config.id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name = $config.scanName
+                    id   = $config.id
                 }
 
                 $this.ExportedInstance = $config
@@ -406,23 +390,6 @@ class DefenderDeviceAuthenticatedScanDefinition : M365DSCResourceBase
         return @{
             ExcludedProperties = @('ScanAuthenticationParams')
         }
-    }
-
-    hidden [DefenderDeviceAuthenticatedScanDefinition] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [DefenderDeviceAuthenticatedScanDefinition])
-        {
-            return $Values
-        }
-
-        $result = [DefenderDeviceAuthenticatedScanDefinition]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

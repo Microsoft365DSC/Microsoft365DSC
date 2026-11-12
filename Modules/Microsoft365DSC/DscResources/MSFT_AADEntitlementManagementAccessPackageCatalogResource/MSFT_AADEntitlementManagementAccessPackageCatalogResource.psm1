@@ -208,28 +208,19 @@ class AADEntitlementManagementAccessPackageCatalogResource : M365DSCResourceBase
                 -OriginSystem $getValue.OriginSystem
 
             $results = @{
-                Id                    = $getValue.Id
-                CatalogId             = $CatalogIdValue
-                Attributes            = $hashAttributes
-                AddedBy               = $getValue.addedBy #Read-Only
-                AddedOn               = $getValue.addedOn #Read-Only
-                Description           = $getValue.description
-                DisplayName           = $getValue.displayName
-                IsPendingOnboarding   = $getValue.isPendingOnboarding #Read-Only
-                OriginId              = $originIdValue
-                OriginSystem          = $getValue.originSystem
-                ResourceType          = $getValue.resourceType
-                Url                   = $getValue.url
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id                  = $getValue.Id
+                CatalogId           = $CatalogIdValue
+                Attributes          = $hashAttributes
+                AddedBy             = $getValue.addedBy #Read-Only
+                AddedOn             = $getValue.addedOn #Read-Only
+                Description         = $getValue.description
+                DisplayName         = $getValue.displayName
+                IsPendingOnboarding = $getValue.isPendingOnboarding #Read-Only
+                OriginId            = $originIdValue
+                OriginSystem        = $getValue.originSystem
+                ResourceType        = $getValue.resourceType
+                Url                 = $getValue.url
+                Ensure              = 'Present'
             }
 
             return $this.AsResult($results)
@@ -437,19 +428,10 @@ class AADEntitlementManagementAccessPackageCatalogResource : M365DSCResourceBase
                     Write-M365DSCHost -Message "        |---[$j/$($resources.Count)] $($resource.DisplayName)" -DeferWrite
 
                     $params = @{
-                        Id                    = $resource.id
-                        DisplayName           = $resource.displayName
-                        CatalogId             = $catalog.Id
-                        Ensure                = 'Present'
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        Id          = $resource.id
+                        DisplayName = $resource.displayName
+                        CatalogId   = $catalog.Id
+                        Ensure      = 'Present'
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -553,23 +535,6 @@ class AADEntitlementManagementAccessPackageCatalogResource : M365DSCResourceBase
                 return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
             }
         }
-    }
-
-    hidden [AADEntitlementManagementAccessPackageCatalogResource] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementAccessPackageCatalogResource])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementAccessPackageCatalogResource]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

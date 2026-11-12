@@ -192,14 +192,6 @@ class ODSettings : M365DSCResourceBase
                 ODBAccessRequests                         = $tenant.ODBAccessRequests
                 ODBMembersCanShare                        = $ODBMembersCanShareValue
                 NotificationsInOneDriveForBusinessEnabled = $tenant.NotificationsInOneDriveForBusinessEnabled
-                ApplicationId                             = $this.ApplicationId
-                TenantId                                  = $this.TenantId
-                CertificatePassword                       = $this.CertificatePassword
-                CertificatePath                           = $this.CertificatePath
-                CertificateThumbprint                     = $this.CertificateThumbprint
-                Credential                                = $this.Credential
-                ManagedIdentity                           = $this.ManagedIdentity
-                AccessTokens                              = $this.AccessTokens
             })
         }
         catch
@@ -357,15 +349,7 @@ class ODSettings : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -393,22 +377,5 @@ class ODSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [ODSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [ODSettings])
-        {
-            return $Values
-        }
-
-        $result = [ODSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

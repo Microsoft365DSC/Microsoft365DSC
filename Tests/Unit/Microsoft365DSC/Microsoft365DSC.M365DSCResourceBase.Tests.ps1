@@ -455,6 +455,22 @@ Describe 'M365DSCResourceBase bound parameter snapshot' {
         $instance.GetAllParameters().DisplayName | Should -Be 'Contoso'
     }
 
+    It 'Copies the authentication properties to a Get result unless the result sets them' {
+        $instance = New-M365DSCResourceInstance -ResourceName 'AADGroup' -Property @{
+            DisplayName           = 'Contoso'
+            ApplicationId         = 'app'
+            TenantId              = 'contoso.onmicrosoft.com'
+            CertificateThumbprint = 'thumbprint'
+        }
+
+        $result = $instance.AsResult(@{ DisplayName = 'Contoso'; TenantId = 'other.onmicrosoft.com' }).ToHashtable()
+
+        $result.ApplicationId | Should -Be 'app'
+        $result.CertificateThumbprint | Should -Be 'thumbprint'
+        $result.TenantId | Should -Be 'other.onmicrosoft.com'
+        $result.ContainsKey('Credential') | Should -BeFalse
+    }
+
     It 'Reads values that DSC wrote by reflection' {
         $instance = New-M365DSCResourceInstance -ResourceName 'AADGroup'
         Set-PropertyByReflection -Instance $instance -Name 'DisplayName' -Value 'Contoso'

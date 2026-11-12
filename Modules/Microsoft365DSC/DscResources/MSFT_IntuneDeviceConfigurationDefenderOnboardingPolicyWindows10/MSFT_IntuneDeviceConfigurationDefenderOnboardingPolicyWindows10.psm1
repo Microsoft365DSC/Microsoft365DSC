@@ -214,15 +214,6 @@ class IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10 : M365DSCResour
                 Id                                                 = $getValue.Id
                 RoleScopeTagIds                                    = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                                             = 'Present'
-                Credential                                         = $this.Credential
-                ApplicationId                                      = $this.ApplicationId
-                TenantId                                           = $this.TenantId
-                ApplicationSecret                                  = $this.ApplicationSecret
-                CertificateThumbprint                              = $this.CertificateThumbprint
-                CertificatePath                                    = $this.CertificatePath
-                CertificatePassword                                = $this.CertificatePassword
-                ManagedIdentity                                    = $this.ManagedIdentity
-                AccessTokens                                       = $this.AccessTokens
                 #endregion
             }
             $returnAssignments = @()
@@ -381,18 +372,9 @@ class IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10 : M365DSCResour
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -489,23 +471,6 @@ class IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10 : M365DSCResour
         return @{
             ExcludedProperties = @('AdvancedThreatProtectionOnboardingBlob')
         }
-    }
-
-    hidden [IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationDefenderOnboardingPolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

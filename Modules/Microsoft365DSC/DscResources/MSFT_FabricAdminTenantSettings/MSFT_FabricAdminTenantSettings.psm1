@@ -968,14 +968,6 @@ class FabricAdminTenantSettings : M365DSCResourceBase
                 WorkspaceBlockInboundAccess                                           = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceBlockInboundAccess' }))
                 WorkspaceBlockOutboundAccess                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceBlockOutboundAccess' }))
                 WorkspaceCmk                                                          = $this.GetFabricTenantSettingObject(($instance.tenantSettings | Where-Object -FilterScript { $_.settingName -eq 'WorkspaceCmk' }))
-                ApplicationId                                                         = $this.ApplicationId
-                TenantId                                                              = $this.TenantId
-                ApplicationSecret                                                     = $this.ApplicationSecret
-                CertificateThumbprint                                                 = $this.CertificateThumbprint
-                CertificatePath                                                       = $this.CertificatePath
-                CertificatePassword                                                   = $this.CertificatePassword
-                ManagedIdentity                                                       = $this.ManagedIdentity
-                AccessTokens                                                          = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -1029,23 +1021,17 @@ class FabricAdminTenantSettings : M365DSCResourceBase
             }
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
 
             $newResults = ([Hashtable]$Results).Clone()
             $noEscape = @()
+            $authenticationKeys = @((Get-M365DSCAuthenticationParameter -BoundParameters $Results).Keys)
             foreach ($key in @($Results.Keys))
             {
-                if ($null -ne $Results.$key -and $key -notin $params.Keys)
+                if ($null -ne $Results.$key -and $key -notin $params.Keys -and $key -notin $authenticationKeys)
                 {
                     $complexTypeMapping = @(
                         @{
@@ -1156,23 +1142,6 @@ class FabricAdminTenantSettings : M365DSCResourceBase
             $values.Add('enabledSecurityGroups', [Array]$Setting.enabledSecurityGroups.name)
         }
         return $values
-    }
-
-    hidden [FabricAdminTenantSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [FabricAdminTenantSettings])
-        {
-            return $Values
-        }
-
-        $result = [FabricAdminTenantSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

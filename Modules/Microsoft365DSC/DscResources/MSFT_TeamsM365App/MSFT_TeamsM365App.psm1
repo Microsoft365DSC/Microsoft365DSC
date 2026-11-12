@@ -118,19 +118,11 @@ class TeamsM365App : M365DSCResourceBase
 
             Write-Verbose -Message "Found an instance with Id {$($this.Id)}"
             $results = @{
-                Id                    = $instance.Id
-                IsBlocked             = [Boolean]$instance.IsBlocked
-                AssignmentType        = $instance.AvailableTo.AssignmentType
-                Users                 = $usersValue
-                Groups                = $groupsValue
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id             = $instance.Id
+                IsBlocked      = [Boolean]$instance.IsBlocked
+                AssignmentType = $instance.AvailableTo.AssignmentType
+                Users          = $usersValue
+                Groups         = $groupsValue
             }
             return $this.AsResult($results)
         }
@@ -294,15 +286,7 @@ class TeamsM365App : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id = $config.Id
                 }
 
                 $this.ExportedInstance = $config
@@ -328,22 +312,5 @@ class TeamsM365App : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsM365App] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsM365App])
-        {
-            return $Values
-        }
-
-        $result = [TeamsM365App]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

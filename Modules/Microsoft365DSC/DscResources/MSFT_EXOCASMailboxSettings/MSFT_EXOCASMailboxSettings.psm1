@@ -257,14 +257,6 @@ class EXOCASMailboxSettings : M365DSCResourceBase
                 ShowGalAsDefaultView                    = $mailboxCasSettings.ShowGalAsDefaultView
                 SmtpClientAuthenticationDisabled        = $mailboxCasSettings.SmtpClientAuthenticationDisabled
                 UniversalOutlookEnabled                 = $mailboxCasSettings.UniversalOutlookEnabled
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                TenantId                                = $this.TenantId
-                AccessTokens                            = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -343,15 +335,7 @@ class EXOCASMailboxSettings : M365DSCResourceBase
                     }
 
                     $Params = @{
-                        Credential            = $this.Credential
-                        Identity              = $mailboxName
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity = $mailboxName
                     }
                     $this.ExportedInstance = $mailbox
                     $Results = $this.GetForExport($Params)
@@ -386,22 +370,5 @@ class EXOCASMailboxSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOCASMailboxSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOCASMailboxSettings])
-        {
-            return $Values
-        }
-
-        $result = [EXOCASMailboxSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

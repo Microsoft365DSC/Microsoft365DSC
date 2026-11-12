@@ -167,13 +167,6 @@ class SCAdaptiveScope : M365DSCResourceBase
                 EnabledStates                = [System.String[]] $instance.EnabledStates
                 LinkedRecipientEnabledStates = [System.String[]] $instance.LinkedRecipientEnabledStates
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePassword          = $this.CertificatePassword
-                CertificatePath              = $this.CertificatePath
-                AccessTokens                 = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -318,15 +311,8 @@ class SCAdaptiveScope : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $exportedInstance.Name
-                    LocationType          = [System.String] $exportedInstance.LocationType
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name         = $exportedInstance.Name
+                    LocationType = [System.String] $exportedInstance.LocationType
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -394,22 +380,5 @@ class SCAdaptiveScope : M365DSCResourceBase
         }
 
         return $Node
-    }
-
-    hidden [SCAdaptiveScope] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCAdaptiveScope])
-        {
-            return $Values
-        }
-
-        $result = [SCAdaptiveScope]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

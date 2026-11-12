@@ -297,15 +297,6 @@ class AADAuthenticationMethodPolicyX509 : M365DSCResourceBase
                 State                           = $getValue.State
                 Id                              = $getValue.Id
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
                 #endregion
             }
 
@@ -413,17 +404,8 @@ class AADAuthenticationMethodPolicyX509 : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -564,23 +546,6 @@ class AADAuthenticationMethodPolicyX509 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationMethodPolicyX509] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationMethodPolicyX509])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationMethodPolicyX509]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

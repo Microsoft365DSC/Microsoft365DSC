@@ -150,15 +150,6 @@ class AADTenantDetails : M365DSCResourceBase
                 State                                = $aadTenantDetails.State
                 Street                               = $aadTenantDetails.Street
                 TechnicalNotificationMails           = $aadTenantDetails.TechnicalNotificationMails
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                TenantId                             = $this.TenantId
-                ApplicationSecret                    = $this.ApplicationSecret
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                AccessTokens                         = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -245,15 +236,6 @@ class AADTenantDetails : M365DSCResourceBase
                 SecurityComplianceNotificationPhones = $aadTenantDetails.SecurityComplianceNotificationPhones
                 TechnicalNotificationMails           = $aadTenantDetails.TechnicalNotificationMails
                 IsSingleInstance                     = 'Yes'
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                TenantId                             = $this.TenantId
-                ApplicationSecret                    = $this.ApplicationSecret
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                AccessTokens                         = $this.AccessTokens
             }
 
             $Results = $this.GetForExport($Params)
@@ -328,23 +310,6 @@ class AADTenantDetails : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADTenantDetails] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADTenantDetails])
-        {
-            return $Values
-        }
-
-        $result = [AADTenantDetails]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

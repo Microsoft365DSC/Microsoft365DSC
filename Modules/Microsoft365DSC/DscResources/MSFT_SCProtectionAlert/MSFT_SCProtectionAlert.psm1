@@ -206,14 +206,6 @@ class SCProtectionAlert : M365DSCResourceBase
                 Threshold                                                   = $AlertObject.Threshold
                 TimeWindow                                                  = $AlertObject.TimeWindow
                 VolumeThreshold                                             = $AlertObject.VolumeThreshold
-                Credential                                                  = $this.Credential
-                ApplicationId                                               = $this.ApplicationId
-                TenantId                                                    = $this.TenantId
-                CertificateThumbprint                                       = $this.CertificateThumbprint
-                CertificatePath                                             = $this.CertificatePath
-                CertificatePassword                                         = $this.CertificatePassword
-                ManagedIdentity                                             = $this.ManagedIdentity
-                AccessTokens                                                = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -333,22 +325,5 @@ class SCProtectionAlert : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCProtectionAlert] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCProtectionAlert])
-        {
-            return $Values
-        }
-
-        $result = [SCProtectionAlert]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

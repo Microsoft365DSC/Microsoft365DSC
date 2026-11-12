@@ -113,18 +113,9 @@ class SPOUserProfileProperty : M365DSCResourceBase
             }
 
             $result = @{
-                UserName              = $this.UserName
-                Properties            = $propertiesValue
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Ensure                = 'Present'
-                AccessTokens          = $this.AccessTokens
+                UserName   = $this.UserName
+                Properties = $propertiesValue
+                Ensure     = 'Present'
             }
 
             return $this.AsResult($result)
@@ -203,16 +194,7 @@ class SPOUserProfileProperty : M365DSCResourceBase
             {
                 Write-M365DSCHost -Message "    |---[$i/$($Instances.Count)] $($instance.Email)" -DeferWrite
                 $Params = @{
-                    UserName              = $instance.Email
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    UserName = $instance.Email
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -293,23 +275,6 @@ class SPOUserProfileProperty : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOUserProfileProperty] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOUserProfileProperty])
-        {
-            return $Values
-        }
-
-        $result = [SPOUserProfileProperty]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -130,6 +130,7 @@
     during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
     and authentication or permission errors still stop the export of the resource.
   * Added `RawExportResults` with an unmodified copy of the last `GetForExport` result.
+  * Fixed `Get()` of several resources not returning all authentication properties.
 * M365DSCReverse
   * Added the `PartiallySucceeded` resource status for resources with skipped instances
     with new statistics information.
@@ -167,6 +168,7 @@
   * Fixed `Install-M365DSCDevBranch` reporting a failure after a successful install.
   * Fixed `Get-TeamByName` waiting 30 seconds for a missing team. Added `RetryCount`.
   * Fixed `Get-M365DSCConfigurationConflict` missing conflicts that differ only in case.
+  * Fixed `Convert-M365DscHashtableToString` writing access tokens in plain text.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Removed the relation templates of removed resources.

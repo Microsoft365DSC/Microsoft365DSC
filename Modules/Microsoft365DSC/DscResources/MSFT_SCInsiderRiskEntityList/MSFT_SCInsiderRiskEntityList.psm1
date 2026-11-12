@@ -412,14 +412,6 @@ class SCInsiderRiskEntityList : M365DSCResourceBase
                 ExcludedSensitiveInformationTypeGroups = $excludedSITGroupValue
                 ExcludedFileTypeGroups                 = $excludedFileTypeGroupValue
                 Ensure                                 = 'Present'
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
-                TenantId                               = $this.TenantId
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                CertificatePath                        = $this.CertificatePath
-                CertificatePassword                    = $this.CertificatePassword
-                ManagedIdentity                        = $this.ManagedIdentity
-                AccessTokens                           = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -860,17 +852,9 @@ class SCInsiderRiskEntityList : M365DSCResourceBase
                 $displayedKey = $config.ListType + ' - ' + $config.Name
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    Name                  = $config.Name
-                    ListType              = $config.ListType
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.DisplayName
+                    Name        = $config.Name
+                    ListType    = $config.ListType
                 }
 
                 $this.ExportedInstance = $config
@@ -954,23 +938,6 @@ class SCInsiderRiskEntityList : M365DSCResourceBase
         Set-InsiderRiskEntityList -Identity $Name `
             -AddEntities $entitiesToAdd `
             -RemoveEntities $entitiesToRemove | Out-Null
-    }
-
-    hidden [SCInsiderRiskEntityList] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCInsiderRiskEntityList])
-        {
-            return $Values
-        }
-
-        $result = [SCInsiderRiskEntityList]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

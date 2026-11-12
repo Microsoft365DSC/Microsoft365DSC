@@ -262,13 +262,6 @@ class IntuneAttackSurfaceReductionRulesPolicyWindows10ConfigManager : M365DSCRes
             Write-Verbose -Message "Found Endpoint Protection Policy {$($policy.name)}"
 
             $returnHashtable.Add('Ensure', 'Present')
-            $returnHashtable.Add('Credential', $this.Credential)
-            $returnHashtable.Add('ApplicationId', $this.ApplicationId)
-            $returnHashtable.Add('TenantId', $this.TenantId)
-            $returnHashtable.Add('ApplicationSecret', $this.ApplicationSecret)
-            $returnHashtable.Add('CertificateThumbprint', $this.CertificateThumbprint)
-            $returnHashtable.Add('ManagedIdentity', $this.ManagedIdentity)
-            $returnHashtable.Add('AccessTokens', $this.AccessTokens)
 
             return $this.AsResult($returnHashtable)
         }
@@ -423,18 +416,9 @@ class IntuneAttackSurfaceReductionRulesPolicyWindows10ConfigManager : M365DSCRes
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Name)" -DeferWrite
 
                 $params = @{
-                    Identity              = $policy.id
-                    DisplayName           = $policy.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $policy.id
+                    DisplayName = $policy.Name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
@@ -493,23 +477,6 @@ class IntuneAttackSurfaceReductionRulesPolicyWindows10ConfigManager : M365DSCRes
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return $this.GetSettingsCatalogCompareParameters()
-    }
-
-    hidden [IntuneAttackSurfaceReductionRulesPolicyWindows10ConfigManager] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAttackSurfaceReductionRulesPolicyWindows10ConfigManager])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAttackSurfaceReductionRulesPolicyWindows10ConfigManager]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

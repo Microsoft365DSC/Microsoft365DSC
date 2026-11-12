@@ -254,22 +254,14 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
             Write-Verbose "PrincipalValue = $PrincipalValue"
             $results = @{
                 #region resource generator code
-                AccessId              = $getValue.accessId
-                GroupDisplayName      = $this.ResourceCache['CurrentGroup'].DisplayName
-                MemberType            = $getValue.memberType
-                PrincipalType         = $getValue.PrincipalType
-                Principal             = $PrincipalValue
-                ScheduleInfo          = $complexScheduleInfo
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                AccessId         = $getValue.accessId
+                GroupDisplayName = $this.ResourceCache['CurrentGroup'].DisplayName
+                MemberType       = $getValue.memberType
+                PrincipalType    = $getValue.PrincipalType
+                Principal        = $PrincipalValue
+                ScheduleInfo     = $complexScheduleInfo
+                Id               = $getValue.Id
+                Ensure           = 'Present'
                 #endregion
             }
 
@@ -623,21 +615,12 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
                     Write-Verbose "PrincipalValue for object is $PrincipalValue"
 
                     $params = @{
-                        Id                    = $config.Id
-                        GroupId               = $group.Id
-                        GroupDisplayName      = $group.DisplayName
-                        AccessId              = $config.accessId
-                        Principal             = $PrincipalValue
-                        Ensure                = 'Present'
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        Id               = $config.Id
+                        GroupId          = $group.Id
+                        GroupDisplayName = $group.DisplayName
+                        AccessId         = $config.accessId
+                        Principal        = $PrincipalValue
+                        Ensure           = 'Present'
                     }
 
                     $this.ExportedInstance = $config
@@ -734,23 +717,6 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
         }
 
         return Get-MgGroup -Filter "DisplayName eq '$($this.Principal -replace "'", "''")'" -ErrorAction SilentlyContinue
-    }
-
-    hidden [AADGroupEligibilitySchedule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADGroupEligibilitySchedule])
-        {
-            return $Values
-        }
-
-        $result = [AADGroupEligibilitySchedule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -153,20 +153,13 @@ class O365Group : M365DSCResourceBase
                 }
 
                 $returnValue = @{
-                    DisplayName           = $ADGroup.DisplayName
-                    MailNickName          = $ADGroup.MailNickName
-                    Members               = $newMemberList
-                    ManagedBy             = $ownersUPN
-                    Description           = $currentDescription
-                    Theme                 = $ADGroup.Theme
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    ManagedIdentity       = $this.ManagedIdentity
-                    Ensure                = 'Present'
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName  = $ADGroup.DisplayName
+                    MailNickName = $ADGroup.MailNickName
+                    Members      = $newMemberList
+                    ManagedBy    = $ownersUPN
+                    Description  = $currentDescription
+                    Theme        = $ADGroup.Theme
+                    Ensure       = 'Present'
                 }
                 return $this.AsResult($returnValue)
             }
@@ -525,18 +518,9 @@ class O365Group : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($groups.Length)] $($group.DisplayName)" -DeferWrite
                 $Params = @{
-                    DisplayName           = $group.DisplayName
-                    ManagedBy             = 'DummyUser'
-                    MailNickName          = $group.MailNickName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName  = $group.DisplayName
+                    ManagedBy    = 'DummyUser'
+                    MailNickName = $group.MailNickName
                 }
                 $this.ExportedInstance = $group
                 $Results = $this.GetForExport($Params)
@@ -561,22 +545,5 @@ class O365Group : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [O365Group] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [O365Group])
-        {
-            return $Values
-        }
-
-        $result = [O365Group]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

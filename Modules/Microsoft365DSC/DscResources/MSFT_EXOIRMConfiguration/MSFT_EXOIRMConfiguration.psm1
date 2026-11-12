@@ -160,14 +160,6 @@ class EXOIRMConfiguration : M365DSCResourceBase
                 SimplifiedClientAccessEnabled              = $IRMConfiguration.SimplifiedClientAccessEnabled
                 SimplifiedClientAccessEncryptOnlyDisabled  = $IRMConfiguration.SimplifiedClientAccessEncryptOnlyDisabled
                 TransportDecryptionSetting                 = $IRMConfiguration.TransportDecryptionSetting
-                Credential                                 = $this.Credential
-                ApplicationId                              = $this.ApplicationId
-                CertificateThumbprint                      = $this.CertificateThumbprint
-                CertificatePath                            = $this.CertificatePath
-                CertificatePassword                        = $this.CertificatePassword
-                ManagedIdentity                            = $this.ManagedIdentity
-                TenantId                                   = $this.TenantId
-                AccessTokens                               = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -244,15 +236,7 @@ class EXOIRMConfiguration : M365DSCResourceBase
             Write-M365DSCHost -Message "    |---[1/1] $($IRMConfiguration.Identity)" -DeferWrite
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $IRMConfiguration
             $Results = $this.GetForExport($Params)
@@ -273,22 +257,5 @@ class EXOIRMConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOIRMConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOIRMConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [EXOIRMConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -189,14 +189,6 @@ class IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile : M365DSCResourc
                 WifiSecurityType        = $androidDeviceOwnerEnrollmentProfile.WifiSecurityType.ToString()
                 WifiSsid                = $androidDeviceOwnerEnrollmentProfile.WifiSsid
                 Ensure                  = 'Present'
-                Credential              = $this.Credential
-                ApplicationId           = $this.ApplicationId
-                TenantId                = $this.TenantId
-                CertificateThumbprint   = $this.CertificateThumbprint
-                CertificatePath         = $this.CertificatePath
-                CertificatePassword     = $this.CertificatePassword
-                ManagedIdentity         = $this.ManagedIdentity
-                AccessTokens            = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -301,17 +293,9 @@ class IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile : M365DSCResourc
                 $displayedKey = $config.DisplayName
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -344,22 +328,5 @@ class IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile : M365DSCResourc
         return @{
             ExcludedProperties = @('AccountId', 'TokenExpirationDateTime', 'WifiPassword')
         }
-    }
-
-    hidden [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceManagementAndroidDeviceOwnerEnrollmentProfile]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

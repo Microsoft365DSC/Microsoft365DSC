@@ -73,17 +73,9 @@ class TeamsUpgradeConfiguration : M365DSCResourceBase
 
             $settings = Get-CsTeamsUpgradeConfiguration -ErrorAction Stop
             return $this.AsResult(@{
-                IsSingleInstance      = 'Yes'
-                DownloadTeams         = $settings.DownloadTeams
-                SfBMeetingJoinUx      = $settings.SfBMeetingJoinUx
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                DownloadTeams    = $settings.DownloadTeams
+                SfBMeetingJoinUx = $settings.SfBMeetingJoinUx
             })
         }
         catch
@@ -140,15 +132,7 @@ class TeamsUpgradeConfiguration : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -182,22 +166,5 @@ class TeamsUpgradeConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsUpgradeConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsUpgradeConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [TeamsUpgradeConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

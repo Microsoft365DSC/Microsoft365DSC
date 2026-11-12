@@ -153,14 +153,6 @@ class IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10 : M365DSCResou
                 RoleScopeTagIds         = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Id                      = $getValue.Id
                 Ensure                  = 'Present'
-                Credential              = $this.Credential
-                ApplicationId           = $this.ApplicationId
-                TenantId                = $this.TenantId
-                ApplicationSecret       = $this.ApplicationSecret
-                CertificateThumbprint   = $this.CertificateThumbprint
-                CertificatePath         = $this.CertificatePath
-                CertificatePassword     = $this.CertificatePassword
-                ManagedIdentity         = $this.ManagedIdentity
                 #endregion
             }
 
@@ -318,18 +310,9 @@ class IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10 : M365DSCResou
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -385,23 +368,6 @@ class IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10 : M365DSCResou
 
             throw
         }
-    }
-
-    hidden [IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -370,13 +370,6 @@ class AADGroup : M365DSCResourceBase
                 AssignedLicenses              = $assignedLicensesValues
                 WritebackConfiguration        = $writebackConfigurationValue
                 Ensure                        = 'Present'
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                CertificateThumbprint         = $this.CertificateThumbprint
-                ApplicationSecret             = $this.ApplicationSecret
-                Credential                    = $this.Credential
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             }
 
             $result += $policySettings
@@ -1093,21 +1086,12 @@ class AADGroup : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedGroups'].Count)] $($group.DisplayName)" -DeferWrite
                 $Params = @{
-                    ApplicationSecret     = $this.ApplicationSecret
-                    DisplayName           = $group.DisplayName
-                    MailNickName          = $group.MailNickName
-                    Members               = @('toextract')
-                    SecurityEnabled       = $true
-                    MailEnabled           = $true
-                    Id                    = $group.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName     = $group.DisplayName
+                    MailNickName    = $group.MailNickName
+                    Members         = @('toextract')
+                    SecurityEnabled = $true
+                    MailEnabled     = $true
+                    Id              = $group.Id
                 }
                 $this.ExportedInstance = $group
                 $Results = $this.GetForExport($Params)
@@ -1337,23 +1321,6 @@ class AADGroup : M365DSCResourceBase
                     }
                 }
             }
-        }
-
-        return $result
-    }
-
-    hidden [AADGroup] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADGroup])
-        {
-            return $Values
-        }
-
-        $result = [AADGroup]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
         }
 
         return $result

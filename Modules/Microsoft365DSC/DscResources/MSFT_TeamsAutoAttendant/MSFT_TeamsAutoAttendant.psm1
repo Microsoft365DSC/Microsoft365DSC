@@ -249,12 +249,6 @@ class TeamsAutoAttendant : M365DSCResourceBase
                 SharedVoicemailTriageSettingsTemplateId = $autoAttendant.SharedVoicemailTriageSettingsTemplateId
                 ApplicationInstances                    = [System.String[]] $applicationInstancesValue
                 Ensure                                  = 'Present'
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                TenantId                                = $this.TenantId
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                ManagedIdentity                         = $this.ManagedIdentity
-                AccessTokens                            = $this.AccessTokens
             }
 
             if ($null -ne $autoAttendant.DefaultCallFlow)
@@ -619,13 +613,7 @@ class TeamsAutoAttendant : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $exportedInstance.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name = $exportedInstance.Name
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -1173,23 +1161,6 @@ class TeamsAutoAttendant : M365DSCResourceBase
             }
 
             $result += New-CsAutoAttendantCallHandlingAssociation @associationParameters
-        }
-
-        return $result
-    }
-
-    hidden [TeamsAutoAttendant] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsAutoAttendant])
-        {
-            return $Values
-        }
-
-        $result = [TeamsAutoAttendant]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
         }
 
         return $result

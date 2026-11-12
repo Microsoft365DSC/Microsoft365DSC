@@ -152,14 +152,6 @@ class AADGroupEligibilityScheduleSettings : M365DSCResourceBase
                 EnablementRule            = $rule.enablementRule
                 ApprovalRule              = $rule.approvalRule
                 AuthenticationContextRule = $rule.authenticationContextRule
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                ApplicationSecret         = $this.ApplicationSecret
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
             }
 
             return $this.AsResult($results)
@@ -357,18 +349,9 @@ class AADGroupEligibilityScheduleSettings : M365DSCResourceBase
                         }
                         Write-M365DSCHost -Message "        |---[$i/$($rules.Count)] $($group.DisplayName)_$($rule.Id)" -DeferWrite
                         $Params = @{
-                            GroupDisplayName      = $group.DisplayName
-                            Id                    = $rule.Id
-                            PIMGroupRole          = $PIMRole
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            ApplicationSecret     = $this.ApplicationSecret
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            CertificatePath       = $this.CertificatePath
-                            CertificatePassword   = $this.CertificatePassword
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            GroupDisplayName = $group.DisplayName
+                            Id               = $rule.Id
+                            PIMGroupRole     = $PIMRole
                         }
 
                         $this.ExportedInstance = $rule
@@ -643,23 +626,6 @@ class AADGroupEligibilityScheduleSettings : M365DSCResourceBase
         }
 
         return $values
-    }
-
-    hidden [AADGroupEligibilityScheduleSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADGroupEligibilityScheduleSettings])
-        {
-            return $Values
-        }
-
-        $result = [AADGroupEligibilityScheduleSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

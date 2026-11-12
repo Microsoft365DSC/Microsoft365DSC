@@ -105,19 +105,10 @@ class PlannerBucket : M365DSCResourceBase
             }
 
             $results = @{
-                Name                  = $this.Name
-                PlanId                = $this.PlanId
-                Id                    = $bucket[0].Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name   = $this.Name
+                PlanId = $this.PlanId
+                Id     = $bucket[0].Id
+                Ensure = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -213,18 +204,9 @@ class PlannerBucket : M365DSCResourceBase
 
                             Write-M365DSCHost -Message "            |---[$k/$($buckets.Length)] $($bucket.Name)" -DeferWrite
                             $params = @{
-                                Name                  = $bucket.Name
-                                PlanId                = $plan.Id
-                                Id                    = $bucket.Id
-                                Credential            = $this.Credential
-                                ApplicationId         = $this.ApplicationId
-                                TenantId              = $this.TenantId
-                                ApplicationSecret     = $this.ApplicationSecret
-                                CertificateThumbprint = $this.CertificateThumbprint
-                                CertificatePath       = $this.CertificatePath
-                                CertificatePassword   = $this.CertificatePassword
-                                ManagedIdentity       = $this.ManagedIdentity
-                                AccessTokens          = $this.AccessTokens
+                                Name   = $bucket.Name
+                                PlanId = $plan.Id
+                                Id     = $bucket.Id
                             }
                             $results = $this.GetForExport($params)
                             $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -258,22 +240,5 @@ class PlannerBucket : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [PlannerBucket] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PlannerBucket])
-        {
-            return $Values
-        }
-
-        $result = [PlannerBucket]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

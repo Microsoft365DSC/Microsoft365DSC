@@ -94,16 +94,8 @@ class TeamsVoiceRoute : M365DSCResourceBase
                 $this.AddTelemetry('Get')
 
                 $nullReturn = @{
-                    Identity              = $this.Identity
-                    Ensure                = 'Absent'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $this.Identity
+                    Ensure   = 'Absent'
                 }
 
                 $route = Get-CsOnlineVoiceRoute -Identity $this.Identity -ErrorAction 'SilentlyContinue'
@@ -129,14 +121,6 @@ class TeamsVoiceRoute : M365DSCResourceBase
                 OnlinePstnUsages        = $route.OnlinePstnUsages
                 Priority                = $route.Priority
                 Ensure                  = 'Present'
-                Credential              = $this.Credential
-                ApplicationId           = $this.ApplicationId
-                TenantId                = $this.TenantId
-                CertificateThumbprint   = $this.CertificateThumbprint
-                CertificatePath         = $this.CertificatePath
-                CertificatePassword     = $this.CertificatePassword
-                ManagedIdentity         = $this.ManagedIdentity
-                AccessTokens            = $this.AccessTokens
             })
         }
         catch
@@ -252,16 +236,8 @@ class TeamsVoiceRoute : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($routes.Count)] $($route.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $route.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $route.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $route
@@ -286,22 +262,5 @@ class TeamsVoiceRoute : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsVoiceRoute] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsVoiceRoute])
-        {
-            return $Values
-        }
-
-        $result = [TeamsVoiceRoute]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

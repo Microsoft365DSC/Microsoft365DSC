@@ -297,24 +297,15 @@ class AzureRoleAssignmentScheduleRequest : M365DSCResourceBase
             }
 
             $results = @{
-                Principal             = $PrincipalValue
-                PrincipalType         = $principalTypeValue
-                RoleDefinition        = $this.RoleDefinition
-                DirectoryScopeId      = $schedule.Scope
-                Id                    = $schedule.Name
-                Justification         = "Assignment of Azure role '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
-                ScheduleInfo          = $ScheduleInfoValue
-                Ensure                = 'Present'
-                SubscriptionId        = $this.SubscriptionId
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Principal        = $PrincipalValue
+                PrincipalType    = $principalTypeValue
+                RoleDefinition   = $this.RoleDefinition
+                DirectoryScopeId = $schedule.Scope
+                Id               = $schedule.Name
+                Justification    = "Assignment of Azure role '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
+                ScheduleInfo     = $ScheduleInfoValue
+                Ensure           = 'Present'
+                SubscriptionId   = $this.SubscriptionId
             }
             return $this.AsResult($results)
         }
@@ -600,22 +591,13 @@ class AzureRoleAssignmentScheduleRequest : M365DSCResourceBase
                     $this.ResourceCache['RoleDefinitions'][$roleDefinitionGuid] = $currentRoleDefinition
                 }
                 $Params = @{
-                    Id                    = $request.Name
-                    Principal             = $PrincipalValue
-                    PrincipalType         = $requestPrincipalType
-                    DirectoryScopeId      = $request.Scope
-                    RoleDefinition        = $currentRoleDefinition.Name
-                    Ensure                = 'Present'
-                    SubscriptionId        = $this.SubscriptionId
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id               = $request.Name
+                    Principal        = $PrincipalValue
+                    PrincipalType    = $requestPrincipalType
+                    DirectoryScopeId = $request.Scope
+                    RoleDefinition   = $currentRoleDefinition.Name
+                    Ensure           = 'Present'
+                    SubscriptionId   = $this.SubscriptionId
                 }
 
                 $this.ExportedInstance = $request
@@ -704,23 +686,6 @@ class AzureRoleAssignmentScheduleRequest : M365DSCResourceBase
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
             )
         }
-    }
-
-    hidden [AzureRoleAssignmentScheduleRequest] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureRoleAssignmentScheduleRequest])
-        {
-            return $Values
-        }
-
-        $result = [AzureRoleAssignmentScheduleRequest]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

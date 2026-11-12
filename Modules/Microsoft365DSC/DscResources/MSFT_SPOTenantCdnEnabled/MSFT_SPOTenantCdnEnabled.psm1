@@ -80,18 +80,9 @@ class SPOTenantCdnEnabled : M365DSCResourceBase
                 -ErrorAction Stop
 
             $result = @{
-                Ensure                = 'Present'
-                CdnType               = $this.CdnType
-                Enable                = $cdnEnabled.Value
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Ensure  = 'Present'
+                CdnType = $this.CdnType
+                Enable  = $cdnEnabled.Value
             }
             return $this.AsResult($result)
         }
@@ -163,16 +154,7 @@ class SPOTenantCdnEnabled : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/2] $cType" -DeferWrite
                 $Params = @{
-                    Credential            = $this.Credential
-                    CdnType               = $cType
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    CdnType = $cType
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -214,22 +196,5 @@ class SPOTenantCdnEnabled : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [SPOTenantCdnEnabled] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOTenantCdnEnabled])
-        {
-            return $Values
-        }
-
-        $result = [SPOTenantCdnEnabled]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

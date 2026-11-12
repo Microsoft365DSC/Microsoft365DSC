@@ -2191,7 +2191,7 @@ function Remove-M365DSCAuthenticationParameter
 
     Initialize-M365DSCDllLoader -ErrorAction Stop
 
-    $keysToRemove = @([Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames) + @('Ensure', 'Verbose')
+    $keysToRemove = [Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames + @('Ensure', 'Verbose')
 
     foreach ($key in $keysToRemove)
     {
@@ -2270,17 +2270,9 @@ function Set-M365DSCAuthenticationParameterMask
         $BoundParameters
     )
 
-    $keysToReplace = @(
-        'AccessTokens',
-        'ApplicationSecret',
-        'Credential',
-        'CertificatePassword',
-        'CertificatePath',
-        'CertificateThumbprint',
-        'Password'
-    )
+    Initialize-M365DSCDllLoader -ErrorAction Stop
 
-    foreach ($key in $keysToReplace)
+    foreach ($key in [Microsoft365DSC.Utilities.Utilities]::SecretPropertyNames)
     {
         if ($BoundParameters.ContainsKey($key))
         {
@@ -4308,16 +4300,8 @@ function Update-M365DSCAuthenticationConfiguration
     # The authentication parameters that need to be present for a given connection mode. The values
     # assigned below are the ones Update-M365DSCExportAuthenticationResults expects to find in order
     # to translate them into their final ConfigurationData or credential references.
-    $authenticationParameterSet = @{
-        ServicePrincipalWithThumbprint = @('ApplicationId', 'CertificateThumbprint', 'TenantId')
-        ServicePrincipalWithSecret     = @('ApplicationId', 'ApplicationSecret', 'TenantId')
-        ServicePrincipalWithPath       = @('ApplicationId', 'CertificatePath', 'CertificatePassword', 'TenantId')
-        CredentialsWithTenantId        = @('Credential', 'TenantId')
-        CredentialsWithApplicationId   = @('Credential', 'ApplicationId')
-        Credentials                    = @('Credential')
-        ManagedIdentity                = @('ManagedIdentity', 'TenantId')
-        AccessTokens                   = @('AccessTokens', 'TenantId')
-    }
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    $authenticationParameters = [Microsoft365DSC.Utilities.Utilities]::ConnectionModePropertyNames[$ConnectionMode]
 
     $updatedResources = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
     foreach ($resource in $parsedContent)
@@ -4332,7 +4316,7 @@ function Update-M365DSCAuthenticationConfiguration
             $resource.Ensure = $ensureValue
         }
 
-        foreach ($parameter in $authenticationParameterSet.$ConnectionMode)
+        foreach ($parameter in $authenticationParameters)
         {
             $resource.$parameter = switch ($parameter)
             {
@@ -4461,7 +4445,7 @@ function Update-M365DSCAuthenticationConfiguration
 
     # The ConfigurationData file is not updated by this function, so let the user know which entries
     # need to receive a value before the configuration can be applied.
-    $configurationDataKeys = @($authenticationParameterSet.$ConnectionMode | Where-Object -FilterScript { $_ -notin @('ManagedIdentity', 'Credential', 'CertificatePassword') })
+    $configurationDataKeys = @($authenticationParameters | Where-Object -FilterScript { $_ -notin @('ManagedIdentity', 'Credential', 'CertificatePassword') })
     if ($credentialParameters -notcontains 'Credential')
     {
         $configurationDataKeys = @('OrganizationName') + $configurationDataKeys

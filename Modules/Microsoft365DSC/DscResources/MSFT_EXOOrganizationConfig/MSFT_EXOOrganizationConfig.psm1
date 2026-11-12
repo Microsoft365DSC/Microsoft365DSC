@@ -697,14 +697,6 @@ class EXOOrganizationConfig : M365DSCResourceBase
                 WebPushNotificationsDisabled                              = $ConfigSettings.WebPushNotificationsDisabled
                 WebSuggestedRepliesDisabled                               = $ConfigSettings.WebSuggestedRepliesDisabled
                 WorkspaceTenantEnabled                                    = $ConfigSettings.WorkspaceTenantEnabled
-                Credential                                                = $this.Credential
-                ApplicationId                                             = $this.ApplicationId
-                CertificateThumbprint                                     = $this.CertificateThumbprint
-                CertificatePath                                           = $this.CertificatePath
-                CertificatePassword                                       = $this.CertificatePassword
-                ManagedIdentity                                           = $this.ManagedIdentity
-                TenantId                                                  = $this.TenantId
-                AccessTokens                                              = $this.AccessTokens
             }
 
             if ($null -eq $ConfigSettings.AutoExpandingArchiveEnabled)
@@ -841,15 +833,7 @@ class EXOOrganizationConfig : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $this.ExportedInstance = $organizationConfig
@@ -889,22 +873,5 @@ class EXOOrganizationConfig : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('TenantAdminNotificationForDelayedDelicensingEnabled', 'EndUserMailNotificationForDelayedDelicensingEnabled'); When = @{ All = @(@{ Property = 'DelayedDelicensingEnabled'; HasKey = $true }; @{ Property = 'DelayedDelicensingEnabled'; NotEquals = $true }) } }
             )
         }
-    }
-
-    hidden [EXOOrganizationConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOOrganizationConfig])
-        {
-            return $Values
-        }
-
-        $result = [EXOOrganizationConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

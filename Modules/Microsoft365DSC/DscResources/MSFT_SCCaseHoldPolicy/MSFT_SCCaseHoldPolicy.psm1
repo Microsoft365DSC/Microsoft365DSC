@@ -114,22 +114,14 @@ class SCCaseHoldPolicy : M365DSCResourceBase
             Write-Verbose "Found existing SCCaseHoldPolicy $($this.Name)"
 
             $result = @{
-                Ensure                = 'Present'
-                Name                  = $PolicyObject.Name
-                Case                  = $this.Case
-                Enabled               = $PolicyObject.Enabled
-                Comment               = $PolicyObject.Comment
-                ExchangeLocation      = $PolicyObject.ExchangeLocation.Name
-                PublicFolderLocation  = $PolicyObject.PublicFolderLocation.Name
-                SharePointLocation    = $PolicyObject.SharePointLocation.Name
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Ensure               = 'Present'
+                Name                 = $PolicyObject.Name
+                Case                 = $this.Case
+                Enabled              = $PolicyObject.Enabled
+                Comment              = $PolicyObject.Comment
+                ExchangeLocation     = $PolicyObject.ExchangeLocation.Name
+                PublicFolderLocation = $PolicyObject.PublicFolderLocation.Name
+                SharePointLocation   = $PolicyObject.SharePointLocation.Name
             }
 
             return $this.AsResult($result)
@@ -365,22 +357,5 @@ class SCCaseHoldPolicy : M365DSCResourceBase
             throw $ErrorRecord
         }
         Write-Warning -Message ($ErrorRecord.Exception.Message -split "`r?`n")[0]
-    }
-
-    hidden [SCCaseHoldPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCCaseHoldPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCCaseHoldPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -1,4 +1,6 @@
 BeforeAll {
+    Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1" -Force -Global
+    Initialize-M365DSCDllLoader
     Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCConnection.psm1" -Force
     $Script:UtilModule = $null
     if ($null -eq (Get-Module -Name 'Microsoft365DSC'))

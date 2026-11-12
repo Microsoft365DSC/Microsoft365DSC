@@ -156,14 +156,6 @@ class AADIdentityAPIConnector : M365DSCResourceBase
                 Id                          = $getValue.Id
                 AuthenticationConfiguration = $complexAuthenticationConfiguration
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
                 #endregion
             }
 
@@ -396,18 +388,9 @@ class AADIdentityAPIConnector : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -470,23 +453,6 @@ class AADIdentityAPIConnector : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Password', 'Pkcs12Value')
         }
-    }
-
-    hidden [AADIdentityAPIConnector] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADIdentityAPIConnector])
-        {
-            return $Values
-        }
-
-        $result = [AADIdentityAPIConnector]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

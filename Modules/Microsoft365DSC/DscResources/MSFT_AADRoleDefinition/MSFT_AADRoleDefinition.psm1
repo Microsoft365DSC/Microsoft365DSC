@@ -130,24 +130,15 @@ class AADRoleDefinition : M365DSCResourceBase
             }
 
             $result = @{
-                Id                    = $AADRoleDefinition.Id
-                DisplayName           = $AADRoleDefinition.DisplayName
-                Description           = $AADRoleDefinition.Description
-                ResourceScopes        = $AADRoleDefinition.ResourceScopes
-                IsEnabled             = $AADRoleDefinition.IsEnabled
-                RolePermissions       = Get-M365DSCArrayFromProperty -PropertyValue $AADRoleDefinition.RolePermissions.AllowedResourceActions -ElementType ([System.String])
-                TemplateId            = $AADRoleDefinition.TemplateId
-                Version               = $AADRoleDefinition.Version
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                ApplicationSecret     = $this.ApplicationSecret
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id              = $AADRoleDefinition.Id
+                DisplayName     = $AADRoleDefinition.DisplayName
+                Description     = $AADRoleDefinition.Description
+                ResourceScopes  = $AADRoleDefinition.ResourceScopes
+                IsEnabled       = $AADRoleDefinition.IsEnabled
+                RolePermissions = Get-M365DSCArrayFromProperty -PropertyValue $AADRoleDefinition.RolePermissions.AllowedResourceActions -ElementType ([System.String])
+                TemplateId      = $AADRoleDefinition.TemplateId
+                Version         = $AADRoleDefinition.Version
+                Ensure          = 'Present'
             }
             return $this.AsResult($result)
         }
@@ -253,19 +244,10 @@ class AADRoleDefinition : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($AADRoleDefinition.DisplayName)" -DeferWrite
                 $Params = @{
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    DisplayName           = $AADRoleDefinition.DisplayName
-                    Id                    = $AADRoleDefinition.Id
-                    IsEnabled             = $true
-                    RolePermissions       = @('temp')
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName     = $AADRoleDefinition.DisplayName
+                    Id              = $AADRoleDefinition.Id
+                    IsEnabled       = $true
+                    RolePermissions = @('temp')
                 }
                 $this.ExportedInstance = $AADRoleDefinition
                 $Results = $this.GetForExport($Params)
@@ -299,22 +281,5 @@ class AADRoleDefinition : M365DSCResourceBase
         return @{
             ExcludedProperties = @('TemplateId')
         }
-    }
-
-    hidden [AADRoleDefinition] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADRoleDefinition])
-        {
-            return $Values
-        }
-
-        $result = [AADRoleDefinition]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

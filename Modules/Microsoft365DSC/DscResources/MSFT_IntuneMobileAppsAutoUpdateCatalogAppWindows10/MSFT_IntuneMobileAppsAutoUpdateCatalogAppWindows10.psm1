@@ -214,15 +214,6 @@ class IntuneMobileAppsAutoUpdateCatalogAppWindows10 : M365DSCResourceBase
                 Publisher                       = $getValue.Publisher
                 RoleScopeTagIds                 = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePassword             = $this.CertificatePassword
-                CertificatePath                 = $this.CertificatePath
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
 
             $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppAssignment -MobileAppId $getValue.Id -ErrorAction SilentlyContinue
@@ -393,17 +384,8 @@ class IntuneMobileAppsAutoUpdateCatalogAppWindows10 : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.DisplayName)" -DeferWrite
 
                 $Params = @{
-                    Id                    = $exportedInstance.Id
-                    DisplayName           = $exportedInstance.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $exportedInstance.Id
+                    DisplayName = $exportedInstance.DisplayName
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -508,23 +490,6 @@ class IntuneMobileAppsAutoUpdateCatalogAppWindows10 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneMobileAppsAutoUpdateCatalogAppWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsAutoUpdateCatalogAppWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsAutoUpdateCatalogAppWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

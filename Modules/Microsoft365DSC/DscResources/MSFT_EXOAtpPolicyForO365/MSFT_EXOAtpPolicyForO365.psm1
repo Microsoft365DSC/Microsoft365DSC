@@ -96,13 +96,6 @@ class EXOAtpPolicyForO365 : M365DSCResourceBase
                 AllowSafeDocsOpen       = $AtpPolicyForO365.AllowSafeDocsOpen
                 EnableATPForSPOTeamsODB = $AtpPolicyForO365.EnableATPForSPOTeamsODB
                 EnableSafeDocs          = $AtpPolicyForO365.EnableSafeDocs
-                ApplicationId           = $this.ApplicationId
-                CertificateThumbprint   = $this.CertificateThumbprint
-                CertificatePath         = $this.CertificatePath
-                CertificatePassword     = $this.CertificatePassword
-                ManagedIdentity         = $this.ManagedIdentity
-                TenantId                = $this.TenantId
-                AccessTokens            = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -184,15 +177,7 @@ class EXOAtpPolicyForO365 : M365DSCResourceBase
                     Write-M365DSCHost -Message "    |---[$i/$($ATPPolicies.Length)] $($atpPolicy.Identity)" -DeferWrite
 
                     $Params = @{
-                        IsSingleInstance      = 'Yes'
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        IsSingleInstance = 'Yes'
                     }
                     $this.ExportedInstance = $atpPolicy
                     $Results = $this.GetForExport($Params)
@@ -231,22 +216,5 @@ class EXOAtpPolicyForO365 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAtpPolicyForO365] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAtpPolicyForO365])
-        {
-            return $Values
-        }
-
-        $result = [EXOAtpPolicyForO365]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

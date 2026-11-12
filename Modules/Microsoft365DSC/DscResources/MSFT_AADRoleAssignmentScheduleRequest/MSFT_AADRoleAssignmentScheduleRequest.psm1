@@ -261,24 +261,15 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
             }
 
             $results = @{
-                Principal             = $PrincipalValue
-                PrincipalType         = $principalTypeValue
-                RoleDefinition        = $this.RoleDefinition
-                DirectoryScopeId      = $schedule.DirectoryScopeId
-                AppScopeId            = $schedule.AppScopeId
-                Id                    = $schedule.Id
-                Justification         = "Assignment of role '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
-                ScheduleInfo          = $ScheduleInfoValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Principal        = $PrincipalValue
+                PrincipalType    = $principalTypeValue
+                RoleDefinition   = $this.RoleDefinition
+                DirectoryScopeId = $schedule.DirectoryScopeId
+                AppScopeId       = $schedule.AppScopeId
+                Id               = $schedule.Id
+                Justification    = "Assignment of role '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
+                ScheduleInfo     = $ScheduleInfoValue
+                Ensure           = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -504,21 +495,12 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
                     $this.ResourceCache['RoleDefinitions'].Add($request.RoleDefinitionId, $currentRoleDefinition)
                 }
                 $params = @{
-                    Id                    = $request.Id
-                    Principal             = $PrincipalValue
-                    PrincipalType         = $principalTypeValue
-                    DirectoryScopeId      = $request.DirectoryScopeId
-                    RoleDefinition        = $currentRoleDefinition.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id               = $request.Id
+                    Principal        = $PrincipalValue
+                    PrincipalType    = $principalTypeValue
+                    DirectoryScopeId = $request.DirectoryScopeId
+                    RoleDefinition   = $currentRoleDefinition.DisplayName
+                    Ensure           = 'Present'
                 }
 
                 $this.ExportedInstance = $request
@@ -665,23 +647,6 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
         }
 
         return $true
-    }
-
-    hidden [AADRoleAssignmentScheduleRequest] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADRoleAssignmentScheduleRequest])
-        {
-            return $Values
-        }
-
-        $result = [AADRoleAssignmentScheduleRequest]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

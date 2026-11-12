@@ -266,14 +266,6 @@ class IntuneCloudProvisioningPolicyWindows365 : M365DSCResourceBase
                 WindowsSettings          = $complexWindowsSettings
                 Id                       = $getValue.Id
                 Ensure                   = 'Present'
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                TenantId                 = $this.TenantId
-                ApplicationSecret        = $this.ApplicationSecret
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
                 #endregion
             }
             $assignmentsValues = $getValue.Assignments
@@ -436,18 +428,9 @@ class IntuneCloudProvisioningPolicyWindows365 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -566,23 +549,6 @@ class IntuneCloudProvisioningPolicyWindows365 : M365DSCResourceBase
         return @{
             ExcludedProperties = @('GeographicLocationType', 'ProvisioningType', 'UserExperienceType')
         }
-    }
-
-    hidden [IntuneCloudProvisioningPolicyWindows365] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneCloudProvisioningPolicyWindows365])
-        {
-            return $Values
-        }
-
-        $result = [IntuneCloudProvisioningPolicyWindows365]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

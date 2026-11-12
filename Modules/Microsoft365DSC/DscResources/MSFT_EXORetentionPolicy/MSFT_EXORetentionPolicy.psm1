@@ -113,14 +113,6 @@ class EXORetentionPolicy : M365DSCResourceBase
                 Name                        = [System.String]$instance.Name
                 RetentionId                 = [System.Guid]$instance.RetentionId
                 RetentionPolicyTagLinks     = [System.String[]]$instance.RetentionPolicyTagLinks
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -207,15 +199,7 @@ class EXORetentionPolicy : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($retentionPolicies.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -239,22 +223,5 @@ class EXORetentionPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXORetentionPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXORetentionPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXORetentionPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

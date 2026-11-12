@@ -113,20 +113,12 @@ class EXOIntraOrganizationConnector : M365DSCResourceBase
                 $TargetSharingEprValue = $IntraOrganizationConnector.TargetSharingEpr.ToString()
             }
             $result = @{
-                Identity              = $this.Identity
-                DiscoveryEndpoint     = $DiscoveryEndpointValue
-                Enabled               = $IntraOrganizationConnector.Enabled
-                TargetAddressDomains  = $IntraOrganizationConnector.TargetAddressDomains
-                TargetSharingEpr      = $TargetSharingEprValue
-                Credential            = $this.Credential
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Identity             = $this.Identity
+                DiscoveryEndpoint    = $DiscoveryEndpointValue
+                Enabled              = $IntraOrganizationConnector.Enabled
+                TargetAddressDomains = $IntraOrganizationConnector.TargetAddressDomains
+                TargetSharingEpr     = $TargetSharingEprValue
+                Ensure               = 'Present'
             }
 
             return $this.AsResult($result)
@@ -224,15 +216,7 @@ class EXOIntraOrganizationConnector : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($IntraOrganizationConnectors.Length)] $($IntraOrganizationConnector.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $IntraOrganizationConnector.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $IntraOrganizationConnector.Identity
                 }
                 $this.ExportedInstance = $IntraOrganizationConnector
                 $Results = $this.GetForExport($Params)
@@ -255,22 +239,5 @@ class EXOIntraOrganizationConnector : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOIntraOrganizationConnector] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOIntraOrganizationConnector])
-        {
-            return $Values
-        }
-
-        $result = [EXOIntraOrganizationConnector]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

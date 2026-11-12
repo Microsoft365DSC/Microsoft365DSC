@@ -679,15 +679,6 @@ class SPOTenantSettings : M365DSCResourceBase
                 IsSiteCreationUiEnabled                                        = $SPOTenantGraphSettings.IsSiteCreationUiEnabled
                 IsSitePagesCreationEnabled                                     = $SPOTenantGraphSettings.IsSitePagesCreationEnabled
                 TenantDefaultTimezone                                          = $SPOTenantGraphSettings.TenantDefaultTimeZone
-                Credential                                                     = $this.Credential
-                ApplicationId                                                  = $this.ApplicationId
-                TenantId                                                       = $this.TenantId
-                ApplicationSecret                                              = $this.ApplicationSecret
-                CertificateThumbprint                                          = $this.CertificateThumbprint
-                CertificatePassword                                            = $this.CertificatePassword
-                CertificatePath                                                = $this.CertificatePath
-                ManagedIdentity                                                = $this.ManagedIdentity
-                AccessTokens                                                   = $this.AccessTokens
             }
 
             if ($SPOTenantSettings.OneDriveRequestFilesLinkExpirationInDays -eq -1)
@@ -838,16 +829,7 @@ class SPOTenantSettings : M365DSCResourceBase
             $dscContent = [System.Text.StringBuilder]::new()
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -883,22 +865,5 @@ class SPOTenantSettings : M365DSCResourceBase
         return @{
             ExcludedProperties = @()
         }
-    }
-
-    hidden [SPOTenantSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOTenantSettings])
-        {
-            return $Values
-        }
-
-        $result = [SPOTenantSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

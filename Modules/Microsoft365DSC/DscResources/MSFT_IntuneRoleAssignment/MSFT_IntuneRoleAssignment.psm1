@@ -201,15 +201,6 @@ class IntuneRoleAssignment : M365DSCResourceBase
                 RoleDefinitionDisplayName  = $currentRoleDefinitionDisplayName
                 RoleScopeTagIds            = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                     = 'Present'
-                Credential                 = $this.Credential
-                ApplicationId              = $this.ApplicationId
-                TenantId                   = $this.TenantId
-                ApplicationSecret          = $this.ApplicationSecret
-                CertificateThumbprint      = $this.CertificateThumbprint
-                CertificatePath            = $this.CertificatePath
-                CertificatePassword        = $this.CertificatePassword
-                ManagedIdentity            = $this.ManagedIdentity
-                AccessTokens               = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -437,18 +428,9 @@ class IntuneRoleAssignment : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -497,22 +479,5 @@ class IntuneRoleAssignment : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('RoleDefinition'); When = @{ Property = 'RoleDefinitionDisplayName'; HasKey = $true } }
             )
         }
-    }
-
-    hidden [IntuneRoleAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneRoleAssignment])
-        {
-            return $Values
-        }
-
-        $result = [IntuneRoleAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

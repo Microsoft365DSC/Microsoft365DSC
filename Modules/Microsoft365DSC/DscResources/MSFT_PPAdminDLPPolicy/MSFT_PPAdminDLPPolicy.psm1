@@ -108,19 +108,11 @@ class PPAdminDLPPolicy : M365DSCResourceBase
             }
 
             $results = @{
-                DisplayName           = $instance.properties.displayName
-                PolicyName            = $instance.name
-                Environments          = [array]$instance.properties.definition.constraints.environmentFilter1.parameters.environments.name
-                FilterType            = $instance.properties.definition.constraints.environmentFilter1.parameters.filterType
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName  = $instance.properties.displayName
+                PolicyName   = $instance.name
+                Environments = [array]$instance.properties.definition.constraints.environmentFilter1.parameters.environments.name
+                FilterType   = $instance.properties.definition.constraints.environmentFilter1.parameters.filterType
+                Ensure       = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -313,16 +305,8 @@ class PPAdminDLPPolicy : M365DSCResourceBase
                 $displayedKey = $config.properties.displayName
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.properties.displayName
-                    PolicyName            = $config.name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.properties.displayName
+                    PolicyName  = $config.name
                 }
 
                 $this.ExportedInstance = $config
@@ -347,22 +331,5 @@ class PPAdminDLPPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [PPAdminDLPPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PPAdminDLPPolicy])
-        {
-            return $Values
-        }
-
-        $result = [PPAdminDLPPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

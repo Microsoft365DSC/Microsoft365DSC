@@ -148,23 +148,15 @@ class ADOPermissionGroup : M365DSCResourceBase
             }
 
             $results = @{
-                OrganizationName      = $this.OrganizationName
-                PrincipalName         = $instance.principalName
-                Description           = $instance.description
-                DisplayName           = $instance.displayName
-                Descriptor            = $instance.descriptor
-                Level                 = $LevelValue
-                Id                    = $instance.originId
-                Members               = $MembersValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                OrganizationName = $this.OrganizationName
+                PrincipalName    = $instance.principalName
+                Description      = $instance.description
+                DisplayName      = $instance.displayName
+                Descriptor       = $instance.descriptor
+                Level            = $LevelValue
+                Id               = $instance.originId
+                Members          = $MembersValue
+                Ensure           = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -315,15 +307,9 @@ class ADOPermissionGroup : M365DSCResourceBase
                     }
                     Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        OrganizationName      = $Organization
-                        PrincipalName         = $config.principalName
-                        Descriptor            = $config.descriptor
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        OrganizationName = $Organization
+                        PrincipalName    = $config.principalName
+                        Descriptor       = $config.descriptor
                     }
 
                     if (-not $config.principalName.StartsWith('[TEAM FOUNDATION]'))
@@ -364,22 +350,5 @@ class ADOPermissionGroup : M365DSCResourceBase
         $UserId = $user.id
         $uri = "https://vsaex.dev.azure.com/$($OrganizationName)/_apis/GroupEntitlements/$($GroupId)/members/$($UserId)?api-version=5.0-preview.1"
         Invoke-M365DSCAzureDevOPSWebRequest -Uri $uri -Method $Method | Out-Null
-    }
-
-    hidden [ADOPermissionGroup] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [ADOPermissionGroup])
-        {
-            return $Values
-        }
-
-        $result = [ADOPermissionGroup]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

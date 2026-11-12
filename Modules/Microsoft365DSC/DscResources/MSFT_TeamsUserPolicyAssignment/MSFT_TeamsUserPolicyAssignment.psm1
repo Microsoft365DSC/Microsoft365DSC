@@ -331,14 +331,6 @@ class TeamsUserPolicyAssignment : M365DSCResourceBase
                 TeamsUpdateManagementPolicy     = $TeamsUpdateManagementPolicyValue
                 TeamsUpgradePolicy              = $TeamsUpgradePolicyValue
                 TenantDialPlan                  = $TenantDialPlanValue
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             })
         }
         catch
@@ -647,15 +639,7 @@ class TeamsUserPolicyAssignment : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$j/$totalCount] Policy Assignment(s) for user {$($user.UserPrincipalName)}" -DeferWrite
                 $getParams = @{
-                    User                  = $user.UserPrincipalName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    User = $user.UserPrincipalName
                 }
                 $results = $this.GetForExport($getParams)
 
@@ -688,22 +672,5 @@ class TeamsUserPolicyAssignment : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsUserPolicyAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsUserPolicyAssignment])
-        {
-            return $Values
-        }
-
-        $result = [TeamsUserPolicyAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

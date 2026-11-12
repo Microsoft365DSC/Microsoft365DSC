@@ -271,8 +271,8 @@ Describe 'HashtableConverter.ToString' {
     }
 
     It 'Obfuscates credential-bearing properties' {
-        $lines = [Microsoft365DSC.Converter.HashtableConverter]::ConvertToString(@{ ApplicationSecret = 'hunter2'; Name = 'x' }) -split "`r?`n"
-        $lines | Should -Be @('ApplicationSecret=***', 'Name=x')
+        $lines = [Microsoft365DSC.Converter.HashtableConverter]::ConvertToString(@{ ApplicationSecret = 'hunter2'; AccessTokens = @('token'); Name = 'x' }) -split "`r?`n"
+        $lines | Should -Be @('AccessTokens=***', 'ApplicationSecret=***', 'Name=x')
     }
 
     It 'Renders a nested hashtable in braces' {

@@ -87,17 +87,9 @@ class EXOPolicyTipConfig : M365DSCResourceBase
             Write-Verbose -Message "Found Policy Tip Config with Name {$($this.Name)}"
 
             $result = @{
-                Name                  = $PolicyTipConfig.Name
-                Value                 = $PolicyTipConfig.Value
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name   = $PolicyTipConfig.Name
+                Value  = $PolicyTipConfig.Value
+                Ensure = 'Present'
             }
 
             return $this.AsResult($result)
@@ -207,15 +199,7 @@ class EXOPolicyTipConfig : M365DSCResourceBase
                     Write-M365DSCHost -Message "    |---[$i/$($AllPolicyTips.Length)] $($PolicyTipConfig.Name)" -DeferWrite
 
                     $Params = @{
-                        Name                  = $PolicyTipConfig.Name
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Name = $PolicyTipConfig.Name
                     }
                     $this.ExportedInstance = $PolicyTipConfig
                     $Results = $this.GetForExport($Params)
@@ -243,22 +227,5 @@ class EXOPolicyTipConfig : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOPolicyTipConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOPolicyTipConfig])
-        {
-            return $Values
-        }
-
-        $result = [EXOPolicyTipConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

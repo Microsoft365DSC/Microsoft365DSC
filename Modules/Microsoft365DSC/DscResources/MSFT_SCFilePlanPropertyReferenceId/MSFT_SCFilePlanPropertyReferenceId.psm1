@@ -84,16 +84,8 @@ class SCFilePlanPropertyReferenceId : M365DSCResourceBase
             Write-Verbose "Found existing SCFilePlanPropertyReferenceId $($this.Name)"
 
             $result = @{
-                Name                  = $property.DisplayName
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name   = $property.DisplayName
+                Ensure = 'Present'
             }
 
             return $this.AsResult($result)
@@ -221,22 +213,5 @@ class SCFilePlanPropertyReferenceId : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCFilePlanPropertyReferenceId] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCFilePlanPropertyReferenceId])
-        {
-            return $Values
-        }
-
-        $result = [SCFilePlanPropertyReferenceId]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

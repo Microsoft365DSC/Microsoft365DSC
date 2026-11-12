@@ -440,13 +440,6 @@ class AADRoleSetting : M365DSCResourceBase
                 AuthenticationContextId                                   = $AuthenticationContextIdValue
                 AuthenticationContextName                                 = $AuthenticationContextNameValue
                 Ensure                                                    = 'Present'
-                ApplicationId                                             = $this.ApplicationId
-                TenantId                                                  = $this.TenantId
-                CertificateThumbprint                                     = $this.CertificateThumbprint
-                ApplicationSecret                                         = $this.ApplicationSecret
-                Credential                                                = $this.Credential
-                ManagedIdentity                                           = $this.ManagedIdentity
-                AccessTokens                                              = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -1033,17 +1026,8 @@ class AADRoleSetting : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($role.DisplayName)" -DeferWrite
                 $Params = @{
-                    Id                    = $role.Id
-                    DisplayName           = $role.DisplayName
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    ApplicationSecret     = $this.ApplicationSecret
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $role.Id
+                    DisplayName = $role.DisplayName
                 }
 
                 $this.ExportedInstance = $role
@@ -1072,22 +1056,5 @@ class AADRoleSetting : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADRoleSetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADRoleSetting])
-        {
-            return $Values
-        }
-
-        $result = [AADRoleSetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

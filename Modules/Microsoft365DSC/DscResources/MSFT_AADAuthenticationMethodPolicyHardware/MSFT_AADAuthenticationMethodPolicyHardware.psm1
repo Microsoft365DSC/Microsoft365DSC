@@ -164,20 +164,11 @@ class AADAuthenticationMethodPolicyHardware : M365DSCResourceBase
             }
             $results = @{
                 #region resource generator code
-                ExcludeTargets        = $complexExcludeTargets
-                IncludeTargets        = $complexIncludeTargets
-                State                 = $getValue.State
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                ExcludeTargets = $complexExcludeTargets
+                IncludeTargets = $complexIncludeTargets
+                State          = $getValue.State
+                Id             = $getValue.Id
+                Ensure         = 'Present'
                 #endregion
             }
 
@@ -280,17 +271,8 @@ class AADAuthenticationMethodPolicyHardware : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -346,23 +328,6 @@ class AADAuthenticationMethodPolicyHardware : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationMethodPolicyHardware] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationMethodPolicyHardware])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationMethodPolicyHardware]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

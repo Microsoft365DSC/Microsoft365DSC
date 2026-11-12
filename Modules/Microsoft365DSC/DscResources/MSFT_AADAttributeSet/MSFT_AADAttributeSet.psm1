@@ -103,19 +103,10 @@ class AADAttributeSet : M365DSCResourceBase
             Write-Verbose -Message "Attribute Set with Id {$($this.Id)} was found."
 
             $results = @{
-                Id                    = $getValue.Id
-                Description           = $getValue.Description
-                MaxAttributesPerSet   = $getValue.MaxAttributesPerSet
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id                  = $getValue.Id
+                Description         = $getValue.Description
+                MaxAttributesPerSet = $getValue.MaxAttributesPerSet
+                Ensure              = 'Present'
             }
 
             return $this.AsResult($results)
@@ -208,17 +199,8 @@ class AADAttributeSet : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -251,22 +233,5 @@ class AADAttributeSet : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [AADAttributeSet] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAttributeSet])
-        {
-            return $Values
-        }
-
-        $result = [AADAttributeSet]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

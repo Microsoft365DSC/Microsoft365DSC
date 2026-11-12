@@ -164,26 +164,18 @@ class IntuneAzureNetworkConnectionWindows365 : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                AdDomainName          = $getValue.AdDomainName
-                AdDomainUsername      = $getValue.AdDomainUsername
-                ConnectionType        = $enumConnectionType
-                DisplayName           = $getValue.DisplayName
-                OrganizationalUnit    = $getValue.OrganizationalUnit
-                ResourceGroupId       = $getValue.ResourceGroupId.Replace("/subscriptions/$($getValue.SubscriptionId)/", "/subscriptions/$($getValue.SubscriptionName)/")
-                ScopeIds              = $getValue.ScopeIds
-                SubnetId              = $getValue.SubnetId.Replace("/subscriptions/$($getValue.SubscriptionId)/", "/subscriptions/$($getValue.SubscriptionName)/")
-                SubscriptionName      = $getValue.SubscriptionName
-                VirtualNetworkId      = $getValue.VirtualNetworkId.Replace("/subscriptions/$($getValue.SubscriptionId)/", "/subscriptions/$($getValue.SubscriptionName)/")
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                AdDomainName       = $getValue.AdDomainName
+                AdDomainUsername   = $getValue.AdDomainUsername
+                ConnectionType     = $enumConnectionType
+                DisplayName        = $getValue.DisplayName
+                OrganizationalUnit = $getValue.OrganizationalUnit
+                ResourceGroupId    = $getValue.ResourceGroupId.Replace("/subscriptions/$($getValue.SubscriptionId)/", "/subscriptions/$($getValue.SubscriptionName)/")
+                ScopeIds           = $getValue.ScopeIds
+                SubnetId           = $getValue.SubnetId.Replace("/subscriptions/$($getValue.SubscriptionId)/", "/subscriptions/$($getValue.SubscriptionName)/")
+                SubscriptionName   = $getValue.SubscriptionName
+                VirtualNetworkId   = $getValue.VirtualNetworkId.Replace("/subscriptions/$($getValue.SubscriptionId)/", "/subscriptions/$($getValue.SubscriptionName)/")
+                Id                 = $getValue.Id
+                Ensure             = 'Present'
                 #endregion
             }
 
@@ -350,23 +342,14 @@ class IntuneAzureNetworkConnectionWindows365 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    ConnectionType        = $config.ConnectionType
-                    ResourceGroupId       = $config.ResourceGroupId
-                    SubnetId              = $config.SubnetId
-                    SubscriptionName      = $config.SubscriptionName
-                    VirtualNetworkId      = $config.VirtualNetworkId
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id               = $config.Id
+                    DisplayName      = $config.DisplayName
+                    ConnectionType   = $config.ConnectionType
+                    ResourceGroupId  = $config.ResourceGroupId
+                    SubnetId         = $config.SubnetId
+                    SubscriptionName = $config.SubscriptionName
+                    VirtualNetworkId = $config.VirtualNetworkId
+                    Ensure           = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -403,22 +386,5 @@ class IntuneAzureNetworkConnectionWindows365 : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Side = 'Desired'; Properties = @('AdDomainName', 'AdDomainUsername', 'OrganizationalUnit'); When = @{ Property = 'ConnectionType'; Equals = 'azureADJoin' } }
             )
         }
-    }
-
-    hidden [IntuneAzureNetworkConnectionWindows365] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAzureNetworkConnectionWindows365])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAzureNetworkConnectionWindows365]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

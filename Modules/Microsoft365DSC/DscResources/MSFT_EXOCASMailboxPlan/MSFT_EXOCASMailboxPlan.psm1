@@ -121,21 +121,13 @@ class EXOCASMailboxPlan : M365DSCResourceBase
             Write-Verbose -Message "Found CASMailboxPlan $($this.Identity)"
 
             $result = @{
-                Ensure                = 'Present'
-                Identity              = $CASMailboxPlan.Identity
-                DisplayName           = $CASMailboxPlan.DisplayName
-                ActiveSyncEnabled     = $CASMailboxPlan.ActiveSyncEnabled
-                ImapEnabled           = $CASMailboxPlan.ImapEnabled
-                OwaMailboxPolicy      = $CASMailboxPlan.OwaMailboxPolicy
-                PopEnabled            = $CASMailboxPlan.PopEnabled
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Ensure            = 'Present'
+                Identity          = $CASMailboxPlan.Identity
+                DisplayName       = $CASMailboxPlan.DisplayName
+                ActiveSyncEnabled = $CASMailboxPlan.ActiveSyncEnabled
+                ImapEnabled       = $CASMailboxPlan.ImapEnabled
+                OwaMailboxPolicy  = $CASMailboxPlan.OwaMailboxPolicy
+                PopEnabled        = $CASMailboxPlan.PopEnabled
             }
 
             return $this.AsResult($result)
@@ -218,16 +210,8 @@ class EXOCASMailboxPlan : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($CASMailboxPlans.Count)] $($CASMailboxPlan.Identity.Split('-')[0])" -DeferWrite
                 $Params = @{
-                    Identity              = $CASMailboxPlan.Identity
-                    DisplayName           = $CASMailboxPlan.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $CASMailboxPlan.Identity
+                    DisplayName = $CASMailboxPlan.DisplayName
                 }
                 $this.ExportedInstance = $CASMailboxPlan
                 $Results = $this.GetForExport($Params)
@@ -261,22 +245,5 @@ class EXOCASMailboxPlan : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOCASMailboxPlan] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOCASMailboxPlan])
-        {
-            return $Values
-        }
-
-        $result = [EXOCASMailboxPlan]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

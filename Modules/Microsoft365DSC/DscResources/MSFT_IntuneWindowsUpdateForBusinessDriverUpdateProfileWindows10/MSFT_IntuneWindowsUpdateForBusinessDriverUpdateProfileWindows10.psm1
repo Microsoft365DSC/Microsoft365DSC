@@ -146,15 +146,6 @@ class IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10 : M365DSCResour
                 DisplayName              = $getValue.displayName
                 Id                       = $resolvedId
                 Ensure                   = 'Present'
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                TenantId                 = $this.TenantId
-                ApplicationSecret        = $this.ApplicationSecret
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                AccessTokens             = $this.AccessTokens
                 #endregion
             }
 
@@ -302,18 +293,9 @@ class IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10 : M365DSCResour
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -353,23 +335,6 @@ class IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10 : M365DSCResour
 
             throw
         }
-    }
-
-    hidden [IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

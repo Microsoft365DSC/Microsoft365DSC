@@ -154,15 +154,6 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
                 IncludeAllPreApprovedApplications = $getValue.IncludeAllPreApprovedApplications
                 ResourceScopeType                 = $getValue.ResourceScopeType
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                ApplicationSecret                 = $this.ApplicationSecret
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -417,16 +408,7 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($policy.Id)" -DeferWrite
 
                 $Params = @{
-                    Id                    = $policy.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id = $policy.Id
                 }
 
                 $this.ExportedInstance = $policy
@@ -1188,23 +1170,6 @@ class AADPermissionGrantPolicy : M365DSCResourceBase
 
         Write-Verbose -Message "Could not resolve ResourceApplication name '$ResourceApplication' to an AppId."
         return $ResourceApplication
-    }
-
-    hidden [AADPermissionGrantPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADPermissionGrantPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADPermissionGrantPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

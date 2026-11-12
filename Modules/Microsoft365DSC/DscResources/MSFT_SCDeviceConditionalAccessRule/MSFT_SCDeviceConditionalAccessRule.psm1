@@ -366,14 +366,6 @@ class SCDeviceConditionalAccessRule : M365DSCResourceBase
                 WLANEnabled                   = $instance.WLANEnabled
                 WorkFoldersSyncUrl            = $instance.WorkFoldersSyncUrl
                 Ensure                        = 'Present'
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -481,17 +473,9 @@ class SCDeviceConditionalAccessRule : M365DSCResourceBase
                 $displayedKey = $config.Name
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Name                  = $config.Name
-                    Policy                = $config.Name.Split('{')[0]
-                    TargetGroups          = $config.TargetGroups
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name         = $config.Name
+                    Policy       = $config.Name.Split('{')[0]
+                    TargetGroups = $config.TargetGroups
                 }
 
                 $this.ExportedInstance = $config
@@ -524,22 +508,5 @@ class SCDeviceConditionalAccessRule : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Name')
         }
-    }
-
-    hidden [SCDeviceConditionalAccessRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCDeviceConditionalAccessRule])
-        {
-            return $Values
-        }
-
-        $result = [SCDeviceConditionalAccessRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

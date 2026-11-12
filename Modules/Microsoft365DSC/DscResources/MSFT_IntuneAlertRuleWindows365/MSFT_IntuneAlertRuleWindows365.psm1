@@ -143,20 +143,12 @@ class IntuneAlertRuleWindows365 : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                AlertRuleTemplate     = $getValue.AlertRuleTemplate
-                Conditions            = $complexConditions
-                Enabled               = $getValue.Enabled
-                NotificationChannels  = $complexNotificationChannels
-                Severity              = $getValue.Severity
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                AlertRuleTemplate    = $getValue.AlertRuleTemplate
+                Conditions           = $complexConditions
+                Enabled              = $getValue.Enabled
+                NotificationChannels = $complexNotificationChannels
+                Severity             = $getValue.Severity
+                Ensure               = 'Present'
                 #endregion
             }
 
@@ -273,17 +265,8 @@ class IntuneAlertRuleWindows365 : M365DSCResourceBase
                 $displayedKey = $config.alertRuleTemplate
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    AlertRuleTemplate     = $config.alertRuleTemplate
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    AlertRuleTemplate = $config.alertRuleTemplate
+                    Ensure            = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -353,23 +336,6 @@ class IntuneAlertRuleWindows365 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneAlertRuleWindows365] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAlertRuleWindows365])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAlertRuleWindows365]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -94,19 +94,11 @@ class EXORoleAssignmentPolicy : M365DSCResourceBase
             }
 
             $result = @{
-                Name                  = $RoleAssignmentPolicy.Name
-                Description           = $RoleAssignmentPolicy.Description
-                IsDefault             = $RoleAssignmentPolicy.IsDefault
-                Roles                 = $RoleAssignmentPolicy.AssignedRoles
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name        = $RoleAssignmentPolicy.Name
+                Description = $RoleAssignmentPolicy.Description
+                IsDefault   = $RoleAssignmentPolicy.IsDefault
+                Roles       = $RoleAssignmentPolicy.AssignedRoles
+                Ensure      = 'Present'
             }
 
             Write-Verbose -Message "Found Role Assignment Policy $($this.Name)"
@@ -246,15 +238,7 @@ class EXORoleAssignmentPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllRoleAssignmentPolicies.Length)] $($RoleAssignmentPolicy.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $RoleAssignmentPolicy.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $RoleAssignmentPolicy.Name
                 }
                 $this.ExportedInstance = $RoleAssignmentPolicy
                 $Results = $this.GetForExport($Params)
@@ -278,22 +262,5 @@ class EXORoleAssignmentPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXORoleAssignmentPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXORoleAssignmentPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXORoleAssignmentPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

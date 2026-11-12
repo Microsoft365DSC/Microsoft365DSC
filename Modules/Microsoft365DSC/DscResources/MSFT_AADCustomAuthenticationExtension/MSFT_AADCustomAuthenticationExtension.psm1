@@ -137,19 +137,10 @@ class AADCustomAuthenticationExtension : M365DSCResourceBase
             Write-Verbose 'Instance found for the resource. Calculating result....'
 
             $results = @{
-                DisplayName           = $instance.DisplayName
-                Id                    = $instance.Id
-                Description           = $instance.Description
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName = $instance.DisplayName
+                Id          = $instance.Id
+                Description = $instance.Description
+                Ensure      = 'Present'
             }
 
             if ($null -ne $instance)
@@ -351,17 +342,8 @@ class AADCustomAuthenticationExtension : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
                 }
 
                 $this.ExportedInstance = $config
@@ -402,23 +384,6 @@ class AADCustomAuthenticationExtension : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADCustomAuthenticationExtension] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCustomAuthenticationExtension])
-        {
-            return $Values
-        }
-
-        $result = [AADCustomAuthenticationExtension]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

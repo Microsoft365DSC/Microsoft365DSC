@@ -197,14 +197,6 @@ class EXOGlobalAddressList : M365DSCResourceBase
                 IncludedRecipients           = $includedRecipientsValue
                 RecipientFilter              = $GlobalAddressList.RecipientFilter
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                TenantId                     = $this.TenantId
-                AccessTokens                 = $this.AccessTokens
             }
 
             Write-Verbose -Message "Found Global Address List $($this.Name)"
@@ -381,15 +373,7 @@ class EXOGlobalAddressList : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllGlobalAddressLists.Count)] $($GlobalAddressList.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $GlobalAddressList.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $GlobalAddressList.Name
                 }
                 $this.ExportedInstance = $GlobalAddressList
                 $Results = $this.GetForExport($Params)
@@ -412,22 +396,5 @@ class EXOGlobalAddressList : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOGlobalAddressList] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOGlobalAddressList])
-        {
-            return $Values
-        }
-
-        $result = [EXOGlobalAddressList]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

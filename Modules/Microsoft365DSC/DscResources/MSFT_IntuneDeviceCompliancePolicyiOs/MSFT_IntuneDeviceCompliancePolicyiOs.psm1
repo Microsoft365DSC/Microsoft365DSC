@@ -250,15 +250,6 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
                 ManagedEmailProfileRequired                    = $devicePolicy.managedEmailProfileRequired
                 RestrictedApps                                 = $devicePolicy.restrictedApps
                 Ensure                                         = 'Present'
-                Credential                                     = $this.Credential
-                ApplicationId                                  = $this.ApplicationId
-                TenantId                                       = $this.TenantId
-                ApplicationSecret                              = $this.ApplicationSecret
-                CertificateThumbprint                          = $this.CertificateThumbprint
-                CertificatePath                                = $this.CertificatePath
-                CertificatePassword                            = $this.CertificatePassword
-                ManagedIdentity                                = $this.ManagedIdentity
-                AccessTokens                                   = $this.AccessTokens
             }
 
             $returnAssignments = @()
@@ -466,17 +457,8 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configDeviceiOsPolicies.Count)] $($configDeviceiOsPolicy.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $configDeviceiOsPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $configDeviceiOsPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configDeviceiOsPolicy
@@ -556,23 +538,6 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceCompliancePolicyiOs] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceCompliancePolicyiOs])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceCompliancePolicyiOs]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

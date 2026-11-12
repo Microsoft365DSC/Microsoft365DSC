@@ -308,12 +308,6 @@ class TeamsMessagingPolicy : M365DSCResourceBase
                     Description                                   = $policy.Description
                     Tenant                                        = $policy.Tenant
                     Ensure                                        = 'Present'
-                    Credential                                    = $this.Credential
-                    ApplicationId                                 = $this.ApplicationId
-                    TenantId                                      = $this.TenantId
-                    CertificateThumbprint                         = $this.CertificateThumbprint
-                    ManagedIdentity                               = $this.ManagedIdentity
-                    AccessTokens                                  = $this.AccessTokens
                 })
             }
         }
@@ -403,16 +397,8 @@ class TeamsMessagingPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
 
                 $params = @{
-                    Identity              = $policy.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
@@ -436,22 +422,5 @@ class TeamsMessagingPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsMessagingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsMessagingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsMessagingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

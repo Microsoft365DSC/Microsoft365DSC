@@ -156,7 +156,7 @@ function Measure-Region
 `$source = Read-Configuration -Path '$sourcePath'
 `$destination = Read-Configuration -Path '$destinationPath'
 `$schema = [Microsoft365DSC.Cache.CacheManager]::Schema
-`$excluded = [System.String[]]@('ResourceInstanceName', 'Credential', 'ManagedIdentity', 'ApplicationId', 'TenantId', 'CertificatePath', 'CertificatePassword', 'CertificateThumbprint', 'ApplicationSecret')
+`$excluded = [System.String[]](@('ResourceInstanceName') + [Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames)
 `$scenarios = @($scenarioList)
 `$repetition = $Repetition
 

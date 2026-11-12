@@ -91,14 +91,12 @@ class IntuneDeviceEnrollmentScopeConfigurationMam : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                AppliesTo             = $enumAppliesTo
-                ComplianceUrl         = $getValue.ComplianceUrl
-                DiscoveryUrl          = $getValue.DiscoveryUrl
-                IncludedGroups        = $includedGroupsValue
-                TermsOfUseUrl         = $getValue.TermsOfUseUrl
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                TenantId              = $this.TenantId
+                AppliesTo        = $enumAppliesTo
+                ComplianceUrl    = $getValue.ComplianceUrl
+                DiscoveryUrl     = $getValue.DiscoveryUrl
+                IncludedGroups   = $includedGroupsValue
+                TermsOfUseUrl    = $getValue.TermsOfUseUrl
+                IsSingleInstance = 'Yes'
                 #endregion
             }
 
@@ -253,10 +251,7 @@ class IntuneDeviceEnrollmentScopeConfigurationMam : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    TenantId              = $this.TenantId
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -290,22 +285,5 @@ class IntuneDeviceEnrollmentScopeConfigurationMam : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('IncludedGroups'); When = @{ Property = 'AppliesTo'; NotEquals = 'Selected' } }
             )
         }
-    }
-
-    hidden [IntuneDeviceEnrollmentScopeConfigurationMam] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceEnrollmentScopeConfigurationMam])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceEnrollmentScopeConfigurationMam]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

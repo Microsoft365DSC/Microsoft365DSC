@@ -297,14 +297,6 @@ class EXOMailboxCalendarConfiguration : M365DSCResourceBase
                 WorkingHoursStartTime                    = $config.WorkingHoursStartTime
                 WorkingHoursTimeZone                     = $config.WorkingHoursTimeZone
                 WorkspaceUserEnabled                     = $config.WorkspaceUserEnabled
-                Credential                               = $this.Credential
-                ApplicationId                            = $this.ApplicationId
-                TenantId                                 = $this.TenantId
-                CertificateThumbprint                    = $this.CertificateThumbprint
-                CertificatePath                          = $this.CertificatePath
-                CertificatePassword                      = $this.CertificatePassword
-                ManagedIdentity                          = $this.ManagedIdentity
-                AccessTokens                             = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -374,15 +366,7 @@ class EXOMailboxCalendarConfiguration : M365DSCResourceBase
                 $displayedKey = $config.UserPrincipalName
                 Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.UserPrincipalName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.UserPrincipalName
                 }
                 $Results = $this.GetForExport($params)
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -404,22 +388,5 @@ class EXOMailboxCalendarConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxCalendarConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxCalendarConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxCalendarConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -568,13 +568,6 @@ class IntuneAntivirusPolicyWindows10SettingCatalog : M365DSCResourceBase
             $returnHashtable.Add('Assignments', $returnAssignments)
 
             $returnHashtable.Add('Ensure', 'Present')
-            $returnHashtable.Add('Credential', $this.Credential)
-            $returnHashtable.Add('ApplicationId', $this.ApplicationId)
-            $returnHashtable.Add('TenantId', $this.TenantId)
-            $returnHashtable.Add('ApplicationSecret', $this.ApplicationSecret)
-            $returnHashtable.Add('CertificateThumbprint', $this.CertificateThumbprint)
-            $returnHashtable.Add('ManagedIdentity', $this.ManagedIdentity)
-            $returnHashtable.Add('AccessTokens', $this.AccessTokens)
 
             return $this.AsResult($returnHashtable)
         }
@@ -764,19 +757,10 @@ class IntuneAntivirusPolicyWindows10SettingCatalog : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Name)" -DeferWrite
 
                 $params = @{
-                    Identity              = $policy.Id
-                    DisplayName           = $policy.Name
-                    TemplateId            = $policy.TemplateReference.TemplateId
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $policy.Id
+                    DisplayName = $policy.Name
+                    TemplateId  = $policy.TemplateReference.TemplateId
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
@@ -839,23 +823,6 @@ class IntuneAntivirusPolicyWindows10SettingCatalog : M365DSCResourceBase
                 @{ Type = 'Rename'; From = 'TamperProtection'; To = 'ControlledConfiguration' }
             )
         }
-    }
-
-    hidden [IntuneAntivirusPolicyWindows10SettingCatalog] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAntivirusPolicyWindows10SettingCatalog])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAntivirusPolicyWindows10SettingCatalog]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

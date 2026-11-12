@@ -156,15 +156,6 @@ class IntuneDeviceComplianceScriptWindows10 : M365DSCResourceBase
                 Publisher              = $getValue.Publisher
                 Id                     = $getValue.Id
                 Ensure                 = 'Present'
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                TenantId               = $this.TenantId
-                ApplicationSecret      = $this.ApplicationSecret
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                AccessTokens           = $this.AccessTokens
                 #endregion
             }
 
@@ -284,18 +275,9 @@ class IntuneDeviceComplianceScriptWindows10 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -321,22 +303,5 @@ class IntuneDeviceComplianceScriptWindows10 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneDeviceComplianceScriptWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceComplianceScriptWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceComplianceScriptWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

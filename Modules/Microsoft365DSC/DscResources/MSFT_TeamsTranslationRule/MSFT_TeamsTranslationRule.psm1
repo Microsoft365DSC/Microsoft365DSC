@@ -99,19 +99,11 @@ class TeamsTranslationRule : M365DSCResourceBase
 
             Write-Verbose -Message "Found an instance with Identity {$($this.Identity)}"
             $results = @{
-                Identity              = $instance.Identity
-                Description           = $instance.Description
-                Pattern               = $instance.Pattern
-                Translation           = $instance.Translation
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity    = $instance.Identity
+                Description = $instance.Description
+                Pattern     = $instance.Pattern
+                Translation = $instance.Translation
+                Ensure      = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -204,16 +196,8 @@ class TeamsTranslationRule : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -238,22 +222,5 @@ class TeamsTranslationRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsTranslationRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsTranslationRule])
-        {
-            return $Values
-        }
-
-        $result = [TeamsTranslationRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

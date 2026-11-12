@@ -213,15 +213,6 @@ class IntuneDeviceFeaturesConfigurationPolicyIOS : M365DSCResourceBase
                 Description              = $getValue.Description
                 DisplayName              = $getValue.DisplayName
                 Ensure                   = 'Present'
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                TenantId                 = $this.TenantId
-                ApplicationSecret        = $this.ApplicationSecret
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                AccessTokens             = $this.AccessTokens
                 AirPrintDestinations     = $this.ConvertComplexObjectToHashtableArray($getValue.airPrintDestinations)
                 AssetTagTemplate         = $getValue.assetTagTemplate
                 ContentFilterSettings    = $this.ConvertComplexObjectToHashtableArrayExportDataType($getValue.contentFilterSettings)
@@ -492,18 +483,9 @@ class IntuneDeviceFeaturesConfigurationPolicyIOS : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -861,23 +843,6 @@ class IntuneDeviceFeaturesConfigurationPolicyIOS : M365DSCResourceBase
             }
         }
         return $Configurations
-    }
-
-    hidden [IntuneDeviceFeaturesConfigurationPolicyIOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceFeaturesConfigurationPolicyIOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceFeaturesConfigurationPolicyIOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

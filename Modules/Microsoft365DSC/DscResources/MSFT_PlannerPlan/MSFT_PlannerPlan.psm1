@@ -140,18 +140,9 @@ class PlannerPlan : M365DSCResourceBase
             {
                 Write-Verbose -Message 'Plan found, returning Ensure = Present'
                 $results = @{
-                    Title                 = $this.Title
-                    OwnerGroup            = $OwnerGroupValue
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Title      = $this.Title
+                    OwnerGroup = $OwnerGroupValue
+                    Ensure     = 'Present'
                 }
             }
             return $this.AsResult($results)
@@ -263,17 +254,8 @@ class PlannerPlan : M365DSCResourceBase
                         }
 
                         $params = @{
-                            Title                 = $plan.Title
-                            OwnerGroup            = $group.Id
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            ApplicationSecret     = $this.ApplicationSecret
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            CertificatePath       = $this.CertificatePath
-                            CertificatePassword   = $this.CertificatePassword
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            Title      = $plan.Title
+                            OwnerGroup = $group.Id
                         }
 
                         Write-M365DSCHost -Message "        [$j/$($plans.Length)] $($plan.Title)" -DeferWrite
@@ -309,22 +291,5 @@ class PlannerPlan : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [PlannerPlan] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PlannerPlan])
-        {
-            return $Values
-        }
-
-        $result = [PlannerPlan]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

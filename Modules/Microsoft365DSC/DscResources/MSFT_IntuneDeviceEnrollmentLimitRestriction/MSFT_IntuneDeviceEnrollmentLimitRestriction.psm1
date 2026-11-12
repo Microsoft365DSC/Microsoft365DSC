@@ -136,22 +136,13 @@ class IntuneDeviceEnrollmentLimitRestriction : M365DSCResourceBase
             Write-Verbose -Message "Found Device Enrollment Limit Restriction with Name {$($this.DisplayName)}"
 
             $results = @{
-                Id                    = $config.Id
-                DisplayName           = $config.DisplayName
-                Description           = $config.Description
-                Limit                 = $config.limit
-                Priority              = $config.Priority
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $config.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id              = $config.Id
+                DisplayName     = $config.DisplayName
+                Description     = $config.Description
+                Limit           = $config.limit
+                Priority        = $config.Priority
+                RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $config.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Ensure          = 'Present'
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $config
@@ -319,17 +310,8 @@ class IntuneDeviceEnrollmentLimitRestriction : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configs.Count)] $($config.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -381,23 +363,6 @@ class IntuneDeviceEnrollmentLimitRestriction : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceEnrollmentLimitRestriction] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceEnrollmentLimitRestriction])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceEnrollmentLimitRestriction]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

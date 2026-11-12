@@ -284,15 +284,7 @@ class EXOAntiPhishPolicy : M365DSCResourceBase
                 TargetedUserQuarantineTag                     = $AntiPhishPolicy.TargetedUserQuarantineTag
                 DmarcQuarantineAction                         = $AntiPhishPolicy.DmarcQuarantineAction
                 DmarcRejectAction                             = $AntiPhishPolicy.DmarcRejectAction
-                Credential                                    = $this.Credential
                 Ensure                                        = 'Present'
-                ApplicationId                                 = $this.ApplicationId
-                CertificateThumbprint                         = $this.CertificateThumbprint
-                CertificatePath                               = $this.CertificatePath
-                CertificatePassword                           = $this.CertificatePassword
-                ManagedIdentity                               = $this.ManagedIdentity
-                TenantId                                      = $this.TenantId
-                AccessTokens                                  = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -388,15 +380,7 @@ class EXOAntiPhishPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AntiphishPolicies.Length)] $($Policy.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $Policy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $Policy.Identity
                 }
                 $this.ExportedInstance = $Policy
                 $Results = $this.GetForExport($Params)
@@ -420,22 +404,5 @@ class EXOAntiPhishPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAntiPhishPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAntiPhishPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOAntiPhishPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

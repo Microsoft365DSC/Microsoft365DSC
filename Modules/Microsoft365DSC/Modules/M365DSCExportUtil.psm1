@@ -1,15 +1,5 @@
 $Script:M365DSCStringReplacementMap = @{}
 $Script:M365DSCMandatoryKeyCache = @{}
-$Script:M365DSCAuthenticationParameterSet = @{
-    ServicePrincipalWithThumbprint = @('ApplicationId', 'CertificateThumbprint', 'TenantId')
-    ServicePrincipalWithSecret = @('ApplicationId', 'ApplicationSecret', 'TenantId')
-    ServicePrincipalWithPath = @('ApplicationId', 'CertificatePath', 'CertificatePassword', 'TenantId')
-    CredentialsWithTenantId = @('Credential', 'TenantId')
-    CredentialsWithApplicationId = @('Credential', 'ApplicationId')
-    Credentials = @('Credential')
-    ManagedIdentity = @('ManagedIdentity', 'TenantId')
-    AccessTokens = @('AccessTokens', 'TenantId')
-}
 $Script:M365DSCRelationIndex = $null
 $Script:M365DSCExportComponentNames = $null
 
@@ -1751,7 +1741,7 @@ function New-M365DSCStubBlockOption
     $authenticationProperties = @()
     if (-not [System.String]::IsNullOrEmpty($Script:ConnectionMode))
     {
-        $authenticationProperties = $Script:M365DSCAuthenticationParameterSet.$($Script:ConnectionMode)
+        $authenticationProperties = [Microsoft365DSC.Utilities.Utilities]::ConnectionModePropertyNames[$Script:ConnectionMode]
     }
 
     $options = [Microsoft365DSC.Relations.StubBlockOptions]::new()

@@ -139,18 +139,9 @@ class PPTenantIsolationSettings : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                IsSingleInstance      = 'Yes'
-                Enabled               = ($tenantIsolationPolicy.properties.isDisabled -eq $false)
-                Rules                 = $allowedTenants
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                Enabled          = ($tenantIsolationPolicy.properties.isDisabled -eq $false)
+                Rules            = $allowedTenants
             })
         }
         catch
@@ -414,16 +405,7 @@ class PPTenantIsolationSettings : M365DSCResourceBase
             $dscContent = [System.Text.StringBuilder]::new()
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -499,23 +481,6 @@ class PPTenantIsolationSettings : M365DSCResourceBase
                 @{ Type = 'CustomCompare'; Name = 'TenantIsolationRules'; TenantIds = $tenantIdMap }
             )
         }
-    }
-
-    hidden [PPTenantIsolationSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PPTenantIsolationSettings])
-        {
-            return $Values
-        }
-
-        $result = [PPTenantIsolationSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 
     <#

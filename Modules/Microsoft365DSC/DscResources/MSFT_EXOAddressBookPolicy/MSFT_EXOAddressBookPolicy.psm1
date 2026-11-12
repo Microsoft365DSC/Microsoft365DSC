@@ -99,20 +99,12 @@ class EXOAddressBookPolicy : M365DSCResourceBase
 
             Write-Verbose -Message "Found Address Book Policy $($this.Name)"
             $result = @{
-                Name                  = $AddressBookPolicy.Name
-                AddressLists          = [System.String[]]$AddressBookPolicy.AddressLists
-                GlobalAddressList     = $AddressBookPolicy.GlobalAddressList
-                OfflineAddressBook    = $AddressBookPolicy.OfflineAddressBook
-                RoomList              = $AddressBookPolicy.RoomList
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name               = $AddressBookPolicy.Name
+                AddressLists       = [System.String[]]$AddressBookPolicy.AddressLists
+                GlobalAddressList  = $AddressBookPolicy.GlobalAddressList
+                OfflineAddressBook = $AddressBookPolicy.OfflineAddressBook
+                RoomList           = $AddressBookPolicy.RoomList
+                Ensure             = 'Present'
             }
 
             return $this.AsResult($result)
@@ -226,15 +218,7 @@ class EXOAddressBookPolicy : M365DSCResourceBase
                 }
 
                 $Params = @{
-                    Name                  = $AddressBookPolicy.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $AddressBookPolicy.Name
                 }
                 $this.ExportedInstance = $AddressBookPolicy
                 $Results = $this.GetForExport($Params)
@@ -259,22 +243,5 @@ class EXOAddressBookPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAddressBookPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAddressBookPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOAddressBookPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

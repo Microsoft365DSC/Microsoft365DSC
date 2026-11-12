@@ -238,31 +238,22 @@ class PlannerTask : M365DSCResourceBase
                     $DueDateTimeValue = $taskResponse.DueDateTime
                 }
                 $results = @{
-                    PlanId                = $this.PlanId
-                    Title                 = $this.Title
-                    Assignments           = $assignmentsValue
-                    Id                    = $taskResponse.Id
-                    Categories            = $categoriesValue
-                    Attachments           = $attachmentsValue
-                    Checklist             = $checklistValue
-                    BucketId              = $taskResponse.BucketId
-                    Priority              = $taskResponse.Priority
-                    ConversationThreadId  = $taskResponse.ConversationThreadId
-                    PercentComplete       = $taskResponse.PercentComplete
-                    StartDateTime         = $StartDateTimeValue
-                    DueDateTime           = $DueDateTimeValue
-                    Description           = $NotesValue
-                    PreviewType           = $taskDetailsResponse.PreviewType
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    PlanId               = $this.PlanId
+                    Title                = $this.Title
+                    Assignments          = $assignmentsValue
+                    Id                   = $taskResponse.Id
+                    Categories           = $categoriesValue
+                    Attachments          = $attachmentsValue
+                    Checklist            = $checklistValue
+                    BucketId             = $taskResponse.BucketId
+                    Priority             = $taskResponse.Priority
+                    ConversationThreadId = $taskResponse.ConversationThreadId
+                    PercentComplete      = $taskResponse.PercentComplete
+                    StartDateTime        = $StartDateTimeValue
+                    DueDateTime          = $DueDateTimeValue
+                    Description          = $NotesValue
+                    PreviewType          = $taskDetailsResponse.PreviewType
+                    Ensure               = 'Present'
                 }
                 return $this.AsResult($results)
             }
@@ -530,18 +521,9 @@ class PlannerTask : M365DSCResourceBase
                             $currentDSCBlock = ''
 
                             $params = @{
-                                Id                    = $task.Id
-                                PlanId                = $plan.Id
-                                Title                 = $task.Title
-                                Credential            = $this.Credential
-                                ApplicationId         = $this.ApplicationId
-                                TenantId              = $this.TenantId
-                                ApplicationSecret     = $this.ApplicationSecret
-                                CertificateThumbprint = $this.CertificateThumbprint
-                                CertificatePath       = $this.CertificatePath
-                                CertificatePassword   = $this.CertificatePassword
-                                ManagedIdentity       = $this.ManagedIdentity
-                                AccessTokens          = $this.AccessTokens
+                                Id     = $task.Id
+                                PlanId = $plan.Id
+                                Title  = $task.Title
                             }
 
                             $result = $this.GetForExport($params)
@@ -848,23 +830,6 @@ class PlannerTask : M365DSCResourceBase
             }
         }
         return $null
-    }
-
-    hidden [PlannerTask] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PlannerTask])
-        {
-            return $Values
-        }
-
-        $result = [PlannerTask]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

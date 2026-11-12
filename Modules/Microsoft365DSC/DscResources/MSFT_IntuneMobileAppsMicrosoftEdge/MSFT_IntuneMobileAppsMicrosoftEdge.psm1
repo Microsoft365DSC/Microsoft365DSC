@@ -220,14 +220,6 @@ class IntuneMobileAppsMicrosoftEdge : M365DSCResourceBase
                 TargetPlatform        = $getValue.'@odata.type'.Replace('#microsoft.graph.', '').Replace('MicrosoftEdgeApp', '')
                 Id                    = $getValue.Id
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
                 #endregion
             }
             $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppAssignment -MobileAppId $resolvedId
@@ -399,19 +391,10 @@ class IntuneMobileAppsMicrosoftEdge : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    TargetPlatform        = $config.'@odata.type'.Replace('#microsoft.graph.', '').Replace('MicrosoftEdgeApp', '')
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id             = $config.Id
+                    DisplayName    = $config.DisplayName
+                    TargetPlatform = $config.'@odata.type'.Replace('#microsoft.graph.', '').Replace('MicrosoftEdgeApp', '')
+                    Ensure         = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -490,23 +473,6 @@ class IntuneMobileAppsMicrosoftEdge : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Channel', 'TargetPlatform')
         }
-    }
-
-    hidden [IntuneMobileAppsMicrosoftEdge] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsMicrosoftEdge])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsMicrosoftEdge]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

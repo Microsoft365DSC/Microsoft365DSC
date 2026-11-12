@@ -220,15 +220,7 @@ class SCSecurityFilter : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($securityFilters.Count)] $($filter.FilterName)" -DeferWrite
 
                 $Params = @{
-                    FilterName            = $filter.FilterName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    FilterName = $filter.FilterName
                 }
                 $this.ExportedInstance = $filter
                 $Results = $this.GetForExport($Params)
@@ -275,23 +267,6 @@ class SCSecurityFilter : M365DSCResourceBase
             ManagedIdentity       = $false
             AccessTokens          = $null
         }
-        return $result
-    }
-
-    hidden [SCSecurityFilter] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCSecurityFilter])
-        {
-            return $Values
-        }
-
-        $result = [SCSecurityFilter]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

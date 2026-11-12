@@ -296,46 +296,38 @@ class IntuneCustomizationBrandingProfile : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                CompanyPortalBlockedActions               = $complexCompanyPortalBlockedActions
-                ContactITEmailAddress                     = $getValue.ContactITEmailAddress
-                ContactITName                             = $getValue.ContactITName
-                ContactITNotes                            = $getValue.ContactITNotes
-                ContactITPhoneNumber                      = $getValue.ContactITPhoneNumber
-                CustomCanSeePrivacyMessage                = $getValue.CustomCanSeePrivacyMessage
-                CustomCantSeePrivacyMessage               = $getValue.CustomCantSeePrivacyMessage
+                CompanyPortalBlockedActions    = $complexCompanyPortalBlockedActions
+                ContactITEmailAddress          = $getValue.ContactITEmailAddress
+                ContactITName                  = $getValue.ContactITName
+                ContactITNotes                 = $getValue.ContactITNotes
+                ContactITPhoneNumber           = $getValue.ContactITPhoneNumber
+                CustomCanSeePrivacyMessage     = $getValue.CustomCanSeePrivacyMessage
+                CustomCantSeePrivacyMessage    = $getValue.CustomCantSeePrivacyMessage
                 #CustomPrivacyMessage                      = $getValue.CustomPrivacyMessage
                 #DisableClientTelemetry                    = $getValue.DisableClientTelemetry
-                DisableDeviceCategorySelection            = $getValue.DisableDeviceCategorySelection
-                DisplayName                               = $getValue.DisplayName
-                EnrollmentAvailability                    = $getValue.EnrollmentAvailability
+                DisableDeviceCategorySelection = $getValue.DisableDeviceCategorySelection
+                DisplayName                    = $getValue.DisplayName
+                EnrollmentAvailability         = $getValue.EnrollmentAvailability
                 #IsFactoryResetDisabled                    = $getValue.IsFactoryResetDisabled
                 #IsRemoveDeviceDisabled                    = $getValue.IsRemoveDeviceDisabled
-                LandingPageCustomizedImage                = $complexLandingPageCustomizedImage
-                LightBackgroundLogo                       = $complexLightBackgroundLogo
-                OnlineSupportSiteName                     = $getValue.OnlineSupportSiteName
-                OnlineSupportSiteUrl                      = $getValue.OnlineSupportSiteUrl
-                PrivacyUrl                                = $getValue.PrivacyUrl
-                ProfileDescription                        = $getValue.ProfileDescription
-                ProfileName                               = $getValue.ProfileName
-                RoleScopeTagIds                           = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                LandingPageCustomizedImage     = $complexLandingPageCustomizedImage
+                LightBackgroundLogo            = $complexLightBackgroundLogo
+                OnlineSupportSiteName          = $getValue.OnlineSupportSiteName
+                OnlineSupportSiteUrl           = $getValue.OnlineSupportSiteUrl
+                PrivacyUrl                     = $getValue.PrivacyUrl
+                ProfileDescription             = $getValue.ProfileDescription
+                ProfileName                    = $getValue.ProfileName
+                RoleScopeTagIds                = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 #SendDeviceOwnershipChangePushNotification = $getValue.SendDeviceOwnershipChangePushNotification
-                ShowAzureADEnterpriseApps                 = $getValue.ShowAzureADEnterpriseApps
-                ShowConfigurationManagerApps              = $getValue.ShowConfigurationManagerApps
-                ShowDisplayNameNextToLogo                 = $getValue.ShowDisplayNameNextToLogo
-                ShowLogo                                  = $getValue.ShowLogo
-                ShowOfficeWebApps                         = $getValue.ShowOfficeWebApps
-                ThemeColor                                = $complexThemeColor
-                ThemeColorLogo                            = $complexThemeColorLogo
-                Id                                        = $getValue.Id
-                Ensure                                    = 'Present'
-                Credential                                = $this.Credential
-                ApplicationId                             = $this.ApplicationId
-                TenantId                                  = $this.TenantId
-                ApplicationSecret                         = $this.ApplicationSecret
-                CertificateThumbprint                     = $this.CertificateThumbprint
-                CertificatePath                           = $this.CertificatePath
-                CertificatePassword                       = $this.CertificatePassword
-                ManagedIdentity                           = $this.ManagedIdentity
+                ShowAzureADEnterpriseApps      = $getValue.ShowAzureADEnterpriseApps
+                ShowConfigurationManagerApps   = $getValue.ShowConfigurationManagerApps
+                ShowDisplayNameNextToLogo      = $getValue.ShowDisplayNameNextToLogo
+                ShowLogo                       = $getValue.ShowLogo
+                ShowOfficeWebApps              = $getValue.ShowOfficeWebApps
+                ThemeColor                     = $complexThemeColor
+                ThemeColorLogo                 = $complexThemeColorLogo
+                Id                             = $getValue.Id
+                Ensure                         = 'Present'
                 #endregion
             }
             $assignmentsValues = Get-MgBetaDeviceManagementIntuneBrandingProfileAssignment -IntuneBrandingProfileId $resolvedId
@@ -498,19 +490,10 @@ class IntuneCustomizationBrandingProfile : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    ProfileName           = $config.ProfileName
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    ProfileName = $config.ProfileName
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -624,23 +607,6 @@ class IntuneCustomizationBrandingProfile : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneCustomizationBrandingProfile] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneCustomizationBrandingProfile])
-        {
-            return $Values
-        }
-
-        $result = [IntuneCustomizationBrandingProfile]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -118,24 +118,15 @@ class SCUnifiedAuditLogRetentionPolicy : M365DSCResourceBase
 
             Write-Verbose -Message "Found an SC Unified Audit Log Retention Policy with Name {$($this.Name)}"
             $results = @{
-                Identity              = $instance.Identity
-                Description           = $instance.Description
-                Name                  = $instance.Name
-                Operations            = $instance.Operations
-                Priority              = $instance.Priority
-                RecordTypes           = $instance.RecordTypes
-                RetentionDuration     = $instance.RetentionDuration
-                UserIds               = $instance.UserIds
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity          = $instance.Identity
+                Description       = $instance.Description
+                Name              = $instance.Name
+                Operations        = $instance.Operations
+                Priority          = $instance.Priority
+                RecordTypes       = $instance.RecordTypes
+                RetentionDuration = $instance.RetentionDuration
+                UserIds           = $instance.UserIds
+                Ensure            = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -248,19 +239,10 @@ class SCUnifiedAuditLogRetentionPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Name                  = $config.Name
-                    Priority              = $config.Priority
-                    RetentionDuration     = $config.RetentionDuration
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name              = $config.Name
+                    Priority          = $config.Priority
+                    RetentionDuration = $config.RetentionDuration
+                    Ensure            = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -296,22 +278,5 @@ class SCUnifiedAuditLogRetentionPolicy : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Name')
         }
-    }
-
-    hidden [SCUnifiedAuditLogRetentionPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCUnifiedAuditLogRetentionPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCUnifiedAuditLogRetentionPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

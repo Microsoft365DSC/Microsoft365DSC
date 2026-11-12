@@ -106,13 +106,6 @@ class AADGroupsNamingPolicy : M365DSCResourceBase
                     PrefixSuffixNamingRequirement = $valuePrefix.Value
                     CustomBlockedWordsList        = $customBlockedWordsListValue
                     Ensure                        = 'Present'
-                    Credential                    = $this.Credential
-                    ApplicationId                 = $this.ApplicationId
-                    TenantId                      = $this.TenantId
-                    ApplicationSecret             = $this.ApplicationSecret
-                    CertificateThumbprint         = $this.CertificateThumbprint
-                    ManagedIdentity               = $this.ManagedIdentity
-                    AccessTokens                  = $this.AccessTokens
                 }
 
                 return $this.AsResult($result)
@@ -215,16 +208,7 @@ class AADGroupsNamingPolicy : M365DSCResourceBase
 
             $dscContent = [System.Text.StringBuilder]::new()
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -253,22 +237,5 @@ class AADGroupsNamingPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADGroupsNamingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADGroupsNamingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADGroupsNamingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

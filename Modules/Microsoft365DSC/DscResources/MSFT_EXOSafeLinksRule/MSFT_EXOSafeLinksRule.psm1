@@ -132,15 +132,7 @@ class EXOSafeLinksRule : M365DSCResourceBase
                 RecipientDomainIs         = $SafeLinksRule.RecipientDomainIs
                 SentTo                    = $SafeLinksRule.SentTo
                 SentToMemberOf            = $SafeLinksRule.SentToMemberOf
-                Credential                = $this.Credential
                 Ensure                    = 'Present'
-                ApplicationId             = $this.ApplicationId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                TenantId                  = $this.TenantId
-                AccessTokens              = $this.AccessTokens
             }
 
             if ('Enabled' -eq $SafeLinksRule.State)
@@ -265,16 +257,8 @@ class EXOSafeLinksRule : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($SafeLinksRules.Length)] $($SafeLinksRule.Identity)" -DeferWrite
                     $Params = @{
-                        Identity              = $SafeLinksRule.Identity
-                        SafeLinksPolicy       = $SafeLinksRule.SafeLinksPolicy
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity        = $SafeLinksRule.Identity
+                        SafeLinksPolicy = $SafeLinksRule.SafeLinksPolicy
                     }
                     $this.ExportedInstance = $SafeLinksRule
                     $Results = $this.GetForExport($Params)
@@ -303,22 +287,5 @@ class EXOSafeLinksRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOSafeLinksRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSafeLinksRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOSafeLinksRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

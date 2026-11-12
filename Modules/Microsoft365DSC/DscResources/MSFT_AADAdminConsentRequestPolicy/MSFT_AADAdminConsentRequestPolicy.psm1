@@ -143,15 +143,6 @@ class AADAdminConsentRequestPolicy : M365DSCResourceBase
                 RemindersEnabled      = $instance.RemindersEnabled
                 RequestDurationInDays = $instance.RequestDurationInDays
                 Reviewers             = $reviewersValue
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -275,16 +266,7 @@ class AADAdminConsentRequestPolicy : M365DSCResourceBase
             $displayedKey = 'Policy'
             Write-M365DSCHost -Message "`r`n    |---[1/1] $displayedKey" -DeferWrite
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -331,23 +313,6 @@ class AADAdminConsentRequestPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAdminConsentRequestPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAdminConsentRequestPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADAdminConsentRequestPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

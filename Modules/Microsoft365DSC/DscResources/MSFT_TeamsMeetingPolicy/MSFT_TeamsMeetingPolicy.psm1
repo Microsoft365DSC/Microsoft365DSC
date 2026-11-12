@@ -719,14 +719,6 @@ class TeamsMeetingPolicy : M365DSCResourceBase
                 WatermarkForScreenSharingPattern             = $policy.WatermarkForScreenSharingPattern
                 WhoCanRegister                               = $policy.WhoCanRegister
                 Ensure                                       = 'Present'
-                Credential                                   = $this.Credential
-                ApplicationId                                = $this.ApplicationId
-                TenantId                                     = $this.TenantId
-                CertificateThumbprint                        = $this.CertificateThumbprint
-                CertificatePath                              = $this.CertificatePath
-                CertificatePassword                          = $this.CertificatePassword
-                ManagedIdentity                              = $this.ManagedIdentity
-                AccessTokens                                 = $this.AccessTokens
             })
         }
         catch
@@ -846,15 +838,7 @@ class TeamsMeetingPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
                 }
 
                 $this.ExportedInstance = $policy
@@ -878,22 +862,5 @@ class TeamsMeetingPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsMeetingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsMeetingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsMeetingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -810,15 +810,6 @@ class AADConditionalAccessPolicy : M365DSCResourceBase
                 TermsOfUse                               = [System.String[]]$termsOfUseNames
                 InsiderRiskLevels                        = $InsiderRiskLevelsValue
                 Ensure                                   = 'Present'
-                Credential                               = $this.Credential
-                ApplicationSecret                        = $this.ApplicationSecret
-                ApplicationId                            = $this.ApplicationId
-                TenantId                                 = $this.TenantId
-                CertificateThumbprint                    = $this.CertificateThumbprint
-                CertificatePath                          = $this.CertificatePath
-                CertificatePassword                      = $this.CertificatePassword
-                ManagedIdentity                          = $this.ManagedIdentity
-                AccessTokens                             = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -1779,17 +1770,8 @@ class AADConditionalAccessPolicy : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($Policies.Count)] $($Policy.DisplayName)" -DeferWrite
                     $Params = @{
-                        DisplayName           = $Policy.DisplayName
-                        Id                    = $Policy.Id
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        Credential            = $this.Credential
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName = $Policy.DisplayName
+                        Id          = $Policy.Id
                     }
                     $this.ExportedInstance = $Policy
                     $Results = $this.GetForExport($Params)
@@ -1835,23 +1817,6 @@ class AADConditionalAccessPolicy : M365DSCResourceBase
                 $graphPlatform = $platform
             }
             $result += $graphPlatform
-        }
-
-        return $result
-    }
-
-    hidden [AADConditionalAccessPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADConditionalAccessPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADConditionalAccessPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
         }
 
         return $result

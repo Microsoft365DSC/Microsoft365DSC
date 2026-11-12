@@ -103,19 +103,11 @@ class EXOActiveSyncDeviceAccessRule : M365DSCResourceBase
             Write-Verbose -Message "Found Active Sync Device Access Rule $($this.Identity)"
 
             $result = @{
-                Identity              = $ActiveSyncDeviceAccessRule.Identity
-                AccessLevel           = $ActiveSyncDeviceAccessRule.AccessLevel
-                Characteristic        = $ActiveSyncDeviceAccessRule.Characteristic
-                QueryString           = $ActiveSyncDeviceAccessRule.QueryString
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity       = $ActiveSyncDeviceAccessRule.Identity
+                AccessLevel    = $ActiveSyncDeviceAccessRule.AccessLevel
+                Characteristic = $ActiveSyncDeviceAccessRule.Characteristic
+                QueryString    = $ActiveSyncDeviceAccessRule.QueryString
+                Ensure         = 'Present'
             }
 
             return $this.AsResult($result)
@@ -225,15 +217,7 @@ class EXOActiveSyncDeviceAccessRule : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllActiveSyncDeviceAccessRules.Count)] $($ActiveSyncDeviceAccessRule.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $ActiveSyncDeviceAccessRule.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $ActiveSyncDeviceAccessRule.Identity
                 }
                 $this.ExportedInstance = $ActiveSyncDeviceAccessRule
                 $Results = $this.GetForExport($Params)
@@ -257,22 +241,5 @@ class EXOActiveSyncDeviceAccessRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOActiveSyncDeviceAccessRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOActiveSyncDeviceAccessRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOActiveSyncDeviceAccessRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

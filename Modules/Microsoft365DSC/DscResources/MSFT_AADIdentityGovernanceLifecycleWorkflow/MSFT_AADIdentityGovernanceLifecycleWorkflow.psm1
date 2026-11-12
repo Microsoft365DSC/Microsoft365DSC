@@ -142,15 +142,6 @@ class AADIdentityGovernanceLifecycleWorkflow : M365DSCResourceBase
                 Tasks                      = [Array]$taskResults
                 ExecutionConditions        = $executionConditionsResults
                 Ensure                     = 'Present'
-                Credential                 = $this.Credential
-                ApplicationId              = $this.ApplicationId
-                TenantId                   = $this.TenantId
-                ApplicationSecret          = $this.ApplicationSecret
-                CertificateThumbprint      = $this.CertificateThumbprint
-                CertificatePath            = $this.CertificatePath
-                CertificatePassword        = $this.CertificatePassword
-                ManagedIdentity            = $this.ManagedIdentity
-                AccessTokens               = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -366,16 +357,7 @@ class AADIdentityGovernanceLifecycleWorkflow : M365DSCResourceBase
                 $displayedKey = $config.DisplayName
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.DisplayName
                 }
 
                 $this.ExportedInstance = $config
@@ -543,23 +525,6 @@ class AADIdentityGovernanceLifecycleWorkflow : M365DSCResourceBase
         }
 
         return $taskList
-    }
-
-    hidden [AADIdentityGovernanceLifecycleWorkflow] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADIdentityGovernanceLifecycleWorkflow])
-        {
-            return $Values
-        }
-
-        $result = [AADIdentityGovernanceLifecycleWorkflow]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

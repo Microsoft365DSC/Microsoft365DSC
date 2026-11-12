@@ -206,23 +206,6 @@ class <ResourceName> : M365DSCResourceBase
             throw
         }
     }
-
-    hidden [<ResourceName>] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [<ResourceName>])
-        {
-            return $Values
-        }
-
-        $result = [<ResourceName>]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
-    }
 }
 <#IF CimInstanceClassBlock#>
 

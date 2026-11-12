@@ -140,14 +140,6 @@ class AADCertificateBasedApplicationConfiguration : M365DSCResourceBase
                 Description                   = $instance.Description
                 TrustedCertificateAuthorities = $trustedCAs
                 Ensure                        = 'Present'
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             }
             Write-Verbose -Message "GET: Returning results => $($results | ConvertTo-Json -Depth 6)"
             return $this.AsResult($results)
@@ -481,17 +473,9 @@ class AADCertificateBasedApplicationConfiguration : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
 
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    Id                    = $config.Id
-                    Description           = $config.Description
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.DisplayName
+                    Id          = $config.Id
+                    Description = $config.Description
                 }
 
                 $this.ExportedInstance = $config
@@ -571,23 +555,6 @@ class AADCertificateBasedApplicationConfiguration : M365DSCResourceBase
         }
 
         return $CertificateValue
-    }
-
-    hidden [AADCertificateBasedApplicationConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCertificateBasedApplicationConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [AADCertificateBasedApplicationConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

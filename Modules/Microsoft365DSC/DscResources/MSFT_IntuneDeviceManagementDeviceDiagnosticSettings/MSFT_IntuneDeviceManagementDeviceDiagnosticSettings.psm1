@@ -89,15 +89,6 @@ class IntuneDeviceManagementDeviceDiagnosticSettings : M365DSCResourceBase
                 EnableLogCollection        = $settings.enableLogCollection
                 EnableAutopilotDiagnostics = $settings.enableAutopilotDiagnostics
                 M365AppDiagnosticsEnabled  = $settings.m365AppDiagnosticsEnabled
-                Credential                 = $this.Credential
-                ApplicationId              = $this.ApplicationId
-                TenantId                   = $this.TenantId
-                ApplicationSecret          = $this.ApplicationSecret
-                CertificateThumbprint      = $this.CertificateThumbprint
-                CertificatePath            = $this.CertificatePath
-                CertificatePassword        = $this.CertificatePassword
-                ManagedIdentity            = $this.ManagedIdentity
-                AccessTokens               = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -152,16 +143,7 @@ class IntuneDeviceManagementDeviceDiagnosticSettings : M365DSCResourceBase
         try
         {
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
 
@@ -194,22 +176,5 @@ class IntuneDeviceManagementDeviceDiagnosticSettings : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceManagementDeviceDiagnosticSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceManagementDeviceDiagnosticSettings])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceManagementDeviceDiagnosticSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

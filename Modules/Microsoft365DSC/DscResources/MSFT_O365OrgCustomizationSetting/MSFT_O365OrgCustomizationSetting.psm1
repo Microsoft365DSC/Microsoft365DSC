@@ -82,16 +82,8 @@ class O365OrgCustomizationSetting : M365DSCResourceBase
             if ($orgConfig.IsDehydrated -eq $false)
             {
                 return $this.AsResult(@{
-                    IsSingleInstance      = 'Yes'
-                    State                 = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
+                    State            = 'Present'
                 })
             }
 
@@ -159,15 +151,7 @@ class O365OrgCustomizationSetting : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -194,22 +178,5 @@ class O365OrgCustomizationSetting : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [O365OrgCustomizationSetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [O365OrgCustomizationSetting])
-        {
-            return $Values
-        }
-
-        $result = [O365OrgCustomizationSetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

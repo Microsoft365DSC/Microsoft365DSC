@@ -119,21 +119,13 @@ class AzureBillingAccountsRoleAssignment : M365DSCResourceBase
             }
 
             $results = @{
-                BillingAccount        = $this.BillingAccount
-                PrincipalName         = $this.PrincipalName
-                PrincipalType         = $this.PrincipalType
-                PrincipalTenantId     = $instance.properties.principalTenantId
-                RoleDefinition        = $RoleDefinitionValue.properties.roleName
-                Ensure                = 'Present'
-                SubscriptionId        = $this.SubscriptionId
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                BillingAccount    = $this.BillingAccount
+                PrincipalName     = $this.PrincipalName
+                PrincipalType     = $this.PrincipalType
+                PrincipalTenantId = $instance.properties.principalTenantId
+                RoleDefinition    = $RoleDefinitionValue.properties.roleName
+                Ensure            = 'Present'
+                SubscriptionId    = $this.SubscriptionId
             }
             return $this.AsResult($results)
         }
@@ -270,18 +262,12 @@ class AzureBillingAccountsRoleAssignment : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "        |---[$j/$($assignments.value.Length)] $($assignment.properties.principalId)" -DeferWrite
                     $params = @{
-                        BillingAccount        = $config.properties.displayName
-                        PrincipalName         = $PrincipalNameValue
-                        PrincipalType         = $assignment.properties.principalType
-                        PrincipalTenantId     = $assignment.properties.principalTenantId
-                        RoleDefinition        = 'AnyRole'
-                        SubscriptionId        = $this.SubscriptionId
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        BillingAccount    = $config.properties.displayName
+                        PrincipalName     = $PrincipalNameValue
+                        PrincipalType     = $assignment.properties.principalType
+                        PrincipalTenantId = $assignment.properties.principalTenantId
+                        RoleDefinition    = 'AnyRole'
+                        SubscriptionId    = $this.SubscriptionId
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -373,23 +359,6 @@ class AzureBillingAccountsRoleAssignment : M365DSCResourceBase
                 $result = $groupInfo.Id
             }
         }
-        return $result
-    }
-
-    hidden [AzureBillingAccountsRoleAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureBillingAccountsRoleAssignment])
-        {
-            return $Values
-        }
-
-        $result = [AzureBillingAccountsRoleAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

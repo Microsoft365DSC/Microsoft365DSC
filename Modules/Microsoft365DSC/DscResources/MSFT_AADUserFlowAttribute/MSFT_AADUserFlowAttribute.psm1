@@ -112,18 +112,11 @@ class AADUserFlowAttribute : M365DSCResourceBase
             }
             Write-Verbose -Message "Found configuration of user flow attribute $($this.DisplayName)"
             $result = @{
-                Id                    = $UserFlowAttribute.Id
-                DisplayName           = $UserFlowAttribute.DisplayName
-                Description           = $UserFlowAttribute.Description
-                DataType              = $UserFlowAttribute.DataType
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                ApplicationSecret     = $this.ApplicationSecret
-                Credential            = $this.Credential
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id          = $UserFlowAttribute.Id
+                DisplayName = $UserFlowAttribute.DisplayName
+                Description = $UserFlowAttribute.Description
+                DataType    = $UserFlowAttribute.DataType
+                Ensure      = 'Present'
             }
             return $this.AsResult($result)
         }
@@ -217,17 +210,8 @@ class AADUserFlowAttribute : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($userFlowAttribute.DisplayName)" -DeferWrite
                 $Params = @{
-                    Id                    = $userFlowAttribute.Id
-                    DisplayName           = $userFlowAttribute.DisplayName
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    ApplicationSecret     = $this.ApplicationSecret
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $userFlowAttribute.Id
+                    DisplayName = $userFlowAttribute.DisplayName
                 }
 
                 $this.ExportedInstance = $userFlowAttribute
@@ -255,22 +239,5 @@ class AADUserFlowAttribute : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADUserFlowAttribute] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADUserFlowAttribute])
-        {
-            return $Values
-        }
-
-        $result = [AADUserFlowAttribute]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -133,14 +133,6 @@ class PPDLPPolicyConnectorConfigurations : M365DSCResourceBase
                 PolicyName                    = $this.PolicyName
                 ConnectorActionConfigurations = $ActionsValue
                 Ensure                        = 'Present'
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -273,16 +265,8 @@ class PPDLPPolicyConnectorConfigurations : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.properties.DisplayName)" -DeferWrite
                 $params = @{
-                    PPTenantId            = $tenantInfo.TenantId
-                    PolicyName            = $policy.properties.displayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    PPTenantId = $tenantInfo.TenantId
+                    PolicyName = $policy.properties.displayName
                 }
 
                 $this.ExportedInstance = $policy
@@ -333,23 +317,6 @@ class PPDLPPolicyConnectorConfigurations : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [PPDLPPolicyConnectorConfigurations] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PPDLPPolicyConnectorConfigurations])
-        {
-            return $Values
-        }
-
-        $result = [PPDLPPolicyConnectorConfigurations]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 
