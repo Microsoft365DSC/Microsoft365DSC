@@ -325,7 +325,7 @@ function Get-DscResourceEmbeddedClass
         $Schema
     )
 
-    $embeddedClasses = [System.Collections.Generic.List[Object]]::new()
+    $embeddedClasses = @()
     $visited = [System.Collections.Generic.HashSet[String]]::new()
     $pending = [System.Collections.Generic.Queue[String]]::new()
 
@@ -356,12 +356,12 @@ function Get-DscResourceEmbeddedClass
                 continue
             }
 
-            $embeddedClasses.Add($Schema[$embeddedName])
+            $embeddedClasses += $Schema[$embeddedName]
             $pending.Enqueue($embeddedName)
         }
     }
 
-    return $embeddedClasses.ToArray()
+    return $embeddedClasses
 }
 
 <#
@@ -475,10 +475,11 @@ function Format-M365DSCPermissionList
 
 <#
 .DESCRIPTION
-    The New-DscClassResourceWikiPage cmdlet will review all of the class-based
-    resources in a specified module directory and will output the Markdown files to
-    the specified directory. These help files include details on the property types
-    for each resource, as well as a text description and examples where they exist.
+    The New-DscClassResourceWikiPage cmdlet will review all of the MOF-based resources
+    described in SchemaDefinition.json in a specified module directory and will output
+    the Markdown files to the specified directory. These help files include details on
+    the property types for each resource, as well as a text description and examples
+    where they exist.
 
 .PARAMETER OutputPath
     Where should the files be saved to.
@@ -486,9 +487,6 @@ function Format-M365DSCPermissionList
 .PARAMETER SourcePath
     The path to the root of the DSC resource module (where the PSD1 file is found,
     not the folder for and individual DSC resource).
-
-.PARAMETER Force
-    Overwrites any existing file when outputting the generated content.
 
 .EXAMPLE
     PS> New-DscClassResourceWikiPage `
@@ -513,11 +511,7 @@ function New-DscClassResourceWikiPage
 
         [Parameter(Mandatory = $true)]
         [System.String]
-        $SourcePath,
-
-        [Parameter()]
-        [System.Management.Automation.SwitchParameter]
-        $Force
+        $SourcePath
     )
 
     $schema = Get-M365DSCSchemaDefinition -SourcePath $SourcePath
@@ -603,16 +597,20 @@ function New-DscClassResourceWikiPage
             {
                 $null = $permissionsContent.AppendLine('## Permissions')
 
-                $workloads = @('exchange', 'purview')
+                # Entries with required roles or role groups list the roles, all other entries list the API permissions
+                $permissionNames = @($settingsJson.permissions.psobject.properties.Name)
+                $workloads = @($permissionNames | Where-Object -FilterScript {
+                        $null -ne $settingsJson.permissions.$_.requiredRoles -or $null -ne $settingsJson.permissions.$_.requiredRoleGroups
+                    })
                 foreach ($workload in $workloads)
                 {
-                    if ($null -ne $settingsJson.permissions.$workload)
+                    $workloadNameUpper = $workload.Substring(0, 1).ToUpper() + $workload.Substring(1, $workload.Length - 1)
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine("### $workloadNameUpper")
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine("To authenticate with Microsoft $workloadNameUpper, this resource requires the following permissions:")
+                    if ($null -ne $settingsJson.permissions.$workload.requiredRoles)
                     {
-                        $workloadNameUpper = $workload.Substring(0, 1).ToUpper() + $workload.Substring(1, $workload.Length - 1)
-                        $null = $permissionsContent.AppendLine()
-                        $null = $permissionsContent.AppendLine("### $workloadNameUpper")
-                        $null = $permissionsContent.AppendLine()
-                        $null = $permissionsContent.AppendLine("To authenticate with Microsoft $workloadNameUpper, this resource requires the following permissions:")
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('#### Roles')
                         $null = $permissionsContent.AppendLine()
@@ -620,6 +618,9 @@ function New-DscClassResourceWikiPage
                         $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$workload.requiredroles.read)")
                         $null = $permissionsContent.AppendLine('* **Update**')
                         $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$workload.requiredroles.update)")
+                    }
+                    if ($null -ne $settingsJson.permissions.$workload.requiredRoleGroups)
+                    {
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('#### Role Groups')
                         $null = $permissionsContent.AppendLine()
@@ -630,7 +631,7 @@ function New-DscClassResourceWikiPage
                     }
                 }
 
-                $otherApis = $settingsJson.permissions.psobject.properties.Name | Where-Object { $_ -notin $workloads }
+                $otherApis = $permissionNames | Where-Object -FilterScript { $_ -notin $workloads }
                 foreach ($otherApi in $otherApis)
                 {
                     $otherApiUpper = $otherApi.Substring(0, 1).ToUpper() + $otherApi.Substring(1, $otherApi.Length - 1)
@@ -689,7 +690,6 @@ function New-DscClassResourceWikiPage
                 -InputObject ($output.ToString() -replace '\r?\n', "`r`n") `
                 -FilePath $savePath `
                 -Encoding utf8 `
-                -Force:$Force `
                 -NoNewline
         }
         elseif ($readmeFile.Count -gt 1)
@@ -705,18 +705,17 @@ function New-DscClassResourceWikiPage
 
 <#
 .DESCRIPTION
-    The Update-M365DSCResourceDocumentationPage cmdlet will review all of the
-    class-based resources in a specified module directory and will output the
-    Markdown files to the specified directory. These help files include details on
-    the property types for each resource, as well as a text description and examples
-    where they exist.
+    The Update-M365DSCResourceDocumentationPage cmdlet builds a Markdown page for each
+    MSFT_* resource under <SourcePath>/DscResources from its SchemaDefinition.json,
+    readme.md, settings.json and examples. The pages are written to
+    docs/docs/resources/<workload> of the repository that contains the loaded module.
 
 .PARAMETER SourcePath
     The path to the root of the DSC resource module (where the PSD1 file is found,
     not the folder for an individual DSC resource).
 
 .PARAMETER Force
-    Overwrites any existing file when outputting the generated content.
+    Has no effect. Existing pages are always overwritten.
 
 .EXAMPLE
     PS> Update-M365DSCResourceDocumentationPage `
@@ -729,6 +728,7 @@ function New-DscClassResourceWikiPage
 #>
 function Update-M365DSCResourceDocumentationPage
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
     [CmdletBinding()]
     param
@@ -737,6 +737,7 @@ function Update-M365DSCResourceDocumentationPage
         [System.String]
         $SourcePath,
 
+        # TODO: Remove during the next breaking change release
         [Parameter()]
         [System.Management.Automation.SwitchParameter]
         $Force
@@ -752,7 +753,6 @@ function Update-M365DSCResourceDocumentationPage
         $newDscClassResourceWikiPageParameters = @{
             OutputPath = $tempPath
             SourcePath = $SourcePath
-            Force      = $Force
         }
 
         New-DscClassResourceWikiPage @newDscClassResourceWikiPageParameters

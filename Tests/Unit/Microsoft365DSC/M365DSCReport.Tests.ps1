@@ -63,6 +63,7 @@ Describe 'New-M365DSCDeltaReport' {
         }
 
         It 'Counts drifted instances in the table of contents, not distinct key values' {
+            $Script:Report | Should -Match '^<!DOCTYPE html>'
             $Script:Report | Should -Match "Resources Configured Differently</a>\s*<strong>\(</strong>2<strong>\)"
             ([regex]::Matches($Script:Report, "<table class='drift-table'>")).Count | Should -Be 2
         }
@@ -85,6 +86,11 @@ Describe 'New-M365DSCDeltaReport' {
                 -Delta $delta -DriftOnly $true
 
             $report | Should -Match '<p class="no-discrepancies">'
+
+            Mock -ModuleName M365DSCReport -CommandName Initialize-M365DSCReporting
+            $report = New-M365DSCDeltaReport -Source $Script:SourcePath -Destination $Script:DestinationPath -Delta @()
+            $report | Should -Match '<p class="no-discrepancies">'
+            Should -Invoke -ModuleName M365DSCReport -CommandName Initialize-M365DSCReporting -Times 0 -Exactly
         }
     }
 
@@ -306,7 +312,7 @@ Describe 'New-M365DSCDeltaReport' {
                         ValueInDestination = 'plain'
                         _Metadata_Level    = 'L1'
                         _Metadata_Info     = '<strong>Annotation</strong>'
-                        DeltaValue         = '=> <src>; <= <dst>'
+                        DeltaValue         = '=> <src>; <= <dst>; => a <= b'
                     }
                 )
             }
@@ -320,10 +326,13 @@ Describe 'New-M365DSCDeltaReport' {
         $Script:Html | Should -Match ([regex]::Escape('<li>&lt;src&gt;</li>'))
         $Script:Html | Should -Match ([regex]::Escape('<li>&lt;dst&gt;</li>'))
         $Script:Html | Should -Match ([regex]::Escape('destination &amp; co.ps1'))
+        $Script:Html | Should -Match ([regex]::Escape('<li>a &lt;= b</li>'))
+        $Script:Html | Should -Not -Match ([regex]::Escape('=&gt; a'))
     }
 
     It 'keeps HTML in blueprint annotations' {
         $Script:Html | Should -Match ([regex]::Escape('<strong>Annotation</strong>'))
+        $Script:Html | Should -Match ('(?s)' + [regex]::Escape('<li>&lt;dst&gt;</li>') + '.*' + [regex]::Escape('<strong>Annotation</strong>'))
     }
 }
 

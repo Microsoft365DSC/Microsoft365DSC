@@ -226,6 +226,107 @@ function ConvertTo-M365DSCHtmlText
 
 <#
 .DESCRIPTION
+    This function converts a property value into plain text for the CSV and Excel reports. Array
+    elements are written on separate lines. The entries of a CIM instance are written as
+    'Name: Value' lines, and nested entries are prefixed with their path. CIM instances in an
+    array are separated by an empty line.
+
+.PARAMETER Value
+    The value to convert.
+
+.PARAMETER Prefix
+    The path of the value inside its parent CIM instance. Empty for the property value itself.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function ConvertTo-M365DSCReportText
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter()]
+        [AllowNull()]
+        [System.Object]
+        $Value,
+
+        [Parameter()]
+        [System.String]
+        $Prefix = ''
+    )
+
+    if ($Value -is [System.Collections.IDictionary])
+    {
+        $lines = @()
+        foreach ($key in ($Value.Keys | Sort-Object))
+        {
+            if ($key -eq 'CIMInstance')
+            {
+                continue
+            }
+
+            $name = $key
+            if (-not [System.String]::IsNullOrEmpty($Prefix))
+            {
+                $name = "$Prefix.$key"
+            }
+
+            $entry = $Value[$key]
+            if ($entry -is [System.Collections.IDictionary] -or $entry -is [System.Array])
+            {
+                $text = ConvertTo-M365DSCReportText -Value $entry -Prefix $name
+                if ([System.String]::IsNullOrEmpty($text))
+                {
+                    $text = "$($name):"
+                }
+                $lines += $text
+            }
+            else
+            {
+                $lines += "$($name): $entry"
+            }
+        }
+        return $lines -join "`n"
+    }
+
+    if ($Value -is [System.Array])
+    {
+        $items = @()
+        $separator = "`n"
+        for ($i = 0; $i -lt $Value.Count; $i++)
+        {
+            $item = $Value[$i]
+            if ($item -is [System.Collections.IDictionary] -or $item -is [System.Array])
+            {
+                $itemPrefix = ''
+                if (-not [System.String]::IsNullOrEmpty($Prefix))
+                {
+                    $itemPrefix = "$Prefix[$i]"
+                }
+                elseif ($item -is [System.Collections.IDictionary])
+                {
+                    $separator = "`n`n"
+                }
+                $items += ConvertTo-M365DSCReportText -Value $item -Prefix $itemPrefix
+            }
+            elseif ([System.String]::IsNullOrEmpty($Prefix))
+            {
+                $items += [System.String]$item
+            }
+            else
+            {
+                $items += "$Prefix[$i]: $item"
+            }
+        }
+        return $items -join $separator
+    }
+
+    return [System.String]$Value
+}
+
+<#
+.DESCRIPTION
     This function generates HTML workload sections by grouping resources
 
 .FUNCTIONALITY
@@ -510,7 +611,7 @@ function New-M365DSCConfigurationToJSON
         $OutputPath
     )
 
-    $jsonContent = $ParsedContent | ConvertTo-Json -Depth 25
+    $jsonContent = ConvertTo-Json -InputObject $ParsedContent -Depth 25
     $jsonContent | Out-File -FilePath $OutputPath
 }
 
@@ -651,6 +752,53 @@ function New-M365DSCConfigurationToExcel
         $OutputPath
     )
 
+    $OutputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
+    $keyNames = @('Identity', 'Name', 'IsSingleInstance', 'DisplayName')
+
+    # Collect every row first and write them to the sheet in one call
+    $rows = @()
+    $keyRows = @()
+    $resourceRanges = @()
+    $row = 2
+    foreach ($resource in $ParsedContent)
+    {
+        $beginRow = $row
+
+        # Key properties first, then the rest, in a stable order
+        foreach ($property in ($resource.Keys | Sort-Object -Property { $_ -notin $keyNames }, { $_ }))
+        {
+            if ($property -ne 'ResourceName' -and $property -ne 'Credential')
+            {
+                $value = $null
+                try
+                {
+                    if ([System.String]::IsNullOrEmpty($resource.$property))
+                    {
+                        $value = "`$null"
+                    }
+                    else
+                    {
+                        $value = ConvertTo-M365DSCReportText -Value $resource.$property
+                    }
+                }
+                catch
+                {
+                    New-M365DSCLogEntry -Message 'Error during conversion to Excel:' `
+                        -Exception $_ `
+                        -Source $($MyInvocation.MyCommand.Source)
+                }
+
+                $rows += , @($resource.ResourceName, $property, $value)
+                if ($property -in $keyNames)
+                {
+                    $keyRows += $row
+                }
+                $row++
+            }
+        }
+        $resourceRanges += "A$($beginRow):C$($row)"
+    }
+
     try
     {
         $excel = New-Object -ComObject excel.application
@@ -665,7 +813,8 @@ function New-M365DSCConfigurationToExcel
     $usedRange = $null
     try
     {
-        $excel.visible = $True
+        $excel.Visible = $false
+        $excel.DisplayAlerts = $false
         $workbook = $excel.Workbooks.Add()
         $report = $workbook.Worksheets.Item(1)
         $report.Name = 'Report'
@@ -679,62 +828,33 @@ function New-M365DSCConfigurationToExcel
         $report.Cells.Item(1, 3).Font.Size = 18
         $report.Cells.Item(1, 3).Font.Bold = $True
         $report.Range('A1:C1').Borders.Weight = -4138
-        $row = 2
-        $keyNames = @('Identity', 'Name', 'IsSingleInstance', 'DisplayName')
 
-        foreach ($resource in $parsedContent)
+        if ($rows.Count -gt 0)
         {
-            $beginRow = $row
-
-            # Key properties first, then the rest, in a stable order
-            foreach ($property in ($resource.Keys | Sort-Object -Property { $_ -notin $keyNames }, { $_ }))
+            $values = [System.Object[,]]::new($rows.Count, 3)
+            for ($i = 0; $i -lt $rows.Count; $i++)
             {
-                if ($property -ne 'ResourceName' -and $property -ne 'Credential')
+                for ($column = 0; $column -lt 3; $column++)
                 {
-                    $report.Cells.Item($row, 1) = $resource.ResourceName
-                    $report.Cells.Item($row, 2) = $property
-                    try
-                    {
-                        if ([System.String]::IsNullOrEmpty($resource.$property))
-                        {
-                            $report.Cells.Item($row, 3) = "`$null"
-                        }
-                        else
-                        {
-                            if ($resource.$property.GetType().Name -eq 'Object[]')
-                            {
-                                $value = $resource.$property | Out-String
-                                $report.Cells.Item($row, 3) = $value
-                            }
-                            else
-                            {
-                                $report.Cells.Item($row, 3) = ($resource.$property).ToString()
-                            }
-                        }
-
-                        $report.Cells.Item($row, 3).HorizontalAlignment = -4131
-                    }
-                    catch
-                    {
-                        New-M365DSCLogEntry -Message 'Error during conversion to Excel:' `
-                            -Exception $_ `
-                            -Source $($MyInvocation.MyCommand.Source)
-                    }
-
-                    if ($property -in $keyNames)
-                    {
-                        $report.Cells($row, 1).Font.ColorIndex = 10
-                        $report.Cells($row, 2).Font.ColorIndex = 10
-                        $report.Cells($row, 3).Font.ColorIndex = 10
-                        $report.Cells($row, 1).Font.Bold = $true
-                        $report.Cells($row, 2).Font.Bold = $true
-                        $report.Cells($row, 3).Font.Bold = $true
-                    }
-                    $row++
+                    $values[$i, $column] = $rows[$i][$column]
                 }
             }
-            $rangeValue = "A$beginRow" + ':' + "C$row"
-            $report.Range($rangeValue).Borders[8].Weight = -4138
+
+            $lastRow = $rows.Count + 1
+            $report.Range("A2:C$lastRow").Value2 = $values
+            $report.Range("C2:C$lastRow").HorizontalAlignment = -4131
+        }
+
+        foreach ($keyRow in $keyRows)
+        {
+            $keyFont = $report.Range("A$($keyRow):C$($keyRow)").Font
+            $keyFont.ColorIndex = 10
+            $keyFont.Bold = $true
+        }
+
+        foreach ($resourceRange in $resourceRanges)
+        {
+            $report.Range($resourceRange).Borders[8].Weight = -4138
         }
         $usedRange = $report.UsedRange
         $usedRange.EntireColumn.AutoFit() | Out-Null
@@ -831,15 +951,7 @@ function New-M365DSCConfigurationToCSV
                     }
                     else
                     {
-                        if ($resource.$property.GetType().Name -eq 'Object[]')
-                        {
-                            $value = $resource.$property | Out-String
-                            $newRow.Value = $value
-                        }
-                        else
-                        {
-                            $newRow.Value = ($resource.$property).ToString()
-                        }
+                        $newRow.Value = ConvertTo-M365DSCReportText -Value $resource.$property
                     }
                 }
                 catch
@@ -978,6 +1090,12 @@ function New-M365DSCReportFromConfiguration
     }
     process # required with DynamicParam
     {
+        if (-not (Test-Path -LiteralPath $ConfigurationPath -PathType Leaf))
+        {
+            Write-Error -Message "Cannot find configuration file: $ConfigurationPath. Please make sure the file exists!"
+            return
+        }
+
         # Validate that the latest version of the module is installed.
         Test-M365DSCModuleValidity
 
@@ -1003,8 +1121,7 @@ function New-M365DSCReportFromConfiguration
                 }
                 'HTML'
                 {
-                    $template = Get-Item $ConfigurationPath
-                    $templateName = $template.Name.Split('.')[0]
+                    $templateName = [System.IO.Path]::GetFileNameWithoutExtension($ConfigurationPath)
                     New-M365DSCConfigurationToHTML -ParsedContent $parsedContent -OutputPath $OutputPath -TemplateName $templateName
                 }
                 'JSON'
@@ -1244,26 +1361,26 @@ function New-M365DSCDeltaReport
     # Validate that the latest version of the module is installed.
     Test-M365DSCModuleValidity
 
-    if ((Test-Path -Path $Source) -eq $false)
+    if ((Test-Path -LiteralPath $Source) -eq $false)
     {
         Write-Error "Cannot find file specified in parameter Source: $Source. Please make sure the file exists!"
         return
     }
 
-    if ((Test-Path -Path $Destination) -eq $false)
+    if ((Test-Path -LiteralPath $Destination) -eq $false)
     {
         Write-Error "Cannot find file specified in parameter Destination: $Destination. Please make sure the file exists!"
         return
     }
 
-    if ($OutputPath -and (Test-Path -Path $OutputPath) -eq $true)
+    if ($OutputPath -and (Test-Path -LiteralPath $OutputPath) -eq $true)
     {
         Write-Warning "File specified in parameter OutputPath already exists and will be overwritten: $OutputPath"
         Write-Warning "Make sure you specify a file that does not exist if you don't want the file to be overwritten!"
     }
 
     if ($PSBoundParameters.ContainsKey('HeaderFilePath') -and -not [System.String]::IsNullOrEmpty($HeaderFilePath) -and `
-        (Test-Path -Path $HeaderFilePath) -eq $false)
+        (Test-Path -LiteralPath $HeaderFilePath) -eq $false)
     {
         Write-Error "Cannot find file specified in parameter HeaderFilePath: $HeaderFilePath. Please make sure the file exists!"
         return
@@ -1284,14 +1401,14 @@ function New-M365DSCDeltaReport
     $ExcludedProperties += 'ResourceInstanceName'
     $ExcludedProperties = $ExcludedProperties + $authParameters | Select-Object -Unique
 
-    if ($null -eq $Script:DscResourceInfo)
-    {
-        $Script:DscResourceInfo = Get-M365DSCResourceSchema
-    }
-
     Write-Verbose -Message 'Obtaining Delta between the source and destination configurations'
-    if (-not $Delta)
+    if (-not $PSBoundParameters.ContainsKey('Delta'))
     {
+        if ($null -eq $Script:DscResourceInfo)
+        {
+            $Script:DscResourceInfo = Get-M365DSCResourceSchema
+        }
+
         #region ConfigurationData variable substitution
         $effectiveSource = $Source
         $effectiveDestination = $Destination
@@ -1316,7 +1433,7 @@ function New-M365DSCDeltaReport
                 if (-not $configDataMap.ContainsKey($filePath))
                 {
                     $autoPath = Join-Path -Path (Split-Path -Path $filePath -Parent) -ChildPath 'ConfigurationData.psd1'
-                    if (Test-Path -Path $autoPath)
+                    if (Test-Path -LiteralPath $autoPath)
                     {
                         $configDataMap[$filePath] = $autoPath
                     }
@@ -1331,14 +1448,14 @@ function New-M365DSCDeltaReport
                 }
 
                 $configDataFile = $configDataMap[$filePath]
-                if (-not (Test-Path -Path $configDataFile))
+                if (-not (Test-Path -LiteralPath $configDataFile))
                 {
                     Write-Warning -Message "ConfigurationData file not found at '$configDataFile'. Skipping variable substitution for '$filePath'."
                     continue
                 }
 
                 Write-Verbose -Message "Importing ConfigurationData from '$configDataFile' for '$filePath'"
-                $configData = Import-PowerShellDataFile -Path $configDataFile
+                $configData = Import-PowerShellDataFile -LiteralPath $configDataFile
 
                 # Collect all string properties from NonNodeData
                 $substitutions = @{}
@@ -1389,7 +1506,7 @@ function New-M365DSCDeltaReport
                     continue
                 }
 
-                $content = [System.IO.File]::ReadAllText($filePath)
+                $content = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $filePath).ProviderPath)
                 $hasSubstitutions = $false
                 foreach ($varName in ($substitutions.Keys | Sort-Object -Property Length -Descending))
                 {
@@ -1397,7 +1514,6 @@ function New-M365DSCDeltaReport
                     {
                         Write-Verbose -Message "  Replacing $varName with '$($substitutions[$varName])'"
                         $replacement = $substitutions[$varName]
-                        $content = $content.Replace('$(' + $varName.TrimStart('`$') + ')', $replacement)
                         $content = $content.Replace('$(' + $varName + ')', $replacement)
                         # Bare form must not match inside a longer name, e.g. .Domain in .DomainName
                         $content = [System.Text.RegularExpressions.Regex]::Replace($content, [System.Text.RegularExpressions.Regex]::Escape($varName) + '(?!\w)', { param($m) $replacement })
@@ -1446,9 +1562,9 @@ function New-M365DSCDeltaReport
             # Clean up temp files if created
             foreach ($tempPath in $tempPaths)
             {
-                if (Test-Path -Path $tempPath)
+                if (Test-Path -LiteralPath $tempPath)
                 {
-                    Remove-Item -Path $tempPath -Force
+                    Remove-Item -LiteralPath $tempPath -Force
                 }
             }
         }
@@ -1503,6 +1619,15 @@ function New-M365DSCDeltaReport
             $compareParameters.Add($resourceName, $parameters)
         }
 
+        if ($null -eq $sourceReporting)
+        {
+            $sourceReporting = @()
+        }
+        if ($null -eq $desiredConfiguration)
+        {
+            $desiredConfiguration = @()
+        }
+
         [Array]$Delta = [Microsoft365DSC.Compare.ConfigurationComparer]::Compare(
             $sourceReporting,
             $desiredConfiguration,
@@ -1522,6 +1647,7 @@ function New-M365DSCDeltaReport
             $ReportTitle = 'Microsoft365DSC - Blueprint Assessment Report'
             $headerTitle = 'Blueprint Assessment Report'
         }
+        [void]$reportSB.AppendLine('<!DOCTYPE html>')
         [void]$reportSB.AppendLine("<html><head><meta charset='utf-8'><title>$ReportTitle</title>")
         [void]$reportSB.AppendLine($Script:ReportCSS)
         [void]$reportSB.AppendLine("</head><body><div class='report-container'>")
@@ -1531,7 +1657,7 @@ function New-M365DSCDeltaReport
         {
             try
             {
-                $headerContent = Get-Content -Path $HeaderFilePath -Raw -ErrorAction Stop
+                $headerContent = Get-Content -LiteralPath $HeaderFilePath -Raw -ErrorAction Stop
                 [void]$reportSB.AppendLine($headerContent)
             }
             catch
@@ -1546,7 +1672,7 @@ function New-M365DSCDeltaReport
         [void]$reportSB.AppendLine("<h1>$headerTitle</h1>")
         [void]$reportSB.AppendLine("<div class='logo-container'>")
         [void]$reportSB.AppendLine("<img src='" + (Get-IconPath -ResourceName 'Promo') + "' alt='Microsoft365DSC Slogan' width='500'  />")
-        [void]$ReportSB.AppendLine('</div>')
+        [void]$reportSB.AppendLine('</div>')
         if (-not $IsBlueprintAssessment)
         {
             [void]$reportSB.AppendLine("<div class='comparison-text'>")
@@ -1715,8 +1841,9 @@ function New-M365DSCDeltaReport
                             $emoticon = '&#x1F7E6;'
                         }
 
+                        $hasDeltaValue = $drift.ContainsKey('DeltaValue') -and $null -ne $drift.DeltaValue
                         $additionalAttribute = ''
-                        if ($drift.ContainsKey('DeltaValue'))
+                        if ($hasDeltaValue)
                         {
                             $additionalAttribute = 'rowspan="2"'
                         }
@@ -1729,16 +1856,11 @@ function New-M365DSCDeltaReport
                         [void]$sb.AppendLine("$(ConvertTo-M365DSCHtmlText -Value $drift.ValueInDestination)</td>")
                         [void]$sb.AppendLine('</tr>')
 
-                        if ($null -ne $drift._Metadata_Level)
-                        {
-                            [void]$sb.AppendLine("<tr><td colspan='3'><span class='emoticon'>$emoticon</span> $($drift._Metadata_Info)</td></tr>")
-                        }
-
-                        if ($drift.ContainsKey('DeltaValue') -and $null -ne $drift.DeltaValue)
+                        if ($hasDeltaValue)
                         {
                             [System.String[]]$deltaValues = $drift.DeltaValue.Split("; ")
-                            [System.String[]]$destinationValues = $deltaValues -like "*<=*" | Foreach-Object { $_.Replace('<= ', '') }
-                            [System.String[]]$sourceValues = $deltaValues -like "*=>*" | Foreach-Object { $_.Replace('=> ', '') }
+                            [System.String[]]$destinationValues = $deltaValues | Where-Object -FilterScript { $_.StartsWith('<= ') } | ForEach-Object -Process { $_.Substring(3) }
+                            [System.String[]]$sourceValues = $deltaValues | Where-Object -FilterScript { $_.StartsWith('=> ') } | ForEach-Object -Process { $_.Substring(3) }
                             [void]$sb.AppendLine('<tr>')
                             [void]$sb.AppendLine("<td class='value-cell'>")
                             if ($sourceValues.Count -gt 0)
@@ -1753,6 +1875,11 @@ function New-M365DSCDeltaReport
                             }
                             [void]$sb.AppendLine("</td>")
                             [void]$sb.AppendLine('</tr>')
+                        }
+
+                        if ($null -ne $drift._Metadata_Level)
+                        {
+                            [void]$sb.AppendLine("<tr><td colspan='3'><span class='emoticon'>$emoticon</span> $($drift._Metadata_Info)</td></tr>")
                         }
                     }
                 }
@@ -1773,13 +1900,19 @@ function New-M365DSCDeltaReport
     }
     elseif ($Type -eq 'JSON')
     {
+        if ($null -eq $Delta)
+        {
+            $Delta = @()
+        }
+
+        $jsonDelta = ConvertTo-Json -InputObject $Delta -Depth 25
         if (-not [System.String]::IsNullOrEmpty($OutputPath))
         {
-            ConvertTo-Json $Delta -Depth 25 | Out-File $OutputPath
+            $jsonDelta | Out-File $OutputPath
         }
         else
         {
-            return (ConvertTo-Json $Delta -Depth 25)
+            return $jsonDelta
         }
     }
 }
@@ -1808,12 +1941,13 @@ function Initialize-M365DSCReporting
         $DscResourceInfo
     )
 
-    if ((Test-Path -Path $ConfigurationPath) -eq $false)
+    if ((Test-Path -LiteralPath $ConfigurationPath -PathType Leaf) -eq $false)
     {
-        Write-Error "Cannot find file specified in parameter Source: $ConfigurationPath. Please make sure the file exists!"
+        Write-Error "Cannot find configuration file: $ConfigurationPath. Please make sure the file exists!"
         return
     }
 
+    $ConfigurationPath = (Resolve-Path -LiteralPath $ConfigurationPath).ProviderPath
     Write-Verbose -Message "Loading file '$ConfigurationPath'"
 
     $fileContent = [System.IO.File]::ReadAllText($ConfigurationPath)

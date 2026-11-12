@@ -64,6 +64,8 @@
     cache error.
 * M365DSCDocGenerator
   * Fixed stale documentation pages being published after an aborted run.
+  * Fixed the pages of Azure, Power Platform and Sentinel resources listing empty API
+    permissions instead of their required roles.
 * M365DSCDRGUtil
   * Fixed the drift event XML not escaping values and showing type names instead of
     the desired and current values.
@@ -153,6 +155,13 @@
   * Fixed `New-M365DSCDeltaReport` comparing `AccessTokens`.
   * Fixed `Get-M365DSCCIMInstanceKey` returning all keys instead of the first.
   * Fixed Commerce, Fabric and Viva resources not being grouped under their workload.
+  * Fixed Excel reports being slow for large configurations and failing for a relative
+    path or an existing file.
+  * Fixed CSV and Excel reports cutting complex values and showing type names.
+  * Fixed JSON reports writing an object instead of an array for a single resource.
+  * Fixed the HTML report title being cut at the first dot of the file name.
+  * Fixed reports failing for relative configuration paths and file names with brackets.
+  * Fixed issues in `New-M365DSCDeltaReport` regarding configuration handling and display.
 * M365DSCResourceBase
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
