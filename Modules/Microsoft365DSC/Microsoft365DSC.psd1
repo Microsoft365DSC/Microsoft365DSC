@@ -59,8 +59,7 @@
   ScriptsToProcess = @(
     'Import-M365DSCDllLoaderModule.ps1',
     'Show-PwshWarning.ps1',
-    'Show-PreReleaseWarning.ps1',
-    'Update-MaximumFunctionCount.ps1'
+    'Show-PreReleaseWarning.ps1'
   )
   #>
 
