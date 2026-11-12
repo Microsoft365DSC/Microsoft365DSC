@@ -84,6 +84,10 @@ Describe 'Add-M365DSCTelemetryEvent' {
             @{ Resource = 'MSFT_DefenderSubscriptionPlan'; Workload = 'Defender' }
             @{ Resource = 'MSFT_IntuneDeviceCategory'; Workload = 'Intune' }
             @{ Resource = 'MSFT_EXOAcceptedDomain'; Workload = 'Exchange Online' }
+            @{ Resource = 'MSFT_ADOOrganizationOwner'; Workload = 'Azure DevOps' }
+            @{ Resource = 'MSFT_SentinelSetting'; Workload = 'Sentinel' }
+            @{ Resource = 'MSFT_SHSpaceGroup'; Workload = 'Services Hub' }
+            @{ Resource = 'SPOTenantSettings'; Workload = 'SharePoint Online' }
         ) {
             Add-M365DSCTelemetryEvent -Data (New-TelemetryData -Values @{ Resource = $Resource })
 
@@ -91,9 +95,14 @@ Describe 'Add-M365DSCTelemetryEvent' {
         }
 
         It 'Should replace the raw TenantId with the Tenant value' {
-            Add-M365DSCTelemetryEvent -Data (New-TelemetryData -Values @{ Resource = 'MSFT_AADGroup'; TenantId = 'contoso.onmicrosoft.com' })
+            Add-M365DSCTelemetryEvent -Data (New-TelemetryData -Values @{
+                    Resource          = 'MSFT_AADGroup'
+                    TenantId          = 'contoso.onmicrosoft.com'
+                    PSBoundParameters = @{ TenantId = 'contoso.onmicrosoft.com' }
+                })
 
             $Global:M365DSCTelemetryTestEvent.Data.ContainsKey('TenantId') | Should -BeFalse
+            $Global:M365DSCTelemetryTestEvent.Data.ContainsKey('PSBoundParameters') | Should -BeFalse
             $Global:M365DSCTelemetryTestEvent.Data['Tenant'] | Should -Be 'contoso.onmicrosoft.com'
         }
 
