@@ -101,7 +101,7 @@ Describe 'Start-M365DSCConfigurationExtract' {
         $certificateBlock | Should -Not -Match '\$CredsCredential'
         $credentialBlock | Should -Match '\$CredsCredential = Get-Credential'
         $credentialBlock | Should -Not -Match '\$CredsCertificatePassword'
-        $content | Should -Match 'M365TenantConfig -ConfigurationData \.\\ConfigurationData\.psd1 -Credential \$CredsCredential -CertificatePassword \$CredsCertificatePassword$'
+        $content | Should -Match 'M365TenantConfig -ConfigurationData \.\\ConfigurationData\.psd1 -Credential \$Credential -CertificatePassword \$CertificatePassword$'
     }
 
     It 'declares and prompts for the Credential once when a TenantId is passed with it' {
@@ -113,6 +113,7 @@ Describe 'Start-M365DSCConfigurationExtract' {
         ([System.Text.RegularExpressions.Regex]::Matches($content, '(?m)^        \$Credential\r?$')).Count | Should -Be 1
         ([System.Text.RegularExpressions.Regex]::Matches($content, 'if \(\$null -eq \$Credential\)')).Count | Should -Be 1
         ([System.Text.RegularExpressions.Regex]::Matches($content, '\$CredsCredential = Get-Credential')).Count | Should -Be 1
+        $content | Should -Match 'M365TenantConfig -ConfigurationData \.\\ConfigurationData\.psd1 -Credential \$Credential$'
     }
 
     Context 'with an exported resource' {

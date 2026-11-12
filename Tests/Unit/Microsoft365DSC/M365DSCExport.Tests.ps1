@@ -335,7 +335,8 @@ Describe 'Get-M365DSCExportContentForResource token replacement' {
     }
 
     It 'replaces the organization name regardless of casing and mapped tokens, including one at the start of the block' {
-        Set-M365DSCStringReplacementMap -Map @{ 'abc-123' = 'TenantGuid' }
+        { Set-M365DSCStringReplacementMap -Map @{ 'abc-123' = 'Tenant-Guid' } } | Should -Throw -ExpectedMessage "*'Tenant-Guid'*"
+        Set-M365DSCStringReplacementMap -Map @{ 'abc-12' = 'ShortId'; 'abc-123' = 'TenantGuid' }
 
         $content = Get-M365DSCExportContentForResource -ResourceName 'AADGroup' -ConnectionMode 'Credentials' `
             -ModulePath 'AADGroup.psm1' -Results @{ DisplayName = 'Group1' } -Credential $script:contentCredential
@@ -346,6 +347,7 @@ Describe 'Get-M365DSCExportContentForResource token replacement' {
         $content | Should -BeLike "*Tenant = '`$(`$ConfigurationData.NonNodeData.TenantGuid)'*"
         $content | Should -BeLike "*`$(`$ConfigurationData.NonNodeData.TenantGuid) = 'x'*"
         $content | Should -Not -BeLike '*abc-123*'
+        $content | Should -Not -BeLike '*ShortId*'
     }
 
     It 'leaves the content untouched when no organization name can be derived' {
