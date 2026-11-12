@@ -17,6 +17,9 @@
   * Fixed the export stopping at billing accounts which do not support associated tenants.
 * AzureBillingAccountsRoleAssignment
   * Fixed the export stopping at a billing account with unreadable role assignments.
+* EXODataAtRestEncryptionPolicyAssignment
+  * Fixed service errors of `Get()` being reported as drift and triggering `Set()`.
+    FIXES [#7622](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7622)
 * IntuneMobileThreatDefenseConnector
   * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
     added Id for `iVerify`.
