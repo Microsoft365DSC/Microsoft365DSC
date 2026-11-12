@@ -213,27 +213,18 @@ class AADUser : M365DSCResourceBase
                 $this.AddTelemetry('Get')
 
                 $nullReturn = @{
-                    UserPrincipalName     = $null
-                    AccountEnabled        = $null
-                    DisplayName           = $null
-                    GivenName             = $null
-                    Surname               = $null
-                    UsageLocation         = $null
-                    LicenseAssignment     = $null
-                    MemberOf              = $null
-                    Mail                  = $null
-                    OtherMails            = $null
-                    Password              = $null
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    ApplicationSecret     = $this.ApplicationSecret
-                    Ensure                = 'Absent'
-                    AccessTokens          = $this.AccessTokens
+                    UserPrincipalName = $null
+                    AccountEnabled    = $null
+                    DisplayName       = $null
+                    GivenName         = $null
+                    Surname           = $null
+                    UsageLocation     = $null
+                    LicenseAssignment = $null
+                    MemberOf          = $null
+                    Mail              = $null
+                    OtherMails        = $null
+                    Password          = $null
+                    Ensure            = 'Absent'
                 }
 
                 Write-Verbose -Message "Getting Office 365 User $($this.UserPrincipalName)"
@@ -369,13 +360,7 @@ class AADUser : M365DSCResourceBase
                 UserType                      = $user.UserType
                 Roles                         = $rolesValue
                 CustomSecurityAttributes      = $complexCustomSecurityAttributes
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                ApplicationSecret             = $this.ApplicationSecret
-                CertificateThumbprint         = $this.CertificateThumbprint
                 Ensure                        = 'Present'
-                AccessTokens                  = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -909,14 +894,7 @@ class AADUser : M365DSCResourceBase
                 if (-not [System.String]::IsNullOrEmpty($userUPN))
                 {
                     $Params = @{
-                        UserPrincipalName     = $userUPN
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        ApplicationSecret     = $this.ApplicationSecret
-                        AccessTokens          = $this.AccessTokens
+                        UserPrincipalName = $userUPN
                     }
 
                     $this.ExportedInstance = $user
@@ -1150,23 +1128,6 @@ class AADUser : M365DSCResourceBase
         }
 
         return $newExtensionAttributes
-    }
-
-    hidden [AADUser] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADUser])
-        {
-            return $Values
-        }
-
-        $result = [AADUser]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

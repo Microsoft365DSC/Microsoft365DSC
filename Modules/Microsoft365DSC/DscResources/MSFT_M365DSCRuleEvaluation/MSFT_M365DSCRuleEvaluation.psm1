@@ -292,21 +292,4 @@ class M365DSCRuleEvaluation : M365DSCResourceBase
         Write-M365DSCHost -Message "`r`n" -DeferWrite
         return $null
     }
-
-    hidden [M365DSCRuleEvaluation] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [M365DSCRuleEvaluation])
-        {
-            return $Values
-        }
-
-        $result = [M365DSCRuleEvaluation]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
-    }
 }

@@ -230,15 +230,6 @@ class IntuneMobileThreatDefenseConnector : M365DSCResourceBase
                 WindowsEnabled                                      = $instance.WindowsEnabled
                 WindowsMobileApplicationManagementEnabled           = $instance.WindowsMobileApplicationManagementEnabled
                 Ensure                                              = 'Present'
-                Credential                                          = $this.Credential
-                ApplicationId                                       = $this.ApplicationId
-                TenantId                                            = $this.TenantId
-                ApplicationSecret                                   = $this.ApplicationSecret
-                CertificateThumbprint                               = $this.CertificateThumbprint
-                CertificatePath                                     = $this.CertificatePath
-                CertificatePassword                                 = $this.CertificatePassword
-                ManagedIdentity                                     = $this.ManagedIdentity
-                AccessTokens                                        = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -327,17 +318,8 @@ class IntuneMobileThreatDefenseConnector : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                                                  = $config.Id
-                    DisplayName                                         = $config.DisplayName
-                    Credential                                          = $this.Credential
-                    ApplicationId                                       = $this.ApplicationId
-                    TenantId                                            = $this.TenantId
-                    ApplicationSecret                                   = $this.ApplicationSecret
-                    CertificateThumbprint                               = $this.CertificateThumbprint
-                    CertificatePath                                     = $this.CertificatePath
-                    CertificatePassword                                 = $this.CertificatePassword
-                    ManagedIdentity                                     = $this.ManagedIdentity
-                    AccessTokens                                        = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
                 }
 
                 $this.ExportedInstance = $config
@@ -421,22 +403,5 @@ class IntuneMobileThreatDefenseConnector : M365DSCResourceBase
             Id          = $ConnectorId
             DisplayName = $ConnectorDisplayName
         }
-    }
-
-    hidden [IntuneMobileThreatDefenseConnector] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileThreatDefenseConnector])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileThreatDefenseConnector]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

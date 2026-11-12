@@ -135,13 +135,6 @@ class IntuneDerivedCredential : M365DSCResourceBase
                 Issuer                     = $instance.Issuer.ToString()
                 NotificationType           = $instance.NotificationType.ToString()
                 RenewalThresholdPercentage = $instance.RenewalThresholdPercentage
-                Credential                 = $this.Credential
-                ApplicationId              = $this.ApplicationId
-                TenantId                   = $this.TenantId
-                CertificateThumbprint      = $this.CertificateThumbprint
-                ApplicationSecret          = $this.ApplicationSecret
-                ManagedIdentity            = $this.ManagedIdentity
-                AccessTokens               = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -231,15 +224,6 @@ class IntuneDerivedCredential : M365DSCResourceBase
                     Issuer                     = $config.Issuer.ToString()
                     NotificationType           = $config.NotificationType.ToString()
                     RenewalThresholdPercentage = $config.RenewalThresholdPercentage
-                    Credential                 = $this.Credential
-                    ApplicationId              = $this.ApplicationId
-                    TenantId                   = $this.TenantId
-                    ApplicationSecret          = $this.ApplicationSecret
-                    CertificateThumbprint      = $this.CertificateThumbprint
-                    CertificatePath            = $this.CertificatePath
-                    CertificatePassword        = $this.CertificatePassword
-                    ManagedIdentity            = $this.ManagedIdentity
-                    AccessTokens               = $this.AccessTokens
                 }
 
                 $this.ExportedInstance = $config
@@ -265,22 +249,5 @@ class IntuneDerivedCredential : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneDerivedCredential] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDerivedCredential])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDerivedCredential]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

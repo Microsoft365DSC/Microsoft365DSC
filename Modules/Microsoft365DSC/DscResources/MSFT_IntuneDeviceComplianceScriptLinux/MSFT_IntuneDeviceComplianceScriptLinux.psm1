@@ -139,19 +139,11 @@ class IntuneDeviceComplianceScriptLinux : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.description
-                DiscoveryScript       = $this.DecodeTextPayload($getValue.settingInstance.simpleSettingValue.value)
-                DisplayName           = $getValue.displayName
-                Id                    = $getValue.id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Description     = $getValue.description
+                DiscoveryScript = $this.DecodeTextPayload($getValue.settingInstance.simpleSettingValue.value)
+                DisplayName     = $getValue.displayName
+                Id              = $getValue.id
+                Ensure          = 'Present'
                 #endregion
             }
 
@@ -284,18 +276,9 @@ class IntuneDeviceComplianceScriptLinux : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -320,22 +303,5 @@ class IntuneDeviceComplianceScriptLinux : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneDeviceComplianceScriptLinux] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceComplianceScriptLinux])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceComplianceScriptLinux]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

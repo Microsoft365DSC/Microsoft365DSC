@@ -281,15 +281,6 @@ class IntuneDeviceCompliancePolicyAndroidDeviceOwner : M365DSCResourceBase
                 SecurityBlockJailbrokenDevices                     = $devicePolicy.securityBlockJailbrokenDevices
                 RoleScopeTagIds                                    = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $devicePolicy.roleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                                             = 'Present'
-                Credential                                         = $this.Credential
-                ApplicationId                                      = $this.ApplicationId
-                TenantId                                           = $this.TenantId
-                ApplicationSecret                                  = $this.ApplicationSecret
-                CertificateThumbprint                              = $this.CertificateThumbprint
-                CertificatePath                                    = $this.CertificatePath
-                CertificatePassword                                = $this.CertificatePassword
-                ManagedIdentity                                    = $this.ManagedIdentity
-                AccessTokens                                       = $this.AccessTokens
             }
 
             $returnAssignments = @()
@@ -487,17 +478,8 @@ class IntuneDeviceCompliancePolicyAndroidDeviceOwner : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configDeviceAndroidPolicies.Count)] $($configDeviceAndroidPolicy.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $configDeviceAndroidPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $configDeviceAndroidPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configDeviceAndroidPolicy
@@ -565,23 +547,6 @@ class IntuneDeviceCompliancePolicyAndroidDeviceOwner : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceCompliancePolicyAndroidDeviceOwner] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceCompliancePolicyAndroidDeviceOwner])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceCompliancePolicyAndroidDeviceOwner]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

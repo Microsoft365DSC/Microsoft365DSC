@@ -116,15 +116,7 @@ class EXODataEncryptionPolicy : M365DSCResourceBase
                 Name                      = $DataEncryptionPolicy.Name
                 PermanentDataPurgeContact = $DataEncryptionPolicy.PermanentDataPurgeContact
                 PermanentDataPurgeReason  = $DataEncryptionPolicy.PermanentDataPurgeReason
-                Credential                = $this.Credential
                 Ensure                    = 'Present'
-                ApplicationId             = $this.ApplicationId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                TenantId                  = $this.TenantId
-                AccessTokens              = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -222,15 +214,7 @@ class EXODataEncryptionPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($DataEncryptionPolicies.Count)] $($DataEncryptionPolicy.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $DataEncryptionPolicy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $DataEncryptionPolicy.Identity
                 }
                 $this.ExportedInstance = $DataEncryptionPolicy
                 $Results = $this.GetForExport($Params)
@@ -253,22 +237,5 @@ class EXODataEncryptionPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXODataEncryptionPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODataEncryptionPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXODataEncryptionPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

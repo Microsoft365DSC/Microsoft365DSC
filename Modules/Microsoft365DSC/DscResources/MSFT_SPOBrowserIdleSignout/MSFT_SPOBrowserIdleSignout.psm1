@@ -87,19 +87,10 @@ class SPOBrowserIdleSignout : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                IsSingleInstance      = 'Yes'
-                Enabled               = $BrowserIdleSignout.Enabled
-                SignOutAfter          = $BrowserIdleSignout.SignOutAfter.ToString()
-                WarnAfter             = $BrowserIdleSignout.WarnAfter.ToString()
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                Enabled          = $BrowserIdleSignout.Enabled
+                SignOutAfter     = $BrowserIdleSignout.SignOutAfter.ToString()
+                WarnAfter        = $BrowserIdleSignout.WarnAfter.ToString()
             })
         }
         catch
@@ -163,17 +154,8 @@ class SPOBrowserIdleSignout : M365DSCResourceBase
             $this.ExportedInstance = Get-PnPBrowserIdleSignout -ErrorAction Stop
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Enabled               = $false
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                ApplicationSecret     = $this.ApplicationSecret
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                Enabled          = $false
             }
 
             $dscContent = [System.Text.StringBuilder]::new()
@@ -213,22 +195,5 @@ class SPOBrowserIdleSignout : M365DSCResourceBase
                 @{ Type = 'Tolerance'; Properties = @('SignOutAfter', 'WarnAfter'); Within = '00:00:30' }
             )
         }
-    }
-
-    hidden [SPOBrowserIdleSignout] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOBrowserIdleSignout])
-        {
-            return $Values
-        }
-
-        $result = [SPOBrowserIdleSignout]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

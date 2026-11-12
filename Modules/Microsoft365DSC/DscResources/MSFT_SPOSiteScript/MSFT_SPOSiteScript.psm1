@@ -116,20 +116,11 @@ class SPOSiteScript : M365DSCResourceBase
             ##### End of Check
 
             return $this.AsResult(@{
-                Identity              = $SiteScript.Id
-                Title                 = $SiteScript.Title
-                Description           = $SiteScript.Description
-                Content               = $SiteScript.Content
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity    = $SiteScript.Id
+                Title       = $SiteScript.Title
+                Description = $SiteScript.Description
+                Content     = $SiteScript.Content
+                Ensure      = 'Present'
             })
         }
         catch
@@ -311,17 +302,8 @@ class SPOSiteScript : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    [$i/$($siteScripts.Length)] $($script.Title)" -DeferWrite
                 $params = @{
-                    Identity              = $script.Id
-                    Title                 = $script.Title
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $script.Id
+                    Title    = $script.Title
                 }
 
                 $this.ExportedInstance = $script
@@ -345,22 +327,5 @@ class SPOSiteScript : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOSiteScript] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSiteScript])
-        {
-            return $Values
-        }
-
-        $result = [SPOSiteScript]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

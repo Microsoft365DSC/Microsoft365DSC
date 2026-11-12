@@ -109,21 +109,13 @@ class TeamsCallParkPolicy : M365DSCResourceBase
 
             Write-Verbose -Message "Found an instance with Identity {$($this.Identity)}"
             $results = @{
-                Identity              = $instance.Identity
-                AllowCallPark         = $instance.AllowCallPark
-                Description           = $instance.Description
-                ParkTimeoutSeconds    = $instance.ParkTimeoutSeconds
-                PickupRangeEnd        = $instance.PickupRangeEnd
-                PickupRangeStart      = $instance.PickupRangeStart
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity           = $instance.Identity
+                AllowCallPark      = $instance.AllowCallPark
+                Description        = $instance.Description
+                ParkTimeoutSeconds = $instance.ParkTimeoutSeconds
+                PickupRangeEnd     = $instance.PickupRangeEnd
+                PickupRangeStart   = $instance.PickupRangeStart
+                Ensure             = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -216,16 +208,8 @@ class TeamsCallParkPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -250,22 +234,5 @@ class TeamsCallParkPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsCallParkPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsCallParkPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsCallParkPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

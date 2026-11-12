@@ -567,15 +567,6 @@ class IntuneDeviceFeaturesConfigurationPolicyMacOS : M365DSCResourceBase
                 SingleSignOnExtension                    = $complexSingleSignOnExtension
                 SleepDisabled                            = $getValue.sleepDisabled
                 Ensure                                   = 'Present'
-                Credential                               = $this.Credential
-                ApplicationId                            = $this.ApplicationId
-                TenantId                                 = $this.TenantId
-                ApplicationSecret                        = $this.ApplicationSecret
-                CertificateThumbprint                    = $this.CertificateThumbprint
-                CertificatePassword                      = $this.CertificatePassword
-                CertificatePath                          = $this.CertificatePath
-                ManagedIdentity                          = $this.ManagedIdentity
-                AccessTokens                             = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -753,17 +744,8 @@ class IntuneDeviceFeaturesConfigurationPolicyMacOS : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.DisplayName)" -DeferWrite
 
                 $Params = @{
-                    Id                    = $exportedInstance.Id
-                    DisplayName           = $exportedInstance.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $exportedInstance.Id
+                    DisplayName = $exportedInstance.DisplayName
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -955,23 +937,6 @@ class IntuneDeviceFeaturesConfigurationPolicyMacOS : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneDeviceFeaturesConfigurationPolicyMacOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceFeaturesConfigurationPolicyMacOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceFeaturesConfigurationPolicyMacOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

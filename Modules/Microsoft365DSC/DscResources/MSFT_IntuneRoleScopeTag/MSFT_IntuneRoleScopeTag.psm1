@@ -123,19 +123,10 @@ class IntuneRoleScopeTag : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                DisplayName           = $getValue.DisplayName
-                Id                    = $getValue.Id
-                Description           = $getValue.Description
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName = $getValue.DisplayName
+                Id          = $getValue.Id
+                Description = $getValue.Description
+                Ensure      = 'Present'
                 #endregion
             }
 
@@ -274,18 +265,9 @@ class IntuneRoleScopeTag : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -326,23 +308,6 @@ class IntuneRoleScopeTag : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneRoleScopeTag] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneRoleScopeTag])
-        {
-            return $Values
-        }
-
-        $result = [IntuneRoleScopeTag]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

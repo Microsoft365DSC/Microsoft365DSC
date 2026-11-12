@@ -128,15 +128,6 @@ class AADLifecycleWorkflowSettings : M365DSCResourceBase
                 SenderDomain                    = $instance.EmailSettings.SenderDomain
                 UseCompanyBranding              = $instance.EmailSettings.UseCompanyBranding
                 QuarantineConfiguration         = $complexQuarantineConfiguration
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -254,16 +245,7 @@ class AADLifecycleWorkflowSettings : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -325,23 +307,6 @@ class AADLifecycleWorkflowSettings : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [AADLifecycleWorkflowSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADLifecycleWorkflowSettings])
-        {
-            return $Values
-        }
-
-        $result = [AADLifecycleWorkflowSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

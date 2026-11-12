@@ -190,15 +190,6 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
                 DeviceEnrollmentConfigurationType = $config.DeviceEnrollmentConfigurationType.ToString()
                 Priority                          = $config.Priority
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                ApplicationSecret                 = $this.ApplicationSecret
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             $results += $this.GetDevicePlatformRestrictionSetting($config)
@@ -441,18 +432,9 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configs.Count)] $($config.displayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -729,23 +711,6 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
         }
 
         return $results
-    }
-
-    hidden [IntuneDeviceEnrollmentPlatformRestriction] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceEnrollmentPlatformRestriction])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceEnrollmentPlatformRestriction]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

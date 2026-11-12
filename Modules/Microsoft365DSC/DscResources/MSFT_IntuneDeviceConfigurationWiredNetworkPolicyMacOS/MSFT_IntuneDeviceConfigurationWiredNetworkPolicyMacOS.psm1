@@ -178,15 +178,6 @@ class IntuneDeviceConfigurationWiredNetworkPolicyMacOS : M365DSCResourceBase
                 RoleScopeTagIds                      = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 TrustedServerCertificateNames        = $getValue.trustedServerCertificateNames
                 Ensure                               = 'Present'
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                TenantId                             = $this.TenantId
-                ApplicationSecret                    = $this.ApplicationSecret
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePassword                  = $this.CertificatePassword
-                CertificatePath                      = $this.CertificatePath
-                ManagedIdentity                      = $this.ManagedIdentity
-                AccessTokens                         = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -340,17 +331,8 @@ class IntuneDeviceConfigurationWiredNetworkPolicyMacOS : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.DisplayName)" -DeferWrite
 
                 $Params = @{
-                    Id                    = $exportedInstance.Id
-                    DisplayName           = $exportedInstance.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $exportedInstance.Id
+                    DisplayName = $exportedInstance.DisplayName
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -392,23 +374,6 @@ class IntuneDeviceConfigurationWiredNetworkPolicyMacOS : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneDeviceConfigurationWiredNetworkPolicyMacOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationWiredNetworkPolicyMacOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationWiredNetworkPolicyMacOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

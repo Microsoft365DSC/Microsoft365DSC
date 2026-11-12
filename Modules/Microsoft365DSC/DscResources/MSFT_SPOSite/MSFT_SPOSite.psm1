@@ -375,15 +375,6 @@ class SPOSite : M365DSCResourceBase
                 AnonymousLinkExpirationInDays                                  = $site.AnonymousLinkExpirationInDays
                 OverrideTenantAnonymousLinkExpirationPolicy                    = $site.OverrideTenantAnonymousLinkExpirationPolicy
                 Ensure                                                         = 'Present'
-                Credential                                                     = $this.Credential
-                ApplicationId                                                  = $this.ApplicationId
-                TenantId                                                       = $this.TenantId
-                ApplicationSecret                                              = $this.ApplicationSecret
-                CertificateThumbprint                                          = $this.CertificateThumbprint
-                CertificatePath                                                = $this.CertificatePath
-                CertificatePassword                                            = $this.CertificatePassword
-                ManagedIdentity                                                = $this.ManagedIdentity
-                AccessTokens                                                   = $this.AccessTokens
             })
         }
         catch
@@ -719,20 +710,11 @@ class SPOSite : M365DSCResourceBase
                     }
 
                     $Params = @{
-                        Url                   = $site.Url
-                        Template              = $site.Template
-                        Owner                 = 'admin@contoso.com' # Passing in bogus value to bypass null owner error
-                        Title                 = $siteTitle
-                        TimeZoneId            = $site.TimeZoneID
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        Credential            = $this.Credential
-                        AccessTokens          = $this.AccessTokens
+                        Url        = $site.Url
+                        Template   = $site.Template
+                        Owner      = 'admin@contoso.com' # Passing in bogus value to bypass null owner error
+                        Title      = $siteTitle
+                        TimeZoneId = $site.TimeZoneID
                     }
 
                     $this.ExportedInstance = $site
@@ -795,22 +777,5 @@ class SPOSite : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOSite] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSite])
-        {
-            return $Values
-        }
-
-        $result = [SPOSite]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

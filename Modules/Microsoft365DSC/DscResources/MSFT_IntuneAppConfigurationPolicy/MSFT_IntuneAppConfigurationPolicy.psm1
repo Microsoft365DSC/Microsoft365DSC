@@ -192,15 +192,6 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
                 Description                 = $configPolicy.Description
                 CustomSettings              = $configPolicy.customSettings
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
                 RoleScopeTagIds             = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $configPolicy.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 TargetedAppManagementLevels = [String]$configPolicy.TargetedAppManagementLevels
                 AppGroupType                = [String]$configPolicy.AppGroupType
@@ -440,18 +431,9 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configPolicies.Count)] $($configPolicy.displayName)" -DeferWrite
                 $params = @{
-                    Id                    = $configPolicy.Id
-                    DisplayName           = $configPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationID         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $configPolicy.Id
+                    DisplayName = $configPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configPolicy
@@ -568,23 +550,6 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
             }
             $result += $currentSetting
         }
-        return $result
-    }
-
-    hidden [IntuneAppConfigurationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAppConfigurationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAppConfigurationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

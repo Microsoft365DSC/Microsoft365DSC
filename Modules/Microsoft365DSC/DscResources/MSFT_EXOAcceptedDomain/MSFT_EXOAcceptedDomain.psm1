@@ -99,19 +99,11 @@ class EXOAcceptedDomain : M365DSCResourceBase
             Write-Verbose -Message "Found AcceptedDomain configuration for $($this.Identity)"
 
             $result = @{
-                DomainType            = $AcceptedDomain.DomainType
-                Ensure                = 'Present'
-                Identity              = $AcceptedDomain.Identity
-                MatchSubDomains       = $AcceptedDomain.MatchSubDomains
-                OutboundOnly          = $AcceptedDomain.OutboundOnly
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DomainType      = $AcceptedDomain.DomainType
+                Ensure          = 'Present'
+                Identity        = $AcceptedDomain.Identity
+                MatchSubDomains = $AcceptedDomain.MatchSubDomains
+                OutboundOnly    = $AcceptedDomain.OutboundOnly
             }
 
             return $this.AsResult($result)
@@ -204,15 +196,7 @@ class EXOAcceptedDomain : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllAcceptedDomains.Count)] $($domain.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $domain.Identity
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    Credential            = $this.Credential
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $domain.Identity
                 }
                 $this.ExportedInstance = $domain
                 $Results = $this.GetForExport($Params)
@@ -235,22 +219,5 @@ class EXOAcceptedDomain : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAcceptedDomain] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAcceptedDomain])
-        {
-            return $Values
-        }
-
-        $result = [EXOAcceptedDomain]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

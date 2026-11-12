@@ -110,18 +110,10 @@ class SCRoleGroupMember : M365DSCResourceBase
             }
 
             $result = @{
-                Name                  = $RoleGroup.Name
-                Description           = $RoleGroup.Description
-                Members               = $roleGroupMembersValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name        = $RoleGroup.Name
+                Description = $RoleGroup.Description
+                Members     = $roleGroupMembersValue
+                Ensure      = 'Present'
             }
 
             Write-Verbose -Message "Found Role Group $($this.Name)"
@@ -237,15 +229,8 @@ class SCRoleGroupMember : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($RoleGroup.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $RoleGroup.Name
-                    Description           = $RoleGroup.Description
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name        = $RoleGroup.Name
+                    Description = $RoleGroup.Description
                 }
                 $this.ExportedInstance = $RoleGroup
                 $Results = $this.GetForExport($Params)
@@ -276,22 +261,5 @@ class SCRoleGroupMember : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Description')
         }
-    }
-
-    hidden [SCRoleGroupMember] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCRoleGroupMember])
-        {
-            return $Values
-        }
-
-        $result = [SCRoleGroupMember]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

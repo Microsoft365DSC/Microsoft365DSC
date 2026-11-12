@@ -149,13 +149,6 @@ class AADNamedLocationPolicy : M365DSCResourceBase
                 CountryLookupMethod               = $NamedLocation.countryLookupMethod
                 IncludeUnknownCountriesAndRegions = $NamedLocation.includeUnknownCountriesAndRegions
                 Ensure                            = 'Present'
-                ApplicationSecret                 = $this.ApplicationSecret
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                CertificateThumbprint             = $this.CertificateThumbprint
-                Credential                        = $this.Credential
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -330,17 +323,8 @@ class AADNamedLocationPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($AADNamedLocations.Count)] $($AADNamedLocation.DisplayName)" -DeferWrite
                 $Params = @{
-                    ApplicationSecret     = $this.ApplicationSecret
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    DisplayName           = $AADNamedLocation.DisplayName
-                    ID                    = $AADNamedLocation.ID
-                    Credential            = $this.Credential
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $AADNamedLocation.DisplayName
+                    ID          = $AADNamedLocation.ID
                 }
                 $this.ExportedInstance = $AADNamedLocation
                 $Results = $this.GetForExport($Params)
@@ -366,22 +350,5 @@ class AADNamedLocationPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADNamedLocationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADNamedLocationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADNamedLocationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

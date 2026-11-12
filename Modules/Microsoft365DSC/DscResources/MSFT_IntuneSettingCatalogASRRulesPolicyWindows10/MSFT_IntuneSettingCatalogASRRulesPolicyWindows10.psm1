@@ -350,13 +350,6 @@ class IntuneSettingCatalogASRRulesPolicyWindows10 : M365DSCResourceBase
             $returnHashtable.Add('Assignments', $assignmentResult)
 
             $returnHashtable.Add('Ensure', 'Present')
-            $returnHashtable.Add('Credential', $this.Credential)
-            $returnHashtable.Add('ApplicationId', $this.ApplicationId)
-            $returnHashtable.Add('TenantId', $this.TenantId)
-            $returnHashtable.Add('ApplicationSecret', $this.ApplicationSecret)
-            $returnHashtable.Add('CertificateThumbprint', $this.CertificateThumbprint)
-            $returnHashtable.Add('ManagedIdentity', $this.ManagedIdentity)
-            $returnHashtable.Add('AccessTokens', $this.AccessTokens)
 
             return $this.AsResult($returnHashtable)
         }
@@ -511,18 +504,9 @@ class IntuneSettingCatalogASRRulesPolicyWindows10 : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Name)" -DeferWrite
 
                 $params = @{
-                    Identity              = $policy.Id
-                    DisplayName           = $policy.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $policy.Id
+                    DisplayName = $policy.Name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
@@ -579,23 +563,6 @@ class IntuneSettingCatalogASRRulesPolicyWindows10 : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return $this.GetSettingsCatalogCompareParameters()
-    }
-
-    hidden [IntuneSettingCatalogASRRulesPolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneSettingCatalogASRRulesPolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneSettingCatalogASRRulesPolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -499,15 +499,6 @@ class AADCrossTenantAccessPolicyConfigurationDefault : M365DSCResourceBase
                 M365CollaborationOutbound                         = $m365CollaborationOutboundValue
                 TenantRestrictions                                = $tenantRestrictionsValue
                 Ensure                                            = 'Present'
-                Credential                                        = $this.Credential
-                ApplicationId                                     = $this.ApplicationId
-                TenantId                                          = $this.TenantId
-                ApplicationSecret                                 = $this.ApplicationSecret
-                CertificateThumbprint                             = $this.CertificateThumbprint
-                CertificatePath                                   = $this.CertificatePath
-                CertificatePassword                               = $this.CertificatePassword
-                ManagedIdentity                                   = $this.ManagedIdentity
-                AccessTokens                                      = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -663,16 +654,7 @@ class AADCrossTenantAccessPolicyConfigurationDefault : M365DSCResourceBase
 
             $dscContent = [System.Text.StringBuilder]::new()
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
 
@@ -1234,23 +1216,6 @@ class AADCrossTenantAccessPolicyConfigurationDefault : M365DSCResourceBase
             isCompliantDeviceAccepted           = $Setting.isCompliantDeviceAccepted
             isHybridAzureADJoinedDeviceAccepted = $Setting.isHybridAzureADJoinedDeviceAccepted
             isMfaAccepted                       = $Setting.isMfaAccepted
-        }
-
-        return $result
-    }
-
-    hidden [AADCrossTenantAccessPolicyConfigurationDefault] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCrossTenantAccessPolicyConfigurationDefault])
-        {
-            return $Values
-        }
-
-        $result = [AADCrossTenantAccessPolicyConfigurationDefault]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
         }
 
         return $result

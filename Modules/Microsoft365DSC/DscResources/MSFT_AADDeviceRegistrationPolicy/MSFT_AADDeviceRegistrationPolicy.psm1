@@ -266,15 +266,6 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
                 AzureAdJoinLocalAdminsRegisteringMode   = $localAdminsRegisteringModeValue
                 AzureAdJoinLocalAdminsRegisteringGroups = $localAdminsRegisteringGroupsValue
                 AzureAdJoinLocalAdminsRegisteringUsers  = $localAdminsRegisteringUsersValue
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                TenantId                                = $this.TenantId
-                ApplicationSecret                       = $this.ApplicationSecret
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                AccessTokens                            = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -480,16 +471,7 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
             }
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -552,23 +534,6 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [AADDeviceRegistrationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADDeviceRegistrationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADDeviceRegistrationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

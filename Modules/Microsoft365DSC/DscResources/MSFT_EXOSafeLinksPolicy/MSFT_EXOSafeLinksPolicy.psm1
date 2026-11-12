@@ -156,14 +156,6 @@ class EXOSafeLinksPolicy : M365DSCResourceBase
                 # The Get-SafeLinksPolicy no longer returns this property
                 # UseTranslatedNotificationText = $SafeLinksPolicy.UseTranslatedNotificationText
                 Ensure                     = 'Present'
-                Credential                 = $this.Credential
-                ApplicationId              = $this.ApplicationId
-                CertificateThumbprint      = $this.CertificateThumbprint
-                CertificatePath            = $this.CertificatePath
-                CertificatePassword        = $this.CertificatePassword
-                ManagedIdentity            = $this.ManagedIdentity
-                TenantId                   = $this.TenantId
-                AccessTokens               = $this.AccessTokens
             }
 
             Write-Verbose -Message "Found SafeLinksPolicy $($this.Identity)"
@@ -262,15 +254,7 @@ class EXOSafeLinksPolicy : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($SafeLinksPolicies.Length)] $($SafeLinksPolicy.Name)" -DeferWrite
                     $Params = @{
-                        Credential            = $this.Credential
-                        Identity              = $SafeLinksPolicy.Identity
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity = $SafeLinksPolicy.Identity
                     }
                     $this.ExportedInstance = $SafeLinksPolicy
                     $Results = $this.GetForExport($Params)
@@ -305,22 +289,5 @@ class EXOSafeLinksPolicy : M365DSCResourceBase
         return @{
             ExcludedProperties = @('UseTranslatedNotificationText')
         }
-    }
-
-    hidden [EXOSafeLinksPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSafeLinksPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOSafeLinksPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

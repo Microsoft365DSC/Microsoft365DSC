@@ -77,17 +77,8 @@ class SPOSiteAuditSettings : M365DSCResourceBase
                 $auditFlag = 'None'
             }
             return $this.AsResult(@{
-                Url                   = $this.Url
-                AuditFlags            = $auditFlag
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Url        = $this.Url
+                AuditFlags = $auditFlag
             })
         }
         catch
@@ -181,17 +172,8 @@ class SPOSiteAuditSettings : M365DSCResourceBase
                     Write-M365DSCHost -Message "    [$i/$($sites.Length)] Audit Settings for {$($site.Url)}" -DeferWrite
 
                     $Params = @{
-                        Url                   = $site.Url
-                        AuditFlags            = 'None'
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificatePassword   = $this.CertificatePassword
-                        CertificatePath       = $this.CertificatePath
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        Credential            = $this.Credential
-                        AccessTokens          = $this.AccessTokens
+                        Url        = $site.Url
+                        AuditFlags = 'None'
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -255,22 +237,5 @@ class SPOSiteAuditSettings : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Url')
         }
-    }
-
-    hidden [SPOSiteAuditSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSiteAuditSettings])
-        {
-            return $Values
-        }
-
-        $result = [SPOSiteAuditSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

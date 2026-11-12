@@ -134,14 +134,6 @@ class EXOAntiPhishRule : M365DSCResourceBase
                 SentTo                    = $AntiPhishRule.SentTo
                 SentToMemberOf            = $AntiPhishRule.SentToMemberOf
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                TenantId                  = $this.TenantId
-                AccessTokens              = $this.AccessTokens
             }
 
             if ('Enabled' -eq $AntiPhishRule.State)
@@ -270,16 +262,8 @@ class EXOAntiPhishRule : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AntiPhishRules.Length)] $($Rule.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $Rule.Identity
-                    AntiPhishPolicy       = $Rule.AntiPhishPolicy
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity        = $Rule.Identity
+                    AntiPhishPolicy = $Rule.AntiPhishPolicy
                 }
                 $this.ExportedInstance = $Rule
                 $Results = $this.GetForExport($Params)
@@ -317,22 +301,5 @@ class EXOAntiPhishRule : M365DSCResourceBase
             throw "Error attempting to create EXOAntiPhishRule {$Identity}. The specified AntiPhishPolicy {$PolicyName} " + `
                 "doesn't exist. Make sure you either create it first or specify a valid policy."
         }
-    }
-
-    hidden [EXOAntiPhishRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAntiPhishRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOAntiPhishRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -135,14 +135,6 @@ class EXOHostedOutboundSpamFilterPolicy : M365DSCResourceBase
                 RecipientLimitExternalPerHour             = $HostedOutboundSpamFilterPolicy.RecipientLimitExternalPerHour
                 ActionWhenThresholdReached                = $HostedOutboundSpamFilterPolicy.ActionWhenThresholdReached
                 AutoForwardingMode                        = $HostedOutboundSpamFilterPolicy.AutoForwardingMode
-                Credential                                = $this.Credential
-                ApplicationId                             = $this.ApplicationId
-                CertificateThumbprint                     = $this.CertificateThumbprint
-                CertificatePath                           = $this.CertificatePath
-                CertificatePassword                       = $this.CertificatePassword
-                ManagedIdentity                           = $this.ManagedIdentity
-                TenantId                                  = $this.TenantId
-                AccessTokens                              = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -238,15 +230,7 @@ class EXOHostedOutboundSpamFilterPolicy : M365DSCResourceBase
                 }
 
                 $Params = @{
-                    Credential            = $this.Credential
-                    Identity              = $HostedOutboundSpamFilterPolicy.Identity
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $HostedOutboundSpamFilterPolicy.Identity
                 }
                 $this.ExportedInstance = $HostedOutboundSpamFilterPolicy
                 Write-M365DSCHost -Message "    |---[$i/$($HostedOutboundSpamFilterPolicies.Length)] $($HostedOutboundSpamFilterPolicy.Identity)" -DeferWrite
@@ -270,22 +254,5 @@ class EXOHostedOutboundSpamFilterPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOHostedOutboundSpamFilterPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOHostedOutboundSpamFilterPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOHostedOutboundSpamFilterPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

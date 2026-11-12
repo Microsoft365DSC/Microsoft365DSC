@@ -153,15 +153,6 @@ class AADCustomSecurityAttributeDefinition : M365DSCResourceBase
                 Type                    = $instance.Type
                 UsePreDefinedValuesOnly = $instance.UsePreDefinedValuesOnly
                 Ensure                  = 'Present'
-                Credential              = $this.Credential
-                ApplicationId           = $this.ApplicationId
-                TenantId                = $this.TenantId
-                ApplicationSecret       = $this.ApplicationSecret
-                CertificateThumbprint   = $this.CertificateThumbprint
-                CertificatePath         = $this.CertificatePath
-                CertificatePassword     = $this.CertificatePassword
-                ManagedIdentity         = $this.ManagedIdentity
-                AccessTokens            = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -301,18 +292,9 @@ class AADCustomSecurityAttributeDefinition : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Name                  = $config.Name
-                    AttributeSet          = $config.AttributeSet
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id           = $config.Id
+                    Name         = $config.Name
+                    AttributeSet = $config.AttributeSet
                 }
 
                 $this.ExportedInstance = $config
@@ -365,23 +347,6 @@ class AADCustomSecurityAttributeDefinition : M365DSCResourceBase
                 @{ Type = 'AllowCurrentExtras'; Property = 'AllowedValues'; MatchKey = 'ValueId' }
             )
         }
-    }
-
-    hidden [AADCustomSecurityAttributeDefinition] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCustomSecurityAttributeDefinition])
-        {
-            return $Values
-        }
-
-        $result = [AADCustomSecurityAttributeDefinition]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

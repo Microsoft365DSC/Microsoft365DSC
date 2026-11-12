@@ -80,15 +80,6 @@ class AADEntitlementManagementSettings : M365DSCResourceBase
                 IsSingleInstance                         = 'Yes'
                 DaysUntilExternalUserDeletedAfterBlocked = $instance.DaysUntilExternalUserDeletedAfterBlocked
                 ExternalUserLifecycleAction              = $instance.ExternalUserLifecycleAction
-                Credential                               = $this.Credential
-                ApplicationId                            = $this.ApplicationId
-                TenantId                                 = $this.TenantId
-                ApplicationSecret                        = $this.ApplicationSecret
-                CertificateThumbprint                    = $this.CertificateThumbprint
-                CertificatePath                          = $this.CertificatePath
-                CertificatePassword                      = $this.CertificatePassword
-                ManagedIdentity                          = $this.ManagedIdentity
-                AccessTokens                             = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -144,16 +135,7 @@ class AADEntitlementManagementSettings : M365DSCResourceBase
         try
         {
             $params = @{
-                IsSIngleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSIngleInstance = 'Yes'
             }
             if ($null -ne $Global:M365DSCExportResourceInstancesCount)
             {
@@ -180,22 +162,5 @@ class AADEntitlementManagementSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADEntitlementManagementSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementSettings])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -97,19 +97,10 @@ class SPOTheme : M365DSCResourceBase
             $convertedPalette = $this.ConvertExistingThemePaletteToArray([System.Collections.Hashtable]$theme.Palette)
 
             return $this.AsResult(@{
-                Name                  = $theme.Name
-                IsInverted            = $theme.IsInverted
-                Palette               = $convertedPalette
-                Credential            = $this.Credential
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name       = $theme.Name
+                IsInverted = $theme.IsInverted
+                Palette    = $convertedPalette
+                Ensure     = 'Present'
             })
         }
         catch
@@ -231,16 +222,7 @@ class SPOTheme : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($themes.Length)] $($theme.Name)" -DeferWrite
                 $Params = @{
-                    Name                  = $theme.Name
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    Name = $theme.Name
                 }
 
                 $this.ExportedInstance = $theme
@@ -294,23 +276,6 @@ class SPOTheme : M365DSCResourceBase
             }
         }
         return $themes
-    }
-
-    hidden [SPOTheme] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOTheme])
-        {
-            return $Values
-        }
-
-        $result = [SPOTheme]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

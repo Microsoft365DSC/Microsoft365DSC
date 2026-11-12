@@ -97,13 +97,6 @@ class AADAuthenticationFlowPolicy : M365DSCResourceBase
                     DisplayName              = $flowPolicy.DisplayName
                     Description              = $flowPolicy.Description
                     SelfServiceSignUpEnabled = [Boolean]$flowPolicy.SelfServiceSignUp.IsEnabled
-                    Credential               = $this.Credential
-                    ApplicationId            = $this.ApplicationId
-                    TenantId                 = $this.TenantId
-                    ApplicationSecret        = $this.ApplicationSecret
-                    CertificateThumbprint    = $this.CertificateThumbprint
-                    ManagedIdentity          = $this.ManagedIdentity
-                    AccessTokens             = $this.AccessTokens
                 }
                 return $this.AsResult($result)
             }
@@ -174,16 +167,7 @@ class AADAuthenticationFlowPolicy : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                ApplicationSecret     = $this.ApplicationSecret
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -213,22 +197,5 @@ class AADAuthenticationFlowPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationFlowPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationFlowPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationFlowPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

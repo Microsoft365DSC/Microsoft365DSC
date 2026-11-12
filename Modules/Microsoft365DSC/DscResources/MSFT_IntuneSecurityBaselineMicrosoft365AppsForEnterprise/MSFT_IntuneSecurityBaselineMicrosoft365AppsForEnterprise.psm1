@@ -610,21 +610,13 @@ class IntuneSecurityBaselineMicrosoft365AppsForEnterprise : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.Description
-                DisplayName           = $getValue.Name
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Id                    = $getValue.Id
-                DeviceSettings        = $complexDeviceSettings
-                UserSettings          = $complexUserSettings
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Description     = $getValue.Description
+                DisplayName     = $getValue.Name
+                RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Id              = $getValue.Id
+                DeviceSettings  = $complexDeviceSettings
+                UserSettings    = $complexUserSettings
+                Ensure          = 'Present'
                 #endregion
             }
             $results += $policySettings
@@ -802,18 +794,9 @@ class IntuneSecurityBaselineMicrosoft365AppsForEnterprise : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.Name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -888,23 +871,6 @@ class IntuneSecurityBaselineMicrosoft365AppsForEnterprise : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return $this.GetSettingsCatalogCompareParameters()
-    }
-
-    hidden [IntuneSecurityBaselineMicrosoft365AppsForEnterprise] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneSecurityBaselineMicrosoft365AppsForEnterprise])
-        {
-            return $Values
-        }
-
-        $result = [IntuneSecurityBaselineMicrosoft365AppsForEnterprise]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

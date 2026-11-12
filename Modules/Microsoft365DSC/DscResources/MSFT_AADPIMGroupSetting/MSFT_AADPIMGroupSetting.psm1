@@ -436,13 +436,6 @@ class AADPIMGroupSetting : M365DSCResourceBase
                 AuthenticationContextId                                   = $AuthenticationContextIdValue
                 AuthenticationContextName                                 = $AuthenticationContextNameValue
                 Ensure                                                    = 'Present'
-                ApplicationId                                             = $this.ApplicationId
-                TenantId                                                  = $this.TenantId
-                CertificateThumbprint                                     = $this.CertificateThumbprint
-                ApplicationSecret                                         = $this.ApplicationSecret
-                Credential                                                = $this.Credential
-                ManagedIdentity                                           = $this.ManagedIdentity
-                AccessTokens                                              = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -1084,18 +1077,9 @@ class AADPIMGroupSetting : M365DSCResourceBase
                     Write-M365DSCHost -Message "        |---[$i/$($getValue.Count)] $($config.Id)" -DeferWrite
 
                     $Params = @{
-                        Id                    = $config.Id
-                        RoleDefinitionId      = $config.roleDefinitionId
-                        DisplayName           = $group.DisplayName
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        Id               = $config.Id
+                        RoleDefinitionId = $config.roleDefinitionId
+                        DisplayName      = $group.DisplayName
                     }
 
                     $this.ExportedInstance = $config
@@ -1125,22 +1109,5 @@ class AADPIMGroupSetting : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADPIMGroupSetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADPIMGroupSetting])
-        {
-            return $Values
-        }
-
-        $result = [AADPIMGroupSetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

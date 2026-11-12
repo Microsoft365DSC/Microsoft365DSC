@@ -131,17 +131,11 @@ class TeamsChannel : M365DSCResourceBase
             }
 
             $results = @{
-                DisplayName           = $channel.DisplayName
-                TeamName              = $team.DisplayName
-                GroupId               = $team.GroupId
-                Description           = $channel.Description
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                Credential            = $this.Credential
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName = $channel.DisplayName
+                TeamName    = $team.DisplayName
+                GroupId     = $team.GroupId
+                Description = $channel.Description
+                Ensure      = 'Present'
             }
 
             if ($this.NewDisplayName)
@@ -269,17 +263,9 @@ class TeamsChannel : M365DSCResourceBase
 
                         Write-M365DSCHost -Message "        |---[$i/$($channels.Length)] $($channel.DisplayName)" -DeferWrite
                         $params = @{
-                            TeamName              = $team.DisplayName
-                            GroupId               = $team.GroupId
-                            DisplayName           = $channel.DisplayName
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            CertificatePath       = $this.CertificatePath
-                            CertificatePassword   = $this.CertificatePassword
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            TeamName    = $team.DisplayName
+                            GroupId     = $team.GroupId
+                            DisplayName = $channel.DisplayName
                         }
 
                         $this.ExportedInstance = $channel
@@ -319,22 +305,5 @@ class TeamsChannel : M365DSCResourceBase
         return @{
             ExcludedProperties = @('GroupID', 'NewDisplayName')
         }
-    }
-
-    hidden [TeamsChannel] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsChannel])
-        {
-            return $Values
-        }
-
-        $result = [TeamsChannel]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

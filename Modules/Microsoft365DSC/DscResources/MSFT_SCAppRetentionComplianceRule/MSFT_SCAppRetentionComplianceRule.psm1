@@ -132,13 +132,6 @@ class SCAppRetentionComplianceRule : M365DSCResourceBase
                 RetentionComplianceAction    = [System.String] $instance.RetentionComplianceAction
                 ExpirationDateOption         = [System.String] $instance.ExpirationDateOption
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePassword          = $this.CertificatePassword
-                CertificatePath              = $this.CertificatePath
-                AccessTokens                 = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -256,15 +249,8 @@ class SCAppRetentionComplianceRule : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $exportedInstance.Name
-                    Policy                = [System.String] $exportedInstance.Policy
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name   = $exportedInstance.Name
+                    Policy = [System.String] $exportedInstance.Policy
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -320,22 +306,5 @@ class SCAppRetentionComplianceRule : M365DSCResourceBase
                 Start-Sleep -Seconds 30
             }
         }
-    }
-
-    hidden [SCAppRetentionComplianceRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCAppRetentionComplianceRule])
-        {
-            return $Values
-        }
-
-        $result = [SCAppRetentionComplianceRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

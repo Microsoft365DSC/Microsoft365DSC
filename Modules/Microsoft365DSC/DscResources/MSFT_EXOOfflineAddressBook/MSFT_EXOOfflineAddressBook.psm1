@@ -100,20 +100,12 @@ class EXOOfflineAddressBook : M365DSCResourceBase
             Write-Verbose -Message "Offline Address Book with Name $($OfflineAddressBook.Name) found"
 
             $result = @{
-                Name                  = $OfflineAddressBook.Name
-                AddressLists          = $OfflineAddressBook.AddressLists
-                ConfiguredAttributes  = $OfflineAddressBook.ConfiguredAttributes
-                DiffRetentionPeriod   = $OfflineAddressBook.DiffRetentionPeriod
-                IsDefault             = $OfflineAddressBook.IsDefault
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name                 = $OfflineAddressBook.Name
+                AddressLists         = $OfflineAddressBook.AddressLists
+                ConfiguredAttributes = $OfflineAddressBook.ConfiguredAttributes
+                DiffRetentionPeriod  = $OfflineAddressBook.DiffRetentionPeriod
+                IsDefault            = $OfflineAddressBook.IsDefault
+                Ensure               = 'Present'
             }
 
             return $this.AsResult($result)
@@ -228,15 +220,7 @@ class EXOOfflineAddressBook : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllOfflineAddressBooks.Count)] $($OfflineAddressBook.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $OfflineAddressBook.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $OfflineAddressBook.Name
                 }
                 $this.ExportedInstance = $OfflineAddressBook
                 $Results = $this.GetForExport($Params)
@@ -260,22 +244,5 @@ class EXOOfflineAddressBook : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOOfflineAddressBook] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOOfflineAddressBook])
-        {
-            return $Values
-        }
-
-        $result = [EXOOfflineAddressBook]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

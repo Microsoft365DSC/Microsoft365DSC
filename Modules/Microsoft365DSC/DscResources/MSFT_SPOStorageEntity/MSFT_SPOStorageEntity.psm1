@@ -119,22 +119,13 @@ class SPOStorageEntity : M365DSCResourceBase
             Write-Verbose -Message "Found storage entity $($Entity.Key)"
 
             return $this.AsResult(@{
-                Key                   = $Entity.Key
-                Value                 = $Entity.Value
-                EntityScope           = $this.EntityScope
-                Description           = $Entity.Description
-                Comment               = $Entity.Comment
-                Ensure                = 'Present'
-                SiteUrl               = $this.SiteUrl
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Key         = $Entity.Key
+                Value       = $Entity.Value
+                EntityScope = $this.EntityScope
+                Description = $Entity.Description
+                Comment     = $Entity.Comment
+                Ensure      = 'Present'
+                SiteUrl     = $this.SiteUrl
             })
         }
         catch
@@ -298,17 +289,8 @@ class SPOStorageEntity : M365DSCResourceBase
                 }
 
                 $Params = @{
-                    Credential            = $this.Credential
-                    Key                   = $storageEntity.Key
-                    SiteUrl               = $centralAdminUrl
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Key     = $storageEntity.Key
+                    SiteUrl = $centralAdminUrl
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($storageEntities.Length)] $($storageEntity.Key)" -DeferWrite
 
@@ -350,22 +332,5 @@ class SPOStorageEntity : M365DSCResourceBase
         return @{
             ExcludedProperties = @('SiteUrl')
         }
-    }
-
-    hidden [SPOStorageEntity] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOStorageEntity])
-        {
-            return $Values
-        }
-
-        $result = [SPOStorageEntity]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

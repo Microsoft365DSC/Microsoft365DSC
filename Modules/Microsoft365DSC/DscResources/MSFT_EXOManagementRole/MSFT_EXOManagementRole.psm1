@@ -90,18 +90,10 @@ class EXOManagementRole : M365DSCResourceBase
             }
 
             $result = @{
-                Name                  = $ManagementRole.Name
-                Parent                = $ManagementRole.Parent
-                Description           = $ManagementRole.Description
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name        = $ManagementRole.Name
+                Parent      = $ManagementRole.Parent
+                Description = $ManagementRole.Description
+                Ensure      = 'Present'
             }
 
             Write-Verbose -Message "Found Management Role $($this.Name)"
@@ -210,16 +202,8 @@ class EXOManagementRole : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($ManagementRole.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $ManagementRole.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    Parent                = $ManagementRole.Parent
-                    AccessTokens          = $this.AccessTokens
+                    Name   = $ManagementRole.Name
+                    Parent = $ManagementRole.Parent
                 }
                 $this.ExportedInstance = $ManagementRole
                 $Results = $this.GetForExport($Params)
@@ -286,22 +270,5 @@ class EXOManagementRole : M365DSCResourceBase
         }
 
         return $null
-    }
-
-    hidden [EXOManagementRole] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOManagementRole])
-        {
-            return $Values
-        }
-
-        $result = [EXOManagementRole]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

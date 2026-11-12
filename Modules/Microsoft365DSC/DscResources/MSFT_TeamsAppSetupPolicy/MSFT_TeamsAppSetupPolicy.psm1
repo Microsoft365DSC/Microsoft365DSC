@@ -151,24 +151,16 @@ class TeamsAppSetupPolicy : M365DSCResourceBase
 
             Write-Verbose -Message "Found an instance with Identity {$($this.Identity)}"
             $results = @{
-                Identity              = $instance.Identity.Replace('Tag:', '')
-                Description           = $instance.Description
-                AppPresetList         = [Array]$appPresetListValue
-                AppPresetMeetingList  = [Array]$appPresetMeetingListValue
-                PinnedAppBarApps      = [Array]$pinnedAppBarAppsValue
-                PinnedCallingBarApps  = [Array]$pinnedCallingBarAppsValue
-                PinnedMessageBarApps  = [Array]$pinnedMessageBarAppsValue
-                AllowUserPinning      = $instance.AllowUserPinning
-                AllowSideLoading      = $instance.AllowSideLoading
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity             = $instance.Identity.Replace('Tag:', '')
+                Description          = $instance.Description
+                AppPresetList        = [Array]$appPresetListValue
+                AppPresetMeetingList = [Array]$appPresetMeetingListValue
+                PinnedAppBarApps     = [Array]$pinnedAppBarAppsValue
+                PinnedCallingBarApps = [Array]$pinnedCallingBarAppsValue
+                PinnedMessageBarApps = [Array]$pinnedMessageBarAppsValue
+                AllowUserPinning     = $instance.AllowUserPinning
+                AllowSideLoading     = $instance.AllowSideLoading
+                Ensure               = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -322,16 +314,8 @@ class TeamsAppSetupPolicy : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -356,22 +340,5 @@ class TeamsAppSetupPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsAppSetupPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsAppSetupPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsAppSetupPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

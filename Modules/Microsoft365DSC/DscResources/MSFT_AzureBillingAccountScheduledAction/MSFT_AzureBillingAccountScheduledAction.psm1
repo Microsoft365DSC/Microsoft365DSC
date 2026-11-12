@@ -155,23 +155,15 @@ class AzureBillingAccountScheduledAction : M365DSCResourceBase
             }
 
             $results = @{
-                DisplayName           = $this.DisplayName
-                BillingAccount        = $this.BillingAccount
-                Status                = $instance.properties.Status
-                View                  = $instance.properties.viewId
-                Notification          = $NotificationValue
-                NotificationEmail     = $instance.properties.notificationEmail
-                Schedule              = $ScheduleValue
-                Ensure                = 'Present'
-                SubscriptionId        = $this.SubscriptionId
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName       = $this.DisplayName
+                BillingAccount    = $this.BillingAccount
+                Status            = $instance.properties.Status
+                View              = $instance.properties.viewId
+                Notification      = $NotificationValue
+                NotificationEmail = $instance.properties.notificationEmail
+                Schedule          = $ScheduleValue
+                Ensure            = 'Present'
+                SubscriptionId    = $this.SubscriptionId
             }
             return $this.AsResult($results)
         }
@@ -310,15 +302,9 @@ class AzureBillingAccountScheduledAction : M365DSCResourceBase
                     $displayedKey = $config.properties.displayName
                     Write-M365DSCHost -Message "        |---[$j/$($actions.Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        DisplayName           = $config.properties.displayName
-                        BillingAccount        = $account.name
-                        SubscriptionId        = $this.SubscriptionId
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName    = $config.properties.displayName
+                        BillingAccount = $account.name
+                        SubscriptionId = $this.SubscriptionId
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -375,23 +361,6 @@ class AzureBillingAccountScheduledAction : M365DSCResourceBase
         return @{
             ExcludedProperties = @('SubscriptionId')
         }
-    }
-
-    hidden [AzureBillingAccountScheduledAction] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureBillingAccountScheduledAction])
-        {
-            return $Values
-        }
-
-        $result = [AzureBillingAccountScheduledAction]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

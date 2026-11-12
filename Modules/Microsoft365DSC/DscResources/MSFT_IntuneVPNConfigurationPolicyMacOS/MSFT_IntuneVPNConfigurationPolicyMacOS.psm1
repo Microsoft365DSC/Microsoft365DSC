@@ -323,15 +323,6 @@ class IntuneVPNConfigurationPolicyMacOS : M365DSCResourceBase
                 SafariDomains                  = $getValue.safariDomains
                 Server                         = $complexServer
                 Ensure                         = 'Present'
-                Credential                     = $this.Credential
-                ApplicationId                  = $this.ApplicationId
-                TenantId                       = $this.TenantId
-                ApplicationSecret              = $this.ApplicationSecret
-                CertificateThumbprint          = $this.CertificateThumbprint
-                CertificatePassword            = $this.CertificatePassword
-                CertificatePath                = $this.CertificatePath
-                ManagedIdentity                = $this.ManagedIdentity
-                AccessTokens                   = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -482,17 +473,8 @@ class IntuneVPNConfigurationPolicyMacOS : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.DisplayName)" -DeferWrite
 
                 $Params = @{
-                    Id                    = $exportedInstance.Id
-                    DisplayName           = $exportedInstance.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $exportedInstance.Id
+                    DisplayName = $exportedInstance.DisplayName
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -609,23 +591,6 @@ class IntuneVPNConfigurationPolicyMacOS : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneVPNConfigurationPolicyMacOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneVPNConfigurationPolicyMacOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneVPNConfigurationPolicyMacOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

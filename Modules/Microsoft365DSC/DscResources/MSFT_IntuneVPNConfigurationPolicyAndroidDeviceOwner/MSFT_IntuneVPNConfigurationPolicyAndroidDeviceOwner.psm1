@@ -272,15 +272,6 @@ class IntuneVPNConfigurationPolicyAndroidDeviceOwner : M365DSCResourceBase
                 customData            = $complexCustomData
                 customKeyValueData    = $complexCustomKeyValueData
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -433,18 +424,9 @@ class IntuneVPNConfigurationPolicyAndroidDeviceOwner : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -571,23 +553,6 @@ class IntuneVPNConfigurationPolicyAndroidDeviceOwner : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneVPNConfigurationPolicyAndroidDeviceOwner] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneVPNConfigurationPolicyAndroidDeviceOwner])
-        {
-            return $Values
-        }
-
-        $result = [IntuneVPNConfigurationPolicyAndroidDeviceOwner]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

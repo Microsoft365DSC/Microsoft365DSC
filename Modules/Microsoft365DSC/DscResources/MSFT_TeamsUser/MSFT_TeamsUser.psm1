@@ -118,18 +118,10 @@ class TeamsUser : M365DSCResourceBase
 
             Write-Verbose -Message "Found team user $($myUser.User) with role:$($myUser.Role)"
             return $this.AsResult(@{
-                User                  = $myUser.User
-                Role                  = $myUser.Role
-                TeamName              = $this.TeamName
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                User     = $myUser.User
+                Role     = $myUser.Role
+                TeamName = $this.TeamName
+                Ensure   = 'Present'
             })
         }
         catch
@@ -238,16 +230,8 @@ class TeamsUser : M365DSCResourceBase
                             Write-M365DSCHost -Message "        - [$k/$($users.Length)] $($user.User)" -DeferWrite
 
                             $getParams = @{
-                                TeamName              = $team.DisplayName
-                                User                  = $user.User
-                                Credential            = $this.Credential
-                                ApplicationId         = $this.ApplicationId
-                                TenantId              = $this.TenantId
-                                CertificateThumbprint = $this.CertificateThumbprint
-                                CertificatePath       = $this.CertificatePath
-                                CertificatePassword   = $this.CertificatePassword
-                                ManagedIdentity       = $this.ManagedIdentity
-                                AccessTokens          = $this.AccessTokens
+                                TeamName = $team.DisplayName
+                                User     = $user.User
                             }
 
                             $this.ExportedInstance = $user
@@ -288,22 +272,5 @@ class TeamsUser : M365DSCResourceBase
         return @{
             IncludedProperties = @('Role', 'User')
         }
-    }
-
-    hidden [TeamsUser] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsUser])
-        {
-            return $Values
-        }
-
-        $result = [TeamsUser]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

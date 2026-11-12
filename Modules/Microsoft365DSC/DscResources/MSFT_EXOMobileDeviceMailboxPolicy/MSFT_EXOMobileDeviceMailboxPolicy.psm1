@@ -361,14 +361,6 @@ class EXOMobileDeviceMailboxPolicy : M365DSCResourceBase
                 UNCAccessEnabled                         = $MobileDeviceMailboxPolicy.UNCAccessEnabled
                 WSSAccessEnabled                         = $MobileDeviceMailboxPolicy.WSSAccessEnabled
                 Ensure                                   = 'Present'
-                Credential                               = $this.Credential
-                ApplicationId                            = $this.ApplicationId
-                CertificateThumbprint                    = $this.CertificateThumbprint
-                CertificatePath                          = $this.CertificatePath
-                CertificatePassword                      = $this.CertificatePassword
-                ManagedIdentity                          = $this.ManagedIdentity
-                TenantId                                 = $this.TenantId
-                AccessTokens                             = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -534,15 +526,7 @@ class EXOMobileDeviceMailboxPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllMobileDeviceMailboxPolicies.Length)] $($MobileDeviceMailboxPolicy.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $MobileDeviceMailboxPolicy.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $MobileDeviceMailboxPolicy.Name
                 }
                 $this.ExportedInstance = $MobileDeviceMailboxPolicy
                 $Results = $this.GetForExport($Params)
@@ -565,22 +549,5 @@ class EXOMobileDeviceMailboxPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMobileDeviceMailboxPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMobileDeviceMailboxPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOMobileDeviceMailboxPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

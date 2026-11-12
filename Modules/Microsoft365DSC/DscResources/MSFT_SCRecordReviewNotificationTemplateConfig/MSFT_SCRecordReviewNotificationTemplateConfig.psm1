@@ -98,14 +98,6 @@ class SCRecordReviewNotificationTemplateConfig : M365DSCResourceBase
                 IsCustomizedReminderTemplate     = $instance.IsCustomizedReminderTemplate
                 CustomizedNotificationDataString = $instance.CustomizedNotificationDataString
                 CustomizedReminderDataString     = $instance.CustomizedReminderDataString
-                Credential                       = $this.Credential
-                ApplicationId                    = $this.ApplicationId
-                TenantId                         = $this.TenantId
-                CertificateThumbprint            = $this.CertificateThumbprint
-                CertificatePath                  = $this.CertificatePath
-                CertificatePassword              = $this.CertificatePassword
-                ManagedIdentity                  = $this.ManagedIdentity
-                AccessTokens                     = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -181,15 +173,7 @@ class SCRecordReviewNotificationTemplateConfig : M365DSCResourceBase
                 $displayedKey = $config.Name
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -214,22 +198,5 @@ class SCRecordReviewNotificationTemplateConfig : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCRecordReviewNotificationTemplateConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCRecordReviewNotificationTemplateConfig])
-        {
-            return $Values
-        }
-
-        $result = [SCRecordReviewNotificationTemplateConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -148,15 +148,7 @@ class EXOOMEConfiguration : M365DSCResourceBase
                 PrivacyStatementUrl      = $OMEConfiguration.PrivacyStatementUrl
                 ReadButtonText           = $OMEConfiguration.ReadButtonText
                 SocialIdSignIn           = $OMEConfiguration.SocialIdSignIn
-                Credential               = $this.Credential
                 Ensure                   = 'Present'
-                ApplicationId            = $this.ApplicationId
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                TenantId                 = $this.TenantId
-                AccessTokens             = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -263,15 +255,7 @@ class EXOOMEConfiguration : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($OMEConfigurations.Length)] $($OMEConfiguration.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $OMEConfiguration.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $OMEConfiguration.Identity
                 }
                 $this.ExportedInstance = $OMEConfiguration
                 $Results = $this.GetForExport($Params)
@@ -294,22 +278,5 @@ class EXOOMEConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOOMEConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOOMEConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [EXOOMEConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

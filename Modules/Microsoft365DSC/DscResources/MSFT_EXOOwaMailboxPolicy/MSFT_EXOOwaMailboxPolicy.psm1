@@ -625,14 +625,6 @@ class EXOOwaMailboxPolicy : M365DSCResourceBase
                 WeatherEnabled                                       = $OwaMailboxPolicy.WeatherEnabled
                 WebPartsFrameOptionsType                             = $OwaMailboxPolicy.WebPartsFrameOptionsType
                 Ensure                                               = 'Present'
-                Credential                                           = $this.Credential
-                ApplicationId                                        = $this.ApplicationId
-                CertificateThumbprint                                = $this.CertificateThumbprint
-                CertificatePath                                      = $this.CertificatePath
-                CertificatePassword                                  = $this.CertificatePassword
-                ManagedIdentity                                      = $this.ManagedIdentity
-                TenantId                                             = $this.TenantId
-                AccessTokens                                         = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -759,15 +751,7 @@ class EXOOwaMailboxPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllOwaMailboxPolicies.Length)] $($OwaMailboxPolicy.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $OwaMailboxPolicy.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $OwaMailboxPolicy.Name
                 }
                 $this.ExportedInstance = $OwaMailboxPolicy
                 $Results = $this.GetForExport($Params)
@@ -790,22 +774,5 @@ class EXOOwaMailboxPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOOwaMailboxPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOOwaMailboxPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOOwaMailboxPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

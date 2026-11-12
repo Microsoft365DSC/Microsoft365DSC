@@ -221,15 +221,6 @@ class SPOSearchManagedProperty : M365DSCResourceBase
                 MappedCrawledProperties     = $mappings
                 CompanyNameExtraction       = $companyNameExtractionValue
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
             })
         }
         catch
@@ -636,17 +627,8 @@ class SPOSearchManagedProperty : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($properties.Length)] $($property.Value.Name)" -DeferWrite
                 $Params = @{
-                    Credential            = $this.Credential
-                    Name                  = $property.Value.Name
-                    Type                  = $property.Value.ManagedType
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name = $property.Value.Name
+                    Type = $property.Value.ManagedType
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -678,22 +660,5 @@ class SPOSearchManagedProperty : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOSearchManagedProperty] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSearchManagedProperty])
-        {
-            return $Values
-        }
-
-        $result = [SPOSearchManagedProperty]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

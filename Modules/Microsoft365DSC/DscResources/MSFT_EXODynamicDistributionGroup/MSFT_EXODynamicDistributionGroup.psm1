@@ -466,82 +466,77 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
             }
 
             $results = @{
-                AcceptMessagesOnlyFrom                 = $acceptMessagesOnlyFromValue
-                AcceptMessagesOnlyFromDLMembers        = $acceptMessagesOnlyFromDLMembersValue
-                Alias                                  = $instance.Alias
-                BypassModerationFromSendersOrMembers   = $bypassModerationFromSendersOrMembersValue
-                ConditionalCompany                     = $instance.ConditionalCompany
-                ConditionalCustomAttribute1            = $instance.ConditionalCustomAttribute1
-                ConditionalCustomAttribute10           = $instance.ConditionalCustomAttribute10
-                ConditionalCustomAttribute11           = $instance.ConditionalCustomAttribute11
-                ConditionalCustomAttribute12           = $instance.ConditionalCustomAttribute12
-                ConditionalCustomAttribute13           = $instance.ConditionalCustomAttribute13
-                ConditionalCustomAttribute14           = $instance.ConditionalCustomAttribute14
-                ConditionalCustomAttribute15           = $instance.ConditionalCustomAttribute15
-                ConditionalCustomAttribute2            = $instance.ConditionalCustomAttribute2
-                ConditionalCustomAttribute3            = $instance.ConditionalCustomAttribute3
-                ConditionalCustomAttribute4            = $instance.ConditionalCustomAttribute4
-                ConditionalCustomAttribute5            = $instance.ConditionalCustomAttribute5
-                ConditionalCustomAttribute6            = $instance.ConditionalCustomAttribute6
-                ConditionalCustomAttribute7            = $instance.ConditionalCustomAttribute7
-                ConditionalCustomAttribute8            = $instance.ConditionalCustomAttribute8
-                ConditionalCustomAttribute9            = $instance.ConditionalCustomAttribute9
-                ConditionalDepartment                  = $instance.ConditionalDepartment
-                ConditionalStateOrProvince             = $instance.ConditionalStateOrProvince
-                CustomAttribute1                       = $instance.CustomAttribute1
-                CustomAttribute10                      = $instance.CustomAttribute10
-                CustomAttribute11                      = $instance.CustomAttribute11
-                CustomAttribute12                      = $instance.CustomAttribute12
-                CustomAttribute13                      = $instance.CustomAttribute13
-                CustomAttribute14                      = $instance.CustomAttribute14
-                CustomAttribute15                      = $instance.CustomAttribute15
-                CustomAttribute2                       = $instance.CustomAttribute2
-                CustomAttribute3                       = $instance.CustomAttribute3
-                CustomAttribute4                       = $instance.CustomAttribute4
-                CustomAttribute5                       = $instance.CustomAttribute5
-                CustomAttribute6                       = $instance.CustomAttribute6
-                CustomAttribute7                       = $instance.CustomAttribute7
-                CustomAttribute8                       = $instance.CustomAttribute8
-                CustomAttribute9                       = $instance.CustomAttribute9
-                DisplayName                            = $instance.DisplayName
-                EmailAddresses                         = $instance.EmailAddresses
-                ExtensionCustomAttribute1              = $instance.ExtensionCustomAttribute1
-                ExtensionCustomAttribute2              = $instance.ExtensionCustomAttribute2
-                ExtensionCustomAttribute3              = $instance.ExtensionCustomAttribute3
-                ExtensionCustomAttribute4              = $instance.ExtensionCustomAttribute4
-                ExtensionCustomAttribute5              = $instance.ExtensionCustomAttribute5
-                ForceMembershipRefresh                 = $instance.ForceMembershipRefresh
-                GrantSendOnBehalfTo                    = $grantSendOnBehalfToValue
-                HiddenFromAddressListsEnabled          = $instance.HiddenFromAddressListsEnabled
-                Identity                               = $instance.Identity
-                IncludedRecipients                     = [System.String[]]$includedRecipientsValue
-                MailTip                                = [EXODynamicDistributionGroup]::RemoveMailTipHtml($instance.MailTip)
-                MailTipTranslations                    = [System.String[]]$mailTipTranslationsValue
-                ManagedBy                              = $managedByValue
-                ModeratedBy                            = $moderatedByValue
-                ModerationEnabled                      = $instance.ModerationEnabled
-                Name                                   = $instance.Name
-                Notes                                  = $instance.Notes
-                PhoneticDisplayName                    = $instance.PhoneticDisplayName
-                PrimarySmtpAddress                     = $instance.PrimarySmtpAddress
-                RecipientContainer                     = $instance.RecipientContainer
-                RecipientFilter                        = $this.RestoreOriginalRecipientFilter($instance.RecipientFilter)
-                RejectMessagesFrom                     = $rejectMessagesFromValue
-                RejectMessagesFromDLMembers            = $rejectMessagesFromDLMembersValue
-                ReportToManagerEnabled                 = $instance.ReportToManagerEnabled
-                ReportToOriginatorEnabled              = $instance.ReportToOriginatorEnabled
-                RequireSenderAuthenticationEnabled     = $instance.RequireSenderAuthenticationEnabled
-                SendModerationNotifications            = $instance.SendModerationNotifications
-                SendOofMessageToOriginatorEnabled      = $instance.SendOofMessageToOriginatorEnabled
-                SimpleDisplayName                      = $instance.SimpleDisplayName
-                UpdateMemberCount                      = $instance.UpdateMemberCount
-                WindowsEmailAddress                    = $instance.WindowsEmailAddress
-                Ensure                                 = 'Present'
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
-                TenantId                               = $this.TenantId
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                ApplicationSecret                      = $ApplicationSecret
+                AcceptMessagesOnlyFrom               = $acceptMessagesOnlyFromValue
+                AcceptMessagesOnlyFromDLMembers      = $acceptMessagesOnlyFromDLMembersValue
+                Alias                                = $instance.Alias
+                BypassModerationFromSendersOrMembers = $bypassModerationFromSendersOrMembersValue
+                ConditionalCompany                   = $instance.ConditionalCompany
+                ConditionalCustomAttribute1          = $instance.ConditionalCustomAttribute1
+                ConditionalCustomAttribute10         = $instance.ConditionalCustomAttribute10
+                ConditionalCustomAttribute11         = $instance.ConditionalCustomAttribute11
+                ConditionalCustomAttribute12         = $instance.ConditionalCustomAttribute12
+                ConditionalCustomAttribute13         = $instance.ConditionalCustomAttribute13
+                ConditionalCustomAttribute14         = $instance.ConditionalCustomAttribute14
+                ConditionalCustomAttribute15         = $instance.ConditionalCustomAttribute15
+                ConditionalCustomAttribute2          = $instance.ConditionalCustomAttribute2
+                ConditionalCustomAttribute3          = $instance.ConditionalCustomAttribute3
+                ConditionalCustomAttribute4          = $instance.ConditionalCustomAttribute4
+                ConditionalCustomAttribute5          = $instance.ConditionalCustomAttribute5
+                ConditionalCustomAttribute6          = $instance.ConditionalCustomAttribute6
+                ConditionalCustomAttribute7          = $instance.ConditionalCustomAttribute7
+                ConditionalCustomAttribute8          = $instance.ConditionalCustomAttribute8
+                ConditionalCustomAttribute9          = $instance.ConditionalCustomAttribute9
+                ConditionalDepartment                = $instance.ConditionalDepartment
+                ConditionalStateOrProvince           = $instance.ConditionalStateOrProvince
+                CustomAttribute1                     = $instance.CustomAttribute1
+                CustomAttribute10                    = $instance.CustomAttribute10
+                CustomAttribute11                    = $instance.CustomAttribute11
+                CustomAttribute12                    = $instance.CustomAttribute12
+                CustomAttribute13                    = $instance.CustomAttribute13
+                CustomAttribute14                    = $instance.CustomAttribute14
+                CustomAttribute15                    = $instance.CustomAttribute15
+                CustomAttribute2                     = $instance.CustomAttribute2
+                CustomAttribute3                     = $instance.CustomAttribute3
+                CustomAttribute4                     = $instance.CustomAttribute4
+                CustomAttribute5                     = $instance.CustomAttribute5
+                CustomAttribute6                     = $instance.CustomAttribute6
+                CustomAttribute7                     = $instance.CustomAttribute7
+                CustomAttribute8                     = $instance.CustomAttribute8
+                CustomAttribute9                     = $instance.CustomAttribute9
+                DisplayName                          = $instance.DisplayName
+                EmailAddresses                       = $instance.EmailAddresses
+                ExtensionCustomAttribute1            = $instance.ExtensionCustomAttribute1
+                ExtensionCustomAttribute2            = $instance.ExtensionCustomAttribute2
+                ExtensionCustomAttribute3            = $instance.ExtensionCustomAttribute3
+                ExtensionCustomAttribute4            = $instance.ExtensionCustomAttribute4
+                ExtensionCustomAttribute5            = $instance.ExtensionCustomAttribute5
+                ForceMembershipRefresh               = $instance.ForceMembershipRefresh
+                GrantSendOnBehalfTo                  = $grantSendOnBehalfToValue
+                HiddenFromAddressListsEnabled        = $instance.HiddenFromAddressListsEnabled
+                Identity                             = $instance.Identity
+                IncludedRecipients                   = [System.String[]]$includedRecipientsValue
+                MailTip                              = [EXODynamicDistributionGroup]::RemoveMailTipHtml($instance.MailTip)
+                MailTipTranslations                  = [System.String[]]$mailTipTranslationsValue
+                ManagedBy                            = $managedByValue
+                ModeratedBy                          = $moderatedByValue
+                ModerationEnabled                    = $instance.ModerationEnabled
+                Name                                 = $instance.Name
+                Notes                                = $instance.Notes
+                PhoneticDisplayName                  = $instance.PhoneticDisplayName
+                PrimarySmtpAddress                   = $instance.PrimarySmtpAddress
+                RecipientContainer                   = $instance.RecipientContainer
+                RecipientFilter                      = $this.RestoreOriginalRecipientFilter($instance.RecipientFilter)
+                RejectMessagesFrom                   = $rejectMessagesFromValue
+                RejectMessagesFromDLMembers          = $rejectMessagesFromDLMembersValue
+                ReportToManagerEnabled               = $instance.ReportToManagerEnabled
+                ReportToOriginatorEnabled            = $instance.ReportToOriginatorEnabled
+                RequireSenderAuthenticationEnabled   = $instance.RequireSenderAuthenticationEnabled
+                SendModerationNotifications          = $instance.SendModerationNotifications
+                SendOofMessageToOriginatorEnabled    = $instance.SendOofMessageToOriginatorEnabled
+                SimpleDisplayName                    = $instance.SimpleDisplayName
+                UpdateMemberCount                    = $instance.UpdateMemberCount
+                WindowsEmailAddress                  = $instance.WindowsEmailAddress
+                Ensure                               = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -723,16 +718,8 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -858,22 +845,5 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
         }
 
         return $Value -replace '(?is)<html>\s*<body>\s*(.*?)\s*</body>\s*</html>\s*', '$1'
-    }
-
-    hidden [EXODynamicDistributionGroup] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODynamicDistributionGroup])
-        {
-            return $Values
-        }
-
-        $result = [EXODynamicDistributionGroup]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -18,6 +18,31 @@ namespace Microsoft365DSC.Utilities
             "CertificatePath", "CertificatePassword", "ManagedIdentity", "AccessTokens"
         ];
 
+        /// <summary>
+        /// The property names whose values are masked in logs and reports.
+        /// </summary>
+        public static IReadOnlyList<string> SecretPropertyNames { get; } =
+        [
+            "AccessTokens", "ApplicationSecret", "CertificatePassword", "CertificatePath",
+            "CertificateThumbprint", "Credential", "Password"
+        ];
+
+        /// <summary>
+        /// The authentication properties an exported configuration sets for each connection mode.
+        /// </summary>
+        public static IReadOnlyDictionary<string, IReadOnlyList<string>> ConnectionModePropertyNames { get; } =
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["ServicePrincipalWithThumbprint"] = ["ApplicationId", "CertificateThumbprint", "TenantId"],
+                ["ServicePrincipalWithSecret"] = ["ApplicationId", "ApplicationSecret", "TenantId"],
+                ["ServicePrincipalWithPath"] = ["ApplicationId", "CertificatePath", "CertificatePassword", "TenantId"],
+                ["CredentialsWithTenantId"] = ["Credential", "TenantId"],
+                ["CredentialsWithApplicationId"] = ["Credential", "ApplicationId"],
+                ["Credentials"] = ["Credential"],
+                ["ManagedIdentity"] = ["ManagedIdentity", "TenantId"],
+                ["AccessTokens"] = ["AccessTokens", "TenantId"]
+            };
+
         private static readonly HashSet<string> AuthenticationPropertySet =
             new(AuthenticationPropertyNames, StringComparer.OrdinalIgnoreCase);
 

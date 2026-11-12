@@ -126,15 +126,6 @@ class AADTokenLifetimePolicy : M365DSCResourceBase
                 DisplayName           = $Policy.DisplayName
                 IsOrganizationDefault = $Policy.IsOrganizationDefault
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                ApplicationSecret     = $this.ApplicationSecret
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -228,17 +219,8 @@ class AADTokenLifetimePolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($AADPolicies.Count)] $($AADPolicy.DisplayName)" -DeferWrite
                 $Params = @{
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    DisplayName           = $AADPolicy.DisplayName
-                    ID                    = $AADPolicy.ID
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $AADPolicy.DisplayName
+                    ID          = $AADPolicy.ID
                 }
                 $this.ExportedInstance = $AADPolicy
                 $Results = $this.GetForExport($Params)
@@ -265,22 +247,5 @@ class AADTokenLifetimePolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADTokenLifetimePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADTokenLifetimePolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADTokenLifetimePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

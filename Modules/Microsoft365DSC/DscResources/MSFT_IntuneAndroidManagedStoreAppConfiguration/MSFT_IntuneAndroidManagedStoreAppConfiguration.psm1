@@ -194,15 +194,6 @@ class IntuneAndroidManagedStoreAppConfiguration : M365DSCResourceBase
                 credentialProviderRoleState = $getValue.credentialProviderRoleState
                 permissionActions           = $complexPermissionActions
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
             }
 
             $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppConfigurationAssignment -ManagedDeviceMobileAppConfigurationId $Results.Id
@@ -370,18 +361,9 @@ class IntuneAndroidManagedStoreAppConfiguration : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -449,23 +431,6 @@ class IntuneAndroidManagedStoreAppConfiguration : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneAndroidManagedStoreAppConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAndroidManagedStoreAppConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAndroidManagedStoreAppConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

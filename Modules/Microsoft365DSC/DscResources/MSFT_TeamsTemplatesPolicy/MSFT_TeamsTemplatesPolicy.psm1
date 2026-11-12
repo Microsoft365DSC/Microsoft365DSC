@@ -110,18 +110,10 @@ class TeamsTemplatesPolicy : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                Identity              = $this.Identity
-                Description           = $policy.Description
-                HiddenTemplates       = $hiddenTemplatesNames
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity        = $this.Identity
+                Description     = $policy.Description
+                HiddenTemplates = $hiddenTemplatesNames
+                Ensure          = 'Present'
             })
         }
         catch
@@ -210,16 +202,8 @@ class TeamsTemplatesPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Length)] $($policy.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
@@ -243,22 +227,5 @@ class TeamsTemplatesPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsTemplatesPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsTemplatesPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsTemplatesPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

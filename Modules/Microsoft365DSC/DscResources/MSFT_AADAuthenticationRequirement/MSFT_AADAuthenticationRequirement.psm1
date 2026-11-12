@@ -94,17 +94,8 @@ class AADAuthenticationRequirement : M365DSCResourceBase
             Write-Verbose -Message "An Azure AD Authentication Method Policy Requirement for a user with UPN {$($this.UserPrincipalName)} was found."
 
             $results = @{
-                PerUserMfaState       = $getValue.perUserMfaState
-                UserPrincipalName     = $this.UserPrincipalName
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                PerUserMfaState   = $getValue.perUserMfaState
+                UserPrincipalName = $this.UserPrincipalName
             }
 
             return $this.AsResult($results)
@@ -222,16 +213,7 @@ class AADAuthenticationRequirement : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    UserPrincipalName     = $config.UserPrincipalName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    UserPrincipalName = $config.UserPrincipalName
                 }
 
                 $this.ExportedInstance = $config
@@ -256,22 +238,5 @@ class AADAuthenticationRequirement : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationRequirement] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationRequirement])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationRequirement]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

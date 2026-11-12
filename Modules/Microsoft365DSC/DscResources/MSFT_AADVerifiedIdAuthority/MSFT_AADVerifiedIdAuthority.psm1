@@ -111,18 +111,12 @@ class AADVerifiedIdAuthority : M365DSCResourceBase
             }
 
             $results = @{
-                Id                    = $instance.Id
-                Name                  = $instance.Name
-                LinkedDomainUrl       = $instance.LinkedDomainUrl
-                DidMethod             = $instance.DidMethod
-                KeyVaultMetadata      = $instance.KeyVaultMetadata
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                ApplicationSecret     = $this.ApplicationSecret
-                AccessTokens          = $this.AccessTokens
+                Id               = $instance.Id
+                Name             = $instance.Name
+                LinkedDomainUrl  = $instance.LinkedDomainUrl
+                DidMethod        = $instance.DidMethod
+                KeyVaultMetadata = $instance.KeyVaultMetadata
+                Ensure           = 'Present'
             }
             return $this.AsResult($results)
 
@@ -229,16 +223,7 @@ class AADVerifiedIdAuthority : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $($authority.didModel.linkedDomainUrls[0])" -DeferWrite
                 $Params = @{
-                    LinkedDomainUrl       = $authority.didModel.linkedDomainUrls[0]
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    LinkedDomainUrl = $authority.didModel.linkedDomainUrls[0]
                 }
                 $Results = $this.GetForExport($Params)
                 if ($Results.Ensure -eq 'Present')
@@ -348,23 +333,6 @@ class AADVerifiedIdAuthority : M365DSCResourceBase
             return $null
         }
         $result = ConvertFrom-Json $response.Content
-        return $result
-    }
-
-    hidden [AADVerifiedIdAuthority] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADVerifiedIdAuthority])
-        {
-            return $Values
-        }
-
-        $result = [AADVerifiedIdAuthority]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

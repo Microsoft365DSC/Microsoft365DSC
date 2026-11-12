@@ -160,14 +160,6 @@ class TeamsFederationConfiguration : M365DSCResourceBase
                 RestrictTeamsConsumerToExternalUserProfiles         = $config.RestrictTeamsConsumerToExternalUserProfiles
                 SecurityTeamAllowBlockListDelegation                = $config.SecurityTeamAllowBlockListDelegation
                 IsSingleInstance                                    = 'Yes'
-                Credential                                          = $this.Credential
-                ApplicationId                                       = $this.ApplicationId
-                TenantId                                            = $this.TenantId
-                CertificateThumbprint                               = $this.CertificateThumbprint
-                CertificatePath                                     = $this.CertificatePath
-                CertificatePassword                                 = $this.CertificatePassword
-                ManagedIdentity                                     = $this.ManagedIdentity
-                AccessTokens                                        = $this.AccessTokens
             })
         }
         catch
@@ -236,15 +228,7 @@ class TeamsFederationConfiguration : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ResourceCache['exportMode'] = $true
             $Results = $this.GetForExport($Params)
@@ -279,22 +263,5 @@ class TeamsFederationConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsFederationConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsFederationConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [TeamsFederationConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

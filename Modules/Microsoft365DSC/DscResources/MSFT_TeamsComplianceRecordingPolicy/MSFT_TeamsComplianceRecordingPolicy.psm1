@@ -135,14 +135,6 @@ class TeamsComplianceRecordingPolicy : M365DSCResourceBase
                 RecordReroutedCalls                                 = $instance.RecordReroutedCalls
                 WarnUserOnRemoval                                   = $instance.WarnUserOnRemoval
                 Ensure                                              = 'Present'
-                Credential                                          = $this.Credential
-                ApplicationId                                       = $this.ApplicationId
-                TenantId                                            = $this.TenantId
-                CertificateThumbprint                               = $this.CertificateThumbprint
-                CertificatePath                                     = $this.CertificatePath
-                CertificatePassword                                 = $this.CertificatePassword
-                ManagedIdentity                                     = $this.ManagedIdentity
-                AccessTokens                                        = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -249,16 +241,8 @@ class TeamsComplianceRecordingPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -363,23 +347,6 @@ class TeamsComplianceRecordingPolicy : M365DSCResourceBase
                 Set-CsTeamsComplianceRecordingApplication @applicationParameters -ErrorAction Stop
             }
         }
-    }
-
-    hidden [TeamsComplianceRecordingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsComplianceRecordingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsComplianceRecordingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

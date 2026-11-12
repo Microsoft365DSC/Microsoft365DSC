@@ -224,14 +224,6 @@ class IntuneDeviceControlPolicySetting : M365DSCResourceBase
                 PrinterPolicySettings = $printerReusableSettings
                 StoragePolicySettings = $storageReusableSettings
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
                 #endregion
             }
 
@@ -453,19 +445,10 @@ class IntuneDeviceControlPolicySetting : M365DSCResourceBase
                 $matchObject = $config.settingInstance.groupSettingCollectionValue[0].children | Where-Object { $_.settingDefinitionId -eq 'device_vendor_msft_defender_configuration_devicecontrol_policygroups_{groupid}_groupdata_matchtype' }
                 $matchTypeValue = $matchObject.choiceSettingValue.value.Split('_')[-1].Replace('matcha', 'A')
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    MatchType             = $matchTypeValue
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    MatchType   = $matchTypeValue
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -524,23 +507,6 @@ class IntuneDeviceControlPolicySetting : M365DSCResourceBase
         return @{
             IncludedProperties = @('MatchType', 'Name')
         }
-    }
-
-    hidden [IntuneDeviceControlPolicySetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceControlPolicySetting])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceControlPolicySetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

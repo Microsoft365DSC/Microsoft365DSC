@@ -423,15 +423,6 @@ class IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled : M365DSCReso
                 Id                                     = $getValue.Id
                 RoleScopeTagIds                        = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                                 = 'Present'
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
-                TenantId                               = $this.TenantId
-                ApplicationSecret                      = $this.ApplicationSecret
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                CertificatePath                        = $this.CertificatePath
-                CertificatePassword                    = $this.CertificatePassword
-                ManagedIdentity                        = $this.ManagedIdentity
-                AccessTokens                           = $this.AccessTokens
                 #endregion
             }
             if ($getValue.assignments.Count -gt 0)
@@ -586,18 +577,9 @@ class IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled : M365DSCReso
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -832,23 +814,6 @@ class IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled : M365DSCReso
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

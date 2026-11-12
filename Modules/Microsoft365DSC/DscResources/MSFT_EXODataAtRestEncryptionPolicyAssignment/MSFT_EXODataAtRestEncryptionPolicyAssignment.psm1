@@ -78,16 +78,8 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
             Write-Verbose -Message "The tenant uses the DataEncryptionPolicy {$($instance.Name)}"
 
             $results = @{
-                DataEncryptionPolicy  = [System.String]$instance.Name
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DataEncryptionPolicy = [System.String]$instance.Name
+                IsSingleInstance     = 'Yes'
             }
             return $this.AsResult($results)
         }
@@ -160,15 +152,7 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
                 $displayedKey = 'Data Encryption Policy Assignment'
                 Write-M365DSCHost -Message "    |---[$i/$($assignments.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -193,22 +177,5 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXODataAtRestEncryptionPolicyAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODataAtRestEncryptionPolicyAssignment])
-        {
-            return $Values
-        }
-
-        $result = [EXODataAtRestEncryptionPolicyAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

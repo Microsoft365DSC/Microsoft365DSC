@@ -84,17 +84,8 @@ class IntuneWindowsBackupForOrganizationConfiguration : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                State                 = $getValue.state
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                State            = $getValue.state
+                IsSingleInstance = 'Yes'
                 #endregion
             }
 
@@ -185,16 +176,7 @@ class IntuneWindowsBackupForOrganizationConfiguration : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $Params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
                 $Results = $this.GetForExport($Params)
 
@@ -217,22 +199,5 @@ class IntuneWindowsBackupForOrganizationConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneWindowsBackupForOrganizationConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsBackupForOrganizationConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsBackupForOrganizationConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

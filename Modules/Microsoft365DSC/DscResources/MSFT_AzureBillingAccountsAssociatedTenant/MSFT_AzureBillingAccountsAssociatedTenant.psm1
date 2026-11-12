@@ -114,14 +114,6 @@ class AzureBillingAccountsAssociatedTenant : M365DSCResourceBase
                 ProvisioningManagementState = $instance.properties.provisioningManagementState
                 Ensure                      = 'Present'
                 SubscriptionId              = $this.SubscriptionId
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -250,18 +242,10 @@ class AzureBillingAccountsAssociatedTenant : M365DSCResourceBase
                     }
                     Write-M365DSCHost -Message "        |---[$j/$($associatedTenants.value.Length)] $($associatedTenant.properties.DisplayName)" -DeferWrite
                     $params = @{
-                        BillingAccount        = $config.properties.displayName
-                        DisplayName           = $associatedTenant.properties.displayName
-                        AssociatedTenantId    = $associatedTenant.properties.tenantId
-                        SubscriptionId        = $this.SubscriptionId
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        BillingAccount     = $config.properties.displayName
+                        DisplayName        = $associatedTenant.properties.displayName
+                        AssociatedTenantId = $associatedTenant.properties.tenantId
+                        SubscriptionId     = $this.SubscriptionId
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -294,22 +278,5 @@ class AzureBillingAccountsAssociatedTenant : M365DSCResourceBase
         return @{
             ExcludedProperties = @('SubscriptionId')
         }
-    }
-
-    hidden [AzureBillingAccountsAssociatedTenant] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureBillingAccountsAssociatedTenant])
-        {
-            return $Values
-        }
-
-        $result = [AzureBillingAccountsAssociatedTenant]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

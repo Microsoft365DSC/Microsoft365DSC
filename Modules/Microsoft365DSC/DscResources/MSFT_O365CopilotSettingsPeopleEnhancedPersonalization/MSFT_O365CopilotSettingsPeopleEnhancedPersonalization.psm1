@@ -101,15 +101,6 @@ class O365CopilotSettingsPeopleEnhancedPersonalization : M365DSCResourceBase
                 {
                     $null
                 }
-                Credential              = $this.Credential
-                ApplicationId           = $this.ApplicationId
-                TenantId                = $this.TenantId
-                ApplicationSecret       = $this.ApplicationSecret
-                CertificateThumbprint   = $this.CertificateThumbprint
-                CertificatePath         = $this.CertificatePath
-                CertificatePassword     = $this.CertificatePassword
-                ManagedIdentity         = $this.ManagedIdentity
-                AccessTokens            = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -199,16 +190,7 @@ class O365CopilotSettingsPeopleEnhancedPersonalization : M365DSCResourceBase
             }
 
             $params = @{
-                ISSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                ISSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -230,22 +212,5 @@ class O365CopilotSettingsPeopleEnhancedPersonalization : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [O365CopilotSettingsPeopleEnhancedPersonalization] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [O365CopilotSettingsPeopleEnhancedPersonalization])
-        {
-            return $Values
-        }
-
-        $result = [O365CopilotSettingsPeopleEnhancedPersonalization]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

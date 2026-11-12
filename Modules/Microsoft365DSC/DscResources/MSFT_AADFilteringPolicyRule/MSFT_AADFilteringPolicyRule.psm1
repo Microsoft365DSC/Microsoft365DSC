@@ -134,21 +134,12 @@ class AADFilteringPolicyRule : M365DSCResourceBase
             }
 
             $results = @{
-                Name                  = $instance.Name
-                Policy                = $this.Policy
-                Id                    = $instance.Id
-                RuleType              = $instance.ruleType
-                Destinations          = $DestinationsValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name         = $instance.Name
+                Policy       = $this.Policy
+                Id           = $instance.Id
+                RuleType     = $instance.ruleType
+                Destinations = $DestinationsValue
+                Ensure       = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -299,18 +290,9 @@ class AADFilteringPolicyRule : M365DSCResourceBase
                     $displayedKey = $rule.Name
                     Write-M365DSCHost -Message "        |---[$j/$($rules.Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        Name                  = $rule.Name
-                        Policy                = $policy.Name
-                        Id                    = $rule.Id
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        Name   = $rule.Name
+                        Policy = $policy.Name
+                        Id     = $rule.Id
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -351,23 +333,6 @@ class AADFilteringPolicyRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADFilteringPolicyRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADFilteringPolicyRule])
-        {
-            return $Values
-        }
-
-        $result = [AADFilteringPolicyRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

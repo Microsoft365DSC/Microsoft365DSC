@@ -507,14 +507,6 @@ class SCDLPComplianceRule : M365DSCResourceBase
                 ExceptIfAnyOfRecipientAddressContainsWords   = $exceptIfAnyOfRecipientAddressContainsWordsValue
                 ContentExtensionMatchesWords                 = $contentExtensionMatchesWordsValue
                 ExceptIfContentExtensionMatchesWords         = $exceptIfContentExtensionMatchesWordsValue
-                Credential                                   = $this.Credential
-                ApplicationId                                = $this.ApplicationId
-                TenantId                                     = $this.TenantId
-                CertificateThumbprint                        = $this.CertificateThumbprint
-                CertificatePath                              = $this.CertificatePath
-                CertificatePassword                          = $this.CertificatePassword
-                ManagedIdentity                              = $this.ManagedIdentity
-                AccessTokens                                 = $this.AccessTokens
             }
 
             $paramsToRemove = @()
@@ -1257,23 +1249,6 @@ class SCDLPComplianceRule : M365DSCResourceBase
             $returnValue += $result
         }
         return $returnValue
-    }
-
-    hidden [SCDLPComplianceRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCDLPComplianceRule])
-        {
-            return $Values
-        }
-
-        $result = [SCDLPComplianceRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

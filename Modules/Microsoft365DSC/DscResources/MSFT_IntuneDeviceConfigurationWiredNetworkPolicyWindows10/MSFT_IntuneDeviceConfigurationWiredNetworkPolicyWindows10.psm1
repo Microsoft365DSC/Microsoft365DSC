@@ -344,15 +344,6 @@ class IntuneDeviceConfigurationWiredNetworkPolicyWindows10 : M365DSCResourceBase
                 Id                                                             = $getValue.Id
                 RoleScopeTagIds                                                = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                                                         = 'Present'
-                Credential                                                     = $this.Credential
-                ApplicationId                                                  = $this.ApplicationId
-                TenantId                                                       = $this.TenantId
-                ApplicationSecret                                              = $this.ApplicationSecret
-                CertificateThumbprint                                          = $this.CertificateThumbprint
-                CertificatePath                                                = $this.CertificatePath
-                CertificatePassword                                            = $this.CertificatePassword
-                ManagedIdentity                                                = $this.ManagedIdentity
-                AccessTokens                                                   = $this.AccessTokens
                 #endregion
             }
 
@@ -679,18 +670,9 @@ class IntuneDeviceConfigurationWiredNetworkPolicyWindows10 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -884,23 +866,6 @@ class IntuneDeviceConfigurationWiredNetworkPolicyWindows10 : M365DSCResourceBase
             $uri = "/beta/deviceManagement/deviceConfigurations('$DeviceConfigurationPolicyId')/microsoft.graph.windowsWiredNetworkConfiguration/$CertificateName/`$ref"
             $null = Invoke-M365DSCGraphRequest -Method $method -Uri $uri -Body ($ref | ConvertTo-Json) -ErrorAction Stop 4>$null
         }
-    }
-
-    hidden [IntuneDeviceConfigurationWiredNetworkPolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationWiredNetworkPolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationWiredNetworkPolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -174,15 +174,7 @@ class EXOOutboundConnector : M365DSCResourceBase
                 TlsSettings                   = $OutBoundConnector.TlsSettings
                 UseMxRecord                   = $OutBoundConnector.UseMxRecord
                 ValidationRecipients          = $OutBoundConnector.ValidationRecipients
-                Credential                    = $this.Credential
                 Ensure                        = 'Present'
-                ApplicationId                 = $this.ApplicationId
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                TenantId                      = $this.TenantId
-                AccessTokens                  = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -282,15 +274,7 @@ class EXOOutboundConnector : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($OutboundConnectors.Length)] $($OutboundConnector.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $OutboundConnector.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $OutboundConnector.Identity
                 }
                 $this.ExportedInstance = $OutboundConnector
                 $Results = $this.GetForExport($Params)
@@ -313,22 +297,5 @@ class EXOOutboundConnector : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOOutboundConnector] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOOutboundConnector])
-        {
-            return $Values
-        }
-
-        $result = [EXOOutboundConnector]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -136,15 +136,6 @@ class AADFederationConfiguration : M365DSCResourceBase
                 Domains                         = $instance.domains.id
                 SigningCertificate              = $instance.signingCertificate
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -288,17 +279,8 @@ class AADFederationConfiguration : M365DSCResourceBase
                 $displayedKey = $config.displayName
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.displayName
-                    Id                    = $config.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.displayName
+                    Id          = $config.Id
                 }
 
                 $this.ExportedInstance = $config
@@ -323,22 +305,5 @@ class AADFederationConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADFederationConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADFederationConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [AADFederationConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

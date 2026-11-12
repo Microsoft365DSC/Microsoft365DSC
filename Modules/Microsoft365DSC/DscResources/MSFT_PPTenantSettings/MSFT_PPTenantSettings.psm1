@@ -353,15 +353,6 @@ class PPTenantSettings : M365DSCResourceBase
                 DisableCapacityAllocationByEnvironmentAdmins       = $PPTenantSettings.disableCapacityAllocationByEnvironmentAdmins
                 DisableSupportTicketsVisibleByAllUsers             = $PPTenantSettings.disableSupportTicketsVisibleByAllUsers
 
-                Credential                                         = $this.Credential
-                ApplicationId                                      = $this.ApplicationId
-                TenantId                                           = $this.TenantId
-                ApplicationSecret                                  = $this.ApplicationSecret
-                CertificateThumbprint                              = $this.CertificateThumbprint
-                CertificatePath                                    = $this.CertificatePath
-                CertificatePassword                                = $this.CertificatePassword
-                ManagedIdentity                                    = $this.ManagedIdentity
-                AccessTokens                                       = $this.AccessTokens
             })
         }
         catch
@@ -434,16 +425,7 @@ class PPTenantSettings : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -569,23 +551,6 @@ class PPTenantSettings : M365DSCResourceBase
             $governance.Add('policy', $policy)
         }
         $result.powerplatform.Add('governance', $governance)
-
-        return $result
-    }
-
-    hidden [PPTenantSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PPTenantSettings])
-        {
-            return $Values
-        }
-
-        $result = [PPTenantSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
 
         return $result
     }

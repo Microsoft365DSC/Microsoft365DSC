@@ -149,14 +149,6 @@ class SCRetentionComplianceRule : M365DSCResourceBase
                 ExpirationDateOption         = $RuleObject.ExpirationDateOption
                 PublishComplianceTag         = $PublishComplianceTagValue
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                AccessTokens                 = $this.AccessTokens
             }
             if (-not $associatedPolicy.TeamsPolicy)
             {
@@ -490,22 +482,5 @@ class SCRetentionComplianceRule : M365DSCResourceBase
                 Start-Sleep -Seconds 30
             }
         }
-    }
-
-    hidden [SCRetentionComplianceRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCRetentionComplianceRule])
-        {
-            return $Values
-        }
-
-        $result = [SCRetentionComplianceRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

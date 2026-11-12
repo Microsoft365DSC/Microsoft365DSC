@@ -173,15 +173,6 @@ class AADAgreement : M365DSCResourceBase
                 Language                          = $file.language
                 TermsExpiration                   = $complexTermsExpiration
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                ApplicationSecret                 = $this.ApplicationSecret
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -376,16 +367,7 @@ class AADAgreement : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
 
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.DisplayName
                 }
 
                 $this.ExportedInstance = $config
@@ -437,23 +419,6 @@ class AADAgreement : M365DSCResourceBase
         }
 
         return [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Value))
-    }
-
-    hidden [AADAgreement] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAgreement])
-        {
-            return $Values
-        }
-
-        $result = [AADAgreement]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

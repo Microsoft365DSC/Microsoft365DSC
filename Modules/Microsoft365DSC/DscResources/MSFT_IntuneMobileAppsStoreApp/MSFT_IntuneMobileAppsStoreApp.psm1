@@ -254,33 +254,25 @@ class IntuneMobileAppsStoreApp : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                ApplicableDeviceType               = $complexApplicableDeviceType
-                AppStoreUrl                        = $getValue.appStoreUrl
-                BundleId                           = $getValue.bundleId
-                Categories                         = $complexCategories
-                MinimumSupportedOperatingSystem    = $complexMinimumSupportedOperatingSystem
-                Description                        = $getValue.Description
-                Developer                          = $getValue.Developer
-                DisplayName                        = $getValue.DisplayName
-                InformationUrl                     = $getValue.InformationUrl
-                IsFeatured                         = $getValue.IsFeatured
-                LargeIcon                          = $complexLargeIcon
-                Notes                              = $getValue.Notes
-                Owner                              = $getValue.Owner
-                PrivacyInformationUrl              = $getValue.PrivacyInformationUrl
-                Publisher                          = $getValue.Publisher
-                RoleScopeTagIds                    = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                TargetPlatform                     = $getValue.'@odata.type'.Replace('#microsoft.graph.', '').Replace('StoreApp', '')
-                Id                                 = $getValue.Id
-                Ensure                             = 'Present'
-                Credential                         = $this.Credential
-                ApplicationId                      = $this.ApplicationId
-                TenantId                           = $this.TenantId
-                ApplicationSecret                  = $this.ApplicationSecret
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
+                ApplicableDeviceType            = $complexApplicableDeviceType
+                AppStoreUrl                     = $getValue.appStoreUrl
+                BundleId                        = $getValue.bundleId
+                Categories                      = $complexCategories
+                MinimumSupportedOperatingSystem = $complexMinimumSupportedOperatingSystem
+                Description                     = $getValue.Description
+                Developer                       = $getValue.Developer
+                DisplayName                     = $getValue.DisplayName
+                InformationUrl                  = $getValue.InformationUrl
+                IsFeatured                      = $getValue.IsFeatured
+                LargeIcon                       = $complexLargeIcon
+                Notes                           = $getValue.Notes
+                Owner                           = $getValue.Owner
+                PrivacyInformationUrl           = $getValue.PrivacyInformationUrl
+                Publisher                       = $getValue.Publisher
+                RoleScopeTagIds                 = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                TargetPlatform                  = $getValue.'@odata.type'.Replace('#microsoft.graph.', '').Replace('StoreApp', '')
+                Id                              = $getValue.Id
+                Ensure                          = 'Present'
                 #endregion
             }
             $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppAssignment -MobileAppId $resolvedId
@@ -479,19 +471,10 @@ class IntuneMobileAppsStoreApp : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    TargetPlatform        = $config.'@odata.type'.Replace('#microsoft.graph.', '').Replace('StoreApp', '')
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id             = $config.Id
+                    DisplayName    = $config.DisplayName
+                    TargetPlatform = $config.'@odata.type'.Replace('#microsoft.graph.', '').Replace('StoreApp', '')
+                    Ensure         = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -647,23 +630,6 @@ class IntuneMobileAppsStoreApp : M365DSCResourceBase
                 }
             }
         }
-    }
-
-    hidden [IntuneMobileAppsStoreApp] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsStoreApp])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsStoreApp]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

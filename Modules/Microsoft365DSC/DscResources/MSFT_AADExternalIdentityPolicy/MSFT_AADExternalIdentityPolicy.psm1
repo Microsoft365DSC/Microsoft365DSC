@@ -80,15 +80,6 @@ class AADExternalIdentityPolicy : M365DSCResourceBase
                 IsSingleInstance                  = 'Yes'
                 AllowDeletedIdentitiesDataRemoval = $Policy.allowDeletedIdentitiesDataRemoval
                 AllowExternalIdentitiesToLeave    = $Policy.allowExternalIdentitiesToLeave
-                Credential                        = $this.Credential
-                ApplicationSecret                 = $this.ApplicationSecret
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -163,15 +154,6 @@ class AADExternalIdentityPolicy : M365DSCResourceBase
             $params = @{
                 IsSingleInstance               = 'Yes'
                 AllowExternalIdentitiesToLeave = $true
-                Credential                     = $this.Credential
-                ApplicationId                  = $this.ApplicationId
-                TenantId                       = $this.TenantId
-                ApplicationSecret              = $this.ApplicationSecret
-                CertificateThumbprint          = $this.CertificateThumbprint
-                CertificatePath                = $this.CertificatePath
-                CertificatePassword            = $this.CertificatePassword
-                ManagedIdentity                = $this.ManagedIdentity
-                AccessTokens                   = $this.AccessTokens
             }
             $Results = $this.GetForExport($Params)
 
@@ -202,22 +184,5 @@ class AADExternalIdentityPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADExternalIdentityPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADExternalIdentityPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADExternalIdentityPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

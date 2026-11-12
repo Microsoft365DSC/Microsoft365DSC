@@ -118,21 +118,13 @@ class EXODataClassification : M365DSCResourceBase
             }
 
             $result = @{
-                Identity              = $this.Identity
-                Description           = $DataClassification.Description
-                Fingerprints          = [System.String[]]$DataClassification.Fingerprints
-                IsDefault             = $DataClassificationIsDefault
-                Locale                = $DataClassificationLocale
-                Name                  = $DataClassification.Name
-                Credential            = $this.Credential
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Identity     = $this.Identity
+                Description  = $DataClassification.Description
+                Fingerprints = [System.String[]]$DataClassification.Fingerprints
+                IsDefault    = $DataClassificationIsDefault
+                Locale       = $DataClassificationLocale
+                Name         = $DataClassification.Name
+                Ensure       = 'Present'
             }
 
             Write-Verbose -Message "Found Data classification policy $($this.Identity)"
@@ -241,15 +233,7 @@ class EXODataClassification : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Length)] $($DataClassification.Name)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $DataClassification.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $DataClassification.Identity
                 }
 
                 $this.ExportedInstance = $DataClassification
@@ -273,22 +257,5 @@ class EXODataClassification : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXODataClassification] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODataClassification])
-        {
-            return $Values
-        }
-
-        $result = [EXODataClassification]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

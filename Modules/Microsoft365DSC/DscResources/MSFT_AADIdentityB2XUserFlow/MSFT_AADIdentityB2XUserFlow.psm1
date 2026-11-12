@@ -154,14 +154,6 @@ class AADIdentityB2XUserFlow : M365DSCResourceBase
                 IdentityProviders         = $getIdentityProviders
                 UserAttributeAssignments  = $complexUserAttributeAssignments
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                ApplicationSecret         = $this.ApplicationSecret
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
                 #endregion
             }
 
@@ -418,17 +410,8 @@ class AADIdentityB2XUserFlow : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -505,23 +488,6 @@ class AADIdentityB2XUserFlow : M365DSCResourceBase
         {
             return ''
         }
-    }
-
-    hidden [AADIdentityB2XUserFlow] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADIdentityB2XUserFlow])
-        {
-            return $Values
-        }
-
-        $result = [AADIdentityB2XUserFlow]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

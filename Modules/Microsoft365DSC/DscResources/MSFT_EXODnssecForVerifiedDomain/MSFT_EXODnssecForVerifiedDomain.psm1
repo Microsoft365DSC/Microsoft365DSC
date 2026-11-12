@@ -79,16 +79,8 @@ class EXODnssecForVerifiedDomain : M365DSCResourceBase
             }
 
             $results = @{
-                DomainName            = $this.DomainName
-                DnssecFeatureStatus   = $instance.DnssecFeatureStatus.ToString()
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DomainName          = $this.DomainName
+                DnssecFeatureStatus = $instance.DnssecFeatureStatus.ToString()
             }
             return $this.AsResult($results)
         }
@@ -166,15 +158,7 @@ class EXODnssecForVerifiedDomain : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DomainName            = $config.DomainName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DomainName = $config.DomainName
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -198,22 +182,5 @@ class EXODnssecForVerifiedDomain : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXODnssecForVerifiedDomain] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODnssecForVerifiedDomain])
-        {
-            return $Values
-        }
-
-        $result = [EXODnssecForVerifiedDomain]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

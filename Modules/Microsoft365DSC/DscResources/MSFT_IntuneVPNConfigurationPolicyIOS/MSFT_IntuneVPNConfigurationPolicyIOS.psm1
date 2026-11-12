@@ -325,15 +325,6 @@ class IntuneVPNConfigurationPolicyIOS : M365DSCResourceBase
                 proxyServer                    = [array]$complexProxyServer
                 targetedMobileApps             = $complexTargetedMobileApps #$getValue.targetedMobileApps
                 Ensure                         = 'Present'
-                Credential                     = $this.Credential
-                ApplicationId                  = $this.ApplicationId
-                TenantId                       = $this.TenantId
-                ApplicationSecret              = $this.ApplicationSecret
-                CertificateThumbprint          = $this.CertificateThumbprint
-                CertificatePath                = $this.CertificatePath
-                CertificatePassword            = $this.CertificatePassword
-                ManagedIdentity                = $this.ManagedIdentity
-                AccessTokens                   = $this.AccessTokens
                 loginGroupOrDomain             = $getValue.loginGroupOrDomain
                 role                           = $getValue.role
                 realm                          = $getValue.realm
@@ -517,18 +508,9 @@ class IntuneVPNConfigurationPolicyIOS : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -670,23 +652,6 @@ class IntuneVPNConfigurationPolicyIOS : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneVPNConfigurationPolicyIOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneVPNConfigurationPolicyIOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneVPNConfigurationPolicyIOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

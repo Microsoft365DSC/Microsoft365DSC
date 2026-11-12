@@ -398,15 +398,6 @@ class IntuneDeviceCompliancePolicyWindows10 : M365DSCResourceBase
                 ValidOperatingSystemBuildRanges             = $complexValidOperatingSystemBuildRanges
                 WslDistributions                            = $complexWslDistributions
                 Ensure                                      = 'Present'
-                Credential                                  = $this.Credential
-                ApplicationId                               = $this.ApplicationId
-                TenantId                                    = $this.TenantId
-                ApplicationSecret                           = $this.ApplicationSecret
-                CertificateThumbprint                       = $this.CertificateThumbprint
-                CertificatePath                             = $this.CertificatePath
-                CertificatePassword                         = $this.CertificatePassword
-                ManagedIdentity                             = $this.ManagedIdentity
-                AccessTokens                                = $this.AccessTokens
             }
 
             $returnAssignments = @()
@@ -629,17 +620,8 @@ class IntuneDeviceCompliancePolicyWindows10 : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configDeviceWindowsPolicies.Count)] $($configDeviceWindowsPolicy.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $configDeviceWindowsPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $configDeviceWindowsPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configDeviceWindowsPolicy
@@ -760,23 +742,6 @@ class IntuneDeviceCompliancePolicyWindows10 : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceCompliancePolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceCompliancePolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceCompliancePolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

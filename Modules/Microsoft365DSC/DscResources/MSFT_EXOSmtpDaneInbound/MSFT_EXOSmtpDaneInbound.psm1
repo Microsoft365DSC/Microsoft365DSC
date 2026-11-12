@@ -83,16 +83,8 @@ class EXOSmtpDaneInbound : M365DSCResourceBase
             Write-Verbose -Message "Found an EXO SmtpDaneInbound instance with DomainName {$($this.DomainName)}"
 
             $results = @{
-                DomainName            = $instance.DomainName
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                DomainName = $instance.DomainName
+                Ensure     = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -197,16 +189,8 @@ class EXOSmtpDaneInbound : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DomainName            = $config.DomainName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    TenantId              = $this.TenantId
-                    AccessTokens          = $this.AccessTokens
+                    DomainName = $config.DomainName
+                    Ensure     = 'Present'
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($params)
@@ -229,22 +213,5 @@ class EXOSmtpDaneInbound : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOSmtpDaneInbound] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSmtpDaneInbound])
-        {
-            return $Values
-        }
-
-        $result = [EXOSmtpDaneInbound]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

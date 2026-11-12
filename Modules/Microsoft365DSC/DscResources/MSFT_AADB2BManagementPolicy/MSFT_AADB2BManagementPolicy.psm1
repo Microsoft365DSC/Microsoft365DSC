@@ -88,16 +88,8 @@ class AADB2BManagementPolicy : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Definition            = $getValue.Definition
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Definition       = $getValue.Definition
+                IsSingleInstance = 'Yes'
                 #endregion
             }
 
@@ -203,16 +195,7 @@ class AADB2BManagementPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -238,22 +221,5 @@ class AADB2BManagementPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADB2BManagementPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADB2BManagementPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADB2BManagementPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

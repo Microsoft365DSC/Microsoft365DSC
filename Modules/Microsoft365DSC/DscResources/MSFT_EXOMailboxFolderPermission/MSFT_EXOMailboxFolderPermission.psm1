@@ -94,17 +94,9 @@ class EXOMailboxFolderPermission : M365DSCResourceBase
             }
 
             $results = @{
-                Identity              = $this.Identity
-                UserPermissions       = $permissionsObj
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity        = $this.Identity
+                UserPermissions = $permissionsObj
+                Ensure          = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -233,16 +225,8 @@ class EXOMailboxFolderPermission : M365DSCResourceBase
                 Write-M365DSCHost -Message "`r`n" -DeferWrite
 
                 $Params = @{
-                    Identity              = $mailboxFolder.Identity
-                    UserPermissions       = $null
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity        = $mailboxFolder.Identity
+                    UserPermissions = $null
                 }
 
                 $MailboxFolderPermissions = $this.GetForExport($Params)
@@ -285,23 +269,6 @@ class EXOMailboxFolderPermission : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxFolderPermission] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxFolderPermission])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxFolderPermission]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

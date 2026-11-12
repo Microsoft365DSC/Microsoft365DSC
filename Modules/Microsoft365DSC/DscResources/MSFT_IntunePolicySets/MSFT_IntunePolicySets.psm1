@@ -147,21 +147,12 @@ class IntunePolicySets : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.Description
-                DisplayName           = $getValue.DisplayName
-                GuidedDeploymentTags  = $getValue.GuidedDeploymentTags
-                RoleScopeTags         = $getValue.RoleScopeTags
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Description          = $getValue.Description
+                DisplayName          = $getValue.DisplayName
+                GuidedDeploymentTags = $getValue.GuidedDeploymentTags
+                RoleScopeTags        = $getValue.RoleScopeTags
+                Id                   = $getValue.Id
+                Ensure               = 'Present'
                 #endregion
             }
 
@@ -345,18 +336,9 @@ class IntunePolicySets : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -588,23 +570,6 @@ class IntunePolicySets : M365DSCResourceBase
         }
 
         return $object.Id
-    }
-
-    hidden [IntunePolicySets] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntunePolicySets])
-        {
-            return $Values
-        }
-
-        $result = [IntunePolicySets]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -119,18 +119,10 @@ class PPPowerAppPolicyUrlPatterns : M365DSCResourceBase
             }
 
             $results = @{
-                PPTenantId            = $this.PPTenantId
-                PolicyName            = $this.PolicyName
-                RuleSet               = $RulesValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                PPTenantId = $this.PPTenantId
+                PolicyName = $this.PolicyName
+                RuleSet    = $RulesValue
+                Ensure     = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -255,16 +247,8 @@ class PPPowerAppPolicyUrlPatterns : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.properties.DisplayName)" -DeferWrite
                 $params = @{
-                    PPTenantId            = $tenantInfo
-                    PolicyName            = $policy.properties.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    PPTenantId = $tenantInfo
+                    PolicyName = $policy.properties.DisplayName
                 }
 
                 $this.ExportedInstance = $policy
@@ -307,23 +291,6 @@ class PPPowerAppPolicyUrlPatterns : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [PPPowerAppPolicyUrlPatterns] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PPPowerAppPolicyUrlPatterns])
-        {
-            return $Values
-        }
-
-        $result = [PPPowerAppPolicyUrlPatterns]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -249,14 +249,6 @@ class IntuneMobileAppsLobAppWindows10 : M365DSCResourceBase
                 RoleScopeTagIds                 = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Id                              = $getValue.Id
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
                 #endregion
             }
 
@@ -455,18 +447,9 @@ class IntuneMobileAppsLobAppWindows10 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -561,23 +544,6 @@ class IntuneMobileAppsLobAppWindows10 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneMobileAppsLobAppWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsLobAppWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsLobAppWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

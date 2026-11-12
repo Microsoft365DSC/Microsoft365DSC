@@ -175,14 +175,6 @@ class AADAuthenticationMethodPolicyQRCodeImage : M365DSCResourceBase
                 StandardQRCodeLifetimeInDays = $instance.StandardQRCodeLifetimeInDays
                 PinLength                    = $instance.PinLength
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                AccessTokens                 = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -280,15 +272,7 @@ class AADAuthenticationMethodPolicyQRCodeImage : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id = $config.Id
                 }
 
                 $this.ExportedInstance = $config
@@ -344,23 +328,6 @@ class AADAuthenticationMethodPolicyQRCodeImage : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationMethodPolicyQRCodeImage] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationMethodPolicyQRCodeImage])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationMethodPolicyQRCodeImage]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

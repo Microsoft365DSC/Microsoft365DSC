@@ -105,14 +105,6 @@ class EXOATPBuiltInProtectionRule : M365DSCResourceBase
                 ExceptIfSentTo            = [System.String[]]$instance.ExceptIfSentTo
                 ExceptIfSentToMemberOf    = [System.String[]]$instance.ExceptIfSentToMemberOf
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -188,15 +180,7 @@ class EXOATPBuiltInProtectionRule : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($rules.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -229,22 +213,5 @@ class EXOATPBuiltInProtectionRule : M365DSCResourceBase
                 @{ Type = 'NullEqualsEmpty'; PropertyPattern = '^ExceptIf\w+$' }
             )
         }
-    }
-
-    hidden [EXOATPBuiltInProtectionRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOATPBuiltInProtectionRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOATPBuiltInProtectionRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

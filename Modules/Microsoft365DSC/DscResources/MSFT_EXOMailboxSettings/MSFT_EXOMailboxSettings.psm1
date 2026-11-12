@@ -118,23 +118,15 @@ class EXOMailboxSettings : M365DSCResourceBase
             }
 
             $result = @{
-                DisplayName           = $this.DisplayName
-                TimeZone              = $mailboxSettings.TimeZone
-                Locale                = $mailboxSettings.Language.Name
-                RetentionPolicy       = $mailboxInfo.RetentionPolicy
-                AddressBookPolicy     = $mailboxInfo.AddressBookPolicy
-                RoleAssignmentPolicy  = $mailboxInfo.RoleAssignmentPolicy
-                SharingPolicy         = $mailboxInfo.SharingPolicy
-                AuditEnabled          = $mailboxInfo.AuditEnabled
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                DisplayName          = $this.DisplayName
+                TimeZone             = $mailboxSettings.TimeZone
+                Locale               = $mailboxSettings.Language.Name
+                RetentionPolicy      = $mailboxInfo.RetentionPolicy
+                AddressBookPolicy    = $mailboxInfo.AddressBookPolicy
+                RoleAssignmentPolicy = $mailboxInfo.RoleAssignmentPolicy
+                SharingPolicy        = $mailboxInfo.SharingPolicy
+                AuditEnabled         = $mailboxInfo.AuditEnabled
+                Ensure               = 'Present'
             }
 
             return $this.AsResult($result)
@@ -254,15 +246,7 @@ class EXOMailboxSettings : M365DSCResourceBase
                     }
 
                     $Params = @{
-                        Credential            = $this.Credential
-                        DisplayName           = $DisplayNameValue
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName = $DisplayNameValue
                     }
 
                     $this.ExportedInstance = $mailbox
@@ -297,22 +281,5 @@ class EXOMailboxSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxSettings])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

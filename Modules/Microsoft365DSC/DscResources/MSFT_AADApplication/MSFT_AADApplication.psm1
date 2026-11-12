@@ -674,15 +674,6 @@ class AADApplication : M365DSCResourceBase
                 TokenEncryptionKeyId            = $AADApp.TokenEncryptionKeyId
                 TokenLifetimePolicy             = $lifetimePolicy.displayName
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -1458,19 +1449,10 @@ class AADApplication : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($AADApp.DisplayName)" -DeferWrite
                 $Params = @{
-                    ApplicationId         = $this.ApplicationId
-                    AppId                 = $AADApp.AppId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    ApplicationSecret     = $this.ApplicationSecret
-                    Description           = $AADApp.Description
-                    DisplayName           = $AADApp.DisplayName
-                    ObjectID              = $AADApp.Id
-                    Credential            = $this.Credential
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    AppId       = $AADApp.AppId
+                    Description = $AADApp.Description
+                    DisplayName = $AADApp.DisplayName
+                    ObjectID    = $AADApp.Id
                 }
                 try
                 {
@@ -2113,23 +2095,6 @@ class AADApplication : M365DSCResourceBase
         }
 
         return $permissionResults
-    }
-
-    hidden [AADApplication] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADApplication])
-        {
-            return $Values
-        }
-
-        $result = [AADApplication]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -100,20 +100,12 @@ class SCCaseHoldRule : M365DSCResourceBase
             Write-Verbose "Found existing SCCaseHoldRule $($this.Name)"
 
             $result = @{
-                Name                  = $Rule.Name
-                Policy                = $this.Policy
-                Comment               = $Rule.Comment
-                Disabled              = $Rule.Disabled
-                ContentMatchQuery     = $Rule.ContentMatchQuery
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name              = $Rule.Name
+                Policy            = $this.Policy
+                Comment           = $Rule.Comment
+                Disabled          = $Rule.Disabled
+                ContentMatchQuery = $Rule.ContentMatchQuery
+                Ensure            = 'Present'
             }
 
             return $this.AsResult($result)
@@ -269,22 +261,5 @@ class SCCaseHoldRule : M365DSCResourceBase
             throw $ErrorRecord
         }
         Write-Warning -Message ($ErrorRecord.Exception.Message -split "`r?`n")[0]
-    }
-
-    hidden [SCCaseHoldRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCCaseHoldRule])
-        {
-            return $Values
-        }
-
-        $result = [SCCaseHoldRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

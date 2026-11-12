@@ -135,22 +135,13 @@ class AADEntitlementManagementAccessPackageCatalog : M365DSCResourceBase
             Write-Verbose -Message "An Azure AD Entitlement Management Access Package Catalog with id {$($this.id)} was found"
             $results = @{
                 #region resource generator code
-                Id                    = $getValue.Id
-                CatalogStatus         = $getValue.CatalogStatus
-                CatalogType           = $getValue.CatalogType
-                Description           = $getValue.Description
-                DisplayName           = $getValue.DisplayName
-                IsExternallyVisible   = $getValue.IsExternallyVisible
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id                  = $getValue.Id
+                CatalogStatus       = $getValue.CatalogStatus
+                CatalogType         = $getValue.CatalogType
+                Description         = $getValue.Description
+                DisplayName         = $getValue.DisplayName
+                IsExternallyVisible = $getValue.IsExternallyVisible
+                Ensure              = 'Present'
             }
 
             return $this.AsResult($results)
@@ -280,18 +271,9 @@ class AADEntitlementManagementAccessPackageCatalog : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -327,22 +309,5 @@ class AADEntitlementManagementAccessPackageCatalog : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [AADEntitlementManagementAccessPackageCatalog] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementAccessPackageCatalog])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementAccessPackageCatalog]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

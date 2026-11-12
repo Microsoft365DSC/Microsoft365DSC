@@ -99,17 +99,8 @@ class IntuneAppleMDMPushNotificationCertificate : M365DSCResourceBase
             }
 
             $results = @{
-                AppleIdentifier       = $instance.AppleIdentifier
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                AppleIdentifier = $instance.AppleIdentifier
+                Ensure          = 'Present'
             }
 
             if (-not [String]::IsNullOrEmpty($instance.Certificate))
@@ -237,18 +228,9 @@ class IntuneAppleMDMPushNotificationCertificate : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
 
                 $Params = @{
-                    AppleIdentifier       = $config.AppleIdentifier
-                    Certificate           = $config.Certificate
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    AppleIdentifier = $config.AppleIdentifier
+                    Certificate     = $config.Certificate
+                    Ensure          = 'Present'
                 }
 
                 # Get the value of Data sharing consent between Intune and Apple. The id is hardcoded to "appleMDMPushCertificate".
@@ -278,22 +260,5 @@ class IntuneAppleMDMPushNotificationCertificate : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneAppleMDMPushNotificationCertificate] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAppleMDMPushNotificationCertificate])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAppleMDMPushNotificationCertificate]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

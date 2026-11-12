@@ -199,15 +199,6 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
                 AccessPackagesIncompatibleWith  = $getAccessPackagesIncompatibleWith #read-only
                 IncompatibleGroups              = $getIncompatibleGroups
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -759,18 +750,9 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -820,23 +802,6 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [AADEntitlementManagementAccessPackage] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementAccessPackage])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementAccessPackage]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

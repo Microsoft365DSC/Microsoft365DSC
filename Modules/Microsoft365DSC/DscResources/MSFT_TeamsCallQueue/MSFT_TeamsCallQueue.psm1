@@ -618,14 +618,6 @@ class TeamsCallQueue : M365DSCResourceBase
                 ChannelUserObjectId                           = $queue.ChannelUserObjectId
                 AuthorizedUsers                               = $authorizedUsersValue
                 Ensure                                        = 'Present'
-                Credential                                    = $this.Credential
-                ApplicationId                                 = $this.ApplicationId
-                TenantId                                      = $this.TenantId
-                CertificateThumbprint                         = $this.CertificateThumbprint
-                CertificatePath                               = $this.CertificatePath
-                CertificatePassword                           = $this.CertificatePassword
-                ManagedIdentity                               = $this.ManagedIdentity
-                AccessTokens                                  = $this.AccessTokens
             }
 
             if ($returnHashtable.OverflowActionCallPriority -eq 0)
@@ -797,16 +789,8 @@ class TeamsCallQueue : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($instance.Name)" -DeferWrite
 
                 $params = @{
-                    Name                  = $instance.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name   = $instance.Name
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $instance
@@ -845,22 +829,5 @@ class TeamsCallQueue : M365DSCResourceBase
         }
 
         return $queue
-    }
-
-    hidden [TeamsCallQueue] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsCallQueue])
-        {
-            return $Values
-        }
-
-        $result = [TeamsCallQueue]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -174,15 +174,7 @@ class EXOMailboxAutoReplyConfiguration : M365DSCResourceBase
                 InternalMessage                  = $config.InternalMessage
                 OOFEventSubject                  = $config.OOFEventSubject
                 StartTime                        = $startTimeValue
-                Credential                       = $this.Credential
                 Ensure                           = 'Present'
-                ApplicationId                    = $this.ApplicationId
-                CertificateThumbprint            = $this.CertificateThumbprint
-                CertificatePath                  = $this.CertificatePath
-                CertificatePassword              = $this.CertificatePassword
-                ManagedIdentity                  = $this.ManagedIdentity
-                TenantId                         = $this.TenantId
-                AccessTokens                     = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -259,15 +251,7 @@ class EXOMailboxAutoReplyConfiguration : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Length)] $($mailbox.UserPrincipalName)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $mailbox.UserPrincipalName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $mailbox.UserPrincipalName
                 }
                 $Results = $this.GetForExport($Params)
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -290,22 +274,5 @@ class EXOMailboxAutoReplyConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxAutoReplyConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxAutoReplyConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxAutoReplyConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

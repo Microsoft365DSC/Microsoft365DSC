@@ -134,14 +134,6 @@ class EXOHostedOutboundSpamFilterRule : M365DSCResourceBase
                 SenderDomainIs                 = $HostedOutboundSpamFilterRule.SenderDomainIs
                 From                           = $HostedOutboundSpamFilterRule.From
                 FromMemberOf                   = $HostedOutboundSpamFilterRule.FromMemberOf
-                Credential                     = $this.Credential
-                ApplicationId                  = $this.ApplicationId
-                CertificateThumbprint          = $this.CertificateThumbprint
-                CertificatePath                = $this.CertificatePath
-                CertificatePassword            = $this.CertificatePassword
-                ManagedIdentity                = $this.ManagedIdentity
-                TenantId                       = $this.TenantId
-                AccessTokens                   = $this.AccessTokens
             }
 
             if ('Enabled' -eq $HostedOutboundSpamFilterRule.State)
@@ -265,16 +257,8 @@ class EXOHostedOutboundSpamFilterRule : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($HostedOutboundSpamFilterRules.Count)] $($HostedOutboundSpamFilterRule.Identity)" -DeferWrite
                 $Params = @{
-                    Credential                     = $this.Credential
                     Identity                       = $HostedOutboundSpamFilterRule.Identity
                     HostedOutboundSpamFilterPolicy = $HostedOutboundSpamFilterRule.HostedOutboundSpamFilterPolicy
-                    ApplicationId                  = $this.ApplicationId
-                    TenantId                       = $this.TenantId
-                    CertificateThumbprint          = $this.CertificateThumbprint
-                    CertificatePassword            = $this.CertificatePassword
-                    CertificatePath                = $this.CertificatePath
-                    ManagedIdentity                = $this.ManagedIdentity
-                    AccessTokens                   = $this.AccessTokens
                 }
                 $this.ExportedInstance = $HostedOutboundSpamFilterRule
                 $Results = $this.GetForExport($Params)
@@ -311,22 +295,5 @@ class EXOHostedOutboundSpamFilterRule : M365DSCResourceBase
             throw "Error attempting to create EXOHostedOutboundSpamFilterRule {$Identity}. The specified HostedOutboundSpamFilterPolicy " + `
                 "{$PolicyName} doesn't exist. Make sure you either create it first or specify a valid policy."
         }
-    }
-
-    hidden [EXOHostedOutboundSpamFilterRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOHostedOutboundSpamFilterRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOHostedOutboundSpamFilterRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

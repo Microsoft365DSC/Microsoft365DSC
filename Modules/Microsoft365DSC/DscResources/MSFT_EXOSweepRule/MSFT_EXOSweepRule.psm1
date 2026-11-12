@@ -132,25 +132,17 @@ class EXOSweepRule : M365DSCResourceBase
             }
 
             $results = @{
-                Name                  = $instance.Name
-                Provider              = $instance.Provider
-                DestinationFolder     = $userInfo.UserPrincipalName + ':\' + $instance.DestinationFolder
-                Enabled               = [Boolean]$instance.Enabled
-                KeepForDays           = $instance.KeepForDays
-                KeepLatest            = $instance.KeepLatest
-                Mailbox               = $userInfo.UserPrincipalName
-                SenderName            = $senderNameValue
-                SourceFolder          = $userInfo.UserPrincipalName + ':\' + $instance.SourceFolder
-                SystemCategory        = $instance.SystemCategory
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name              = $instance.Name
+                Provider          = $instance.Provider
+                DestinationFolder = $userInfo.UserPrincipalName + ':\' + $instance.DestinationFolder
+                Enabled           = [Boolean]$instance.Enabled
+                KeepForDays       = $instance.KeepForDays
+                KeepLatest        = $instance.KeepLatest
+                Mailbox           = $userInfo.UserPrincipalName
+                SenderName        = $senderNameValue
+                SourceFolder      = $userInfo.UserPrincipalName + ':\' + $instance.SourceFolder
+                SystemCategory    = $instance.SystemCategory
+                Ensure            = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -264,14 +256,8 @@ class EXOSweepRule : M365DSCResourceBase
                     $displayedKey = $config.Name
                     Write-M365DSCHost -Message "        |---[$i/$($currentInstances.Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        Name                  = $config.Name
-                        Mailbox               = $mailbox.UserPrincipalName
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        Name    = $config.Name
+                        Mailbox = $mailbox.UserPrincipalName
                     }
                     $this.ExportedInstance = $config
                     $Results = $this.GetForExport($params)
@@ -296,22 +282,5 @@ class EXOSweepRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOSweepRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSweepRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOSweepRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

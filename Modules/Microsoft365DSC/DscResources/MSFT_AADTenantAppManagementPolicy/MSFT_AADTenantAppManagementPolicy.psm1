@@ -181,14 +181,6 @@ class AADTenantAppManagementPolicy : M365DSCResourceBase
                 ApplicationRestrictions      = $appRestrictionsValue
                 ServicePrincipalRestrictions = $spnRestrictionsValue
                 IsSingleInstance             = 'Yes'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                AccessTokens                 = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -344,15 +336,7 @@ class AADTenantAppManagementPolicy : M365DSCResourceBase
                 $displayedKey = $config.DisplayName
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -452,23 +436,6 @@ class AADTenantAppManagementPolicy : M365DSCResourceBase
                 @{ Type = 'Normalize'; Paths = @('ApplicationRestrictions.KeyCredentials[].MaxLifetime', 'ApplicationRestrictions.PasswordCredentials[].MaxLifetime', 'ServicePrincipalRestrictions.KeyCredentials[].MaxLifetime', 'ServicePrincipalRestrictions.PasswordCredentials[].MaxLifetime'); Using = 'RegexReplace'; Pattern = '(?-i)T0H0M0S'; Replacement = '' }
             )
         }
-    }
-
-    hidden [AADTenantAppManagementPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADTenantAppManagementPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADTenantAppManagementPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

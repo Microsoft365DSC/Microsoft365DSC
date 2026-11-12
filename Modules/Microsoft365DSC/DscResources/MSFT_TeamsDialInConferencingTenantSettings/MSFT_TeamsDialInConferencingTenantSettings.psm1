@@ -127,14 +127,6 @@ class TeamsDialInConferencingTenantSettings : M365DSCResourceBase
                 MigrateServiceNumbersOnCrossForestMove = $instance.MigrateServiceNumbersOnCrossForestMove
                 PinLength                              = $instance.PinLength
                 UseUniqueConferenceIds                 = $instance.UseUniqueConferenceIds
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
-                TenantId                               = $this.TenantId
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                CertificatePath                        = $this.CertificatePath
-                CertificatePassword                    = $this.CertificatePassword
-                ManagedIdentity                        = $this.ManagedIdentity
-                AccessTokens                           = $this.AccessTokens
             })
         }
         catch
@@ -198,15 +190,7 @@ class TeamsDialInConferencingTenantSettings : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -240,22 +224,5 @@ class TeamsDialInConferencingTenantSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsDialInConferencingTenantSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsDialInConferencingTenantSettings])
-        {
-            return $Values
-        }
-
-        $result = [TeamsDialInConferencingTenantSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -121,14 +121,6 @@ class EXOMailboxCalendarFolder : M365DSCResourceBase
                 SearchableUrlEnabled        = [Boolean]$folder.SearchableUrlEnabled
                 SharedCalendarSyncStartDate = $folder.SharedCalendarSyncStartDate
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                TenantId                    = $this.TenantId
-                AccessTokens                = $this.AccessTokens
             }
 
             Write-Verbose -Message "Found Calendar Folder for {$($this.Identity)}"
@@ -216,15 +208,7 @@ class EXOMailboxCalendarFolder : M365DSCResourceBase
                 $folderPath = $mailbox.UserPrincipalName + ':\' + $calendarFolderName
                 Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $($folderPath)" -DeferWrite
                 $Params = @{
-                    Identity              = $folderPath
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $folderPath
                 }
                 $Results = $this.GetForExport($Params)
                 if ($Results.SharedCalendarSyncStartDate -eq '01/02/0001 00:00:00')
@@ -253,22 +237,5 @@ class EXOMailboxCalendarFolder : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxCalendarFolder] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxCalendarFolder])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxCalendarFolder]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

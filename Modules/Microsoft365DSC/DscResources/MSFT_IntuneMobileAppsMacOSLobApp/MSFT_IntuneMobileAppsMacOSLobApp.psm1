@@ -257,15 +257,6 @@ class IntuneMobileAppsMacOSLobApp : M365DSCResourceBase
                 RoleScopeTagIds                 = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $instance.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 VersionNumber                   = $instance.versionNumber
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
 
             #Assignments
@@ -423,18 +414,9 @@ class IntuneMobileAppsMacOSLobApp : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
 
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -553,23 +535,6 @@ class IntuneMobileAppsMacOSLobApp : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneMobileAppsMacOSLobApp] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsMacOSLobApp])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsMacOSLobApp]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

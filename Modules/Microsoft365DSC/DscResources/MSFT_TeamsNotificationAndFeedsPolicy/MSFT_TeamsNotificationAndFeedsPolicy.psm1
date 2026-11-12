@@ -99,13 +99,6 @@ class TeamsNotificationAndFeedsPolicy : M365DSCResourceBase
                 Description               = $instance.Description
                 SuggestedFeedsEnabledType = $instance.SuggestedFeedsEnabledType
                 TrendingFeedsEnabledType  = $instance.TrendingFeedsEnabledType
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
             }
             return $this.AsResult($results)
         }
@@ -184,15 +177,7 @@ class TeamsNotificationAndFeedsPolicy : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -216,22 +201,5 @@ class TeamsNotificationAndFeedsPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsNotificationAndFeedsPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsNotificationAndFeedsPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsNotificationAndFeedsPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

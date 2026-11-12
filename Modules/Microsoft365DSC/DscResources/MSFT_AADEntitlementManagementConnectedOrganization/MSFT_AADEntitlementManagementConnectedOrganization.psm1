@@ -212,23 +212,14 @@ class AADEntitlementManagementConnectedOrganization : M365DSCResourceBase
             }
 
             $results = @{
-                Id                    = $getValue.id
-                Description           = $getValue.description
-                DisplayName           = $getValue.displayName
-                ExternalSponsors      = $ExternalSponsorsValues
-                IdentitySources       = $getIdentitySources
-                InternalSponsors      = $InternalSponsorsValues
-                State                 = $getValue.state
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id               = $getValue.id
+                Description      = $getValue.description
+                DisplayName      = $getValue.displayName
+                ExternalSponsors = $ExternalSponsorsValues
+                IdentitySources  = $getIdentitySources
+                InternalSponsors = $InternalSponsorsValues
+                State            = $getValue.state
+                Ensure           = 'Present'
             }
 
             return $this.AsResult($results)
@@ -515,18 +506,9 @@ class AADEntitlementManagementConnectedOrganization : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    id                    = $config.id
-                    DisplayName           = $displayedKey
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    id          = $config.id
+                    DisplayName = $displayedKey
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -591,23 +573,6 @@ class AADEntitlementManagementConnectedOrganization : M365DSCResourceBase
         }
 
         return $null
-    }
-
-    hidden [AADEntitlementManagementConnectedOrganization] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementConnectedOrganization])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementConnectedOrganization]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

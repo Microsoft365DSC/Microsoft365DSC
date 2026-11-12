@@ -350,15 +350,6 @@ class IntuneMobileAppsWin32CatalogAppWindows10 : M365DSCResourceBase
                 SetupFilePath                  = $getValue.setupFilePath
                 UninstallCommandLine           = $getValue.uninstallCommandLine
                 Ensure                         = 'Present'
-                Credential                     = $this.Credential
-                ApplicationId                  = $this.ApplicationId
-                TenantId                       = $this.TenantId
-                ApplicationSecret              = $this.ApplicationSecret
-                CertificateThumbprint          = $this.CertificateThumbprint
-                CertificatePassword            = $this.CertificatePassword
-                CertificatePath                = $this.CertificatePath
-                ManagedIdentity                = $this.ManagedIdentity
-                AccessTokens                   = $this.AccessTokens
             }
 
             $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppAssignment -MobileAppId $getValue.Id -ErrorAction SilentlyContinue
@@ -536,17 +527,8 @@ class IntuneMobileAppsWin32CatalogAppWindows10 : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.DisplayName)" -DeferWrite
 
                 $Params = @{
-                    Id                    = $exportedInstance.Id
-                    DisplayName           = $exportedInstance.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $exportedInstance.Id
+                    DisplayName = $exportedInstance.DisplayName
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -701,23 +683,6 @@ class IntuneMobileAppsWin32CatalogAppWindows10 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneMobileAppsWin32CatalogAppWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsWin32CatalogAppWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsWin32CatalogAppWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

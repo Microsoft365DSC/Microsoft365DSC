@@ -169,19 +169,11 @@ class IntuneEndpointDetectionAndResponsePolicyWindows10 : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Description           = $policy.Description
-                DisplayName           = $policy.Name
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $policy.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Identity              = $policy.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Description     = $policy.Description
+                DisplayName     = $policy.Name
+                RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $policy.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Identity        = $policy.Id
+                Ensure          = 'Present'
                 #endregion
             }
             $results += $policySettings
@@ -379,18 +371,9 @@ class IntuneEndpointDetectionAndResponsePolicyWindows10 : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Name)" -DeferWrite
 
                 $params = @{
-                    Identity              = $policy.id
-                    DisplayName           = $policy.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $policy.id
+                    DisplayName = $policy.Name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
@@ -448,23 +431,6 @@ class IntuneEndpointDetectionAndResponsePolicyWindows10 : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return $this.GetSettingsCatalogCompareParameters(@('ConfigurationBlob'))
-    }
-
-    hidden [IntuneEndpointDetectionAndResponsePolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneEndpointDetectionAndResponsePolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneEndpointDetectionAndResponsePolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

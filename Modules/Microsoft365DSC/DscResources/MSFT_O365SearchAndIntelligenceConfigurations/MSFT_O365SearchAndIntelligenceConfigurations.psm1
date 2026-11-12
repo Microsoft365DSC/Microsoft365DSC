@@ -133,14 +133,7 @@ class O365SearchAndIntelligenceConfigurations : M365DSCResourceBase
                 MeetingInsightsIsEnabledInOrganization = $MeetingInsightsValue
                 PersonInsightsIsEnabledInOrganization  = $PersonInsights.IsEnabledInOrganization
                 PersonInsightsDisabledForGroup         = $PersonInsightsDisabledForGroupValue
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
                 TenantId                               = $tenantIdValue
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                CertificatePath                        = $this.CertificatePath
-                CertificatePassword                    = $this.CertificatePassword
-                ManagedIdentity                        = $this.ManagedIdentity
-                AccessTokens                           = $this.AccessTokens
             })
         }
         catch
@@ -257,15 +250,7 @@ class O365SearchAndIntelligenceConfigurations : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -292,22 +277,5 @@ class O365SearchAndIntelligenceConfigurations : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [O365SearchAndIntelligenceConfigurations] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [O365SearchAndIntelligenceConfigurations])
-        {
-            return $Values
-        }
-
-        $result = [O365SearchAndIntelligenceConfigurations]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

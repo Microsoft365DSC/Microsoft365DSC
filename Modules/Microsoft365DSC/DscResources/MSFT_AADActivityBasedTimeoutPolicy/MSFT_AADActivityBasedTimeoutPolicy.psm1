@@ -119,20 +119,11 @@ class AADActivityBasedTimeoutPolicy : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                DisplayName           = $getValue.displayName
-                Id                    = $getValue.Id
-                AzurePortalTimeOut    = $azurePortalTimeOutValue
-                DefaultTimeOut        = $defaultTimeOutValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName        = $getValue.displayName
+                Id                 = $getValue.Id
+                AzurePortalTimeOut = $azurePortalTimeOutValue
+                DefaultTimeOut     = $defaultTimeOutValue
+                Ensure             = 'Present'
                 #endregion
             }
 
@@ -323,17 +314,8 @@ class AADActivityBasedTimeoutPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -358,22 +340,5 @@ class AADActivityBasedTimeoutPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADActivityBasedTimeoutPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADActivityBasedTimeoutPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADActivityBasedTimeoutPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

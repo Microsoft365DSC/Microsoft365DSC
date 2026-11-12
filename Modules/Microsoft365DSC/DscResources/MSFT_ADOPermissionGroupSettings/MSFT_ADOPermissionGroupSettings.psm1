@@ -121,19 +121,11 @@ class ADOPermissionGroupSettings : M365DSCResourceBase
             $groupPermissions = $this.GetGroupPermission($instance.principalName, $this.OrganizationName, $this.ResourceCache)
 
             $results = @{
-                OrganizationName      = $this.OrganizationName
-                GroupName             = $instance.principalName
-                Descriptor            = $instance.Descriptor
-                AllowPermissions      = $groupPermissions.Allow
-                DenyPermissions       = $groupPermissions.Deny
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                OrganizationName = $this.OrganizationName
+                GroupName        = $instance.principalName
+                Descriptor       = $instance.Descriptor
+                AllowPermissions = $groupPermissions.Allow
+                DenyPermissions  = $groupPermissions.Deny
             }
             return $this.AsResult($results)
         }
@@ -271,15 +263,9 @@ class ADOPermissionGroupSettings : M365DSCResourceBase
                     }
                     Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        OrganizationName      = $Organization
-                        GroupName             = $config.principalName
-                        Descriptor            = $config.descriptor
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        OrganizationName = $Organization
+                        GroupName        = $config.principalName
+                        Descriptor       = $config.descriptor
                     }
 
                     if (-not $config.principalName.StartsWith('[TEAM FOUNDATION]'))
@@ -471,23 +457,6 @@ class ADOPermissionGroupSettings : M365DSCResourceBase
             throw $_
         }
         return $results
-    }
-
-    hidden [ADOPermissionGroupSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [ADOPermissionGroupSettings])
-        {
-            return $Values
-        }
-
-        $result = [ADOPermissionGroupSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -300,15 +300,6 @@ class IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 : M365DSCResourceB
                 Id                                          = $getValue.Id
                 RoleScopeTagIds                             = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                                      = 'Present'
-                Credential                                  = $this.Credential
-                ApplicationId                               = $this.ApplicationId
-                TenantId                                    = $this.TenantId
-                ApplicationSecret                           = $this.ApplicationSecret
-                CertificateThumbprint                       = $this.CertificateThumbprint
-                CertificatePath                             = $this.CertificatePath
-                CertificatePassword                         = $this.CertificatePassword
-                ManagedIdentity                             = $this.ManagedIdentity
-                AccessTokens                                = $this.AccessTokens
                 #endregion
             }
 
@@ -534,18 +525,9 @@ class IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 : M365DSCResourceB
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -685,23 +667,6 @@ class IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 : M365DSCResourceB
     {
         $Uri = "/beta/deviceManagement/deviceConfigurations('$DeviceConfigurationPolicyId')/microsoft.graph.windows81SCEPCertificateProfile/rootCertificate"
         $result = Invoke-M365DSCGraphRequest -Method Get -Uri $Uri -ErrorAction Stop
-
-        return $result
-    }
-
-    hidden [IntuneDeviceConfigurationSCEPCertificatePolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationSCEPCertificatePolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationSCEPCertificatePolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
 
         return $result
     }

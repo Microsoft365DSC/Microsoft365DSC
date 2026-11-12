@@ -87,15 +87,6 @@ class AADIdentityProtectionPolicySettings : M365DSCResourceBase
             $results = @{
                 IsSingleInstance                 = 'Yes'
                 IsUserRiskClearedOnPasswordReset = $instance.IsUserRiskClearedOnPasswordReset
-                Credential                       = $this.Credential
-                ApplicationId                    = $this.ApplicationId
-                TenantId                         = $this.TenantId
-                ApplicationSecret                = $this.ApplicationSecret
-                CertificateThumbprint            = $this.CertificateThumbprint
-                CertificatePath                  = $this.CertificatePath
-                CertificatePassword              = $this.CertificatePassword
-                ManagedIdentity                  = $this.ManagedIdentity
-                AccessTokens                     = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -174,16 +165,7 @@ class AADIdentityProtectionPolicySettings : M365DSCResourceBase
                 $displayedKey = 'AAD Identity Protection Policy Settings'
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -208,22 +190,5 @@ class AADIdentityProtectionPolicySettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADIdentityProtectionPolicySettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADIdentityProtectionPolicySettings])
-        {
-            return $Values
-        }
-
-        $result = [AADIdentityProtectionPolicySettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

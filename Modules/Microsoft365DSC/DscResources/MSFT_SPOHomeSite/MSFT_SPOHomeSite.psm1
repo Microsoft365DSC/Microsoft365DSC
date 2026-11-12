@@ -90,18 +90,9 @@ class SPOHomeSite : M365DSCResourceBase
             }
 
             $result = @{
-                IsSingleInstance      = $this.IsSingleInstance
-                Url                   = $homeSiteUrl
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = $this.IsSingleInstance
+                Url              = $homeSiteUrl
+                Ensure           = 'Present'
             }
             return $this.AsResult($result)
         }
@@ -189,16 +180,7 @@ class SPOHomeSite : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                ApplicationSecret     = $this.ApplicationSecret
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $dscContent = [System.Text.StringBuilder]::new()
             $Results = $this.GetForExport($Params)
@@ -219,22 +201,5 @@ class SPOHomeSite : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOHomeSite] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOHomeSite])
-        {
-            return $Values
-        }
-
-        $result = [SPOHomeSite]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

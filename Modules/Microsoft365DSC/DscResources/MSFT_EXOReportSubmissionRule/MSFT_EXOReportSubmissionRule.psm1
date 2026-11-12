@@ -97,19 +97,11 @@ class EXOReportSubmissionRule : M365DSCResourceBase
             Write-Verbose -Message "Found ReportSubmissionRule with Identity {$($this.Identity)}"
 
             $result = @{
-                IsSingleInstance      = 'Yes'
-                Identity              = $ReportSubmissionRule.Identity
-                Comments              = $ReportSubmissionRule.Comments
-                SentTo                = $ReportSubmissionRule.SentTo
-                Credential            = $this.Credential
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                Identity         = $ReportSubmissionRule.Identity
+                Comments         = $ReportSubmissionRule.Comments
+                SentTo           = $ReportSubmissionRule.SentTo
+                Ensure           = 'Present'
             }
 
             return $this.AsResult($result)
@@ -203,16 +195,8 @@ class EXOReportSubmissionRule : M365DSCResourceBase
             }
 
             $Params = @{
-                Identity              = $ReportSubmissionRule.Identity
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                IsSingleInstance      = 'Yes'
-                AccessTokens          = $this.AccessTokens
+                Identity         = $ReportSubmissionRule.Identity
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $ReportSubmissionRule
             $Results = $this.GetForExport($Params)
@@ -246,22 +230,5 @@ class EXOReportSubmissionRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOReportSubmissionRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOReportSubmissionRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOReportSubmissionRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

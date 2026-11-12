@@ -207,15 +207,6 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
                 Audiences              = $federatedIdentityCredential.Audiences
                 Description            = $federatedIdentityCredential.Description
                 Ensure                 = 'Present'
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                ApplicationSecret      = $this.ApplicationSecret
-                TenantId               = $this.TenantId
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                AccessTokens           = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -350,19 +341,10 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($federatedIdentityCredentials.Count)] $($application.DisplayName) - $($federatedIdentityCredential.Name)" -DeferWrite
                     $params = @{
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
                         ApplicationDisplayName = $application.DisplayName
                         ApplicationObjectId   = $application.Id
                         Name                  = $federatedIdentityCredential.Name
                         Id                    = $federatedIdentityCredential.Id
-                        AccessTokens          = $this.AccessTokens
                     }
                     $this.ExportedInstance = $federatedIdentityCredential
                     $this.ExportedInstance.Add('ApplicationObjectId', $application.Id)
@@ -393,22 +375,5 @@ class AADApplicationFederatedIdentityCredential : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADApplicationFederatedIdentityCredential] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADApplicationFederatedIdentityCredential])
-        {
-            return $Values
-        }
-
-        $result = [AADApplicationFederatedIdentityCredential]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

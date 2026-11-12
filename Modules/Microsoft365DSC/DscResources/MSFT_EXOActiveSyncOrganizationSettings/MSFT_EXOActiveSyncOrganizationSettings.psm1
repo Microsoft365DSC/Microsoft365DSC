@@ -118,14 +118,6 @@ class EXOActiveSyncOrganizationSettings : M365DSCResourceBase
                 OtaNotificationMailInsert              = $activeSyncOrganizationSettings.OtaNotificationMailInsert
                 TenantAdminPreference                  = $activeSyncOrganizationSettings.TenantAdminPreference
                 UserMailInsert                         = $activeSyncOrganizationSettings.UserMailInsert
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
-                TenantId                               = $this.TenantId
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                CertificatePassword                    = $this.CertificatePassword
-                CertificatePath                        = $this.CertificatePath
-                ManagedIdentity                        = $this.ManagedIdentity
-                AccessTokens                           = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -217,15 +209,7 @@ class EXOActiveSyncOrganizationSettings : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.Identity)" -DeferWrite
 
                 $Params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -252,22 +236,5 @@ class EXOActiveSyncOrganizationSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOActiveSyncOrganizationSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOActiveSyncOrganizationSettings])
-        {
-            return $Values
-        }
-
-        $result = [EXOActiveSyncOrganizationSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

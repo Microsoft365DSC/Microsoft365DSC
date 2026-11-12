@@ -226,15 +226,6 @@ class IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner : M365DSCResourc
                 TrustedServerCertificateNames         = $getValue.trustedServerCertificateNames
                 WiFiSecurityType                      = $getValue.wiFiSecurityType
                 Ensure                                = 'Present'
-                Credential                            = $this.Credential
-                ApplicationId                         = $this.ApplicationId
-                TenantId                              = $this.TenantId
-                ApplicationSecret                     = $this.ApplicationSecret
-                CertificateThumbprint                 = $this.CertificateThumbprint
-                CertificatePath                       = $this.CertificatePath
-                CertificatePassword                   = $this.CertificatePassword
-                ManagedIdentity                       = $this.ManagedIdentity
-                AccessTokens                          = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -376,18 +367,9 @@ class IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner : M365DSCResourc
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -446,23 +428,6 @@ class IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner : M365DSCResourc
         return @{
             ExcludedProperties = @('PreSharedKey')
         }
-    }
-
-    hidden [IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWifiConfigurationPolicyAndroidEnterpriseDeviceOwner]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

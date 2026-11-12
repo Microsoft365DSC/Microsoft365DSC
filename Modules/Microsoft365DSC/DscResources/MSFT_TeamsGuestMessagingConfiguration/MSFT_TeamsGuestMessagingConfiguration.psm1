@@ -102,24 +102,16 @@ class TeamsGuestMessagingConfiguration : M365DSCResourceBase
             $config = Get-CsTeamsGuestMessagingConfiguration -ErrorAction Stop
 
             return $this.AsResult(@{
-                AllowUserEditMessage      = $config.AllowUserEditMessage
-                AllowUserDeleteMessage    = $config.AllowUserDeleteMessage
-                AllowUserChat             = $config.AllowUserChat
-                AllowUserDeleteChat       = $config.AllowUserDeleteChat
-                AllowGiphy                = $config.AllowGiphy
-                GiphyRatingType           = $config.GiphyRatingType
-                AllowMemes                = $config.AllowMemes
-                AllowStickers             = $config.AllowStickers
-                AllowImmersiveReader      = $config.AllowImmersiveReader
-                IsSingleInstance          = 'Yes'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
+                AllowUserEditMessage   = $config.AllowUserEditMessage
+                AllowUserDeleteMessage = $config.AllowUserDeleteMessage
+                AllowUserChat          = $config.AllowUserChat
+                AllowUserDeleteChat    = $config.AllowUserDeleteChat
+                AllowGiphy             = $config.AllowGiphy
+                GiphyRatingType        = $config.GiphyRatingType
+                AllowMemes             = $config.AllowMemes
+                AllowStickers          = $config.AllowStickers
+                AllowImmersiveReader   = $config.AllowImmersiveReader
+                IsSingleInstance       = 'Yes'
             })
         }
         catch
@@ -192,15 +184,7 @@ class TeamsGuestMessagingConfiguration : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -234,22 +218,5 @@ class TeamsGuestMessagingConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsGuestMessagingConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsGuestMessagingConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [TeamsGuestMessagingConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

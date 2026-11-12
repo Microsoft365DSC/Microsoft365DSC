@@ -417,60 +417,53 @@ class AzureRoleEligibilityScheduleSettings : M365DSCResourceBase
 
             Write-Verbose -Message "Found configuration for Role {$($this.RoleDefinitionDisplayName)} at Scope {$($this.ScopeId)}"
             $resultObj = @{
-                RoleDefinitionDisplayName                                 = $this.RoleDefinitionDisplayName
-                ScopeId                                                   = $this.ScopeId
-                PolicyId                                                  = $policyIdValue
-                ActivationMaxDuration                                     = $result.ActivationMaxDuration
-                ActivationReqJustification                                = $result.ActivationReqJustification
-                ActivationReqTicket                                       = $result.ActivationReqTicket
-                ActivationReqMFA                                          = $result.ActivationReqMFA
-                ApprovaltoActivate                                        = $result.ApprovaltoActivate
-                ActivateApprover                                          = [System.String[]]$result.ActivateApprover
-                ActivationReqAuthContext                                  = $result.ActivationReqAuthContext
-                ActivationAuthContextId                                   = $result.ActivationAuthContextId
-                PermanentEligibleAssignmentisExpirationRequired           = $result.PermanentEligibleAssignmentisExpirationRequired
-                ExpireEligibleAssignment                                  = $result.ExpireEligibleAssignment
-                PermanentActiveAssignmentisExpirationRequired             = $result.PermanentActiveAssignmentisExpirationRequired
-                ExpireActiveAssignment                                    = $result.ExpireActiveAssignment
-                AssignmentReqMFA                                          = $result.AssignmentReqMFA
-                AssignmentReqJustification                                = $result.AssignmentReqJustification
-                EligibilityAssignmentReqMFA                               = $result.EligibilityAssignmentReqMFA
-                EligibilityAssignmentReqJustification                     = $result.EligibilityAssignmentReqJustification
-                EligibleAlertNotificationDefaultRecipient                 = $result.EligibleAlertNotificationDefaultRecipient
-                EligibleAlertNotificationAdditionalRecipient              = [System.String[]]$result.EligibleAlertNotificationAdditionalRecipient
-                EligibleAlertNotificationOnlyCritical                     = $result.EligibleAlertNotificationOnlyCritical
-                EligibleAssigneeNotificationDefaultRecipient              = $result.EligibleAssigneeNotificationDefaultRecipient
-                EligibleAssigneeNotificationAdditionalRecipient           = [System.String[]]$result.EligibleAssigneeNotificationAdditionalRecipient
-                EligibleAssigneeNotificationOnlyCritical                  = $result.EligibleAssigneeNotificationOnlyCritical
-                EligibleApproveNotificationDefaultRecipient               = $result.EligibleApproveNotificationDefaultRecipient
-                EligibleApproveNotificationAdditionalRecipient            = [System.String[]]$result.EligibleApproveNotificationAdditionalRecipient
-                EligibleApproveNotificationOnlyCritical                   = $result.EligibleApproveNotificationOnlyCritical
-                ActiveAlertNotificationDefaultRecipient                   = $result.ActiveAlertNotificationDefaultRecipient
-                ActiveAlertNotificationAdditionalRecipient                = [System.String[]]$result.ActiveAlertNotificationAdditionalRecipient
-                ActiveAlertNotificationOnlyCritical                       = $result.ActiveAlertNotificationOnlyCritical
-                ActiveAssigneeNotificationDefaultRecipient                = $result.ActiveAssigneeNotificationDefaultRecipient
-                ActiveAssigneeNotificationAdditionalRecipient             = [System.String[]]$result.ActiveAssigneeNotificationAdditionalRecipient
-                ActiveAssigneeNotificationOnlyCritical                    = $result.ActiveAssigneeNotificationOnlyCritical
-                ActiveApproveNotificationDefaultRecipient                 = $result.ActiveApproveNotificationDefaultRecipient
-                ActiveApproveNotificationAdditionalRecipient              = [System.String[]]$result.ActiveApproveNotificationAdditionalRecipient
-                ActiveApproveNotificationOnlyCritical                     = $result.ActiveApproveNotificationOnlyCritical
-                ActivationAlertNotificationDefaultRecipient               = $result.ActivationAlertNotificationDefaultRecipient
-                ActivationAlertNotificationAdditionalRecipient            = [System.String[]]$result.ActivationAlertNotificationAdditionalRecipient
-                ActivationAlertNotificationOnlyCritical                   = $result.ActivationAlertNotificationOnlyCritical
-                ActivationAssigneeNotificationDefaultRecipient            = $result.ActivationAssigneeNotificationDefaultRecipient
-                ActivationAssigneeNotificationAdditionalRecipient         = [System.String[]]$result.ActivationAssigneeNotificationAdditionalRecipient
-                ActivationAssigneeNotificationOnlyCritical                = $result.ActivationAssigneeNotificationOnlyCritical
-                ActivationApproveNotificationDefaultRecipient             = $result.ActivationApproveNotificationDefaultRecipient
-                ActivationApproveNotificationAdditionalRecipient          = [System.String[]]$result.ActivationApproveNotificationAdditionalRecipient
-                ActivationApproveNotificationOnlyCritical                 = $result.ActivationApproveNotificationOnlyCritical
-                ApplicationId                                             = $this.ApplicationId
-                TenantId                                                  = $this.TenantId
-                CertificateThumbprint                                     = $this.CertificateThumbprint
-                ApplicationSecret                                         = $this.ApplicationSecret
-                SubscriptionId                                            = $this.SubscriptionId
-                Credential                                                = $this.Credential
-                ManagedIdentity                                           = $this.ManagedIdentity
-                AccessTokens                                              = $this.AccessTokens
+                RoleDefinitionDisplayName                         = $this.RoleDefinitionDisplayName
+                ScopeId                                           = $this.ScopeId
+                PolicyId                                          = $policyIdValue
+                ActivationMaxDuration                             = $result.ActivationMaxDuration
+                ActivationReqJustification                        = $result.ActivationReqJustification
+                ActivationReqTicket                               = $result.ActivationReqTicket
+                ActivationReqMFA                                  = $result.ActivationReqMFA
+                ApprovaltoActivate                                = $result.ApprovaltoActivate
+                ActivateApprover                                  = [System.String[]]$result.ActivateApprover
+                ActivationReqAuthContext                          = $result.ActivationReqAuthContext
+                ActivationAuthContextId                           = $result.ActivationAuthContextId
+                PermanentEligibleAssignmentisExpirationRequired   = $result.PermanentEligibleAssignmentisExpirationRequired
+                ExpireEligibleAssignment                          = $result.ExpireEligibleAssignment
+                PermanentActiveAssignmentisExpirationRequired     = $result.PermanentActiveAssignmentisExpirationRequired
+                ExpireActiveAssignment                            = $result.ExpireActiveAssignment
+                AssignmentReqMFA                                  = $result.AssignmentReqMFA
+                AssignmentReqJustification                        = $result.AssignmentReqJustification
+                EligibilityAssignmentReqMFA                       = $result.EligibilityAssignmentReqMFA
+                EligibilityAssignmentReqJustification             = $result.EligibilityAssignmentReqJustification
+                EligibleAlertNotificationDefaultRecipient         = $result.EligibleAlertNotificationDefaultRecipient
+                EligibleAlertNotificationAdditionalRecipient      = [System.String[]]$result.EligibleAlertNotificationAdditionalRecipient
+                EligibleAlertNotificationOnlyCritical             = $result.EligibleAlertNotificationOnlyCritical
+                EligibleAssigneeNotificationDefaultRecipient      = $result.EligibleAssigneeNotificationDefaultRecipient
+                EligibleAssigneeNotificationAdditionalRecipient   = [System.String[]]$result.EligibleAssigneeNotificationAdditionalRecipient
+                EligibleAssigneeNotificationOnlyCritical          = $result.EligibleAssigneeNotificationOnlyCritical
+                EligibleApproveNotificationDefaultRecipient       = $result.EligibleApproveNotificationDefaultRecipient
+                EligibleApproveNotificationAdditionalRecipient    = [System.String[]]$result.EligibleApproveNotificationAdditionalRecipient
+                EligibleApproveNotificationOnlyCritical           = $result.EligibleApproveNotificationOnlyCritical
+                ActiveAlertNotificationDefaultRecipient           = $result.ActiveAlertNotificationDefaultRecipient
+                ActiveAlertNotificationAdditionalRecipient        = [System.String[]]$result.ActiveAlertNotificationAdditionalRecipient
+                ActiveAlertNotificationOnlyCritical               = $result.ActiveAlertNotificationOnlyCritical
+                ActiveAssigneeNotificationDefaultRecipient        = $result.ActiveAssigneeNotificationDefaultRecipient
+                ActiveAssigneeNotificationAdditionalRecipient     = [System.String[]]$result.ActiveAssigneeNotificationAdditionalRecipient
+                ActiveAssigneeNotificationOnlyCritical            = $result.ActiveAssigneeNotificationOnlyCritical
+                ActiveApproveNotificationDefaultRecipient         = $result.ActiveApproveNotificationDefaultRecipient
+                ActiveApproveNotificationAdditionalRecipient      = [System.String[]]$result.ActiveApproveNotificationAdditionalRecipient
+                ActiveApproveNotificationOnlyCritical             = $result.ActiveApproveNotificationOnlyCritical
+                ActivationAlertNotificationDefaultRecipient       = $result.ActivationAlertNotificationDefaultRecipient
+                ActivationAlertNotificationAdditionalRecipient    = [System.String[]]$result.ActivationAlertNotificationAdditionalRecipient
+                ActivationAlertNotificationOnlyCritical           = $result.ActivationAlertNotificationOnlyCritical
+                ActivationAssigneeNotificationDefaultRecipient    = $result.ActivationAssigneeNotificationDefaultRecipient
+                ActivationAssigneeNotificationAdditionalRecipient = [System.String[]]$result.ActivationAssigneeNotificationAdditionalRecipient
+                ActivationAssigneeNotificationOnlyCritical        = $result.ActivationAssigneeNotificationOnlyCritical
+                ActivationApproveNotificationDefaultRecipient     = $result.ActivationApproveNotificationDefaultRecipient
+                ActivationApproveNotificationAdditionalRecipient  = [System.String[]]$result.ActivationApproveNotificationAdditionalRecipient
+                ActivationApproveNotificationOnlyCritical         = $result.ActivationApproveNotificationOnlyCritical
+                SubscriptionId                                    = $this.SubscriptionId
             }
             return $this.AsResult($resultObj)
         }
@@ -1238,15 +1231,6 @@ class AzureRoleEligibilityScheduleSettings : M365DSCResourceBase
                         RoleDefinitionDisplayName = $instance.RoleDisplayName
                         ScopeId                   = $currentScope
                         SubscriptionId            = $this.SubscriptionId
-                        Credential                = $this.Credential
-                        ApplicationId             = $this.ApplicationId
-                        TenantId                  = $this.TenantId
-                        ApplicationSecret         = $this.ApplicationSecret
-                        CertificateThumbprint     = $this.CertificateThumbprint
-                        CertificatePath           = $this.CertificatePath
-                        CertificatePassword       = $this.CertificatePassword
-                        ManagedIdentity           = $this.ManagedIdentity
-                        AccessTokens              = $this.AccessTokens
                     }
 
                     $this.ExportedInstance = @{
@@ -1284,22 +1268,5 @@ class AzureRoleEligibilityScheduleSettings : M365DSCResourceBase
         return @{
             ExcludedProperties = @('SubscriptionId')
         }
-    }
-
-    hidden [AzureRoleEligibilityScheduleSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureRoleEligibilityScheduleSettings])
-        {
-            return $Values
-        }
-
-        $result = [AzureRoleEligibilityScheduleSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

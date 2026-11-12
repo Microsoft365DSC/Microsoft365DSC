@@ -87,18 +87,20 @@ InModuleScope -ModuleName 'M365DSCResourceGenerator' {
             $script:classContent | Should -Match '(?m)^class MSFT_MicrosoftGraphTestRule'
         }
 
-        It 'declares the four DSC methods plus AsResult' {
+        It 'declares the four DSC methods' {
             $script:classContent | Should -Match '\[AADTestPolicy\] Get\(\)'
             $script:classContent | Should -Match '\[void\] Set\(\)'
             $script:classContent | Should -Match '\[bool\] Test\(\)'
             $script:classContent | Should -Match '\[string\] Export\(\)'
-            $script:classContent | Should -Match 'hidden \[AADTestPolicy\] AsResult'
+            $script:classContent | Should -Not -Match 'AsResult\(\[System\.Object\]'
         }
 
         It 'uses the base-class plumbing instead of script-scope state' {
             $script:classContent | Should -Match '\$this\.Connect\(''MicrosoftGraph''\)'
             $script:classContent | Should -Match '\$this\.AddTelemetry\('
             $script:classContent | Should -Match '\$this\.ExportedInstance'
+            $script:classContent | Should -Match '\$this\.AsResult\('
+            $script:classContent | Should -Not -Match '=\s*\$this\.Credential\b'
             $script:classContent | Should -Not -Match '\$Script:exportedInstance'
             $script:classContent | Should -Not -Match 'function Get-TargetResource'
         }

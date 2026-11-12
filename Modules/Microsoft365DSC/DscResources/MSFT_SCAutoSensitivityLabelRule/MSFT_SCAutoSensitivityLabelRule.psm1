@@ -331,14 +331,6 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
                 SentToMemberOf                               = $PolicyRule.SentToMemberOf
                 SubjectMatchesPatterns                       = $PolicyRule.SubjectMatchesPatterns
                 Ensure                                       = 'Present'
-                Credential                                   = $this.Credential
-                ApplicationId                                = $this.ApplicationId
-                TenantId                                     = $this.TenantId
-                CertificateThumbprint                        = $this.CertificateThumbprint
-                CertificatePath                              = $this.CertificatePath
-                CertificatePassword                          = $this.CertificatePassword
-                ManagedIdentity                              = $this.ManagedIdentity
-                AccessTokens                                 = $this.AccessTokens
             }
 
             $paramsToRemove = @()
@@ -931,23 +923,6 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
         $result.Add('groups', $groups)
         $returnValue += $result
         return $returnValue
-    }
-
-    hidden [SCAutoSensitivityLabelRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCAutoSensitivityLabelRule])
-        {
-            return $Values
-        }
-
-        $result = [SCAutoSensitivityLabelRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

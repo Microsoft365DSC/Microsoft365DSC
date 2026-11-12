@@ -514,15 +514,6 @@ class AADServicePrincipal : M365DSCResourceBase
                 KeyCredentials                     = $complexKeyCredentials
                 PasswordCredentials                = $complexPasswordCredentials
                 Ensure                             = 'Present'
-                Credential                         = $this.Credential
-                ApplicationId                      = $this.ApplicationId
-                ApplicationSecret                  = $this.ApplicationSecret
-                TenantId                           = $this.TenantId
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
-                AccessTokens                       = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -1009,16 +1000,7 @@ class AADServicePrincipal : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($AADServicePrincipal.DisplayName)" -DeferWrite
                 $Params = @{
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AppID                 = $appIdValue
-                    AccessTokens          = $this.AccessTokens
+                    AppID = $appIdValue
                 }
                 $this.ExportedInstance = $AADServicePrincipal
                 $Results = $this.GetForExport($Params)
@@ -1367,23 +1349,6 @@ class AADServicePrincipal : M365DSCResourceBase
         }
 
         return $newCustomSecurityAttributes
-    }
-
-    hidden [AADServicePrincipal] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADServicePrincipal])
-        {
-            return $Values
-        }
-
-        $result = [AADServicePrincipal]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -96,14 +96,6 @@ class EXOAuthenticationPolicyAssignment : M365DSCResourceBase
                 UserName                 = $this.UserName
                 AuthenticationPolicyName = $user.AuthenticationPolicy
                 Ensure                   = 'Present'
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                TenantId                 = $this.TenantId
-                AccessTokens             = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -205,15 +197,7 @@ class EXOAuthenticationPolicyAssignment : M365DSCResourceBase
                     }
 
                     $Params = @{
-                        UserName              = $user.UserPrincipalName
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        UserName = $user.UserPrincipalName
                     }
                     $this.ExportedInstance = $user
                     $Results = $this.GetForExport($Params)
@@ -239,22 +223,5 @@ class EXOAuthenticationPolicyAssignment : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAuthenticationPolicyAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAuthenticationPolicyAssignment])
-        {
-            return $Values
-        }
-
-        $result = [EXOAuthenticationPolicyAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

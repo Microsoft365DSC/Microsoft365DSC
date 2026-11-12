@@ -74,15 +74,6 @@ class AADNetworkAccessSettingCrossTenantAccess : M365DSCResourceBase
             $results = @{
                 IsSingleInstance           = 'Yes'
                 NetworkPacketTaggingStatus = $instance.NetworkPacketTaggingStatus
-                Credential                 = $this.Credential
-                ApplicationId              = $this.ApplicationId
-                TenantId                   = $this.TenantId
-                ApplicationSecret          = $this.ApplicationSecret
-                CertificateThumbprint      = $this.CertificateThumbprint
-                CertificatePath            = $this.CertificatePath
-                CertificatePassword        = $this.CertificatePassword
-                ManagedIdentity            = $this.ManagedIdentity
-                AccessTokens               = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -137,16 +128,7 @@ class AADNetworkAccessSettingCrossTenantAccess : M365DSCResourceBase
             $Global:M365DSCExportResourceInstancesCount++
 
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -170,22 +152,5 @@ class AADNetworkAccessSettingCrossTenantAccess : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADNetworkAccessSettingCrossTenantAccess] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADNetworkAccessSettingCrossTenantAccess])
-        {
-            return $Values
-        }
-
-        $result = [AADNetworkAccessSettingCrossTenantAccess]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

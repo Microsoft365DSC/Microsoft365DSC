@@ -154,14 +154,6 @@ class EXOSharedMailbox : M365DSCResourceBase
                 MessageCopyForSendOnBehalfEnabled = $mailbox.MessageCopyForSendOnBehalfEnabled
                 MessageCopyForSentAsEnabled       = $mailbox.MessageCopyForSentAsEnabled
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                TenantId                          = $this.TenantId
-                AccessTokens                      = $this.AccessTokens
             }
 
             Write-Verbose -Message "Found an existing instance of Shared Mailbox '$($this.DisplayName)'"
@@ -406,17 +398,9 @@ class EXOSharedMailbox : M365DSCResourceBase
                     }
 
                     $params = @{
-                        Identity              = $mailbox.Identity
-                        Credential            = $this.Credential
-                        DisplayName           = $mailboxName
-                        Alias                 = $mailbox.Alias
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity    = $mailbox.Identity
+                        DisplayName = $mailboxName
+                        Alias       = $mailbox.Alias
                     }
                     $this.ExportedInstance = $mailbox
                     $Results = $this.GetForExport($Params)
@@ -447,22 +431,5 @@ class EXOSharedMailbox : M365DSCResourceBase
         return @{
             IncludedProperties = @('DisplayName')
         }
-    }
-
-    hidden [EXOSharedMailbox] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSharedMailbox])
-        {
-            return $Values
-        }
-
-        $result = [EXOSharedMailbox]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

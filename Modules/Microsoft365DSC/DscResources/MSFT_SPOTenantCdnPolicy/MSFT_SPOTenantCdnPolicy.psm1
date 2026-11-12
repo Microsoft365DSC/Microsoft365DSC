@@ -93,15 +93,6 @@ class SPOTenantCdnPolicy : M365DSCResourceBase
                 CDNType                              = $this.CDNType
                 ExcludeRestrictedSiteClassifications = $excludeRestrictedSiteClassificationsValue
                 IncludeFileExtensions                = $includeFileExtensionsValue
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                TenantId                             = $this.TenantId
-                ApplicationSecret                    = $this.ApplicationSecret
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                AccessTokens                         = $this.AccessTokens
             })
         }
         catch
@@ -181,16 +172,7 @@ class SPOTenantCdnPolicy : M365DSCResourceBase
             $this.ResourceCache['ExportMode'] = $true
 
             $Params = @{
-                CdnType               = 'Public'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                AccessTokens          = $this.AccessTokens
+                CdnType = 'Public'
             }
             $dscContent = [System.Text.StringBuilder]::new()
 
@@ -220,14 +202,7 @@ class SPOTenantCdnPolicy : M365DSCResourceBase
             }
 
             $Params = @{
-                CdnType               = 'Private'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
+                CdnType = 'Private'
             }
             Write-M365DSCHost -Message '    |---[2/2] Private' -DeferWrite
             $Results = $this.GetForExport($Params)
@@ -267,22 +242,5 @@ class SPOTenantCdnPolicy : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [SPOTenantCdnPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOTenantCdnPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SPOTenantCdnPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

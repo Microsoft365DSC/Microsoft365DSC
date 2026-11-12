@@ -202,15 +202,6 @@ class IntuneDeviceConfigurationPolicyAndroidOpenSourceProject : M365DSCResourceB
                 StorageBlockUsbFileTransfer                    = $getValue.storageBlockUsbFileTransfer
                 WifiBlockEditConfigurations                    = $getValue.wifiBlockEditConfigurations
                 Ensure                                         = 'Present'
-                Credential                                     = $this.Credential
-                ApplicationId                                  = $this.ApplicationId
-                TenantId                                       = $this.TenantId
-                ApplicationSecret                              = $this.ApplicationSecret
-                CertificateThumbprint                          = $this.CertificateThumbprint
-                CertificatePath                                = $this.CertificatePath
-                CertificatePassword                            = $this.CertificatePassword
-                ManagedIdentity                                = $this.ManagedIdentity
-                AccessTokens                                   = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -355,18 +346,9 @@ class IntuneDeviceConfigurationPolicyAndroidOpenSourceProject : M365DSCResourceB
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -418,23 +400,6 @@ class IntuneDeviceConfigurationPolicyAndroidOpenSourceProject : M365DSCResourceB
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceConfigurationPolicyAndroidOpenSourceProject] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationPolicyAndroidOpenSourceProject])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationPolicyAndroidOpenSourceProject]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 
