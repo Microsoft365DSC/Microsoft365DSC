@@ -11,6 +11,10 @@
   * Added `RoleEnabledGroupSyncInbound` to `IdentitySynchronization`.
 * AADEntitlementManagementAccessPackage
   * Fixed `Set()` failing to remove incompatible access packages and groups.
+* AADPIMGroupSetting
+  * Added the `RoleManagementPolicy.Read.AzureADGroup` and
+    `RoleManagementPolicy.ReadWrite.AzureADGroup` permissions. Without them, the export
+    returns no instance and `Set()` cannot update the policy rules of a group.
 * AADTenantDetails
   * Added the `ResourceQuotas` property.
 * AzureBillingAccountsAssociatedTenant
