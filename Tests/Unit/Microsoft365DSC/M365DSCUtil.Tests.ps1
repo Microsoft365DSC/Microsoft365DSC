@@ -51,8 +51,8 @@ Describe 'Test-M365DSCParameterState drift event' {
 
     It 'writes well-formed XML with escaped values for every drift' {
         Mock -ModuleName M365DSCUtil -CommandName Get-M365DSCLCMState -MockWith { 'ConsistencyCheck' }
-        $desired = @{ Identity = 'Policy'; Description = 'a & b <c>' }
-        $current = @{ Identity = 'Policy'; Description = 'old "value"' }
+        $desired = @{ Identity = 'Policy'; Description = 'a & b <c>'; AccessTokens = [System.String[]]@('token1', 'token2') }
+        $current = @{ Identity = 'Policy'; Description = 'old "value"'; AccessTokens = [System.String[]]@('token1', 'token2') }
 
         foreach ($i in 1..2)
         {
@@ -65,7 +65,11 @@ Describe 'Test-M365DSCParameterState drift event' {
         {
             $xml = [System.Xml.XmlDocument] $message
             ($xml.M365DSCEvent.DesiredValues.Param | Where-Object -Property Name -EQ 'Description').'#text' | Should -Be 'a & b <c>'
+            ($xml.M365DSCEvent.DesiredValues.Param | Where-Object -Property Name -EQ 'AccessTokens').'#text' | Should -Be '***'
+            ($xml.M365DSCEvent.CurrentValues.Param | Where-Object -Property Name -EQ 'AccessTokens').'#text' | Should -Be '***'
+            $message | Should -Not -Match 'token1'
         }
+        $desired.AccessTokens | Should -Be @('token1', 'token2')
     }
 
     It 'queries the LCM state for every drift' -Skip:(-not $IsWindows) {
@@ -111,7 +115,8 @@ Describe 'Write-M365DSCDriftsToEventLog' {
 
     It 'escapes values, renders complex values and does not mask the caller hashtables' {
         $credential = [System.Management.Automation.PSCredential]::new('user', (ConvertTo-SecureString -String 'pwd' -AsPlainText -Force))
-        $current = @{ Description = 'x & y'; Credential = $credential; Settings = @{ Name = 'a<b' } }
+        $assignment = New-CimInstance -ClassName 'MSFT_DeviceManagementConfigurationPolicyAssignments' -Property @{ dataType = 'allDevices' } -ClientOnly
+        $current = @{ Description = 'x & y'; Credential = $credential; Settings = @{ Name = 'a<b' }; Assignments = @($assignment); Owner = [PSCustomObject]@{ Id = 'o1' } }
         $desired = @{ Description = '<z>'; Credential = $credential; Settings = @{ Name = 'c' } }
         $drifts = @{
             DriftInfo = @(
@@ -129,6 +134,8 @@ Describe 'Write-M365DSCDriftsToEventLog' {
         $xml.M365DSCEvent.ConfigurationDrift.ParametersNotInDesiredState.Param.CurrentValue | Should -Be 'x & y'
         ($xml.M365DSCEvent.CurrentValues.Param | Where-Object -Property Name -EQ 'Settings').'#text' | Should -Be '{Name=a<b}'
         ($xml.M365DSCEvent.CurrentValues.Param | Where-Object -Property Name -EQ 'Credential').'#text' | Should -Be '***'
+        ($xml.M365DSCEvent.CurrentValues.Param | Where-Object -Property Name -EQ 'Assignments').'#text' | Should -Be '{dataType=allDevices}'
+        ($xml.M365DSCEvent.CurrentValues.Param | Where-Object -Property Name -EQ 'Owner').'#text' | Should -Be '{Id=o1}'
 
         $current.Credential | Should -Be $credential
         $desired.Credential | Should -Be $credential

@@ -52,6 +52,66 @@ function Import-M365DSCDscEngine
 
 <#
 .SYNOPSIS
+    Tests whether a script invokes the configuration outside of a function or configuration.
+
+.PARAMETER Path
+    Path of the configuration script.
+
+.PARAMETER ConfigurationName
+    Name of the configuration.
+
+.OUTPUTS
+    System.Boolean
+#>
+function Test-M365DSCScriptInvokesConfiguration
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Path,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ConfigurationName
+    )
+
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$parseErrors)
+    $invocations = $ast.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq $ConfigurationName
+    }, $true)
+
+    foreach ($invocation in $invocations)
+    {
+        $isNested = $false
+        $parent = $invocation.Parent
+        while ($null -ne $parent)
+        {
+            if ($parent -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
+                $parent -is [System.Management.Automation.Language.ConfigurationDefinitionAst])
+            {
+                $isNested = $true
+                break
+            }
+            $parent = $parent.Parent
+        }
+
+        if (-not $isNested)
+        {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+<#
+.SYNOPSIS
     Compiles an exported Microsoft365DSC configuration script to MOF.
 
 .DESCRIPTION
@@ -91,7 +151,10 @@ function Import-M365DSCDscEngine
     Folder for the generated MOF files.
 
 .NOTES
-    The standard pipeline without ConfigurationName runs the script's own invocation.
+    The standard pipeline runs the script's own invocation when ConfigurationName is not specified
+    or when the script invokes the configuration itself, as an exported script does. OutputPath,
+    ConfigurationData and ConfigurationDataPath then have no effect. The fast host behaves the same
+    for exported scripts. Edit the invocation at the end of the script to change them.
 
 .EXAMPLE
     Invoke-M365DSCConfigurationBuild -Path .\M365TenantConfig.ps1
@@ -144,6 +207,14 @@ function Invoke-M365DSCConfigurationBuild
     )
 
     $Path = (Resolve-Path -Path $Path -ErrorAction Stop).ProviderPath
+    if ($ConfigurationDataPath)
+    {
+        $ConfigurationDataPath = (Resolve-Path -LiteralPath $ConfigurationDataPath -ErrorAction Stop).ProviderPath
+    }
+    if ($OutputPath)
+    {
+        $OutputPath = $PSCmdlet.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
+    }
     if (-not $ConfigurationDataPath -and $null -eq $ConfigurationData)
     {
         $candidate = Join-Path -Path (Split-Path -Path $Path -Parent) -ChildPath 'ConfigurationData.psd1'
@@ -234,7 +305,7 @@ function Invoke-M365DSCConfigurationBuild
         Push-Location -Path $scriptDirectory
         try
         {
-            if (-not $ConfigurationName)
+            if (-not $ConfigurationName -or (Test-M365DSCScriptInvokesConfiguration -Path $Path -ConfigurationName $ConfigurationName))
             {
                 $ignoredParameters = @()
                 foreach ($parameterName in @('OutputPath', 'ConfigurationData', 'ConfigurationDataPath'))
@@ -246,7 +317,7 @@ function Invoke-M365DSCConfigurationBuild
                 }
                 if ($ignoredParameters.Count -gt 0)
                 {
-                    Write-Warning -Message "The standard pipeline without -ConfigurationName runs the script's own invocation, which decides the MOF location and configuration data. Ignoring: $($ignoredParameters -join ', '). Specify -ConfigurationName or use the fast host to apply them."
+                    Write-Warning -Message "The standard pipeline runs the script's own invocation, which decides the MOF location and configuration data. Ignoring: $($ignoredParameters -join ', '). Edit the invocation at the end of the script, or use a script that only declares the configuration together with -ConfigurationName, to apply them."
                 }
 
                 return (& $Path @invokeParameters)

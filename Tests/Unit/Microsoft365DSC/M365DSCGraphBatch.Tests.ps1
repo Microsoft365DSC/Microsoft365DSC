@@ -266,6 +266,9 @@ Describe 'Invoke-M365DSCLegacyBatchRequest' {
         Should -Invoke -ModuleName M365DSCUtil -CommandName Write-Warning -Times 0 -Exactly -ParameterFilter {
             $Message -like 'Batch retry returned no responses*'
         }
+        Should -Invoke -ModuleName M365DSCUtil -CommandName Write-Warning -Times 1 -Exactly -ParameterFilter {
+            $Message -like 'Batch request returned no responses. Skipping batch sub-requests: 1, 2, 3.'
+        }
     }
 }
 

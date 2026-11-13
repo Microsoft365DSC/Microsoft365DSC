@@ -50,9 +50,14 @@
   * Fixed `Invoke-M365DSCConfigurationBuild` resetting the recursion guard of an outer build.
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
     pipeline without `ConfigurationName` ignores.
+  * Fixed `Invoke-M365DSCConfigurationBuild -ConfigurationName` compiling an exported
+    configuration twice and prompting for its credential.
+  * Fixed `Invoke-M365DSCConfigurationBuild` resolving a relative `ConfigurationDataPath`
+    and `OutputPath` against the folder of the script.
 * M365DSCConfigurationHelper
   * Fixed `Get-M365DSCEvaluationRulesForConfiguration` generating configurations that do
     not compile.
+  * Fixed `Get-M365DSCEvaluationRulesForConfiguration` missing from the cmdlet documentation.
 * M365DSCConnection
   * Fixed `New-M365DSCConnection` replacing the `ApplicationSecret` credential of the
     caller with its plain text value.
@@ -69,6 +74,7 @@
 * M365DSCDRGUtil
   * Fixed the drift event XML not escaping values and showing type names instead of
     the desired and current values.
+  * Fixed drift events showing CIM instances as their class name.
 * M365DSCErrorHandler
   * Added `Test-M365DSCAccessError` to detect authentication and permission errors.
   * Updated `Save-M365DSCPartialExport` to accept empty content.
@@ -221,6 +227,17 @@
   * Fixed `Get-TeamByName` waiting 30 seconds for a missing team. Added `RetryCount`.
   * Fixed `Get-M365DSCConfigurationConflict` missing conflicts that differ only in case.
   * Fixed `Convert-M365DscHashtableToString` writing access tokens in plain text.
+  * Fixed `Test-M365DSCParameterState` writing access tokens and type names to the event log.
+  * Fixed the UTF-8 code page warning never being shown.
+  * Fixed `Install-M365DSCDevBranch` ignoring `-Scope` for the module files.
+  * Fixed the PowerShell 7 session being used after the module failed to load in it.
+  * Fixed failed Graph batch requests being skipped without a warning.
+  * Fixed the access package exports reading the same group or application name again
+    for every scope.
+  * Fixed `Assert-M365DSCBlueprint` hiding the error of an invalid blueprint and leaving
+    temporary files behind when the export fails.
+  * Fixed `Get-M365DSCResourceDifferences` returning an array when no version is installed.
+  * Fixed the duplicate team warning showing the URL-encoded team name.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Removed the relation templates of removed resources.
