@@ -11,6 +11,13 @@
   * Added `RoleEnabledGroupSyncInbound` to `IdentitySynchronization`.
 * AADEntitlementManagementAccessPackage
   * Fixed `Set()` failing to remove incompatible access packages and groups.
+* AADGroupEligibilitySchedule
+  * Added the `RoleManagementPolicy.ReadWrite.AzureADGroup` permission. Without it, `Set()`
+    cannot read or update the expiration rule of the group policy, which it does for the
+    `noExpiration`, `afterDateTime` and `afterDuration` expiration types.
+* AADGroupEligibilityScheduleSettings
+  * Added the `RoleManagementPolicy.Read.AzureADGroup` permission. Without it, the export
+    returns no instance.
 * AADPIMGroupSetting
   * Added the `RoleManagementPolicy.Read.AzureADGroup` and
     `RoleManagementPolicy.ReadWrite.AzureADGroup` permissions. Without them, the export
