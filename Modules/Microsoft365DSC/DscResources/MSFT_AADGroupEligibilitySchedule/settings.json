@@ -60,6 +60,9 @@
             "name": "PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup"
           },
           {
+            "name": "RoleManagementPolicy.ReadWrite.AzureADGroup"
+          },
+          {
             "name": "RoleManagementPolicy.ReadWrite.Directory"
           }
         ]
@@ -82,6 +85,9 @@
           },
           {
             "name": "PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup"
+          },
+          {
+            "name": "RoleManagementPolicy.ReadWrite.AzureADGroup"
           },
           {
             "name": "RoleManagementPolicy.ReadWrite.Directory"
