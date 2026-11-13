@@ -15,12 +15,12 @@
     Specifies the request payload to send when the method supports a body.
 
 .OUTPUTS
-    System.Collections.Hashtable
+    System.Management.Automation.PSCustomObject
 #>
 function Invoke-M365DSCDefenderREST
 {
     [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
+    [OutputType([System.Management.Automation.PSCustomObject])]
     param(
         [Parameter(Mandatory = $true)]
         [System.String]
@@ -35,7 +35,11 @@ function Invoke-M365DSCDefenderREST
         $Body
     )
 
-    $bodyJSON = ConvertTo-Json $Body -Depth 10 -Compress
+    $bodyJSON = $null
+    if ($null -ne $Body)
+    {
+        $bodyJSON = ConvertTo-Json $Body -Depth 10 -Compress
+    }
     $headers = @{
         Authorization  = (Get-MSCloudLoginConnectionProfile -Workload DefenderForEndpoint).AccessToken
         'Content-Type' = 'application/json'

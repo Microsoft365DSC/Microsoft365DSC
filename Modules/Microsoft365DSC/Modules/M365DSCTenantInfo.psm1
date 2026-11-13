@@ -212,7 +212,7 @@ function Get-M365DSCOrganization
     Returns the tenant short name portion that is used to build workload-specific endpoints.
 
 .PARAMETER UseMFA
-    Indicates that interactive multi-factor authentication should be used.
+    Obsolete. This parameter has no effect and is ignored.
 
 .PARAMETER Credential
     Specifies the credential used for delegated authentication.
@@ -225,6 +225,7 @@ function Get-M365TenantName
     [CmdletBinding()]
     param
     (
+        # TODO: Remove during next breaking change release
         [Parameter(Mandatory = $false)]
         [switch]
         $UseMFA,
@@ -234,11 +235,8 @@ function Get-M365TenantName
         $Credential
     )
 
-    Write-Verbose -Message 'Connection to Azure AD is required to automatically determine SharePoint Online admin URL...'
-    $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
-    Write-Verbose -Message 'Getting SharePoint Online admin URL...'
-    $tenantName = Get-M365DSCInitialDomainPrefix
+    $initialDomain = Get-M365DSCInitialDomain -InboundParameters $PSBoundParameters
+    $tenantName = $initialDomain.Split('.')[0]
 
     Write-Verbose -Message "M365 tenant name is $tenantName"
     return $tenantName
@@ -300,11 +298,12 @@ function Get-M365DSCAPIEndpoint
     Retrieves the SharePoint Online administration URL.
 
 .DESCRIPTION
-    Connects to Microsoft Graph, discovers the initial tenant domain, and builds the SharePoint admin URL.
-    Returns the URL in the https://tenant-admin.sharepoint.com format.
+    Connects to Microsoft Graph, discovers the initial tenant domain, and builds the SharePoint admin URL of the tenant cloud.
+    Returns the URL in the https://tenant-admin.sharepoint.com format, with the SharePoint domain of
+    US Government (sharepoint.us), DoD (sharepoint-mil.us), China (sharepoint.cn) and sovereign cloud tenants.
 
 .PARAMETER UseMFA
-    Indicates that interactive multi-factor authentication should be used.
+    Obsolete. This parameter has no effect and is ignored.
 
 .PARAMETER Credential
     Specifies the credential used for delegated authentication.
@@ -317,6 +316,7 @@ function Get-SPOAdministrationUrl
     [CmdletBinding()]
     param
     (
+        # TODO: Remove during next breaking change release
         [Parameter(Mandatory = $false)]
         [switch]
         $UseMFA,
@@ -326,24 +326,47 @@ function Get-SPOAdministrationUrl
         $Credential
     )
 
-    Write-Verbose -Message 'Connection to Azure AD is required to automatically determine SharePoint Online admin URL...'
-    $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-        -InboundParameters $PSBoundParameters
     Write-Verbose -Message 'Getting SharePoint Online admin URL...'
-    $tenantName = Get-M365DSCInitialDomainPrefix
-    $adminUrl = "https://$tenantName-admin.sharepoint.com"
+    $initialDomain = Get-M365DSCInitialDomain -InboundParameters $PSBoundParameters
+    $tenantName = $initialDomain.Split('.')[0]
+    $environmentName = (Get-MSCloudLoginConnectionProfile -Workload 'MicrosoftGraph').EnvironmentName
+
+    if ($initialDomain -like '*.onsovcloud.*')
+    {
+        $adminHost = $initialDomain.Replace('.onsovcloud.', '-admin.sovcloud-sharepoint.')
+    }
+    elseif ($initialDomain -like '*.partner.onmschina.cn')
+    {
+        $adminHost = "$tenantName-admin.sharepoint.cn"
+    }
+    elseif ($environmentName -eq 'AzureDOD')
+    {
+        $adminHost = "$tenantName-admin.sharepoint-mil.us"
+    }
+    elseif ($environmentName -eq 'AzureUSGovernment')
+    {
+        $adminHost = "$tenantName-admin.sharepoint.us"
+    }
+    else
+    {
+        $adminHost = "$tenantName-admin.sharepoint.$($initialDomain.Split('.')[-1])"
+    }
+
+    $adminUrl = "https://$adminHost"
     Write-Verbose -Message "SharePoint Online admin URL is $adminUrl"
     return $adminUrl
 }
 
 <#
 .SYNOPSIS
-    Returns the tenant prefix of the initial domain (e.g. contoso for contoso.onmicrosoft.com).
+    Returns the initial domain of the tenant (e.g. contoso.onmicrosoft.com).
 
 .DESCRIPTION
-    Reads the tenant domains from Microsoft Graph and returns the prefix of the initial onmicrosoft or onsovcloud domain.
+    Connects to Microsoft Graph and returns the initial onmicrosoft, onmschina or onsovcloud domain of the tenant.
     The default domain is not used because it could be a custom domain.
-    Requires an existing Microsoft Graph connection.
+
+.PARAMETER InboundParameters
+    Specifies the parameters used to connect to Microsoft Graph.
 
 .FUNCTIONALITY
     Internal
@@ -351,19 +374,27 @@ function Get-SPOAdministrationUrl
 .OUTPUTS
     System.String
 #>
-function Get-M365DSCInitialDomainPrefix
+function Get-M365DSCInitialDomain
 {
     [CmdletBinding()]
     [OutputType([System.String])]
-    param()
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $InboundParameters
+    )
+
+    Write-Verbose -Message 'Connection to Microsoft Graph is required to determine the initial domain of the tenant...'
+    $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
+        -InboundParameters $InboundParameters
 
     $domains = (Invoke-MgGraphRequest -Uri 'beta/domains' -Method GET -ErrorAction Stop).value
-    $initialDomainPattern = '^(?<prefix>[^.]+)\.(onmicrosoft\.(com|de|us)|onsovcloud\..+)$'
+    $initialDomainPattern = '^[^.]+\.(onmicrosoft\.(com|de|us)|partner\.onmschina\.cn|onsovcloud\..+)$'
     foreach ($domain in $domains)
     {
         if ($domain.isInitial -eq $true -and $domain.id -match $initialDomainPattern)
         {
-            return $Matches['prefix']
+            return $domain.id
         }
     }
 

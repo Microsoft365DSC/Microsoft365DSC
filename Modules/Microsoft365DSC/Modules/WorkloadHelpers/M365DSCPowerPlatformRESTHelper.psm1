@@ -15,12 +15,12 @@
     Specifies the request payload to send when the method supports a body.
 
 .OUTPUTS
-    System.Collections.Hashtable
+    System.Management.Automation.PSCustomObject
 #>
 function Invoke-M365DSCPowerPlatformRESTWebRequest
 {
     [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
+    [OutputType([System.Management.Automation.PSCustomObject])]
     param(
         [Parameter(Mandatory = $true)]
         [System.String]
@@ -56,9 +56,20 @@ function Invoke-M365DSCPowerPlatformRESTWebRequest
     }
     catch
     {
+        $errorMessage = $_.Exception.Message
         if (-not [System.String]::IsNullOrEmpty($_.ErrorDetails.Message))
         {
-            throw "$($_.Exception.Message) $($_.ErrorDetails.Message)"
+            $errorMessage = "$errorMessage $($_.ErrorDetails.Message)"
+        }
+
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden)
+        {
+            throw "Invalid permission for the application. If you are using a custom app registration to authenticate, make sure it is defined as a Power Platform admin management application. For additional information refer to https://learn.microsoft.com/en-us/power-platform/admin/powershell-create-service-principal#registering-an-admin-management-application $errorMessage"
+        }
+
+        if (-not [System.String]::IsNullOrEmpty($_.ErrorDetails.Message))
+        {
+            throw $errorMessage
         }
 
         throw $_
@@ -66,7 +77,14 @@ function Invoke-M365DSCPowerPlatformRESTWebRequest
     $result = $null
     if ($response.Content.Length -gt 0)
     {
-        $result = ConvertFrom-Json $response.Content -ErrorAction SilentlyContinue
+        try
+        {
+            $result = ConvertFrom-Json $response.Content -ErrorAction Stop
+        }
+        catch
+        {
+            Write-Verbose -Message "The response content is not valid JSON: $_"
+        }
     }
     return $result
 }

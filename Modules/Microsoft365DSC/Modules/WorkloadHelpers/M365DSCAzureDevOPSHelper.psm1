@@ -18,11 +18,12 @@
     The content type of the request. Default is 'application/json-patch+json'.
 
 .OUTPUTS
-    Returns a hashtable containing the response from the Azure DevOPS API. If the response content is not empty, it will be converted from JSON to a PowerShell object.
+    System.Management.Automation.PSCustomObject
+    Returns the response from the Azure DevOPS API converted from JSON, or $null when the response content is empty.
 #>
 function Invoke-M365DSCAzureDevOPSWebRequest
 {
-    [OutputType([System.Collections.Hashtable])]
+    [OutputType([System.Management.Automation.PSCustomObject])]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
