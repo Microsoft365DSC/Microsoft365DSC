@@ -1261,7 +1261,7 @@ function Start-M365DSCConfigurationExtract
         {
             try
             {
-                if ($IsWindows -and ([System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+                if (Test-M365DSCCurrentUserIsAdministrator)
                 {
                     $LCMConfig = Get-DscLocalConfigurationManager
                     if ($null -ne $LCMConfig.CertificateID)

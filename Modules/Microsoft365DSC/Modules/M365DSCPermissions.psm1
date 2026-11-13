@@ -154,32 +154,18 @@ function Get-M365DSCCompiledPermissionList
             $targetMatrix = if ($GroupByResourceName) { $currentResourceResults } else { $results }
 
             # Entra / Administrative roles
-            if ($null -ne $resourceSettings.roles.read -or $null -ne $resourceSettings.roles.update)
+            foreach ($currentAccessType in @('Read', 'Update'))
             {
-                $readRoles = $resourceSettings.roles.read
-                $updateRoles = $resourceSettings.roles.update
-                foreach ($role in $readRoles)
+                foreach ($role in $resourceSettings.roles.$currentAccessType)
                 {
-                    if (-not $targetMatrix.AdministrativeRoles.Read.Contains($role))
+                    if (-not $targetMatrix.AdministrativeRoles.$currentAccessType.Contains($role))
                     {
-                        Write-Verbose -Message "    Found new Administrative Read role {$($role)}"
-                        $targetMatrix.AdministrativeRoles.Read += $role
+                        Write-Verbose -Message "    Found new Administrative $currentAccessType role {$($role)}"
+                        $targetMatrix.AdministrativeRoles.$currentAccessType += $role
                     }
                     else
                     {
-                        Write-Verbose -Message "    Administrative Read role {$($role)} was already added"
-                    }
-                }
-                foreach ($role in $updateRoles)
-                {
-                    if (-not $targetMatrix.AdministrativeRoles.Update.Contains($role))
-                    {
-                        Write-Verbose -Message "    Found new Administrative Update role {$($role)}"
-                        $targetMatrix.AdministrativeRoles.Update += $role
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Administrative Update role {$($role)} was already added"
+                        Write-Verbose -Message "    Administrative $currentAccessType role {$($role)} was already added"
                     }
                 }
             }
@@ -260,18 +246,21 @@ function Get-M365DSCCompiledPermissionList
             $_.Remove('Permission')
         }
         $results = @{
-            AdministrativeRoles = $results.AdministrativeRoles.$AccessType
+            AdministrativeRoles = Get-M365DSCArrayFromProperty -PropertyValue ($results.AdministrativeRoles.$AccessType | Sort-Object -Unique) -ElementType ([System.String])
             Permissions         = $resultsByType
-            RequiredRoles       = ($results.RequiredRoles).$AccessType
-            RequiredRoleGroups  = ($results.RequiredRoleGroups).$AccessType
+            RequiredRoles       = Get-M365DSCArrayFromProperty -PropertyValue ($results.RequiredRoles.$AccessType | Sort-Object -Unique) -ElementType ([System.String])
+            RequiredRoleGroups  = Get-M365DSCArrayFromProperty -PropertyValue ($results.RequiredRoleGroups.$AccessType | Sort-Object -Unique) -ElementType ([System.String])
         }
     }
-
-    if (-not $GroupByResourceName)
+    elseif (-not $GroupByResourceName)
     {
-        $results.AdministrativeRoles = $results.AdministrativeRoles | Sort-Object -Unique
-        $results.RequiredRoleGroups  = $results.RequiredRoleGroups | Sort-Object -Unique
-        $results.RequiredRoles       = $results.RequiredRoles | Sort-Object -Unique
+        foreach ($section in @('AdministrativeRoles', 'RequiredRoleGroups', 'RequiredRoles'))
+        {
+            foreach ($currentAccessType in @('Read', 'Update'))
+            {
+                $results.$section.$currentAccessType = Get-M365DSCArrayFromProperty -PropertyValue ($results.$section.$currentAccessType | Sort-Object -Unique) -ElementType ([System.String])
+            }
+        }
     }
 
     return $results
@@ -428,7 +417,7 @@ function Update-M365DSCAllowedGraphScopes
         $Type,
 
         [Parameter()]
-        [ValidateSet('Global', 'China', 'USGov', 'USGovDoD', 'Germany')]
+        [ValidateSet('Global', 'China', 'USGov', 'USGovDoD')]
         [System.String]
         $Environment = 'Global'
     )
@@ -451,10 +440,14 @@ function Update-M365DSCAllowedGraphScopes
 
     Write-Verbose -Message "Specified type: $Type"
     $results = (Get-M365DSCCompiledPermissionList -ResourceNameList $resourceNames -PermissionType 'Delegated' -AccessType $Type).Permissions
-    [System.String[]]$permissions = ($results | Where-Object -Property API -EQ 'Graph').PermissionName
-
     # Remove the Tasks.Read.All permission from the list as it is causing an issue with the Graph SDK
-    $permissions = $permissions -ne 'Tasks.Read.All'
+    $permissions = Get-M365DSCArrayFromProperty -PropertyValue ($results | Where-Object -FilterScript { $_.API -eq 'Graph' -and $_.PermissionName -ne 'Tasks.Read.All' }).PermissionName -ElementType ([System.String])
+    if ($permissions.Count -eq 0)
+    {
+        Write-Warning -Message 'No delegated Microsoft Graph permissions are required for the specified resources.'
+        return
+    }
+
     Write-Verbose -Message "Found permissions: $($permissions -join ', ')"
     $params = @{
         Scopes = $permissions
@@ -551,6 +544,66 @@ function Get-M365DSCApiServicePrincipal
     $Cache.Add($cacheKey, $servicePrincipal)
 
     return $servicePrincipal
+}
+
+<#
+.SYNOPSIS
+    Resolves the service principal and app role id of an application permission.
+
+.DESCRIPTION
+    Returns a hashtable with the ServicePrincipal and AppRoleId keys, or with a Warning key when the API
+    has no service principal or no matching app role. A PermissionName that is a GUID and doesn't match any app
+    role value is used as the app role id.
+
+.PARAMETER Permission
+    Hashtable with the Api and PermissionName of the permission.
+
+.PARAMETER Cache
+    Hashtable holding the service principals already resolved during the current call.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function Resolve-M365DSCPermissionAppRole
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Permission,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Cache
+    )
+
+    $servicePrincipal = Get-M365DSCApiServicePrincipal -ApiName ($Permission.Api) -Cache $Cache
+    if ($null -eq $servicePrincipal)
+    {
+        return @{
+            Warning = "    No service principal found for API '$($Permission.Api)'. Grant '$($Permission.PermissionName)' manually."
+        }
+    }
+
+    $appRoleId = ($servicePrincipal.AppRoles | Where-Object -Property Value -EQ $Permission.PermissionName).Id
+    if ($null -eq $appRoleId -and [System.Guid]::TryParse($Permission.PermissionName, [ref][System.Guid]::Empty))
+    {
+        $appRoleId = $Permission.PermissionName
+    }
+
+    if ($null -eq $appRoleId)
+    {
+        return @{
+            Warning = "    API '$($Permission.Api)' has no application permission '$($Permission.PermissionName)'."
+        }
+    }
+
+    return @{
+        ServicePrincipal = $servicePrincipal
+        AppRoleId        = $appRoleId
+    }
 }
 
 <#
@@ -787,6 +840,30 @@ function Update-M365DSCAzureAdApplication
         Write-Host @params
     }
 
+    # Type follows the Certificate parameter set when it is not specified
+    if (-not $PSBoundParameters.ContainsKey('Type') -and $PSCmdlet.ParameterSetName -eq 'Certificate')
+    {
+        $Type = 'Certificate'
+    }
+
+    if ($Type -eq 'Secret' -and $PSCmdlet.ParameterSetName -eq 'Certificate')
+    {
+        Write-LogEntry -Message 'The CertificatePath and CreateSelfSignedCertificate parameters require Type Certificate.' -Type Error
+        return
+    }
+
+    if ($Type -eq 'Certificate' -and $CreateNewSecret)
+    {
+        Write-LogEntry -Message 'The CreateNewSecret parameter requires Type Secret.' -Type Error
+        return
+    }
+
+    if ($AdminConsent -and $Type -ne 'ManagedIdentity' -and -not $PSBoundParameters.ContainsKey('Credential'))
+    {
+        Write-LogEntry -Message 'You need to provide admin credentials when specifying the AdminConsent parameter.' -Type Error
+        return
+    }
+
     Confirm-M365DSCDependencies
 
     $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
@@ -857,6 +934,14 @@ function Update-M365DSCAzureAdApplication
             {
                 Write-LogEntry -Message '  AdminConsent is ignored because permissions assigned to a managed identity need no consent.' -Type Warning
             }
+
+            foreach ($ignoredParameter in @('CertificatePath', 'CreateSelfSignedCertificate', 'CreateNewSecret', 'MonthsValid'))
+            {
+                if ($PSBoundParameters.ContainsKey($ignoredParameter))
+                {
+                    Write-LogEntry -Message "  $ignoredParameter is ignored because no credential is created for a managed identity." -Type Warning
+                }
+            }
         }
     }
 
@@ -899,23 +984,14 @@ function Update-M365DSCAzureAdApplication
             }
             Write-LogEntry "  Checking permission '$($permission.Api)\$($permission.PermissionName)'"
 
-            $svcprincipal = Get-M365DSCApiServicePrincipal -ApiName ($permission.Api) -Cache $servicePrincipalCache
-            if ($null -eq $svcprincipal)
+            $resolvedPermission = Resolve-M365DSCPermissionAppRole -Permission $permission -Cache $servicePrincipalCache
+            if ($resolvedPermission.ContainsKey('Warning'))
             {
-                Write-LogEntry "    No service principal found for API '$($permission.Api)'. Grant '$($permission.PermissionName)' manually." -Type Warning
+                Write-LogEntry $resolvedPermission.Warning -Type Warning
                 continue
             }
-
-            $appRoleId = ($svcprincipal.AppRoles | Where-Object -Property Value -EQ $permission.PermissionName).Id
-            if ($null -eq $appRoleId -and [System.Guid]::TryParse($permission.PermissionName, [ref][System.Guid]::Empty))
-            {
-                $appRoleId = $permission.PermissionName
-            }
-            if ($null -eq $appRoleId)
-            {
-                Write-LogEntry "    API '$($permission.Api)' has no application permission '$($permission.PermissionName)'." -Type Warning
-                continue
-            }
+            $svcprincipal = $resolvedPermission.ServicePrincipal
+            $appRoleId = $resolvedPermission.AppRoleId
 
             if ($null -ne ($existingAssignments | Where-Object -FilterScript { $_.resourceId -eq $svcprincipal.Id -and $_.appRoleId -eq $appRoleId }))
             {
@@ -948,7 +1024,14 @@ function Update-M365DSCAzureAdApplication
 
     Write-LogEntry ' '
     Write-LogEntry 'Checking existence of AD Application'
-    if (-not ($azureADApp = Get-MgApplication -Filter "DisplayName eq '$($ApplicationName -replace "'", "''")'" -ErrorAction SilentlyContinue))
+    $azureADApps = @(Get-MgApplication -Filter "DisplayName eq '$($ApplicationName -replace "'", "''")'" -ErrorAction SilentlyContinue)
+    if ($azureADApps.Count -gt 1)
+    {
+        Write-LogEntry -Message "Multiple applications named '$ApplicationName' found. Specify a unique application name instead." -Type Error
+        return
+    }
+
+    if ($azureADApps.Count -eq 0)
     {
         $azureADApp = New-MgApplication -DisplayName $ApplicationName
         Write-LogEntry "  New Azure AD application '$ApplicationName' created!"
@@ -956,6 +1039,7 @@ function Update-M365DSCAzureAdApplication
     }
     else
     {
+        $azureADApp = $azureADApps[0]
         Write-LogEntry "  Application '$ApplicationName' already exists!"
     }
 
@@ -974,24 +1058,14 @@ function Update-M365DSCAzureAdApplication
             }
             Write-LogEntry "  Checking permission '$($permission.Api)\$($permission.PermissionName)'"
 
-            $svcprincipal = Get-M365DSCApiServicePrincipal -ApiName ($permission.Api) -Cache $servicePrincipalCache
-            if ($null -eq $svcprincipal)
+            $resolvedPermission = Resolve-M365DSCPermissionAppRole -Permission $permission -Cache $servicePrincipalCache
+            if ($resolvedPermission.ContainsKey('Warning'))
             {
-                Write-LogEntry "    No service principal found for API '$($permission.Api)'. Grant '$($permission.PermissionName)' manually." -Type Warning
+                Write-LogEntry $resolvedPermission.Warning -Type Warning
                 continue
             }
-
-            $appRoleId = ($svcprincipal.AppRoles | Where-Object -Property Value -EQ $permission.PermissionName).Id
-            if ($null -eq $appRoleId -and [System.Guid]::TryParse($permission.PermissionName, [ref][System.Guid]::Empty))
-            {
-                $appRoleId = $permission.PermissionName
-            }
-
-            if ($null -eq $appRoleId)
-            {
-                Write-LogEntry "    API '$($permission.Api)' has no application permission '$($permission.PermissionName)'." -Type Warning
-                continue
-            }
+            $svcprincipal = $resolvedPermission.ServicePrincipal
+            $appRoleId = $resolvedPermission.AppRoleId
 
             # Already requested permissions are only reported, they must stay in the PATCH body to be kept
             $existingAccess = $azureADApp.RequiredResourceAccess | Where-Object -FilterScript { $_.ResourceAppId -eq $svcprincipal.AppId }
@@ -1062,53 +1136,48 @@ function Update-M365DSCAzureAdApplication
 
         if ($AdminConsent)
         {
-            if (-not $PSBoundParameters.ContainsKey('Credential'))
+            if ($requireWait)
             {
-                Write-LogEntry '[ERROR] You need to provide admin credentials when specifying the AdminConsent parameter.'
-            }
-            else
-            {
-                $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                    -InboundParameters $PSBoundParameters
-                if ($requireWait)
-                {
-                    Write-LogEntry ' '
-                    Write-LogEntry 'Waiting 10 seconds for application creation'
-                    Write-LogEntry '  ...'
-                    Start-Sleep -Seconds 10
-                }
-
                 Write-LogEntry ' '
-                Write-LogEntry 'Providing Admin Consent for application permissions'
+                Write-LogEntry 'Waiting 10 seconds for application creation'
+                Write-LogEntry '  ...'
+                Start-Sleep -Seconds 10
+            }
 
-                $currentConnectionProfile = Get-MSCloudLoginConnectionProfile -Workload 'MicrosoftGraph'
-                $authorizationUrl = $currentConnectionProfile.AuthorizationUrl
-                $tenantId = $Credential.GetNetworkCredential().UserName.Split('@')[-1]
-                $token = Get-AuthToken -AuthorizationUrl $authorizationUrl `
-                    -ClientId '1950a258-227b-4e31-a9cf-717495945fc2' `
-                    -Scope '74658136-14ec-4630-ad9b-26e160ff0fc6/.default' `
-                    -Credentials $Credential `
-                    -TenantId $tenantId `
-                    -DeviceCode
+            Write-LogEntry ' '
+            Write-LogEntry 'Providing Admin Consent for application permissions'
 
-                $headers = @{
-                    authorization            = "Bearer $($token.access_token)"
-                    'x-ms-client-request-id' = [guid]::NewGuid().ToString()
-                    'x-ms-client-session-id' = [guid]::NewGuid().ToString()
-                }
+            $currentConnectionProfile = Get-MSCloudLoginConnectionProfile -Workload 'MicrosoftGraph'
+            $authorizationUrl = $currentConnectionProfile.AuthorizationUrl
+            $consentTenantId = $Credential.GetNetworkCredential().UserName.Split('@')[-1]
+            if ($PSBoundParameters.ContainsKey('TenantId'))
+            {
+                $consentTenantId = $TenantId
+            }
+            $token = Get-AuthToken -AuthorizationUrl $authorizationUrl `
+                -ClientId '1950a258-227b-4e31-a9cf-717495945fc2' `
+                -Scope '74658136-14ec-4630-ad9b-26e160ff0fc6/.default' `
+                -Credentials $Credential `
+                -TenantId $consentTenantId `
+                -DeviceCode
 
-                $applicationId = $azureADApp.AppId
-                $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$applicationId/Consent?onBehalfOfAll=true"
-                try
-                {
-                    $null = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop
-                    Write-LogEntry '  Admin Consent for application permissions provided'
-                }
-                catch
-                {
-                    Write-LogEntry '[ERROR] Error while providing consent to the requested permissions. Please make sure you provide consent via the Azure AD Admin Portal.' -Type Error
-                    Write-LogEntry "Error details: $($_.Exception.Message)"
-                }
+            $headers = @{
+                authorization            = "Bearer $($token.access_token)"
+                'x-ms-client-request-id' = [guid]::NewGuid().ToString()
+                'x-ms-client-session-id' = [guid]::NewGuid().ToString()
+            }
+
+            $consentAppId = $azureADApp.AppId
+            $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$consentAppId/Consent?onBehalfOfAll=true"
+            try
+            {
+                $null = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop
+                Write-LogEntry '  Admin Consent for application permissions provided'
+            }
+            catch
+            {
+                Write-LogEntry 'Error while providing consent to the requested permissions. Please make sure you provide consent via the Azure AD Admin Portal.' -Type Error
+                Write-LogEntry "Error details: $($_.Exception.Message)"
             }
         }
 

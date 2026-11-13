@@ -3,8 +3,9 @@
     Loads and initializes the Microsoft365DSC C# dll files.
 
 .DESCRIPTION
-    This module loads all of the Microsoft365DSC.*.dll at module import time.
-    It fails fast when a dll file is missing or cannot be loaded.
+    This module provides Initialize-M365DSCDllLoader, which loads all of the Microsoft365DSC.*.dll
+    files the first time a function that needs them calls it. It fails when a dll file is missing
+    or cannot be loaded.
 
 .NOTES
     The DLLs are located in the Dependencies/Assemblies directory relative to the module root.
@@ -52,7 +53,6 @@ function Initialize-M365DSCDllLoader
             'Microsoft365DSC.Reporting.dll'
         )
 
-        $loadedAssemblies = @()
         foreach ($dllName in $dllsToLoad)
         {
             $dllPath = Join-Path -Path $moduleRoot -ChildPath "Dependencies/Assemblies/$dllName"
@@ -64,7 +64,8 @@ function Initialize-M365DSCDllLoader
             Write-Verbose -Message "Loading dll from: $dllPath"
             try
             {
-                $loadedAssemblies += Add-Type -Path $dllPath -PassThru -ErrorAction Stop
+                Add-Type -Path $dllPath -ErrorAction Stop
+                Write-Verbose -Message "Loaded assembly: $([System.Reflection.AssemblyName]::GetAssemblyName($dllPath).FullName)"
             }
             catch
             {
@@ -88,11 +89,6 @@ function Initialize-M365DSCDllLoader
                     Write-Verbose -Message "Assembly $dllName is already loaded. Skipping."
                 }
             }
-        }
-
-        foreach ($assembly in $loadedAssemblies)
-        {
-            Write-Verbose -Message "Loaded assembly: $($assembly.FullName)"
         }
 
         Write-Verbose -Message "Microsoft365DSC C# dll files loaded successfully."

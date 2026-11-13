@@ -127,10 +127,12 @@ Describe 'M365DSCModuleMgmt' {
             Mock -ModuleName M365DSCModuleMgmt -CommandName Get-PSResource -MockWith { $null }
             Mock -ModuleName M365DSCModuleMgmt -CommandName Get-Module -ParameterFilter { $ListAvailable } -MockWith { $null }
             Mock -ModuleName M365DSCModuleMgmt -CommandName Test-M365DSCDependencyManifestPath -MockWith { $ModuleName -eq 'Test.Present' }
+            Mock -ModuleName M365DSCModuleMgmt -CommandName Test-M365DSCCurrentUserIsAdministrator -MockWith { $false }
 
-            $result = Update-M365DSCDependencies -ValidateOnly
+            $result = Update-M365DSCDependencies -ValidateOnly -ErrorAction Stop
 
             @($result).ModuleName | Should -Be @('Test.Missing')
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Test-M365DSCCurrentUserIsAdministrator -Times 0 -Exactly
             Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Install-Module -Times 0 -Exactly
             Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Install-PSResource -Times 0 -Exactly
             Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Get-PSResource -Times 0 -Exactly

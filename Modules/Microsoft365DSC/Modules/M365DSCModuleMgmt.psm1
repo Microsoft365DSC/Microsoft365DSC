@@ -720,6 +720,7 @@ function Confirm-M365DSCLoadedModule
                 Cmdlet              = @()
                 Variable            = @()
                 Alias               = @()
+                ErrorAction         = 'Stop'
             }
             $Script:M365DSCGraphShimLoaded = $true
         }
@@ -761,6 +762,7 @@ function Confirm-M365DSCLoadedModule
         Cmdlet              = @()
         Variable            = @()
         DisableNameChecking = $true
+        ErrorAction         = 'Stop'
     }
 
     if ($manifestModule.Commands.Count -gt 0)
@@ -778,6 +780,14 @@ function Confirm-M365DSCLoadedModule
     elseif ($loadedModule.Version -ne $manifestModule.RequiredVersion)
     {
         Write-Verbose -Message "Module '$ModuleName' is loaded but the version '$($loadedModule.Version)' does not match the required version '$($manifestModule.RequiredVersion)'."
+        $requiredModule = @{
+            ModuleName      = $ModuleName
+            RequiredVersion = $manifestModule.RequiredVersion
+        }
+        if ($null -eq (Get-Module -FullyQualifiedName $requiredModule -ListAvailable))
+        {
+            throw "Module '$ModuleName' with the required version '$($manifestModule.RequiredVersion)' is not installed. Please run Update-M365DSCDependencies."
+        }
         Remove-Module -Name $ModuleName -Force -ErrorAction SilentlyContinue
         Write-Verbose -Message "Unloaded module '$ModuleName' with version '$($loadedModule.Version)'."
         Import-M365DSCDependencyModule -Parameters $importModuleSplat
@@ -942,14 +952,14 @@ function Test-M365DSCModuleValidity
         return
     }
 
-    # Validate if only one installation of the module is present and that it's the latest version available
+    # Check whether a newer version of the module is available on the PowerShell Gallery
     if ($Script:IsPsResourceGetAvailable)
     {
         $latestVersion = (Find-PSResource -Name 'Microsoft365DSC' -Repository 'PSGallery').Version | Sort-Object -Descending | Select-Object -First 1
     }
     else
     {
-        $latestVersion = (Find-Module -Name 'Microsoft365DSC' -Includes 'DSCResource').Version
+        $latestVersion = (Find-Module -Name 'Microsoft365DSC' -Repository 'PSGallery').Version | Sort-Object -Descending | Select-Object -First 1
     }
     $localVersion = (Get-Module -Name 'Microsoft365DSC').Version
 
@@ -1054,6 +1064,15 @@ function Uninstall-M365DSCOutdatedDependencies
         $InformationPreference = 'Continue'
 
         [array]$microsoft365DscModules = Get-Module Microsoft365DSC -ListAvailable
+        # The dependencies are pruned to the manifest of the loaded version, which has to be the newest one
+        $loadedVersion = (Get-Module -Name Microsoft365DSC | Sort-Object -Property Version -Descending | Select-Object -First 1).Version
+        $newestVersion = ($microsoft365DscModules | Sort-Object -Property Version -Descending | Select-Object -First 1).Version
+        if ($null -ne $loadedVersion -and $null -ne $newestVersion -and $loadedVersion -lt $newestVersion)
+        {
+            Write-Warning -Message "The loaded Microsoft365DSC version $loadedVersion is older than the installed version $newestVersion. Start a new PowerShell session with version $newestVersion before removing outdated dependencies."
+            return
+        }
+
         $outdatedMicrosoft365DscModules = $microsoft365DscModules | Sort-Object -Property Version | Select-Object -SkipLast 1
 
         foreach ($module in $outdatedMicrosoft365DscModules)
@@ -1279,6 +1298,8 @@ function Update-M365DSCDependencies
             $dependencies += @($Script:M365DSCDevDependencies.Values)
         }
 
+        $isAdministratorRequired = -not $ValidateOnly -and $IsWindows -and $Scope -eq 'AllUsers' -and -not (Test-M365DSCCurrentUserIsAdministrator)
+        $isAdministratorMissing = $false
         foreach ($dependency in $dependencies)
         {
             $i++
@@ -1309,43 +1330,34 @@ function Update-M365DSCDependencies
 
                 if ((-not $found -or $Force) -and -not $ValidateOnly)
                 {
-                    $errorFound = $false
-                    try
+                    # Stop at the first dependency to install when an AllUsers install is not elevated
+                    if ($isAdministratorRequired)
                     {
-                        if (($PSEdition -eq 'Desktop' -or $IsWindows) -and (-not(([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) -and ($Scope -eq "AllUsers"))
-                        {
-                            Write-Error 'Cannot update the dependencies for Microsoft365DSC. You need to run this command as a local administrator.'
-                            $errorFound = $true
-                        }
+                        $isAdministratorMissing = $true
+                        break
                     }
-                    catch
+
+                    if ($dependency.PowerShellCore -and -not $Script:IsPowerShellCore)
                     {
-                        Write-Verbose -Message "Couldn't retrieve Windows Principal. One possible cause is that the current environment is not a Windows OS."
+                        Write-Warning "The dependency {$($dependency.ModuleName)} requires PowerShell Core. Please run Update-M365DSCDependencies in PowerShell Core."
+                        continue
                     }
-                    if (-not $errorFound)
+
+                    Remove-Module $dependency.ModuleName -Force -ErrorAction SilentlyContinue
+                    if ($dependency.ModuleName -like 'Microsoft.Graph*')
                     {
-                        if ($dependency.PowerShellCore -and -not $Script:IsPowerShellCore)
-                        {
-                            Write-Warning "The dependency {$($dependency.ModuleName)} requires PowerShell Core. Please run Update-M365DSCDependencies in PowerShell Core."
-                            continue
-                        }
+                        Remove-Module 'Microsoft.Graph.Authentication' -Force -ErrorAction SilentlyContinue
+                    }
 
-                        Remove-Module $dependency.ModuleName -Force -ErrorAction SilentlyContinue
-                        if ($dependency.ModuleName -like 'Microsoft.Graph*')
-                        {
-                            Remove-Module 'Microsoft.Graph.Authentication' -Force -ErrorAction SilentlyContinue
-                        }
-
-                        if ($scopedIsPsResourceGetAvailable -and -not $UsePowerShellGet)
-                        {
-                            Write-Information -MessageData "Using Install-PSResource to install $($dependency.ModuleName) with version {$($dependency.RequiredVersion)}"
-                            Install-PSResource -Name $dependency.ModuleName -Version $dependency.RequiredVersion -Scope $Scope -AcceptLicense -SkipDependencyCheck -TrustRepository -Repository $Repository
-                        }
-                        else
-                        {
-                            Write-Information -MessageData "Using Install-Module to install $($dependency.ModuleName) with version {$($dependency.RequiredVersion)}"
-                            Install-Module $dependency.ModuleName -RequiredVersion $dependency.RequiredVersion -AllowClobber -Force -Scope "$Scope" @Params -Repository $Repository
-                        }
+                    if ($scopedIsPsResourceGetAvailable -and -not $UsePowerShellGet)
+                    {
+                        Write-Information -MessageData "Using Install-PSResource to install $($dependency.ModuleName) with version {$($dependency.RequiredVersion)}"
+                        Install-PSResource -Name $dependency.ModuleName -Version $dependency.RequiredVersion -Scope $Scope -AcceptLicense -SkipDependencyCheck -TrustRepository -Repository $Repository
+                    }
+                    else
+                    {
+                        Write-Information -MessageData "Using Install-Module to install $($dependency.ModuleName) with version {$($dependency.RequiredVersion)}"
+                        Install-Module $dependency.ModuleName -RequiredVersion $dependency.RequiredVersion -AllowClobber -Force -Scope "$Scope" @Params -Repository $Repository
                     }
                 }
 
@@ -1362,6 +1374,11 @@ function Update-M365DSCDependencies
 
         # The progress bar seems to hang sometimes. Make sure it is no longer displayed.
         Write-Progress -Activity 'Scanning dependencies' -Completed
+
+        if ($isAdministratorMissing)
+        {
+            Write-Error -Message 'Cannot update the dependencies for Microsoft365DSC. You need to run this command as a local administrator.'
+        }
 
         if ($ValidateOnly)
         {
@@ -1449,7 +1466,8 @@ function Update-M365DSCModule
     }
     catch
     {
-        if ($_.Exception.Message -like "*Module 'Microsoft365DSC' was not installed by using Install-Module*")
+        $updateError = $_
+        if ($updateError.Exception.Message -like "*Module 'Microsoft365DSC' was not installed by using Install-Module*")
         {
             Write-Verbose -Message "The Microsoft365DSC module might have been installed with Install-PSResource"
             if ($Script:IsPsResourceGetAvailable)
@@ -1479,11 +1497,25 @@ function Update-M365DSCModule
                     }
                 }
             }
+            else
+            {
+                New-M365DSCLogEntry -Message 'Error Updating Module:' `
+                    -Exception $updateError `
+                    -Source $($MyInvocation.MyCommand.Source)
+                throw $updateError
+            }
         }
-        elseif ($_.Exception.Message -like "*was not updated because no valid module was found*")
+        elseif ($updateError.Exception.Message -like "*was not updated because no valid module was found*")
         {
             Write-Verbose -Message "No valid module was found to update."
             $unloadModule = $false
+        }
+        else
+        {
+            New-M365DSCLogEntry -Message 'Error Updating Module:' `
+                -Exception $updateError `
+                -Source $($MyInvocation.MyCommand.Source)
+            throw $updateError
         }
     }
     try

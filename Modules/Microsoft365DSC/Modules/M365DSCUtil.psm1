@@ -266,8 +266,11 @@ function Get-M365DSCArrayFromProperty
 .SYNOPSIS
     Tests whether the current Windows identity is a local administrator.
 
+.DESCRIPTION
+    Returns $false on platforms other than Windows.
+
 .FUNCTIONALITY
-    Private
+    Internal
 
 .OUTPUTS
     System.Boolean
@@ -277,6 +280,11 @@ function Test-M365DSCCurrentUserIsAdministrator
     [CmdletBinding()]
     [OutputType([System.Boolean])]
     param()
+
+    if (-not $IsWindows)
+    {
+        return $false
+    }
 
     $principal = [System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()
     return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -4596,6 +4604,7 @@ Export-ModuleMember -Function @(
     'Send-M365DSCPushNotification',
     'Set-M365DSCResourcesDictionary',
     'Test-CodePage',
+    'Test-M365DSCCurrentUserIsAdministrator',
     'Test-M365DSCParameterState',
     'Test-M365DSCTargetResource',
     'Update-M365DSCAuthenticationConfiguration',

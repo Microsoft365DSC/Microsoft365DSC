@@ -43,6 +43,9 @@
   * Fixed `Test-M365DSCAgent` numbering every issue and recommendation as the first one.
   * Fixed several issues in `Set-M365DSCAgentCertificateConfiguration` regarding
     certificate creation and storing handling.
+  * Fixed `Test-M365DSCAgent` changing the WinRM configuration and missing the `MaxEnvelopeSize`.
+  * Fixed `Set-M365DSCAgentCertificateConfiguration -ForceRenew` leaving the private keys
+    of the replaced certificates behind.
 * M365DSCAzureHelper
   * Fixed failed Azure Billing requests being treated as empty results.
   * Fixed the billing account list ignoring the `includeAll` parameter.
@@ -153,9 +156,24 @@
     previous dependency.
   * Fixed `Uninstall-M365DSCOutdatedDependencies` using an undefined scope.
   * Fixed `Update-M365DSCDependencies -ValidateOnly` failing without PSResourceGet.
+  * Fixed failed dependency imports being treated as loaded for the rest of the session.
+  * Fixed `Uninstall-M365DSCOutdatedDependencies` removing the dependencies of the newest
+    version when an older version is loaded.
+  * Fixed `Update-M365DSCDependencies` installing without administrator rights under
+    `-ErrorAction Stop` and reporting the administrator error once per dependency.
+  * Fixed `Update-M365DSCModule` ignoring a failed module update.
+  * Fixed the new version check querying other repositories than the PowerShell Gallery.
 * M365DSCPermissions
+  * Removed the retired `Germany` environment from `Update-M365DSCAllowedGraphScopes`.
   * Fixed several issues in `Update-M365DSCAzureAdApplication` regarding API permissions
     and certificate handling.
+  * Fixed `Get-M365DSCCompiledPermissionList` not sorting the roles and output.
+  * Fixed `Update-M365DSCAllowedGraphScopes` requesting an invalid scope.
+  * Fixed `Update-M365DSCAzureAdApplication` ignoring `-CertificatePath` without
+    `-Type Certificate`.
+  * Fixed `Update-M365DSCAzureAdApplication` failing for applications with the same name.
+  * Fixed `Update-M365DSCAzureAdApplication -AdminConsent` changing the application before
+    checking the credential and ignoring `-TenantId` for the consent.
 * M365DSCReport
   * Fixed HTML reports not encoding tenant values and writing broken list tags.
   * Fixed array values containing commas being shown as several items.
