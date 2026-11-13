@@ -349,6 +349,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 )
             }
 
+            Mock -CommandName Get-M365DSCSettingCatalogTemplate -MockWith {
+                return , [System.Object[]]@(Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate)
+            }
+
             Mock -CommandName Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate -MockWith {
                 return @(
                     @{

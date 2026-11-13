@@ -191,27 +191,6 @@ if ($uncovered.Count -gt 0)
 }
 #endregion
 
-#region Classify parameters
-# Parameters that are part of the SDK infrastructure and should NOT be sent in the request body.
-$infrastructureParams = @(
-    'Headers', 'HttpPipelinePrepend', 'HttpPipelineAppend',
-    'Proxy', 'ProxyCredential', 'ProxyUseDefaultCredentials',
-    'Break', 'ResponseHeadersVariable', 'InputObject'
-)
-
-# Parameters that map to OData query options (used in GET requests).
-$odataParams = @(
-    'Filter', 'Property', 'ExpandProperty', 'Top', 'Skip',
-    'Search', 'Sort', 'CountVariable', 'ConsistencyLevel',
-    'All', 'PageSize', 'NoPageSize'
-)
-
-# Parameters that are used for body construction in POST/PATCH/PUT
-$bodyMetaParams = @(
-    'BodyParameter', 'AdditionalProperties'
-)
-#endregion
-
 #region Helper: create the guards that reject an empty identity parameter value
 <#
     Returns one guard line per parameter in ParamName. When UriExpression is given, only the
@@ -415,11 +394,7 @@ function Invoke-M365DSCGraphShimRequestV76
 
         [Parameter()]
         [switch]
-        $All,
-
-        [Parameter()]
-        [Switch]
-        $PassThru
+        $All
     )
 
     if ($PSBoundParameters.ContainsKey('OutputType') -and -not [System.String]::IsNullOrEmpty($OutputType))
@@ -560,7 +535,7 @@ function Get-M365DSCGraphShimAllPages
         $NoPageSize
     )
 
-    $allResults = [System.Collections.Generic.List[System.Object]]::new()
+    $allResults = @()
     $currentUri = $Uri
 
     if ($Skip -gt 0 -and $currentUri -notmatch '[\?&]\$skip=')
@@ -593,16 +568,16 @@ function Get-M365DSCGraphShimAllPages
         }
         elseif ($response.ContainsKey('value'))
         {
-            $allResults.AddRange([array]$response.value)
+            $allResults += [array]$response.value
         }
         elseif ($response -is [System.Collections.IEnumerable] -and $response -isnot [string])
         {
-            $allResults.AddRange([array]$response)
+            $allResults += [array]$response
         }
         else
         {
             # Single object response, not a collection
-            $allResults.Add($response)
+            $allResults += $response
         }
 
         $nextLink = $response.'@odata.nextLink'
@@ -641,13 +616,10 @@ function Get-M365DSCGraphShimAllPagesV76
         $NoPageSize
     )
 
-    $allResults = [System.Collections.Generic.List[System.Object]]::new()
-    $currentUri = $Uri
-
     $requestParams = @{
         All    = $true
         Method = 'GET'
-        Uri    = $currentUri
+        Uri    = $Uri
     }
 
     if ($NoPageSize.IsPresent)
@@ -670,18 +642,7 @@ function Get-M365DSCGraphShimAllPagesV76
         $requestParams['PageSize'] = $PageSize
     }
 
-    $response = Invoke-M365DSCGraphShimRequestV76 @requestParams -PassThru
-    if ($response -is [System.Collections.IEnumerable] -and $response -isnot [string])
-    {
-        $allResults.AddRange([array]$response)
-    }
-    elseif ($null -ne $response)
-    {
-        # Single object response, not a collection
-        $allResults.Add($response)
-    }
-
-    return $allResults
+    return Invoke-M365DSCGraphShimRequestV76 @requestParams
 }
 
 <#
@@ -730,38 +691,38 @@ function ConvertTo-M365DSCGraphShimUri
     )
 
     $uri = $UriTemplate
-    $queryParts = [System.Collections.Generic.List[System.String]]::new()
+    $queryParts = @()
     if (-not [System.String]::IsNullOrEmpty($Filter))
     {
-        $queryParts.Add("`$filter=$([System.Web.HttpUtility]::UrlEncode($Filter))")
+        $queryParts += "`$filter=$([System.Web.HttpUtility]::UrlEncode($Filter))"
     }
     if ($Property -and $Property.Count -gt 0)
     {
-        $queryParts.Add("`$select=$($Property -join ',')")
+        $queryParts += "`$select=$($Property -join ',')"
     }
     if ($ExpandProperty -and $ExpandProperty.Count -gt 0)
     {
-        $queryParts.Add("`$expand=$($ExpandProperty -join ',')")
+        $queryParts += "`$expand=$($ExpandProperty -join ',')"
     }
     if ($Top -gt 0)
     {
-        $queryParts.Add("`$top=$Top")
+        $queryParts += "`$top=$Top"
     }
     if ($Skip -gt 0)
     {
-        $queryParts.Add("`$skip=$Skip")
+        $queryParts += "`$skip=$Skip"
     }
     if (-not [System.String]::IsNullOrEmpty($Search))
     {
-        $queryParts.Add("`$search=$([System.Web.HttpUtility]::UrlEncode($Search))")
+        $queryParts += "`$search=$([System.Web.HttpUtility]::UrlEncode($Search))"
     }
     if ($Sort -and $Sort.Count -gt 0)
     {
-        $queryParts.Add("`$orderby=$($Sort -join ',')")
+        $queryParts += "`$orderby=$($Sort -join ',')"
     }
     if (-not [System.String]::IsNullOrEmpty($CountVariable))
     {
-        $queryParts.Add('$count=true')
+        $queryParts += '$count=true'
     }
 
     if ($queryParts.Count -gt 0)
@@ -774,8 +735,9 @@ function ConvertTo-M365DSCGraphShimUri
 <#
 .SYNOPSIS
     Converts a PascalCase property name to the camelCase name Graph expects. A leading run of
-    capitals is lowered up to the last one that starts a word. Keys that do not start with a
-    capital, such as @odata.type, are returned unchanged.
+    capitals is lowered up to the last one that starts a word. Names that start with Odata, such
+    as OdataId and OdataType, become the @odata.id and @odata.type annotations. Keys that do not
+    start with a capital, such as @odata.type, are returned unchanged.
 #>
 function ConvertTo-M365DSCGraphShimPropertyName
 {
@@ -790,6 +752,10 @@ function ConvertTo-M365DSCGraphShimPropertyName
     if ($Name -cnotmatch '^[A-Z]')
     {
         return $Name
+    }
+    if ($Name -cmatch '^Odata([A-Z].*)$')
+    {
+        return '@odata.' + $Matches[1].Substring(0, 1).ToLower() + $Matches[1].Substring(1)
     }
     if ($Name -cmatch '^[A-Z0-9]+$')
     {
@@ -881,16 +847,19 @@ function ConvertTo-M365DSCGraphShimBody
     return $body
 }
 
-# Base set of parameter names that are never sent in a request body.
+# Base set of parameter names that are never sent in a request body, like the common parameters,
+# the SDK infrastructure and OData query parameters, PassThru and IfMatch.
 # Individual functions append their own identity-parameter names before calling helpers.
 $script:GraphShimExcludeFromBody = @(
+    [System.Management.Automation.PSCmdlet]::CommonParameters
+    [System.Management.Automation.PSCmdlet]::OptionalCommonParameters
     'Headers', 'HttpPipelinePrepend', 'HttpPipelineAppend',
     'Proxy', 'ProxyCredential', 'ProxyUseDefaultCredentials',
     'Break', 'ResponseHeadersVariable', 'InputObject',
     'Filter', 'Property', 'ExpandProperty', 'Top', 'Skip',
     'Search', 'Sort', 'CountVariable', 'ConsistencyLevel',
     'All', 'PageSize', 'NoPageSize', 'BodyParameter', 'AdditionalProperties',
-    'Confirm', 'WhatIf', 'ErrorAction'
+    'PassThru', 'IfMatch'
 )
 
 <#
@@ -918,7 +887,7 @@ function ConvertTo-M365DSCGraphShimSafeUri
 
 <#
 .SYNOPSIS
-    Returns a copy of the bound request headers.
+    Returns a copy of the bound request headers, with IfMatch as the If-Match header.
 #>
 function Get-M365DSCGraphShimRequestHeaders
 {
@@ -937,6 +906,10 @@ function Get-M365DSCGraphShimRequestHeaders
         {
             $requestHeaders[$key] = $BoundParameters['Headers'][$key]
         }
+    }
+    if (-not [System.String]::IsNullOrEmpty($BoundParameters['IfMatch']))
+    {
+        $requestHeaders['If-Match'] = $BoundParameters['IfMatch']
     }
     return $requestHeaders
 }
@@ -1129,10 +1102,6 @@ function Invoke-M365DSCGraphShimDeleteResource
     )
 
     $requestHeaders = Get-M365DSCGraphShimRequestHeaders -BoundParameters $BoundParameters
-    if (-not [System.String]::IsNullOrEmpty($BoundParameters['IfMatch']))
-    {
-        $requestHeaders['If-Match'] = $BoundParameters['IfMatch']
-    }
     $Uri = ConvertTo-M365DSCGraphShimSafeUri -Uri $Uri
 
     if ($Script:IsPowerShell76OrGreater)
@@ -1150,7 +1119,6 @@ function Invoke-M365DSCGraphShimDeleteResource
 
 Write-Host 'Generating wrapper functions...'
 $generated = 0
-$skipped = 0
 $exportedFunctions = [System.Collections.Generic.List[string]]::new()
 
 foreach ($cmdletName in $cmdletNames) {
@@ -1253,9 +1221,7 @@ foreach ($cmdletName in $cmdletNames) {
     # Build the function body
     $bodyLines = [System.Text.StringBuilder]::new()
 
-    # Determine which params are identity, OData, body-meta, and infrastructure
     $identityParamNames = @($identityMapping.Keys)
-    $allExcludeFromBody = $infrastructureParams + $odataParams + $bodyMetaParams + $identityParamNames + @('Confirm', 'WhatIf')
 
     switch ($method) {
         'GET' {
@@ -1265,6 +1231,11 @@ foreach ($cmdletName in $cmdletNames) {
 
             [void]$bodyLines.AppendLine('')
 
+            # Every identity parameter is substituted into the collection URI, the single-item URI or both
+            foreach ($guardLine in (Get-ShimEmptyIdentityGuard -ParamName $identityParamNames)) {
+                [void]$bodyLines.AppendLine($guardLine)
+            }
+
             if ($hasSingleUri -and $identityParamNames.Count -gt 0) {
                 # Build the single-item URI expression with variable substitution
                 $singleUriExpr = "/$apiVersion$singleUri"
@@ -1273,9 +1244,6 @@ foreach ($cmdletName in $cmdletNames) {
                 }
 
                 $lastIdParam = $identityParamNames[-1]
-                foreach ($guardLine in (Get-ShimEmptyIdentityGuard -ParamName $lastIdParam)) {
-                    [void]$bodyLines.AppendLine($guardLine)
-                }
                 [void]$bodyLines.AppendLine("    `$singleItemUri = if (`$PSBoundParameters.ContainsKey('$lastIdParam') -and -not [System.String]::IsNullOrEmpty(`$$lastIdParam)) { `"$singleUriExpr`" } else { `$null }")
             }
 
@@ -1468,5 +1436,5 @@ $manifestLines.InsertRange($exportStart, $exportLines)
 $manifestContent = (($manifestLines | ForEach-Object { $_.TrimEnd() }) -join "`r`n").TrimEnd("`r", "`n") + "`r`n"
 [System.IO.File]::WriteAllText($OutputManifestPath, $manifestContent)
 
-Write-Host "Done. Generated $generated wrappers, skipped $skipped."
+Write-Host "Done. Generated $generated wrappers."
 Write-Host "Exported functions: $($exportedFunctions.Count)"

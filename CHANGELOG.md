@@ -107,7 +107,12 @@
   * Fixed remove cmdlets not sending the `If-Match` header.
   * Fixed the Multi Admin Approval error not being reported when the response has no
     status code.
+  * Fixed `-OdataId` and `-OdataType` being sent as `odataId` and `odataType` instead of
+    `@odata.id` and `@odata.type`.
+  * Fixed common parameters such as `-Verbose` and `-PassThru` being sent in the request body.
+  * Fixed get cmdlets sending the request with an empty parent ID.
 * M365DSCIntuneUtil
+  * Updated `Wait-M365DSCIntuneMobileAppPublished` to warn when the app is not published in time.
   * Fixed handling of group lookup failures, such as missing permissions or network errors.
   * Fixed an assignment with an unresolved assignment filter being created without the filter.
   * Fixed the Azure Storage upload retrying without limit.
@@ -119,6 +124,12 @@
   * Fixed `Find-GraphDataUsingComplexFunctions` treating filter values as wildcard patterns.
   * Fixed `Get-M365DSCIntuneDeviceConfigurationSettings` reading only the first template
     category and matching the wrong property when several property names share a suffix.
+  * Fixed role scope tags created after the tags were loaded being skipped.
+  * Fixed assignments with an unresolved exclusion group being applied without the exclusion.
+  * Fixed Settings Catalog secret values being written to the verbose stream.
+  * Fixed `startsWith`, `endsWith` and `contains` filters in other casings being sent to
+    Graph and filter values with escaped quotes being cut off.
+  * Fixed error log entries missing the tenant.
   * Removed the `Setting` parameter set of `Export-IntuneSettingCatalogPolicySettings`
     with the `SettingInstance`, `SettingDefinitions` and `IsRoot` parameters.
 * M365DSCLogEngine

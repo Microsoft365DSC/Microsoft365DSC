@@ -91,25 +91,43 @@ function Resolve-M365DSCIntuneRoleScopeTagIds
         return ,([System.String[]]$RoleScopeTagIds)
     }
 
+    # A tag created after the cache was loaded is found after one reload per call
+    $reloaded = $false
     $ids = @()
     foreach ($id in $RoleScopeTagIds)
     {
-        $resolvedIds = $null
-        if ([Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetIds($id, [ref]$resolvedIds))
+        foreach ($attempt in 1..2)
+        {
+            $resolvedIds = $null
+            $resolvedName = $null
+            $found = [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetIds($id, [ref]$resolvedIds) -or
+                [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName)
+            if ($found -or $reloaded)
+            {
+                break
+            }
+
+            Initialize-M365DSCIntuneRoleScopeTagCache -Force
+            $reloaded = $true
+            if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable)
+            {
+                return ,([System.String[]]$RoleScopeTagIds)
+            }
+        }
+
+        if ($null -ne $resolvedIds)
         {
             $ids += $resolvedIds
-            continue
         }
-
-        $resolvedName = $null
-        if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName))
+        elseif ($null -ne $resolvedName)
         {
-            Write-Warning "RoleScopeTag with Name or Id {$id} not found in the directory. It may have been deleted or renamed. Skipping it."
-            continue
+            # Already an id, return it as-is
+            $ids += $id
         }
-
-        # Already an id, return it as-is
-        $ids += $id
+        else
+        {
+            Write-Warning -Message "RoleScopeTag with Name or Id {$id} not found in the directory. It may have been deleted or renamed. Skipping it."
+        }
     }
 
     return ,$ids
@@ -163,6 +181,8 @@ function Resolve-M365DSCIntuneRoleScopeTagNames
         return ,([System.String[]]$CurrentValues)
     }
 
+    # A tag created after the cache was loaded is found after one reload per call
+    $reloaded = $false
     $names = @()
     foreach ($id in $CurrentValues)
     {
@@ -173,9 +193,21 @@ function Resolve-M365DSCIntuneRoleScopeTagNames
         }
 
         $resolvedName = $null
-        if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName))
+        $found = [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName)
+        if (-not $found -and -not $reloaded)
         {
-            Write-Warning "RoleScopeTag with Id {$id} not found in the directory. It may have been deleted or renamed."
+            Initialize-M365DSCIntuneRoleScopeTagCache -Force
+            $reloaded = $true
+            if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable)
+            {
+                return ,([System.String[]]$CurrentValues)
+            }
+            $found = [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName)
+        }
+
+        if (-not $found)
+        {
+            Write-Warning -Message "RoleScopeTag with Id {$id} not found in the directory. It may have been deleted or renamed."
             $resolvedName = $id
         }
 
@@ -367,6 +399,78 @@ function Resolve-M365DSCIntuneAssignmentGroupId
 
 <#
 .SYNOPSIS
+    Throws when the group of an exclusion assignment could not be resolved.
+
+.DESCRIPTION
+    An assignment that is applied without its exclusion targets more devices. Include and other
+    assignment types are skipped by the caller instead.
+
+.PARAMETER DataType
+    Specifies the @odata.type of the assignment target.
+
+.PARAMETER GroupId
+    Specifies the group identifier from the assignment.
+
+.PARAMETER GroupDisplayName
+    Specifies the group display name from the assignment.
+
+.FUNCTIONALITY
+    Private
+#>
+function Assert-M365DSCIntuneExclusionGroupResolved
+{
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [System.String]
+        $DataType,
+
+        [Parameter()]
+        [System.String]
+        $GroupId,
+
+        [Parameter()]
+        [System.String]
+        $GroupDisplayName
+    )
+
+    if ($DataType -eq '#microsoft.graph.exclusionGroupAssignmentTarget')
+    {
+        $message = "The exclusion group with Id {$GroupId} and DisplayName {$GroupDisplayName} could not be resolved. "
+        $message += 'The assignments are not applied without the exclusion, as they would target more devices. '
+        $message += 'Please update your DSC resource extract with the correct groupId or a unique groupDisplayName.'
+        throw $message
+    }
+}
+
+<#
+.SYNOPSIS
+    Returns the tenant id of the Microsoft Graph connection for log entries.
+
+.OUTPUTS
+    System.String. $null when there is no connection profile.
+
+.FUNCTIONALITY
+    Private
+#>
+function Get-M365DSCIntuneConnectedTenantId
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param ()
+
+    try
+    {
+        return (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph -ErrorAction Stop).TenantId
+    }
+    catch
+    {
+        return $null
+    }
+}
+
+<#
+.SYNOPSIS
     Tests whether a failed group lookup means the group does not exist.
 
 .DESCRIPTION
@@ -432,7 +536,7 @@ function ConvertFrom-IntunePolicyAssignment
     [OutputType([System.Collections.Hashtable[]])]
     param (
         [Parameter(Mandatory = $true)]
-        [Array]
+        [System.Array]
         $Assignments,
 
         [Parameter()]
@@ -457,7 +561,7 @@ function ConvertFrom-IntunePolicyAssignment
         $collectionId = $assignment.Target.collectionId
 
         $hashAssignment.Add('dataType', $dataType)
-        if (-not [string]::IsNullOrEmpty($groupId))
+        if (-not [System.String]::IsNullOrEmpty($groupId))
         {
             $hashAssignment.Add('groupId', $groupId)
 
@@ -479,7 +583,7 @@ function ConvertFrom-IntunePolicyAssignment
         {
             $hashAssignment.Add('groupDisplayName', $groupDisplayName)
         }
-        if (-not [string]::IsNullOrEmpty($collectionId))
+        if (-not [System.String]::IsNullOrEmpty($collectionId))
         {
             $hashAssignment.Add('collectionId', $collectionId)
         }
@@ -523,7 +627,7 @@ function ConvertFrom-IntunePolicyAssignment
 function ConvertTo-IntunePolicyAssignment
 {
     [CmdletBinding()]
-    [OutputType([Hashtable[]])]
+    [OutputType([System.Collections.Hashtable[]])]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -565,6 +669,7 @@ function ConvertTo-IntunePolicyAssignment
             $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $assignment.groupId -GroupDisplayName $assignment.groupDisplayName
             if ($null -eq $groupId)
             {
+                Assert-M365DSCIntuneExclusionGroupResolved -DataType $assignment.dataType -GroupId $assignment.groupId -GroupDisplayName $assignment.groupDisplayName
                 $target = $null
             }
             else
@@ -606,7 +711,7 @@ function ConvertFrom-IntuneMobileAppAssignment
     param
     (
         [Parameter(Mandatory = $true)]
-        [Array]
+        [System.Array]
         $Assignments,
 
         [Parameter()]
@@ -625,7 +730,7 @@ function ConvertFrom-IntuneMobileAppAssignment
         $groupId = $assignment.Target.groupId
 
         $hashAssignment.Add('dataType', $dataType)
-        if (-not [string]::IsNullOrEmpty($groupId))
+        if (-not [System.String]::IsNullOrEmpty($groupId))
         {
             $hashAssignment.Add('groupId', $groupId)
 
@@ -703,7 +808,7 @@ function ConvertFrom-IntuneMobileAppAssignment
 function ConvertTo-IntuneMobileAppAssignment
 {
     [CmdletBinding()]
-    [OutputType([Hashtable[]])]
+    [OutputType([System.Collections.Hashtable[]])]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -749,6 +854,7 @@ function ConvertTo-IntuneMobileAppAssignment
             $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $assignment.groupId -GroupDisplayName $assignment.groupDisplayName
             if ($null -eq $groupId)
             {
+                Assert-M365DSCIntuneExclusionGroupResolved -DataType $assignment.dataType -GroupId $assignment.groupId -GroupDisplayName $assignment.groupDisplayName
                 $target = $null
             }
             else
@@ -807,8 +913,14 @@ function Get-M365DSCExportCachedConfigurationPolicies
 
     Initialize-M365DSCDllLoader -ErrorAction Stop
 
-    # Fetch from cache when the filter is the templateId filter
-    if ($Filter -like 'templateReference/templateId eq ''*''' -and [Microsoft365DSC.Intune.ConfigurationPolicyCache]::IsPopulated)
+    $templateFilter = "templateReference/templateId eq '$TemplateId'"
+    if ([System.String]::IsNullOrEmpty($Filter))
+    {
+        $Filter = $templateFilter
+    }
+
+    # Fetch from cache when the filter is the templateId filter of this template
+    if ($Filter -eq $templateFilter -and [Microsoft365DSC.Intune.ConfigurationPolicyCache]::IsPopulated)
     {
         $cacheValue = [Microsoft365DSC.Intune.ConfigurationPolicyCache]::GetByTemplateId($TemplateId)
         if ($null -eq $cacheValue)
@@ -819,16 +931,8 @@ function Get-M365DSCExportCachedConfigurationPolicies
         return $cacheValue
     }
 
-    if (-not [System.String]::IsNullOrEmpty($Filter))
-    {
-        return Get-MgBetaDeviceManagementConfigurationPolicy -All `
-            -Filter $Filter `
-            -ExpandProperty 'assignments' `
-            -ErrorAction Stop
-    }
-
     return Get-MgBetaDeviceManagementConfigurationPolicy -All `
-        -Filter "templateReference/TemplateId eq '$TemplateId'" `
+        -Filter $Filter `
         -ExpandProperty 'assignments' `
         -ErrorAction Stop
 }
@@ -1004,7 +1108,7 @@ function Update-DeviceConfigurationPolicyAssignment
         $DeviceConfigurationPolicyId,
 
         [Parameter()]
-        [Array]
+        [System.Array]
         $Targets,
 
         [Parameter()]
@@ -1038,7 +1142,7 @@ function Update-DeviceConfigurationPolicyAssignment
             {
                 $targetAssignment.Add('runSchedule', $target.runSchedule)
             }
-            if ($target.target -is [hashtable])
+            if ($target.target -is [System.Collections.Hashtable])
             {
                 $target = $target.target
             }
@@ -1051,6 +1155,7 @@ function Update-DeviceConfigurationPolicyAssignment
                 $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $target.groupId -GroupDisplayName $target.groupDisplayName
                 if ($null -eq $groupId)
                 {
+                    Assert-M365DSCIntuneExclusionGroupResolved -DataType $formattedTarget.'@odata.type' -GroupId $target.groupId -GroupDisplayName $target.groupDisplayName
                     continue
                 }
                 $formattedTarget.Add('groupId', $groupId)
@@ -1082,8 +1187,7 @@ function Update-DeviceConfigurationPolicyAssignment
         New-M365DSCLogEntry -Message $message `
             -Exception $_ `
             -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+            -TenantId (Get-M365DSCIntuneConnectedTenantId)
 
         throw $message
     }
@@ -1126,7 +1230,7 @@ function Update-DeviceAppManagementPolicyAssignment
         $AppManagementPolicyId,
 
         [Parameter()]
-        [Array]
+        [System.Array]
         $Assignments,
 
         [Parameter()]
@@ -1171,6 +1275,7 @@ function Update-DeviceAppManagementPolicyAssignment
                 $groupId = Resolve-M365DSCIntuneAssignmentGroupId -GroupId $target.groupId -GroupDisplayName $target.groupDisplayName
                 if ($null -eq $groupId)
                 {
+                    Assert-M365DSCIntuneExclusionGroupResolved -DataType $formattedTarget.'@odata.type' -GroupId $target.groupId -GroupDisplayName $target.groupDisplayName
                     continue
                 }
                 $formattedTarget.Add('groupId', $groupId)
@@ -1198,8 +1303,7 @@ function Update-DeviceAppManagementPolicyAssignment
         New-M365DSCLogEntry -Message $message `
             -Exception $_ `
             -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+            -TenantId (Get-M365DSCIntuneConnectedTenantId)
 
         throw $message
     }
@@ -1240,12 +1344,17 @@ function Wait-M365DSCIntuneMobileAppPublished
     )
 
     $uri = "/beta/deviceAppManagement/mobileApps/$($AppId)?`$select=publishingState"
-    $null = Wait-M365DSCCondition -Description "the publishing of mobile app {$AppId}" `
+    $published = Wait-M365DSCCondition -Description "the publishing of mobile app {$AppId}" `
         -MaxAttempts $MaxAttempts `
         -RetryDelayInSeconds $RetryDelayInSeconds `
         -ScriptBlock {
             (Invoke-MgGraphRequest -Method GET -Uri $uri -ErrorAction Stop).publishingState -eq 'published'
         }
+
+    if (-not $published)
+    {
+        Write-Warning -Message "Mobile app {$AppId} was not published after $MaxAttempts attempts. Assigning it may fail."
+    }
 }
 
 <#
@@ -1274,7 +1383,7 @@ function Update-DeviceAppManagementAppCategory
 
         [Parameter(Mandatory = $true)]
         [AllowEmptyCollection()]
-        [Array]
+        [System.Array]
         $Categories,
 
         [Parameter()]
@@ -1404,7 +1513,7 @@ function Get-M365DSCIntuneDeviceConfigurationSettings
     [OutputType([System.Collections.Hashtable])]
     param
     (
-        [Parameter(Mandatory = 'true')]
+        [Parameter(Mandatory = $true)]
         [System.Collections.Hashtable]
         $Properties,
 
@@ -1444,7 +1553,7 @@ function Get-M365DSCIntuneDeviceConfigurationSettings
                 ( $_ -eq '#microsoft.graph.deviceManagementBooleanSettingInstance' )
             }
             {
-                if ([String]::IsNullOrEmpty($settingValue))
+                if ([System.String]::IsNullOrEmpty($settingValue))
                 {
                     $settingValue = $setting.ValueJson | ConvertFrom-Json
                 }
@@ -1458,7 +1567,7 @@ function Get-M365DSCIntuneDeviceConfigurationSettings
                 }
                 else
                 {
-                    $settingValue = ConvertTo-Json -InputObject ([Array]$settingValue)
+                    $settingValue = ConvertTo-Json -InputObject ([System.Array]$settingValue)
                 }
             }
             default
@@ -1521,54 +1630,41 @@ function Get-OmaSettingPlainTextValue
         $APIVersion = 'beta'
     )
 
-    try
-    {
-        <#
-            e.g. PolicyId for SecretReferenceValueId '35ea58ec-2a79-471d-8eea-7e28e6cd2722_bdf6c690-05fb-4d02-835d-5a7406c35d58_abe32712-2255-445f-a35e-0c6f143d82ca'
-            is 'bdf6c690-05fb-4d02-835d-5a7406c35d58'
-        #>
-        $SplitSecretReferenceValueId = $SecretReferenceValueId.Split('_')
-        if ($SplitSecretReferenceValueId.Count -eq 3)
-        {
-            $PolicyId = $SplitSecretReferenceValueId[1]
-        }
-        else
-        {
-            return $null
-        }
-    }
-    catch
+    <#
+        e.g. PolicyId for SecretReferenceValueId '35ea58ec-2a79-471d-8eea-7e28e6cd2722_bdf6c690-05fb-4d02-835d-5a7406c35d58_abe32712-2255-445f-a35e-0c6f143d82ca'
+        is 'bdf6c690-05fb-4d02-835d-5a7406c35d58'
+    #>
+    $splitSecretReferenceValueId = $SecretReferenceValueId.Split('_')
+    if ($splitSecretReferenceValueId.Count -ne 3)
     {
         return $null
     }
+    $policyId = $splitSecretReferenceValueId[1]
 
-    $Repository = 'deviceManagement/deviceConfigurations'
-    $Uri = "/{0}/{1}/{2}/getOmaSettingPlainTextValue(secretReferenceValueId='{3}')" -f $APIVersion, $Repository, $PolicyId, $SecretReferenceValueId
+    $repository = 'deviceManagement/deviceConfigurations'
+    $uri = "/{0}/{1}/{2}/getOmaSettingPlainTextValue(secretReferenceValueId='{3}')" -f $APIVersion, $repository, $policyId, $SecretReferenceValueId
 
     try
     {
-        $Result = Invoke-MgGraphRequest -Method GET -Uri $Uri -ErrorAction Stop
+        $result = Invoke-MgGraphRequest -Method GET -Uri $uri -ErrorAction Stop
     }
     catch
     {
-        $Message = 'Error decrypting OmaSetting with SecretReferenceValueId {0}:' -f $SecretReferenceValueId
-        New-M365DSCLogEntry -Message $Message `
+        $message = 'Error decrypting OmaSetting with SecretReferenceValueId {0}:' -f $SecretReferenceValueId
+        New-M365DSCLogEntry -Message $message `
             -Exception $_ `
             -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+            -TenantId (Get-M365DSCIntuneConnectedTenantId)
 
         return $null
     }
 
-    if (![String]::IsNullOrEmpty($Result.Value))
+    if (-not [System.String]::IsNullOrEmpty($result.Value))
     {
-        return $Result.Value
+        return $result.Value
     }
-    else
-    {
-        return $null
-    }
+
+    return $null
 }
 
 <#
@@ -1604,14 +1700,14 @@ function Get-IntuneSettingCatalogPolicySetting
         $DSCParams,
 
         [Parameter(
-            Mandatory = 'true',
+            Mandatory = $true,
             ParameterSetName = 'Start'
         )]
         [System.String]
         $TemplateId,
 
         [Parameter(
-            Mandatory = 'true',
+            Mandatory = $true,
             ParameterSetName = 'DeviceAndUserSettings'
         )]
         [System.Array]
@@ -1736,6 +1832,7 @@ function Set-M365DSCCachedSettingCatalogTemplate
         $TemplateId,
 
         [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
         [System.Object[]]
         $Templates
     )
@@ -1836,7 +1933,7 @@ function Update-IntuneDeviceConfigurationPolicy
     [OutputType([System.Collections.Hashtable])]
     param
     (
-        [Parameter(Mandatory = 'true')]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $DeviceConfigurationPolicyId,
 
@@ -1866,7 +1963,7 @@ function Update-IntuneDeviceConfigurationPolicy
         $CreationSource,
 
         [Parameter()]
-        [Array]
+        [System.Array]
         $Settings,
 
         [Parameter()]
@@ -1898,7 +1995,7 @@ function Update-IntuneDeviceConfigurationPolicy
         }
 
         $body = $policy | ConvertTo-Json -Depth 20
-        Write-Verbose -Message "Updating policy with:`r`n$body"
+        Write-Verbose -Message "Updating policy {$DeviceConfigurationPolicyId} '$Name' with $(@($Settings).Count) setting(s)"
         Invoke-MgGraphRequest -Method PUT -Uri $Uri -Body $body -ErrorAction Stop
     }
     catch
@@ -1906,15 +2003,14 @@ function Update-IntuneDeviceConfigurationPolicy
         New-M365DSCLogEntry -Message 'Error updating data:' `
             -Exception $_ `
             -Source $($MyInvocation.MyCommand.Source) `
-            -TenantId $TenantId `
-            -Credential $Credential
+            -TenantId (Get-M365DSCIntuneConnectedTenantId)
 
         throw
     }
 }
 
 # Matches the startswith/endswith/contains filter functions that Graph does not support server-side
-$Script:M365DSCComplexFilterFunctionsRegex = "startswith\((.*?),\s*'(.*?)'\)|endswith\((.*?),\s*'(.*?)'\)|contains\((.*?),\s*'(.*?)'\)"
+$Script:M365DSCComplexFilterFunctionsRegex = "(?i)(?:startswith|endswith|contains)\(([^,]*?),\s*'((?:[^']|'')*)'\)"
 
 <#
 .SYNOPSIS
@@ -1935,10 +2031,12 @@ function Get-ComplexFunctionsFromFilterQuery
     [CmdletBinding()]
     [OutputType([System.Array])]
     param (
-        [string]$FilterQuery
+        [Parameter()]
+        [System.String]
+        $FilterQuery
     )
 
-    [array]$complexFunctions = [System.Text.RegularExpressions.Regex]::Matches($FilterQuery, $Script:M365DSCComplexFilterFunctionsRegex) | ForEach-Object {
+    [System.Array]$complexFunctions = [System.Text.RegularExpressions.Regex]::Matches($FilterQuery, $Script:M365DSCComplexFilterFunctionsRegex) | ForEach-Object {
         $_.Value
     }
 
@@ -1964,7 +2062,9 @@ function Remove-ComplexFunctionsFromFilterQuery
     [CmdletBinding()]
     [OutputType([System.String])]
     param (
-        [string]$FilterQuery
+        [Parameter()]
+        [System.String]
+        $FilterQuery
     )
 
     $functionsRegex = $Script:M365DSCComplexFilterFunctionsRegex
@@ -2024,30 +2124,41 @@ function Find-GraphDataUsingComplexFunctions
     [CmdletBinding()]
     [OutputType([System.Array])]
     param (
-        [array]$Policies,
-        [array]$ComplexFunctions
+        [Parameter()]
+        [System.Array]
+        $Policies,
+
+        [Parameter()]
+        [System.Array]
+        $ComplexFunctions
     )
 
     $comparison = [System.StringComparison]::OrdinalIgnoreCase
+    $functionRegex = "^(?i)(startswith|endswith|contains)\(([^,]*?),\s*'((?:[^']|'')*)'\)$"
     foreach ($function in $ComplexFunctions)
     {
-        if ($function -match "startswith\((.*?),\s*'(.*?)'\)")
+        $functionMatch = [System.Text.RegularExpressions.Regex]::Match($function, $functionRegex)
+        if (-not $functionMatch.Success)
         {
-            $property = $matches[1].Trim()
-            $value = $matches[2].Replace("''", "'")
-            $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).StartsWith($value, $comparison) }
+            continue
         }
-        elseif ($function -match "endswith\((.*?),\s*'(.*?)'\)")
+
+        $property = $functionMatch.Groups[2].Value.Trim()
+        $value = $functionMatch.Groups[3].Value.Replace("''", "'")
+        switch ($functionMatch.Groups[1].Value.ToLowerInvariant())
         {
-            $property = $matches[1].Trim()
-            $value = $matches[2].Replace("''", "'")
-            $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).EndsWith($value, $comparison) }
-        }
-        elseif ($function -match "contains\((.*?),\s*'(.*?)'\)")
-        {
-            $property = $matches[1].Trim()
-            $value = $matches[2].Replace("''", "'")
-            $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).Contains($value, $comparison) }
+            'startswith'
+            {
+                $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).StartsWith($value, $comparison) }
+            }
+            'endswith'
+            {
+                $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).EndsWith($value, $comparison) }
+            }
+            'contains'
+            {
+                $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).Contains($value, $comparison) }
+            }
         }
     }
 
@@ -2158,7 +2269,7 @@ function Invoke-M365DSCIntuneMobileAppInitialUpload
                 'content-type' = 'text/plain; charset=iso-8859-1'
                 'x-ms-blob-type' = 'BlockBlob'
             } -ErrorAction Stop -UseBasicParsing | Out-Null
-            Write-Verbose 'File uploaded successfully to Azure Storage.'
+            Write-Verbose -Message 'File uploaded successfully to Azure Storage.'
             $success = $true
         }
         catch
@@ -2260,7 +2371,7 @@ function Wait-ForFileProcessing
 
     $fileUri = "beta/deviceAppManagement/mobileApps/$($AppId)/$OdataType/contentVersions/$ContentVersionId/files/$($FileId)"
 
-    Write-Verbose "Waiting for file processing to complete for AppId: $AppId, OdataType: $OdataType, FileId: $FileId, ContentVersionId: $ContentVersionId"
+    Write-Verbose -Message "Waiting for file processing to complete for AppId: $AppId, OdataType: $OdataType, FileId: $FileId, ContentVersionId: $ContentVersionId"
     $file = Invoke-MgGraphRequest -Method GET -Uri $fileUri
 
     $maxAttempts = 120
@@ -2279,7 +2390,7 @@ function Wait-ForFileProcessing
         }
 
         Start-Sleep -Seconds 1
-        Write-Verbose "Current upload state: $($file.uploadState). Waiting for processing to complete..."
+        Write-Verbose -Message "Current upload state: $($file.uploadState). Waiting for processing to complete..."
         $file = Invoke-MgGraphRequest -Method GET -Uri $fileUri
     }
 

@@ -86,6 +86,22 @@ function New-M365DscUnitTestHelper
         InvokeCompareRules = ${function:Invoke-M365DSCCompareRules}
         InvokeDeltaCompare = ${function:Invoke-M365DSCDeltaCompare}
         InitializeRoleScopeTagCache = ${function:Initialize-M365DSCTestRoleScopeTagCache}
+        MockIntuneGroups = [ScriptBlock]::Create(@"
+            # Resolves the Intune assignment groups used by the unit tests by id or display name
+            Mock -ModuleName M365DSCIntuneUtil -CommandName Get-M365DSCIntuneGroup -MockWith {
+                `$groups = @(
+                    [PSCustomObject]@{ Id = '26d60dd1-fab6-47bf-8656-358194c1a49d'; DisplayName = 'Exclude' }
+                    [PSCustomObject]@{ Id = '12345678-1234-1234-1234-1234567890ab'; DisplayName = 'Include' }
+                    [PSCustomObject]@{ Id = '3eacc231-d77b-4efb-bb5f-310f68bd6198'; DisplayName = 'MyExcludedGroup' }
+                    [PSCustomObject]@{ Id = '6ee86c9f-2b3c-471d-ad38-ff4673ed723e'; DisplayName = 'MyAssignedGroup' }
+                )
+                if (-not [System.String]::IsNullOrEmpty(`$GroupId))
+                {
+                    return `$groups | Where-Object -Property Id -EQ `$GroupId | Select-Object -First 1
+                }
+                return , [System.Object[]]@(`$groups | Where-Object -Property DisplayName -EQ `$DisplayName)
+            }
+"@)
         RepoRoot = $repoRoot
         CleanupScript = [ScriptBlock]::Create(@"
             `$global:DSCMachineStatus = 0

@@ -244,6 +244,9 @@ Describe 'Intune assignment group resolution' {
         $result.Count | Should -Be 0
         $warnings | Should -HaveCount 1
         "$($warnings[0])" | Should -BeLike '*group with Id {deleted}*'
+
+        $exclusions = @(@{ dataType = '#microsoft.graph.exclusionGroupAssignmentTarget'; groupId = 'deleted' })
+        { ConvertTo-IntunePolicyAssignment -Assignments $exclusions -WarningAction SilentlyContinue } | Should -Throw -ExpectedMessage '*exclusion group with Id {deleted}*'
     }
 
     It 'Should resolve the group by display name when the id is unknown' {
@@ -482,6 +485,8 @@ Describe 'Remove-ComplexFunctionsFromFilterQuery' {
         @{ Query = "displayName eq 'Win ( ) Baseline' and startswith(displayName,'b')"; Expected = "displayName eq 'Win ( ) Baseline'" }
         @{ Query = "((startswith(displayName,'b'))) and platforms eq 'c'"; Expected = "platforms eq 'c'" }
         @{ Query = "platforms eq 'c' and (startswith(displayName,'b'))"; Expected = "platforms eq 'c'" }
+        @{ Query = "startsWith(displayName,'b') and platforms eq 'c'"; Expected = "platforms eq 'c'" }
+        @{ Query = "platforms eq 'c' and EndsWith(displayName,'a'')b')"; Expected = "platforms eq 'c'" }
     ) {
         Remove-ComplexFunctionsFromFilterQuery -FilterQuery $Query | Should -BeExactly $Expected
     }
@@ -518,6 +523,11 @@ Describe 'Find-GraphDataUsingComplexFunctions' {
 
     It 'Should unescape doubled single quotes' {
         $complexFunctions = Get-ComplexFunctionsFromFilterQuery -FilterQuery "startswith(displayName,'o''brien')"
+        $result = Find-GraphDataUsingComplexFunctions -Policies $Script:Policies -ComplexFunctions $complexFunctions
+
+        @($result).displayName | Should -Be @("O'Brien policy")
+
+        $complexFunctions = Get-ComplexFunctionsFromFilterQuery -FilterQuery "startsWith(displayName,'o''brien p')"
         $result = Find-GraphDataUsingComplexFunctions -Policies $Script:Policies -ComplexFunctions $complexFunctions
 
         @($result).displayName | Should -Be @("O'Brien policy")
