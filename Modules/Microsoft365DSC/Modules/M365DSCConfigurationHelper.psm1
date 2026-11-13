@@ -24,6 +24,12 @@
 .OUTPUTS
     If OutputPath is provided, the function will create a new configuration file with the evaluation rules. If OutputPath is not provided, the function will return the evaluation rules as a string.
     The returned rules reference the variables an exported configuration defines: $CredsCredential for the Credentials* modes and $CredsCertificatePassword for ServicePrincipalWithPath.
+
+.EXAMPLE
+    PS> Get-M365DSCEvaluationRulesForConfiguration -ConfigurationPath 'C:\DSC\M365TenantConfig.ps1' -ConnectionMode 'ServicePrincipalWithThumbprint' -OutputPath 'C:\DSC\EvaluationRules.ps1'
+
+.FUNCTIONALITY
+    Public
 #>
 function Get-M365DSCEvaluationRulesForConfiguration
 {
@@ -33,11 +39,11 @@ function Get-M365DSCEvaluationRulesForConfiguration
     param (
         [Parameter(ParameterSetName = 'Configuration', Mandatory = $true)]
         [Parameter(ParameterSetName = 'Plaintext', Mandatory = $true)]
-        [string]
+        [System.String]
         $ConfigurationPath,
 
         [Parameter(ParameterSetName = 'Configuration', Mandatory = $true)]
-        [string]
+        [System.String]
         $OutputPath,
 
         [Parameter(ParameterSetName = 'Configuration', Mandatory = $true)]

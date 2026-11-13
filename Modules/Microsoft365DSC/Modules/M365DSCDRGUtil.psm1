@@ -248,7 +248,7 @@ function Get-M365DSCDRGComplexTypeToHashtable
     Specifies optional nested type mappings for specific properties.
 
 .PARAMETER Whitespace
-    Specifies the whitespace prefix used when rendering output.
+    Has no effect. IndentLevel controls the indentation.
 
 .PARAMETER IndentLevel
     Specifies the indentation level used when rendering output.
@@ -297,9 +297,9 @@ function Get-M365DSCDRGComplexTypeToString
     Initialize-M365DSCDllLoader -ErrorAction Stop
 
     $typeMappingList = [System.Collections.Generic.List[Microsoft365DSC.Converter.ComplexTypeMapping]]::new()
-    if ($PSBoundParameters.ContainsKey('ComplexTypeMapping') -and $ComplexTypeMapping -ne $null)
+    foreach ($mapping in $ComplexTypeMapping)
     {
-        foreach ($mapping in $ComplexTypeMapping)
+        if ($null -ne $mapping)
         {
             $typeMappingList.Add($mapping)
         }
@@ -447,6 +447,23 @@ function Convert-M365DSCDriftValueToString
         return $Value.ToString()
     }
 
+    if ($Value -is [Microsoft.Management.Infrastructure.CimInstance])
+    {
+        Initialize-M365DSCDllLoader -ErrorAction Stop
+        return Convert-M365DSCDriftValueToString -Value ([Microsoft365DSC.Converter.ComplexObjectConverter]::ToHashtable($Value)) -Depth $Depth
+    }
+
+    if ($Value -is [System.Management.Automation.PSCustomObject])
+    {
+        $properties = [ordered]@{}
+        foreach ($property in $Value.PSObject.Properties)
+        {
+            $properties[$property.Name] = $property.Value
+        }
+
+        return Convert-M365DSCDriftValueToString -Value $properties -Depth $Depth
+    }
+
     if ($Value -is [System.Collections.IDictionary])
     {
         $entries = @()
@@ -522,7 +539,6 @@ function Write-M365DSCDriftsToEventLog
     $CurrentValues = Set-M365DSCAuthenticationParameterMask -BoundParameters $CurrentValues.Clone()
     $DesiredValues = Set-M365DSCAuthenticationParameterMask -BoundParameters ([System.Collections.Hashtable]$DesiredValues).Clone()
 
-    # If ExistingDrifts is null, then this is the main call and not a recursive one. Write to the Event log.
     if ($null -ne $Drifts -and $Drifts.DriftInfo.Length -gt 0)
     {
         $LCMState = Get-M365DSCLCMState
