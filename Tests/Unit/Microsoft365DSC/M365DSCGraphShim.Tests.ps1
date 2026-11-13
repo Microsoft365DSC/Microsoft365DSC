@@ -255,12 +255,15 @@ Describe 'M365DSCGraphShim' {
                 ConvertTo-M365DSCGraphShimBody -NamedParams @{
                     Id       = 'Phoenix'
                     IsActive = [System.Management.Automation.SwitchParameter]::new($false)
+                    OdataId  = 'https://graph.microsoft.com/v1.0/directoryObjects/user1'
                 }
             }
 
             $body.isActive | Should -BeOfType [System.Boolean]
             $body.isActive | Should -BeFalse
             ConvertTo-Json $body -Compress | Should -Match '"isActive":false'
+            $body['@odata.id'] | Should -Be 'https://graph.microsoft.com/v1.0/directoryObjects/user1'
+            $body.ContainsKey('odataId') | Should -BeFalse
         }
     }
 }

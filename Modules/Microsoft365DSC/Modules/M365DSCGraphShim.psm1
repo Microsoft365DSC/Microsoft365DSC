@@ -166,11 +166,7 @@ function Invoke-M365DSCGraphShimRequestV76
 
         [Parameter()]
         [switch]
-        $All,
-
-        [Parameter()]
-        [Switch]
-        $PassThru
+        $All
     )
 
     if ($PSBoundParameters.ContainsKey('OutputType') -and -not [System.String]::IsNullOrEmpty($OutputType))
@@ -311,7 +307,7 @@ function Get-M365DSCGraphShimAllPages
         $NoPageSize
     )
 
-    $allResults = [System.Collections.Generic.List[System.Object]]::new()
+    $allResults = @()
     $currentUri = $Uri
 
     if ($Skip -gt 0 -and $currentUri -notmatch '[\?&]\$skip=')
@@ -344,16 +340,16 @@ function Get-M365DSCGraphShimAllPages
         }
         elseif ($response.ContainsKey('value'))
         {
-            $allResults.AddRange([array]$response.value)
+            $allResults += [array]$response.value
         }
         elseif ($response -is [System.Collections.IEnumerable] -and $response -isnot [string])
         {
-            $allResults.AddRange([array]$response)
+            $allResults += [array]$response
         }
         else
         {
             # Single object response, not a collection
-            $allResults.Add($response)
+            $allResults += $response
         }
 
         $nextLink = $response.'@odata.nextLink'
@@ -392,13 +388,10 @@ function Get-M365DSCGraphShimAllPagesV76
         $NoPageSize
     )
 
-    $allResults = [System.Collections.Generic.List[System.Object]]::new()
-    $currentUri = $Uri
-
     $requestParams = @{
         All    = $true
         Method = 'GET'
-        Uri    = $currentUri
+        Uri    = $Uri
     }
 
     if ($NoPageSize.IsPresent)
@@ -421,18 +414,7 @@ function Get-M365DSCGraphShimAllPagesV76
         $requestParams['PageSize'] = $PageSize
     }
 
-    $response = Invoke-M365DSCGraphShimRequestV76 @requestParams -PassThru
-    if ($response -is [System.Collections.IEnumerable] -and $response -isnot [string])
-    {
-        $allResults.AddRange([array]$response)
-    }
-    elseif ($null -ne $response)
-    {
-        # Single object response, not a collection
-        $allResults.Add($response)
-    }
-
-    return $allResults
+    return Invoke-M365DSCGraphShimRequestV76 @requestParams
 }
 
 <#
@@ -481,38 +463,38 @@ function ConvertTo-M365DSCGraphShimUri
     )
 
     $uri = $UriTemplate
-    $queryParts = [System.Collections.Generic.List[System.String]]::new()
+    $queryParts = @()
     if (-not [System.String]::IsNullOrEmpty($Filter))
     {
-        $queryParts.Add("`$filter=$([System.Web.HttpUtility]::UrlEncode($Filter))")
+        $queryParts += "`$filter=$([System.Web.HttpUtility]::UrlEncode($Filter))"
     }
     if ($Property -and $Property.Count -gt 0)
     {
-        $queryParts.Add("`$select=$($Property -join ',')")
+        $queryParts += "`$select=$($Property -join ',')"
     }
     if ($ExpandProperty -and $ExpandProperty.Count -gt 0)
     {
-        $queryParts.Add("`$expand=$($ExpandProperty -join ',')")
+        $queryParts += "`$expand=$($ExpandProperty -join ',')"
     }
     if ($Top -gt 0)
     {
-        $queryParts.Add("`$top=$Top")
+        $queryParts += "`$top=$Top"
     }
     if ($Skip -gt 0)
     {
-        $queryParts.Add("`$skip=$Skip")
+        $queryParts += "`$skip=$Skip"
     }
     if (-not [System.String]::IsNullOrEmpty($Search))
     {
-        $queryParts.Add("`$search=$([System.Web.HttpUtility]::UrlEncode($Search))")
+        $queryParts += "`$search=$([System.Web.HttpUtility]::UrlEncode($Search))"
     }
     if ($Sort -and $Sort.Count -gt 0)
     {
-        $queryParts.Add("`$orderby=$($Sort -join ',')")
+        $queryParts += "`$orderby=$($Sort -join ',')"
     }
     if (-not [System.String]::IsNullOrEmpty($CountVariable))
     {
-        $queryParts.Add('$count=true')
+        $queryParts += '$count=true'
     }
 
     if ($queryParts.Count -gt 0)
@@ -525,8 +507,9 @@ function ConvertTo-M365DSCGraphShimUri
 <#
 .SYNOPSIS
     Converts a PascalCase property name to the camelCase name Graph expects. A leading run of
-    capitals is lowered up to the last one that starts a word. Keys that do not start with a
-    capital, such as @odata.type, are returned unchanged.
+    capitals is lowered up to the last one that starts a word. Names that start with Odata, such
+    as OdataId and OdataType, become the @odata.id and @odata.type annotations. Keys that do not
+    start with a capital, such as @odata.type, are returned unchanged.
 #>
 function ConvertTo-M365DSCGraphShimPropertyName
 {
@@ -541,6 +524,10 @@ function ConvertTo-M365DSCGraphShimPropertyName
     if ($Name -cnotmatch '^[A-Z]')
     {
         return $Name
+    }
+    if ($Name -cmatch '^Odata([A-Z].*)$')
+    {
+        return '@odata.' + $Matches[1].Substring(0, 1).ToLower() + $Matches[1].Substring(1)
     }
     if ($Name -cmatch '^[A-Z0-9]+$')
     {
@@ -632,16 +619,19 @@ function ConvertTo-M365DSCGraphShimBody
     return $body
 }
 
-# Base set of parameter names that are never sent in a request body.
+# Base set of parameter names that are never sent in a request body, like the common parameters,
+# the SDK infrastructure and OData query parameters, PassThru and IfMatch.
 # Individual functions append their own identity-parameter names before calling helpers.
 $script:GraphShimExcludeFromBody = @(
+    [System.Management.Automation.PSCmdlet]::CommonParameters
+    [System.Management.Automation.PSCmdlet]::OptionalCommonParameters
     'Headers', 'HttpPipelinePrepend', 'HttpPipelineAppend',
     'Proxy', 'ProxyCredential', 'ProxyUseDefaultCredentials',
     'Break', 'ResponseHeadersVariable', 'InputObject',
     'Filter', 'Property', 'ExpandProperty', 'Top', 'Skip',
     'Search', 'Sort', 'CountVariable', 'ConsistencyLevel',
     'All', 'PageSize', 'NoPageSize', 'BodyParameter', 'AdditionalProperties',
-    'Confirm', 'WhatIf', 'ErrorAction'
+    'PassThru', 'IfMatch'
 )
 
 <#
@@ -669,7 +659,7 @@ function ConvertTo-M365DSCGraphShimSafeUri
 
 <#
 .SYNOPSIS
-    Returns a copy of the bound request headers.
+    Returns a copy of the bound request headers, with IfMatch as the If-Match header.
 #>
 function Get-M365DSCGraphShimRequestHeaders
 {
@@ -688,6 +678,10 @@ function Get-M365DSCGraphShimRequestHeaders
         {
             $requestHeaders[$key] = $BoundParameters['Headers'][$key]
         }
+    }
+    if (-not [System.String]::IsNullOrEmpty($BoundParameters['IfMatch']))
+    {
+        $requestHeaders['If-Match'] = $BoundParameters['IfMatch']
     }
     return $requestHeaders
 }
@@ -880,10 +874,6 @@ function Invoke-M365DSCGraphShimDeleteResource
     )
 
     $requestHeaders = Get-M365DSCGraphShimRequestHeaders -BoundParameters $BoundParameters
-    if (-not [System.String]::IsNullOrEmpty($BoundParameters['IfMatch']))
-    {
-        $requestHeaders['If-Match'] = $BoundParameters['IfMatch']
-    }
     $Uri = ConvertTo-M365DSCGraphShimSafeUri -Uri $Uri
 
     if ($Script:IsPowerShell76OrGreater)
@@ -1364,6 +1354,7 @@ function Get-MgApplicationFederatedIdentityCredential
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ApplicationId') -and [System.String]::IsNullOrEmpty($ApplicationId)) { Write-Error -Message "Cannot bind argument to parameter 'ApplicationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('FederatedIdentityCredentialId') -and [System.String]::IsNullOrEmpty($FederatedIdentityCredentialId)) { Write-Error -Message "Cannot bind argument to parameter 'FederatedIdentityCredentialId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('FederatedIdentityCredentialId') -and -not [System.String]::IsNullOrEmpty($FederatedIdentityCredentialId)) { "/v1.0/applications/$($ApplicationId)/federatedIdentityCredentials/$($FederatedIdentityCredentialId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/applications/$($ApplicationId)/federatedIdentityCredentials" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -1458,6 +1449,7 @@ function Get-MgApplicationOwner
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ApplicationId') -and [System.String]::IsNullOrEmpty($ApplicationId)) { Write-Error -Message "Cannot bind argument to parameter 'ApplicationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/applications/$($ApplicationId)/owners" -ErrorAction $ErrorActionPreference
 }
 
@@ -1888,6 +1880,7 @@ function Get-MgBetaDeviceAppManagementAndroidManagedAppProtectionApp
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AndroidManagedAppProtectionId') -and [System.String]::IsNullOrEmpty($AndroidManagedAppProtectionId)) { Write-Error -Message "Cannot bind argument to parameter 'AndroidManagedAppProtectionId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { Write-Error -Message "Cannot bind argument to parameter 'ManagedMobileAppId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and -not [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { "/beta/deviceAppManagement/androidManagedAppProtections/$($AndroidManagedAppProtectionId)/apps/$($ManagedMobileAppId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/androidManagedAppProtections/$($AndroidManagedAppProtectionId)/apps" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -1986,6 +1979,7 @@ function Get-MgBetaDeviceAppManagementAndroidManagedAppProtectionAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AndroidManagedAppProtectionId') -and [System.String]::IsNullOrEmpty($AndroidManagedAppProtectionId)) { Write-Error -Message "Cannot bind argument to parameter 'AndroidManagedAppProtectionId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'TargetedManagedAppPolicyAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and -not [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { "/beta/deviceAppManagement/androidManagedAppProtections/$($AndroidManagedAppProtectionId)/assignments/$($TargetedManagedAppPolicyAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/androidManagedAppProtections/$($AndroidManagedAppProtectionId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -2178,6 +2172,7 @@ function Get-MgBetaDeviceAppManagementiOSManagedAppProtectionApp
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('IosManagedAppProtectionId') -and [System.String]::IsNullOrEmpty($IosManagedAppProtectionId)) { Write-Error -Message "Cannot bind argument to parameter 'IosManagedAppProtectionId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { Write-Error -Message "Cannot bind argument to parameter 'ManagedMobileAppId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and -not [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { "/beta/deviceAppManagement/iosManagedAppProtections/$($IosManagedAppProtectionId)/apps/$($ManagedMobileAppId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/iosManagedAppProtections/$($IosManagedAppProtectionId)/apps" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -2276,6 +2271,7 @@ function Get-MgBetaDeviceAppManagementiOSManagedAppProtectionAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('IosManagedAppProtectionId') -and [System.String]::IsNullOrEmpty($IosManagedAppProtectionId)) { Write-Error -Message "Cannot bind argument to parameter 'IosManagedAppProtectionId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'TargetedManagedAppPolicyAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and -not [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { "/beta/deviceAppManagement/iosManagedAppProtections/$($IosManagedAppProtectionId)/assignments/$($TargetedManagedAppPolicyAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/iosManagedAppProtections/$($IosManagedAppProtectionId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -2750,6 +2746,7 @@ function Get-MgBetaDeviceAppManagementMobileAppAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('MobileAppId') -and [System.String]::IsNullOrEmpty($MobileAppId)) { Write-Error -Message "Cannot bind argument to parameter 'MobileAppId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('MobileAppAssignmentId') -and [System.String]::IsNullOrEmpty($MobileAppAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'MobileAppAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('MobileAppAssignmentId') -and -not [System.String]::IsNullOrEmpty($MobileAppAssignmentId)) { "/beta/deviceAppManagement/mobileApps/$($MobileAppId)/assignments/$($MobileAppAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/mobileApps/$($MobileAppId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -3040,6 +3037,7 @@ function Get-MgBetaDeviceAppManagementMobileAppConfigurationAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ManagedDeviceMobileAppConfigurationId') -and [System.String]::IsNullOrEmpty($ManagedDeviceMobileAppConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'ManagedDeviceMobileAppConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ManagedDeviceMobileAppConfigurationAssignmentId') -and [System.String]::IsNullOrEmpty($ManagedDeviceMobileAppConfigurationAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'ManagedDeviceMobileAppConfigurationAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ManagedDeviceMobileAppConfigurationAssignmentId') -and -not [System.String]::IsNullOrEmpty($ManagedDeviceMobileAppConfigurationAssignmentId)) { "/beta/deviceAppManagement/mobileAppConfigurations/$($ManagedDeviceMobileAppConfigurationId)/assignments/$($ManagedDeviceMobileAppConfigurationAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/mobileAppConfigurations/$($ManagedDeviceMobileAppConfigurationId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -3338,6 +3336,7 @@ function Get-MgBetaDeviceAppManagementTargetedManagedAppConfigurationApp
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('TargetedManagedAppConfigurationId') -and [System.String]::IsNullOrEmpty($TargetedManagedAppConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'TargetedManagedAppConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { Write-Error -Message "Cannot bind argument to parameter 'ManagedMobileAppId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and -not [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { "/beta/deviceAppManagement/targetedManagedAppConfigurations/$($TargetedManagedAppConfigurationId)/apps/$($ManagedMobileAppId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/targetedManagedAppConfigurations/$($TargetedManagedAppConfigurationId)/apps" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -3436,6 +3435,7 @@ function Get-MgBetaDeviceAppManagementTargetedManagedAppConfigurationAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('TargetedManagedAppConfigurationId') -and [System.String]::IsNullOrEmpty($TargetedManagedAppConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'TargetedManagedAppConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'TargetedManagedAppPolicyAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and -not [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { "/beta/deviceAppManagement/targetedManagedAppConfigurations/$($TargetedManagedAppConfigurationId)/assignments/$($TargetedManagedAppPolicyAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/targetedManagedAppConfigurations/$($TargetedManagedAppConfigurationId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -3628,6 +3628,7 @@ function Get-MgBetaDeviceAppManagementWindowsManagedAppProtectionApp
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('WindowsManagedAppProtectionId') -and [System.String]::IsNullOrEmpty($WindowsManagedAppProtectionId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsManagedAppProtectionId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { Write-Error -Message "Cannot bind argument to parameter 'ManagedMobileAppId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ManagedMobileAppId') -and -not [System.String]::IsNullOrEmpty($ManagedMobileAppId)) { "/beta/deviceAppManagement/windowsManagedAppProtections/$($WindowsManagedAppProtectionId)/apps/$($ManagedMobileAppId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/windowsManagedAppProtections/$($WindowsManagedAppProtectionId)/apps" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -3726,6 +3727,7 @@ function Get-MgBetaDeviceAppManagementWindowsManagedAppProtectionAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('WindowsManagedAppProtectionId') -and [System.String]::IsNullOrEmpty($WindowsManagedAppProtectionId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsManagedAppProtectionId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'TargetedManagedAppPolicyAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('TargetedManagedAppPolicyAssignmentId') -and -not [System.String]::IsNullOrEmpty($TargetedManagedAppPolicyAssignmentId)) { "/beta/deviceAppManagement/windowsManagedAppProtections/$($WindowsManagedAppProtectionId)/assignments/$($TargetedManagedAppPolicyAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceAppManagement/windowsManagedAppProtections/$($WindowsManagedAppProtectionId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -4202,6 +4204,7 @@ function Get-MgBetaDeviceManagementConfigurationPolicyAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationPolicyId') -and [System.String]::IsNullOrEmpty($DeviceManagementConfigurationPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementConfigurationPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationPolicyAssignmentId') -and [System.String]::IsNullOrEmpty($DeviceManagementConfigurationPolicyAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementConfigurationPolicyAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationPolicyAssignmentId') -and -not [System.String]::IsNullOrEmpty($DeviceManagementConfigurationPolicyAssignmentId)) { "/beta/deviceManagement/configurationPolicies/$($DeviceManagementConfigurationPolicyId)/assignments/$($DeviceManagementConfigurationPolicyAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/configurationPolicies/$($DeviceManagementConfigurationPolicyId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -4252,6 +4255,7 @@ function Get-MgBetaDeviceManagementConfigurationPolicyEnrollmentTimeDeviceMember
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationPolicyId') -and [System.String]::IsNullOrEmpty($DeviceManagementConfigurationPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementConfigurationPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/configurationPolicies/$($DeviceManagementConfigurationPolicyId)/retrieveEnrollmentTimeDeviceMembershipTarget" -ErrorAction $ErrorActionPreference
 }
 
@@ -4348,6 +4352,7 @@ function Get-MgBetaDeviceManagementConfigurationPolicySetting
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationPolicyId') -and [System.String]::IsNullOrEmpty($DeviceManagementConfigurationPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementConfigurationPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationSettingId') -and [System.String]::IsNullOrEmpty($DeviceManagementConfigurationSettingId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementConfigurationSettingId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationSettingId') -and -not [System.String]::IsNullOrEmpty($DeviceManagementConfigurationSettingId)) { "/beta/deviceManagement/configurationPolicies/$($DeviceManagementConfigurationPolicyId)/settings/$($DeviceManagementConfigurationSettingId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/configurationPolicies/$($DeviceManagementConfigurationPolicyId)/settings" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -4446,6 +4451,7 @@ function Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationPolicyTemplateId') -and [System.String]::IsNullOrEmpty($DeviceManagementConfigurationPolicyTemplateId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementConfigurationPolicyTemplateId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationSettingTemplateId') -and [System.String]::IsNullOrEmpty($DeviceManagementConfigurationSettingTemplateId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementConfigurationSettingTemplateId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceManagementConfigurationSettingTemplateId') -and -not [System.String]::IsNullOrEmpty($DeviceManagementConfigurationSettingTemplateId)) { "/beta/deviceManagement/configurationPolicyTemplates/$($DeviceManagementConfigurationPolicyTemplateId)/settingTemplates/$($DeviceManagementConfigurationSettingTemplateId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/configurationPolicyTemplates/$($DeviceManagementConfigurationPolicyTemplateId)/settingTemplates" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -4920,6 +4926,7 @@ function Get-MgBetaDeviceManagementDeviceCompliancePolicyAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceCompliancePolicyId') -and [System.String]::IsNullOrEmpty($DeviceCompliancePolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceCompliancePolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceCompliancePolicyAssignmentId') -and [System.String]::IsNullOrEmpty($DeviceCompliancePolicyAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceCompliancePolicyAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceCompliancePolicyAssignmentId') -and -not [System.String]::IsNullOrEmpty($DeviceCompliancePolicyAssignmentId)) { "/beta/deviceManagement/deviceCompliancePolicies/$($DeviceCompliancePolicyId)/assignments/$($DeviceCompliancePolicyAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/deviceCompliancePolicies/$($DeviceCompliancePolicyId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -5112,6 +5119,7 @@ function Get-MgBetaDeviceManagementDeviceConfigurationAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceConfigurationId') -and [System.String]::IsNullOrEmpty($DeviceConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceConfigurationAssignmentId') -and [System.String]::IsNullOrEmpty($DeviceConfigurationAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceConfigurationAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceConfigurationAssignmentId') -and -not [System.String]::IsNullOrEmpty($DeviceConfigurationAssignmentId)) { "/beta/deviceManagement/deviceConfigurations/$($DeviceConfigurationId)/assignments/$($DeviceConfigurationAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/deviceConfigurations/$($DeviceConfigurationId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -5304,6 +5312,7 @@ function Get-MgBetaDeviceManagementDeviceEnrollmentConfigurationAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceEnrollmentConfigurationId') -and [System.String]::IsNullOrEmpty($DeviceEnrollmentConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceEnrollmentConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('EnrollmentConfigurationAssignmentId') -and [System.String]::IsNullOrEmpty($EnrollmentConfigurationAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'EnrollmentConfigurationAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('EnrollmentConfigurationAssignmentId') -and -not [System.String]::IsNullOrEmpty($EnrollmentConfigurationAssignmentId)) { "/beta/deviceManagement/deviceEnrollmentConfigurations/$($DeviceEnrollmentConfigurationId)/assignments/$($EnrollmentConfigurationAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/deviceEnrollmentConfigurations/$($DeviceEnrollmentConfigurationId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -5496,6 +5505,7 @@ function Get-MgBetaDeviceManagementDeviceHealthScriptAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceHealthScriptId') -and [System.String]::IsNullOrEmpty($DeviceHealthScriptId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceHealthScriptId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceHealthScriptAssignmentId') -and [System.String]::IsNullOrEmpty($DeviceHealthScriptAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceHealthScriptAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceHealthScriptAssignmentId') -and -not [System.String]::IsNullOrEmpty($DeviceHealthScriptAssignmentId)) { "/beta/deviceManagement/deviceHealthScripts/$($DeviceHealthScriptId)/assignments/$($DeviceHealthScriptAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/deviceHealthScripts/$($DeviceHealthScriptId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -5782,6 +5792,7 @@ function Get-MgBetaDeviceManagementGroupPolicyConfigurationAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupPolicyConfigurationId') -and [System.String]::IsNullOrEmpty($GroupPolicyConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('GroupPolicyConfigurationAssignmentId') -and [System.String]::IsNullOrEmpty($GroupPolicyConfigurationAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyConfigurationAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('GroupPolicyConfigurationAssignmentId') -and -not [System.String]::IsNullOrEmpty($GroupPolicyConfigurationAssignmentId)) { "/beta/deviceManagement/groupPolicyConfigurations/$($GroupPolicyConfigurationId)/assignments/$($GroupPolicyConfigurationAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/groupPolicyConfigurations/$($GroupPolicyConfigurationId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -5880,6 +5891,7 @@ function Get-MgBetaDeviceManagementGroupPolicyConfigurationDefinitionValue
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupPolicyConfigurationId') -and [System.String]::IsNullOrEmpty($GroupPolicyConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('GroupPolicyDefinitionValueId') -and [System.String]::IsNullOrEmpty($GroupPolicyDefinitionValueId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyDefinitionValueId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('GroupPolicyDefinitionValueId') -and -not [System.String]::IsNullOrEmpty($GroupPolicyDefinitionValueId)) { "/beta/deviceManagement/groupPolicyConfigurations/$($GroupPolicyConfigurationId)/definitionValues/$($GroupPolicyDefinitionValueId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/groupPolicyConfigurations/$($GroupPolicyConfigurationId)/definitionValues" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -5942,6 +5954,8 @@ function Get-MgBetaDeviceManagementGroupPolicyConfigurationDefinitionValueDefini
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupPolicyConfigurationId') -and [System.String]::IsNullOrEmpty($GroupPolicyConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    if ($PSBoundParameters.ContainsKey('GroupPolicyDefinitionValueId') -and [System.String]::IsNullOrEmpty($GroupPolicyDefinitionValueId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyDefinitionValueId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/groupPolicyConfigurations/$($GroupPolicyConfigurationId)/definitionValues/$($GroupPolicyDefinitionValueId)/definition" -ErrorAction $ErrorActionPreference
 }
 
@@ -6042,6 +6056,8 @@ function Get-MgBetaDeviceManagementGroupPolicyConfigurationDefinitionValuePresen
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupPolicyConfigurationId') -and [System.String]::IsNullOrEmpty($GroupPolicyConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    if ($PSBoundParameters.ContainsKey('GroupPolicyDefinitionValueId') -and [System.String]::IsNullOrEmpty($GroupPolicyDefinitionValueId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyDefinitionValueId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('GroupPolicyPresentationValueId') -and [System.String]::IsNullOrEmpty($GroupPolicyPresentationValueId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupPolicyPresentationValueId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('GroupPolicyPresentationValueId') -and -not [System.String]::IsNullOrEmpty($GroupPolicyPresentationValueId)) { "/beta/deviceManagement/groupPolicyConfigurations/$($GroupPolicyConfigurationId)/definitionValues/$($GroupPolicyDefinitionValueId)/presentationValues/$($GroupPolicyPresentationValueId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/groupPolicyConfigurations/$($GroupPolicyConfigurationId)/definitionValues/$($GroupPolicyDefinitionValueId)/presentationValues" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -6328,6 +6344,7 @@ function Get-MgBetaDeviceManagementIntuneBrandingProfileAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('IntuneBrandingProfileId') -and [System.String]::IsNullOrEmpty($IntuneBrandingProfileId)) { Write-Error -Message "Cannot bind argument to parameter 'IntuneBrandingProfileId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('IntuneBrandingProfileAssignmentId') -and [System.String]::IsNullOrEmpty($IntuneBrandingProfileAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'IntuneBrandingProfileAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('IntuneBrandingProfileAssignmentId') -and -not [System.String]::IsNullOrEmpty($IntuneBrandingProfileAssignmentId)) { "/beta/deviceManagement/intuneBrandingProfiles/$($IntuneBrandingProfileId)/assignments/$($IntuneBrandingProfileAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/intuneBrandingProfiles/$($IntuneBrandingProfileId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -7084,6 +7101,7 @@ function Get-MgBetaDeviceManagementRoleScopeTagAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('RoleScopeTagId') -and [System.String]::IsNullOrEmpty($RoleScopeTagId)) { Write-Error -Message "Cannot bind argument to parameter 'RoleScopeTagId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('RoleScopeTagAutoAssignmentId') -and [System.String]::IsNullOrEmpty($RoleScopeTagAutoAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'RoleScopeTagAutoAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('RoleScopeTagAutoAssignmentId') -and -not [System.String]::IsNullOrEmpty($RoleScopeTagAutoAssignmentId)) { "/beta/deviceManagement/roleScopeTags/$($RoleScopeTagId)/assignments/$($RoleScopeTagAutoAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/roleScopeTags/$($RoleScopeTagId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -7276,6 +7294,7 @@ function Get-MgBetaDeviceManagementScriptAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceManagementScriptId') -and [System.String]::IsNullOrEmpty($DeviceManagementScriptId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementScriptId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceManagementScriptAssignmentId') -and [System.String]::IsNullOrEmpty($DeviceManagementScriptAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementScriptAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceManagementScriptAssignmentId') -and -not [System.String]::IsNullOrEmpty($DeviceManagementScriptAssignmentId)) { "/beta/deviceManagement/deviceManagementScripts/$($DeviceManagementScriptId)/assignments/$($DeviceManagementScriptAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/deviceManagementScripts/$($DeviceManagementScriptId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -7374,6 +7393,7 @@ function Get-MgBetaDeviceManagementTemplateCategory
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceManagementTemplateId') -and [System.String]::IsNullOrEmpty($DeviceManagementTemplateId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementTemplateId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceManagementTemplateSettingCategoryId') -and [System.String]::IsNullOrEmpty($DeviceManagementTemplateSettingCategoryId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementTemplateSettingCategoryId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceManagementTemplateSettingCategoryId') -and -not [System.String]::IsNullOrEmpty($DeviceManagementTemplateSettingCategoryId)) { "/beta/deviceManagement/templates/$($DeviceManagementTemplateId)/categories/$($DeviceManagementTemplateSettingCategoryId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/templates/$($DeviceManagementTemplateId)/categories" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -7476,6 +7496,8 @@ function Get-MgBetaDeviceManagementTemplateCategoryRecommendedSetting
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DeviceManagementTemplateId') -and [System.String]::IsNullOrEmpty($DeviceManagementTemplateId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementTemplateId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    if ($PSBoundParameters.ContainsKey('DeviceManagementTemplateSettingCategoryId') -and [System.String]::IsNullOrEmpty($DeviceManagementTemplateSettingCategoryId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementTemplateSettingCategoryId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DeviceManagementSettingInstanceId') -and [System.String]::IsNullOrEmpty($DeviceManagementSettingInstanceId)) { Write-Error -Message "Cannot bind argument to parameter 'DeviceManagementSettingInstanceId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DeviceManagementSettingInstanceId') -and -not [System.String]::IsNullOrEmpty($DeviceManagementSettingInstanceId)) { "/beta/deviceManagement/templates/$($DeviceManagementTemplateId)/categories/$($DeviceManagementTemplateSettingCategoryId)/recommendedSettings/$($DeviceManagementSettingInstanceId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/templates/$($DeviceManagementTemplateId)/categories/$($DeviceManagementTemplateSettingCategoryId)/recommendedSettings" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -7668,6 +7690,7 @@ function Get-MgBetaDeviceManagementTermAndConditionAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('TermsAndConditionsId') -and [System.String]::IsNullOrEmpty($TermsAndConditionsId)) { Write-Error -Message "Cannot bind argument to parameter 'TermsAndConditionsId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('TermsAndConditionsAssignmentId') -and [System.String]::IsNullOrEmpty($TermsAndConditionsAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'TermsAndConditionsAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('TermsAndConditionsAssignmentId') -and -not [System.String]::IsNullOrEmpty($TermsAndConditionsAssignmentId)) { "/beta/deviceManagement/termsAndConditions/$($TermsAndConditionsId)/assignments/$($TermsAndConditionsAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/termsAndConditions/$($TermsAndConditionsId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -8142,6 +8165,7 @@ function Get-MgBetaDeviceManagementWindowsAutopilotDeploymentProfileAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('WindowsAutopilotDeploymentProfileId') -and [System.String]::IsNullOrEmpty($WindowsAutopilotDeploymentProfileId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsAutopilotDeploymentProfileId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('WindowsAutopilotDeploymentProfileAssignmentId') -and [System.String]::IsNullOrEmpty($WindowsAutopilotDeploymentProfileAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsAutopilotDeploymentProfileAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('WindowsAutopilotDeploymentProfileAssignmentId') -and -not [System.String]::IsNullOrEmpty($WindowsAutopilotDeploymentProfileAssignmentId)) { "/beta/deviceManagement/windowsAutopilotDeploymentProfiles/$($WindowsAutopilotDeploymentProfileId)/assignments/$($WindowsAutopilotDeploymentProfileAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/windowsAutopilotDeploymentProfiles/$($WindowsAutopilotDeploymentProfileId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -8334,6 +8358,7 @@ function Get-MgBetaDeviceManagementWindowsFeatureUpdateProfileAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('WindowsFeatureUpdateProfileId') -and [System.String]::IsNullOrEmpty($WindowsFeatureUpdateProfileId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsFeatureUpdateProfileId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('WindowsFeatureUpdateProfileAssignmentId') -and [System.String]::IsNullOrEmpty($WindowsFeatureUpdateProfileAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsFeatureUpdateProfileAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('WindowsFeatureUpdateProfileAssignmentId') -and -not [System.String]::IsNullOrEmpty($WindowsFeatureUpdateProfileAssignmentId)) { "/beta/deviceManagement/windowsFeatureUpdateProfiles/$($WindowsFeatureUpdateProfileId)/assignments/$($WindowsFeatureUpdateProfileAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/windowsFeatureUpdateProfiles/$($WindowsFeatureUpdateProfileId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -8526,6 +8551,7 @@ function Get-MgBetaDeviceManagementWindowsQualityUpdateProfileAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('WindowsQualityUpdateProfileId') -and [System.String]::IsNullOrEmpty($WindowsQualityUpdateProfileId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsQualityUpdateProfileId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('WindowsQualityUpdateProfileAssignmentId') -and [System.String]::IsNullOrEmpty($WindowsQualityUpdateProfileAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'WindowsQualityUpdateProfileAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('WindowsQualityUpdateProfileAssignmentId') -and -not [System.String]::IsNullOrEmpty($WindowsQualityUpdateProfileAssignmentId)) { "/beta/deviceManagement/windowsQualityUpdateProfiles/$($WindowsQualityUpdateProfileId)/assignments/$($WindowsQualityUpdateProfileAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/deviceManagement/windowsQualityUpdateProfiles/$($WindowsQualityUpdateProfileId)/assignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -8812,6 +8838,7 @@ function Get-MgBetaDirectoryCertificateAuthorityCertificateBasedApplicationConfi
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('CertificateBasedApplicationConfigurationId') -and [System.String]::IsNullOrEmpty($CertificateBasedApplicationConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'CertificateBasedApplicationConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('CertificateAuthorityAsEntityId') -and [System.String]::IsNullOrEmpty($CertificateAuthorityAsEntityId)) { Write-Error -Message "Cannot bind argument to parameter 'CertificateAuthorityAsEntityId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('CertificateAuthorityAsEntityId') -and -not [System.String]::IsNullOrEmpty($CertificateAuthorityAsEntityId)) { "/beta/directory/certificateAuthorities/certificateBasedApplicationConfigurations/$($CertificateBasedApplicationConfigurationId)/trustedCertificateAuthorities/$($CertificateAuthorityAsEntityId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/directory/certificateAuthorities/certificateBasedApplicationConfigurations/$($CertificateBasedApplicationConfigurationId)/trustedCertificateAuthorities" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -9628,6 +9655,7 @@ function Get-MgBetaDomainFederationConfiguration
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('DomainId') -and [System.String]::IsNullOrEmpty($DomainId)) { Write-Error -Message "Cannot bind argument to parameter 'DomainId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('InternalDomainFederationId') -and [System.String]::IsNullOrEmpty($InternalDomainFederationId)) { Write-Error -Message "Cannot bind argument to parameter 'InternalDomainFederationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('InternalDomainFederationId') -and -not [System.String]::IsNullOrEmpty($InternalDomainFederationId)) { "/beta/domains/$($DomainId)/federationConfiguration/$($InternalDomainFederationId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/domains/$($DomainId)/federationConfiguration" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -10028,6 +10056,7 @@ function Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResourc
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AccessPackageCatalogId') -and [System.String]::IsNullOrEmpty($AccessPackageCatalogId)) { Write-Error -Message "Cannot bind argument to parameter 'AccessPackageCatalogId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/entitlementManagement/accessPackageCatalogs/$($AccessPackageCatalogId)/accessPackageResources" -ErrorAction $ErrorActionPreference
 }
 
@@ -10116,6 +10145,7 @@ function Get-MgBetaEntitlementManagementAccessPackageCatalogAccessPackageResourc
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AccessPackageCatalogId') -and [System.String]::IsNullOrEmpty($AccessPackageCatalogId)) { Write-Error -Message "Cannot bind argument to parameter 'AccessPackageCatalogId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/entitlementManagement/accessPackageCatalogs/$($AccessPackageCatalogId)/accessPackageResourceRoles" -ErrorAction $ErrorActionPreference
 }
 
@@ -10204,6 +10234,7 @@ function Get-MgBetaEntitlementManagementAccessPackageIncompatibleAccessPackage
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AccessPackageId') -and [System.String]::IsNullOrEmpty($AccessPackageId)) { Write-Error -Message "Cannot bind argument to parameter 'AccessPackageId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/entitlementManagement/accessPackages/$($AccessPackageId)/incompatibleAccessPackages" -ErrorAction $ErrorActionPreference
 }
 
@@ -10292,6 +10323,7 @@ function Get-MgBetaEntitlementManagementAccessPackageIncompatibleGroup
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AccessPackageId') -and [System.String]::IsNullOrEmpty($AccessPackageId)) { Write-Error -Message "Cannot bind argument to parameter 'AccessPackageId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/entitlementManagement/accessPackages/$($AccessPackageId)/incompatibleGroups" -ErrorAction $ErrorActionPreference
 }
 
@@ -10388,6 +10420,7 @@ function Get-MgBetaEntitlementManagementAccessPackageIncompatibleWith
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AccessPackageId') -and [System.String]::IsNullOrEmpty($AccessPackageId)) { Write-Error -Message "Cannot bind argument to parameter 'AccessPackageId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('AccessPackageId1') -and [System.String]::IsNullOrEmpty($AccessPackageId1)) { Write-Error -Message "Cannot bind argument to parameter 'AccessPackageId1' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('AccessPackageId1') -and -not [System.String]::IsNullOrEmpty($AccessPackageId1)) { "/beta/identityGovernance/entitlementManagement/accessPackages/$($AccessPackageId)/accessPackagesIncompatibleWith/$($AccessPackageId1)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/entitlementManagement/accessPackages/$($AccessPackageId)/accessPackagesIncompatibleWith" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -10580,6 +10613,7 @@ function Get-MgBetaEntitlementManagementConnectedOrganizationExternalSponsor
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ConnectedOrganizationId') -and [System.String]::IsNullOrEmpty($ConnectedOrganizationId)) { Write-Error -Message "Cannot bind argument to parameter 'ConnectedOrganizationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/entitlementManagement/connectedOrganizations/$($ConnectedOrganizationId)/externalSponsors" -ErrorAction $ErrorActionPreference
 }
 
@@ -10668,6 +10702,7 @@ function Get-MgBetaEntitlementManagementConnectedOrganizationInternalSponsor
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ConnectedOrganizationId') -and [System.String]::IsNullOrEmpty($ConnectedOrganizationId)) { Write-Error -Message "Cannot bind argument to parameter 'ConnectedOrganizationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/entitlementManagement/connectedOrganizations/$($ConnectedOrganizationId)/internalSponsors" -ErrorAction $ErrorActionPreference
 }
 
@@ -11098,6 +11133,7 @@ function Get-MgBetaGroupMember
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupId') -and [System.String]::IsNullOrEmpty($GroupId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/groups/$($GroupId)/members" -ErrorAction $ErrorActionPreference
 }
 
@@ -11342,6 +11378,7 @@ function Get-MgBetaIdentityB2XUserFlowApiConnectorConfiguration
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('B2xIdentityUserFlowId') -and [System.String]::IsNullOrEmpty($B2xIdentityUserFlowId)) { Write-Error -Message "Cannot bind argument to parameter 'B2xIdentityUserFlowId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identity/b2xUserFlows/$($B2xIdentityUserFlowId)/apiConnectorConfiguration" -ErrorAction $ErrorActionPreference
 }
 
@@ -11438,6 +11475,7 @@ function Get-MgBetaIdentityB2XUserFlowIdentityProvider
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('B2xIdentityUserFlowId') -and [System.String]::IsNullOrEmpty($B2xIdentityUserFlowId)) { Write-Error -Message "Cannot bind argument to parameter 'B2xIdentityUserFlowId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('IdentityProviderId') -and [System.String]::IsNullOrEmpty($IdentityProviderId)) { Write-Error -Message "Cannot bind argument to parameter 'IdentityProviderId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('IdentityProviderId') -and -not [System.String]::IsNullOrEmpty($IdentityProviderId)) { "/beta/identity/b2xUserFlows/$($B2xIdentityUserFlowId)/identityProviders/$($IdentityProviderId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identity/b2xUserFlows/$($B2xIdentityUserFlowId)/identityProviders" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -11536,6 +11574,7 @@ function Get-MgBetaIdentityB2XUserFlowUserAttributeAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('B2xIdentityUserFlowId') -and [System.String]::IsNullOrEmpty($B2xIdentityUserFlowId)) { Write-Error -Message "Cannot bind argument to parameter 'B2xIdentityUserFlowId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('IdentityUserFlowAttributeAssignmentId') -and [System.String]::IsNullOrEmpty($IdentityUserFlowAttributeAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'IdentityUserFlowAttributeAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('IdentityUserFlowAttributeAssignmentId') -and -not [System.String]::IsNullOrEmpty($IdentityUserFlowAttributeAssignmentId)) { "/beta/identity/b2xUserFlows/$($B2xIdentityUserFlowId)/userAttributeAssignments/$($IdentityUserFlowAttributeAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identity/b2xUserFlows/$($B2xIdentityUserFlowId)/userAttributeAssignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -12340,6 +12379,7 @@ function Get-MgBetaIdentityGovernanceLifecycleWorkflowTask
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('WorkflowId') -and [System.String]::IsNullOrEmpty($WorkflowId)) { Write-Error -Message "Cannot bind argument to parameter 'WorkflowId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('TaskId') -and [System.String]::IsNullOrEmpty($TaskId)) { Write-Error -Message "Cannot bind argument to parameter 'TaskId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('TaskId') -and -not [System.String]::IsNullOrEmpty($TaskId)) { "/beta/identityGovernance/lifecycleWorkflows/workflows/$($WorkflowId)/tasks/$($TaskId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/identityGovernance/lifecycleWorkflows/workflows/$($WorkflowId)/tasks" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -12908,6 +12948,7 @@ function Get-MgBetaNetworkAccessFilteringPolicyRule
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('FilteringPolicyId') -and [System.String]::IsNullOrEmpty($FilteringPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'FilteringPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and -not [System.String]::IsNullOrEmpty($PolicyRuleId)) { "/beta/networkAccess/filteringPolicies/$($FilteringPolicyId)/policyRules/$($PolicyRuleId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/filteringPolicies/$($FilteringPolicyId)/policyRules" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -13100,6 +13141,7 @@ function Get-MgBetaNetworkAccessFilteringProfilePolicy
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('FilteringProfileId') -and [System.String]::IsNullOrEmpty($FilteringProfileId)) { Write-Error -Message "Cannot bind argument to parameter 'FilteringProfileId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('PolicyLinkId') -and [System.String]::IsNullOrEmpty($PolicyLinkId)) { Write-Error -Message "Cannot bind argument to parameter 'PolicyLinkId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('PolicyLinkId') -and -not [System.String]::IsNullOrEmpty($PolicyLinkId)) { "/beta/networkAccess/filteringProfiles/$($FilteringProfileId)/policies/$($PolicyLinkId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/filteringProfiles/$($FilteringProfileId)/policies" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -13386,6 +13428,7 @@ function Get-MgBetaNetworkAccessForwardingProfilePolicy
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ForwardingProfileId') -and [System.String]::IsNullOrEmpty($ForwardingProfileId)) { Write-Error -Message "Cannot bind argument to parameter 'ForwardingProfileId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('PolicyLinkId') -and [System.String]::IsNullOrEmpty($PolicyLinkId)) { Write-Error -Message "Cannot bind argument to parameter 'PolicyLinkId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('PolicyLinkId') -and -not [System.String]::IsNullOrEmpty($PolicyLinkId)) { "/beta/networkAccess/forwardingProfiles/$($ForwardingProfileId)/policies/$($PolicyLinkId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/forwardingProfiles/$($ForwardingProfileId)/policies" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -13580,6 +13623,7 @@ function Get-MgBetaOnPremisePublishingProfileConnectorGroup
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('OnPremisesPublishingProfileId') -and [System.String]::IsNullOrEmpty($OnPremisesPublishingProfileId)) { Write-Error -Message "Cannot bind argument to parameter 'OnPremisesPublishingProfileId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ConnectorGroupId') -and [System.String]::IsNullOrEmpty($ConnectorGroupId)) { Write-Error -Message "Cannot bind argument to parameter 'ConnectorGroupId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ConnectorGroupId') -and -not [System.String]::IsNullOrEmpty($ConnectorGroupId)) { "/beta/onPremisesPublishingProfiles/$($OnPremisesPublishingProfileId)/connectorGroups/$($ConnectorGroupId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/onPremisesPublishingProfiles/$($OnPremisesPublishingProfileId)/connectorGroups" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -13772,6 +13816,7 @@ function Get-MgBetaOrganizationCertificateBasedAuthConfiguration
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('OrganizationId') -and [System.String]::IsNullOrEmpty($OrganizationId)) { Write-Error -Message "Cannot bind argument to parameter 'OrganizationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('CertificateBasedAuthConfigurationId') -and [System.String]::IsNullOrEmpty($CertificateBasedAuthConfigurationId)) { Write-Error -Message "Cannot bind argument to parameter 'CertificateBasedAuthConfigurationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('CertificateBasedAuthConfigurationId') -and -not [System.String]::IsNullOrEmpty($CertificateBasedAuthConfigurationId)) { "/beta/organization/$($OrganizationId)/certificateBasedAuthConfiguration/$($CertificateBasedAuthConfigurationId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/organization/$($OrganizationId)/certificateBasedAuthConfiguration" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -13830,6 +13875,7 @@ function Get-MgBetaOrganizationSettingItemInsight
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('OrganizationId') -and [System.String]::IsNullOrEmpty($OrganizationId)) { Write-Error -Message "Cannot bind argument to parameter 'OrganizationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/organization/$($OrganizationId)/settings/itemInsights" -ErrorAction $ErrorActionPreference
 }
 
@@ -13886,6 +13932,7 @@ function Get-MgBetaOrganizationSettingPersonInsight
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('OrganizationId') -and [System.String]::IsNullOrEmpty($OrganizationId)) { Write-Error -Message "Cannot bind argument to parameter 'OrganizationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/organization/$($OrganizationId)/settings/peopleInsights" -ErrorAction $ErrorActionPreference
 }
 
@@ -15030,6 +15077,7 @@ function Get-MgBetaPolicyCrossTenantAccessPolicyPartnerIdentitySynchronization
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('CrossTenantAccessPolicyConfigurationPartnerTenantId') -and [System.String]::IsNullOrEmpty($CrossTenantAccessPolicyConfigurationPartnerTenantId)) { Write-Error -Message "Cannot bind argument to parameter 'CrossTenantAccessPolicyConfigurationPartnerTenantId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/policies/crossTenantAccessPolicy/partners/$($CrossTenantAccessPolicyConfigurationPartnerTenantId)/identitySynchronization" -ErrorAction $ErrorActionPreference
 }
 
@@ -16024,6 +16072,7 @@ function Get-MgBetaPolicyRoleManagementPolicyRule
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('UnifiedRoleManagementPolicyId') -and [System.String]::IsNullOrEmpty($UnifiedRoleManagementPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'UnifiedRoleManagementPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('UnifiedRoleManagementPolicyRuleId') -and [System.String]::IsNullOrEmpty($UnifiedRoleManagementPolicyRuleId)) { Write-Error -Message "Cannot bind argument to parameter 'UnifiedRoleManagementPolicyRuleId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('UnifiedRoleManagementPolicyRuleId') -and -not [System.String]::IsNullOrEmpty($UnifiedRoleManagementPolicyRuleId)) { "/beta/policies/roleManagementPolicies/$($UnifiedRoleManagementPolicyId)/rules/$($UnifiedRoleManagementPolicyRuleId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/policies/roleManagementPolicies/$($UnifiedRoleManagementPolicyId)/rules" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -17160,6 +17209,7 @@ function Get-MgBetaServicePrincipalAppRoleAssignedTo
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ServicePrincipalId') -and [System.String]::IsNullOrEmpty($ServicePrincipalId)) { Write-Error -Message "Cannot bind argument to parameter 'ServicePrincipalId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('AppRoleAssignmentId') -and [System.String]::IsNullOrEmpty($AppRoleAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'AppRoleAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('AppRoleAssignmentId') -and -not [System.String]::IsNullOrEmpty($AppRoleAssignmentId)) { "/beta/servicePrincipals/$($ServicePrincipalId)/appRoleAssignedTo/$($AppRoleAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/servicePrincipals/$($ServicePrincipalId)/appRoleAssignedTo" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -17258,6 +17308,7 @@ function Get-MgBetaServicePrincipalDelegatedPermissionClassification
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('ServicePrincipalId') -and [System.String]::IsNullOrEmpty($ServicePrincipalId)) { Write-Error -Message "Cannot bind argument to parameter 'ServicePrincipalId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('DelegatedPermissionClassificationId') -and [System.String]::IsNullOrEmpty($DelegatedPermissionClassificationId)) { Write-Error -Message "Cannot bind argument to parameter 'DelegatedPermissionClassificationId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('DelegatedPermissionClassificationId') -and -not [System.String]::IsNullOrEmpty($DelegatedPermissionClassificationId)) { "/beta/servicePrincipals/$($ServicePrincipalId)/delegatedPermissionClassifications/$($DelegatedPermissionClassificationId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/servicePrincipals/$($ServicePrincipalId)/delegatedPermissionClassifications" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -17544,6 +17595,7 @@ function Get-MgBetaTeamChannel
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('TeamId') -and [System.String]::IsNullOrEmpty($TeamId)) { Write-Error -Message "Cannot bind argument to parameter 'TeamId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ChannelId') -and [System.String]::IsNullOrEmpty($ChannelId)) { Write-Error -Message "Cannot bind argument to parameter 'ChannelId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ChannelId') -and -not [System.String]::IsNullOrEmpty($ChannelId)) { "/beta/teams/$($TeamId)/channels/$($ChannelId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/teams/$($TeamId)/channels" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -17646,6 +17698,8 @@ function Get-MgBetaTeamChannelTab
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('TeamId') -and [System.String]::IsNullOrEmpty($TeamId)) { Write-Error -Message "Cannot bind argument to parameter 'TeamId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    if ($PSBoundParameters.ContainsKey('ChannelId') -and [System.String]::IsNullOrEmpty($ChannelId)) { Write-Error -Message "Cannot bind argument to parameter 'ChannelId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('TeamsTabId') -and [System.String]::IsNullOrEmpty($TeamsTabId)) { Write-Error -Message "Cannot bind argument to parameter 'TeamsTabId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('TeamsTabId') -and -not [System.String]::IsNullOrEmpty($TeamsTabId)) { "/beta/teams/$($TeamId)/channels/$($ChannelId)/tabs/$($TeamsTabId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/teams/$($TeamId)/channels/$($ChannelId)/tabs" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -17704,6 +17758,7 @@ function Get-MgBetaUserAuthenticationRequirement
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('UserId') -and [System.String]::IsNullOrEmpty($UserId)) { Write-Error -Message "Cannot bind argument to parameter 'UserId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/users/$($UserId)/authentication/requirements" -ErrorAction $ErrorActionPreference
 }
 
@@ -17992,6 +18047,7 @@ function Get-MgDeviceManagementRoleDefinitionRoleAssignment
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('RoleDefinitionId') -and [System.String]::IsNullOrEmpty($RoleDefinitionId)) { Write-Error -Message "Cannot bind argument to parameter 'RoleDefinitionId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('RoleAssignmentId') -and [System.String]::IsNullOrEmpty($RoleAssignmentId)) { Write-Error -Message "Cannot bind argument to parameter 'RoleAssignmentId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('RoleAssignmentId') -and -not [System.String]::IsNullOrEmpty($RoleAssignmentId)) { "/v1.0/deviceManagement/roleDefinitions/$($RoleDefinitionId)/roleAssignments/$($RoleAssignmentId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/deviceManagement/roleDefinitions/$($RoleDefinitionId)/roleAssignments" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -18180,6 +18236,7 @@ function Get-MgDirectoryAdministrativeUnitMember
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AdministrativeUnitId') -and [System.String]::IsNullOrEmpty($AdministrativeUnitId)) { Write-Error -Message "Cannot bind argument to parameter 'AdministrativeUnitId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/directory/administrativeUnits/$($AdministrativeUnitId)/members" -ErrorAction $ErrorActionPreference
 }
 
@@ -18276,6 +18333,7 @@ function Get-MgDirectoryAdministrativeUnitScopedRoleMember
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('AdministrativeUnitId') -and [System.String]::IsNullOrEmpty($AdministrativeUnitId)) { Write-Error -Message "Cannot bind argument to parameter 'AdministrativeUnitId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('ScopedRoleMembershipId') -and [System.String]::IsNullOrEmpty($ScopedRoleMembershipId)) { Write-Error -Message "Cannot bind argument to parameter 'ScopedRoleMembershipId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('ScopedRoleMembershipId') -and -not [System.String]::IsNullOrEmpty($ScopedRoleMembershipId)) { "/v1.0/directory/administrativeUnits/$($AdministrativeUnitId)/scopedRoleMembers/$($ScopedRoleMembershipId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/directory/administrativeUnits/$($AdministrativeUnitId)/scopedRoleMembers" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -18848,6 +18906,7 @@ function Get-MgGroupMember
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupId') -and [System.String]::IsNullOrEmpty($GroupId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/groups/$($GroupId)/members" -ErrorAction $ErrorActionPreference
 }
 
@@ -18940,6 +18999,7 @@ function Get-MgGroupOwner
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupId') -and [System.String]::IsNullOrEmpty($GroupId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/groups/$($GroupId)/owners" -ErrorAction $ErrorActionPreference
 }
 
@@ -19036,6 +19096,7 @@ function Get-MgGroupPlannerPlan
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupId') -and [System.String]::IsNullOrEmpty($GroupId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     if ($PSBoundParameters.ContainsKey('PlannerPlanId') -and [System.String]::IsNullOrEmpty($PlannerPlanId)) { Write-Error -Message "Cannot bind argument to parameter 'PlannerPlanId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     $singleItemUri = if ($PSBoundParameters.ContainsKey('PlannerPlanId') -and -not [System.String]::IsNullOrEmpty($PlannerPlanId)) { "/v1.0/groups/$($GroupId)/planner/plans/$($PlannerPlanId)" } else { $null }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/groups/$($GroupId)/planner/plans" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
@@ -19130,6 +19191,8 @@ function Get-MgGroupPlannerPlanTask
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('GroupId') -and [System.String]::IsNullOrEmpty($GroupId)) { Write-Error -Message "Cannot bind argument to parameter 'GroupId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    if ($PSBoundParameters.ContainsKey('PlannerPlanId') -and [System.String]::IsNullOrEmpty($PlannerPlanId)) { Write-Error -Message "Cannot bind argument to parameter 'PlannerPlanId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/groups/$($GroupId)/planner/plans/$($PlannerPlanId)/tasks" -ErrorAction $ErrorActionPreference
 }
 
@@ -19218,6 +19281,7 @@ function Get-MgPlannerPlanBucket
         $CountVariable
     )
 
+    if ($PSBoundParameters.ContainsKey('PlannerPlanId') -and [System.String]::IsNullOrEmpty($PlannerPlanId)) { Write-Error -Message "Cannot bind argument to parameter 'PlannerPlanId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/planner/plans/$($PlannerPlanId)/buckets" -ErrorAction $ErrorActionPreference
 }
 
@@ -19274,6 +19338,7 @@ function Get-MgPlannerPlanDetail
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('PlannerPlanId') -and [System.String]::IsNullOrEmpty($PlannerPlanId)) { Write-Error -Message "Cannot bind argument to parameter 'PlannerPlanId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/planner/plans/$($PlannerPlanId)/details" -ErrorAction $ErrorActionPreference
 }
 
@@ -19424,6 +19489,7 @@ function Get-MgPlannerTaskDetail
         $ProxyUseDefaultCredentials
     )
 
+    if ($PSBoundParameters.ContainsKey('PlannerTaskId') -and [System.String]::IsNullOrEmpty($PlannerTaskId)) { Write-Error -Message "Cannot bind argument to parameter 'PlannerTaskId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/v1.0/planner/tasks/$($PlannerTaskId)/details" -ErrorAction $ErrorActionPreference
 }
 
