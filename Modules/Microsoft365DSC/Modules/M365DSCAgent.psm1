@@ -37,19 +37,37 @@ function Test-M365DSCAgent
     }
     #endregion
 
-    # We need to do a quick configuration of WinRM in order to be able to obtain configuration information;
-    Write-Progress -Activity 'Scanning WinRM MaxEnvelopeSize...' -PercentComplete (2 / $TotalSteps * 100)
-    WinRM QuickConfig -Force | Out-Null
-
     #region MaxEnvelopeSize
-    $CurrentMaxEnvelopeSize = (Get-Item -Path WSMan:\localhost\MaxEnvelopeSizekb).Value
-
-    if ($CurrentMaxEnvelopeSize -le 1024)
+    # Reading the WinRM configuration needs the WinRM service to be running
+    Write-Progress -Activity 'Scanning WinRM MaxEnvelopeSize...' -PercentComplete (2 / $TotalSteps * 100)
+    $winRMService = Get-Service -Name 'WinRM' -ErrorAction SilentlyContinue
+    if ($null -eq $winRMService -or $winRMService.Status -ne 'Running')
     {
-        $Recommendations += @{
-            ID      = 'R1'
-            Message = "We recommend increasing the MaxEnvelopeSize of the agent's WinRM to a minimum of 10 Mb." + `
-                ' To make the change, run: Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 10240'
+        $Issues += @{
+            ID      = 'I3'
+            Message = "The WinRM service is not running. Start it, or run 'winrm quickconfig' from an elevated session, to allow DSC to operate."
+        }
+    }
+    else
+    {
+        try
+        {
+            $currentMaxEnvelopeSize = [System.Int32](Get-Item -Path 'WSMan:\localhost\MaxEnvelopeSizekb' -ErrorAction Stop).Value
+            if ($currentMaxEnvelopeSize -lt 10240)
+            {
+                $Recommendations += @{
+                    ID      = 'R1'
+                    Message = "We recommend increasing the MaxEnvelopeSize of the agent's WinRM to a minimum of 10 Mb." + `
+                        ' To make the change, run: Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 10240'
+                }
+            }
+        }
+        catch
+        {
+            $Issues += @{
+                ID      = 'I3'
+                Message = "Unable to read the WinRM MaxEnvelopeSize: $($_.Exception.Message)"
+            }
         }
     }
     #endregion
@@ -172,7 +190,7 @@ function Set-M365DSCAgentCertificateConfiguration
     {
         foreach ($cert in $matchingCertificates)
         {
-            Remove-Item $cert.PSPath | Out-Null
+            Remove-Item -Path $cert.PSPath -DeleteKey | Out-Null
         }
         $matchingCertificates = @()
     }

@@ -419,10 +419,9 @@ function Add-M365DSCTelemetryEvent
             # LCM Metadata Information
             try
             {
-                if ($null -eq $Script:M365DSCCurrentPrincipalIsAdmin -and $IsWindows)
+                if ($null -eq $Script:M365DSCCurrentPrincipalIsAdmin)
                 {
-                    $currentPrincipal = New-Object System.Security.Principal.WindowsPrincipal([System.Security.Principal.WindowsIdentity]::GetCurrent())
-                    $Script:M365DSCCurrentPrincipalIsAdmin = $currentPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+                    $Script:M365DSCCurrentPrincipalIsAdmin = Test-M365DSCCurrentUserIsAdministrator
                 }
 
                 if ($Script:M365DSCCurrentPrincipalIsAdmin)

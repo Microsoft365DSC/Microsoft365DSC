@@ -25,7 +25,10 @@ Describe 'Get-M365DSCCompiledPermissionList' {
                 }
             }
             [PSCustomObject]@{
-                roles       = $null
+                roles       = [PSCustomObject]@{
+                    read   = @('Role B', 'Role A')
+                    update = @('Role A')
+                }
                 permissions = [PSCustomObject]@{ graph = $graphPermissions }
             }
         }
@@ -38,6 +41,9 @@ Describe 'Get-M365DSCCompiledPermissionList' {
         $applicationRead.Permission.Name | Should -Be @('Organization.Read.All', 'Group.Read.All')
         @($result.Read | Where-Object -FilterScript { $_.Permission.Type -eq 'Delegated' }).Count | Should -Be 1
         @($result.Update | Where-Object -FilterScript { $_.Permission.Name -eq 'Group.ReadWrite.All' }).Count | Should -Be 1
+        $result.AdministrativeRoles.Read | Should -Be @('Role A', 'Role B')
+        $result.AdministrativeRoles.Update.GetType() | Should -Be ([System.String[]])
+        $result.RequiredRoles.Read.GetType() | Should -Be ([System.String[]])
     }
 
     It 'keeps a separate permission list per resource with GroupByResourceName' {
@@ -47,6 +53,7 @@ Describe 'Get-M365DSCCompiledPermissionList' {
         {
             $result[$resourceName].Read.Count | Should -Be 3
             $result[$resourceName].Update.Count | Should -Be 2
+            $result[$resourceName].AdministrativeRoles.Read | Should -Be @('Role A', 'Role B')
         }
     }
 }
