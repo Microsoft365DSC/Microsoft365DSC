@@ -7,6 +7,10 @@ BeforeAll {
     {
         Import-Module -Name "$PSScriptRoot/../Stubs/Microsoft365.psm1" -Function 'Invoke-MgGraphRequest' -Global -WarningAction SilentlyContinue
     }
+    if (-not (Test-Path -Path 'Function:\Get-MSCloudLoginConnectionProfile'))
+    {
+        Import-Module -Name "$PSScriptRoot/../Stubs/Generic.psm1" -Function 'Get-MSCloudLoginConnectionProfile' -Global -WarningAction SilentlyContinue
+    }
 
     $Script:TestCredential = [System.Management.Automation.PSCredential]::new(
         'admin@contoso.com',
@@ -18,6 +22,9 @@ Describe 'M365DSCTenantInfo' {
     BeforeEach {
         Mock -ModuleName M365DSCTenantInfo -CommandName New-M365DSCConnection -MockWith { 'Credentials' }
         Mock -ModuleName M365DSCTenantInfo -CommandName New-M365DSCLogEntry
+        Mock -ModuleName M365DSCTenantInfo -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
+            @{ EnvironmentName = 'AzureCloud' }
+        }
         Mock -ModuleName M365DSCTenantInfo -CommandName Invoke-MgGraphRequest -ParameterFilter { $Uri -eq 'beta/domains' } -MockWith {
             @{
                 '@odata.context' = 'https://graph.microsoft.com/beta/$metadata#domains'
@@ -43,6 +50,11 @@ Describe 'M365DSCTenantInfo' {
                 @{ value = @(@{ id = 'tailspin.onsovcloud.de'; isInitial = $true }) }
             }
             Get-M365TenantName -Credential $Script:TestCredential | Should -Be 'tailspin'
+
+            Mock -ModuleName M365DSCTenantInfo -CommandName Invoke-MgGraphRequest -ParameterFilter { $Uri -eq 'beta/domains' } -MockWith {
+                @{ value = @(@{ id = 'wingtip.partner.onmschina.cn'; isInitial = $true }) }
+            }
+            Get-M365TenantName -Credential $Script:TestCredential | Should -Be 'wingtip'
         }
 
         It 'throws a clear error when no initial domain exists' {

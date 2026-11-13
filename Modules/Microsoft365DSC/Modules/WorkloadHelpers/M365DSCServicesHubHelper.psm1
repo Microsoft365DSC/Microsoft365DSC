@@ -15,12 +15,12 @@
     Specifies the request payload to send when the method supports a body.
 
 .OUTPUTS
-    System.Collections.Hashtable
+    System.Management.Automation.PSCustomObject
 #>
 function Invoke-M365DSCServicesHubWebRequest
 {
     [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
+    [OutputType([System.Management.Automation.PSCustomObject])]
     param(
         [Parameter(Mandatory = $true)]
         [System.String]
@@ -65,7 +65,14 @@ function Invoke-M365DSCServicesHubWebRequest
     $result = $null
     if ($response.Content.Length -gt 0)
     {
-        $result = ConvertFrom-Json $response.Content -ErrorAction SilentlyContinue
+        try
+        {
+            $result = ConvertFrom-Json $response.Content -ErrorAction Stop
+        }
+        catch
+        {
+            Write-Verbose -Message "The response content is not valid JSON: $_"
+        }
     }
     return $result
 }

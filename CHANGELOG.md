@@ -53,6 +53,7 @@
 * M365DSCAzureHelper
   * Fixed failed Azure Billing requests being treated as empty results.
   * Fixed the billing account list ignoring the `includeAll` parameter.
+  * Fixed Azure Billing list requests returning only the first page.
 * M365DSCConfigurationCompiler
   * Fixed `Invoke-M365DSCConfigurationBuild` resetting the recursion guard of an outer build.
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
@@ -74,6 +75,8 @@
     authentication parameters are incomplete.
   * Fixed `Export-M365DSCConfiguration` with only invalid components failing with a schema
     cache error.
+* M365DSCDefenderHelper
+  * Fixed requests without a body sending a `null` JSON body.
 * M365DSCDocGenerator
   * Fixed stale documentation pages being published after an aborted run.
   * Fixed the pages of Azure, Power Platform and Sentinel resources listing empty API
@@ -178,6 +181,10 @@
   * Fixed `Update-M365DSCAzureAdApplication` failing for applications with the same name.
   * Fixed `Update-M365DSCAzureAdApplication -AdminConsent` changing the application before
     checking the credential and ignoring `-TenantId` for the consent.
+* M365DSCPowerPlatformRESTHelper
+  * Fixed the hint for a missing Power Platform admin management application never
+    being shown on a 403 error.
+  * Fixed responses that are not JSON failing the request.
 * M365DSCReport
   * Fixed HTML reports not encoding tenant values and writing broken list tags.
   * Fixed array values containing commas being shown as several items.
@@ -232,6 +239,7 @@
   * Fixed the export duration being rounded to whole seconds.
 * M365DSCServicesHubHelper
   * Fixed HTTP errors being replaced by a method invocation error.
+  * Fixed responses that are not JSON failing the request.
 * M365DSCTelemetryEngine
   * Fixed `Set-M365DSCTelemetryOption` overwriting options that were not passed.
   * Fixed `Set-M365DSCTelemetryOption` not applying a new instrumentation key or
@@ -244,6 +252,8 @@
   * Fixed `Get-M365DSCAPIEndpoint` returning no Azure management URL for US DoD tenants.
   * Fixed `Get-M365DSCTenantDomain` not detecting a missing `Organization.Read.All`
     permission.
+  * Fixed `Get-SPOAdministrationUrl` returning the commercial admin URL for US Government,
+    DoD, China and sovereign cloud tenants.
 * M365DSCUtil
   * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
   * Updated `Write-M365DSCHost` to show the `[x/y] Extracting ...` line as soon as the
