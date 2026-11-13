@@ -1832,6 +1832,7 @@ function Set-M365DSCCachedSettingCatalogTemplate
         $TemplateId,
 
         [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
         [System.Object[]]
         $Templates
     )
