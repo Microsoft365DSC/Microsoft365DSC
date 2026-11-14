@@ -205,6 +205,213 @@ function Invoke-AzRestMethod
         $Method
     )
 }
+function Get-AzADGroup
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $DisplayName,
+
+        [Parameter()]
+        [System.Guid]
+        $ObjectId
+    )
+}
+function Get-AzADServicePrincipal
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $DisplayName,
+
+        [Parameter()]
+        [System.String]
+        $ObjectId
+    )
+}
+function Get-AzADUser
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $UserPrincipalName,
+
+        [Parameter()]
+        [System.String]
+        $ObjectId
+    )
+}
+function Get-AzRoleAssignmentSchedule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $Scope,
+
+        [Parameter()]
+        [System.String]
+        $Filter
+    )
+}
+function Get-AzRoleDefinition
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Guid]
+        $Id,
+
+        [Parameter()]
+        [System.String]
+        $Scope,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Custom
+    )
+}
+function Get-AzRoleEligibilitySchedule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $Scope,
+
+        [Parameter()]
+        [System.String]
+        $Filter
+    )
+}
+function New-AzRoleAssignmentScheduleRequest
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.String]
+        $Scope,
+
+        [Parameter()]
+        [System.String]
+        $PrincipalId,
+
+        [Parameter()]
+        [System.String]
+        $RoleDefinitionId,
+
+        [Parameter()]
+        [System.DateTime]
+        $ScheduleInfoStartDateTime,
+
+        [Parameter()]
+        [System.String]
+        $ExpirationType,
+
+        [Parameter()]
+        [System.String]
+        $ExpirationDuration,
+
+        [Parameter()]
+        [System.DateTime]
+        $ExpirationEndDateTime,
+
+        [Parameter()]
+        [System.String]
+        $RequestType,
+
+        [Parameter()]
+        [System.String]
+        $Justification
+    )
+}
+function New-AzRoleDefinition
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.Object]
+        $Role
+    )
+}
+function New-AzRoleEligibilityScheduleRequest
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.String]
+        $Scope,
+
+        [Parameter()]
+        [System.String]
+        $PrincipalId,
+
+        [Parameter()]
+        [System.String]
+        $RoleDefinitionId,
+
+        [Parameter()]
+        [System.DateTime]
+        $ScheduleInfoStartDateTime,
+
+        [Parameter()]
+        [System.String]
+        $ExpirationType,
+
+        [Parameter()]
+        [System.String]
+        $ExpirationDuration,
+
+        [Parameter()]
+        [System.DateTime]
+        $ExpirationEndDateTime,
+
+        [Parameter()]
+        [System.String]
+        $RequestType,
+
+        [Parameter()]
+        [System.String]
+        $Justification
+    )
+}
+function Remove-AzRoleDefinition
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.Guid]
+        $Id,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Force
+    )
+}
+function Set-AzRoleDefinition
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.Object]
+        $Role
+    )
+}
 #endregion
 
 #region ExchangeOnlineManagement
