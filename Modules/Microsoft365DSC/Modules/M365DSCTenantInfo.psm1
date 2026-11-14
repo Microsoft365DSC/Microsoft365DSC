@@ -1,110 +1,5 @@
 <#
 .SYNOPSIS
-    Resolves the initial onmicrosoft tenant domain.
-
-.DESCRIPTION
-    Retrieves the tenant's initial domain through Microsoft Graph when connection parameters support it.
-    When a certificate path is provided and the tenant id already contains onmicrosoft, it returns the tenant id directly.
-
-.PARAMETER ApplicationId
-    Specifies the application id used for app-based authentication.
-
-.PARAMETER TenantId
-    Specifies the tenant id or tenant domain.
-
-.PARAMETER ApplicationSecret
-    Specifies the application secret used for app-based authentication.
-
-.PARAMETER CertificateThumbprint
-    Specifies the certificate thumbprint used for app-based authentication.
-
-.PARAMETER CertificatePath
-    Specifies the certificate file path used for app-based authentication.
-
-.PARAMETER ManagedIdentity
-    Indicates that managed identity authentication should be used.
-
-.FUNCTIONALITY
-    Internal
-
-.OUTPUTS
-    System.String
-#>
-function Get-M365DSCTenantDomain
-{
-    [CmdletBinding(DefaultParameterSetName = 'AppId')]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter(ParameterSetName = 'AppId', Mandatory = $true)]
-        [System.String]
-        $ApplicationId,
-
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $TenantId,
-
-        [Parameter(ParameterSetName = 'AppId')]
-        [System.Management.Automation.PSCredential]
-        $ApplicationSecret,
-
-        [Parameter(ParameterSetName = 'AppId')]
-        [System.String]
-        $CertificateThumbprint,
-
-        [Parameter(ParameterSetName = 'AppId')]
-        [System.String]
-        $CertificatePath,
-
-        [Parameter(ParameterSetName = 'MID')]
-        [Switch]
-        $ManagedIdentity
-    )
-
-    if ([System.String]::IsNullOrEmpty($CertificatePath))
-    {
-        $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-            -InboundParameters $PSBoundParameters
-
-        try
-        {
-            $tenantDetails = (Invoke-MgGraphRequest -Uri '/beta/organization' -Method GET -ErrorAction 'Stop').value
-            $defaultDomain = $tenantDetails.verifiedDomains | Where-Object -Property isInitial -EQ $true
-
-            return $defaultDomain.name
-        }
-        catch
-        {
-            if ($_.Exception.Message -like '*Insufficient privileges*' -or
-                $_.ErrorDetails.Message -like '*Insufficient privileges*' -or
-                $_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden)
-            {
-                $message = 'Error retrieving Organizational information: Missing Organization.Read.All permission.'
-                New-M365DSCLogEntry `
-                    -Message $message `
-                    -Exception $_ `
-                    -Source $($MyInvocation.MyCommand.Source) `
-                    -TenantId $TenantId
-
-                throw [System.UnauthorizedAccessException]::new($message, $_.Exception)
-            }
-
-            throw $_
-        }
-    }
-
-    if ($TenantId.Contains('onmicrosoft'))
-    {
-        return $TenantId
-    }
-    else
-    {
-        throw 'TenantID must be in format contoso.onmicrosoft.com'
-    }
-}
-
-<#
-.SYNOPSIS
     Derives the tenant name from a bound parameter set.
 
 .DESCRIPTION
@@ -389,7 +284,6 @@ function Get-M365DSCInitialDomain
 }
 
 Export-ModuleMember -Function @(
-    'Get-M365DSCTenantDomain',
     'Get-M365DSCTenantNameFromParameterSet',
     'Get-M365DSCOrganization',
     'Get-M365TenantName',

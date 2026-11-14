@@ -107,31 +107,4 @@ Describe 'M365DSCTenantInfo' {
             { Get-M365DSCAPIEndpoint -TenantId 'contoso.onmicrosoft.com' } | Should -Throw -ExpectedMessage '*Connect to the Azure workload first*'
         }
     }
-
-    Context 'Get-M365DSCTenantDomain' {
-        It 'logs the missing permission when Graph answers with an HTTP 403 error' {
-            Mock -ModuleName M365DSCTenantInfo -CommandName Invoke-MgGraphRequest -ParameterFilter { $Uri -eq '/beta/organization' } -MockWith {
-                $exception = [System.Exception]::new('Response status code does not indicate success: Forbidden (Forbidden).')
-                $record = [System.Management.Automation.ErrorRecord]::new($exception, 'Forbidden', 'PermissionDenied', $null)
-                $record.ErrorDetails = '{"error":{"code":"Authorization_RequestDenied","message":"Insufficient privileges to complete the operation."}}'
-                throw $record
-            }
-
-            { Get-M365DSCTenantDomain -TenantId 'contoso.onmicrosoft.com' -ManagedIdentity } |
-                Should -Throw -ExpectedMessage '*Missing Organization.Read.All permission*'
-            Should -Invoke -ModuleName M365DSCTenantInfo -CommandName New-M365DSCLogEntry -Exactly -Times 1 -ParameterFilter {
-                $Message -like '*Organization.Read.All*' -and $null -eq $Credential
-            }
-        }
-
-        It 'rethrows other errors unchanged' {
-            Mock -ModuleName M365DSCTenantInfo -CommandName Invoke-MgGraphRequest -ParameterFilter { $Uri -eq '/beta/organization' } -MockWith {
-                throw 'Response status code does not indicate success: ServiceUnavailable'
-            }
-
-            { Get-M365DSCTenantDomain -TenantId 'contoso.onmicrosoft.com' -ManagedIdentity } |
-                Should -Throw -ExpectedMessage '*ServiceUnavailable*'
-            Should -Invoke -ModuleName M365DSCTenantInfo -CommandName New-M365DSCLogEntry -Exactly -Times 0
-        }
-    }
 }

@@ -560,22 +560,10 @@ function Start-M365DSCConfigurationExtract
                 $organization = $Credential.UserName.Split('@')[1]
             }
         }
-        elseif ($AuthMethods -contains 'AccessTokens')
+        elseif ($AuthMethods -contains 'AccessTokens' -or `
+                $AuthMethods -contains 'ManagedIdentity')
         {
             $organization = $TenantId
-        }
-        elseif ($AuthMethods -contains 'ManagedIdentity')
-        {
-            # If tenantId comes in as a GUID then query to replace with string representation, else use what was provided
-            if ($TenantId -match ('^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$'))
-            {
-                $null = New-M365DSCConnection -Workload 'MicrosoftGraph' -InboundParameters @{'ManagedIdentity' = $true; 'TenantId' = $TenantId }
-                $organization = Get-M365DSCTenantDomain -TenantId $TenantId -ManagedIdentity
-            }
-            else
-            {
-                $organization = $TenantId
-            }
         }
 
         [array] $version = Get-Module 'Microsoft365DSC'

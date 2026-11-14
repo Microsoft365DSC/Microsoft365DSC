@@ -31,6 +31,7 @@
 .PARAMETER PostProcessing
     Specifies a script block or function that will be invoked after the initial comparison to allow for custom post-processing of the current and desired values.
     The script block should accept three parameters: DesiredValues, CurrentValues, and ValuesToCheck, and return a tuple containing the modified DesiredValues, CurrentValues, and ValuesToCheck.
+    The comparison throws when the script block fails or does not return a tuple of three hashtables.
 
 .PARAMETER PostProcessingArgs
     Specifies an array of additional arguments to pass to the PostProcessing script block or function.
@@ -117,21 +118,20 @@ function Compare-M365DSCResourceState
         try
         {
             $result = $PostProcessing.Invoke($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-            if ($null -ne $result -and $result.Item1 -is [System.Collections.Hashtable] -and $result.Item2 -is [System.Collections.Hashtable] -and $result.Item3 -is [System.Collections.Hashtable])
-            {
-                $DesiredValues = $result.Item1
-                $CurrentValues = $result.Item2
-                $ValuesToCheck = $result.Item3
-            }
-            else
-            {
-                Write-Warning -Message "PostProcessing function did not return a valid tuple for resource $ResourceName. Using original values."
-            }
         }
         catch
         {
-            Write-Warning -Message "Error occurred during post-processing for resource $ResourceName`: $_"
+            throw [System.InvalidOperationException]::new("PostProcessing failed for resource $($ResourceName): $($_.Exception.Message)", $_.Exception)
         }
+
+        if ($null -eq $result -or $result.Item1 -isnot [System.Collections.Hashtable] -or $result.Item2 -isnot [System.Collections.Hashtable] -or $result.Item3 -isnot [System.Collections.Hashtable])
+        {
+            throw [System.InvalidOperationException]::new("PostProcessing did not return a tuple of three hashtables for resource $ResourceName.")
+        }
+
+        $DesiredValues = $result.Item1
+        $CurrentValues = $result.Item2
+        $ValuesToCheck = $result.Item3
     }
 
     if ($VerbosePreference -ne 'SilentlyContinue')
