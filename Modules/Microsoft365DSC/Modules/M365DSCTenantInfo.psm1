@@ -1,6 +1,3 @@
-# Resolved API endpoints per tenant, used by Get-M365DSCAPIEndpoint
-$Script:M365DSCAPIEndpointCache = @{}
-
 <#
 .SYNOPSIS
     Resolves the initial onmicrosoft tenant domain.
@@ -244,14 +241,14 @@ function Get-M365TenantName
 
 <#
 .SYNOPSIS
-    Resolves API endpoint base URLs for a tenant cloud region.
+    Resolves API endpoint base URLs for the connected cloud.
 
 .DESCRIPTION
-    Reads the tenant OpenID metadata to detect regional scope and returns endpoint values used by Microsoft365DSC.
-    Currently resolves the Azure management endpoint with sovereign cloud handling.
+    Returns endpoint values used by Microsoft365DSC. Currently resolves the Azure management endpoint
+    from the Azure connection profile, without a trailing slash. Requires an Azure connection.
 
 .PARAMETER TenantId
-    Specifies the tenant id or tenant domain used to query OpenID metadata.
+    Specifies the tenant id or tenant domain. Not used, the endpoint comes from the Azure connection profile.
 
 .EXAMPLE
     PS> Get-M365DSCAPIEndpoint -TenantId 'contoso.onmicrosoft.com'
@@ -272,25 +269,15 @@ function Get-M365DSCAPIEndpoint
         $TenantId
     )
 
-    if ($Script:M365DSCAPIEndpointCache.ContainsKey($TenantId))
+    $managementUrl = (Get-MSCloudLoginConnectionProfile -Workload 'Azure').ManagementUrl
+    if ([System.String]::IsNullOrEmpty($managementUrl))
     {
-        return $Script:M365DSCAPIEndpointCache[$TenantId].Clone()
+        throw 'The Azure management endpoint is not available. Connect to the Azure workload first.'
     }
 
-    $response = Invoke-RestMethod -Uri "https://login.windows.net/$($TenantId)/.well-known/openid-configuration"
-
-    $endpoints = @{
-        AzureManagement = 'https://management.azure.com'
+    return @{
+        AzureManagement = $managementUrl.TrimEnd('/')
     }
-
-    # GCC High (DODCON) and DoD both use the Azure Government endpoints
-    if ($response.'tenant_region_scope' -eq 'USGov')
-    {
-        $endpoints.AzureManagement = 'https://management.usgovcloudapi.net'
-    }
-
-    $Script:M365DSCAPIEndpointCache[$TenantId] = $endpoints
-    return $endpoints.Clone()
 }
 
 <#

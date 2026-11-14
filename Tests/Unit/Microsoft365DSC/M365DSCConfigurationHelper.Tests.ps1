@@ -1,4 +1,6 @@
 BeforeAll {
+    Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1" -Force -Global
+    Initialize-M365DSCDllLoader
     Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCConfigurationHelper.psm1" -Force
 
     Mock -ModuleName 'M365DSCConfigurationHelper' -CommandName ConvertTo-DSCObject -MockWith {
@@ -24,6 +26,8 @@ Describe 'Get-M365DSCEvaluationRulesForConfiguration' {
             $result | Should -Match '-eq 2'
             $result | Should -Match "M365DSCRuleEvaluation 'AADUser'"
             $result | Should -Match '-eq 1'
+            $result | Should -Match 'ManagedIdentity\s+= \$true'
+            $result | Should -Match 'TenantId\s+= \$ConfigurationData\.NonNodeData\.OrganizationName'
         }
 
         It 'binds to Configuration with OutputPath and writes the file' {

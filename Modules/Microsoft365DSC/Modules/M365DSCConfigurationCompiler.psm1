@@ -206,7 +206,7 @@ function Invoke-M365DSCConfigurationBuild
         $OutputPath
     )
 
-    $Path = (Resolve-Path -Path $Path -ErrorAction Stop).ProviderPath
+    $Path = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).ProviderPath
     if ($ConfigurationDataPath)
     {
         $ConfigurationDataPath = (Resolve-Path -LiteralPath $ConfigurationDataPath -ErrorAction Stop).ProviderPath
@@ -218,7 +218,7 @@ function Invoke-M365DSCConfigurationBuild
     if (-not $ConfigurationDataPath -and $null -eq $ConfigurationData)
     {
         $candidate = Join-Path -Path (Split-Path -Path $Path -Parent) -ChildPath 'ConfigurationData.psd1'
-        if (Test-Path -Path $candidate)
+        if (Test-Path -LiteralPath $candidate)
         {
             $ConfigurationDataPath = $candidate
         }
@@ -302,7 +302,7 @@ function Invoke-M365DSCConfigurationBuild
     try
     {
         $scriptDirectory = Split-Path -Path $Path -Parent
-        Push-Location -Path $scriptDirectory
+        Push-Location -LiteralPath $scriptDirectory
         try
         {
             if (-not $ConfigurationName -or (Test-M365DSCScriptInvokesConfiguration -Path $Path -ConfigurationName $ConfigurationName))
@@ -338,7 +338,7 @@ function Invoke-M365DSCConfigurationBuild
                 }
                 elseif ($ConfigurationDataPath)
                 {
-                    Import-PowerShellDataFile -Path $ConfigurationDataPath
+                    Import-PowerShellDataFile -LiteralPath $ConfigurationDataPath
                 }
                 else
                 {

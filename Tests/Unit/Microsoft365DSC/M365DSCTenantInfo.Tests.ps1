@@ -82,31 +82,29 @@ Describe 'M365DSCTenantInfo' {
 
     Context 'Get-M365DSCAPIEndpoint' {
         BeforeEach {
-            InModuleScope -ModuleName M365DSCTenantInfo { $Script:M365DSCAPIEndpointCache = @{} }
+            Mock -ModuleName M365DSCTenantInfo -CommandName Invoke-RestMethod
         }
 
-        It 'returns <Expected> for scope <Scope>/<SubScope>' -ForEach @(
-            @{ Scope = 'NA'; SubScope = $null; Expected = 'https://management.azure.com' }
-            @{ Scope = 'EU'; SubScope = $null; Expected = 'https://management.azure.com' }
-            @{ Scope = 'USGov'; SubScope = 'DODCON'; Expected = 'https://management.usgovcloudapi.net' }
-            @{ Scope = 'USGov'; SubScope = 'DOD'; Expected = 'https://management.usgovcloudapi.net' }
+        It 'returns <Expected> for the Azure management URL <ManagementUrl>' -ForEach @(
+            @{ ManagementUrl = 'https://management.azure.com/'; Expected = 'https://management.azure.com' }
+            @{ ManagementUrl = 'https://management.usgovcloudapi.net/'; Expected = 'https://management.usgovcloudapi.net' }
+            @{ ManagementUrl = 'https://management.chinacloudapi.cn/'; Expected = 'https://management.chinacloudapi.cn' }
+            @{ ManagementUrl = 'https://management.azure.com'; Expected = 'https://management.azure.com' }
         ) {
-            Mock -ModuleName M365DSCTenantInfo -CommandName Invoke-RestMethod -MockWith {
-                [PSCustomObject]@{ tenant_region_scope = $Scope; tenant_region_sub_scope = $SubScope }
+            Mock -ModuleName M365DSCTenantInfo -CommandName Get-MSCloudLoginConnectionProfile -ParameterFilter { $Workload -eq 'Azure' } -MockWith {
+                @{ ManagementUrl = $ManagementUrl }
             }.GetNewClosure()
 
             (Get-M365DSCAPIEndpoint -TenantId 'contoso.onmicrosoft.com').AzureManagement | Should -Be $Expected
+            Should -Invoke -ModuleName M365DSCTenantInfo -CommandName Invoke-RestMethod -Exactly -Times 0
         }
 
-        It 'queries the OpenID metadata only once per tenant' {
-            Mock -ModuleName M365DSCTenantInfo -CommandName Invoke-RestMethod -MockWith {
-                [PSCustomObject]@{ tenant_region_scope = 'NA' }
+        It 'throws when the Azure connection profile has no management URL' {
+            Mock -ModuleName M365DSCTenantInfo -CommandName Get-MSCloudLoginConnectionProfile -ParameterFilter { $Workload -eq 'Azure' } -MockWith {
+                @{ ManagementUrl = $null }
             }
 
-            $first = Get-M365DSCAPIEndpoint -TenantId 'contoso.onmicrosoft.com'
-            $first.AzureManagement = 'modified by caller'
-            (Get-M365DSCAPIEndpoint -TenantId 'contoso.onmicrosoft.com').AzureManagement | Should -Be 'https://management.azure.com'
-            Should -Invoke -ModuleName M365DSCTenantInfo -CommandName Invoke-RestMethod -Exactly -Times 1
+            { Get-M365DSCAPIEndpoint -TenantId 'contoso.onmicrosoft.com' } | Should -Throw -ExpectedMessage '*Connect to the Azure workload first*'
         }
     }
 

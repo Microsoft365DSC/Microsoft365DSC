@@ -611,11 +611,11 @@ function Set-M365DSCTelemetryConnectionParameter
     Records a failed connection attempt for the running export.
 
 .DESCRIPTION
-    While an export is running, stores the failure message under the workload and connection mode key
-    so later attempts fail immediately.
+    While an export is running, stores the failure message under the workload, connection mode, URL
+    and search-only session key so later attempts fail immediately.
 
 .PARAMETER FailureKey
-    Specifies the cache key in the form 'Workload-ConnectionMode'.
+    Specifies the cache key in the form 'Workload-ConnectionMode-Url-EnableSearchOnlySession'.
 
 .PARAMETER Message
     Specifies the failure message.
