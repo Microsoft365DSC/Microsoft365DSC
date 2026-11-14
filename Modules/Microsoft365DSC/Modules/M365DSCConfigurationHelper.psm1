@@ -69,61 +69,42 @@ function Get-M365DSCEvaluationRulesForConfiguration
     # endregion
 '@
 
-    switch ($ConnectionMode)
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    $authenticationProperties = [Microsoft365DSC.Utilities.Utilities]::ConnectionModePropertyNames[$ConnectionMode]
+
+    $authenticationLines = @()
+    foreach ($property in $authenticationProperties)
     {
-        'ServicePrincipalWithThumbprint'
+        $value = switch ($property)
         {
-            $authentication = @"
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-        CertificateThumbprint   = `$ConfigurationData.NonNodeData.CertificateThumbprint
-"@
+            'ApplicationSecret'
+            {
+                "New-Object System.Management.Automation.PSCredential ('ApplicationSecret', (ConvertTo-SecureString `$ConfigurationData.NonNodeData.ApplicationSecret -AsPlainText -Force))"
+            }
+            'CertificatePassword'
+            {
+                '$CredsCertificatePassword'
+            }
+            'Credential'
+            {
+                '$CredsCredential'
+            }
+            'ManagedIdentity'
+            {
+                '$true'
+            }
+            'TenantId'
+            {
+                '$ConfigurationData.NonNodeData.OrganizationName'
+            }
+            default
+            {
+                "`$ConfigurationData.NonNodeData.$property"
+            }
         }
-        'ServicePrincipalWithSecret'
-        {
-            $authentication = @"
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-        ApplicationSecret       = New-Object System.Management.Automation.PSCredential ('ApplicationSecret', (ConvertTo-SecureString `$ConfigurationData.NonNodeData.ApplicationSecret -AsPlainText -Force))
-"@
-        }
-        'ServicePrincipalWithPath'
-        {
-            $authentication = @"
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-        CertificatePath         = `$ConfigurationData.NonNodeData.CertificatePath
-        CertificatePassword     = `$CredsCertificatePassword
-"@
-        }
-        'CredentialsWithTenantId'
-        {
-            $authentication = @"
-        Credential              = `$CredsCredential
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-"@
-        }
-        'CredentialsWithApplicationId'
-        {
-            $authentication = @"
-        Credential              = `$CredsCredential
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-"@
-        }
-        'ManagedIdentity'
-        {
-            $authentication = @"
-        ManagedIdentity         = `$true
-"@
-        }
-        'Credentials'
-        {
-            $authentication = @"
-        Credential              = `$CredsCredential
-"@
-        }
+        $authenticationLines += "        $($property.PadRight(24))= $value"
     }
+    $authentication = $authenticationLines -join "`n"
 
     $M365DSCRuleEvaluationResourceBlock = @'
     M365DSCRuleEvaluation '<ResourceName>'
@@ -152,20 +133,17 @@ function Get-M365DSCEvaluationRulesForConfiguration
 
         # Declare and resolve the PSCredential the rule blocks reference, the same way exported configurations do.
         $parameterName = $null
-        switch ($ConnectionMode)
+        if ($authenticationProperties -contains 'CertificatePassword')
         {
-            'ServicePrincipalWithPath'
-            {
-                $parameterName = 'CertificatePassword'
-                $variableName = 'CredsCertificatePassword'
-                $promptMessage = 'Certificate Password'
-            }
-            { $_ -in 'Credentials', 'CredentialsWithTenantId', 'CredentialsWithApplicationId' }
-            {
-                $parameterName = 'Credential'
-                $variableName = 'CredsCredential'
-                $promptMessage = 'Credentials'
-            }
+            $parameterName = 'CertificatePassword'
+            $variableName = 'CredsCertificatePassword'
+            $promptMessage = 'Certificate Password'
+        }
+        elseif ($authenticationProperties -contains 'Credential')
+        {
+            $parameterName = 'Credential'
+            $variableName = 'CredsCredential'
+            $promptMessage = 'Credentials'
         }
 
         $scriptParameters = ''

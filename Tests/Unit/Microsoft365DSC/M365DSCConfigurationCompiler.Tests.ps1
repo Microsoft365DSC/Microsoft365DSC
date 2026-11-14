@@ -28,8 +28,9 @@ Describe 'Invoke-M365DSCConfigurationBuild standard pipeline' {
         Import-Module (Join-Path $script:ModulesRoot 'M365DSCConfigurationCompiler.psm1') -Force
         Mock -ModuleName 'M365DSCConfigurationCompiler' -CommandName Test-M365DSCFastCompileAvailable -MockWith { $false }
 
-        $script:ScriptPath = Join-Path $TestDrive 'M365TenantConfig.ps1'
-        Set-Content -Path $script:ScriptPath -Value "'compiled'; `$Global:PSDscFastCompileActive"
+        $scriptFolder = New-Item -Path (Join-Path $TestDrive 'Tenant[1]') -ItemType Directory
+        $script:ScriptPath = Join-Path $scriptFolder.FullName 'M365TenantConfig.ps1'
+        Set-Content -LiteralPath $script:ScriptPath -Value "'compiled'; `$Global:PSDscFastCompileActive"
     }
 
     AfterEach {

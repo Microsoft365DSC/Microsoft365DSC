@@ -69,10 +69,12 @@
     configuration twice and prompting for its credential.
   * Fixed `Invoke-M365DSCConfigurationBuild` resolving a relative `ConfigurationDataPath`
     and `OutputPath` against the folder of the script.
+  * Fixed `Invoke-M365DSCConfigurationBuild` failing for paths with `[` or `]`.
 * M365DSCConfigurationHelper
   * Fixed `Get-M365DSCEvaluationRulesForConfiguration` generating configurations that do
     not compile.
   * Fixed `Get-M365DSCEvaluationRulesForConfiguration` missing from the cmdlet documentation.
+  * Fixed `Get-M365DSCEvaluationRulesForConfiguration` omitting `TenantId` for `ManagedIdentity`.
 * M365DSCConnection
   * Fixed `New-M365DSCConnection` replacing the `ApplicationSecret` credential of the
     caller with its plain text value.
@@ -257,6 +259,7 @@
   * Fixed `Get-M365TenantName` and `Get-SPOAdministrationUrl` always returning an empty
     tenant name.
   * Fixed `Get-M365DSCAPIEndpoint` returning no Azure management URL for US DoD tenants.
+  * Fixed `Get-M365DSCAPIEndpoint` returning the global Azure management URL for China tenants.
   * Fixed `Get-M365DSCTenantDomain` not detecting a missing `Organization.Read.All`
     permission.
   * Fixed `Get-SPOAdministrationUrl` returning the commercial admin URL for US Government,
