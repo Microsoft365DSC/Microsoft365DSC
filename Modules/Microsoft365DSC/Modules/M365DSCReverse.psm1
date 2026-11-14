@@ -238,7 +238,7 @@ function Start-M365DSCConfigurationExtract
             $OutputDSCPath = '.'
         }
 
-        while ((Test-Path -Path $OutputDSCPath -PathType Container -ErrorAction SilentlyContinue) -eq $false)
+        while ((Test-Path -LiteralPath $OutputDSCPath -PathType Container -ErrorAction SilentlyContinue) -eq $false)
         {
             try
             {
@@ -262,7 +262,7 @@ function Start-M365DSCConfigurationExtract
         {
             $OutputDSCPath += [System.IO.Path]::DirectorySeparatorChar
         }
-        Push-Location -Path $OutputDSCPath
+        Push-Location -LiteralPath $OutputDSCPath -ErrorAction Stop
         $pushedLocation = $true
         #endregion
 
@@ -1270,14 +1270,20 @@ function Start-M365DSCConfigurationExtract
                         {
                             # Export the certificate assigned to the LCM
                             $certPath = $OutputDSCPath + 'M365DSC.cer'
-                            if (Test-Path $certPath)
+                            if (Test-Path -LiteralPath $certPath)
                             {
-                                Remove-Item $certPath -Force
+                                Remove-Item -LiteralPath $certPath -Force
                             }
                             Export-Certificate -FilePath $certPath `
                                 -Cert "cert:\LocalMachine\my\$($LCMConfig.CertificateID)" `
                                 -Type CERT `
-                                -NoClobber | Out-Null
+                                -NoClobber `
+                                -ErrorAction Stop | Out-Null
+
+                            Add-ConfigurationDataEntry -Node 'localhost' `
+                                -Key 'CertificateFile' `
+                                -Value 'M365DSC.cer' `
+                                -Description 'Path of the certificate used to encrypt credentials in the file.'
                         }
                         catch
                         {
@@ -1287,11 +1293,6 @@ function Start-M365DSCConfigurationExtract
                                 -TenantId $TenantId `
                                 -Credential $Credential
                         }
-
-                        Add-ConfigurationDataEntry -Node 'localhost' `
-                            -Key 'CertificateFile' `
-                            -Value 'M365DSC.cer' `
-                            -Description 'Path of the certificate used to encrypt credentials in the file.'
                     }
                 }
                 else
@@ -1310,7 +1311,7 @@ function Start-M365DSCConfigurationExtract
         {
             try
             {
-                Invoke-Item -Path $OutputDSCPath
+                Invoke-Item -LiteralPath $OutputDSCPath
             }
             catch
             {
@@ -1325,9 +1326,9 @@ function Start-M365DSCConfigurationExtract
         if (-not [System.String]::IsNullOrEmpty($env:TEMP))
         {
             $partialPath = Join-Path $env:TEMP -ChildPath "$($Global:PartialExportFileName)"
-            if (Test-Path $partialPath)
+            if (Test-Path -LiteralPath $partialPath)
             {
-                Remove-Item -Path (Get-Item $partialPath).FullName -Force
+                Remove-Item -LiteralPath $partialPath -Force
             }
         }
 

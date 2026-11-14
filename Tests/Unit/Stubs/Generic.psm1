@@ -1463,6 +1463,33 @@ function Export-PfxCertificate
         $Password
     )
 }
+
+function Export-Certificate
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.Object]
+        $Cert,
+
+        [Parameter()]
+        [System.String]
+        $FilePath,
+
+        [Parameter()]
+        [System.String]
+        $Type,
+
+        [Parameter()]
+        [switch]
+        $NoClobber,
+
+        [Parameter()]
+        [switch]
+        $Force
+    )
+}
 #endregion
 
 #region PSDesiredStateConfiguration

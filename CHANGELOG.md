@@ -119,6 +119,7 @@
   * Fixed failed lookups of PIM-enabled groups being skipped without a warning.
   * Fixed filters with `&`, `#` or `+` breaking the export of Intune reusable policy settings.
   * Fixed `-LaunchWebUI` writing its status to the output.
+  * Fixed Intune exports with a filter also returning derived policy types.
 * M365DSCGraphShim
   * Fixed update and remove cmdlets sending the request without the item ID when an
     identity parameter is empty.
@@ -149,6 +150,7 @@
   * Fixed `startsWith`, `endsWith` and `contains` filters in other casings being sent to
     Graph and filter values with escaped quotes being cut off.
   * Fixed error log entries missing the tenant.
+  * Fixed a transient error while reading the role scope tags.
   * Removed the `Setting` parameter set of `Export-IntuneSettingCatalogPolicySettings`
     with the `SettingInstance`, `SettingDefinitions` and `IsRoot` parameters.
 * M365DSCLogEngine
@@ -246,6 +248,8 @@
   * Fixed relative export paths for the SharePoint app packages and the LCM certificate.
   * Fixed verbose output being lost in parallel mode.
   * Fixed the export duration being rounded to whole seconds.
+  * Fixed output paths with `[` or `]` writing the export to the current folder.
+  * Fixed the `CertificateFile` entry being added when the LCM certificate export failed.
 * M365DSCServicesHubHelper
   * Fixed HTTP errors being replaced by a method invocation error.
   * Fixed responses that are not JSON failing the request.
