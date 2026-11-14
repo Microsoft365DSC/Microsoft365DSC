@@ -31,6 +31,8 @@
 * EXODataAtRestEncryptionPolicyAssignment
   * Fixed service errors of `Get()` being reported as drift and triggering `Set()`.
     FIXES [#7622](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7622)
+* IntuneDeviceEnrollmentPlatformRestriction
+  * Added missing property `isServerEnrollmentBlocked` to `MSFT_DeviceEnrollmentPlatformRestriction`.
 * IntuneMobileThreatDefenseConnector
   * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
     added Id for `iVerify`.
