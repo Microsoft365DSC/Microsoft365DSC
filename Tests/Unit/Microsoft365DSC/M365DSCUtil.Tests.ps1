@@ -5,7 +5,7 @@ BeforeAll {
 
     $stubFunctions = @{
         'Microsoft365.psm1' = @('Get-MgGroup', 'Get-MgUser', 'Get-Team')
-        'Generic.psm1'      = @('New-M365DSCLogEntry')
+        'Generic.psm1'      = @('New-M365DSCLogEntry', 'Get-DscLocalConfigurationManager')
     }
     foreach ($stubModule in $stubFunctions.Keys)
     {

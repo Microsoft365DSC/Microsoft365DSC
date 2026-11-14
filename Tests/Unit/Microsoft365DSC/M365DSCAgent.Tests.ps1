@@ -2,6 +2,12 @@ BeforeAll {
     Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1" -Force -Global
     Initialize-M365DSCDllLoader
     Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Microsoft365DSC.psd1" -Global
+
+    $missingFunctions = @(@('New-SelfSignedCertificate', 'Export-PfxCertificate') | Where-Object -FilterScript { -not (Test-Path -Path "Function:\$_") })
+    if ($missingFunctions.Count -gt 0)
+    {
+        Import-Module -Name "$PSScriptRoot/../Stubs/Generic.psm1" -Function $missingFunctions -Global -WarningAction SilentlyContinue
+    }
 }
 
 Describe 'M365DSCAgent' {
