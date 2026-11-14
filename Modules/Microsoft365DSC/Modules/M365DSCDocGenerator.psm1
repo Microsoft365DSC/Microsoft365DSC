@@ -597,6 +597,19 @@ function New-DscClassResourceWikiPage
             {
                 $null = $permissionsContent.AppendLine('## Permissions')
 
+                if ($null -ne $settingsJson.roles)
+                {
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine('### Microsoft Entra ID roles')
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine('This resource requires the following Microsoft Entra ID roles:')
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine('* **Read**')
+                    $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.roles.read)")
+                    $null = $permissionsContent.AppendLine('* **Update**')
+                    $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.roles.update)")
+                }
+
                 # Entries with required roles or role groups list the roles, all other entries list the API permissions
                 $permissionNames = @($settingsJson.permissions.psobject.properties.Name)
                 $workloads = @($permissionNames | Where-Object -FilterScript {

@@ -493,6 +493,8 @@ function New-M365DSCConfigurationToHTML
         $TemplateName = 'Configuration Report'
     }
 
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
     Write-Output 'Generating HTML report'
     $fullHTML = [System.Text.StringBuilder]::new()
     [void]$fullHTML.Append('<!DOCTYPE html>')
@@ -529,7 +531,8 @@ function New-M365DSCConfigurationToHTML
 
             foreach ($property in ($resource.Keys | Sort-Object))
             {
-                if ($property -notin @('ResourceName', 'ResourceInstanceName'))
+                if ($property -notin @('ResourceName', 'ResourceInstanceName') -and
+                    -not [Microsoft365DSC.Utilities.Utilities]::IsAuthenticationProperty($property))
                 {
                     [void]$partHTML.Append("<tr><td class='property-name'>" + (ConvertTo-M365DSCHtmlText -Value $property) + '</td>')
                     $value = "`$null"
@@ -584,7 +587,7 @@ function New-M365DSCConfigurationToHTML
     if (-not [System.String]::IsNullOrEmpty($OutputPath))
     {
         Write-Output 'Saving HTML report'
-        $fullHTML.ToString() | Out-File $OutputPath
+        $fullHTML.ToString() | Out-File -LiteralPath $OutputPath
     }
 
     Write-Output 'Completed generating HTML report'
@@ -611,8 +614,24 @@ function New-M365DSCConfigurationToJSON
         $OutputPath
     )
 
-    $jsonContent = ConvertTo-Json -InputObject $ParsedContent -Depth 25
-    $jsonContent | Out-File -FilePath $OutputPath
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    $resources = @()
+    foreach ($resource in $ParsedContent)
+    {
+        $copy = [ordered]@{}
+        foreach ($property in $resource.Keys)
+        {
+            if (-not [Microsoft365DSC.Utilities.Utilities]::IsAuthenticationProperty($property))
+            {
+                $copy[$property] = $resource[$property]
+            }
+        }
+        $resources += $copy
+    }
+
+    $jsonContent = ConvertTo-Json -InputObject $resources -Depth 25
+    $jsonContent | Out-File -LiteralPath $OutputPath
 }
 
 <#
@@ -732,6 +751,94 @@ function Get-Base64EncodedImage
 }
 
 <#
+.SYNOPSIS
+    Returns the property rows of every resource of a parsed configuration.
+
+.DESCRIPTION
+    Lists the properties of each resource with their report text, key properties first and the rest
+    in alphabetical order. ResourceName and the authentication properties are skipped. Empty values
+    are returned as '$null'.
+
+.PARAMETER ParsedContent
+    Specifies the parsed resources of the configuration.
+
+.PARAMETER ReportType
+    Specifies the report type named in the log entry of a failed conversion.
+
+.OUTPUTS
+    System.Management.Automation.PSCustomObject[]. One object per resource with the ResourceName and
+    its Properties, each with the Property, Value and IsKey members.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function Get-M365DSCReportPropertyRow
+{
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.PSCustomObject[]])]
+    param
+    (
+        [Parameter()]
+        [System.Array]
+        $ParsedContent,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ReportType
+    )
+
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    $keyNames = @('Identity', 'Name', 'IsSingleInstance', 'DisplayName')
+
+    $resources = @()
+    foreach ($resource in $ParsedContent)
+    {
+        $properties = @()
+
+        # Key properties first, then the rest, in a stable order
+        foreach ($property in ($resource.Keys | Sort-Object -Property { $_ -notin $keyNames }, { $_ }))
+        {
+            if ($property -eq 'ResourceName' -or [Microsoft365DSC.Utilities.Utilities]::IsAuthenticationProperty($property))
+            {
+                continue
+            }
+
+            $value = $null
+            try
+            {
+                if ([System.String]::IsNullOrEmpty($resource.$property))
+                {
+                    $value = "`$null"
+                }
+                else
+                {
+                    $value = ConvertTo-M365DSCReportText -Value $resource.$property
+                }
+            }
+            catch
+            {
+                New-M365DSCLogEntry -Message "Error during conversion to $($ReportType):" `
+                    -Exception $_ `
+                    -Source $($MyInvocation.MyCommand.Source)
+            }
+
+            $properties += [PSCustomObject]@{
+                Property = $property
+                Value    = $value
+                IsKey    = $property -in $keyNames
+            }
+        }
+
+        $resources += [PSCustomObject]@{
+            ResourceName = $resource.ResourceName
+            Properties   = $properties
+        }
+    }
+
+    return $resources
+}
+
+<#
 .DESCRIPTION
     This function creates a new Excel document from the specified exported configuration
 
@@ -753,48 +860,23 @@ function New-M365DSCConfigurationToExcel
     )
 
     $OutputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
-    $keyNames = @('Identity', 'Name', 'IsSingleInstance', 'DisplayName')
 
     # Collect every row first and write them to the sheet in one call
     $rows = @()
     $keyRows = @()
     $resourceRanges = @()
     $row = 2
-    foreach ($resource in $ParsedContent)
+    foreach ($resource in (Get-M365DSCReportPropertyRow -ParsedContent $ParsedContent -ReportType 'Excel'))
     {
         $beginRow = $row
-
-        # Key properties first, then the rest, in a stable order
-        foreach ($property in ($resource.Keys | Sort-Object -Property { $_ -notin $keyNames }, { $_ }))
+        foreach ($propertyRow in $resource.Properties)
         {
-            if ($property -ne 'ResourceName' -and $property -ne 'Credential')
+            $rows += , @($resource.ResourceName, $propertyRow.Property, $propertyRow.Value)
+            if ($propertyRow.IsKey)
             {
-                $value = $null
-                try
-                {
-                    if ([System.String]::IsNullOrEmpty($resource.$property))
-                    {
-                        $value = "`$null"
-                    }
-                    else
-                    {
-                        $value = ConvertTo-M365DSCReportText -Value $resource.$property
-                    }
-                }
-                catch
-                {
-                    New-M365DSCLogEntry -Message 'Error during conversion to Excel:' `
-                        -Exception $_ `
-                        -Source $($MyInvocation.MyCommand.Source)
-                }
-
-                $rows += , @($resource.ResourceName, $property, $value)
-                if ($property -in $keyNames)
-                {
-                    $keyRows += $row
-                }
-                $row++
+                $keyRows += $row
             }
+            $row++
         }
         $resourceRanges += "A$($beginRow):C$($row)"
     }
@@ -912,61 +994,33 @@ function New-M365DSCConfigurationToCSV
         $Delimiter = ','
     )
 
-    $keyNames = @('Identity', 'Name', 'IsSingleInstance', 'DisplayName')
     $row = 0
     $csvOutput = @()
 
-    foreach ($resource in $parsedContent)
+    foreach ($resource in (Get-M365DSCReportPropertyRow -ParsedContent $ParsedContent -ReportType 'CSV'))
     {
-        $newRow = [ordered]@{
-            'Component Name' = $null
-            Property         = $null
-            Value            = $null
-        }
         if ($row -gt 0)
         {
             Write-Verbose -Message 'add separator-line in CSV-file between resources'
-            $newRow.'Component Name' = '======================'
-            $csvOutput += [pscustomobject]$newRow
-            $row++
-        }
-
-        # Key properties first, then the rest, in a stable order
-        foreach ($property in ($resource.Keys | Sort-Object -Property { $_ -notin $keyNames }, { $_ }))
-        {
-            $newRow = [ordered]@{
-                'Component Name' = $null
+            $csvOutput += [PSCustomObject][ordered]@{
+                'Component Name' = '======================'
                 Property         = $null
                 Value            = $null
             }
-            if ($property -ne 'ResourceName' -and $property -ne 'Credential')
-            {
-                $newRow.'Component Name' = $resource.ResourceName
-                $newRow.Property = $property
-                try
-                {
-                    if ([System.String]::IsNullOrEmpty($resource.$property))
-                    {
-                        $newRow.Value = "`$null"
-                    }
-                    else
-                    {
-                        $newRow.Value = ConvertTo-M365DSCReportText -Value $resource.$property
-                    }
-                }
-                catch
-                {
-                    New-M365DSCLogEntry -Message 'Error during conversion to CSV:' `
-                        -Exception $_ `
-                        -Source $($MyInvocation.MyCommand.Source)
-                }
+            $row++
+        }
 
-                $csvOutput += [pscustomobject]$newRow
-                $row++
+        foreach ($propertyRow in $resource.Properties)
+        {
+            $csvOutput += [PSCustomObject][ordered]@{
+                'Component Name' = $resource.ResourceName
+                Property         = $propertyRow.Property
+                Value            = $propertyRow.Value
             }
+            $row++
         }
     }
-    $csvOutput | Export-Csv -Path $OutputPath -Encoding UTF8 -Delimiter $Delimiter -NoTypeInformation
+    $csvOutput | Export-Csv -LiteralPath $OutputPath -Encoding UTF8 -Delimiter $Delimiter -NoTypeInformation
 }
 
 <#
@@ -1396,11 +1450,6 @@ function New-M365DSCDeltaReport
     Add-M365DSCTelemetryEvent -Data $data -Type 'CompareConfigurations'
     #endregion
 
-    # Excluding authentication properties by default.
-    $authParameters = [Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames
-    $ExcludedProperties += 'ResourceInstanceName'
-    $ExcludedProperties = $ExcludedProperties + $authParameters | Select-Object -Unique
-
     Write-Verbose -Message 'Obtaining Delta between the source and destination configurations'
     if (-not $PSBoundParameters.ContainsKey('Delta'))
     {
@@ -1432,7 +1481,8 @@ function New-M365DSCDeltaReport
             {
                 if (-not $configDataMap.ContainsKey($filePath))
                 {
-                    $autoPath = Join-Path -Path (Split-Path -Path $filePath -Parent) -ChildPath 'ConfigurationData.psd1'
+                    $resolvedFilePath = (Resolve-Path -LiteralPath $filePath -ErrorAction Stop).ProviderPath
+                    $autoPath = Join-Path -Path (Split-Path -Path $resolvedFilePath -Parent) -ChildPath 'ConfigurationData.psd1'
                     if (Test-Path -LiteralPath $autoPath)
                     {
                         $configDataMap[$filePath] = $autoPath
@@ -1891,7 +1941,7 @@ function New-M365DSCDeltaReport
         [void]$reportSB.AppendLine('</div></body></html>')
         if (-not [System.String]::IsNullOrEmpty($OutputPath))
         {
-            $reportSB.ToString() | Out-File $OutputPath
+            $reportSB.ToString() | Out-File -LiteralPath $OutputPath
         }
         else
         {
@@ -1908,7 +1958,7 @@ function New-M365DSCDeltaReport
         $jsonDelta = ConvertTo-Json -InputObject $Delta -Depth 25
         if (-not [System.String]::IsNullOrEmpty($OutputPath))
         {
-            $jsonDelta | Out-File $OutputPath
+            $jsonDelta | Out-File -LiteralPath $OutputPath
         }
         else
         {
