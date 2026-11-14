@@ -339,7 +339,7 @@ function Test-M365DSCAccessError
         $response = $ErrorRecord.Exception.Response
         if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
         {
-            if ([int]$response.StatusCode -in @(401, 403))
+            if ([System.Int32]$response.StatusCode -in @(401, 403))
             {
                 return $true
             }
@@ -451,7 +451,7 @@ function Invoke-M365DSCCommand
     param
     (
         [Parameter(Mandatory = $true)]
-        [scriptblock]
+        [System.Management.Automation.ScriptBlock]
         $ScriptBlock,
 
         [Parameter()]
@@ -552,7 +552,7 @@ function Wait-M365DSCCondition
     param
     (
         [Parameter(Mandatory = $true)]
-        [scriptblock]
+        [System.Management.Automation.ScriptBlock]
         $ScriptBlock,
 
         [Parameter(Mandatory = $true)]

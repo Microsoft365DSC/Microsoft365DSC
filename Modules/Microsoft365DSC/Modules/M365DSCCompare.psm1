@@ -68,7 +68,7 @@ function Compare-M365DSCResourceState
         $IncludedProperties,
 
         [Parameter()]
-        [System.Func[Hashtable, Hashtable, Hashtable, [Object[]], Tuple[Hashtable, Hashtable, Hashtable]]]
+        [System.Func[System.Collections.Hashtable, System.Collections.Hashtable, System.Collections.Hashtable, [System.Object[]], System.Tuple[System.Collections.Hashtable, System.Collections.Hashtable, System.Collections.Hashtable]]]
         $PostProcessing,
 
         [Parameter()]
@@ -117,7 +117,7 @@ function Compare-M365DSCResourceState
         try
         {
             $result = $PostProcessing.Invoke($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-            if ($null -ne $result -and $result.Item1 -is [Hashtable] -and $result.Item2 -is [Hashtable] -and $result.Item3 -is [Hashtable])
+            if ($null -ne $result -and $result.Item1 -is [System.Collections.Hashtable] -and $result.Item2 -is [System.Collections.Hashtable] -and $result.Item3 -is [System.Collections.Hashtable])
             {
                 $DesiredValues = $result.Item1
                 $CurrentValues = $result.Item2
