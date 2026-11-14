@@ -472,6 +472,7 @@ function Update-M365DSCAllowedGraphScopes
 .DESCRIPTION
     Resolves the service principal using the API name provided. A known API name resolves through
     its application id because the Entra portal name may be different from what's in the settings file.
+    Throws when the lookup fails.
 
 .PARAMETER ApiName
     Name of the API as written in the settings file or passed by the caller.
@@ -540,7 +541,7 @@ function Get-M365DSCApiServicePrincipal
         return $Cache.$cacheKey
     }
 
-    $servicePrincipal = Get-MgServicePrincipal -Filter $filter -ErrorAction SilentlyContinue | Select-Object -First 1
+    $servicePrincipal = Get-MgServicePrincipal -Filter $filter -ErrorAction Stop | Select-Object -First 1
     $Cache.Add($cacheKey, $servicePrincipal)
 
     return $servicePrincipal
@@ -579,7 +580,17 @@ function Resolve-M365DSCPermissionAppRole
         $Cache
     )
 
-    $servicePrincipal = Get-M365DSCApiServicePrincipal -ApiName ($Permission.Api) -Cache $Cache
+    try
+    {
+        $servicePrincipal = Get-M365DSCApiServicePrincipal -ApiName ($Permission.Api) -Cache $Cache
+    }
+    catch
+    {
+        return @{
+            Warning = "    Unable to read the service principal of API '$($Permission.Api)': $($_.Exception.Message) Grant '$($Permission.PermissionName)' manually."
+        }
+    }
+
     if ($null -eq $servicePrincipal)
     {
         return @{
@@ -892,7 +903,7 @@ function Update-M365DSCAzureAdApplication
 
             if (-not $PSBoundParameters.ContainsKey('CertificatePath'))
             {
-                if ($PSBoundParameters.ContainsKey('CreateSelfSignedCertificate'))
+                if ($CreateSelfSignedCertificate)
                 {
                     # CreateSelfSignedCertificate is specified, but CertificatePath is missing.
                     Write-LogEntry -Message 'You have to specify CertificatePath, when specifying the CreateSelfSignedCertificate parameter.' -Type Error
@@ -907,7 +918,7 @@ function Update-M365DSCAzureAdApplication
             }
             else
             {
-                if ($PSBoundParameters.ContainsKey('CreateSelfSignedCertificate'))
+                if ($CreateSelfSignedCertificate)
                 {
                     # CreateSelfSignedCertificate is specified and path specified in CertificatePath already exists.
                     if ((Test-Path -Path $CertificatePath) -eq $true)
@@ -955,7 +966,15 @@ function Update-M365DSCAzureAdApplication
             $identityFilter = "servicePrincipalType eq 'ManagedIdentity' and (id eq '$ApplicationName' or appId eq '$ApplicationName')"
         }
 
-        $identities = @(Get-MgServicePrincipal -Filter $identityFilter -ErrorAction SilentlyContinue)
+        try
+        {
+            $identities = @(Get-MgServicePrincipal -Filter $identityFilter -ErrorAction Stop)
+        }
+        catch
+        {
+            Write-LogEntry -Message "Unable to read the managed identity '$ApplicationName': $($_.Exception.Message)" -Type Error
+            return
+        }
         if ($identities.Count -eq 0)
         {
             Write-LogEntry -Message "No managed identity '$ApplicationName' found." -Type Error
@@ -1024,7 +1043,15 @@ function Update-M365DSCAzureAdApplication
 
     Write-LogEntry ' '
     Write-LogEntry 'Checking existence of AD Application'
-    $azureADApps = @(Get-MgApplication -Filter "DisplayName eq '$($ApplicationName -replace "'", "''")'" -ErrorAction SilentlyContinue)
+    try
+    {
+        $azureADApps = @(Get-MgApplication -Filter "DisplayName eq '$($ApplicationName -replace "'", "''")'" -ErrorAction Stop)
+    }
+    catch
+    {
+        Write-LogEntry -Message "Unable to read the application '$ApplicationName': $($_.Exception.Message)" -Type Error
+        return
+    }
     if ($azureADApps.Count -gt 1)
     {
         Write-LogEntry -Message "Multiple applications named '$ApplicationName' found. Specify a unique application name instead." -Type Error
@@ -1241,7 +1268,7 @@ function Update-M365DSCAzureAdApplication
                 }
                 else
                 {
-                    if ($PSBoundParameters.ContainsKey('CreateSelfSignedCertificate') -eq $false)
+                    if (-not $CreateSelfSignedCertificate)
                     {
                         Write-LogEntry "  CertificatePath specified '$CertificatePath', using that certificate"
                         $certCred = $certCreds | Where-Object -FilterScript { Test-M365DSCKeyCredentialMatch -KeyCredential $_ -Certificate $cerCert }

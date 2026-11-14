@@ -183,6 +183,9 @@
     `-ErrorAction Stop` and reporting the administrator error once per dependency.
   * Fixed `Update-M365DSCModule` ignoring a failed module update.
   * Fixed the new version check querying other repositories than the PowerShell Gallery.
+  * Fixed a module missing from the dependency manifest failing when it is already loaded.
+  * Fixed `Uninstall-M365DSCOutdatedDependencies` removing a second copy of the newest
+    Microsoft365DSC version.
 * M365DSCPermissions
   * Removed the retired `Germany` environment from `Update-M365DSCAllowedGraphScopes`.
   * Fixed several issues in `Update-M365DSCAzureAdApplication` regarding API permissions
@@ -194,6 +197,10 @@
   * Fixed `Update-M365DSCAzureAdApplication` failing for applications with the same name.
   * Fixed `Update-M365DSCAzureAdApplication -AdminConsent` changing the application before
     checking the credential and ignoring `-TenantId` for the consent.
+  * Fixed `Update-M365DSCAzureAdApplication` creating a duplicate application and reporting
+    missing service principals when a lookup fails.
+  * Fixed `Update-M365DSCAzureAdApplication -CreateSelfSignedCertificate:$false` being
+    treated as `-CreateSelfSignedCertificate`.
 * M365DSCPowerPlatformRESTHelper
   * Fixed the hint for a missing Power Platform admin management application never
     being shown on a 403 error.
@@ -266,6 +273,9 @@
     connection string to the current session.
   * Fixed a telemetry client failure, such as an invalid connection string, stopping
     resource operations and exports.
+  * Fixed the telemetry options not being stored on Linux and macOS.
+  * Fixed `Set-M365DSCTelemetryOption` failing with a registry error without admin privileges.
+  * Fixed telemetry events reporting the LCM state of the first operation of the session.
 * M365DSCTenantInfo
   * Fixed `Get-M365TenantName` and `Get-SPOAdministrationUrl` always returning an empty
     tenant name.

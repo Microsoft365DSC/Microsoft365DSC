@@ -1,5 +1,160 @@
-$Script:TelemetryEnabled = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryEnabled', `
-            [System.EnvironmentVariableTarget]::Machine)
+<#
+.SYNOPSIS
+    Returns the path of the per-user telemetry settings file used outside Windows.
+
+.FUNCTIONALITY
+    Internal, Hidden
+
+.OUTPUTS
+    System.String
+#>
+function Get-M365DSCTelemetrySettingsFilePath
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param()
+
+    $configurationRoot = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::ApplicationData)
+    return [System.IO.Path]::Combine($configurationRoot, 'Microsoft365DSC', 'TelemetrySettings.json')
+}
+
+<#
+.SYNOPSIS
+    Reads a telemetry setting.
+
+.DESCRIPTION
+    On Windows, reads the machine environment variable. On other platforms, where machine
+    environment variables cannot be stored, reads the process environment variable and falls back
+    to the per-user telemetry settings file.
+
+.PARAMETER Name
+    Specifies the name of the setting, such as M365DSCTelemetryEnabled.
+
+.FUNCTIONALITY
+    Internal, Hidden
+
+.OUTPUTS
+    System.String
+#>
+function Get-M365DSCTelemetrySetting
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Name
+    )
+
+    if ($IsWindows)
+    {
+        return [System.Environment]::GetEnvironmentVariable($Name, [System.EnvironmentVariableTarget]::Machine)
+    }
+
+    $value = [System.Environment]::GetEnvironmentVariable($Name, [System.EnvironmentVariableTarget]::Process)
+    if (-not [System.String]::IsNullOrEmpty($value))
+    {
+        return $value
+    }
+
+    $settingsFilePath = Get-M365DSCTelemetrySettingsFilePath
+    if (-not [System.IO.File]::Exists($settingsFilePath))
+    {
+        return $null
+    }
+
+    try
+    {
+        $settings = [System.IO.File]::ReadAllText($settingsFilePath) | ConvertFrom-Json -AsHashtable
+        if ($null -ne $settings -and $settings.ContainsKey($Name))
+        {
+            return [System.String]$settings[$Name]
+        }
+    }
+    catch
+    {
+        Write-Verbose -Message "Could not read the telemetry settings file {$settingsFilePath}: $($_.Exception.Message)"
+    }
+
+    return $null
+}
+
+<#
+.SYNOPSIS
+    Stores a telemetry setting.
+
+.DESCRIPTION
+    On Windows, writes the machine environment variable, which requires administrator privileges.
+    On other platforms, writes the per-user telemetry settings file and the process environment
+    variable. An empty value removes the setting.
+
+.PARAMETER Name
+    Specifies the name of the setting, such as M365DSCTelemetryEnabled.
+
+.PARAMETER Value
+    Specifies the value of the setting.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function Set-M365DSCTelemetrySetting
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [System.String]
+        $Value
+    )
+
+    if ($IsWindows)
+    {
+        try
+        {
+            [System.Environment]::SetEnvironmentVariable($Name, $Value, [System.EnvironmentVariableTarget]::Machine)
+        }
+        catch [System.Security.SecurityException], [System.UnauthorizedAccessException]
+        {
+            throw 'Changing the telemetry settings requires administrator privileges. Run the command from an elevated PowerShell session.'
+        }
+        return
+    }
+
+    $settingsFilePath = Get-M365DSCTelemetrySettingsFilePath
+    $settings = @{}
+    if ([System.IO.File]::Exists($settingsFilePath))
+    {
+        $existing = [System.IO.File]::ReadAllText($settingsFilePath) | ConvertFrom-Json -AsHashtable
+        if ($null -ne $existing)
+        {
+            $settings = $existing
+        }
+    }
+
+    $processValue = [System.Management.Automation.Language.NullString]::Value
+    if ([System.String]::IsNullOrEmpty($Value))
+    {
+        $settings.Remove($Name)
+    }
+    else
+    {
+        $settings[$Name] = $Value
+        $processValue = $Value
+    }
+
+    $null = [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($settingsFilePath))
+    [System.IO.File]::WriteAllText($settingsFilePath, ($settings | ConvertTo-Json))
+    [System.Environment]::SetEnvironmentVariable($Name, $processValue, [System.EnvironmentVariableTarget]::Process)
+}
+
+$Script:TelemetryEnabled = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryEnabled'
 
 $Script:M365DSCCurrentRolesResolved = $false
 $Script:M365DSCCurrentRoles = @()
@@ -74,16 +229,14 @@ function Get-M365DSCApplicationInsightsTelemetryClient
 
         $TelClient = [Microsoft.ApplicationInsights.TelemetryClient]::new()
 
-        $connectionString = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryConnectionString', `
-            [System.EnvironmentVariableTarget]::Machine)
+        $connectionString = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryConnectionString'
         if (-not [System.String]::IsNullOrEmpty($connectionString))
         {
             $TelClient.TelemetryConfiguration.ConnectionString = $connectionString
         }
         else
         {
-            $InstrumentationKey = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryInstrumentationKey', `
-                    [System.EnvironmentVariableTarget]::Machine)
+            $InstrumentationKey = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryInstrumentationKey'
 
             if ($null -eq $InstrumentationKey)
             {
@@ -279,8 +432,7 @@ function Add-M365DSCTelemetryEvent
 
         try
         {
-            $ProjectName = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryProjectName', `
-                    [System.EnvironmentVariableTarget]::Machine)
+            $ProjectName = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryProjectName'
 
             if ($null -ne $ProjectName)
             {
@@ -426,7 +578,7 @@ function Add-M365DSCTelemetryEvent
 
                 if ($Script:M365DSCCurrentPrincipalIsAdmin)
                 {
-                    if ($null -eq $Script:LCMInfo)
+                    if ($null -eq $Script:LCMInfo -or -not $Global:M365DSCExportInProgress)
                     {
                         $Script:LCMInfo = Get-DscLocalConfigurationManager -ErrorAction Stop
                     }
@@ -456,24 +608,27 @@ function Add-M365DSCTelemetryEvent
                         {
                             $Type = 'Export'
                         }
-                        elseif ($Script:LCMInfo.LCMStateDetail -eq 'LCM is performing a consistency check.' -or `
-                                $Script:LCMInfo.LCMStateDetail -eq 'LCM exécute une vérification de cohérence.' -or `
-                                $Script:LCMInfo.LCMStateDetail -eq 'LCM führt gerade eine Konsistenzüberprüfung durch.')
-                        {
-                            $Type = 'MonitoringScheduled'
-                        }
-                        elseif ($Script:LCMInfo.LCMStateDetail -eq 'LCM is testing node against the configuration.')
-                        {
-                            $Type = 'MonitoringManual'
-                        }
-                        elseif ($Script:LCMInfo.LCMStateDetail -eq 'LCM is applying a new configuration.' -or `
-                                $Script:LCMInfo.LCMStateDetail -eq 'LCM applique une nouvelle configuration.')
-                        {
-                            $Type = 'ApplyingConfiguration'
-                        }
                         else
                         {
-                            $Type = 'Undetermined'
+                            $Type = switch (ConvertTo-M365DSCLCMStateName -LCMStateDetail $Script:LCMInfo.LCMStateDetail)
+                            {
+                                'ConsistencyCheck'
+                                {
+                                    'MonitoringScheduled'
+                                }
+                                'ManualTestDSCConfiguration'
+                                {
+                                    'MonitoringManual'
+                                }
+                                'Initial'
+                                {
+                                    'ApplyingConfiguration'
+                                }
+                                default
+                                {
+                                    'Undetermined'
+                                }
+                            }
                         }
                     }
                 }
@@ -611,28 +766,24 @@ function Set-M365DSCTelemetryOption
 
     if ($PSBoundParameters.ContainsKey('Enabled'))
     {
-        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $Enabled, `
-                [System.EnvironmentVariableTarget]::Machine)
+        Set-M365DSCTelemetrySetting -Name 'M365DSCTelemetryEnabled' -Value $Enabled
         $Script:TelemetryEnabled = $Enabled
     }
 
     if ($PSBoundParameters.ContainsKey('InstrumentationKey'))
     {
-        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryInstrumentationKey', $InstrumentationKey, `
-                [System.EnvironmentVariableTarget]::Machine)
+        Set-M365DSCTelemetrySetting -Name 'M365DSCTelemetryInstrumentationKey' -Value $InstrumentationKey
         $Script:M365DSCTelemetryEngine = $null
     }
 
     if ($PSBoundParameters.ContainsKey('ProjectName'))
     {
-        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryProjectName', $ProjectName, `
-                [System.EnvironmentVariableTarget]::Machine)
+        Set-M365DSCTelemetrySetting -Name 'M365DSCTelemetryProjectName' -Value $ProjectName
     }
 
     if ($PSBoundParameters.ContainsKey('ConnectionString'))
     {
-        [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryConnectionString', $ConnectionString, `
-                [System.EnvironmentVariableTarget]::Machine)
+        Set-M365DSCTelemetrySetting -Name 'M365DSCTelemetryConnectionString' -Value $ConnectionString
         $Script:M365DSCTelemetryEngine = $null
     }
 }
@@ -660,14 +811,10 @@ function Get-M365DSCTelemetryOption
     param()
 
     return @{
-        Enabled            = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryEnabled', `
-                [System.EnvironmentVariableTarget]::Machine)
-        InstrumentationKey = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryInstrumentationKey', `
-                [System.EnvironmentVariableTarget]::Machine)
-        ProjectName        = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryProjectName', `
-                [System.EnvironmentVariableTarget]::Machine)
-        ConnectionString   = [System.Environment]::GetEnvironmentVariable('M365DSCTelemetryConnectionString', `
-                [System.EnvironmentVariableTarget]::Machine)
+        Enabled            = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryEnabled'
+        InstrumentationKey = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryInstrumentationKey'
+        ProjectName        = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryProjectName'
+        ConnectionString   = Get-M365DSCTelemetrySetting -Name 'M365DSCTelemetryConnectionString'
     }
 }
 

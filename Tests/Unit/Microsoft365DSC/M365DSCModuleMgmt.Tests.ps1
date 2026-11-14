@@ -177,13 +177,17 @@ Describe 'M365DSCModuleMgmt' {
     }
 
     Context 'Confirm-M365DSCLoadedModule' {
-        It 'Warns and still imports a module that is missing from the manifest' {
+        It 'Warns and imports a module that is missing from the manifest, or keeps it when it is already loaded' {
             Mock -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -MockWith {}
             Mock -ModuleName M365DSCModuleMgmt -CommandName Get-Module -MockWith { $null }
 
             try
             {
                 Confirm-M365DSCLoadedModule -ModuleName 'Test.NotInManifest' -WarningVariable warnings -WarningAction SilentlyContinue
+                & $Script:ModuleMgmtModule { [void]$Script:M365DSCValidatedDependencies.Remove('Test.NotInManifest') }
+
+                Mock -ModuleName M365DSCModuleMgmt -CommandName Get-Module -MockWith { [PSCustomObject]@{ Name = 'Test.NotInManifest'; Version = [System.Version]'1.0.0' } }
+                Confirm-M365DSCLoadedModule -ModuleName 'Test.NotInManifest' -WarningAction SilentlyContinue
             }
             finally
             {
@@ -192,7 +196,9 @@ Describe 'M365DSCModuleMgmt' {
 
             $warnings | Should -HaveCount 1
             $warnings[0].Message | Should -BeLike "Module 'Test.NotInManifest' is not declared in Dependencies/Manifest.psd1*"
-            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -Times 1 -Exactly -ParameterFilter { $Parameters.Name -eq 'Test.NotInManifest' }
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -Times 1 -Exactly -ParameterFilter {
+                $Parameters.Name -eq 'Test.NotInManifest' -and -not $Parameters.ContainsKey('RequiredVersion')
+            }
         }
     }
 

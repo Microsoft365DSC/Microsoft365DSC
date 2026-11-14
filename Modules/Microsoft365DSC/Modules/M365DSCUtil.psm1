@@ -292,6 +292,53 @@ function Test-M365DSCCurrentUserIsAdministrator
 
 <#
 .SYNOPSIS
+    Maps a localized LCM state detail to the operation it describes.
+
+.DESCRIPTION
+    Returns ConsistencyCheck, ManualTestDSCConfiguration or Initial for the known LCMStateDetail
+    values of the Local Configuration Manager, and $null for any other value.
+
+.PARAMETER LCMStateDetail
+    Specifies the LCMStateDetail value returned by Get-DscLocalConfigurationManager.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.String
+#>
+function ConvertTo-M365DSCLCMStateName
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter()]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [System.String]
+        $LCMStateDetail
+    )
+
+    $stateMap = @{
+        'LCM is performing a consistency check.'             = 'ConsistencyCheck'
+        'LCM exécute une vérification de cohérence.'         = 'ConsistencyCheck'
+        'LCM führt gerade eine Konsistenzüberprüfung durch.' = 'ConsistencyCheck'
+        'LCM is testing node against the configuration.'     = 'ManualTestDSCConfiguration'
+        'LCM is applying a new configuration.'               = 'Initial'
+        'LCM applique une nouvelle configuration.'           = 'Initial'
+    }
+
+    if (-not [System.String]::IsNullOrEmpty($LCMStateDetail) -and $stateMap.ContainsKey($LCMStateDetail))
+    {
+        return $stateMap[$LCMStateDetail]
+    }
+
+    return $null
+}
+
+<#
+.SYNOPSIS
     Returns the current LCM state used in drift event payloads.
 
 .DESCRIPTION
@@ -324,18 +371,10 @@ function Get-M365DSCLCMState
         }
 
         $lcmInfo = Get-DscLocalConfigurationManager -ErrorAction Stop
-        $stateMap = @{
-            'LCM is performing a consistency check.'             = 'ConsistencyCheck'
-            'LCM exécute une vérification de cohérence.'         = 'ConsistencyCheck'
-            'LCM führt gerade eine Konsistenzüberprüfung durch.' = 'ConsistencyCheck'
-            'LCM is testing node against the configuration.'     = 'ManualTestDSCConfiguration'
-            'LCM is applying a new configuration.'               = 'Initial'
-            'LCM applique une nouvelle configuration.'           = 'Initial'
-        }
-
-        if (-not [System.String]::IsNullOrEmpty($lcmInfo.LCMStateDetail) -and $stateMap.ContainsKey($lcmInfo.LCMStateDetail))
+        $stateName = ConvertTo-M365DSCLCMStateName -LCMStateDetail $lcmInfo.LCMStateDetail
+        if ($null -ne $stateName)
         {
-            return $stateMap[$lcmInfo.LCMStateDetail]
+            return $stateName
         }
     }
     catch
@@ -4627,6 +4666,7 @@ Export-ModuleMember -Function @(
     'Complete-M365DSCHostLine',
     'Confirm-ImportedCmdletIsAvailable',
     'Convert-M365DscHashtableToString',
+    'ConvertTo-M365DSCLCMStateName',
     'ConvertTo-M365DSCXmlEscapedString',
     'Get-AllSPOPackages',
     'Get-M365DSCAccessPackageResourceOriginDisplayName',
