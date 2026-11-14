@@ -212,6 +212,19 @@ Describe 'Assert-M365DSCBlueprint' {
         $Script:ParsedContent[0] | Should -Not -Match '-ModuleVersion'
         $Script:ParsedContent[0] | Should -Match "Import-DscResource -ModuleName 'Microsoft365DSC'`n"
         Should -Invoke -ModuleName M365DSCUtil -CommandName New-M365DSCDeltaReport -Exactly -Times 1
+        Should -Invoke -ModuleName M365DSCUtil -CommandName Export-M365DSCConfiguration -Exactly -Times 1 -ParameterFilter {
+            -not $PesterBoundParameters.ContainsKey('Credential') -and -not $PesterBoundParameters.ContainsKey('TenantId') -and -not $PesterBoundParameters.ContainsKey('ApplicationSecret')
+        }
+        Should -Invoke -ModuleName M365DSCUtil -CommandName Add-M365DSCTelemetryEvent -Exactly -Times 1 -ParameterFilter {
+            $Data['BluePrintSource'] -eq 'File' -and -not $Data.ContainsKey('BluePrint')
+        }
+
+        $secret = [System.Management.Automation.PSCredential]::new('app', (ConvertTo-SecureString -String 'secret-value' -AsPlainText -Force))
+        Assert-M365DSCBlueprint -BluePrintUrl $Script:BlueprintPath -OutputReportPath (Join-Path $TestDrive 'report.html') `
+            -ApplicationId 'app-id' -TenantId 'contoso.onmicrosoft.com' -ApplicationSecret $secret
+        Should -Invoke -ModuleName M365DSCUtil -CommandName Export-M365DSCConfiguration -Exactly -Times 1 -ParameterFilter {
+            $ApplicationSecret -eq 'secret-value' -and $TenantId -eq 'contoso.onmicrosoft.com' -and -not $PesterBoundParameters.ContainsKey('Credential')
+        }
     }
 
     It 'returns to the caller and removes the temp blueprint when every resource is excluded' {

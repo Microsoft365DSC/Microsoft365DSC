@@ -90,7 +90,7 @@ $env:TEMP = Get-TemporaryPath
 function Get-TeamByName
 {
     [CmdletBinding()]
-    [OutputType([Hashtable])]
+    [OutputType([System.Collections.Hashtable])]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -418,15 +418,15 @@ function Test-M365DSCParameterState
     param
     (
         [Parameter(Mandatory = $true, Position = 1)]
-        [HashTable]
+        [System.Collections.Hashtable]
         $CurrentValues,
 
         [Parameter(Mandatory = $true, Position = 2)]
-        [Object]
+        [System.Object]
         $DesiredValues,
 
         [Parameter(Position = 3)]
-        [Array]
+        [System.Array]
         $ValuesToCheck,
 
         [Parameter(Position = 4)]
@@ -702,7 +702,7 @@ function Test-M365DSCTargetResource
         $CurrentValues,
 
         [Parameter()]
-        [System.Func[Hashtable, Hashtable, Hashtable, [Object[]], Tuple[Hashtable, Hashtable, Hashtable]]]
+        [System.Func[System.Collections.Hashtable, System.Collections.Hashtable, System.Collections.Hashtable, [System.Object[]], System.Tuple[System.Collections.Hashtable, System.Collections.Hashtable, System.Collections.Hashtable]]]
         $PostProcessing,
 
         [Parameter()]
@@ -730,15 +730,6 @@ function Test-M365DSCTargetResource
     #Ensure the proper dependencies are installed in the current environment.
     Confirm-M365DSCDependencies
     Initialize-M365DSCDllLoader -ErrorAction Stop
-
-    if ($null -eq (Get-Module -Name 'M365DSCCompare'))
-    {
-        $compareModulePath = Join-Path -Path $PSScriptRoot -ChildPath 'M365DSCCompare.psm1'
-        Import-M365DSCDependencyModule -Parameters @{
-            Name  = $compareModulePath
-            Force = $true
-        }
-    }
 
     # Retrieve the primary keys of the given resource and remove them from the list of values to check.
     Initialize-M365DSCSchemaCache
@@ -1100,9 +1091,11 @@ function Install-M365DSCDevBranch
     param(
         [Parameter()]
         [ValidateSet('CurrentUser', 'AllUsers')]
+        [System.String]
         $Scope = 'AllUsers'
     )
 
+    $downloadPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "M365DSCDev_$([System.Guid]::NewGuid())"
     try
     {
         $longPathsEnabled = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem').LongPathsEnabled -eq 1
@@ -1116,8 +1109,9 @@ function Install-M365DSCDevBranch
         #region Download and Extract Dev branch's ZIP
         Write-Host 'Downloading the Zip package...' -NoNewline
         $url = 'https://github.com/microsoft/Microsoft365DSC/archive/Dev.zip'
-        $output = "$($env:TEMP)/dev.zip"
-        $extractPath = "$($env:TEMP)/O365Dev"
+        $null = New-Item -Path $downloadPath -ItemType Directory -Force
+        $output = Join-Path -Path $downloadPath -ChildPath 'dev.zip'
+        $extractPath = Join-Path -Path $downloadPath -ChildPath 'O365Dev'
 
         Invoke-WebRequest -Uri $url -OutFile $output -UseBasicParsing
 
@@ -1126,7 +1120,8 @@ function Install-M365DSCDevBranch
         #endregion
 
         #region Install All Dependencies
-        $manifest = Import-PowerShellDataFile "$extractPath\Microsoft365DSC-Dev\Modules\Microsoft365DSC\Microsoft365DSC.psd1"
+        $sourcePath = Join-Path -Path $extractPath -ChildPath 'Microsoft365DSC-Dev\Modules\Microsoft365DSC'
+        $manifest = Import-PowerShellDataFile (Join-Path -Path $sourcePath -ChildPath 'Microsoft365DSC.psd1')
         $dependencies = $manifest.RequiredModules
         if ($IsWindows -and -not (Test-M365DSCCurrentUserIsAdministrator) -and $Scope -eq 'AllUsers')
         {
@@ -1160,7 +1155,40 @@ function Install-M365DSCDevBranch
         }
         $currentVersionPath = Join-Path -Path $defaultPath -ChildPath ([System.Version]$($manifest.ModuleVersion)).ToString()
 
-        Copy-Item "$extractPath\Microsoft365DSC-Dev\Modules\Microsoft365DSC\*" `
+        # Removes files and folders of a previous Dev branch install that no longer exist on Dev.
+        # Version folders of installed releases are kept.
+        $version = $null
+        $installedItems = @()
+        foreach ($rootItem in (Get-ChildItem -LiteralPath $defaultPath))
+        {
+            if ($rootItem.PSIsContainer -and [System.Version]::TryParse($rootItem.Name, [ref]$version))
+            {
+                continue
+            }
+            $installedItems += $rootItem
+            if ($rootItem.PSIsContainer)
+            {
+                $installedItems += Get-ChildItem -LiteralPath $rootItem.FullName -Recurse
+            }
+        }
+        foreach ($installedItem in $installedItems)
+        {
+            $relativePath = $installedItem.FullName.Substring($defaultPath.Length).TrimStart('\', '/')
+            if (-not (Test-Path -LiteralPath (Join-Path -Path $sourcePath -ChildPath $relativePath)) -and
+                (Test-Path -LiteralPath $installedItem.FullName))
+            {
+                try
+                {
+                    Remove-Item -LiteralPath $installedItem.FullName -Recurse -Force -ErrorAction Stop
+                }
+                catch
+                {
+                    Write-Verbose -Message $_
+                }
+            }
+        }
+
+        Copy-Item -Path (Join-Path -Path $sourcePath -ChildPath '*') `
             -Destination $defaultPath -Recurse -Force
 
         Import-Module -Name (Join-Path -Path $defaultPath -ChildPath 'Microsoft365DSC.psd1') -Force | Out-Null
@@ -1190,6 +1218,10 @@ function Install-M365DSCDevBranch
             -Exception $_ `
             -Source $($MyInvocation.MyCommand.Source)
         Write-Error $_
+    }
+    finally
+    {
+        Remove-Item -LiteralPath $downloadPath -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 
@@ -1279,8 +1311,8 @@ function Get-AllSPOPackages
         {
             try
             {
-                [Array]$spfxFiles = @(Find-PnPFile -List 'AppCatalog' -Match '*.sppkg' -ErrorAction Stop)
-                [Array]$appFiles = @(Find-PnPFile -List 'AppCatalog' -Match '*.app' -ErrorAction Stop)
+                [System.Array]$spfxFiles = @(Find-PnPFile -List 'AppCatalog' -Match '*.sppkg' -ErrorAction Stop)
+                [System.Array]$appFiles = @(Find-PnPFile -List 'AppCatalog' -Match '*.app' -ErrorAction Stop)
 
                 $allFiles = $spfxFiles + $appFiles
 
@@ -1575,7 +1607,7 @@ function Assert-M365DSCBlueprint
     #region Telemetry
     $data = [System.Collections.Generic.Dictionary[[System.String], [System.Object]]]::new()
     $data.Add('Event', 'AssertBlueprint')
-    $data.Add('BluePrint', $BluePrintUrl)
+    $data.Add('BluePrintSource', $(if ($BluePrintUrl -match '^https?://') { 'Url' } else { 'File' }))
     Add-M365DSCTelemetryEvent -Data $data
     #endregion
 
@@ -1631,9 +1663,9 @@ function Assert-M365DSCBlueprint
             }
         }
 
-        if ([String]::IsNullOrEmpty($ResourcesInBluePrint))
+        if ([System.String]::IsNullOrEmpty($ResourcesInBluePrint))
         {
-            if (-not [String]::IsNullOrEmpty($ExcludedResources))
+            if (-not [System.String]::IsNullOrEmpty($ExcludedResources))
             {
                 Write-Host 'All resources were excluded from BluePrint, aborting'
             }
@@ -1653,33 +1685,42 @@ function Assert-M365DSCBlueprint
         Write-Host "Initiating the Export of those ($($ResourcesInBluePrint.Length)) components from the tenant..."
         $TempExportName = 'TempExport_' + (New-Guid).ToString() + '.ps1'
 
-        $additionalParams = @{}
+        $exportParams = @{
+            Components     = $ResourcesInBluePrint
+            Path           = $env:TEMP
+            FileName       = $TempExportName
+            WithStatistics = $WithStatistics.IsPresent
+        }
         if ($Parallel.IsPresent)
         {
-            $additionalParams = @{
-                ThrottleLimit = $ThrottleLimit
+            $exportParams.Parallel = $true
+            $exportParams.ThrottleLimit = $ThrottleLimit
+        }
+
+        foreach ($parameterName in @('ApplicationId', 'TenantId', 'CertificateThumbprint', 'CertificatePath', 'CertificatePassword', 'AccessTokens', 'TokenReplacement'))
+        {
+            if ($PSBoundParameters.ContainsKey($parameterName))
+            {
+                $exportParams.$parameterName = $PSBoundParameters[$parameterName]
             }
+        }
+        if ($PSBoundParameters.ContainsKey('Credentials'))
+        {
+            $exportParams.Credential = $Credentials
+        }
+        if ($null -ne $ApplicationSecret)
+        {
+            $exportParams.ApplicationSecret = $ApplicationSecret.GetNetworkCredential().Password
+        }
+        if ($ManagedIdentity.IsPresent)
+        {
+            $exportParams.ManagedIdentity = $true
         }
 
         $ExportPath = Join-Path -Path $env:TEMP -ChildPath $TempExportName
         try
         {
-            Export-M365DSCConfiguration -Components $ResourcesInBluePrint `
-                -Path $env:TEMP `
-                -FileName $TempExportName `
-                -Parallel:$Parallel.IsPresent `
-                -Credential $Credentials `
-                -ApplicationId $ApplicationId `
-                -ApplicationSecret $ApplicationSecret `
-                -TenantId $TenantId `
-                -CertificateThumbprint $CertificateThumbprint `
-                -CertificatePath $CertificatePath `
-                -CertificatePassword $CertificatePassword `
-                -ManagedIdentity:$ManagedIdentity.IsPresent `
-                -AccessTokens $AccessTokens `
-                -TokenReplacement $TokenReplacement `
-                -WithStatistics:$WithStatistics.IsPresent `
-                @additionalParams
+            Export-M365DSCConfiguration @exportParams
 
             # Call the New-M365DSCDeltaReport configuration to generate the Delta Report between
             # the BluePrint and the extracted resources
@@ -1824,7 +1865,7 @@ function Get-M365DSCResourceDifferences
         $CurrentVersion
     )
 
-    [Array]$installedModules = Get-Module 'Microsoft365DSC' -ListAvailable | Sort-Object -Property Version -Descending
+    [System.Array]$installedModules = Get-Module 'Microsoft365DSC' -ListAvailable | Sort-Object -Property Version -Descending
 
     if ($installedModules.Count -eq 0)
     {
@@ -1982,7 +2023,7 @@ function New-M365DSCCmdletDocumentation
             }
 
             $cmd = Get-Command -Name $commandName
-            if ([String]::IsNullOrEmpty($cmd.OutputType) -eq $false)
+            if ([System.String]::IsNullOrEmpty($cmd.OutputType) -eq $false)
             {
                 $null = $output.AppendLine('## Output')
                 $null = $output.AppendLine()
@@ -2026,12 +2067,26 @@ function New-M365DSCCmdletDocumentation
                     {
                         $description = $paramHelp.description[0].Text
                     }
-                    $mandatory = $parameter.Attributes.Where({ $_.TypeName.FullName -eq 'Parameter' }).NamedArguments.Where({ $_.ArgumentName -eq 'Mandatory' }).Argument.VariablePath.UserPath
-                    if ($null -eq $mandatory)
+
+                    # A parameter in several parameter sets is required only in the sets that mark it as mandatory
+                    $parameterSets = $cmd.Parameters[$paramName].ParameterSets
+                    $mandatorySets = @()
+                    foreach ($parameterSetName in $parameterSets.Keys)
                     {
-                        $mandatory = 'False'
+                        if ($parameterSets[$parameterSetName].IsMandatory)
+                        {
+                            $mandatorySets += $parameterSetName
+                        }
                     }
-                    $mandatory = (Get-Culture).TextInfo.ToTitleCase($mandatory.ToLower())
+                    $mandatory = 'False'
+                    if ($mandatorySets.Count -gt 0 -and $mandatorySets.Count -eq $parameterSets.Count)
+                    {
+                        $mandatory = 'True'
+                    }
+                    elseif ($mandatorySets.Count -gt 0)
+                    {
+                        $mandatory = "True ($($mandatorySets -join ', '))"
+                    }
 
                     $defaultValue = " $($parameter.DefaultValue.Value) "
                     if ($defaultValue -eq '  ')
@@ -2140,10 +2195,10 @@ function New-M365DSCResourceExample
         $params.Remove('CertificatePassword')
     }
 
-    [string]$userName = 'admin@contoso.onmicrosoft.com'
-    [string]$userPassword = 'dummypassword'
-    [securestring]$secStringPassword = ConvertTo-SecureString $userPassword -AsPlainText -Force
-    [pscredential]$credObject = New-Object System.Management.Automation.PSCredential ($userName, $secStringPassword)
+    [System.String]$userName = 'admin@contoso.onmicrosoft.com'
+    [System.String]$userPassword = 'dummypassword'
+    [System.Security.SecureString]$secStringPassword = ConvertTo-SecureString $userPassword -AsPlainText -Force
+    [System.Management.Automation.PSCredential]$credObject = New-Object System.Management.Automation.PSCredential ($userName, $secStringPassword)
 
     $resourceExample = Get-M365DSCExportContentForResource -ResourceName $ResourceName -ModulePath $resource.Path -Results $params -ConnectionMode Credentials -Credential $credObject
 
@@ -2193,7 +2248,7 @@ function New-M365DSCMissingResourcesExample
     $examplesPath = Join-Path $location -ChildPath '../../../Examples/Resources'
     $examples = Get-ChildItem -Path $examplesPath | Where-Object -Property PsIsContainer -EQ $true | Select-Object -ExpandProperty Name
 
-    [array]$differences = Compare-Object -ReferenceObject $m365Resources -DifferenceObject $examples
+    [System.Array]$differences = Compare-Object -ReferenceObject $m365Resources -DifferenceObject $examples
 
     $count = 1
     $total = $differences.Count
@@ -2363,7 +2418,7 @@ function Set-M365DSCAuthenticationParameterMask
 function Get-M365DSCConfigurationConflict
 {
     [CmdletBinding()]
-    [OutputType([Array])]
+    [OutputType([System.Array])]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -2466,14 +2521,17 @@ function Invoke-M365DSCClassResourceInPowerShellCore
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Parameters', Justification = 'Using statement not detected')]
     param (
         [Parameter(Mandatory = $true)]
-        [System.String]$ClassName,
+        [System.String]
+        $ClassName,
 
         [Parameter(Mandatory = $true)]
         [ValidateSet('Get', 'Set', 'Test', 'Export')]
-        [System.String]$MethodName,
+        [System.String]
+        $MethodName,
 
         [Parameter(Mandatory = $true)]
-        [System.Collections.Hashtable]$Parameters
+        [System.Collections.Hashtable]
+        $Parameters
     )
 
     if (-not (Test-M365DSCPowerShellSession -Session $script:PSCoreSession))
@@ -4389,7 +4447,7 @@ function Update-M365DSCAuthenticationConfiguration
         New-Item -Path $destinationFolder -ItemType Directory -Force | Out-Null
     }
 
-    [array]$parsedContent = ConvertTo-DSCObject -Path $SourceFile
+    [System.Array]$parsedContent = ConvertTo-DSCObject -Path $SourceFile
     if ($parsedContent.Count -eq 0)
     {
         throw "No DSC resource instances could be found in the file {$SourceFile}."

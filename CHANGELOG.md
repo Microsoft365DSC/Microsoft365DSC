@@ -288,6 +288,12 @@
     temporary files behind when the export fails.
   * Fixed `Get-M365DSCResourceDifferences` returning an array when no version is installed.
   * Fixed the duplicate team warning showing the URL-encoded team name.
+  * Fixed several issues with `Assert-M365DSCBlueprint` regarding authentication parameters.
+  * Fixed `Assert-M365DSCBlueprint` sending the blueprint URL or path to telemetry.
+  * Fixed `Install-M365DSCDevBranch` keeping files that were removed from the Dev branch.
+  * Fixed `Test-M365DSCTargetResource` importing the compare module again on every call.
+  * Fixed the cmdlet documentation showing `True True` as required for parameters in
+    several parameter sets.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Removed the relation templates of removed resources.
