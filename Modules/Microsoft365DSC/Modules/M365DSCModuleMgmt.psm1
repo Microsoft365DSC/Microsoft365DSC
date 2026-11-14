@@ -749,6 +749,16 @@ function Confirm-M365DSCLoadedModule
     }
 
     $loadedModule = Get-Module -Name $ModuleName
+    if ($null -eq $manifestModule -and $null -ne $loadedModule)
+    {
+        Write-Verbose -Message "Module '$ModuleName' is not declared and already loaded with version '$($loadedModule.Version)'."
+        if (-not $Script:M365DSCValidatedDependencies.Contains($ModuleName))
+        {
+            $Script:M365DSCValidatedDependencies.Add($ModuleName)
+        }
+        return
+    }
+
     if ($ModuleName -eq 'PnP.PowerShell' -and ($null -eq $loadedModule -or $loadedModule.Version -ne $manifestModule.RequiredVersion))
     {
         Register-M365DSCPnPIdentityClientResolver
@@ -756,13 +766,17 @@ function Confirm-M365DSCLoadedModule
 
     $importModuleSplat = @{
         Name                = $ModuleName
-        RequiredVersion     = $manifestModule.RequiredVersion
         Global              = $true
         Alias               = @()
         Cmdlet              = @()
         Variable            = @()
         DisableNameChecking = $true
         ErrorAction         = 'Stop'
+    }
+
+    if ($null -ne $manifestModule)
+    {
+        $importModuleSplat.Add('RequiredVersion', $manifestModule.RequiredVersion)
     }
 
     if ($manifestModule.Commands.Count -gt 0)
@@ -1073,7 +1087,7 @@ function Uninstall-M365DSCOutdatedDependencies
             return
         }
 
-        $outdatedMicrosoft365DscModules = $microsoft365DscModules | Sort-Object -Property Version | Select-Object -SkipLast 1
+        $outdatedMicrosoft365DscModules = $microsoft365DscModules | Where-Object -Property Version -LT $newestVersion
 
         foreach ($module in $outdatedMicrosoft365DscModules)
         {
