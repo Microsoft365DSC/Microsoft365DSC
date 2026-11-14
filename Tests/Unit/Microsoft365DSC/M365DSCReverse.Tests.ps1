@@ -3,6 +3,12 @@ BeforeAll {
     Initialize-M365DSCDllLoader
     Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Microsoft365DSC.psd1" -Global -WarningAction SilentlyContinue
 
+    $missingFunctions = @(@('Export-Certificate', 'Get-DscLocalConfigurationManager') | Where-Object -FilterScript { -not (Test-Path -Path "Function:\$_") })
+    if ($missingFunctions.Count -gt 0)
+    {
+        Import-Module -Name "$PSScriptRoot/../Stubs/Generic.psm1" -Function $missingFunctions -Global -WarningAction SilentlyContinue
+    }
+
     $Script:Password = ConvertTo-SecureString -String 'Pass@word1' -AsPlainText -Force
     $Script:Credential = [System.Management.Automation.PSCredential]::new('admin@contoso.onmicrosoft.com', $Script:Password)
     $Script:TenantGuid = '11111111-2222-3333-4444-555555555555'
@@ -139,15 +145,22 @@ Describe 'Start-M365DSCConfigurationExtract' {
             }
         }
 
-        It 'writes the configuration even when the validation fails' {
+        It 'writes the configuration even when the validation and the certificate export fail' {
             Mock -ModuleName M365DSCReverse -CommandName Get-M365DSCConfigurationConflict -MockWith { throw 'validation broke' }
+            Mock -ModuleName M365DSCReverse -CommandName Test-M365DSCCurrentUserIsAdministrator -MockWith { $true }
+            Mock -ModuleName M365DSCReverse -CommandName Get-DscLocalConfigurationManager -MockWith { [PSCustomObject]@{ CertificateID = 'ABCDEF' } }
+            Mock -ModuleName M365DSCReverse -CommandName Export-Certificate -MockWith { throw 'certificate export failed' }
+            Mock -ModuleName M365DSCReverse -CommandName New-M365DSCLogEntry
 
             { Start-M365DSCConfigurationExtract -Components @('AADUser') -Credential $Script:Credential `
                     -Validate -Path $Script:OutputPath -WarningAction SilentlyContinue } | Should -Not -Throw
 
             $content = Get-Content -Path (Join-Path -Path $Script:OutputPath -ChildPath 'M365TenantConfig.ps1') -Raw
             $content | Should -Match "AADUser 'Test'"
-            Test-Path -Path (Join-Path -Path $Script:OutputPath -ChildPath 'ConfigurationData.psd1') | Should -BeTrue
+            $configurationDataPath = Join-Path -Path $Script:OutputPath -ChildPath 'ConfigurationData.psd1'
+            Test-Path -Path $configurationDataPath | Should -BeTrue
+            Should -Invoke -ModuleName M365DSCReverse -CommandName Export-Certificate -Times 1 -Exactly
+            Get-Content -Path $configurationDataPath -Raw | Should -Not -Match 'CertificateFile'
         }
     }
 }

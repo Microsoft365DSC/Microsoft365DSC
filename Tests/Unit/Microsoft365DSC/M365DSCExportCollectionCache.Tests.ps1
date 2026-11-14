@@ -142,11 +142,12 @@ Describe 'M365DSCExportCollectionCache' {
             Should -Invoke -ModuleName M365DSCExportUtil -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -Times 1 -Exactly -ParameterFilter {
                 $Filter -eq "isof('microsoft.graph.windowsKioskConfiguration')" -and $ExpandProperty -contains 'assignments' -and $All
             }
-            $result.Count | Should -Be 3
+            @($result).id | Should -Be '1'
         }
 
         It 'builds the exclusion and multi-type filters' {
-            $null = Get-M365DSCExportCachedCollection -Collection 'deviceConfigurations' -ODataType 'microsoft.graph.windowsWifiConfiguration' -ExcludeODataType 'microsoft.graph.windowsWifiEnterpriseEAPConfiguration'
+            $wifi = Get-M365DSCExportCachedCollection -Collection 'deviceConfigurations' -ODataType 'microsoft.graph.windowsWifiConfiguration' -ExcludeODataType 'microsoft.graph.windowsWifiEnterpriseEAPConfiguration'
+            @($wifi).id | Should -Be '2'
             Should -Invoke -ModuleName M365DSCExportUtil -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -Times 1 -Exactly -ParameterFilter {
                 $Filter -eq "isof('microsoft.graph.windowsWifiConfiguration') and not isof('microsoft.graph.windowsWifiEnterpriseEAPConfiguration')"
             }
@@ -162,6 +163,8 @@ Describe 'M365DSCExportCollectionCache' {
             Should -Invoke -ModuleName M365DSCExportUtil -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -Times 1 -Exactly -ParameterFilter {
                 $Filter -eq "(isof('microsoft.graph.windowsKioskConfiguration')) and (displayName eq 'x')"
             }
+            $wifi = Get-M365DSCExportCachedCollection -Collection 'deviceConfigurations' -ODataType 'microsoft.graph.windowsWifiConfiguration' -Filter "displayName eq 'x'"
+            @($wifi).id | Should -Be '2'
             [Microsoft365DSC.Cache.ExportCollectionCache]::ShouldPopulate('deviceConfigurations') | Should -BeTrue
         }
 

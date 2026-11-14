@@ -6,7 +6,8 @@
     Reads every role scope tag of the tenant once and hands them to the cache the resolve functions
     read from. A tenant that does not grant the permission to read them is recorded as such, so the
     rest of the run passes role scope tags through untouched instead of repeating a call that has
-    already failed.
+    already failed. A transient error, such as throttling or a server error, leaves the cache unread
+    and the next call reads the tags again.
 
 .PARAMETER Force
     Reloads the tags even when they have already been read.
@@ -42,6 +43,12 @@ function Initialize-M365DSCIntuneRoleScopeTagCache
     }
     catch
     {
+        if (Test-M365DSCTransientError -ErrorRecord $_)
+        {
+            Write-Warning -Message "Unable to read the Intune role scope tags. $($_.Exception.Message)"
+            return
+        }
+
         [Microsoft365DSC.Intune.RoleScopeTagCache]::MarkUnavailable()
         Write-Warning -Message "Unable to read the Intune role scope tags. $($_.Exception.Message) They are reported and written as their raw ids for the rest of this run."
         return
@@ -60,6 +67,7 @@ function Initialize-M365DSCIntuneRoleScopeTagCache
 .DESCRIPTION
     Resolves RoleScopeTag Names into their corresponding Ids.
     If a tag has been deleted, this will return the raw name and emit a warning.
+    Throws when the role scope tags could not be read because of a transient error.
 
 .PARAMETER RoleScopeTagIds
     One or more RoleScopeTag Names to resolve into Ids.
@@ -91,6 +99,12 @@ function Resolve-M365DSCIntuneRoleScopeTagIds
         return ,([System.String[]]$RoleScopeTagIds)
     }
 
+    $unreadMessage = "The Intune role scope tags could not be read. Unable to resolve the role scope tags {$($RoleScopeTagIds -join ', ')}."
+    if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsPopulated)
+    {
+        throw $unreadMessage
+    }
+
     # A tag created after the cache was loaded is found after one reload per call
     $reloaded = $false
     $ids = @()
@@ -112,6 +126,10 @@ function Resolve-M365DSCIntuneRoleScopeTagIds
             if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable)
             {
                 return ,([System.String[]]$RoleScopeTagIds)
+            }
+            if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsPopulated)
+            {
+                throw $unreadMessage
             }
         }
 
@@ -176,7 +194,8 @@ function Resolve-M365DSCIntuneRoleScopeTagNames
 
     Initialize-M365DSCIntuneRoleScopeTagCache
 
-    if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable)
+    if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable -or
+        -not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsPopulated)
     {
         return ,([System.String[]]$CurrentValues)
     }
@@ -198,11 +217,12 @@ function Resolve-M365DSCIntuneRoleScopeTagNames
         {
             Initialize-M365DSCIntuneRoleScopeTagCache -Force
             $reloaded = $true
-            if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable)
+            if (-not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsAvailable -or
+                -not [Microsoft365DSC.Intune.RoleScopeTagCache]::IsPopulated)
             {
                 return ,([System.String[]]$CurrentValues)
             }
-            $found = [Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName)
+            $found =[Microsoft365DSC.Intune.RoleScopeTagCache]::TryGetName($id, [ref]$resolvedName)
         }
 
         if (-not $found)

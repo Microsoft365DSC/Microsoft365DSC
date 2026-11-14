@@ -1982,8 +1982,9 @@ function Complete-M365DSCExportCollectionConsumer
     Specifies the Graph collection to list.
 
 .PARAMETER ODataType
-    Specifies the OData types to return, written like the isof() argument (for example
-    'microsoft.graph.windowsKioskConfiguration'). Returns every type when omitted.
+    Specifies the exact OData types to return, written like the isof() argument (for example
+    'microsoft.graph.windowsKioskConfiguration'). Derived types are not returned. Returns every type
+    when omitted.
 
 .PARAMETER ExcludeODataType
     Specifies the OData types to exclude from the result.
@@ -2108,14 +2109,19 @@ function Get-M365DSCExportCachedCollection
     }
 
     $items = Invoke-M365DSCExportCollectionList -Collection $Collection -ExpandProperty $descriptor.Expand -Property $descriptor.Select -Filter $mergedFilter
-    if (-not $descriptor.ServerSideTypeFilter -and $null -ne ('Microsoft365DSC.Cache.ExportCollectionCache' -as [System.Type]))
+    # Narrows the live result to the exact OData types, matching the cached result
+    if ($null -ne ('Microsoft365DSC.Cache.ExportCollectionCache' -as [System.Type]))
     {
         $items = [Microsoft365DSC.Cache.ExportCollectionCache]::FilterByODataType([System.Object[]]$items, [System.String[]]$ODataType, [System.String[]]$ExcludeODataType)
     }
-    elseif (-not $descriptor.ServerSideTypeFilter -and $ODataType.Count -gt 0)
+    elseif ($ODataType.Count -gt 0 -or $ExcludeODataType.Count -gt 0)
     {
         $wanted = @($ODataType | ForEach-Object -Process { $_.TrimStart('#') })
-        $items = @($items | Where-Object -FilterScript { $wanted -contains ([System.String]$_.'@odata.type').TrimStart('#') })
+        $unwanted = @($ExcludeODataType | ForEach-Object -Process { $_.TrimStart('#') })
+        $items = @($items | Where-Object -FilterScript {
+                $type = ([System.String]$_.'@odata.type').TrimStart('#')
+                ($wanted.Count -eq 0 -or $wanted -contains $type) -and $unwanted -notcontains $type
+            })
     }
 
     return , [System.Object[]]$items
