@@ -61,6 +61,8 @@
   * Fixed failed Azure Billing requests being treated as empty results.
   * Fixed the billing account list ignoring the `includeAll` parameter.
   * Fixed Azure Billing list requests returning only the first page.
+* M365DSCCompare
+  * Updated `Compare-M365DSCResourceState` to fail when post-processing fails.
 * M365DSCConfigurationCompiler
   * Fixed `Invoke-M365DSCConfigurationBuild` resetting the recursion guard of an outer build.
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
@@ -134,6 +136,7 @@
   * Fixed get cmdlets sending the request with an empty parent ID.
 * M365DSCIntuneUtil
   * Updated `Wait-M365DSCIntuneMobileAppPublished` to warn when the app is not published in time.
+  * Removed `Get-M365DSCCachedSettingCatalogTemplate` and `Set-M365DSCCachedSettingCatalogTemplate`.
   * Fixed handling of group lookup failures, such as missing permissions or network errors.
   * Fixed an assignment with an unresolved assignment filter being created without the filter.
   * Fixed the Azure Storage upload retrying without limit.
@@ -170,6 +173,7 @@
   * Fixed long event messages not being written to the event log.
   * Fixed `Export-M365DSCDiagnosticData` leaving collected data in the temporary folder.
 * M365DSCModuleMgmt
+  * Removed the unused `Preference` and `ModuleName` parameters of `Set-M365DSCVerboseScope`.
   * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
     FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
   * Fixed `Test-M365DSCDependenciesForNewVersions` reusing the installed versions of the
@@ -285,6 +289,7 @@
     permission.
   * Fixed `Get-SPOAdministrationUrl` returning the commercial admin URL for US Government,
     DoD, China and sovereign cloud tenants.
+  * Removed the function `Get-M365DSCTenantDomain`.
 * M365DSCUtil
   * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
   * Updated `Write-M365DSCHost` to show the `[x/y] Extracting ...` line as soon as the

@@ -1784,8 +1784,10 @@ function Get-M365DSCSettingCatalogTemplate
         $TemplateId
     )
 
-    $templates = Get-M365DSCCachedSettingCatalogTemplate -TemplateId $TemplateId
-    if ($null -ne $templates)
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+
+    $templates = $null
+    if ([Microsoft365DSC.Intune.SettingTemplateCache]::TryGet($TemplateId, [ref] $templates))
     {
         return , $templates
     }
@@ -1795,70 +1797,9 @@ function Get-M365DSCSettingCatalogTemplate
             -ExpandProperty 'settingDefinitions' `
             -All `
             -ErrorAction Stop)
-    Set-M365DSCCachedSettingCatalogTemplate -TemplateId $TemplateId -Templates $templates
+    [Microsoft365DSC.Intune.SettingTemplateCache]::Set($TemplateId, $templates)
 
     return , $templates
-}
-
-<#
-.SYNOPSIS
-    Returns the cached setting templates of a Settings Catalog template, or null on a miss.
-
-.PARAMETER TemplateId
-    Specifies the configuration policy template id, including its version suffix.
-
-.OUTPUTS
-    System.Object[]
-#>
-function Get-M365DSCCachedSettingCatalogTemplate
-{
-    [CmdletBinding()]
-    [OutputType([System.Object[]])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $TemplateId
-    )
-
-    Initialize-M365DSCDllLoader -ErrorAction Stop
-
-    $templates = $null
-    if ([Microsoft365DSC.Intune.SettingTemplateCache]::TryGet($TemplateId, [ref] $templates))
-    {
-        return , $templates
-    }
-
-    return $null
-}
-
-<#
-.SYNOPSIS
-    Stores the setting templates of a Settings Catalog template for the rest of the process.
-
-.PARAMETER TemplateId
-    Specifies the configuration policy template id, including its version suffix.
-
-.PARAMETER Templates
-    Specifies the setting templates, each carrying its setting definitions.
-#>
-function Set-M365DSCCachedSettingCatalogTemplate
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.String]
-        $TemplateId,
-
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyCollection()]
-        [System.Object[]]
-        $Templates
-    )
-
-    Initialize-M365DSCDllLoader -ErrorAction Stop
-    [Microsoft365DSC.Intune.SettingTemplateCache]::Set($TemplateId, $Templates)
 }
 
 <#
@@ -2444,9 +2385,7 @@ Export-ModuleMember -Function @(
     'Get-ComplexFunctionsFromFilterQuery',
     'Get-IntuneSettingCatalogPolicySetting',
     'Get-M365DSCExportCachedConfigurationPolicies',
-    'Get-M365DSCCachedSettingCatalogTemplate',
     'Get-M365DSCSettingCatalogTemplate',
-    'Set-M365DSCCachedSettingCatalogTemplate',
     'Get-M365DSCIntuneDeviceConfigurationSettings',
     'Get-M365DSCIntuneExpandedAssignments',
     'Get-M365DSCIntuneGroup',

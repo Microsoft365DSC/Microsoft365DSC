@@ -404,12 +404,6 @@ function Set-M365DSCVerbosePreferenceInScope
     Restore levels the per-scope values with the global one. An optimized module scope refuses
     variable removal, so the values stay in place.
 
-.PARAMETER Preference
-    Specifies the preference the Microsoft365DSC scopes run with. Defaults to the global scope.
-
-.PARAMETER ModuleName
-    Specifies which module scopes keep the preference. Defaults to every Microsoft365DSC scope.
-
 .PARAMETER Restore
     Specifies the previous preference to restore.
 
@@ -428,14 +422,6 @@ function Set-M365DSCVerboseScope
     [CmdletBinding(DefaultParameterSetName = 'Apply')]
     [OutputType([System.String])]
     param(
-        [Parameter(ParameterSetName = 'Apply')]
-        [System.String]
-        $Preference,
-
-        [Parameter(ParameterSetName = 'Apply')]
-        [System.String[]]
-        $ModuleName,
-
         [Parameter(Mandatory = $true, ParameterSetName = 'Restore')]
         [AllowNull()]
         [System.String]
@@ -463,11 +449,6 @@ function Set-M365DSCVerboseScope
         return $Restore
     }
 
-    if ($PSBoundParameters.ContainsKey('ModuleName') -and $ModuleName.Count -gt 0)
-    {
-        $scopes = $scopes | Where-Object -FilterScript { $ModuleName -contains $_.Name }
-    }
-
     $Script:M365DSCVerboseScopeDepth++
     if ($Script:M365DSCVerboseScopeDepth -gt 1)
     {
@@ -475,13 +456,8 @@ function Set-M365DSCVerboseScope
     }
 
     $previous = $global:VerbosePreference
-    if (-not $PSBoundParameters.ContainsKey('Preference'))
-    {
-        $Preference = $previous
-    }
-
     $global:VerbosePreference = 'SilentlyContinue'
-    Set-M365DSCVerbosePreferenceInScope -Scope $scopes -Preference $Preference
+    Set-M365DSCVerbosePreferenceInScope -Scope $scopes -Preference $previous
 
     return $previous
 }
