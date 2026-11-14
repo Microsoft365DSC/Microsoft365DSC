@@ -208,7 +208,7 @@ Describe 'New-M365DSCConfigurationToCSV' {
     BeforeAll {
         $Script:CsvPath = Join-Path -Path $TestDrive -ChildPath 'Report.csv'
         $parsed = @(
-            [ordered]@{ Identity = 'contoso.com'; ResourceName = 'EXOAcceptedDomain'; Description = 'admin@contoso.com'; Ensure = 'Present' }
+            [ordered]@{ Identity = 'contoso.com'; ResourceName = 'EXOAcceptedDomain'; Description = 'admin@contoso.com'; Ensure = 'Present'; ApplicationSecret = 'TopSecretValue'; Credential = '$CredsCredential' }
             [ordered]@{ DisplayName = 'Policy (Prod)'; ResourceName = 'AADGroup'; Description = '$OrganizationName' }
         )
         InModuleScope -ModuleName M365DSCReport -Parameters @{ Parsed = $parsed; Path = $Script:CsvPath } {
@@ -219,8 +219,10 @@ Describe 'New-M365DSCConfigurationToCSV' {
         $Script:Rows = @(Import-Csv -Path $Script:CsvPath)
     }
 
-    It 'Writes the columns in a stable order' {
+    It 'Writes the columns in a stable order without the authentication properties' {
         (Get-Content -Path $Script:CsvPath -TotalCount 1) | Should -Be '"Component Name","Property","Value"'
+        $Script:Rows.Property | Should -Not -Contain 'ApplicationSecret'
+        $Script:Rows.Property | Should -Not -Contain 'Credential'
     }
 
     It 'Puts the key property first when it is the first property enumerated' {
@@ -265,6 +267,7 @@ Describe 'New-M365DSCConfigurationToHTML' {
                 DisplayName          = 'Sales & <script>alert(1)</script>'
                 Members              = @('one', '<two>')
                 Settings             = @(@{ Name = 'Rule'; Value = 'user.department -eq "<x>"' })
+                ApplicationSecret    = 'TopSecretValue'
             },
             @{
                 ResourceName         = 'FabricAdminTenantSettings'
@@ -287,8 +290,9 @@ Describe 'New-M365DSCConfigurationToHTML' {
         $Script:Html | Should -Not -Match '<script>'
     }
 
-    It 'renders every resource once' {
+    It 'renders every resource once without the authentication properties' {
         ([regex]::Matches($Script:Html, "<table class='resource-table'>")).Count | Should -Be 2
+        $Script:Html | Should -Not -Match 'ApplicationSecret|TopSecretValue'
     }
 }
 

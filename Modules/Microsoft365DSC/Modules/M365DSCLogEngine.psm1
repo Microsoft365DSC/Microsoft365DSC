@@ -380,108 +380,113 @@ function Export-M365DSCDiagnosticData
     $tempPath = Join-Path -Path $env:TEMP -ChildPath $guid
     $null = New-Item -Path $tempPath -ItemType 'Directory'
 
-    # Copy DSC Verbose Logs
-    Write-Host '  * Copying DSC Verbose Logs' -ForegroundColor Gray
-    $logPath = Join-Path -Path $tempPath -ChildPath 'DSCLogs'
-    $null = New-Item -Path $logPath -ItemType 'Directory'
-
-    $sourceLogPath = Join-Path -Path $env:windir -ChildPath 'System32/Configuration/ConfigurationStatus'
-    $items = Get-ChildItem -Path "$sourceLogPath/*.json" | Where-Object -Property LastWriteTime -GT $afterDate
-    if ($null -ne $items)
-    {
-        Copy-Item -Path $items.FullName -Destination $logPath -ErrorAction 'SilentlyContinue'
-    }
-
-    $anonymizeText = {
-        param
-        (
-            [System.String]
-            $Text
-        )
-
-        $Text -replace [System.Text.RegularExpressions.Regex]::Escape($Url), 'fqdn.com' `
-            -replace [System.Text.RegularExpressions.Regex]::Escape($Domain), '[DOMAIN]' `
-            -replace [System.Text.RegularExpressions.Regex]::Escape($Server), '[SERVER]'
-    }
-
-    if ($Anonymize)
-    {
-        Write-Host '    * Anonymizing DSC Verbose Logs' -ForegroundColor Gray
-        foreach ($file in (Get-ChildItem -Path $logPath))
-        {
-            $content = Get-Content -Path $file.FullName -Raw -Encoding Unicode
-            $content = & $anonymizeText $content
-            Set-Content -Path $file.FullName -Value $content -Encoding Unicode
-        }
-    }
-
-    # Export M365DSC event log
-    Write-Host '  * Exporting DSC Event Log' -ForegroundColor Gray
-    $evtExportLog = Join-Path -Path $tempPath -ChildPath 'M365DSC.csv'
-
     try
     {
-        Get-WinEvent -FilterHashtable @{ LogName = 'M365DSC'; StartTime = $afterDate } -ErrorAction SilentlyContinue | Export-Csv $evtExportLog -NoTypeInformation
-    }
-    catch
-    {
-        $txtExportLog = Join-Path -Path $tempPath -ChildPath 'M365DSC.txt'
-        Add-Content -Value 'M365DSC event log does not exist!' -Path $txtExportLog
-    }
+        # Copy DSC Verbose Logs
+        Write-Host '  * Copying DSC Verbose Logs' -ForegroundColor Gray
+        $logPath = Join-Path -Path $tempPath -ChildPath 'DSCLogs'
+        $null = New-Item -Path $logPath -ItemType 'Directory'
 
-    if ($Anonymize -and (Test-Path -Path $evtExportLog))
-    {
-        Write-Host '    * Anonymizing DSC Event Log' -ForegroundColor Gray
+        $sourceLogPath = Join-Path -Path $env:windir -ChildPath 'System32/Configuration/ConfigurationStatus'
+        $items = Get-ChildItem -Path "$sourceLogPath/*.json" | Where-Object -Property LastWriteTime -GT $afterDate
+        if ($null -ne $items)
+        {
+            Copy-Item -Path $items.FullName -Destination $logPath -ErrorAction 'SilentlyContinue'
+        }
+
+        $anonymizeText = {
+            param
+            (
+                [System.String]
+                $Text
+            )
+
+            $Text -replace [System.Text.RegularExpressions.Regex]::Escape($Url), 'fqdn.com' `
+                -replace [System.Text.RegularExpressions.Regex]::Escape($Domain), '[DOMAIN]' `
+                -replace [System.Text.RegularExpressions.Regex]::Escape($Server), '[SERVER]'
+        }
+
+        if ($Anonymize)
+        {
+            Write-Host '    * Anonymizing DSC Verbose Logs' -ForegroundColor Gray
+            foreach ($file in (Get-ChildItem -Path $logPath))
+            {
+                $content = Get-Content -Path $file.FullName -Raw -Encoding Unicode
+                $content = & $anonymizeText $content
+                Set-Content -Path $file.FullName -Value $content -Encoding Unicode
+            }
+        }
+
+        # Export M365DSC event log
+        Write-Host '  * Exporting DSC Event Log' -ForegroundColor Gray
+        $evtExportLog = Join-Path -Path $tempPath -ChildPath 'M365DSC.csv'
+
         try
         {
-            $newLog = Import-Csv $evtExportLog
-            foreach ($entry in $newLog)
-            {
-                $entry.MachineName = '[SERVER]'
-                $entry.UserId = '[USER]'
-                $entry.Message = & $anonymizeText $entry.Message
-            }
-
-            $newLog | Export-Csv -Path $evtExportLog -NoTypeInformation
+            Get-WinEvent -FilterHashtable @{ LogName = 'M365DSC'; StartTime = $afterDate } -ErrorAction SilentlyContinue | Export-Csv $evtExportLog -NoTypeInformation
         }
         catch
         {
-            # The raw event log must not be packaged when anonymization fails.
-            Remove-Item -Path $evtExportLog -Force -ErrorAction SilentlyContinue
-            Write-Warning -Message "The M365DSC event log could not be anonymized and is not included: $_"
+            $txtExportLog = Join-Path -Path $tempPath -ChildPath 'M365DSC.txt'
+            Add-Content -Value 'M365DSC event log does not exist!' -Path $txtExportLog
         }
+
+        if ($Anonymize -and (Test-Path -Path $evtExportLog))
+        {
+            Write-Host '    * Anonymizing DSC Event Log' -ForegroundColor Gray
+            try
+            {
+                $newLog = Import-Csv $evtExportLog
+                foreach ($entry in $newLog)
+                {
+                    $entry.MachineName = '[SERVER]'
+                    $entry.UserId = '[USER]'
+                    $entry.Message = & $anonymizeText $entry.Message
+                }
+
+                $newLog | Export-Csv -Path $evtExportLog -NoTypeInformation
+            }
+            catch
+            {
+                # The raw event log must not be packaged when anonymization fails.
+                Remove-Item -Path $evtExportLog -Force -ErrorAction SilentlyContinue
+                Write-Warning -Message "The M365DSC event log could not be anonymized and is not included: $_"
+            }
+        }
+
+        # PowerShell Version
+        Write-Host '  * Exporting PowerShell Version info' -ForegroundColor Gray
+        $psInfoFile = Join-Path -Path $tempPath -ChildPath 'PSInfo.txt'
+        $PSVersionTable | Out-File -FilePath $psInfoFile
+
+        # OS Version
+        Write-Host '  * Exporting OS Version info' -ForegroundColor Gray
+        $computerInfoFile = Join-Path -Path $tempPath -ChildPath 'OSInfo.txt'
+
+        Get-ComputerInfo -Property @(
+            'OsName',
+            'OsOperatingSystemSKU',
+            'OSArchitecture',
+            'WindowsVersion',
+            'WindowsBuildLabEx',
+            'OsLanguage',
+            'OsMuiLanguages') | Out-File -FilePath $computerInfoFile
+
+        # LCM settings
+        Write-Host '  * Exporting LCM Configuration info' -ForegroundColor Gray
+        $lcmInfoFile = Join-Path -Path $tempPath -ChildPath 'LCMInfo.txt'
+        Get-DscLocalConfigurationManager | Out-File -FilePath $lcmInfoFile
+
+        # Creating export package
+        Write-Host '  * Creating Zip file with all collected information' -ForegroundColor Gray
+        Compress-Archive -Path $tempPath -DestinationPath $ExportFilePath -Force
     }
-
-    # PowerShell Version
-    Write-Host '  * Exporting PowerShell Version info' -ForegroundColor Gray
-    $psInfoFile = Join-Path -Path $tempPath -ChildPath 'PSInfo.txt'
-    $PSVersionTable | Out-File -FilePath $psInfoFile
-
-    # OS Version
-    Write-Host '  * Exporting OS Version info' -ForegroundColor Gray
-    $computerInfoFile = Join-Path -Path $tempPath -ChildPath 'OSInfo.txt'
-
-    Get-ComputerInfo -Property @(
-        'OsName',
-        'OsOperatingSystemSKU',
-        'OSArchitecture',
-        'WindowsVersion',
-        'WindowsBuildLabEx',
-        'OsLanguage',
-        'OsMuiLanguages') | Out-File -FilePath $computerInfoFile
-
-    # LCM settings
-    Write-Host '  * Exporting LCM Configuration info' -ForegroundColor Gray
-    $lcmInfoFile = Join-Path -Path $tempPath -ChildPath 'LCMInfo.txt'
-    Get-DscLocalConfigurationManager | Out-File -FilePath $lcmInfoFile
-
-    # Creating export package
-    Write-Host '  * Creating Zip file with all collected information' -ForegroundColor Gray
-    Compress-Archive -Path $tempPath -DestinationPath $ExportFilePath -Force
-
-    # Cleaning up temporary data
-    Write-Host '  * Removing temporary data' -ForegroundColor Gray
-    Remove-Item $tempPath -Recurse -Force -Confirm:$false
+    finally
+    {
+        # Cleaning up temporary data
+        Write-Host '  * Removing temporary data' -ForegroundColor Gray
+        Remove-Item -LiteralPath $tempPath -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+    }
 
     Write-Host ('Completed with export. Information exported to {0}' -f $ExportFilePath) -ForegroundColor Yellow
 }

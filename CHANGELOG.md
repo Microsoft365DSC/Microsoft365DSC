@@ -90,6 +90,7 @@
   * Fixed stale documentation pages being published after an aborted run.
   * Fixed the pages of Azure, Power Platform and Sentinel resources listing empty API
     permissions instead of their required roles.
+  * Fixed resource pages missing the required Microsoft Entra ID roles.
 * M365DSCDRGUtil
   * Fixed the drift event XML not escaping values and showing type names instead of
     the desired and current values.
@@ -167,6 +168,7 @@
   * Fixed `Export-M365DSCDiagnosticData` failing without recent DSC status files.
   * Fixed notification endpoints registered for `Error` never being notified.
   * Fixed long event messages not being written to the event log.
+  * Fixed `Export-M365DSCDiagnosticData` leaving collected data in the temporary folder.
 * M365DSCModuleMgmt
   * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
     FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
@@ -197,6 +199,8 @@
     being shown on a 403 error.
   * Fixed responses that are not JSON failing the request.
 * M365DSCReport
+  * Updated HTML, JSON, CSV and Excel reports to hide the authentication properties like
+    the Markdown report.
   * Fixed HTML reports not encoding tenant values and writing broken list tags.
   * Fixed array values containing commas being shown as several items.
   * Fixed CSV and Excel reports removing `@`, `(` and `)` from values and leaving a row
@@ -219,6 +223,9 @@
   * Fixed the HTML report title being cut at the first dot of the file name.
   * Fixed reports failing for relative configuration paths and file names with brackets.
   * Fixed issues in `New-M365DSCDeltaReport` regarding configuration handling and display.
+  * Fixed `New-M365DSCDeltaReport -UseVariableSubstitution` failing for a file name
+    without a folder.
+  * Fixed reports failing for output paths with `[` or `]`.
 * M365DSCResourceBase
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`. Single-instance resources, transient errors
