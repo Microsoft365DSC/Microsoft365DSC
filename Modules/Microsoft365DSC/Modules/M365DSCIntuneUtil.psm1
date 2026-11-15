@@ -1973,6 +1973,9 @@ function Update-IntuneDeviceConfigurationPolicy
 # Matches the startswith/endswith/contains filter functions that Graph does not support server-side
 $Script:M365DSCComplexFilterFunctionsRegex = "(?i)(?:startswith|endswith|contains)\(([^,]*?),\s*'((?:[^']|'')*)'\)"
 
+# Matches a complex filter function together with a 'not' in front of it
+$Script:M365DSCComplexFilterClauseRegex = "(?i)(?:\bnot\s*\(\s*$Script:M365DSCComplexFilterFunctionsRegex\s*\)|\bnot\s+$Script:M365DSCComplexFilterFunctionsRegex|$Script:M365DSCComplexFilterFunctionsRegex)"
+
 <#
 .SYNOPSIS
     Extracts startswith, endswith, and contains clauses from a filter query.
@@ -1997,7 +2000,7 @@ function Get-ComplexFunctionsFromFilterQuery
         $FilterQuery
     )
 
-    [System.Array]$complexFunctions = [System.Text.RegularExpressions.Regex]::Matches($FilterQuery, $Script:M365DSCComplexFilterFunctionsRegex) | ForEach-Object {
+    [System.Array]$complexFunctions = [System.Text.RegularExpressions.Regex]::Matches($FilterQuery, $Script:M365DSCComplexFilterClauseRegex) | ForEach-Object {
         $_.Value
     }
 
@@ -2040,9 +2043,10 @@ function Remove-ComplexFunctionsFromFilterQuery
         Write-Warning -Message "Filter clauses combined with 'or' and startswith/endswith/contains are evaluated as 'and'."
     }
 
-    # Remove each function together with one adjacent connector
-    $basicFilterQuery = [System.Text.RegularExpressions.Regex]::Replace($FilterQuery, "$connectorRegex(?:$functionsRegex)", '')
-    $basicFilterQuery = [System.Text.RegularExpressions.Regex]::Replace($basicFilterQuery, "(?:$functionsRegex)(?:$connectorRegex)?", '')
+    # Remove each function and its negation together with one adjacent connector
+    $clauseRegex = $Script:M365DSCComplexFilterClauseRegex
+    $basicFilterQuery = [System.Text.RegularExpressions.Regex]::Replace($FilterQuery, "$connectorRegex(?:$clauseRegex)", '')
+    $basicFilterQuery = [System.Text.RegularExpressions.Regex]::Replace($basicFilterQuery, "(?:$clauseRegex)(?:$connectorRegex)?", '')
 
     # Remove empty groups outside string literals until none are left, then leftover connectors
     $emptyGroupRegex = "'(?:[^']|'')*'|(?<empty>(?<=^|[\s(])\(\s*\)(?=$|[\s)]))"
@@ -2098,6 +2102,15 @@ function Find-GraphDataUsingComplexFunctions
     $functionRegex = "^(?i)(startswith|endswith|contains)\(([^,]*?),\s*'((?:[^']|'')*)'\)$"
     foreach ($function in $ComplexFunctions)
     {
+        # A negated function keeps the policies that do not match it
+        $negate = $false
+        $negationMatch = [System.Text.RegularExpressions.Regex]::Match($function, '^(?i)not\s*\(\s*(.+?)\s*\)$|^(?i)not\s+(.+)$')
+        if ($negationMatch.Success)
+        {
+            $negate = $true
+            $function = if ($negationMatch.Groups[1].Success) { $negationMatch.Groups[1].Value } else { $negationMatch.Groups[2].Value }
+        }
+
         $functionMatch = [System.Text.RegularExpressions.Regex]::Match($function, $functionRegex)
         if (-not $functionMatch.Success)
         {
@@ -2110,15 +2123,15 @@ function Find-GraphDataUsingComplexFunctions
         {
             'startswith'
             {
-                $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).StartsWith($value, $comparison) }
+                $Policies = $Policies | Where-Object -FilterScript { ($null -ne $_.$property -and ([System.String]$_.$property).StartsWith($value, $comparison)) -ne $negate }
             }
             'endswith'
             {
-                $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).EndsWith($value, $comparison) }
+                $Policies = $Policies | Where-Object -FilterScript { ($null -ne $_.$property -and ([System.String]$_.$property).EndsWith($value, $comparison)) -ne $negate }
             }
             'contains'
             {
-                $Policies = $Policies | Where-Object -FilterScript { $null -ne $_.$property -and ([System.String]$_.$property).Contains($value, $comparison) }
+                $Policies = $Policies | Where-Object -FilterScript { ($null -ne $_.$property -and ([System.String]$_.$property).Contains($value, $comparison)) -ne $negate }
             }
         }
     }

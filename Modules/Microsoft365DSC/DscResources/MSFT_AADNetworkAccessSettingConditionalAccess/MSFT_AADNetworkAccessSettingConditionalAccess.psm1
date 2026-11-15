@@ -101,8 +101,11 @@ class AADNetworkAccessSettingConditionalAccess : M365DSCResourceBase
 
         $this.AddTelemetry('Set')
 
-        Write-Verbose -Message 'Updating the Conditional Access Settings'
-        Update-MgBetaNetworkAccessSettingConditionalAccess -SignalingStatus $this.SignalingStatus
+        if ($null -ne $this.SignalingStatus)
+        {
+            Write-Verbose -Message 'Updating the Conditional Access Settings'
+            Update-MgBetaNetworkAccessSettingConditionalAccess -SignalingStatus $this.SignalingStatus
+        }
     }
 
     [bool] Test()

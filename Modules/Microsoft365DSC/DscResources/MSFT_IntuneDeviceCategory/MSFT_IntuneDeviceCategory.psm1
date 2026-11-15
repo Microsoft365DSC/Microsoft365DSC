@@ -139,28 +139,33 @@ class IntuneDeviceCategory : M365DSCResourceBase
             Write-Verbose -Message "Creating new Device Category {$($this.DisplayName)}"
             $createParameters = @{
                 DisplayName = $this.DisplayName
-                Description = $this.Description
+            }
+            if ($null -ne $this.Description)
+            {
+                $createParameters.Description = $this.Description
             }
             if ($null -ne $resolvedRoleScopeTagIds)
             {
                 $createParameters.RoleScopeTagIds = $resolvedRoleScopeTagIds
             }
-            New-MgBetaDeviceManagementDeviceCategory @createParameters
+            New-MgBetaDeviceManagementDeviceCategory -BodyParameter $createParameters
         }
         elseif ($this.Ensure -eq 'Present' -and $currentCategory.Ensure -eq 'Present')
         {
             Write-Verbose -Message "Updating Device Category {$($this.DisplayName)}"
             $category = Get-MgBetaDeviceManagementDeviceCategory -All -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'"
             $updateParameters = @{
-                DeviceCategoryId = $category.id
-                DisplayName      = $this.DisplayName
-                Description      = $this.Description
+                DisplayName = $this.DisplayName
+            }
+            if ($null -ne $this.Description)
+            {
+                $updateParameters.Description = $this.Description
             }
             if ($null -ne $resolvedRoleScopeTagIds)
             {
                 $updateParameters.RoleScopeTagIds = $resolvedRoleScopeTagIds
             }
-            Update-MgBetaDeviceManagementDeviceCategory @updateParameters
+            Update-MgBetaDeviceManagementDeviceCategory -DeviceCategoryId $category.id -BodyParameter $updateParameters
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentCategory.Ensure -eq 'Present')
         {

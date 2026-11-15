@@ -101,7 +101,10 @@ class AADNetworkAccessSettingCrossTenantAccess : M365DSCResourceBase
 
         $this.AddTelemetry('Set')
 
-        Update-MgBetaNetworkAccessSettingCrossTenantAccess -NetworkPacketTaggingStatus $this.NetworkPacketTaggingStatus
+        if ($null -ne $this.NetworkPacketTaggingStatus)
+        {
+            Update-MgBetaNetworkAccessSettingCrossTenantAccess -NetworkPacketTaggingStatus $this.NetworkPacketTaggingStatus
+        }
     }
 
     [bool] Test()

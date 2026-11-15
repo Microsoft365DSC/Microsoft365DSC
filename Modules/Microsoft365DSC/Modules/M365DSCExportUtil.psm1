@@ -327,7 +327,7 @@ function Export-M365DSCConfiguration
     if ($LaunchWebUI)
     {
         Write-M365DSCHost -Message "Launching web page 'https://export.microsoft365dsc.com'"
-        explorer 'https://export.microsoft365dsc.com'
+        Start-Process -FilePath 'https://export.microsoft365dsc.com'
         return
     }
 
@@ -471,16 +471,21 @@ function Export-M365DSCConfiguration
             ($null -ne $telemetryParams -and `
                     $telemetryParams.Keys.Count -eq 0))
         {
-            $telemetryParams = @{
-                Credential            = $Credential
-                ApplicationId         = $ApplicationId
-                TenantId              = $TenantId
-                ApplicationSecret     = $ApplicationSecret
-                CertificateThumbprint = $CertificateThumbprint
-                CertificatePassword   = $CertificatePassword
-                CertificatePath       = $CertificatePath
-                Identity              = $ManagedIdentity.IsPresent
-                AccessTokens          = $AccessTokens
+            $telemetryParams = @{}
+            foreach ($parameterName in @('Credential', 'ApplicationId', 'TenantId', 'ApplicationSecret', 'CertificateThumbprint', 'CertificatePath', 'AccessTokens'))
+            {
+                if ($PSBoundParameters.ContainsKey($parameterName) -and -not [System.String]::IsNullOrEmpty($PSBoundParameters[$parameterName]))
+                {
+                    $telemetryParams[$parameterName] = $PSBoundParameters[$parameterName]
+                }
+            }
+            if ($null -ne $CertificatePassword)
+            {
+                $telemetryParams['CertificatePassword'] = $CertificatePassword.Password
+            }
+            if ($ManagedIdentity.IsPresent)
+            {
+                $telemetryParams['Identity'] = $true
             }
             Set-M365DSCTelemetryConnectionParameter -Parameters $telemetryParams
         }
@@ -862,14 +867,11 @@ function Get-M365DSCExportContentForResource
     $partialContent = Get-DSCBlock -Params $Results -ModulePath $ModulePath -NoEscape $NoEscape -AllowVariablesInStrings:$AllowVariablesInStrings
 
     $ignoreCase = [System.StringComparison]::OrdinalIgnoreCase
-    if (-not [System.String]::IsNullOrEmpty($OrganizationName) -and $partialContent.IndexOf($OrganizationName, $ignoreCase) -ge 0)
-    {
-        $partialContent = $partialContent.Replace($OrganizationName + ':', "`$(`$OrganizationName):", $ignoreCase)
-        $partialContent = $partialContent.Replace('@' + $OrganizationName, "@`$OrganizationName", $ignoreCase)
-        $partialContent = $partialContent.Replace($OrganizationName, "`$OrganizationName", $ignoreCase)
-    }
 
-    # Apply additional string to variable replacements from mapping, longest target first
+    # String to variable replacements from the mapping, longest target first. Targets that contain the
+    # organization name are replaced before it, all other targets after it.
+    $organizationTargets = @()
+    $otherTargets = @()
     if ($null -ne $Script:M365DSCStringReplacementMap -and $Script:M365DSCStringReplacementMap.Count -gt 0)
     {
         foreach ($target in $Script:M365DSCStringReplacementTargets)
@@ -887,13 +889,45 @@ function Get-M365DSCExportContentForResource
                 continue
             }
 
-            if ($partialContent.IndexOf($target, $ignoreCase) -ge 0)
+            if ($OrganizationName -and $target.IndexOf($OrganizationName, $ignoreCase) -ge 0)
             {
-                $partialContent = $partialContent.Replace($target + ':', "`$(`$ConfigurationData.NonNodeData.$varName):", $ignoreCase)
-                $partialContent = $partialContent.Replace('@' + $target, "@`$(`$ConfigurationData.NonNodeData.$varName)", $ignoreCase)
-                $partialContent = $partialContent.Replace($target, "`$(`$ConfigurationData.NonNodeData.$varName)", $ignoreCase)
+                $organizationTargets += $target
+            }
+            else
+            {
+                $otherTargets += $target
             }
         }
+    }
+
+    $replaceTarget = {
+        param ($Text, $Target)
+
+        $variableName = $Script:M365DSCStringReplacementMap[$Target]
+        if ($Text.IndexOf($Target, $ignoreCase) -ge 0)
+        {
+            $Text = $Text.Replace($Target + ':', "`$(`$ConfigurationData.NonNodeData.$variableName):", $ignoreCase)
+            $Text = $Text.Replace('@' + $Target, "@`$(`$ConfigurationData.NonNodeData.$variableName)", $ignoreCase)
+            $Text = $Text.Replace($Target, "`$(`$ConfigurationData.NonNodeData.$variableName)", $ignoreCase)
+        }
+        return $Text
+    }
+
+    foreach ($target in $organizationTargets)
+    {
+        $partialContent = & $replaceTarget $partialContent $target
+    }
+
+    if (-not [System.String]::IsNullOrEmpty($OrganizationName) -and $partialContent.IndexOf($OrganizationName, $ignoreCase) -ge 0)
+    {
+        $partialContent = $partialContent.Replace($OrganizationName + ':', "`$(`$OrganizationName):", $ignoreCase)
+        $partialContent = $partialContent.Replace('@' + $OrganizationName, "@`$OrganizationName", $ignoreCase)
+        $partialContent = $partialContent.Replace($OrganizationName, "`$OrganizationName", $ignoreCase)
+    }
+
+    foreach ($target in $otherTargets)
+    {
+        $partialContent = & $replaceTarget $partialContent $target
     }
 
     [void]$content.Append($partialContent)
@@ -1019,16 +1053,18 @@ function Join-M365DSCConfiguration
         throw 'The ConfigurationFile parameter must be a .ps1 file.'
     }
 
-    if (-not (Test-Path -Path $ConfigurationPath))
+    if (-not (Test-Path -LiteralPath $ConfigurationPath))
     {
         throw 'The ConfigurationPath parameter must be a valid path.'
     }
 
     $ConfigurationFilePath = Join-Path -Path $ConfigurationPath -ChildPath $ConfigurationFile
-    $ConfigurationPath = Join-Path -Path $ConfigurationPath -ChildPath '*'
 
-    $baseConfiguration = ConvertTo-DSCObject -Path $ConfigurationFilePath
-    $additionalConfigurations = Get-Item -Path $ConfigurationPath -Filter *.ps1 -Exclude $ConfigurationFile | ForEach-Object { ConvertTo-DSCObject -Path $_.FullName }
+    $content = Get-Content -LiteralPath $ConfigurationFilePath -Raw
+    $baseConfiguration = ConvertTo-DSCObject -Content $content
+    $additionalConfigurations = Get-ChildItem -LiteralPath $ConfigurationPath -Filter '*.ps1' -File |
+        Where-Object -Property Name -NE $ConfigurationFile |
+        ForEach-Object -Process { ConvertTo-DSCObject -Content (Get-Content -LiteralPath $_.FullName -Raw) }
 
     $combinedArray = @($baseConfiguration) + @($additionalConfigurations)
     $combinedConfiguration = ConvertFrom-DSCObject -DSCResources $combinedArray
@@ -1038,7 +1074,6 @@ function Join-M365DSCConfiguration
     $combinedConfiguration = $combinedConfiguration.TrimEnd()
 
     # Remove everything in the "Node localhost" part in the configuration file, while excluding the last two closing brackets
-    $content = Get-Content -Path $ConfigurationFilePath -Raw
     $content = $content -replace '(?s)(?<=Node localhost\s*\{)(.*\s{8}\}?)(?=\s*\})', ''
 
     # Append the combined configuration after the "Node localhost" part in the configuration file.
@@ -1095,20 +1130,20 @@ function Split-M365DSCConfiguration
         $MaxResources = 0  # 0 = ignore resource count limit
     )
 
-    $fileContent = Get-Content -Encoding utf8 -Path $Path -Raw
+    $fileContent = Get-Content -Encoding utf8 -LiteralPath $Path -Raw
 
     if ([System.String]::IsNullOrEmpty($OutputFolder))
     {
-        $OutputFolder = Split-Path -Path (Resolve-Path -Path $Path).ProviderPath -Parent
+        $OutputFolder = Split-Path -Path (Resolve-Path -LiteralPath $Path).ProviderPath -Parent
     }
 
-    if (-not (Test-Path -Path $OutputFolder -PathType Container))
+    if (-not (Test-Path -LiteralPath $OutputFolder -PathType Container))
     {
         $null = New-Item -Path $OutputFolder -ItemType Directory -Force
     }
 
     # Extract content inside "Node localhost { ... }"
-    $pattern = 'Node localhost\s*{([\s\S]*)\s+}(\r|\n)+\s+}'
+    $pattern = 'Node localhost\s*{([\s\S]*)\s+}[ \t]*\r?\n\s*}'
     $nodeMatch = [System.Text.RegularExpressions.Regex]::Match($fileContent, $pattern)
     if (-not $nodeMatch.Success)
     {

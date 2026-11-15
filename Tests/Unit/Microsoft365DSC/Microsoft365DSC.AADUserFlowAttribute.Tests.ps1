@@ -92,7 +92,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             It 'Should create the role definition from the set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADUserFlowAttribute' -Property $testParams).Set()
-                Should -Invoke -CommandName 'New-MgBetaIdentityUserFlowAttribute' -Exactly 1
+                Should -Invoke -CommandName 'New-MgBetaIdentityUserFlowAttribute' -Exactly 1 -ParameterFilter {
+                    $BodyParameter.DataType -eq 'string' -and $BodyParameter.Description -eq 'sai test description'
+                }
             }
         }
 

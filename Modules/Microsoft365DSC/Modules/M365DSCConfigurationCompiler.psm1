@@ -323,39 +323,35 @@ function Invoke-M365DSCConfigurationBuild
                 return (& $Path @invokeParameters)
             }
 
-            # The script only declares the configuration, so dot-source and invoke it.
-            . $Path
-            try
+            if ($OutputPath)
             {
-                if ($OutputPath)
-                {
-                    $invokeParameters['OutputPath'] = $OutputPath
-                }
-
-                $data = if ($null -ne $ConfigurationData)
-                {
-                    $ConfigurationData
-                }
-                elseif ($ConfigurationDataPath)
-                {
-                    Import-PowerShellDataFile -LiteralPath $ConfigurationDataPath
-                }
-                else
-                {
-                    $null
-                }
-
-                if ($null -ne $data)
-                {
-                    $invokeParameters['ConfigurationData'] = $data
-                }
-
-                return (& $ConfigurationName @invokeParameters)
+                $invokeParameters['OutputPath'] = $OutputPath
             }
-            finally
+
+            $data = if ($null -ne $ConfigurationData)
             {
-                Remove-Item -Path "function:$ConfigurationName" -Force -Recurse -ErrorAction 'SilentlyContinue'
+                $ConfigurationData
             }
+            elseif ($ConfigurationDataPath)
+            {
+                Import-PowerShellDataFile -LiteralPath $ConfigurationDataPath
+            }
+            else
+            {
+                $null
+            }
+
+            if ($null -ne $data)
+            {
+                $invokeParameters['ConfigurationData'] = $data
+            }
+
+            # Dot-sources the script and invokes the configuration in a child scope
+            return (& {
+                    param($M365DSCBuildScriptPath, $M365DSCBuildConfigurationName, $M365DSCBuildParameters)
+                    . $M365DSCBuildScriptPath
+                    & $M365DSCBuildConfigurationName @M365DSCBuildParameters
+                } $Path $ConfigurationName $invokeParameters)
         }
         finally
         {

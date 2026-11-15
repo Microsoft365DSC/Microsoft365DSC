@@ -281,7 +281,7 @@ function Test-M365DSCCurrentUserIsAdministrator
     [OutputType([System.Boolean])]
     param()
 
-    if (-not $IsWindows)
+    if ($PSEdition -eq 'Core' -and -not $IsWindows)
     {
         return $false
     }
@@ -358,7 +358,7 @@ function Get-M365DSCLCMState
     [OutputType([System.String])]
     param()
 
-    if (-not $IsWindows)
+    if ($PSEdition -eq 'Core' -and -not $IsWindows)
     {
         return $null
     }
@@ -1077,7 +1077,7 @@ function Get-M365DSCResourceSchema
 #>
 function Test-CodePage
 {
-    if (-not $IsWindows)
+    if ($PSEdition -eq 'Core' -and -not $IsWindows)
     {
         return
     }
@@ -1134,6 +1134,11 @@ function Install-M365DSCDevBranch
         $Scope = 'AllUsers'
     )
 
+    if ($PSEdition -eq 'Core' -and -not $IsWindows)
+    {
+        throw 'Install-M365DSCDevBranch is only supported on Windows.'
+    }
+
     $downloadPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "M365DSCDev_$([System.Guid]::NewGuid())"
     try
     {
@@ -1158,27 +1163,12 @@ function Install-M365DSCDevBranch
         Write-Host 'Done' -ForegroundColor Green
         #endregion
 
-        #region Install All Dependencies
         $sourcePath = Join-Path -Path $extractPath -ChildPath 'Microsoft365DSC-Dev\Modules\Microsoft365DSC'
         $manifest = Import-PowerShellDataFile (Join-Path -Path $sourcePath -ChildPath 'Microsoft365DSC.psd1')
-        $dependencies = $manifest.RequiredModules
-        if ($IsWindows -and -not (Test-M365DSCCurrentUserIsAdministrator) -and $Scope -eq 'AllUsers')
+        if (-not (Test-M365DSCCurrentUserIsAdministrator) -and $Scope -eq 'AllUsers')
         {
-            throw 'Cannot update the dependencies for Microsoft365DSC. You need to run this command as a local administrator.'
+            throw 'Cannot install the Dev branch for all users. You need to run this command as a local administrator.'
         }
-
-        foreach ($dependency in $dependencies)
-        {
-            Write-Host "Installing {$($dependency.ModuleName)}..." -NoNewline
-            $existingModule = Get-Module $dependency.ModuleName -ListAvailable | Where-Object -Property Version -EQ $dependency.RequiredVersion
-            if ($null -eq $existingModule)
-            {
-                Install-Module $dependency.ModuleName -RequiredVersion $dependency.RequiredVersion -Force -AllowClobber -Scope $Scope | Out-Null
-            }
-            Import-Module $dependency.ModuleName -Force | Out-Null
-            Write-Host 'Done' -ForegroundColor Green
-        }
-        #endregion
 
         #region Install M365DSC
         Write-Host 'Updating the Core Microsoft365DSC module...' -NoNewline
@@ -1250,6 +1240,9 @@ function Install-M365DSCDevBranch
         }
         Write-Host 'Done' -ForegroundColor Green
         #endregion
+
+        # Installs the dependencies of the installed Dev branch
+        Update-M365DSCDependencies -Scope $Scope -ErrorAction Stop
     }
     catch
     {
@@ -1484,7 +1477,8 @@ function Remove-NullEntriesFromHashtable
     Indicates that only drifts should be included in the report.
 
 .PARAMETER KeepExport
-    Indicates that the temporary export should be retained.
+    Indicates that the temporary export should be retained. The folder of the export is shown
+    when the assessment completes.
 
 .PARAMETER UseVariableSubstitution
     Indicates that variable substitution should be applied during comparison.
@@ -1704,17 +1698,14 @@ function Assert-M365DSCBlueprint
 
         if ([System.String]::IsNullOrEmpty($ResourcesInBluePrint))
         {
+            Remove-Item -Path $LocalBluePrintPath -Force -ErrorAction SilentlyContinue
             if (-not [System.String]::IsNullOrEmpty($ExcludedResources))
             {
-                Write-Host 'All resources were excluded from BluePrint, aborting'
-            }
-            else
-            {
-                Write-Host 'Malformed BluePrint, aborting'
+                Write-Warning -Message 'All resources were excluded from the blueprint, no assessment was run.'
+                return
             }
 
-            Remove-Item -Path $LocalBluePrintPath -Force -ErrorAction SilentlyContinue
-            return
+            throw "The blueprint {$BluePrintUrl} contains no resources."
         }
 
         Write-Host "Selected BluePrint contains ($($ResourcesInBluePrint.Length)) components to assess."
@@ -1723,10 +1714,11 @@ function Assert-M365DSCBlueprint
         # types contained within the BluePrint
         Write-Host "Initiating the Export of those ($($ResourcesInBluePrint.Length)) components from the tenant..."
         $TempExportName = 'TempExport_' + (New-Guid).ToString() + '.ps1'
+        $exportFolder = Join-Path -Path $env:TEMP -ChildPath ('M365DSCBlueprint_' + (New-Guid).ToString())
 
         $exportParams = @{
             Components     = $ResourcesInBluePrint
-            Path           = $env:TEMP
+            Path           = $exportFolder
             FileName       = $TempExportName
             WithStatistics = $WithStatistics.IsPresent
         }
@@ -1756,7 +1748,7 @@ function Assert-M365DSCBlueprint
             $exportParams.ManagedIdentity = $true
         }
 
-        $ExportPath = Join-Path -Path $env:TEMP -ChildPath $TempExportName
+        $ExportPath = Join-Path -Path $exportFolder -ChildPath $TempExportName
         try
         {
             Export-M365DSCConfiguration @exportParams
@@ -1800,7 +1792,11 @@ function Assert-M365DSCBlueprint
             Remove-Item $LocalBluePrintPath -Force -ErrorAction SilentlyContinue
             if (-not $KeepExport)
             {
-                Remove-Item $ExportPath -Force -ErrorAction SilentlyContinue
+                Remove-Item -LiteralPath $exportFolder -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            elseif (Test-Path -LiteralPath $exportFolder)
+            {
+                Write-Host "The export is kept in {$exportFolder}. Its ConfigurationData.psd1 can contain the application secret or access tokens."
             }
         }
     }
@@ -2127,7 +2123,16 @@ function New-M365DSCCmdletDocumentation
                         $mandatory = "True ($($mandatorySets -join ', '))"
                     }
 
-                    $defaultValue = " $($parameter.DefaultValue.Value) "
+                    $defaultValueText = $null
+                    if ($parameter.DefaultValue -is [System.Management.Automation.Language.StringConstantExpressionAst])
+                    {
+                        $defaultValueText = $parameter.DefaultValue.Value
+                    }
+                    elseif ($null -ne $parameter.DefaultValue)
+                    {
+                        $defaultValueText = $parameter.DefaultValue.Extent.Text
+                    }
+                    $defaultValue = " $defaultValueText "
                     if ($defaultValue -eq '  ')
                     {
                         $defaultValue = ' '
@@ -4469,24 +4474,24 @@ function Update-M365DSCAuthenticationConfiguration
         $ConnectionMode
     )
 
-    if (-not (Test-Path -Path $SourceFile -PathType Leaf))
+    if (-not (Test-Path -LiteralPath $SourceFile -PathType Leaf))
     {
         throw "The SourceFile parameter must point to an existing file. Received {$SourceFile}."
     }
 
-    $destinationRoot = [System.IO.Path]::GetPathRoot($DestinationFile)
-    if ([System.String]::IsNullOrEmpty($destinationRoot.TrimEnd('\', '/')))
+    if (-not [System.IO.Path]::IsPathFullyQualified($DestinationFile))
     {
         throw "The DestinationFile parameter must be a fully qualified path. Received {$DestinationFile}."
     }
 
     $destinationFolder = Split-Path -Path $DestinationFile -Parent
-    if (-not (Test-Path -Path $destinationFolder))
+    if (-not (Test-Path -LiteralPath $destinationFolder))
     {
         New-Item -Path $destinationFolder -ItemType Directory -Force | Out-Null
     }
 
-    [System.Array]$parsedContent = ConvertTo-DSCObject -Path $SourceFile
+    $sourceContent = Get-Content -LiteralPath $SourceFile -Raw
+    [System.Array]$parsedContent = ConvertTo-DSCObject -Content $sourceContent
     if ($parsedContent.Count -eq 0)
     {
         throw "No DSC resource instances could be found in the file {$SourceFile}."
@@ -4543,11 +4548,10 @@ function Update-M365DSCAuthenticationConfiguration
 
     # Indent all non-empty lines by 8 spaces to match the indentation of the configuration file
     $updatedContent = ($updatedContent -replace '(?m)^(?=.)', '        ').TrimEnd()
-    $sourceContent = Get-Content -Path $SourceFile -Raw
 
     # Locate everything in the "Node localhost" part of the configuration file, while excluding the
     # last two closing brackets
-    $nodeSection = [regex]::Match($sourceContent, '(?s)(?<=Node localhost\s*\{)(.*\s{8}\}?)(?=\s*\})')
+    $nodeSection = [regex]::Match($sourceContent, '(?is)(?<=Node localhost\s*\{)(.*\s{8}\}?)(?=\s*\})')
     if (-not $nodeSection.Success)
     {
         throw "Could not locate the 'Node localhost' section in the file {$SourceFile}."
@@ -4632,11 +4636,20 @@ function Update-M365DSCAuthenticationConfiguration
     # Replace the resource instances of the source file with the updated ones. Substring is used
     # instead of the -replace operator, since the updated content contains '$' characters that would
     # otherwise be interpreted as substitution patterns.
-    $destinationContent = $headerContent + "`r`n" + $updatedContent + `
-        $sourceContent.Substring($nodeSection.Index + $nodeSection.Length)
+    $trailingContent = $sourceContent.Substring($nodeSection.Index + $nodeSection.Length)
+
+    # Replaces the credential arguments of the configuration invocation with those of the requested connection mode
+    $launchArguments = ''
+    foreach ($credentialParameter in $credentialParameters)
+    {
+        $launchArguments += " -$credentialParameter `$$credentialParameter"
+    }
+    $trailingContent = $trailingContent -replace '(?m)^([ \t]*\S+[ \t]+-ConfigurationData[ \t]+\S+)(?:[ \t]+-(?:Credential|CertificatePassword)[ \t]+\$\w+)*[ \t]*(?=\r?$)', ('$1' + $launchArguments.Replace('$', '$$'))
+
+    $destinationContent = $headerContent + "`r`n" + $updatedContent + $trailingContent
 
     Write-Verbose -Message "Saving the updated configuration to {$DestinationFile}."
-    Set-Content -Path $DestinationFile -Value $destinationContent -Encoding UTF8 -Force
+    Set-Content -LiteralPath $DestinationFile -Value $destinationContent -Encoding UTF8 -Force
 
     # The ConfigurationData file is not updated by this function, so let the user know which entries
     # need to receive a value before the configuration can be applied.

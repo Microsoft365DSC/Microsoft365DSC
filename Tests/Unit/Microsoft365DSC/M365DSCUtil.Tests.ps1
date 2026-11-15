@@ -213,7 +213,8 @@ Describe 'Assert-M365DSCBlueprint' {
         $Script:ParsedContent[0] | Should -Match "Import-DscResource -ModuleName 'Microsoft365DSC'`n"
         Should -Invoke -ModuleName M365DSCUtil -CommandName New-M365DSCDeltaReport -Exactly -Times 1
         Should -Invoke -ModuleName M365DSCUtil -CommandName Export-M365DSCConfiguration -Exactly -Times 1 -ParameterFilter {
-            -not $PesterBoundParameters.ContainsKey('Credential') -and -not $PesterBoundParameters.ContainsKey('TenantId') -and -not $PesterBoundParameters.ContainsKey('ApplicationSecret')
+            -not $PesterBoundParameters.ContainsKey('Credential') -and -not $PesterBoundParameters.ContainsKey('TenantId') -and -not $PesterBoundParameters.ContainsKey('ApplicationSecret') -and
+            (Split-Path -Path $Path -Leaf) -like 'M365DSCBlueprint_*'
         }
         Should -Invoke -ModuleName M365DSCUtil -CommandName Add-M365DSCTelemetryEvent -Exactly -Times 1 -ParameterFilter {
             $Data['BluePrintSource'] -eq 'File' -and -not $Data.ContainsKey('BluePrint')
@@ -227,18 +228,22 @@ Describe 'Assert-M365DSCBlueprint' {
         }
     }
 
-    It 'returns to the caller and removes the temp blueprint when every resource is excluded' {
+    It 'returns to the caller when every resource is excluded, throws for a blueprint without resources and removes the temp blueprint' {
         $before = @(Get-ChildItem -Path $env:TEMP -Filter 'TempBlueprint_*.M365' -ErrorAction SilentlyContinue).Count
         $iterations = 0
         foreach ($i in 1..2)
         {
             Assert-M365DSCBlueprint -BluePrintUrl $Script:BlueprintPath -OutputReportPath (Join-Path $TestDrive 'report.html') `
-                -ExcludedResources @('AADGroup')
+                -ExcludedResources @('AADGroup') -WarningAction SilentlyContinue
             $iterations++
         }
 
         $iterations | Should -Be 2
         Should -Invoke -ModuleName M365DSCUtil -CommandName Export-M365DSCConfiguration -Exactly -Times 0
+
+        Mock -ModuleName M365DSCUtil -CommandName ConvertTo-DSCObject -MockWith { @() }
+        { Assert-M365DSCBlueprint -BluePrintUrl $Script:BlueprintPath -OutputReportPath (Join-Path $TestDrive 'report.html') } |
+            Should -Throw '*contains no resources*'
         @(Get-ChildItem -Path $env:TEMP -Filter 'TempBlueprint_*.M365' -ErrorAction SilentlyContinue).Count | Should -Be $before
     }
 }

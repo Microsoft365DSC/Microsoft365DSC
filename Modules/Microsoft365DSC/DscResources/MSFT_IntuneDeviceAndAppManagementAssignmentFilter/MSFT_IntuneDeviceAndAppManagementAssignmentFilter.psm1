@@ -173,13 +173,15 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
         {
             Write-Verbose -Message "Creating new assignment filter {$($this.DisplayName)}"
 
-            New-MgBetaDeviceManagementAssignmentFilter `
-                -DisplayName $this.DisplayName `
-                -Description $this.Description `
-                -Platform $this.Platform `
-                -RoleScopeTags $this.RoleScopeTags `
-                -Rule $this.Rule `
-                -AssignmentFilterManagementType $this.AssignmentFilterManagementType | Out-Null
+            $createParameters = @{}
+            foreach ($property in @('DisplayName', 'Description', 'Platform', 'RoleScopeTags', 'Rule', 'AssignmentFilterManagementType'))
+            {
+                if ($null -ne $this.$property)
+                {
+                    $createParameters[$property] = $this.$property
+                }
+            }
+            New-MgBetaDeviceManagementAssignmentFilter -BodyParameter $createParameters | Out-Null
 
         }
         elseif ($this.Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Present')
@@ -191,13 +193,17 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
                 throw 'Cannot change the AssignmentFilterManagementType of an existing IntuneDeviceAndAppManagementAssignmentFilter. Remove and recreate the filter if you want to change the filter type.'
             }
 
+            $updateParameters = @{}
+            foreach ($property in @('DisplayName', 'Description', 'RoleScopeTags', 'Rule', 'AssignmentFilterManagementType'))
+            {
+                if ($null -ne $this.$property)
+                {
+                    $updateParameters[$property] = $this.$property
+                }
+            }
             Update-MgBetaDeviceManagementAssignmentFilter `
                 -DeviceAndAppManagementAssignmentFilterId $currentPolicy.Id `
-                -DisplayName $this.DisplayName `
-                -Description $this.Description `
-                -RoleScopeTags $this.RoleScopeTags `
-                -Rule $this.Rule `
-                -AssignmentFilterManagementType $this.AssignmentFilterManagementType | Out-Null
+                -BodyParameter $updateParameters | Out-Null
 
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
