@@ -228,6 +228,7 @@ class EXODkimSigningConfig : M365DSCResourceBase
             else
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for DKIM Signing Config"
+                $this.SkipExport('The current tenant is not registered to allow for DKIM Signing Config')
                 return ''
             }
             return $dscContent.ToString()

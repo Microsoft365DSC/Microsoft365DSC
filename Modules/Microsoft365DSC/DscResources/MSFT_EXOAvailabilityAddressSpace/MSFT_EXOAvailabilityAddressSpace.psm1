@@ -243,6 +243,7 @@ class EXOAvailabilityAddressSpace : M365DSCResourceBase
             if ($null -eq (Get-Command Get-AvailabilityAddressSpace -ErrorAction SilentlyContinue))
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiRedX) The specified account doesn't have permissions to access Availibility Address Space"
+                $this.SkipExport('The specified account doesn''t have permissions to access Availability Address Space')
                 return ''
             }
             try
@@ -252,6 +253,7 @@ class EXOAvailabilityAddressSpace : M365DSCResourceBase
             catch
             {
                 $this.LogError($_, "Couldn't get AvailabilityAddressSpaces")
+                $this.SkipExport($_)
             }
 
             $dscContent = [System.Text.StringBuilder]::new()

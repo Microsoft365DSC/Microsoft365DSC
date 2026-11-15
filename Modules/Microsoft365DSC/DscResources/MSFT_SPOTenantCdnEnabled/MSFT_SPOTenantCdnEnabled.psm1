@@ -187,6 +187,7 @@ class SPOTenantCdnEnabled : M365DSCResourceBase
             if ($_.Exception -like '*The method or operation is not implemented*')
             {
                 Write-M365DSCHost -Message "    $($Global:M365DSCEmojiYellowCircle) The current tenant does not support this feature." -CommitWrite
+                $this.SkipExport($_)
                 return ''
             }
             else

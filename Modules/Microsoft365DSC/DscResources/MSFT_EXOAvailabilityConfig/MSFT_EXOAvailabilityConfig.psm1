@@ -187,6 +187,7 @@ class EXOAvailabilityConfig : M365DSCResourceBase
             if ($null -eq (Get-Command Get-AvailabilityConfig -ErrorAction SilentlyContinue))
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiRedX) The specified account doesn't have permissions to access Availibility Config"
+                $this.SkipExport('The specified account doesn''t have permissions to access Availability Config')
                 return ''
             }
             $AvailabilityConfig = Get-AvailabilityConfig -ErrorAction Stop

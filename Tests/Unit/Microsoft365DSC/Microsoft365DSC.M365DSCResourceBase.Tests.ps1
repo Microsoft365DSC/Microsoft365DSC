@@ -829,3 +829,34 @@ Describe 'Export of a skipped instance' {
         ($Global:M365DSCTestHostOutput -join '') | Should -Be $Global:M365DSCEmojiGreenCheckMark
     }
 }
+
+Describe 'M365DSCResourceBase SkipExport' {
+    BeforeEach {
+        $Global:M365DSCExportResourceSkipMessage = $null
+    }
+
+    AfterAll {
+        $Global:M365DSCExportResourceSkipMessage = $null
+    }
+
+    It 'Records the exception message of an error record' {
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+        $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+            [System.Exception]::new('Insufficient privileges to complete the operation.'),
+            'Forbidden',
+            [System.Management.Automation.ErrorCategory]::PermissionDenied,
+            $null)
+
+        $instance.SkipExport($errorRecord)
+
+        $Global:M365DSCExportResourceSkipMessage | Should -Be 'Insufficient privileges to complete the operation.'
+    }
+
+    It 'Records a message' {
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+
+        $instance.SkipExport('The current tenant is not registered for this feature.')
+
+        $Global:M365DSCExportResourceSkipMessage | Should -Be 'The current tenant is not registered for this feature.'
+    }
+}

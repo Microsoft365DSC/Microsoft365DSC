@@ -802,6 +802,7 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
             if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
+                $this.SkipExport($_)
                 return ''
             }
             else

@@ -1339,6 +1339,17 @@ class M365DSCResourceBase
         }
     }
 
+    # Marks the resource as not read in the export statistics.
+    hidden [void] SkipExport([System.Management.Automation.ErrorRecord] $ErrorRecord)
+    {
+        $this.SkipExport($ErrorRecord.Exception.Message)
+    }
+
+    hidden [void] SkipExport([System.String] $Message)
+    {
+        $Global:M365DSCExportResourceSkipMessage = $Message
+    }
+
     #endregion
 
     #region Windows PowerShell 5.1 dispatch

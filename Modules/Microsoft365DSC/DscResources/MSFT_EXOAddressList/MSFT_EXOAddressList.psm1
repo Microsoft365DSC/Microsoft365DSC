@@ -362,6 +362,7 @@ class EXOAddressList : M365DSCResourceBase
             if ($null -eq (Get-Command 'Get-AddressList' -ErrorAction SilentlyContinue))
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for Address Lists"
+                $this.SkipExport('The current tenant is not registered to allow for Address Lists')
                 return ''
             }
             $dscContent = [System.Text.StringBuilder]::new()

@@ -821,6 +821,7 @@ function Start-M365DSCConfigurationExtract
         [void]$synchronizedHashtable.TryAdd('ResourcesResult', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('ResourceStatus', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('ResourceErrors', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
+        [void]$synchronizedHashtable.TryAdd('ResourceSkips', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('InstanceCounts', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.Int32]]::new())
         [void]$synchronizedHashtable.TryAdd('InstanceErrors', [System.Collections.Concurrent.ConcurrentQueue[System.Collections.Hashtable]]::new())
         [void]$synchronizedHashtable.TryAdd('BusyWorkers', 0)
@@ -918,6 +919,7 @@ function Start-M365DSCConfigurationExtract
 
                     $Global:M365DSCExportInstanceTally = 0
                     $Global:M365DSCExportInstanceErrors = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
+                    $Global:M365DSCExportResourceSkipMessage = $null
                     try
                     {
                         $exportOutput = Invoke-M365DSCResourceMethod -ResourceName $resourceName -MethodName 'Export' -Parameters $parameters
@@ -929,6 +931,10 @@ function Start-M365DSCConfigurationExtract
                             $resourceStatus = 'PartiallySucceeded'
                         }
                         [void]$sharedState.ResourceStatus.TryAdd($resourceName, $resourceStatus)
+                        if ($null -ne $Global:M365DSCExportResourceSkipMessage)
+                        {
+                            [void]$sharedState.ResourceSkips.TryAdd($resourceName, $Global:M365DSCExportResourceSkipMessage)
+                        }
                     }
                     catch
                     {
@@ -950,6 +956,7 @@ function Start-M365DSCConfigurationExtract
                         }
                         $Global:M365DSCExportInstanceErrors = $null
                         $Global:M365DSCExportInstanceFailureMessage = $null
+                        $Global:M365DSCExportResourceSkipMessage = $null
                         Complete-M365DSCHostLine
                         Complete-M365DSCExportCollectionConsumer -ResourceName $resourceName
                     }
@@ -1331,13 +1338,29 @@ function Start-M365DSCConfigurationExtract
                 $failedResources += $instanceError
             }
 
+            $skippedResources = @()
+            $skippedSucceededResourceCount = 0
+            foreach ($resourceSkip in $synchronizedHashtable.ResourceSkips.GetEnumerator())
+            {
+                $skippedResources += @{
+                    ResourceName = $resourceSkip.Key
+                    Message      = $resourceSkip.Value
+                }
+                if ($synchronizedHashtable.ResourceStatus[$resourceSkip.Key] -eq 'Succeeded')
+                {
+                    $skippedSucceededResourceCount++
+                }
+            }
+
             @{
                 ExportDurationInSeconds        = $timeTaken.TotalSeconds
-                ExportedResourceCount          = $synchronizedHashtable.SuccessfulResources
+                ExportedResourceCount          = $synchronizedHashtable.SuccessfulResources - $skippedSucceededResourceCount
                 PartiallyExportedResourceCount = $synchronizedHashtable.PartiallySucceededResources
                 FailedResourceCount            = $synchronizedHashtable.FailedResources
+                SkippedResourceCount           = $skippedResources.Count
                 TotalResourceCount             = $synchronizedHashtable.SuccessfulResources + $synchronizedHashtable.PartiallySucceededResources + $synchronizedHashtable.FailedResources
                 FailedResources                = @($failedResources | Sort-Object -Property { $_.ResourceName }, { $_.InstanceName })
+                SkippedResources               = @($skippedResources | Sort-Object -Property { $_.ResourceName })
             }
         }
     }

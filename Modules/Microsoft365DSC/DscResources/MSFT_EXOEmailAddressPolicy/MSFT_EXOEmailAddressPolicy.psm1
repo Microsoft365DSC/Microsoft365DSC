@@ -220,6 +220,7 @@ class EXOEmailAddressPolicy : M365DSCResourceBase
         if ($null -eq (Get-Command Get-EmailAddressPolicy -ErrorAction SilentlyContinue))
         {
             Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiRedX) The specified account doesn't have permissions to access Email Address Policy"
+            $this.SkipExport('The specified account doesn''t have permissions to access Email Address Policy')
             return ''
         }
 

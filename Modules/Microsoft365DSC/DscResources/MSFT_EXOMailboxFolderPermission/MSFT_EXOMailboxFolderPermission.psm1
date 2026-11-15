@@ -204,6 +204,7 @@ class EXOMailboxFolderPermission : M365DSCResourceBase
             if ($null -eq $cmdletInfo)
             {
                 Write-M365DSCHost -Message "    `r`n$($Global:M365DSCEmojiYellowCircle) The Get-MailboxFolder cmdlet is not available. Service Principals do not have mailboxes." -CommitWrite
+                $this.SkipExport('The Get-MailboxFolder cmdlet is not available. Service Principals do not have mailboxes.')
                 return ''
             }
 

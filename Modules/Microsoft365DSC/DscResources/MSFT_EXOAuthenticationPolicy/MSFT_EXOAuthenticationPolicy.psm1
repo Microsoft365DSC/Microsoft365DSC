@@ -240,6 +240,7 @@ class EXOAuthenticationPolicy : M365DSCResourceBase
                 if ($_.Exception -like "*The operation couldn't be performed because object*")
                 {
                     Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for Authentication Policies"
+                    $this.SkipExport($_)
                     return ''
                 }
                 throw $_

@@ -273,6 +273,7 @@ class EXOSafeLinksPolicy : M365DSCResourceBase
             else
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle)The current tenant is not registered to allow for Safe Attachment Rules."
+                $this.SkipExport('The current tenant is not registered to allow for Safe Links Policies.')
             }
             return $dscContent.ToString()
         }

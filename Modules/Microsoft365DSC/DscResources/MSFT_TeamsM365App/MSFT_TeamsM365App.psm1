@@ -269,6 +269,7 @@ class TeamsM365App : M365DSCResourceBase
             catch
             {
                 Write-Verbose $_
+                $this.SkipExport($_)
             }
 
             $i = 1

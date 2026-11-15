@@ -705,6 +705,7 @@ class AzureRoleEligibilityScheduleRequest : M365DSCResourceBase
                     $_.ErrorDetails.Message -like '*[AadPremiumLicenseRequired]*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
+                $this.SkipExport($_)
                 return ''
             }
             else

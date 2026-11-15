@@ -396,6 +396,7 @@ class SCAutoSensitivityLabelPolicy : M365DSCResourceBase
             if ($_.Exception.Message -like '*is not recognized as*name of a cmdlet*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for this feature."
+                $this.SkipExport($_)
             }
             else
             {

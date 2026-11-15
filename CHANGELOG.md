@@ -253,9 +253,12 @@
     resources, transient errors and authentication or permission errors.
   * Added `RawExportResults` with an unmodified copy of the last `GetForExport` result.
   * Fixed `Get()` of several resources not returning all authentication properties.
+  * Added `SkipExport` for resources whose export cannot read the tenant.
 * M365DSCReverse
   * Added the `PartiallySucceeded` resource status for resources with skipped instances
     with new statistics information.
+  * Added `SkippedResources` to the `-WithStatistics` output for unreadable resources,
+    left out of `ExportedResourceCount`.
   * Fixed `-ErrorAction Stop` being ignored and the output lines being interleaved in
     parallel mode.
   * Fixed verbose output being lost in parallel mode.
