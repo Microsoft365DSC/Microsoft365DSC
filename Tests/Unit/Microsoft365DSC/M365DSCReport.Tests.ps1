@@ -221,6 +221,7 @@ Describe 'New-M365DSCConfigurationToCSV' {
 
     It 'Writes the columns in a stable order without the authentication properties' {
         (Get-Content -Path $Script:CsvPath -TotalCount 1) | Should -Be '"Component Name","Property","Value"'
+        [System.IO.File]::ReadAllBytes($Script:CsvPath)[0..2] | Should -Be @(0xEF, 0xBB, 0xBF)
         $Script:Rows.Property | Should -Not -Contain 'ApplicationSecret'
         $Script:Rows.Property | Should -Not -Contain 'Credential'
     }

@@ -943,17 +943,25 @@ function Test-M365DSCModuleValidity
     }
 
     # Check whether a newer version of the module is available on the PowerShell Gallery
-    if ($Script:IsPsResourceGetAvailable)
+    $latestVersion = $null
+    try
     {
-        $latestVersion = (Find-PSResource -Name 'Microsoft365DSC' -Repository 'PSGallery').Version | Sort-Object -Descending | Select-Object -First 1
+        if ($Script:IsPsResourceGetAvailable)
+        {
+            $latestVersion = (Find-PSResource -Name 'Microsoft365DSC' -Repository 'PSGallery' -ErrorAction Stop).Version | Sort-Object -Descending | Select-Object -First 1
+        }
+        else
+        {
+            $latestVersion = (Find-Module -Name 'Microsoft365DSC' -Repository 'PSGallery' -ErrorAction Stop).Version | Sort-Object -Descending | Select-Object -First 1
+        }
     }
-    else
+    catch
     {
-        $latestVersion = (Find-Module -Name 'Microsoft365DSC' -Repository 'PSGallery').Version | Sort-Object -Descending | Select-Object -First 1
+        Write-Verbose -Message "Could not check the PowerShell Gallery for a newer version of Microsoft365DSC: $($_.Exception.Message)"
     }
     $localVersion = (Get-Module -Name 'Microsoft365DSC').Version
 
-    if ($latestVersion -gt $localVersion)
+    if ($null -ne $latestVersion -and $latestVersion -gt $localVersion)
     {
         Write-Host "There is a newer version of the 'Microsoft365DSC' module available on the gallery."
         Write-Host "To update the module and it's dependencies, run the following command:"

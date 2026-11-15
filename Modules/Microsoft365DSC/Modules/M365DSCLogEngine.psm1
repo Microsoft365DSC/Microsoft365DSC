@@ -224,6 +224,7 @@ function Add-M365DSCEvent
     try
     {
         $sourceExists = $false
+        $writeEntry = $true
         try
         {
             $sourceExists = [System.Diagnostics.EventLog]::SourceExists($Source)
@@ -250,7 +251,8 @@ function Add-M365DSCEvent
             }
             catch [System.Security.SecurityException]
             {
-                Write-Verbose -Message '[WARNING] Not all event logs could be searched. Source might exist in another event log.'
+                Write-Verbose -Message "[WARNING] The event source {$Source} could not be created in the event log {$LogName}. Creating an event source requires administrator rights."
+                $writeEntry = $false
             }
         }
 
@@ -273,13 +275,16 @@ function Add-M365DSCEvent
                 -EventType $EventType
         }
 
-        try
+        if ($writeEntry)
         {
-            [System.Diagnostics.EventLog]::WriteEntry($Source, $outputMessage, $EntryType, $EventID)
-        }
-        catch
-        {
-            Write-Verbose -Message $_
+            try
+            {
+                [System.Diagnostics.EventLog]::WriteEntry($Source, $outputMessage, $EntryType, $EventID)
+            }
+            catch
+            {
+                Write-Verbose -Message $_
+            }
         }
     }
     catch

@@ -219,6 +219,7 @@ function Start-M365DSCConfigurationExtract
     }
 
     $pushedLocation = $false
+    $Global:PartialExportFileName = $null
     try
     {
         $shouldOpenOutputDirectory = $false
@@ -243,14 +244,16 @@ function Start-M365DSCConfigurationExtract
             try
             {
                 Write-M365DSCHost -Message "Directory `"$OutputDSCPath`" doesn't exist; creating..."
-                New-Item -Path $OutputDSCPath -ItemType Directory | Out-Null
-                if ($?)
-                {
-                    break
-                }
+                $null = New-Item -Path $OutputDSCPath -ItemType Directory -ErrorAction Stop
+                break
             }
             catch
             {
+                # Prompts again only for a destination that was entered interactively
+                if (-not $shouldOpenOutputDirectory)
+                {
+                    throw "Could not create the output folder {$OutputDSCPath}. $($_.Exception.Message)"
+                }
                 Write-Warning "$($_.Exception.Message)"
                 Write-Warning "Could not create folder $OutputDSCPath!"
             }
@@ -1129,14 +1132,7 @@ function Start-M365DSCConfigurationExtract
         [System.IO.File]::WriteAllText($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($outputDSCFile),
             $DSCContent.ToString(), [System.Text.UTF8Encoding]::new($true))
 
-        try
-        {
-            $Global:M365DSCExportContentSize = $DSCContent.Length
-        }
-        catch
-        {
-            Write-Verbose -Message $_
-        }
+        $Global:M365DSCExportContentSize = $DSCContent.Length
 
         #region Benchmarks
         $M365DSCExportEndTime = [System.DateTime]::Now
@@ -1347,13 +1343,19 @@ function Start-M365DSCConfigurationExtract
     }
     catch
     {
-        # Close the partial export StreamWriter
-        Close-M365DSCPartialExport -FileName $Global:PartialExportFileName
-
-        if (-not [System.String]::IsNullOrEmpty($env:TEMP))
+        if (-not [System.String]::IsNullOrEmpty($Global:PartialExportFileName))
         {
-            $partialPath = Join-Path $env:TEMP -ChildPath "$($Global:PartialExportFileName)"
-            Write-M365DSCHost -Message "Partial Export file was saved at: $partialPath"
+            # Close the partial export StreamWriter
+            Close-M365DSCPartialExport -FileName $Global:PartialExportFileName
+
+            if (-not [System.String]::IsNullOrEmpty($env:TEMP))
+            {
+                $partialPath = Join-Path $env:TEMP -ChildPath "$($Global:PartialExportFileName)"
+                if (Test-Path -LiteralPath $partialPath)
+                {
+                    Write-M365DSCHost -Message "Partial Export file was saved at: $partialPath"
+                }
+            }
         }
 
         throw

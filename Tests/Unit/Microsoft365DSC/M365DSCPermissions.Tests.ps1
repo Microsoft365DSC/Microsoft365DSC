@@ -44,6 +44,11 @@ Describe 'Get-M365DSCCompiledPermissionList' {
         $result.AdministrativeRoles.Read | Should -Be @('Role A', 'Role B')
         $result.AdministrativeRoles.Update.GetType() | Should -Be ([System.String[]])
         $result.RequiredRoles.Read.GetType() | Should -Be ([System.String[]])
+
+        $delegatedRead = Get-M365DSCCompiledPermissionList -ResourceNameList @('ResourceA') -PermissionType Delegated -AccessType Read
+        $delegatedRead.Permissions.GetType() | Should -Be ([System.Object[]])
+        $delegatedRead.Permissions.Count | Should -Be 1
+        $delegatedRead.Permissions[0].PermissionName | Should -Be 'group.read.all'
     }
 
     It 'keeps a separate permission list per resource with GroupByResourceName' {

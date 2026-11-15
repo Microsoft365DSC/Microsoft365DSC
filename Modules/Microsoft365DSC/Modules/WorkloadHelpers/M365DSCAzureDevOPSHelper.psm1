@@ -20,6 +20,7 @@
 .OUTPUTS
     System.Management.Automation.PSCustomObject
     Returns the response from the Azure DevOPS API converted from JSON, or $null when the response content is empty.
+    For GET requests, the value, items and members arrays of all pages are merged into the first page.
 #>
 function Invoke-M365DSCAzureDevOPSWebRequest
 {
@@ -60,11 +61,53 @@ function Invoke-M365DSCAzureDevOPSWebRequest
         $params.Add('Body', $Body)
     }
 
-    $response = Invoke-WebRequest @params -UseBasicParsing
     $result = $null
-    if (-not [System.String]::IsNullOrEmpty($response.Content))
+    $previousToken = $null
+    do
     {
-        $result = ConvertFrom-Json $response.Content
-    }
+        $response = Invoke-WebRequest @params -UseBasicParsing
+        $page = $null
+        if (-not [System.String]::IsNullOrEmpty($response.Content))
+        {
+            $page = ConvertFrom-Json $response.Content
+        }
+
+        $continuationToken = $null
+        if ($Method -eq 'GET')
+        {
+            if ($null -ne $response.Headers)
+            {
+                $continuationToken = $response.Headers['X-MS-ContinuationToken'] | Select-Object -First 1
+            }
+            if ([System.String]::IsNullOrEmpty($continuationToken) -and $null -ne $page -and $null -ne $page.PSObject.Properties['continuationToken'])
+            {
+                $continuationToken = $page.continuationToken | Select-Object -First 1
+            }
+        }
+
+        if ($null -eq $result)
+        {
+            $result = $page
+        }
+        elseif ($null -ne $page)
+        {
+            foreach ($property in @('value', 'items', 'members'))
+            {
+                if ($null -ne $page.PSObject.Properties[$property] -and $null -ne $result.PSObject.Properties[$property])
+                {
+                    $result.$property = @($result.$property) + @($page.$property)
+                }
+            }
+        }
+
+        if ([System.String]::IsNullOrEmpty($continuationToken) -or $continuationToken -eq $previousToken)
+        {
+            break
+        }
+        $previousToken = $continuationToken
+        $separator = if ($Uri.Contains('?')) { '&' } else { '?' }
+        $params.Uri = $Uri + $separator + 'continuationToken=' + [System.Uri]::EscapeDataString($continuationToken)
+    } while ($true)
+
     return $result
 }

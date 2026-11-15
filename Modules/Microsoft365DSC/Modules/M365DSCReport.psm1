@@ -1020,7 +1020,7 @@ function New-M365DSCConfigurationToCSV
             $row++
         }
     }
-    $csvOutput | Export-Csv -LiteralPath $OutputPath -Encoding UTF8 -Delimiter $Delimiter -NoTypeInformation
+    $csvOutput | Export-Csv -LiteralPath $OutputPath -Encoding utf8BOM -Delimiter $Delimiter -NoTypeInformation
 }
 
 <#
