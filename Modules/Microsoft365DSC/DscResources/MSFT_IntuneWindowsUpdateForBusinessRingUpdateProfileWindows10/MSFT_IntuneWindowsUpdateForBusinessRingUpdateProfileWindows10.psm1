@@ -572,7 +572,16 @@ class IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10 : M365DSCResource
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return @{
-            ExcludedProperties = @('FeatureUpdatesWillBeRolledBack', 'QualityUpdatesWillBeRolledBack')
+            ExcludedProperties = @(
+                'FeatureUpdatesWillBeRolledBack'
+                'QualityUpdatesWillBeRolledBack'
+                'FeatureUpdatesPauseExpiryDateTime'
+                'FeatureUpdatesPauseStartDate'
+                'FeatureUpdatesRollbackStartDateTime'
+                'QualityUpdatesPauseExpiryDateTime'
+                'QualityUpdatesPauseStartDate'
+                'QualityUpdatesRollbackStartDateTime'
+            )
         }
     }
 
