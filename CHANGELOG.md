@@ -28,9 +28,11 @@
     `RoleManagementPolicy.ReadWrite.AzureADGroup` permissions. Without them, the export
     returns no instance and `Set()` cannot update the policy rules of a group.
 * AADRoleAssignmentScheduleRequest
-  * Fixed `Set()` creating a schedule again after it has ended.
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
 * AADRoleEligibilityScheduleRequest
-  * Fixed `Set()` creating a schedule again after it has ended.
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
 * AADTenantDetails
   * Added the `ResourceQuotas` property.
 * AADUserFlowAttribute

@@ -1208,6 +1208,12 @@ class M365DSCResourceBase
         return $null -ne $end -and $end -lt [System.DateTimeOffset]::UtcNow
     }
 
+    hidden static [System.Boolean] TestDurationWithoutStart([System.Object] $ScheduleInfo)
+    {
+        return $ScheduleInfo.Expiration.Type -eq 'afterDuration' -and
+            $null -eq [M365DSCResourceBase]::ConvertToDateTimeOffset($ScheduleInfo.StartDateTime)
+    }
+
     # Warns that the resource is deprecated, names its replacement and, when given, a link with more information.
     hidden [void] WarnResourceDeprecated([System.String] $Replacement, [System.String] $InformationUrl)
     {
