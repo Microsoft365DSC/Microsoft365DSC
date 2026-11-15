@@ -240,7 +240,7 @@ function Get-M365DSCCompiledPermissionList
 
     if ($PSBoundParameters.ContainsKey('PermissionType'))
     {
-        $resultsByType = $results.$AccessType | Where-Object -FilterScript { $_.Permission.Type -eq $PermissionType }
+        $resultsByType = @($results.$AccessType | Where-Object -FilterScript { $_.Permission.Type -eq $PermissionType })
         $resultsByType | ForEach-Object -Process {
             $_.PermissionName = $_.Permission.Name
             $_.Remove('Permission')
@@ -706,7 +706,7 @@ function Resolve-M365DSCPermissionAppRole
     Specifies the application id used for app-based authentication.
 
 .PARAMETER TenantId
-    Specifies the tenant id or tenant domain used for authentication.
+    Specifies the tenant domain (for example contoso.onmicrosoft.com) used for authentication. A tenant GUID is not supported.
 
 .PARAMETER ApplicationSecret
     Specifies the application secret used for app-based authentication.
@@ -918,10 +918,13 @@ function Update-M365DSCAzureAdApplication
             }
             else
             {
+                # Resolves a relative path against the current location
+                $CertificatePath = $PSCmdlet.GetUnresolvedProviderPathFromPSPath($CertificatePath)
+
                 if ($CreateSelfSignedCertificate)
                 {
                     # CreateSelfSignedCertificate is specified and path specified in CertificatePath already exists.
-                    if ((Test-Path -Path $CertificatePath) -eq $true)
+                    if ((Test-Path -LiteralPath $CertificatePath) -eq $true)
                     {
                         Write-LogEntry -Message "Specified CertificatePath '$CertificatePath', where the Self Signed Certificate should be exported, already exists." -Type Error
                         return
@@ -930,7 +933,7 @@ function Update-M365DSCAzureAdApplication
                 else
                 {
                     # CreateSelfSignedCertificate is NOT specified and path specified in CertificatePath does not exists.
-                    if (-not (Test-Path -Path $CertificatePath))
+                    if (-not (Test-Path -LiteralPath $CertificatePath))
                     {
                         Write-LogEntry -Message "Specified CertificatePath '$CertificatePath' does not exist." -Type Error
                         return

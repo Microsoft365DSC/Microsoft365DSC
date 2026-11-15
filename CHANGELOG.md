@@ -70,6 +70,8 @@
     certificate creation and storing handling.
   * Fixed `Set-M365DSCAgentCertificateConfiguration -ForceRenew` keeping the private keys
     of the replaced certificates.
+* M365DSCAzureDevOPSHelper
+  * Fixed list requests returning only the first page of groups and user entitlements.
 * M365DSCAzureHelper
   * Fixed Azure Billing requests treating failures as empty results, returning only the
     first page and ignoring the `includeAll` parameter for the billing account list.
@@ -202,11 +204,14 @@
   * Fixed failed dependency imports being treated as loaded for the rest of the session.
   * Fixed a module missing from the dependency manifest failing when it is already loaded.
   * Fixed `Update-M365DSCModule` ignoring a failed module update.
+  * Fixed the check for a newer Microsoft365DSC version failing reports and exports
+    without access to the PowerShell Gallery.
 * M365DSCPermissions
   * Removed the retired `Germany` environment from `Update-M365DSCAllowedGraphScopes`.
   * Fixed several issues in `Update-M365DSCAzureAdApplication` regarding API permissions,
     certificate handling, admin consent, applications with the same name and failed lookups.
-  * Fixed `Get-M365DSCCompiledPermissionList` not sorting the roles and output.
+  * Fixed `Get-M365DSCCompiledPermissionList` not sorting the roles and output and
+    returning a single permission as a hashtable instead of an array.
   * Fixed `Update-M365DSCAllowedGraphScopes` requesting an invalid scope.
 * M365DSCPowerPlatformRESTHelper
   * Fixed the hint for a missing Power Platform admin management application never
@@ -220,6 +225,7 @@
   * Fixed array values containing commas being shown as several items.
   * Fixed CSV and Excel reports removing `@`, `(` and `)` from values, cutting complex
     values, showing type names and leaving a row blank when the key is the first property.
+  * Fixed CSV reports showing non-ASCII characters incorrectly in Excel.
   * Fixed Excel reports being slow for large configurations, failing for a relative path
     or an existing file and not releasing the Excel process.
   * Fixed JSON reports writing an object instead of an array for a single resource.
@@ -249,6 +255,8 @@
   * Fixed a failure in the validation or SharePoint app steps losing the export.
   * Fixed the early return when no selected resource can be exported, and the working
     directory not being restored on failure.
+  * Fixed a `-Path` that cannot be created prompting for another folder instead of failing.
+  * Fixed a failure before the export starts being replaced by a parameter binding error.
   * Fixed the warning for resources that do not support filters never being shown.
   * Fixed the `[x/y]` total counting resources without a definition.
   * Fixed a `-Components` wildcard that matches no resource failing the export.
