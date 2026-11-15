@@ -109,6 +109,11 @@ namespace Microsoft365DSC.Compare
                 {
                     if (!currentHasKey || currentValue is null)
                     {
+                        if (RuleValues.IsNullOrEmptyCollection(desiredValue))
+                        {
+                            continue;
+                        }
+
                         driftInfo.Add(DriftRecord.Create(key, null, desiredValue));
                         AddDriftedParameter(driftedParameters, key, "null", "[Array]");
                         returnValue = false;

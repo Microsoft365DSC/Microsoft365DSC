@@ -77,6 +77,7 @@
     first page and ignoring the `includeAll` parameter for the billing account list.
 * M365DSCCompare
   * Updated `Compare-M365DSCResourceState` to fail when post-processing fails.
+  * Fixed an empty desired collection drifting from a missing or null value.
 * M365DSCConfigurationCompiler
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
     pipeline without `ConfigurationName` ignores.

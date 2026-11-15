@@ -348,6 +348,13 @@ Describe 'ConfigurationComparer.Compare' {
             $displayName['KeyValue'] | Should -Be 'a'
         }
 
+        It 'Reports nothing for an empty desired collection the source leaves out or sets to null' {
+            $source = @(New-Resource -ResourceName 'TestResource' -InstanceName 'S' -Values @{ Identity = 'a'; Items = $null; Nesting = @{ State = 's'; Targets = $null } })
+            $destination = @(New-Resource -ResourceName 'TestResource' -InstanceName 'D' -Values @{ Identity = 'a'; Tags = @(); Items = @(); Plain = @(); Nesting = @{ State = 's'; Targets = @() } })
+
+            (Invoke-ConfigurationCompare -Source $source -Destination $destination).Count | Should -Be 0
+        }
+
         It 'Reports nothing for identical instances' {
             $source = New-Resource -ResourceName 'TestResource' -InstanceName 'Inst' -Values @{ Identity = 'a'; DisplayName = 'x'; Tags = @('t1', 't2'); Ensure = 'Present' }
             $destination = New-Resource -ResourceName 'TestResource' -InstanceName 'Inst' -Values @{ Identity = 'a'; DisplayName = 'x'; Tags = @('t1', 't2'); Ensure = 'Present' }
@@ -1000,6 +1007,13 @@ Describe 'SimpleObjectComparer.Compare' {
         $result['DriftObject']['DriftInfo'][0]['DesiredValue'] | Should -Be '$null'
     }
 
+    It 'Treats an empty desired array and a null or missing current value as equal' {
+        (Invoke-SimpleCompare -Current @{ A = $null } -Desired @{ A = @() } -Keys @('A'))['TestResult'] | Should -BeTrue
+        (Invoke-SimpleCompare -Current @{ } -Desired @{ A = @() } -Keys @('A'))['TestResult'] | Should -BeTrue
+        (Invoke-SimpleCompare -Current @{ A = @() } -Desired @{ A = $null } -Keys @('A'))['TestResult'] | Should -BeTrue
+        (Invoke-SimpleCompare -Current @{ A = $null } -Desired @{ A = @('x') } -Keys @('A'))['TestResult'] | Should -BeFalse
+    }
+
     It 'Renders a null desired value as $null' {
         $result = Invoke-SimpleCompare -Current @{ A = 'x' } -Desired @{ A = $null } -Keys @('A')
 
@@ -1056,6 +1070,15 @@ Describe 'ComplexObjectComparer.Compare drift shapes' {
         $key.Item1[0]['PropertyName'] | Should -Be 'Prop.A'
         $key.Item1[0]['CurrentValue'] | Should -Be 'Current value is NOT null'
         $key.Item1[0]['DesiredValue'] | Should -Be 'Desired value is null'
+    }
+
+    It 'Treats an empty collection and null as equal at the root and at key level' {
+        (Invoke-ComplexCompare -Source @() -Target $null).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source $null -Target @()).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source @{ A = @() } -Target @{ A = $null }).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source @{ A = $null } -Target @{ A = [System.Collections.ArrayList]::new() }).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source @{ A = @('x') } -Target @{ A = $null }).Item2 | Should -BeFalse
+        (Invoke-ComplexCompare -Source @{ A = '' } -Target @{ A = $null }).Item2 | Should -BeFalse
     }
 
     It 'Treats numerically equal values of different types as equal' {
@@ -1216,10 +1239,14 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
     }
 
     It 'NullEqualsEmpty reads a missing current array as empty' {
-        $rules = @(@{ Type = 'NullEqualsEmpty'; PropertyPattern = '^Members$' })
+        $rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'NullEqualsEmpty'; PropertyPattern = '^Members$' }))
+        $desired = @{ Members = @('a') }
 
-        Invoke-RuleCompare -Rules @() -Source @{ } -Destination @{ Members = @() } | Should -Be @('Members')
-        Invoke-RuleCompare -Rules $rules -Source @{ } -Destination @{ Members = @() } | Should -BeNullOrEmpty
+        $rewritten = [Microsoft365DSC.Compare.CompareRule]::ApplyAll($rules, $desired, @{ }, $desired.Clone(), [System.Object[]] @(), 'X')
+
+        $rewritten.Item2.ContainsKey('Members') | Should -BeTrue
+        @($rewritten.Item2.Members).Count | Should -Be 0
+        Invoke-RuleCompare -Rules @(@{ Type = 'NullEqualsEmpty'; PropertyPattern = '^Members$' }) -Source @{ } -Destination @{ Members = @() } | Should -BeNullOrEmpty
     }
 
     It 'Tolerance skips time spans within the allowed difference' {
