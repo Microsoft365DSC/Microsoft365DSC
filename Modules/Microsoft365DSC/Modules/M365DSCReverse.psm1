@@ -1339,17 +1339,22 @@ function Start-M365DSCConfigurationExtract
             }
 
             $skippedResources = @()
+            $skippedSucceededResourceCount = 0
             foreach ($resourceSkip in $synchronizedHashtable.ResourceSkips.GetEnumerator())
             {
                 $skippedResources += @{
                     ResourceName = $resourceSkip.Key
                     Message      = $resourceSkip.Value
                 }
+                if ($synchronizedHashtable.ResourceStatus[$resourceSkip.Key] -eq 'Succeeded')
+                {
+                    $skippedSucceededResourceCount++
+                }
             }
 
             @{
                 ExportDurationInSeconds        = $timeTaken.TotalSeconds
-                ExportedResourceCount          = $synchronizedHashtable.SuccessfulResources
+                ExportedResourceCount          = $synchronizedHashtable.SuccessfulResources - $skippedSucceededResourceCount
                 PartiallyExportedResourceCount = $synchronizedHashtable.PartiallySucceededResources
                 FailedResourceCount            = $synchronizedHashtable.FailedResources
                 SkippedResourceCount           = $skippedResources.Count

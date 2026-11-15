@@ -249,7 +249,8 @@
 * M365DSCReverse
   * Added the `PartiallySucceeded` resource status for resources with skipped instances
     with new statistics information.
-  * Added `SkippedResources` to the `-WithStatistics` output for unreadable resources.
+  * Added `SkippedResources` to the `-WithStatistics` output for unreadable resources,
+    left out of `ExportedResourceCount`.
   * Fixed `-ErrorAction Stop` being ignored and the output lines being interleaved in
     parallel mode.
   * Fixed verbose output being lost in parallel mode.

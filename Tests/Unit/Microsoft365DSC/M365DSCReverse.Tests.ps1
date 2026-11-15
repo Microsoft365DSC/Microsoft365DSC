@@ -152,7 +152,8 @@ Describe 'Start-M365DSCConfigurationExtract' {
             $statistics.SkippedResources.Count | Should -Be 1
             $statistics.SkippedResources[0].ResourceName | Should -Be 'AADGroup'
             $statistics.SkippedResources[0].Message | Should -Be 'Insufficient privileges to complete the operation.'
-            $statistics.ExportedResourceCount | Should -Be 2
+            $statistics.ExportedResourceCount | Should -Be 1
+            $statistics.TotalResourceCount | Should -Be 2
             $statistics.FailedResourceCount | Should -Be 0
             $statistics.FailedResources.Count | Should -Be 0
             $Global:M365DSCExportResourceSkipMessage | Should -BeNullOrEmpty
@@ -166,6 +167,7 @@ Describe 'Start-M365DSCConfigurationExtract' {
 
             $statistics.SkippedResourceCount | Should -Be 0
             $statistics.SkippedResources.Count | Should -Be 0
+            $statistics.ExportedResourceCount | Should -Be 1
         }
 
         It 'warns when a filter is passed for a resource without a Filter property' {
