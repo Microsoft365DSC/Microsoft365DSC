@@ -42,6 +42,8 @@
   * Fixed `Set()` clearing the description and rule when `Description` or `Rule` is not specified.
 * IntuneDeviceCategory
   * Fixed `Set()` clearing the description when `Description` is not specified.
+* IntuneDeviceEnrollmentPlatformRestriction
+  * Added missing property `isServerEnrollmentBlocked` to `MSFT_DeviceEnrollmentPlatformRestriction`.
 * IntuneMobileThreatDefenseConnector
   * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
     added Id for `iVerify`.

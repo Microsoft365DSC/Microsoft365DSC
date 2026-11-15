@@ -51,6 +51,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     PlatformRestriction = @{
                         PersonalDeviceEnrollmentBlocked = $False
                         PlatformBlocked                 = $False
+                        IsServerEnrollmentBlocked       = $False
                     }
                     platformType        = 'ios'
                     id                                = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
@@ -83,6 +84,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $False
+                            isServerEnrollmentBlocked       = $False
                         })
                 }
 
@@ -96,6 +98,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         PlatformRestriction = @{
                             PersonalDeviceEnrollmentBlocked = $False
                             PlatformBlocked                 = $False
+                            IsServerEnrollmentBlocked       = $False
                         }
                         platformType        = 'ios'
                         id                                = '12345-12345-12345-12345-12345_SinglePlatformRestriction'
@@ -118,7 +121,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should create the restriction from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -Property $testParams).Set()
                 Should -Invoke -CommandName 'New-MgBetaDeviceManagementDeviceEnrollmentConfiguration' -Exactly 1 -ParameterFilter {
-                    $BodyParameter.platformType -eq 'ios' -and $null -ne $BodyParameter.platformRestriction
+                    $BodyParameter.platformType -eq 'ios' -and
+                    $null -ne $BodyParameter.platformRestriction -and
+                    $BodyParameter.platformRestriction.isServerEnrollmentBlocked -eq $false
                 }
             }
         }
@@ -136,6 +141,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $False
+                            isServerEnrollmentBlocked       = $False
                         })
                 }
 
@@ -163,6 +169,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $True # Updated property
+                            isServerEnrollmentBlocked       = $False
                         })
                 }
             }
@@ -185,6 +192,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     IosRestriction                    = ([MSFT_DeviceEnrollmentPlatformRestriction] @{
                             platformBlocked                 = $False
                             personalDeviceEnrollmentBlocked = $False
+                            isServerEnrollmentBlocked       = $False
                         })
                 }
             }
@@ -215,6 +223,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should Reverse Engineer resource from the Export method' {
                 $result = Invoke-M365DSCResourceMethod -ResourceName 'IntuneDeviceEnrollmentPlatformRestriction' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
+                $result | Should -Match 'isServerEnrollmentBlocked = \$False'
             }
         }
     }

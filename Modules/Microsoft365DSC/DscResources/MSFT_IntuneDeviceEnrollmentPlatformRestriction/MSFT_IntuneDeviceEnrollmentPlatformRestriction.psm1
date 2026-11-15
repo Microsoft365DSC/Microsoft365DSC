@@ -725,6 +725,10 @@ class MSFT_DeviceEnrollmentPlatformRestriction
     [System.Nullable[System.Boolean]] $PersonalDeviceEnrollmentBlocked
 
     [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether server enrollment is blocked.')]
+    [System.Nullable[System.Boolean]] $IsServerEnrollmentBlocked
+
+    [DscProperty()]
     [System.ComponentModel.Description('Min OS version supported.')]
     [System.String] $OsMinimumVersion
 
