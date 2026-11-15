@@ -27,7 +27,7 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
 
     [DscProperty(Key)]
     [System.ComponentModel.Description('The type of entry to add.')]
-    [ValidateSet('FileHash', 'Sender', 'Url')]
+    [ValidateSet('FileHash', 'IP', 'Sender', 'Url')]
     [System.String] $ListType
 
     [DscProperty()]
@@ -217,7 +217,7 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
 
         try
         {
-            $ListTypes = ('FileHash', 'Sender', 'Url')
+            $ListTypes = ('FileHash', 'IP', 'Sender', 'Url')
             $listValues = [System.Collections.Generic.List[System.Object]]::new()
 
             foreach ($ListType in $ListTypes)
