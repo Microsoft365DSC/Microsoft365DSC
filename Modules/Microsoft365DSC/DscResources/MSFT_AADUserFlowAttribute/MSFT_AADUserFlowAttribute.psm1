@@ -151,7 +151,17 @@ class AADUserFlowAttribute : M365DSCResourceBase
 
             try
             {
-                New-MgBetaIdentityUserFlowAttribute -DataType $this.DataType -Description $this.Description -DisplayName $this.DisplayName
+                $createParameters = @{
+                    DisplayName = $this.DisplayName
+                }
+                foreach ($property in @('DataType', 'Description'))
+                {
+                    if ($null -ne $this.$property)
+                    {
+                        $createParameters[$property] = $this.$property
+                    }
+                }
+                New-MgBetaIdentityUserFlowAttribute -BodyParameter $createParameters
             }
             catch
             {
@@ -173,8 +183,11 @@ class AADUserFlowAttribute : M365DSCResourceBase
                 Write-Warning -Message "There is a deviation in display name and data type for the resource with ID '$($currentUserFlowAttribute.Id)' but these values are not settable so cannot update them."
             }
 
-            Write-Verbose -Message "Updating description of user flow attribute with display name '$($this.DisplayName)'"
-            Update-MgBetaIdentityUserFlowAttribute -IdentityUserFlowAttributeId $currentUserFlowAttribute.Id -Description $this.Description
+            if ($null -ne $this.Description)
+            {
+                Write-Verbose -Message "Updating description of user flow attribute with display name '$($this.DisplayName)'"
+                Update-MgBetaIdentityUserFlowAttribute -IdentityUserFlowAttributeId $currentUserFlowAttribute.Id -Description $this.Description
+            }
         }
     }
 

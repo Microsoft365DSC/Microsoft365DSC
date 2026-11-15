@@ -53,7 +53,7 @@ function Get-M365DSCEvaluationRulesForConfiguration
         $ConnectionMode
     )
 
-    $configurationAsObject = ConvertTo-DSCObject -Path $ConfigurationPath
+    $configurationAsObject = ConvertTo-DSCObject -Content (Get-Content -LiteralPath $ConfigurationPath -Raw)
 
     $groupCondition = {
         $_.ResourceName
@@ -126,9 +126,10 @@ function Get-M365DSCEvaluationRulesForConfiguration
 
     if ($PSCmdlet.ParameterSetName -eq 'Configuration')
     {
-        if (-not (Test-Path -Path $OutputPath))
+        $outputFolder = Split-Path -Path $OutputPath -Parent
+        if (-not [System.String]::IsNullOrEmpty($outputFolder) -and -not (Test-Path -LiteralPath $outputFolder))
         {
-            New-Item -Path $OutputPath -ItemType File -Force | Out-Null
+            New-Item -Path $outputFolder -ItemType Directory -Force | Out-Null
         }
 
         # Declare and resolve the PSCredential the rule blocks reference, the same way exported configurations do.
@@ -197,7 +198,7 @@ $credentialResolution
 
         $M365DSCRuleEvaluationString = $DSCString.Replace('<Instances>', $M365DSCRuleEvaluationString)
 
-        $M365DSCRuleEvaluationString | Out-File -FilePath $OutputPath
+        $M365DSCRuleEvaluationString | Out-File -LiteralPath $OutputPath
     }
     else
     {

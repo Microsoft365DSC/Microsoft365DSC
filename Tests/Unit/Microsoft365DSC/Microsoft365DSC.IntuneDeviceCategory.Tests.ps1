@@ -64,7 +64,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             BeforeAll {
                 $testParams = @{
                     DisplayName     = 'Test Category'
-                    Description     = 'Test Definition'
                     RoleScopeTagIds = @('0')
                     Ensure          = 'Present'
                     Credential      = $Credential
@@ -85,7 +84,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should create the category from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceCategory' -Property $testParams).Set()
-                Should -Invoke -CommandName 'New-MgBetaDeviceManagementDeviceCategory' -Exactly 1
+                Should -Invoke -CommandName 'New-MgBetaDeviceManagementDeviceCategory' -Exactly 1 -ParameterFilter {
+                    $BodyParameter.DisplayName -eq 'Test Category' -and -not $BodyParameter.ContainsKey('Description')
+                }
             }
         }
 
@@ -151,7 +152,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should update the category from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceCategory' -Property $testParams).Set()
-                Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceCategory -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceCategory -Exactly 1 -ParameterFilter {
+                    -not [System.String]::IsNullOrEmpty($DeviceCategoryId) -and $BodyParameter.Description -eq 'Different Value'
+                }
             }
         }
 

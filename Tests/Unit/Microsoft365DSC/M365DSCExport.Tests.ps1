@@ -143,17 +143,18 @@ Describe 'Split-M365DSCConfiguration' {
         Get-Content -Path $files[0].FullName -Raw | Should -Match '(?s)\}\n\n        AADGroup "AADGroup-Two"'
     }
 
-    It 'falls back to the configuration name when the source has no launch line' {
+    It 'falls back to the configuration name when the LF source has no launch line' {
         $sourcePath = Join-Path -Path $TestDrive -ChildPath 'NoLaunch.ps1'
         $outputFolder = Join-Path -Path $TestDrive -ChildPath 'SplitNoLaunch'
         $null = New-Item -Path $outputFolder -ItemType Directory -Force
-        $content = $Script:SourceConfiguration.Substring(0, $Script:SourceConfiguration.LastIndexOf('}') + 1)
+        $content = $Script:SourceConfiguration.Substring(0, $Script:SourceConfiguration.LastIndexOf('}') + 1).Replace("`r`n", "`n")
         Set-Content -Path $sourcePath -Value $content -NoNewline -Encoding utf8
 
         Split-M365DSCConfiguration -Path $sourcePath -OutputFolder $outputFolder
 
         $result = Get-Content -Path (Join-Path -Path $outputFolder -ChildPath 'M365TenantConfig_1.ps1') -Raw
         $result.TrimEnd() | Should -Match 'MyTenant -ConfigurationData \.\\ConfigurationData\.psd1$'
+        $result | Should -Match 'AADGroup "AADGroup-Three"'
     }
 }
 
