@@ -96,7 +96,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScheduleInfo         = [MSFT_AADRoleEligibilityScheduleRequestSchedule] @{
                         startDateTime             = '2023-09-01T02:40:44Z'
                         expiration = [MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration] @{
-                            endDateTime = '2025-10-31T02:40:09Z'
+                            endDateTime = '2099-10-31T02:40:09Z'
                             type        = 'afterDateTime'
                         }
                     }
@@ -105,6 +105,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaRoleManagementDirectoryRoleEligibilitySchedule -MockWith {
                     return $null
+                }
+
+                $endedParams = $testParams.Clone()
+                $endedParams.ScheduleInfo = [MSFT_AADRoleEligibilityScheduleRequestSchedule] @{
+                    startDateTime = '2023-09-01T02:40:44Z'
+                    expiration = [MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration] @{
+                        endDateTime = '2025-10-31T02:40:09Z'
+                        type = 'afterDateTime'
+                    }
+                }
+                $passedDurationParams = $testParams.Clone()
+                $passedDurationParams.ScheduleInfo = [MSFT_AADRoleEligibilityScheduleRequestSchedule] @{
+                    startDateTime = '2023-09-01T02:40:44Z'
+                    expiration = [MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration] @{
+                        duration = 'P30D'
+                        type = 'afterDuration'
+                    }
+                }
+                $durationWithoutStartParams = $testParams.Clone()
+                $durationWithoutStartParams.ScheduleInfo = [MSFT_AADRoleEligibilityScheduleRequestSchedule] @{
+                    expiration = [MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration] @{
+                        duration = 'P30D'
+                        type = 'afterDuration'
+                    }
                 }
             }
             It 'Should return Values from the Get method' {
@@ -116,6 +140,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should Create the instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleEligibilityScheduleRequest -Exactly 1
+            }
+            It 'Should return true from the Test method when the schedule has ended' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $endedParams).Test() | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $passedDurationParams).Test() | Should -Be $true
+            }
+            It 'Should return false from the Test method for a duration without a start' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $durationWithoutStartParams).Test() | Should -Be $false
+            }
+            It 'Should create the instance from the Set method for a duration without a start and no live schedule' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $durationWithoutStartParams).Set()
+                Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleEligibilityScheduleRequest -Exactly 1
+            }
+            It 'Should not create the instance from the Set method when the schedule has ended' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $endedParams).Set()
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $passedDurationParams).Set()
+                Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleEligibilityScheduleRequest -Exactly 0
             }
         }
 
@@ -169,7 +209,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Get-MgBetaRoleManagementDirectoryRoleEligibilitySchedule -MockWith {
-                    $start = [System.DateTime]::new(2026, 1, 1, 8, 0, 0, [System.DateTimeKind]::Utc)
+                    $start = [System.DateTime]::UtcNow.Date.AddDays(-10)
                     return @{
                         Id               = '12345-12345-12345-12345-12345'
                         DirectoryScopeId = '/'
@@ -194,6 +234,59 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $true
             }
         }
+        Context -Name 'The instance has a duration without a start and the live schedule exists' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    DirectoryScopeId = '/'
+                    Ensure           = 'Present'
+                    PrincipalType    = 'User'
+                    Principal        = 'John.Smith@contoso.com'
+                    RoleDefinition   = 'Teams Communications Administrator'
+                    ScheduleInfo     = [MSFT_AADRoleEligibilityScheduleRequestSchedule] @{
+                        expiration = [MSFT_AADRoleEligibilityScheduleRequestScheduleExpiration] @{
+                            duration = 'P30D'
+                            type     = 'afterDuration'
+                        }
+                    }
+                    Credential       = $Credential
+                }
+                $Script:LiveScheduleStart = [System.DateTime]::UtcNow.Date
+                $Script:LiveScheduleDays = 30
+                Mock -CommandName Get-MgBetaRoleManagementDirectoryRoleEligibilitySchedule -MockWith {
+                    return @{
+                        Id               = '12345-12345-12345-12345-12345'
+                        DirectoryScopeId = '/'
+                        PrincipalId      = '123456'
+                        RoleDefinitionId = '12345'
+                        ScheduleInfo     = @{
+                            startDateTime = $Script:LiveScheduleStart
+                            expiration    = @{
+                                endDateTime = $Script:LiveScheduleStart.AddDays($Script:LiveScheduleDays)
+                                type        = 'afterDateTime'
+                            }
+                        }
+                    }
+                }
+            }
+
+            It 'Should return true from the Test method and not update from the Set method when the live end has passed' {
+                $Script:LiveScheduleStart = [System.DateTime]::UtcNow.Date.AddDays(-60)
+                $Script:LiveScheduleDays = 20
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleEligibilityScheduleRequest -Exactly 0
+            }
+
+            It 'Should compare and update the instance when the live end lies ahead' {
+                $Script:LiveScheduleStart = [System.DateTime]::UtcNow.Date.AddDays(-10)
+                $Script:LiveScheduleDays = 30
+                $testParams.ScheduleInfo.Expiration.Duration = 'P60D'
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $testParams).Test() | Should -Be $false
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleEligibilityScheduleRequest' -Property $testParams).Set()
+                Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleEligibilityScheduleRequest -Exactly 1
+            }
+        }
+
         Context -Name 'The instance Exists and specified Values are NOT in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{

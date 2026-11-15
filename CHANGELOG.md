@@ -15,6 +15,7 @@
   * Added the `RoleManagementPolicy.ReadWrite.AzureADGroup` permission. Without it, `Set()`
     cannot read or update the expiration rule of the group policy, which it does for the
     `noExpiration`, `afterDateTime` and `afterDuration` expiration types.
+  * Fixed `Set()` creating a schedule again after it has ended.
 * AADGroupEligibilityScheduleSettings
   * Added the `RoleManagementPolicy.Read.AzureADGroup` permission. Without it, the export
     returns no instance.
@@ -26,6 +27,12 @@
   * Added the `RoleManagementPolicy.Read.AzureADGroup` and
     `RoleManagementPolicy.ReadWrite.AzureADGroup` permissions. Without them, the export
     returns no instance and `Set()` cannot update the policy rules of a group.
+* AADRoleAssignmentScheduleRequest
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
+* AADRoleEligibilityScheduleRequest
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
 * AADTenantDetails
   * Added the `ResourceQuotas` property.
 * AADUserFlowAttribute
