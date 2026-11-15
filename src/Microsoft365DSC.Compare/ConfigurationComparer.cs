@@ -32,9 +32,8 @@ namespace Microsoft365DSC.Compare
         /// <param name="excludedProperties">Property names to skip on every resource.</param>
         /// <param name="excludedResources">Resource names to skip entirely.</param>
         /// <param name="compareParameters">
-        /// Per-resource comparison overrides, keyed by resource name. Merged with the schema's own
-        /// declarations, and the only way to supply a post-processing callback, which cannot be
-        /// expressed in the schema.
+        /// Per-resource comparison overrides, keyed by resource name. A supplied entry replaces the
+        /// schema's declarations for that resource and is the only source of a post-processing callback.
         /// </param>
         /// <returns>One entry per differing property, plus one per resource missing on either side.</returns>
         public static List<ConfigurationDelta> Compare(
@@ -96,7 +95,11 @@ namespace Microsoft365DSC.Compare
 
                 if (sourceInstance.Key is null || !firstDestinationByKey.TryGetValue(sourceInstance.Key.Value, out Hashtable? match))
                 {
-                    delta.Add(Presence(sourceInstance.Resource, keyName, keyValue, inSource: "Present", inDestination: "Absent"));
+                    if (!IsIgnoredWhenOnlyCurrent(sourceInstance, index, compareParameters))
+                    {
+                        delta.Add(Presence(sourceInstance.Resource, keyName, keyValue, inSource: "Present", inDestination: "Absent"));
+                    }
+
                     continue;
                 }
 
@@ -115,6 +118,15 @@ namespace Microsoft365DSC.Compare
             }
 
             return delta;
+        }
+
+        private static bool IsIgnoredWhenOnlyCurrent(
+            KeyedInstance source,
+            SchemaIndex index,
+            IDictionary<string, ResourceCompareParameters>? compareParameters)
+        {
+            return Overrides(source.ResourceName, index, compareParameters)?.Rules is { Count: > 0 } rules
+                && rules.OfType<IgnoreWhenOnlyCurrentRule>().Any(rule => rule.CanIgnore(source.Resource));
         }
 
         private static bool IsSetToAbsent(Hashtable resource)
@@ -173,14 +185,14 @@ namespace Microsoft365DSC.Compare
 
             public bool Equals(InstanceKey other)
             {
-                if (!string.Equals(_resourceName, other._resourceName, StringComparison.Ordinal) || _values.Length != other._values.Length)
+                if (!string.Equals(_resourceName, other._resourceName, StringComparison.OrdinalIgnoreCase) || _values.Length != other._values.Length)
                 {
                     return false;
                 }
 
                 for (int i = 0; i < _values.Length; i++)
                 {
-                    if (!string.Equals(_values[i], other._values[i], StringComparison.Ordinal))
+                    if (!string.Equals(_values[i], other._values[i], StringComparison.OrdinalIgnoreCase))
                     {
                         return false;
                     }
@@ -193,10 +205,10 @@ namespace Microsoft365DSC.Compare
 
             public override int GetHashCode()
             {
-                int hash = StringComparer.Ordinal.GetHashCode(_resourceName);
+                int hash = StringComparer.OrdinalIgnoreCase.GetHashCode(_resourceName);
                 foreach (string? value in _values)
                 {
-                    hash = unchecked((hash * 31) + (value is null ? 0 : StringComparer.Ordinal.GetHashCode(value)));
+                    hash = unchecked((hash * 31) + (value is null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(value)));
                 }
 
                 return hash;

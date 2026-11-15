@@ -348,6 +348,13 @@ Describe 'ConfigurationComparer.Compare' {
             $displayName['KeyValue'] | Should -Be 'a'
         }
 
+        It 'Reports nothing for an empty desired collection the source leaves out or sets to null' {
+            $source = @(New-Resource -ResourceName 'TestResource' -InstanceName 'S' -Values @{ Identity = 'a'; Items = $null; Nesting = @{ State = 's'; Targets = $null } })
+            $destination = @(New-Resource -ResourceName 'TestResource' -InstanceName 'D' -Values @{ Identity = 'a'; Tags = @(); Items = @(); Plain = @(); Nesting = @{ State = 's'; Targets = @() } })
+
+            (Invoke-ConfigurationCompare -Source $source -Destination $destination).Count | Should -Be 0
+        }
+
         It 'Reports nothing for identical instances' {
             $source = New-Resource -ResourceName 'TestResource' -InstanceName 'Inst' -Values @{ Identity = 'a'; DisplayName = 'x'; Tags = @('t1', 't2'); Ensure = 'Present' }
             $destination = New-Resource -ResourceName 'TestResource' -InstanceName 'Inst' -Values @{ Identity = 'a'; DisplayName = 'x'; Tags = @('t1', 't2'); Ensure = 'Present' }
@@ -417,11 +424,25 @@ Describe 'ConfigurationComparer.Compare' {
             $deltas | ForEach-Object -Process { $_['Properties'][0]['ValueInDestination'] | Should -Be 'y' }
         }
 
-        It 'Matches key values as strings, ordinal and case-sensitive' {
-            $source = @(New-Resource -ResourceName 'TestResource' -InstanceName 'S' -Values @{ Identity = 'A'; DisplayName = 'x' })
-            $destination = @(New-Resource -ResourceName 'TestResource' -InstanceName 'D' -Values @{ Identity = 'a'; DisplayName = 'x' })
+        It 'Matches key values and resource names as strings ignoring case' {
+            $source = @(New-Resource -ResourceName 'TestResource' -InstanceName 'S' -Values @{ Identity = 'Contoso Policy'; DisplayName = 'x' })
+            $destination = @(New-Resource -ResourceName 'testresource' -InstanceName 'D' -Values @{ Identity = 'contoso policy'; DisplayName = 'y' })
+            $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination
 
-            (Invoke-ConfigurationCompare -Source $source -Destination $destination).Count | Should -Be 2
+            $deltas.Count | Should -Be 1
+            $deltas[0]['KeyValue'] | Should -Be 'Contoso Policy'
+            $deltas[0]['Properties'][0]['ParameterName'] | Should -Be 'DisplayName'
+        }
+
+        It 'Pairs keys of several properties ignoring case and keeps different values apart' {
+            $source = @(
+                New-Resource -ResourceName 'TeamsChannel' -InstanceName 'S1' -Values @{ TeamName = 'Sales'; DisplayName = 'General'; Description = 'd' }
+                New-Resource -ResourceName 'TeamsChannel' -InstanceName 'S2' -Values @{ TeamName = 'Sales'; DisplayName = 'General '; Description = 'd' }
+            )
+            $destination = @(New-Resource -ResourceName 'TeamsChannel' -InstanceName 'D' -Values @{ TeamName = 'SALES'; DisplayName = 'general'; Description = 'd' })
+            $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination
+
+            @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('S2')
         }
 
         It 'Pairs a TeamsChannel by team name and display name' {
@@ -986,6 +1007,13 @@ Describe 'SimpleObjectComparer.Compare' {
         $result['DriftObject']['DriftInfo'][0]['DesiredValue'] | Should -Be '$null'
     }
 
+    It 'Treats an empty desired array and a null or missing current value as equal' {
+        (Invoke-SimpleCompare -Current @{ A = $null } -Desired @{ A = @() } -Keys @('A'))['TestResult'] | Should -BeTrue
+        (Invoke-SimpleCompare -Current @{ } -Desired @{ A = @() } -Keys @('A'))['TestResult'] | Should -BeTrue
+        (Invoke-SimpleCompare -Current @{ A = @() } -Desired @{ A = $null } -Keys @('A'))['TestResult'] | Should -BeTrue
+        (Invoke-SimpleCompare -Current @{ A = $null } -Desired @{ A = @('x') } -Keys @('A'))['TestResult'] | Should -BeFalse
+    }
+
     It 'Renders a null desired value as $null' {
         $result = Invoke-SimpleCompare -Current @{ A = 'x' } -Desired @{ A = $null } -Keys @('A')
 
@@ -1042,6 +1070,15 @@ Describe 'ComplexObjectComparer.Compare drift shapes' {
         $key.Item1[0]['PropertyName'] | Should -Be 'Prop.A'
         $key.Item1[0]['CurrentValue'] | Should -Be 'Current value is NOT null'
         $key.Item1[0]['DesiredValue'] | Should -Be 'Desired value is null'
+    }
+
+    It 'Treats an empty collection and null as equal at the root and at key level' {
+        (Invoke-ComplexCompare -Source @() -Target $null).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source $null -Target @()).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source @{ A = @() } -Target @{ A = $null }).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source @{ A = $null } -Target @{ A = [System.Collections.ArrayList]::new() }).Item2 | Should -BeTrue
+        (Invoke-ComplexCompare -Source @{ A = @('x') } -Target @{ A = $null }).Item2 | Should -BeFalse
+        (Invoke-ComplexCompare -Source @{ A = '' } -Target @{ A = $null }).Item2 | Should -BeFalse
     }
 
     It 'Treats numerically equal values of different types as equal' {
@@ -1202,10 +1239,14 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
     }
 
     It 'NullEqualsEmpty reads a missing current array as empty' {
-        $rules = @(@{ Type = 'NullEqualsEmpty'; PropertyPattern = '^Members$' })
+        $rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'NullEqualsEmpty'; PropertyPattern = '^Members$' }))
+        $desired = @{ Members = @('a') }
 
-        Invoke-RuleCompare -Rules @() -Source @{ } -Destination @{ Members = @() } | Should -Be @('Members')
-        Invoke-RuleCompare -Rules $rules -Source @{ } -Destination @{ Members = @() } | Should -BeNullOrEmpty
+        $rewritten = [Microsoft365DSC.Compare.CompareRule]::ApplyAll($rules, $desired, @{ }, $desired.Clone(), [System.Object[]] @(), 'X')
+
+        $rewritten.Item2.ContainsKey('Members') | Should -BeTrue
+        @($rewritten.Item2.Members).Count | Should -Be 0
+        Invoke-RuleCompare -Rules @(@{ Type = 'NullEqualsEmpty'; PropertyPattern = '^Members$' }) -Source @{ } -Destination @{ Members = @() } | Should -BeNullOrEmpty
     }
 
     It 'Tolerance skips time spans within the allowed difference' {
@@ -1242,6 +1283,57 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
             Should -BeNullOrEmpty
         Invoke-RuleCompare -Rules $rules -Now $now -Source @{ ScheduleInfo = @{ StartDateTime = '2026-05-20T00:00:00Z' } } -Destination @{ ScheduleInfo = @{ StartDateTime = '2026-07-01T00:00:00Z' } } |
             Should -Be @('ScheduleInfo.StartDateTime')
+    }
+
+    It 'IgnoreWhenOnlyCurrent skips a current-only instance that meets its condition and nothing else' {
+        $parameters = New-CompareParameters
+        $parameters.Rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(
+                @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.Expiration.type'; In = @('afterDateTime', 'afterDuration') } }
+            ))
+        $map = New-CompareParameterMap -ResourceName 'TestRules' -Parameters $parameters
+        $timeBound = { param($Identity, $Notes) New-Resource -ResourceName 'TestRules' -InstanceName $Identity -Values @{ Identity = $Identity; Notes = $Notes; ScheduleInfo = @{ Expiration = @{ type = 'AfterDateTime' } } } }
+        $permanent = New-Resource -ResourceName 'TestRules' -InstanceName 'p' -Values @{ Identity = 'p'; ScheduleInfo = @{ Expiration = @{ type = 'noExpiration' } } }
+        $source = @((& $timeBound 'a' 'x'), (& $timeBound 'b' 'x'), $permanent)
+        $destination = @((& $timeBound 'b' 'y'), (& $timeBound 'c' 'y'))
+
+        $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination -CompareParameters $map
+
+        @($deltas | ForEach-Object -Process { '{0}:{1}' -f $_['KeyValue'], $_['Properties'][0]['ParameterName'] }) |
+            Should -Be @('b:Notes', 'p:_IsInConfiguration_', 'c:_IsInConfiguration_')
+        (Invoke-ConfigurationCompare -Source $source -Destination $destination).Count | Should -Be 4
+    }
+
+    It 'IgnoreWhenOnlyCurrent applies when the schema declares it' {
+        $schema = [object[]] @($Script:Schema | Where-Object -FilterScript { $_.ClassName -ne 'MSFT_TestRules' }) + @(
+            @{
+                ClassName         = 'MSFT_TestRules'
+                Parameters        = @(@{ Name = 'Identity'; CIMType = 'String'; Option = 'Key' }, @{ Name = 'Notes'; CIMType = 'String'; Option = 'Write' })
+                CompareParameters = @{ CompareRules = @(@{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'Notes'; NotNullOrEmpty = $true } }) }
+            }
+        )
+        $source = @(
+            New-Resource -ResourceName 'TestRules' -InstanceName 'a' -Values @{ Identity = 'a'; Notes = 'expires' }
+            New-Resource -ResourceName 'TestRules' -InstanceName 'b' -Values @{ Identity = 'b' }
+        )
+
+        $deltas = Invoke-ConfigurationCompare -Source $source -SchemaOverride $schema
+
+        @($deltas | ForEach-Object -Process { $_['KeyValue'] }) | Should -Be @('b')
+    }
+
+    It 'IgnoreWhenOnlyCurrent refuses a missing condition and a condition on the desired side' {
+        { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'IgnoreWhenOnlyCurrent' })) } | Should -Throw '*When*'
+        { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Any = @(@{ Property = 'Notes'; Truthy = $true }, @{ Side = 'Desired'; Property = 'Mode'; Truthy = $true }) } })) } |
+            Should -Throw '*Current*'
+    }
+
+    It 'Reads a condition property as a path and matches In against a list ignoring case' {
+        $rules = @(@{ Type = 'RemoveWhen'; Properties = @('Notes'); When = @{ Side = 'Current'; Property = 'ScheduleInfo.Expiration.type'; In = @('afterDateTime', 'afterDuration') } })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = 'x'; ScheduleInfo = @{ Expiration = @{ type = 'AFTERDURATION' } } } -Destination @{ Notes = 'y'; ScheduleInfo = @{ Expiration = @{ type = 'AFTERDURATION' } } } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = 'x'; ScheduleInfo = @{ Expiration = @{ type = 'noExpiration' } } } -Destination @{ Notes = 'y'; ScheduleInfo = @{ Expiration = @{ type = 'noExpiration' } } } |
+            Should -Be @('Notes')
     }
 
     It 'Rename moves a property to its new name on both sides' {
@@ -1334,6 +1426,33 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
         {
             { [Microsoft365DSC.Compare.CompareRule]::ParseAll($entry.CompareParameters.CompareRules) } | Should -Not -Throw -Because $entry.ClassName
         }
+    }
+
+    It 'Ignores expiring PIM requests and allow/block entries only the source has, with the shipped schema' {
+        $schemaPath = "$PSScriptRoot/../../../Modules/Microsoft365DSC/SchemaDefinition.json"
+        if (-not (Test-Path -Path $schemaPath))
+        {
+            Set-ItResult -Skipped -Because 'the schema has not been built'
+            return
+        }
+
+        $schema = [object[]] @([System.IO.File]::ReadAllText($schemaPath) | ConvertFrom-Json)
+        $schedule = { param($Type) @{ startDateTime = '2026-05-01T00:00:00Z'; expiration = @{ type = $Type; endDateTime = '2026-06-01T00:00:00Z' } } }
+        $source = @(
+            New-Resource -ResourceName 'AADRoleEligibilityScheduleRequest' -InstanceName 'e1' -Values @{ Principal = 'u1'; RoleDefinition = 'r'; DirectoryScopeId = '/'; ScheduleInfo = (& $schedule 'afterDateTime') }
+            New-Resource -ResourceName 'AADRoleEligibilityScheduleRequest' -InstanceName 'e2' -Values @{ Principal = 'u2'; RoleDefinition = 'r'; DirectoryScopeId = '/'; ScheduleInfo = (& $schedule 'noExpiration') }
+            New-Resource -ResourceName 'AADRoleAssignmentScheduleRequest' -InstanceName 'a1' -Values @{ Principal = 'u1'; RoleDefinition = 'r'; DirectoryScopeId = '/'; ScheduleInfo = (& $schedule 'afterDuration') }
+            New-Resource -ResourceName 'AADGroupEligibilitySchedule' -InstanceName 'g1' -Values @{ GroupDisplayName = 'g'; Principal = 'u1'; AccessId = 'member'; ScheduleInfo = (& $schedule 'afterDateTime') }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't1' -Values @{ Value = 'a.example'; ListType = 'Sender'; Action = 'Block'; ExpirationDate = '2026-06-01T00:00:00Z' }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't2' -Values @{ Value = 'b.example'; ListType = 'Sender'; Action = 'Block'; NoExpiration = $true }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't3' -Values @{ Value = 'c.example'; ListType = 'Url'; Action = 'Allow'; NoExpiration = $true; RemoveAfter = 45 }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't4' -Values @{ Value = 'd.example'; ListType = 'Url'; Action = 'Allow'; NoExpiration = $true; RemoveAfter = 0 }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't5' -Values @{ Value = 'e.example'; ListType = 'Url'; Action = 'Allow'; NoExpiration = $true; RemoveAfter = '0' }
+        )
+
+        $deltas = Invoke-ConfigurationCompare -Source $source -SchemaOverride $schema
+
+        @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('e2', 't2', 't4', 't5')
     }
 
     It 'Refuses an unknown rule type, a condition on both sides and an unreadable time span' {

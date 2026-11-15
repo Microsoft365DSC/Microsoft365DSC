@@ -167,6 +167,7 @@ Prefer `CompareRules` over a `PostProcessing` scriptblock. Rules are data. The s
 | `IgnoreNested` | `Paths` | Removes nested properties on both sides. |
 | `ScalarAsArray` | `Paths` | Reads a single value as a list of one on both sides. |
 | `IgnoreWhenPast` | `Path` | Takes the current date when the desired date differs and lies in the past. |
+| `IgnoreWhenOnlyCurrent` | `When` | Does not report a current instance the desired configuration lacks when `When` is met. |
 | `SameInstant` | `Path` | Takes the current date when both dates are the same instant. |
 | `Rename` | `From`, `To` | Renames a property on both sides. |
 | `DurationMatchesEnd` | `Expiration`, `Start`, `ToleranceMinutes` | Treats an `afterDuration` expiration as equal to an `afterDateTime` one that ends that long after the start. |
@@ -175,13 +176,19 @@ Prefer `CompareRules` over a `PostProcessing` scriptblock. Rules are data. The s
 
 A path is dotted, such as `ScheduleInfo.Expiration`. A segment ending in `[]`, such as `Settings[].Value`, continues into every element of that array. Matching a property ignores case.
 
-`When` is one condition or a combination. A condition has `Property`, an optional `Side` that defaults to `Desired`, and one operator: `Equals`, `NotEquals`, `IsNullOrEmpty`, `NotNullOrEmpty`, `HasKey`, `NotHasKey`, `Truthy` or `Falsy`. Combine conditions with `All = @(...)` or `Any = @(...)`:
+`When` is one condition or a combination. A condition has `Property`, an optional `Side` that defaults to `Desired`, and one operator: `Equals`, `NotEquals`, `In` with a list of values, `IsNullOrEmpty`, `NotNullOrEmpty`, `HasKey`, `NotHasKey`, `Truthy` or `Falsy`. `Property` may be a path. Combine conditions with `All = @(...)` or `Any = @(...)`:
 
 ```powershell
 When = @{ All = @(
     @{ Property = 'Mode'; Equals = 'Off' }
     @{ Side = 'Current'; Property = 'Window'; NotNullOrEmpty = $true }
 ) }
+```
+
+Every rule except `IgnoreWhenOnlyCurrent` applies to an instance both configurations contain. `IgnoreWhenOnlyCurrent` applies only to an instance of the current configuration, the source of the delta report, that has no counterpart in the desired one. Its condition reads the `Current` side, which is also its default. It suits instances that expire on their own, such as a time-bound role assignment:
+
+```powershell
+@{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.expiration.type'; In = @('afterDateTime', 'afterDuration') } }
 ```
 
 The normalizers are:

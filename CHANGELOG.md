@@ -77,6 +77,7 @@
     first page and ignoring the `includeAll` parameter for the billing account list.
 * M365DSCCompare
   * Updated `Compare-M365DSCResourceState` to fail when post-processing fails.
+  * Fixed an empty desired collection drifting from a missing or null value.
 * M365DSCConfigurationCompiler
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
     pipeline without `ConfigurationName` ignores.
@@ -329,6 +330,8 @@
     for a lowercase `node localhost`.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
+  * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
+  * Fixed the delta report not pairing keys that differ only in case.
   * Removed the relation templates of removed resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.

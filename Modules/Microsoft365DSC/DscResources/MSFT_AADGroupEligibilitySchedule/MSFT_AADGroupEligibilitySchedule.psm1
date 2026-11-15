@@ -701,6 +701,7 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
         return @{
             CompareRules = @(
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
+                @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.Expiration.Type'; In = @('afterDateTime', 'afterDuration') } }
             )
         }
     }

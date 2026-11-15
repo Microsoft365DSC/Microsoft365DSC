@@ -122,7 +122,7 @@ namespace Microsoft365DSC.Compare
                         continue;
                     }
 
-                    if (frame.Left is null && frame.Right is null)
+                    if (RuleValues.IsNullOrEmptyCollection(frame.Left) && RuleValues.IsNullOrEmptyCollection(frame.Right))
                     {
                         continue;
                     }
@@ -394,6 +394,11 @@ namespace Microsoft365DSC.Compare
 
                     object? sourceValue = GetValue(frame.Left!, key);
                     object? targetValue = GetValue(right, key);
+
+                    if (RuleValues.IsNullOrEmptyCollection(sourceValue) && RuleValues.IsNullOrEmptyCollection(targetValue))
+                    {
+                        continue;
+                    }
 
                     if ((sourceValue is null) != (targetValue is null))
                     {
