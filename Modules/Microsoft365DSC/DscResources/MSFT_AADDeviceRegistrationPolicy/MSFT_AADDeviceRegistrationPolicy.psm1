@@ -525,6 +525,7 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
             if ($_.ErrorDetails.Message -like '*Insufficient privileges*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Insufficient permissions or license to export Attribute Sets."
+                $this.SkipExport($_)
                 return ''
             }
             else

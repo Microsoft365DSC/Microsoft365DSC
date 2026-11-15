@@ -487,6 +487,7 @@ class IntuneDeviceConfigurationNetworkBoundaryPolicyWindows10 : M365DSCResourceB
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {

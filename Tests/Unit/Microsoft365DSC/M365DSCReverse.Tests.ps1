@@ -133,6 +133,41 @@ Describe 'Start-M365DSCConfigurationExtract' {
             }
         }
 
+        It 'returns the resources that could not be read with the statistics' {
+            Mock -ModuleName M365DSCReverse -CommandName Invoke-M365DSCResourceMethod -MockWith {
+                if ($ResourceName -eq 'AADGroup')
+                {
+                    $Global:M365DSCExportResourceSkipMessage = 'Insufficient privileges to complete the operation.'
+                    return ''
+                }
+                "        AADUser 'Test'`r`n        {`r`n            UserPrincipalName = 'john@contoso.com'`r`n        }`r`n"
+            }
+            $Global:M365DSCExportResourceSkipMessage = 'Stale message'
+
+            $statistics = Start-M365DSCConfigurationExtract -Components @('AADGroup', 'AADUser') -Credential $Script:Credential `
+                -Path $Script:OutputPath -WithStatistics -WarningAction SilentlyContinue |
+                Where-Object -FilterScript { $_ -is [System.Collections.Hashtable] -and $_.ContainsKey('SkippedResources') }
+
+            $statistics.SkippedResourceCount | Should -Be 1
+            $statistics.SkippedResources.Count | Should -Be 1
+            $statistics.SkippedResources[0].ResourceName | Should -Be 'AADGroup'
+            $statistics.SkippedResources[0].Message | Should -Be 'Insufficient privileges to complete the operation.'
+            $statistics.ExportedResourceCount | Should -Be 2
+            $statistics.FailedResourceCount | Should -Be 0
+            $statistics.FailedResources.Count | Should -Be 0
+            $Global:M365DSCExportResourceSkipMessage | Should -BeNullOrEmpty
+            Get-Content -Path (Join-Path -Path $Script:OutputPath -ChildPath 'M365TenantConfig.ps1') -Raw | Should -Match "AADUser 'Test'"
+        }
+
+        It 'returns no skipped resources when every export read the tenant' {
+            $statistics = Start-M365DSCConfigurationExtract -Components @('AADUser') -Credential $Script:Credential `
+                -Path $Script:OutputPath -WithStatistics -WarningAction SilentlyContinue |
+                Where-Object -FilterScript { $_ -is [System.Collections.Hashtable] -and $_.ContainsKey('SkippedResources') }
+
+            $statistics.SkippedResourceCount | Should -Be 0
+            $statistics.SkippedResources.Count | Should -Be 0
+        }
+
         It 'warns when a filter is passed for a resource without a Filter property' {
             Start-M365DSCConfigurationExtract -Components @('AADUser') -Credential $Script:Credential `
                 -Filters @{ AADUser = "DisplayName eq 'John'" } -Path $Script:OutputPath -WarningAction SilentlyContinue

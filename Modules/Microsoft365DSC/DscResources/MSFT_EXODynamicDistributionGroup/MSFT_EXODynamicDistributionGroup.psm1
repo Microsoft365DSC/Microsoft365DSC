@@ -743,6 +743,7 @@ class EXODynamicDistributionGroup : M365DSCResourceBase
 
             $this.LogError($_, 'Error during Export:')
 
+            $this.SkipExport($_)
             return ''
         }
     }

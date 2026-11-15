@@ -1008,6 +1008,7 @@ class AADRoleSetting : M365DSCResourceBase
             if ($_.ErrorDetails.Message -like '*The tenant needs to have Microsoft Entra*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) AAD Premium License is required to get the role."
+                $this.SkipExport($_)
                 return ''
             }
         }

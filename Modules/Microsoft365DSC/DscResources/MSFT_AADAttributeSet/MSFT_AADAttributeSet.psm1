@@ -224,6 +224,7 @@ class AADAttributeSet : M365DSCResourceBase
             if ($_.ErrorDetails.Message -like '*Insufficient privileges*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Insufficient permissions or license to export Attribute Sets." -CommitWrite
+                $this.SkipExport($_)
                 return ''
             }
             else

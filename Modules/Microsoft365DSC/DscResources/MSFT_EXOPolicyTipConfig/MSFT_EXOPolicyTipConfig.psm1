@@ -218,6 +218,7 @@ class EXOPolicyTipConfig : M365DSCResourceBase
             else
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Policy Tip Configurations." -CommitWrite
+                $this.SkipExport('The current tenant is not registered for Policy Tip Configurations.')
             }
             return $dscContent.ToString()
         }

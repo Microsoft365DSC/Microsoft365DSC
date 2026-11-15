@@ -429,6 +429,7 @@ class AADIdentityGovernanceLifecycleWorkflowCustomTaskExtension : M365DSCResourc
                 Write-M365DSCHost -Message "`r`n    " -DeferWrite
                 Write-M365DSCHost -Message $Global:M365DSCEmojiYellowCircle -DeferWrite
                 Write-M365DSCHost -Message ' Insufficient license. You need the Entra ID Governance license.' -CommitWrite
+                $this.SkipExport($_)
             }
             else
             {

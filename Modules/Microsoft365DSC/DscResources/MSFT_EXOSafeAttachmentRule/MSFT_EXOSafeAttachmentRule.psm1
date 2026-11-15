@@ -277,6 +277,7 @@ class EXOSafeAttachmentRule : M365DSCResourceBase
             else
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant doesn't have access to the Safe Attachment Rule API."
+                $this.SkipExport('The current tenant doesn''t have access to the Safe Attachment Rule API.')
             }
             return $dscContent.ToString()
         }
