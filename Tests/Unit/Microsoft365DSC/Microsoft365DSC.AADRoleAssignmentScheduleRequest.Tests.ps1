@@ -98,7 +98,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScheduleInfo         = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
                         startDateTime   = '2023-09-01T02:40:44Z'
                         expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
-                            endDateTime = '2025-10-31T02:40:09Z'
+                            endDateTime = '2099-10-31T02:40:09Z'
                             type        = 'afterDateTime'
                         }
                     }
@@ -107,6 +107,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-MgBetaRoleManagementDirectoryRoleAssignmentSchedule -MockWith {
                     return $null
+                }
+
+                $endedParams = $testParams.Clone()
+                $endedParams.ScheduleInfo = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
+                    startDateTime = '2023-09-01T02:40:44Z'
+                    expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
+                        endDateTime = '2025-10-31T02:40:09Z'
+                        type = 'afterDateTime'
+                    }
+                }
+                $passedDurationParams = $testParams.Clone()
+                $passedDurationParams.ScheduleInfo = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
+                    startDateTime = '2023-09-01T02:40:44Z'
+                    expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
+                        duration = 'P30D'
+                        type = 'afterDuration'
+                    }
+                }
+                $durationWithoutStartParams = $testParams.Clone()
+                $durationWithoutStartParams.ScheduleInfo = [MSFT_AADRoleAssignmentScheduleRequestSchedule] @{
+                    expiration = [MSFT_AADRoleAssignmentScheduleRequestScheduleExpiration] @{
+                        duration = 'P30D'
+                        type = 'afterDuration'
+                    }
                 }
             }
             It 'Should return Values from the Get method' {
@@ -118,6 +142,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should Create the instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $testParams).Set()
                 Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -Exactly 1
+            }
+            It 'Should return true from the Test method when the schedule has ended' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $endedParams).Test() | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $passedDurationParams).Test() | Should -Be $true
+            }
+            It 'Should return false from the Test method for a duration without a start' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $durationWithoutStartParams).Test() | Should -Be $false
+            }
+            It 'Should not create the instance from the Set method when the schedule has ended' {
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $endedParams).Set()
+                (New-M365DSCResourceInstance -ResourceName 'AADRoleAssignmentScheduleRequest' -Property $passedDurationParams).Set()
+                Should -Invoke -CommandName New-MgBetaRoleManagementDirectoryRoleAssignmentScheduleRequest -Exactly 0
             }
         }
 

@@ -287,6 +287,12 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
 
         $currentInstance = $this.Get().ToHashtable()
 
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo))
+        {
+            Write-Verbose -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended. It is not created again."
+            return
+        }
+
         $PrincipalId = $null
         $PrincipalId = ($this.FindPrincipal() | Select-Object -First 1).Id
 
@@ -397,6 +403,12 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
 
     [bool] Test()
     {
+        if ($this.Ensure -ne 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo) -and $this.Get().Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended and no longer exists. It is in the desired state."
+            return $true
+        }
+
         return ([M365DSCResourceBase] $this).Test()
     }
 

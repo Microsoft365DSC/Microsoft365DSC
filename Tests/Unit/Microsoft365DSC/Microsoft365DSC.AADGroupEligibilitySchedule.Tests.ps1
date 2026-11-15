@@ -88,7 +88,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScheduleInfo         = @{
                         StartDateTime = '2025-01-23T08:59:00.000Z'
                         Expiration = @{
-                            EndDateTime = '2025-12-23T08:59:00.000Z'
+                            EndDateTime = '2099-12-23T08:59:00.000Z'
                             type = 'afterDateTime'
                         }
                     }
@@ -115,7 +115,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                             startDateTime = '2025-01-23T08:59:00.0000000+00:00'
                             Expiration = ([MSFT_MicrosoftGraphExpirationPattern] @{
-                                    EndDateTime = '2025-12-23T08:59:00.00000000+00:00'
+                                    EndDateTime = '2099-12-23T08:59:00.00000000+00:00'
                                     Type = 'afterDateTime'})
                             })
                     Ensure               = "Present"
@@ -128,6 +128,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName New-MgBetaIdentityGovernancePrivilegedAccessGroupEligibilityScheduleRequest -MockWith {
                     return $null
+                }
+
+                $endedParams = $testParams.Clone()
+                $endedParams.ScheduleInfo = [MSFT_MicrosoftGraphrequestSchedule] @{
+                    StartDateTime = '2023-09-01T02:40:44Z'
+                    Expiration = [MSFT_MicrosoftGraphExpirationPattern] @{
+                        EndDateTime = '2025-10-31T02:40:09Z'
+                        Type = 'afterDateTime'
+                    }
+                }
+                $passedDurationParams = $testParams.Clone()
+                $passedDurationParams.ScheduleInfo = [MSFT_MicrosoftGraphrequestSchedule] @{
+                    StartDateTime = '2023-09-01T02:40:44Z'
+                    Expiration = [MSFT_MicrosoftGraphExpirationPattern] @{
+                        Duration = 'P30D'
+                        Type = 'afterDuration'
+                    }
+                }
+                $durationWithoutStartParams = $testParams.Clone()
+                $durationWithoutStartParams.ScheduleInfo = [MSFT_MicrosoftGraphrequestSchedule] @{
+                    Expiration = [MSFT_MicrosoftGraphExpirationPattern] @{
+                        Duration = 'P30D'
+                        Type = 'afterDuration'
+                    }
                 }
 
                 Mock -CommandName Get-MgBetaPolicyRoleManagementPolicyRule -MockWith {
@@ -199,6 +223,19 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Should -Invoke -CommandName Get-MgBetaIdentityGovernancePrivilegedAccessGroupEligibilitySchedule -Exactly 2
                 Should -Invoke -CommandName New-MgBetaIdentityGovernancePrivilegedAccessGroupEligibilityScheduleRequest -Exactly 1
             }
+
+            It 'Should return true from the Test method when the schedule has ended' {
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupEligibilitySchedule' -Property $endedParams).Test() | Should -Be $true
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupEligibilitySchedule' -Property $passedDurationParams).Test() | Should -Be $true
+            }
+            It 'Should return false from the Test method for a duration without a start' {
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupEligibilitySchedule' -Property $durationWithoutStartParams).Test() | Should -Be $false
+            }
+            It 'Should not create the instance from the Set method when the schedule has ended' {
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupEligibilitySchedule' -Property $endedParams).Set()
+                (New-M365DSCResourceInstance -ResourceName 'AADGroupEligibilitySchedule' -Property $passedDurationParams).Set()
+                Should -Invoke -CommandName New-MgBetaIdentityGovernancePrivilegedAccessGroupEligibilityScheduleRequest -Exactly 0
+            }
         }
 
         Context -Name "The AADGroupEligibilitySchedule exists but it SHOULD NOT" -Fixture {
@@ -211,7 +248,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScheduleInfo         = ([MSFT_MicrosoftGraphrequestSchedule] @{
                         startDateTime = '2025-01-23T08:59:00.0000000+00:00'
                         Expiration = ([MSFT_MicrosoftGraphExpirationPattern] @{
-                                EndDateTime = '2025-12-23T08:59:00.00000000+00:00'
+                                EndDateTime = '2099-12-23T08:59:00.00000000+00:00'
                                 Type = 'afterDateTime'})
                         })
                     Ensure = "Absent"
@@ -255,7 +292,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ScheduleInfo         = @{
                             StartDateTime = '2025-01-23T08:59:00.000Z'
                                 Expiration = @{
-                                    EndDateTime = '2025-12-23T08:59:00.000Z'
+                                    EndDateTime = '2099-12-23T08:59:00.000Z'
                                     type = 'afterDateTime'
                                 }
                         }
@@ -310,7 +347,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScheduleInfo         = ([MSFT_MicrosoftGraphrequestSchedule] @{
                         startDateTime = '2025-01-23T08:59:00.0000000Z'
                         Expiration = ([MSFT_MicrosoftGraphExpirationPattern] @{
-                                EndDateTime = '2025-12-23T08:59:00.0000000Z'
+                                EndDateTime = '2099-12-23T08:59:00.0000000Z'
                                 Type = 'afterDateTime'})
                         })
                     Ensure = "Present"
@@ -328,7 +365,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ScheduleInfo         = @{
                             StartDateTime = '2025-01-23T08:59:00.000Z'
                                 Expiration = @{
-                                    EndDateTime = '2025-12-23T08:59:00.000Z'
+                                    EndDateTime = '2099-12-23T08:59:00.000Z'
                                     type = 'afterDateTime'
                                 }
                         }
@@ -402,7 +439,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     ScheduleInfo             = ([MSFT_MicrosoftGraphrequestSchedule] @{
                         startDateTime = '2025-01-23T08:59:00.0000000+00:00'
                         Expiration = ([MSFT_MicrosoftGraphExpirationPattern] @{
-                                EndDateTime = '2025-12-24T08:59:00.00000000+00:00' # Drift
+                                EndDateTime = '2099-12-24T08:59:00.00000000+00:00' # Drift
                                 Type = 'afterDateTime'})
                         })
                     Ensure                    = "Present"
@@ -441,7 +478,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ScheduleInfo         = @{
                             StartDateTime = '2025-01-23T08:59:00.000Z'
                                 Expiration = @{
-                                    EndDateTime = '2025-12-23T08:59:00.000Z'
+                                    EndDateTime = '2099-12-23T08:59:00.000Z'
                                     type = 'afterDateTime'
                                 }
                         }
@@ -538,7 +575,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                     scheduleInfo         = @{
                                         startDateTime = '2025-01-23T08:59:00.000Z'
                                         expiration = @{
-                                            endDateTime = '2025-12-22T08:59:00.000Z'
+                                            endDateTime = '2099-12-22T08:59:00.000Z'
                                             type = 'afterDateTime'
                                         }
                                     }
@@ -574,7 +611,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ScheduleInfo         = @{
                             StartDateTime = '2025-01-23T08:59:00.000Z'
                                 Expiration = @{
-                                    EndDateTime = '2025-12-23T08:59:00.000Z'
+                                    EndDateTime = '2099-12-23T08:59:00.000Z'
                                     type = 'afterDateTime'
                                 }
                         }

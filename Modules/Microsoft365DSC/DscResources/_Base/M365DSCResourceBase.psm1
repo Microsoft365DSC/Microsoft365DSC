@@ -1181,6 +1181,33 @@ class M365DSCResourceBase
         return [System.Xml.XmlConvert]::ToString([System.TimeSpan]$span)
     }
 
+    # An afterDuration schedule without a start date never counts as ended.
+    hidden static [System.Boolean] TestScheduleEnded([System.Object] $ScheduleInfo)
+    {
+        $expiration = $ScheduleInfo.Expiration
+        if ($null -eq $expiration)
+        {
+            return $false
+        }
+
+        $end = $null
+        if ($expiration.Type -eq 'afterDateTime')
+        {
+            $end = [M365DSCResourceBase]::ConvertToDateTimeOffset($expiration.EndDateTime)
+        }
+        elseif ($expiration.Type -eq 'afterDuration')
+        {
+            $start = [M365DSCResourceBase]::ConvertToDateTimeOffset($ScheduleInfo.StartDateTime)
+            $duration = [M365DSCResourceBase]::ConvertToTimeSpan($expiration.Duration)
+            if ($null -ne $start -and $null -ne $duration)
+            {
+                $end = $start.Add($duration)
+            }
+        }
+
+        return $null -ne $end -and $end -lt [System.DateTimeOffset]::UtcNow
+    }
+
     # Warns that the resource is deprecated, names its replacement and, when given, a link with more information.
     hidden [void] WarnResourceDeprecated([System.String] $Replacement, [System.String] $InformationUrl)
     {

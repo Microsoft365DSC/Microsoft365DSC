@@ -295,6 +295,13 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
         $this.AddTelemetry('Set')
 
         $currentInstance = $this.Get().ToHashtable()
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo))
+        {
+            Write-Verbose -Message "The role assignment schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended. It is not created again."
+            return
+        }
+
         $ParametersOps = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
         [Array]$PrincipalIdValue = ($this.FindPrincipal()).Id
@@ -408,6 +415,12 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
 
     [bool] Test()
     {
+        if ($this.Ensure -ne 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo) -and $this.Get().Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "The role assignment schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended and no longer exists. It is in the desired state."
+            return $true
+        }
+
         return ([M365DSCResourceBase] $this).Test()
     }
 
