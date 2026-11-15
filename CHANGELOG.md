@@ -38,6 +38,8 @@
 * EXODataAtRestEncryptionPolicyAssignment
   * Fixed service errors of `Get()` being reported as drift and triggering `Set()`.
     FIXES [#7622](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7622)
+* EXOTenantAllowBlockListItems
+  * Fixed the export only returning entries of the `Url` list type.
 * IntuneDeviceAndAppManagementAssignmentFilter
   * Fixed `Set()` clearing the description and rule when `Description` or `Rule` is not specified.
 * IntuneDeviceCategory
