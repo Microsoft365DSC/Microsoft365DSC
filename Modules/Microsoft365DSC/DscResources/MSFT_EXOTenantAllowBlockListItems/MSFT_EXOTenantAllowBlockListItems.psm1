@@ -285,6 +285,9 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
     {
         return @{
             IncludedProperties = @('Action', 'ListType', 'Value')
+            CompareRules       = @(
+                @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ExpirationDate'; NotNullOrEmpty = $true } }
+            )
         }
     }
 }

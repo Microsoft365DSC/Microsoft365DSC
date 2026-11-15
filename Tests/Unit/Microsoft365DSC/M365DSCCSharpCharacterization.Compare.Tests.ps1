@@ -1244,6 +1244,57 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
             Should -Be @('ScheduleInfo.StartDateTime')
     }
 
+    It 'IgnoreWhenOnlyCurrent skips a current-only instance that meets its condition and nothing else' {
+        $parameters = New-CompareParameters
+        $parameters.Rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(
+                @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.Expiration.type'; In = @('afterDateTime', 'afterDuration') } }
+            ))
+        $map = New-CompareParameterMap -ResourceName 'TestRules' -Parameters $parameters
+        $timeBound = { param($Identity, $Notes) New-Resource -ResourceName 'TestRules' -InstanceName $Identity -Values @{ Identity = $Identity; Notes = $Notes; ScheduleInfo = @{ Expiration = @{ type = 'AfterDateTime' } } } }
+        $permanent = New-Resource -ResourceName 'TestRules' -InstanceName 'p' -Values @{ Identity = 'p'; ScheduleInfo = @{ Expiration = @{ type = 'noExpiration' } } }
+        $source = @((& $timeBound 'a' 'x'), (& $timeBound 'b' 'x'), $permanent)
+        $destination = @((& $timeBound 'b' 'y'), (& $timeBound 'c' 'y'))
+
+        $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination -CompareParameters $map
+
+        @($deltas | ForEach-Object -Process { '{0}:{1}' -f $_['KeyValue'], $_['Properties'][0]['ParameterName'] }) |
+            Should -Be @('b:Notes', 'p:_IsInConfiguration_', 'c:_IsInConfiguration_')
+        (Invoke-ConfigurationCompare -Source $source -Destination $destination).Count | Should -Be 4
+    }
+
+    It 'IgnoreWhenOnlyCurrent applies when the schema declares it' {
+        $schema = [object[]] @($Script:Schema | Where-Object -FilterScript { $_.ClassName -ne 'MSFT_TestRules' }) + @(
+            @{
+                ClassName         = 'MSFT_TestRules'
+                Parameters        = @(@{ Name = 'Identity'; CIMType = 'String'; Option = 'Key' }, @{ Name = 'Notes'; CIMType = 'String'; Option = 'Write' })
+                CompareParameters = @{ CompareRules = @(@{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'Notes'; NotNullOrEmpty = $true } }) }
+            }
+        )
+        $source = @(
+            New-Resource -ResourceName 'TestRules' -InstanceName 'a' -Values @{ Identity = 'a'; Notes = 'expires' }
+            New-Resource -ResourceName 'TestRules' -InstanceName 'b' -Values @{ Identity = 'b' }
+        )
+
+        $deltas = Invoke-ConfigurationCompare -Source $source -SchemaOverride $schema
+
+        @($deltas | ForEach-Object -Process { $_['KeyValue'] }) | Should -Be @('b')
+    }
+
+    It 'IgnoreWhenOnlyCurrent refuses a missing condition and a condition on the desired side' {
+        { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'IgnoreWhenOnlyCurrent' })) } | Should -Throw '*When*'
+        { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Any = @(@{ Property = 'Notes'; Truthy = $true }, @{ Side = 'Desired'; Property = 'Mode'; Truthy = $true }) } })) } |
+            Should -Throw '*Current*'
+    }
+
+    It 'Reads a condition property as a path and matches In against a list ignoring case' {
+        $rules = @(@{ Type = 'RemoveWhen'; Properties = @('Notes'); When = @{ Side = 'Current'; Property = 'ScheduleInfo.Expiration.type'; In = @('afterDateTime', 'afterDuration') } })
+
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = 'x'; ScheduleInfo = @{ Expiration = @{ type = 'AFTERDURATION' } } } -Destination @{ Notes = 'y'; ScheduleInfo = @{ Expiration = @{ type = 'AFTERDURATION' } } } |
+            Should -BeNullOrEmpty
+        Invoke-RuleCompare -Rules $rules -Source @{ Notes = 'x'; ScheduleInfo = @{ Expiration = @{ type = 'noExpiration' } } } -Destination @{ Notes = 'y'; ScheduleInfo = @{ Expiration = @{ type = 'noExpiration' } } } |
+            Should -Be @('Notes')
+    }
+
     It 'Rename moves a property to its new name on both sides' {
         Invoke-RuleCompare -Rules @(@{ Type = 'Rename'; From = 'Notes'; To = 'Window' }) -Source @{ Notes = 'x' } -Destination @{ Notes = 'y' } |
             Should -Be @('Window')
@@ -1334,6 +1385,30 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
         {
             { [Microsoft365DSC.Compare.CompareRule]::ParseAll($entry.CompareParameters.CompareRules) } | Should -Not -Throw -Because $entry.ClassName
         }
+    }
+
+    It 'Ignores expiring PIM requests and allow/block entries only the source has, with the shipped schema' {
+        $schemaPath = "$PSScriptRoot/../../../Modules/Microsoft365DSC/SchemaDefinition.json"
+        if (-not (Test-Path -Path $schemaPath))
+        {
+            Set-ItResult -Skipped -Because 'the schema has not been built'
+            return
+        }
+
+        $schema = [object[]] @([System.IO.File]::ReadAllText($schemaPath) | ConvertFrom-Json)
+        $schedule = { param($Type) @{ startDateTime = '2026-05-01T00:00:00Z'; expiration = @{ type = $Type; endDateTime = '2026-06-01T00:00:00Z' } } }
+        $source = @(
+            New-Resource -ResourceName 'AADRoleEligibilityScheduleRequest' -InstanceName 'e1' -Values @{ Principal = 'u1'; RoleDefinition = 'r'; DirectoryScopeId = '/'; ScheduleInfo = (& $schedule 'afterDateTime') }
+            New-Resource -ResourceName 'AADRoleEligibilityScheduleRequest' -InstanceName 'e2' -Values @{ Principal = 'u2'; RoleDefinition = 'r'; DirectoryScopeId = '/'; ScheduleInfo = (& $schedule 'noExpiration') }
+            New-Resource -ResourceName 'AADRoleAssignmentScheduleRequest' -InstanceName 'a1' -Values @{ Principal = 'u1'; RoleDefinition = 'r'; DirectoryScopeId = '/'; ScheduleInfo = (& $schedule 'afterDuration') }
+            New-Resource -ResourceName 'AADGroupEligibilitySchedule' -InstanceName 'g1' -Values @{ GroupDisplayName = 'g'; Principal = 'u1'; AccessId = 'member'; ScheduleInfo = (& $schedule 'afterDateTime') }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't1' -Values @{ Value = 'a.example'; ListType = 'Sender'; Action = 'Block'; ExpirationDate = '2026-06-01T00:00:00Z' }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't2' -Values @{ Value = 'b.example'; ListType = 'Sender'; Action = 'Block'; NoExpiration = $true }
+        )
+
+        $deltas = Invoke-ConfigurationCompare -Source $source -SchemaOverride $schema
+
+        @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('e2', 't2')
     }
 
     It 'Refuses an unknown rule type, a condition on both sides and an unreadable time span' {

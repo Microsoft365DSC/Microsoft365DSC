@@ -103,6 +103,7 @@ namespace Microsoft365DSC.Compare
             ["IgnoreNested"] = IgnoreNestedRule.From,
             ["ScalarAsArray"] = ScalarAsArrayRule.From,
             ["IgnoreWhenPast"] = IgnoreWhenPastRule.From,
+            ["IgnoreWhenOnlyCurrent"] = IgnoreWhenOnlyCurrentRule.From,
             ["SameInstant"] = SameInstantRule.From,
             ["Rename"] = RenameRule.From,
             ["DurationMatchesEnd"] = DurationMatchesEndRule.From,
@@ -601,6 +602,36 @@ namespace Microsoft365DSC.Compare
         protected override bool CanUseCurrentDate(DateTimeOffset desired, DateTimeOffset current, DateTimeOffset now) => desired != current && desired < now;
     }
 
+    internal sealed class IgnoreWhenOnlyCurrentRule : CompareRule
+    {
+        private readonly RuleCondition _when;
+
+        public IgnoreWhenOnlyCurrentRule(RuleCondition when)
+        {
+            _when = when;
+        }
+
+        public static CompareRule From(object declaration)
+        {
+            RuleCondition when = RuleCondition.ReadRequired(declaration, "When", RuleSide.Current);
+            return when.IsReading(RuleSide.Desired)
+                ? throw new ArgumentException("The IgnoreWhenOnlyCurrent condition only reads the Current side.", nameof(declaration))
+                : new IgnoreWhenOnlyCurrentRule(when);
+        }
+
+        public bool CanIgnore(Hashtable current) => _when.IsMet(new CompareRuleContext(
+            new Hashtable(StringComparer.OrdinalIgnoreCase),
+            current,
+            new Hashtable(StringComparer.OrdinalIgnoreCase),
+            [],
+            DateTimeOffset.Now,
+            null));
+
+        internal override void Apply(CompareRuleContext context)
+        {
+        }
+    }
+
     internal sealed class SameInstantRule : InstantRule
     {
         public SameInstantRule(string path)
@@ -750,7 +781,7 @@ namespace Microsoft365DSC.Compare
     internal sealed class RuleCondition
     {
         private static readonly string[] Operators =
-            ["Equals", "NotEquals", "IsNullOrEmpty", "NotNullOrEmpty", "HasKey", "NotHasKey", "Truthy", "Falsy"];
+            ["Equals", "NotEquals", "In", "IsNullOrEmpty", "NotNullOrEmpty", "HasKey", "NotHasKey", "Truthy", "Falsy"];
 
         private readonly IReadOnlyList<RuleCondition>? _all;
         private readonly IReadOnlyList<RuleCondition>? _any;
@@ -774,7 +805,15 @@ namespace Microsoft365DSC.Compare
         }
 
         public static RuleCondition? ReadOptional(object declaration, string name) =>
-            MemberAccessor.TryGetMember(declaration, name, out object? value) && value is not null ? Read(value) : null;
+            MemberAccessor.TryGetMember(declaration, name, out object? value) && value is not null ? Read(value, RuleSide.Desired) : null;
+
+        public static RuleCondition ReadRequired(object declaration, string name, RuleSide defaultSide) =>
+            MemberAccessor.TryGetMember(declaration, name, out object? value) && value is not null
+                ? Read(value, defaultSide)
+                : throw new ArgumentException($"The compare rule needs a {name}.", nameof(declaration));
+
+        public bool IsReading(RuleSide side) =>
+            _all?.Any(condition => condition.IsReading(side)) ?? _any?.Any(condition => condition.IsReading(side)) ?? _side == side;
 
         public bool IsMet(CompareRuleContext context)
         {
@@ -788,33 +827,35 @@ namespace Microsoft365DSC.Compare
                 return _any.Any(condition => condition.IsMet(context));
             }
 
-            Hashtable values = context.GetSide(_side);
-            object? value = RuleValues.GetValue(values, _property);
+            RuleSlot? slot = RuleValues.ResolveSlots(context.GetSide(_side), _property).FirstOrDefault();
+            object? value = slot?.Read();
+            bool isPresent = slot?.IsPresent == true;
 
             return _operator switch
             {
                 "Equals" => RuleValues.IsEqual(value, _operand),
                 "NotEquals" => !RuleValues.IsEqual(value, _operand),
+                "In" => RuleValues.ListItems(_operand).Any(candidate => RuleValues.IsEqual(value, candidate)),
                 "IsNullOrEmpty" => RuleValues.IsNullOrEmpty(value),
                 "NotNullOrEmpty" => !RuleValues.IsNullOrEmpty(value),
-                "HasKey" => RuleValues.HasKey(values, _property),
-                "NotHasKey" => !RuleValues.HasKey(values, _property),
+                "HasKey" => isPresent,
+                "NotHasKey" => !isPresent,
                 "Truthy" => RuleValues.IsTruthy(value),
                 "Falsy" => !RuleValues.IsTruthy(value),
                 _ => false
             };
         }
 
-        private static RuleCondition Read(object declaration)
+        private static RuleCondition Read(object declaration, RuleSide defaultSide)
         {
             if (MemberAccessor.TryGetMember(declaration, "All", out object? all) && all is not null)
             {
-                return new RuleCondition([.. SchemaIndex.AsSequence(all).Select(Read)], null);
+                return new RuleCondition([.. SchemaIndex.AsSequence(all).Select(entry => Read(entry, defaultSide))], null);
             }
 
             if (MemberAccessor.TryGetMember(declaration, "Any", out object? any) && any is not null)
             {
-                return new RuleCondition(null, [.. SchemaIndex.AsSequence(any).Select(Read)]);
+                return new RuleCondition(null, [.. SchemaIndex.AsSequence(any).Select(entry => Read(entry, defaultSide))]);
             }
 
             string property = RuleValues.ReadRequiredString(declaration, "Property");
@@ -822,7 +863,7 @@ namespace Microsoft365DSC.Compare
             {
                 if (MemberAccessor.TryGetMember(declaration, candidate, out object? operand))
                 {
-                    RuleSide side = RuleValues.ReadSide(declaration, "Side", RuleSide.Desired);
+                    RuleSide side = RuleValues.ReadSide(declaration, "Side", defaultSide);
                     return side == RuleSide.Both
                         ? throw new ArgumentException($"The condition on '{property}' only reads one side, not Both.", nameof(declaration))
                         : new RuleCondition(side, property, candidate, operand);

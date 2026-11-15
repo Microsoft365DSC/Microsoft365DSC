@@ -96,7 +96,11 @@ namespace Microsoft365DSC.Compare
 
                 if (sourceInstance.Key is null || !firstDestinationByKey.TryGetValue(sourceInstance.Key.Value, out Hashtable? match))
                 {
-                    delta.Add(Presence(sourceInstance.Resource, keyName, keyValue, inSource: "Present", inDestination: "Absent"));
+                    if (!IsIgnoredWhenOnlyCurrent(sourceInstance, index, compareParameters))
+                    {
+                        delta.Add(Presence(sourceInstance.Resource, keyName, keyValue, inSource: "Present", inDestination: "Absent"));
+                    }
+
                     continue;
                 }
 
@@ -115,6 +119,15 @@ namespace Microsoft365DSC.Compare
             }
 
             return delta;
+        }
+
+        private static bool IsIgnoredWhenOnlyCurrent(
+            KeyedInstance source,
+            SchemaIndex index,
+            IDictionary<string, ResourceCompareParameters>? compareParameters)
+        {
+            return Overrides(source.ResourceName, index, compareParameters)?.Rules is { Count: > 0 } rules
+                && rules.OfType<IgnoreWhenOnlyCurrentRule>().Any(rule => rule.CanIgnore(source.Resource));
         }
 
         private static bool IsSetToAbsent(Hashtable resource)
