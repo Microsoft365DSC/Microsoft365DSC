@@ -204,7 +204,6 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
 
     [string] Export()
     {
-        $listValues = $null
         if ($this.RequiresPowerShellCore())
         {
             return [string] $this.InvokeInPowerShellCore('Export')
@@ -219,13 +218,14 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
         try
         {
             $ListTypes = ('FileHash', 'Sender', 'Url')
+            $listValues = [System.Collections.Generic.List[System.Object]]::new()
 
             foreach ($ListType in $ListTypes)
             {
-                [array]$listValues = Get-TenantAllowBlockListItems -ListType $ListType -ErrorAction Stop
-                foreach ($value in $listValues)
+                foreach ($value in @(Get-TenantAllowBlockListItems -ListType $ListType -ErrorAction Stop))
                 {
-                    $value | Add-Member -MemberType NoteProperty -Name ListType -Value $ListType
+                    $value | Add-Member -MemberType NoteProperty -Name ListType -Value $ListType -Force
+                    $listValues.Add($value)
                 }
             }
 
