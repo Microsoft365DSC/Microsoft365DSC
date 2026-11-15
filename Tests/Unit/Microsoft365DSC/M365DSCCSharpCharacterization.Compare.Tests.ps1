@@ -1404,11 +1404,14 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
             New-Resource -ResourceName 'AADGroupEligibilitySchedule' -InstanceName 'g1' -Values @{ GroupDisplayName = 'g'; Principal = 'u1'; AccessId = 'member'; ScheduleInfo = (& $schedule 'afterDateTime') }
             New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't1' -Values @{ Value = 'a.example'; ListType = 'Sender'; Action = 'Block'; ExpirationDate = '2026-06-01T00:00:00Z' }
             New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't2' -Values @{ Value = 'b.example'; ListType = 'Sender'; Action = 'Block'; NoExpiration = $true }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't3' -Values @{ Value = 'c.example'; ListType = 'Url'; Action = 'Allow'; NoExpiration = $true; RemoveAfter = 45 }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't4' -Values @{ Value = 'd.example'; ListType = 'Url'; Action = 'Allow'; NoExpiration = $true; RemoveAfter = 0 }
+            New-Resource -ResourceName 'EXOTenantAllowBlockListItems' -InstanceName 't5' -Values @{ Value = 'e.example'; ListType = 'Url'; Action = 'Allow'; NoExpiration = $true; RemoveAfter = '0' }
         )
 
         $deltas = Invoke-ConfigurationCompare -Source $source -SchemaOverride $schema
 
-        @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('e2', 't2')
+        @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('e2', 't2', 't4', 't5')
     }
 
     It 'Refuses an unknown rule type, a condition on both sides and an unreadable time span' {

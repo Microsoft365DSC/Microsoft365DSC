@@ -32,9 +32,8 @@ namespace Microsoft365DSC.Compare
         /// <param name="excludedProperties">Property names to skip on every resource.</param>
         /// <param name="excludedResources">Resource names to skip entirely.</param>
         /// <param name="compareParameters">
-        /// Per-resource comparison overrides, keyed by resource name. Merged with the schema's own
-        /// declarations, and the only way to supply a post-processing callback, which cannot be
-        /// expressed in the schema.
+        /// Per-resource comparison overrides, keyed by resource name. A supplied entry replaces the
+        /// schema's declarations for that resource and is the only source of a post-processing callback.
         /// </param>
         /// <returns>One entry per differing property, plus one per resource missing on either side.</returns>
         public static List<ConfigurationDelta> Compare(
