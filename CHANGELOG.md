@@ -330,6 +330,7 @@
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
+  * Fixed the delta report not pairing keys that differ only in case.
   * Removed the relation templates of removed resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.

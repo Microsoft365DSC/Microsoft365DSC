@@ -417,11 +417,25 @@ Describe 'ConfigurationComparer.Compare' {
             $deltas | ForEach-Object -Process { $_['Properties'][0]['ValueInDestination'] | Should -Be 'y' }
         }
 
-        It 'Matches key values as strings, ordinal and case-sensitive' {
-            $source = @(New-Resource -ResourceName 'TestResource' -InstanceName 'S' -Values @{ Identity = 'A'; DisplayName = 'x' })
-            $destination = @(New-Resource -ResourceName 'TestResource' -InstanceName 'D' -Values @{ Identity = 'a'; DisplayName = 'x' })
+        It 'Matches key values and resource names as strings ignoring case' {
+            $source = @(New-Resource -ResourceName 'TestResource' -InstanceName 'S' -Values @{ Identity = 'Contoso Policy'; DisplayName = 'x' })
+            $destination = @(New-Resource -ResourceName 'testresource' -InstanceName 'D' -Values @{ Identity = 'contoso policy'; DisplayName = 'y' })
+            $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination
 
-            (Invoke-ConfigurationCompare -Source $source -Destination $destination).Count | Should -Be 2
+            $deltas.Count | Should -Be 1
+            $deltas[0]['KeyValue'] | Should -Be 'Contoso Policy'
+            $deltas[0]['Properties'][0]['ParameterName'] | Should -Be 'DisplayName'
+        }
+
+        It 'Pairs keys of several properties ignoring case and keeps different values apart' {
+            $source = @(
+                New-Resource -ResourceName 'TeamsChannel' -InstanceName 'S1' -Values @{ TeamName = 'Sales'; DisplayName = 'General'; Description = 'd' }
+                New-Resource -ResourceName 'TeamsChannel' -InstanceName 'S2' -Values @{ TeamName = 'Sales'; DisplayName = 'General '; Description = 'd' }
+            )
+            $destination = @(New-Resource -ResourceName 'TeamsChannel' -InstanceName 'D' -Values @{ TeamName = 'SALES'; DisplayName = 'general'; Description = 'd' })
+            $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination
+
+            @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('S2')
         }
 
         It 'Pairs a TeamsChannel by team name and display name' {

@@ -185,14 +185,14 @@ namespace Microsoft365DSC.Compare
 
             public bool Equals(InstanceKey other)
             {
-                if (!string.Equals(_resourceName, other._resourceName, StringComparison.Ordinal) || _values.Length != other._values.Length)
+                if (!string.Equals(_resourceName, other._resourceName, StringComparison.OrdinalIgnoreCase) || _values.Length != other._values.Length)
                 {
                     return false;
                 }
 
                 for (int i = 0; i < _values.Length; i++)
                 {
-                    if (!string.Equals(_values[i], other._values[i], StringComparison.Ordinal))
+                    if (!string.Equals(_values[i], other._values[i], StringComparison.OrdinalIgnoreCase))
                     {
                         return false;
                     }
@@ -205,10 +205,10 @@ namespace Microsoft365DSC.Compare
 
             public override int GetHashCode()
             {
-                int hash = StringComparer.Ordinal.GetHashCode(_resourceName);
+                int hash = StringComparer.OrdinalIgnoreCase.GetHashCode(_resourceName);
                 foreach (string? value in _values)
                 {
-                    hash = unchecked((hash * 31) + (value is null ? 0 : StringComparer.Ordinal.GetHashCode(value)));
+                    hash = unchecked((hash * 31) + (value is null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(value)));
                 }
 
                 return hash;
