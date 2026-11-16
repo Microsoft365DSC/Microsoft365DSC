@@ -47,6 +47,7 @@
     FIXES [#7622](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7622)
 * EXOTenantAllowBlockListItems
   * Fixed the export only returning entries of the `Url` list type.
+  * Added the `IP` list type.
 * IntuneDeviceAndAppManagementAssignmentFilter
   * Fixed `Set()` clearing the description and rule when `Description` or `Rule` is not specified.
 * IntuneDeviceCategory
@@ -57,6 +58,8 @@
   * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
     added Id for `iVerify`.
     FIXES [#7609](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7609)
+* IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10
+  * Fixed pause and rollback dates set by the service being reported as drift.
 * M365DSCRuleEvaluation
   * Fixed `CertificatePath` and `CertificatePassword` not being passed to the evaluated
     resource.
@@ -342,6 +345,7 @@
     for a lowercase `node localhost`.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
+  * Fixed `PartiallyExportedResourceCount` counting skipped resources.
   * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
   * Fixed the delta report not pairing keys that differ only in case.
   * Removed the relation templates of removed resources.
