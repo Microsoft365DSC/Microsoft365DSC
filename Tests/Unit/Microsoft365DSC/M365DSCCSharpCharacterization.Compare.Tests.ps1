@@ -684,8 +684,8 @@ Describe 'ResourceComparer.Compare complex properties' {
         $result = Invoke-ResourceCompare -Desired $desired -Current $current
 
         Get-DriftNames -Result $result | Should -Be @('Plain')
-        $result.DriftInfo[0]['CurrentValue'] | Should -Be 'Current value has {2} items'
-        $result.DriftInfo[0]['DesiredValue'] | Should -Be 'Desired value has {1} items'
+        $result.DriftInfo[0]['CurrentValue'].Count | Should -Be 2
+        $result.DriftInfo[0]['DesiredValue'][0]['Name'] | Should -Be 'a'
     }
 
     It 'Keeps only the failed attempts of the first unmatched element, in candidate order, for arrays without primary keys' {
@@ -1060,16 +1060,16 @@ Describe 'ComplexObjectComparer.Compare drift shapes' {
         }
     }
 
-    It 'Describes a null mismatch at the root and at key level' {
+    It 'Reports the values of a null mismatch at the root and at key level' {
         $root = Invoke-ComplexCompare -Source $null -Target @{ A = 1 }
         $root.Item1[0]['PropertyName'] | Should -Be 'Prop'
-        $root.Item1[0]['CurrentValue'] | Should -Be 'Current value is NOT null'
-        $root.Item1[0]['DesiredValue'] | Should -Be 'Desired value is null'
+        $root.Item1[0]['CurrentValue']['A'] | Should -Be 1
+        $root.Item1[0]['DesiredValue'] | Should -BeNullOrEmpty
 
         $key = Invoke-ComplexCompare -Source @{ A = $null } -Target @{ A = 1 }
         $key.Item1[0]['PropertyName'] | Should -Be 'Prop.A'
-        $key.Item1[0]['CurrentValue'] | Should -Be 'Current value is NOT null'
-        $key.Item1[0]['DesiredValue'] | Should -Be 'Desired value is null'
+        $key.Item1[0]['CurrentValue'] | Should -Be 1
+        $key.Item1[0]['DesiredValue'] | Should -BeNullOrEmpty
     }
 
     It 'Treats an empty collection and null as equal at the root and at key level' {
@@ -1125,8 +1125,8 @@ Describe 'ComplexObjectComparer.Compare drift shapes' {
     It 'Reports a count mismatch for complex arrays before comparing elements' {
         $result = Invoke-ComplexCompare -Source @(@{ A = 1 }) -Target @(@{ A = 1 }, @{ A = 2 })
 
-        $result.Item1[0]['CurrentValue'] | Should -Be 'Current value has {2} items'
-        $result.Item1[0]['DesiredValue'] | Should -Be 'Desired value has {1} items'
+        $result.Item1[0]['CurrentValue'].Count | Should -Be 2
+        $result.Item1[0]['DesiredValue'][0]['A'] | Should -Be 1
     }
 
     It 'Reports a drift for value-type arrays reached directly' {
