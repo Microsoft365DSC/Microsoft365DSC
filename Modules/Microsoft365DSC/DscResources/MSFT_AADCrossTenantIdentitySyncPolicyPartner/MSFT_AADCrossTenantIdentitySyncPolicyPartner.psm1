@@ -225,6 +225,7 @@ class AADCrossTenantIdentitySyncPolicyPartner : M365DSCResourceBase
                 {
                     Write-M365DSCHost -Message "    |---[$i/$($policyPartners.Count)] $($partner.TenantId)$Global:M365DSCEmojiRedX" -CommitWrite
                     $this.LogError($_, 'Error during Export:')
+                    $this.AddExportInstanceFailure($_, $partner.TenantId)
                     $i++
                     continue
                 }

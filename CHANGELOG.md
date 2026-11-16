@@ -360,6 +360,7 @@
   * Removed the relation templates of removed resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.
+  * Fixed exports dropping instances that fail outside `GetForExport` without recording them.
 
 # 2.26.1104.1
 

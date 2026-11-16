@@ -299,6 +299,7 @@ class SPOSiteGroup : M365DSCResourceBase
                 catch
                 {
                     Write-Warning -Message "Could not retrieve sitegroups for site $($site.Url): $($_.Exception.Message)"
+                    $this.AddExportInstanceFailure($_, $site.Url)
                 }
 
                 $j = 1
@@ -347,6 +348,7 @@ class SPOSiteGroup : M365DSCResourceBase
                     catch
                     {
                         Write-Verbose -Message "There was an issue retrieving the SiteGroups for $($this.Url)"
+                        $this.AddExportInstanceFailure($_, "$($site.Url), $($siteGroup.Title)")
                     }
                     $j++
                     Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite

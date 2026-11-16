@@ -315,6 +315,7 @@ class TeamsChannelTab : M365DSCResourceBase
                 {
                     $message = "        $($Global:M365DSCEmojiRedX) The specified Service Principal doesn't have access to read Channel information. Permission Required: Channel.ReadBasic.All"
                     $this.LogError($_, $Message)
+                    $this.AddExportInstanceFailure($_, $team.DisplayName)
                 }
 
                 $j = 1
@@ -332,6 +333,7 @@ class TeamsChannelTab : M365DSCResourceBase
                     {
                         $message = "            $($Global:M365DSCEmojiRedX) The specified Service Principal doesn't have access to read Tab information. Permission Required: TeamsTab.Read.All"
                         $this.LogError($_, $Message)
+                        $this.AddExportInstanceFailure($_, "$($team.DisplayName), $($channel.DisplayName)")
                     }
 
                     $k = 1

@@ -253,6 +253,7 @@ class TeamsUser : M365DSCResourceBase
                     {
                         Write-Verbose -Message $_
                         Write-Verbose -Message "The current User doesn't have the required permissions to extract Users for Team {$($team.DisplayName)}."
+                        $this.AddExportInstanceFailure($_, $team.DisplayName)
                     }
                     $j++
                 }
