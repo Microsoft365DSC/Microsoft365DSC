@@ -298,6 +298,11 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
             return
         }
 
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            Write-Warning -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has a duration without a start date. It is created again each time it ends and the tenant no longer lists it. Set ScheduleInfo.StartDateTime to keep it ended."
+        }
+
         $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
         if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')

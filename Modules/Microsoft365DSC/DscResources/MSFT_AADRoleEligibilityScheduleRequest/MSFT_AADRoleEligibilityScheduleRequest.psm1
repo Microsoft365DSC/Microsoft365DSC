@@ -301,6 +301,11 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
             return
         }
 
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            Write-Warning -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has a duration without a start date. It is created again each time it ends and the tenant no longer lists it. Set ScheduleInfo.StartDateTime to keep it ended."
+        }
+
         $PrincipalId = $null
         $PrincipalId = ($this.FindPrincipal() | Select-Object -First 1).Id
 
