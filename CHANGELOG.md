@@ -7,6 +7,7 @@
     FIXES [#7615](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7615)
   * Fixed `Set()` creating a new application instead of restoring a soft-deleted one.
     FIXES [#7617](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7617)
+  * Fixed key credential start and end dates being reported as drift.
 * AADCrossTenantAccessPolicyConfigurationPartner
   * Added `RoleEnabledGroupSyncInbound` to `IdentitySynchronization`.
 * AADEntitlementManagementAccessPackage
