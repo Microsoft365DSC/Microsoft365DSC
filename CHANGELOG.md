@@ -351,6 +351,7 @@
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Fixed `PartiallyExportedResourceCount` counting skipped resources.
+  * Added a `Reason` of `AccessDenied` or `NotAvailable` to `SkippedResources`.
   * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
   * Added the `IgnoreEndedWhenOnlyDesired` compare rule for ended PIM schedules.
   * Fixed the delta report not pairing keys that differ only in case.

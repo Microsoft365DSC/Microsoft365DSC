@@ -1342,12 +1342,14 @@ class M365DSCResourceBase
     # Marks the resource as not read in the export statistics.
     hidden [void] SkipExport([System.Management.Automation.ErrorRecord] $ErrorRecord)
     {
-        $this.SkipExport($ErrorRecord.Exception.Message)
+        $Global:M365DSCExportResourceSkipMessage = $ErrorRecord.Exception.Message
+        $Global:M365DSCExportResourceSkipReason = Get-M365DSCExportSkipReason -ErrorRecord $ErrorRecord
     }
 
     hidden [void] SkipExport([System.String] $Message)
     {
         $Global:M365DSCExportResourceSkipMessage = $Message
+        $Global:M365DSCExportResourceSkipReason = Get-M365DSCExportSkipReason -Message $Message
     }
 
     #endregion

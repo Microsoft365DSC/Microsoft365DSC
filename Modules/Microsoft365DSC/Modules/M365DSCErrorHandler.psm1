@@ -306,6 +306,88 @@ function Test-M365DSCNotFoundError
 
 <#
 .SYNOPSIS
+    Returns the reason category of a resource the export skipped.
+
+.DESCRIPTION
+    Returns AccessDenied for a failed sign-in or a missing permission and NotAvailable for any
+    other reason, such as a missing license or a feature the tenant does not offer.
+
+.PARAMETER ErrorRecord
+    The error that made the export skip the resource.
+
+.PARAMETER Message
+    The message the export skipped the resource with.
+
+.OUTPUTS
+    [System.String] AccessDenied or NotAvailable.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Get-M365DSCExportSkipReason
+{
+    [CmdletBinding(DefaultParameterSetName = 'Message')]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter(Mandatory = $true, ParameterSetName = 'ErrorRecord')]
+        [System.Management.Automation.ErrorRecord]
+        $ErrorRecord,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'Message')]
+        [AllowEmptyString()]
+        [System.String]
+        $Message
+    )
+
+    $messages = @($Message)
+    if ($PSCmdlet.ParameterSetName -eq 'ErrorRecord')
+    {
+        if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
+        {
+            $response = $ErrorRecord.Exception.Response
+            if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'] -and
+                [System.Int32]$response.StatusCode -in @(401, 403))
+            {
+                return 'AccessDenied'
+            }
+        }
+
+        $messages = @($ErrorRecord.Exception.Message)
+        if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
+        {
+            $messages += $ErrorRecord.ErrorDetails.Message
+        }
+    }
+
+    $accessPatterns = @(
+        '*Unauthorized*',
+        '*Forbidden*',
+        '*Authorization_RequestDenied*',
+        '*Insufficient privileges*',
+        '*Access denied*',
+        '*AccessDenied*',
+        '*Access is denied*',
+        '*AADSTS*',
+        '*permission*'
+    )
+
+    foreach ($text in $messages)
+    {
+        foreach ($pattern in $accessPatterns)
+        {
+            if ($text -like $pattern)
+            {
+                return 'AccessDenied'
+            }
+        }
+    }
+
+    return 'NotAvailable'
+}
+
+<#
+.SYNOPSIS
     Determines whether an error record represents an authentication or authorization error.
 
 .DESCRIPTION
@@ -599,6 +681,7 @@ function Wait-M365DSCCondition
 
 Export-ModuleMember -Function @(
     'Close-M365DSCPartialExport',
+    'Get-M365DSCExportSkipReason',
     'Invoke-M365DSCCommand',
     'Save-M365DSCPartialExport',
     'Test-M365DSCAccessError',
