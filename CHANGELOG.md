@@ -260,7 +260,8 @@
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`.
   * Updated `GetForExport` to still stop the export of a resource for single-instance
-    resources, transient errors and authentication or permission errors.
+    resources.
+  * Updated `GetForExport` to stop after three consecutive transient or access errors.
   * Added `RawExportResults` with an unmodified copy of the last `GetForExport` result.
   * Fixed `Get()` of several resources not returning all authentication properties.
   * Added `SkipExport` for resources whose export cannot read the tenant.

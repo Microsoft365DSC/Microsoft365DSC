@@ -778,15 +778,31 @@ Describe 'M365DSCResourceBase GetForExport' {
         $Global:M365DSCExportInstanceErrors.Count | Should -Be 0
     }
 
-    It 'Throws for a <Kind> error' -ForEach @(
+    It 'Records two <Kind> errors in a row and throws for the third' -ForEach @(
         @{ Kind = 'transient'; CommandName = 'Test-M365DSCTransientError' }
         @{ Kind = 'access'; CommandName = 'Test-M365DSCAccessError' }
     ) {
         Mock -CommandName $CommandName -ModuleName '_Shared' -MockWith { $true }
         $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+        $errorRecord = [System.Management.Automation.ErrorRecord]::new([System.Exception]::new('Failed'), 'Failed', 'NotSpecified', $null)
 
-        { $instance.GetForExport(@{ Identity = 'Room1@contoso.com'; AutomateProcessing = 'Invalid' }) } | Should -Throw
-        $Global:M365DSCExportInstanceErrors.Count | Should -Be 0
+        $instance.GetForExport(@{ Identity = 'Room1@contoso.com'; AutomateProcessing = 'Invalid' }) | Should -BeNullOrEmpty
+        $instance.AddExportInstanceFailure($errorRecord, 'Room2@contoso.com')
+        { $instance.GetForExport(@{ Identity = 'Room3@contoso.com'; AutomateProcessing = 'Invalid' }) } | Should -Throw
+        $Global:M365DSCExportInstanceErrors.InstanceName | Should -Be @('Room1@contoso.com', 'Room2@contoso.com')
+    }
+
+    It 'Starts the count over after an error of another kind' {
+        $Global:M365DSCTestTransientErrors = 0
+        Mock -CommandName 'Test-M365DSCTransientError' -ModuleName '_Shared' -MockWith { ($Global:M365DSCTestTransientErrors++ % 3) -ne 2 }
+        $instance = New-M365DSCResourceInstance -ResourceName 'EXOCalendarProcessing' -Property @{ Identity = 'Room1@contoso.com' }
+
+        foreach ($attempt in 1..6)
+        {
+            $instance.GetForExport(@{ Identity = 'Room1@contoso.com'; AutomateProcessing = 'Invalid' }) | Should -BeNullOrEmpty
+        }
+        $Global:M365DSCExportInstanceErrors.Count | Should -Be 6
+        $Global:M365DSCTestTransientErrors = $null
     }
 
     It 'Clears the failure message of the previous instance' {

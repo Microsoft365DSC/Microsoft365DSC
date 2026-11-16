@@ -224,6 +224,14 @@ class M365DSCResourceBase
     # Unmodified copy of the last GetForExport result, $null for a skipped instance.
     hidden [Hashtable] $RawExportResults
 
+    hidden static [System.Int32] $MaxConsecutiveExportFailures = 3
+
+    hidden [System.String] $_exportFailureKind
+
+    hidden [System.Int32] $_exportFailureCount
+
+    hidden [bool] $_exportInstanceRead
+
     # Each runspace compiles its own class types. A PowerShell class instance references only the session
     # state it was created in.
     hidden static [System.Runtime.CompilerServices.ConditionalWeakTable[Runspace, ConcurrentDictionary[String, ConcurrentDictionary[Type, System.Object]]]] $_runspaceTypeCaches = `
@@ -1288,28 +1296,36 @@ class M365DSCResourceBase
 
     # During Export-M365DSCConfiguration, returns $null for an instance whose Get() failed,
     # after recording the failure for the export statistics and the progress output.
-    # Single-instance resources, transient errors and authentication or permission errors
-    # still end the export of the resource. Outside of it, every error is rethrown.
+    # Single-instance resources and consecutive transient or access errors still end the
+    # export of the resource. Outside of it, every error is rethrown.
     [Hashtable] GetForExport([Hashtable] $Values)
     {
         $Global:M365DSCExportInstanceFailureMessage = $null
         $this.RawExportResults = $null
+        if ($this._exportInstanceRead)
+        {
+            $this._exportFailureKind = $null
+            $this._exportFailureCount = 0
+            $this._exportInstanceRead = $false
+        }
+
         try
         {
             $this.FromHashtable($Values)
             $result = $this.Get().ToHashtable()
             $this.RawExportResults = $result.Clone()
+            $this._exportInstanceRead = $true
             return $result
         }
         catch
         {
             if ($null -eq $Global:M365DSCExportInstanceErrors -or
-                $this._info.Meta.ContainsKey('IsSingleInstance') -or
-                (Test-M365DSCTransientError -ErrorRecord $_) -or
-                (Test-M365DSCAccessError -ErrorRecord $_))
+                $this._info.Meta.ContainsKey('IsSingleInstance'))
             {
                 throw
             }
+
+            $this.CountExportFailure($_)
 
             $instanceNameParts = @()
             foreach ($meta in $this._info.Meta.Values)
@@ -1323,6 +1339,49 @@ class M365DSCResourceBase
             $this.AddExportInstanceError(($instanceNameParts -join ', '), $_.Exception.Message)
             $Global:M365DSCExportInstanceFailureMessage = $_.Exception.Message
             return $null
+        }
+    }
+
+    hidden [void] AddExportInstanceFailure([System.Management.Automation.ErrorRecord] $ErrorRecord, [System.String] $InstanceName)
+    {
+        if ($null -eq $Global:M365DSCExportInstanceErrors)
+        {
+            return
+        }
+
+        $this.CountExportFailure($ErrorRecord)
+        $this.AddExportInstanceError($InstanceName, $ErrorRecord.Exception.Message)
+    }
+
+    # Throws the error once MaxConsecutiveExportFailures instances in a row fail with one kind of transient or access error.
+    hidden [void] CountExportFailure([System.Management.Automation.ErrorRecord] $ErrorRecord)
+    {
+        $this._exportInstanceRead = $false
+        $kind = $null
+        if (Test-M365DSCTransientError -ErrorRecord $ErrorRecord)
+        {
+            $kind = 'Transient'
+        }
+        elseif (Test-M365DSCAccessError -ErrorRecord $ErrorRecord)
+        {
+            $kind = 'Access'
+        }
+
+        if ($kind -ne $this._exportFailureKind)
+        {
+            $this._exportFailureKind = $kind
+            $this._exportFailureCount = 0
+        }
+
+        if ($null -eq $kind)
+        {
+            return
+        }
+
+        $this._exportFailureCount++
+        if ($this._exportFailureCount -ge [M365DSCResourceBase]::MaxConsecutiveExportFailures)
+        {
+            throw $ErrorRecord
         }
     }
 
