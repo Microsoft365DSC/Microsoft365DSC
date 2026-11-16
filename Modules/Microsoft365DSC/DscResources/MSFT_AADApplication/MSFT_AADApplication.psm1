@@ -1733,7 +1733,7 @@ class AADApplication : M365DSCResourceBase
         return @{
             ExcludedProperties = @('AppId', 'ObjectId', 'ApplicationTemplateId', 'AdminConsentGranted', 'PasswordCredentials')
             CompareRules       = @(
-                @{ Type = 'IgnoreNested'; Paths = @('KeyCredentials[].StartDateTime', 'KeyCredentials[].EndDateTime') }
+                @{ Type = 'IgnoreNested'; Paths = @('KeyCredentials[].StartDateTime', 'KeyCredentials[].EndDateTime', 'KeyCredentials[].KeyId', 'KeyCredentials[].Key') }
             )
         }
     }
