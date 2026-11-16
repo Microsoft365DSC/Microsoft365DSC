@@ -621,6 +621,7 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
                 @{ Type = 'DurationMatchesEnd'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
                 @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.expiration.type'; In = @('afterDateTime', 'afterDuration') } }
+                @{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
             )
         }
     }

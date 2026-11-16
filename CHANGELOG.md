@@ -348,6 +348,7 @@
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Fixed `PartiallyExportedResourceCount` counting skipped resources.
   * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
+  * Added the `IgnoreEndedWhenOnlyDesired` compare rule for ended PIM schedules.
   * Fixed the delta report not pairing keys that differ only in case.
   * Removed the relation templates of removed resources.
   * Updated the export to skip an instance that fails to export instead of stopping the

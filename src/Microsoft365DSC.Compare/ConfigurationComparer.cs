@@ -109,7 +109,8 @@ namespace Microsoft365DSC.Compare
             foreach (KeyedInstance destinationInstance in destinations)
             {
                 if ((destinationInstance.Key is null || !sourceKeys.Contains(destinationInstance.Key.Value))
-                    && !IsSetToAbsent(destinationInstance.Resource))
+                    && !IsSetToAbsent(destinationInstance.Resource)
+                    && !IsIgnoredWhenOnlyDesired(destinationInstance, index, compareParameters))
                 {
                     ConfigurationDelta missing = Presence(destinationInstance.Resource, KeyName(destinationInstance.Keys), KeyValue(destinationInstance.Resource, destinationInstance.Keys), inSource: "Absent", inDestination: "Present");
                     ApplyPresenceAnnotation(missing.Properties[0], destinationInstance.Resource, destinationInstance.Keys);
@@ -127,6 +128,17 @@ namespace Microsoft365DSC.Compare
         {
             return Overrides(source.ResourceName, index, compareParameters)?.Rules is { Count: > 0 } rules
                 && rules.OfType<IgnoreWhenOnlyCurrentRule>().Any(rule => rule.CanIgnore(source.Resource));
+        }
+
+        private static bool IsIgnoredWhenOnlyDesired(
+            KeyedInstance destination,
+            SchemaIndex index,
+            IDictionary<string, ResourceCompareParameters>? compareParameters)
+        {
+            ResourceCompareParameters? overrides = Overrides(destination.ResourceName, index, compareParameters);
+            DateTimeOffset now = overrides?.Now ?? DateTimeOffset.Now;
+            return overrides?.Rules is { Count: > 0 } rules
+                && rules.OfType<IgnoreEndedWhenOnlyDesiredRule>().Any(rule => rule.CanIgnore(destination.Resource, now));
         }
 
         private static bool IsSetToAbsent(Hashtable resource)

@@ -168,6 +168,7 @@ Prefer `CompareRules` over a `PostProcessing` scriptblock. Rules are data. The s
 | `ScalarAsArray` | `Paths` | Reads a single value as a list of one on both sides. |
 | `IgnoreWhenPast` | `Path` | Takes the current date when the desired date differs and lies in the past. |
 | `IgnoreWhenOnlyCurrent` | `When` | Does not report a current instance the desired configuration lacks when `When` is met. |
+| `IgnoreEndedWhenOnlyDesired` | `Expiration`, `Start` | Does not report a desired instance the current configuration lacks when its schedule has ended. |
 | `SameInstant` | `Path` | Takes the current date when both dates are the same instant. |
 | `Rename` | `From`, `To` | Renames a property on both sides. |
 | `DurationMatchesEnd` | `Expiration`, `Start`, `ToleranceMinutes` | Treats an `afterDuration` expiration as equal to an `afterDateTime` one that ends that long after the start. |
@@ -185,10 +186,16 @@ When = @{ All = @(
 ) }
 ```
 
-Every rule except `IgnoreWhenOnlyCurrent` applies to an instance both configurations contain. `IgnoreWhenOnlyCurrent` applies only to an instance of the current configuration, the source of the delta report, that has no counterpart in the desired one. Its condition reads the `Current` side, which is also its default. It suits instances that expire on their own, such as a time-bound role assignment:
+Every rule except `IgnoreWhenOnlyCurrent` and `IgnoreEndedWhenOnlyDesired` applies to an instance both configurations contain. `IgnoreWhenOnlyCurrent` applies only to an instance of the current configuration, the source of the delta report, that has no counterpart in the desired one. Its condition reads the `Current` side, which is also its default. It suits instances that expire on their own, such as a time-bound role assignment:
 
 ```powershell
 @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.expiration.type'; In = @('afterDateTime', 'afterDuration') } }
+```
+
+`IgnoreEndedWhenOnlyDesired` applies only to an instance of the desired configuration that the current one lacks. `Expiration` holds `type`, `endDateTime` and `duration`. An `afterDateTime` schedule ends at `endDateTime`, an `afterDuration` schedule ends `duration` after `Start`. An `afterDuration` schedule without a start never counts as ended:
+
+```powershell
+@{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
 ```
 
 The normalizers are:

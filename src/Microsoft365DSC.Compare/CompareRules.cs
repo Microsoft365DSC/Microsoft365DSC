@@ -104,6 +104,7 @@ namespace Microsoft365DSC.Compare
             ["ScalarAsArray"] = ScalarAsArrayRule.From,
             ["IgnoreWhenPast"] = IgnoreWhenPastRule.From,
             ["IgnoreWhenOnlyCurrent"] = IgnoreWhenOnlyCurrentRule.From,
+            ["IgnoreEndedWhenOnlyDesired"] = IgnoreEndedWhenOnlyDesiredRule.From,
             ["SameInstant"] = SameInstantRule.From,
             ["Rename"] = RenameRule.From,
             ["DurationMatchesEnd"] = DurationMatchesEndRule.From,
@@ -629,6 +630,53 @@ namespace Microsoft365DSC.Compare
 
         internal override void Apply(CompareRuleContext context)
         {
+        }
+    }
+
+    internal sealed class IgnoreEndedWhenOnlyDesiredRule : CompareRule
+    {
+        private readonly string _expirationPath;
+        private readonly string _startPath;
+
+        public IgnoreEndedWhenOnlyDesiredRule(string expirationPath, string startPath)
+        {
+            _expirationPath = expirationPath;
+            _startPath = startPath;
+        }
+
+        public static CompareRule From(object declaration) => new IgnoreEndedWhenOnlyDesiredRule(
+            RuleValues.ReadRequiredString(declaration, "Expiration"),
+            RuleValues.ReadRequiredString(declaration, "Start"));
+
+        public bool CanIgnore(Hashtable desired, DateTimeOffset now) => TryReadEnd(desired, out DateTimeOffset end) && end < now;
+
+        internal override void Apply(CompareRuleContext context)
+        {
+        }
+
+        private bool TryReadEnd(Hashtable desired, out DateTimeOffset end)
+        {
+            end = default;
+            if (RuleValues.ResolveSlots(desired, _expirationPath).FirstOrDefault()?.Read() is not IDictionary expiration)
+            {
+                return false;
+            }
+
+            string? type = RuleValues.ConvertToText(RuleValues.GetValue(expiration, "type"));
+            if (string.Equals(type, "afterDateTime", StringComparison.OrdinalIgnoreCase))
+            {
+                return RuleValues.TryReadInstant(RuleValues.GetValue(expiration, "endDateTime"), out end);
+            }
+
+            if (!string.Equals(type, "afterDuration", StringComparison.OrdinalIgnoreCase) ||
+                !RuleValues.TryReadInstant(RuleValues.ResolveSlots(desired, _startPath).FirstOrDefault()?.Read(), out DateTimeOffset start) ||
+                !RuleValues.TryReadDuration(RuleValues.GetValue(expiration, "duration"), out TimeSpan duration))
+            {
+                return false;
+            }
+
+            end = start + duration;
+            return true;
         }
     }
 

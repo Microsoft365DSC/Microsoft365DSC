@@ -1327,6 +1327,27 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
             Should -Throw '*Current*'
     }
 
+    It 'IgnoreEndedWhenOnlyDesired skips a desired-only instance whose schedule has ended' {
+        $parameters = New-CompareParameters
+        $parameters.Rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(
+                @{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.Expiration'; Start = 'ScheduleInfo.StartDateTime' }
+            ))
+        $parameters.Now = [System.DateTimeOffset]::Parse('2026-06-01T00:00:00Z')
+        $map = New-CompareParameterMap -ResourceName 'TestRules' -Parameters $parameters
+        $schedule = { param($Identity, $ScheduleInfo) New-Resource -ResourceName 'TestRules' -InstanceName $Identity -Values @{ Identity = $Identity; ScheduleInfo = $ScheduleInfo } }
+        $destination = @(
+            (& $schedule 'endedDate' @{ Expiration = @{ type = 'afterDateTime'; endDateTime = '2026-05-01T00:00:00Z' } })
+            (& $schedule 'endedDuration' @{ StartDateTime = '2026-05-01T00:00:00Z'; Expiration = @{ type = 'afterDuration'; duration = 'P7D' } })
+            (& $schedule 'future' @{ Expiration = @{ type = 'afterDateTime'; endDateTime = '2026-07-01T00:00:00Z' } })
+            (& $schedule 'noStart' @{ Expiration = @{ type = 'afterDuration'; duration = 'P7D' } })
+            (& $schedule 'permanent' @{ Expiration = @{ type = 'noExpiration' } })
+        )
+
+        $deltas = Invoke-ConfigurationCompare -Source @() -Destination $destination -CompareParameters $map
+
+        @($deltas | ForEach-Object -Process { $_['KeyValue'] }) | Should -Be @('future', 'noStart', 'permanent')
+    }
+
     It 'Reads a condition property as a path and matches In against a list ignoring case' {
         $rules = @(@{ Type = 'RemoveWhen'; Properties = @('Notes'); When = @{ Side = 'Current'; Property = 'ScheduleInfo.Expiration.type'; In = @('afterDateTime', 'afterDuration') } })
 
