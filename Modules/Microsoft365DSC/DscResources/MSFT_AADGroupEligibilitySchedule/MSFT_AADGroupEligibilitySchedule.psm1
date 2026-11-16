@@ -298,6 +298,19 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
             return
         }
 
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Present' -and
+            [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo) -and
+            [M365DSCResourceBase]::TestScheduleEnded($currentInstance.ScheduleInfo))
+        {
+            Write-Verbose -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has ended in the tenant. It is not updated."
+            return
+        }
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            Write-Warning -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has a duration without a start date. It is created again each time it ends and the tenant no longer lists it. Set ScheduleInfo.StartDateTime to keep it ended."
+        }
+
         $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
         if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
@@ -494,6 +507,16 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
         {
             Write-Verbose -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has ended and no longer exists. It is in the desired state."
             return $true
+        }
+
+        if ($this.Ensure -ne 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            $currentInstance = $this.Get()
+            if ($currentInstance.Ensure -eq 'Present' -and [M365DSCResourceBase]::TestScheduleEnded($currentInstance.ScheduleInfo))
+            {
+                Write-Verbose -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has ended in the tenant. It is in the desired state."
+                return $true
+            }
         }
 
         return ([M365DSCResourceBase] $this).Test()
@@ -715,6 +738,7 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
             CompareRules = @(
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
                 @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.Expiration.Type'; In = @('afterDateTime', 'afterDuration') } }
+                @{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.Expiration'; Start = 'ScheduleInfo.StartDateTime' }
             )
         }
     }

@@ -213,6 +213,7 @@ class SPOSiteAuditSettings : M365DSCResourceBase
                     $this.LogError($_, 'Error during Export:')
 
                     Write-Verbose "There was an issue retrieving Audit Settings for $($this.Url)"
+                    $this.AddExportInstanceFailure($_, $site.Url)
                 }
                 $i++
             }

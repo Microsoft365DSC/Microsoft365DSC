@@ -22,6 +22,8 @@ namespace Microsoft365DSC.Compare
         private static readonly string[] AlwaysExcludedProperties =
             [.. Microsoft365DSC.Utilities.Utilities.AuthenticationPropertyNames.Prepend("ResourceInstanceName")];
         private static readonly string[] first = new[] { "Ensure" };
+        private static readonly string IdentitySeparator = ((char)31).ToString();
+        private static readonly string[] IdentityProperties = ["Id", "Identity"];
 
         /// <summary>
         /// Compares a source configuration against a destination configuration.
@@ -89,12 +91,26 @@ namespace Microsoft365DSC.Compare
                 {
                     sourceKeys.Add(key);
                 }
+            }
 
+            Dictionary<string, KeyedInstance> renameCandidates = BuildRenameCandidates(destinations, sourceKeys);
+            HashSet<KeyedInstance> renamedDestinations = [];
+
+            foreach (KeyedInstance sourceInstance in sources)
+            {
                 string keyName = KeyName(sourceInstance.Keys);
                 string keyValue = KeyValue(sourceInstance.Resource, sourceInstance.Keys);
 
                 if (sourceInstance.Key is null || !firstDestinationByKey.TryGetValue(sourceInstance.Key.Value, out Hashtable? match))
                 {
+                    if (TryFindRenamedDestination(sourceInstance, renameCandidates, renamedDestinations, out KeyedInstance? renamed))
+                    {
+                        string baselineKeyValue = KeyValue(renamed!.Resource, renamed.Keys);
+                        AddKeyDeltas(delta, sourceInstance, renamed, keyName, baselineKeyValue);
+                        AddPropertyDeltas(delta, sourceInstance.Resource, renamed.Resource, sourceInstance.ResourceName, keyName, baselineKeyValue, index, globalExclusions, compareParameters);
+                        continue;
+                    }
+
                     if (!IsIgnoredWhenOnlyCurrent(sourceInstance, index, compareParameters))
                     {
                         delta.Add(Presence(sourceInstance.Resource, keyName, keyValue, inSource: "Present", inDestination: "Absent"));
@@ -109,7 +125,9 @@ namespace Microsoft365DSC.Compare
             foreach (KeyedInstance destinationInstance in destinations)
             {
                 if ((destinationInstance.Key is null || !sourceKeys.Contains(destinationInstance.Key.Value))
-                    && !IsSetToAbsent(destinationInstance.Resource))
+                    && !renamedDestinations.Contains(destinationInstance)
+                    && !IsSetToAbsent(destinationInstance.Resource)
+                    && !IsIgnoredWhenOnlyDesired(destinationInstance, index, compareParameters))
                 {
                     ConfigurationDelta missing = Presence(destinationInstance.Resource, KeyName(destinationInstance.Keys), KeyValue(destinationInstance.Resource, destinationInstance.Keys), inSource: "Absent", inDestination: "Present");
                     ApplyPresenceAnnotation(missing.Properties[0], destinationInstance.Resource, destinationInstance.Keys);
@@ -120,6 +138,94 @@ namespace Microsoft365DSC.Compare
             return delta;
         }
 
+        private static Dictionary<string, KeyedInstance> BuildRenameCandidates(List<KeyedInstance> destinations, HashSet<InstanceKey> sourceKeys)
+        {
+            Dictionary<string, KeyedInstance> candidates = new(StringComparer.OrdinalIgnoreCase);
+            foreach (KeyedInstance destination in destinations)
+            {
+                if (destination.Key is not { } key || sourceKeys.Contains(key) || IsSetToAbsent(destination.Resource))
+                {
+                    continue;
+                }
+
+                foreach (string identity in ListIdentities(destination))
+                {
+                    if (!candidates.ContainsKey(identity))
+                    {
+                        candidates[identity] = destination;
+                    }
+                }
+            }
+
+            return candidates;
+        }
+
+        private static bool TryFindRenamedDestination(
+            KeyedInstance source,
+            Dictionary<string, KeyedInstance> candidates,
+            HashSet<KeyedInstance> renamedDestinations,
+            out KeyedInstance? renamed)
+        {
+            renamed = null;
+            if (source.Key is null)
+            {
+                return false;
+            }
+
+            foreach (string identity in ListIdentities(source))
+            {
+                if (candidates.TryGetValue(identity, out KeyedInstance? candidate) && renamedDestinations.Add(candidate))
+                {
+                    renamed = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<string> ListIdentities(KeyedInstance instance)
+        {
+            foreach (string property in IdentityProperties)
+            {
+                if (instance.Resource[property]?.ToString() is { Length: > 0 } value)
+                {
+                    yield return string.Join(IdentitySeparator, instance.ResourceName, property, value);
+                }
+            }
+        }
+
+        private static void AddKeyDeltas(List<ConfigurationDelta> delta, KeyedInstance source, KeyedInstance destination, string keyName, string keyValue)
+        {
+            foreach (string key in source.Keys)
+            {
+                object? sourceValue = source.Resource[key];
+                object? destinationValue = destination.Resource[key];
+                if (string.Equals(sourceValue?.ToString(), destinationValue?.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                ConfigurationDeltaProperty property = new()
+                {
+                    ParameterName = key,
+                    ValueInSource = sourceValue,
+                    ValueInDestination = destinationValue
+                };
+
+                ApplyAnnotation(property, destination.Resource, key);
+
+                delta.Add(new ConfigurationDelta
+                {
+                    ResourceName = source.ResourceName,
+                    ResourceInstanceName = source.Resource["ResourceInstanceName"]?.ToString(),
+                    Key = keyName,
+                    KeyValue = keyValue,
+                    Properties = [property]
+                });
+            }
+        }
+
         private static bool IsIgnoredWhenOnlyCurrent(
             KeyedInstance source,
             SchemaIndex index,
@@ -127,6 +233,17 @@ namespace Microsoft365DSC.Compare
         {
             return Overrides(source.ResourceName, index, compareParameters)?.Rules is { Count: > 0 } rules
                 && rules.OfType<IgnoreWhenOnlyCurrentRule>().Any(rule => rule.CanIgnore(source.Resource));
+        }
+
+        private static bool IsIgnoredWhenOnlyDesired(
+            KeyedInstance destination,
+            SchemaIndex index,
+            IDictionary<string, ResourceCompareParameters>? compareParameters)
+        {
+            ResourceCompareParameters? overrides = Overrides(destination.ResourceName, index, compareParameters);
+            DateTimeOffset now = overrides?.Now ?? DateTimeOffset.Now;
+            return overrides?.Rules is { Count: > 0 } rules
+                && rules.OfType<IgnoreEndedWhenOnlyDesiredRule>().Any(rule => rule.CanIgnore(destination.Resource, now));
         }
 
         private static bool IsSetToAbsent(Hashtable resource)

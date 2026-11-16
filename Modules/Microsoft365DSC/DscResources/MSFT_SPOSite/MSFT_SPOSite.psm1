@@ -766,6 +766,7 @@ class SPOSite : M365DSCResourceBase
                 catch
                 {
                     Write-M365DSCHost -Message "$($Global:M365DSCEmojiYellowCircle) $_"
+                    $this.AddExportInstanceFailure($_, $site.Url)
                 }
                 $i++
             }

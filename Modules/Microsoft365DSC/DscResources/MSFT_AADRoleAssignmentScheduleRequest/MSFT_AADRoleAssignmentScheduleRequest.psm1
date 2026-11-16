@@ -310,6 +310,11 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
             return
         }
 
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            Write-Warning -Message "The role assignment schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has a duration without a start date. It is created again each time it ends and the tenant no longer lists it. Set ScheduleInfo.StartDateTime to keep it ended."
+        }
+
         $ParametersOps = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
         [Array]$PrincipalIdValue = ($this.FindPrincipal()).Id
@@ -621,6 +626,7 @@ class AADRoleAssignmentScheduleRequest : M365DSCResourceBase
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
                 @{ Type = 'DurationMatchesEnd'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
                 @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.expiration.type'; In = @('afterDateTime', 'afterDuration') } }
+                @{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
             )
         }
     }

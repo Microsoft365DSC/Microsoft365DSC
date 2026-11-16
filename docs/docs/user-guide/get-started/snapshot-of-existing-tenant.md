@@ -224,7 +224,7 @@ This parameter allows replacing specific tokens that appear in the configuration
 
 This parameter prints a summary of statistics after the export completes. The returned hashtable also lists the resources that failed to export, each with the message of its error, in its FailedResources entry.
 
-Some resources do not fail when they cannot read the tenant, for example because of a missing license or permission, or a feature the tenant does not offer. They don't export anything and do not count in ExportedResourceCount. The returned hashtable lists them in its SkippedResources entry, each with a ResourceName and a Message, and counts them in SkippedResourceCount. A resource in SkippedResources doesn't have any instances in the export because the export couldn't read it.
+Some resources do not fail when they cannot read the tenant, for example because of a missing license or permission, or a feature the tenant does not offer. They don't export anything and do not count in ExportedResourceCount. The returned hashtable lists them in its SkippedResources entry, each with a ResourceName, a Message and a Reason, and counts them in SkippedResourceCount. The Reason is AccessDenied for a failed sign-in or a missing permission, and NotAvailable for anything else, such as a missing license or a feature the tenant does not offer. A resource in SkippedResources doesn't have any instances in the export because the export couldn't read it.
 
 ### IncludeDependencies
 

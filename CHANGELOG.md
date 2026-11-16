@@ -7,6 +7,7 @@
     FIXES [#7615](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7615)
   * Fixed `Set()` creating a new application instead of restoring a soft-deleted one.
     FIXES [#7617](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7617)
+  * Fixed key credential dates, key ids and certificate blobs reported as drift.
 * AADCrossTenantAccessPolicyConfigurationPartner
   * Added `RoleEnabledGroupSyncInbound` to `IdentitySynchronization`.
 * AADEntitlementManagementAccessPackage
@@ -15,7 +16,9 @@
   * Added the `RoleManagementPolicy.ReadWrite.AzureADGroup` permission. Without it, `Set()`
     cannot read or update the expiration rule of the group policy, which it does for the
     `noExpiration`, `afterDateTime` and `afterDuration` expiration types.
-  * Fixed `Set()` creating a schedule again after it has ended.
+  * Added a `Set()` warning for a duration schedule without a start date.
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
 * AADGroupEligibilityScheduleSettings
   * Added the `RoleManagementPolicy.Read.AzureADGroup` permission. Without it, the export
     returns no instance.
@@ -28,9 +31,11 @@
     `RoleManagementPolicy.ReadWrite.AzureADGroup` permissions. Without them, the export
     returns no instance and `Set()` cannot update the policy rules of a group.
 * AADRoleAssignmentScheduleRequest
+  * Added a `Set()` warning for a duration schedule without a start date.
   * Fixed `Set()` creating a schedule again after it has ended, read from the
     tenant for a duration without a start.
 * AADRoleEligibilityScheduleRequest
+  * Added a `Set()` warning for a duration schedule without a start date.
   * Fixed `Set()` creating a schedule again after it has ended, read from the
     tenant for a duration without a start.
 * AADTenantDetails
@@ -90,6 +95,7 @@
 * M365DSCCompare
   * Updated `Compare-M365DSCResourceState` to fail when post-processing fails.
   * Fixed an empty desired collection drifting from a missing or null value.
+  * Fixed null and item count drifts showing fixed text instead of values.
 * M365DSCConfigurationCompiler
   * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
     pipeline without `ConfigurationName` ignores.
@@ -255,7 +261,8 @@
   * Updated `GetForExport` to skip a failed instance of a multi-instance resource
     during `Export-M365DSCConfiguration`.
   * Updated `GetForExport` to still stop the export of a resource for single-instance
-    resources, transient errors and authentication or permission errors.
+    resources.
+  * Updated `GetForExport` to stop after three consecutive transient or access errors.
   * Added `RawExportResults` with an unmodified copy of the last `GetForExport` result.
   * Fixed `Get()` of several resources not returning all authentication properties.
   * Added `SkipExport` for resources whose export cannot read the tenant.
@@ -346,11 +353,15 @@
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Fixed `PartiallyExportedResourceCount` counting skipped resources.
+  * Added a `Reason` of `AccessDenied` or `NotAvailable` to `SkippedResources`.
   * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
+  * Added the `IgnoreEndedWhenOnlyDesired` compare rule for ended PIM schedules.
   * Fixed the delta report not pairing keys that differ only in case.
+  * Fixed the delta report not pairing renamed instances by `Id` or `Identity`.
   * Removed the relation templates of removed resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.
+  * Fixed exports dropping instances that fail outside `GetForExport` without recording them.
 
 # 2.26.1104.1
 

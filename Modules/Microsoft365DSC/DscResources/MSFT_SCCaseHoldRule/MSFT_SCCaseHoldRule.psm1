@@ -240,6 +240,7 @@ class SCCaseHoldRule : M365DSCResourceBase
                 catch
                 {
                     Write-Verbose -Message "You are not authorized to access Case Hold Policy {$($Rule.Policy)}"
+                    $this.AddExportInstanceFailure($_, $Rule.Name)
                 }
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 $i++

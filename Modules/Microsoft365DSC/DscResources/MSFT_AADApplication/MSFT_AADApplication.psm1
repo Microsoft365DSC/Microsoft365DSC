@@ -1714,6 +1714,7 @@ class AADApplication : M365DSCResourceBase
                     }
                     $this.LogError($_, 'Error during Export:')
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+                    $this.AddExportInstanceFailure($_, $AADApp.DisplayName)
                     $i++
                 }
             }
@@ -1731,6 +1732,9 @@ class AADApplication : M365DSCResourceBase
     {
         return @{
             ExcludedProperties = @('AppId', 'ObjectId', 'ApplicationTemplateId', 'AdminConsentGranted', 'PasswordCredentials')
+            CompareRules       = @(
+                @{ Type = 'IgnoreNested'; Paths = @('KeyCredentials[].StartDateTime', 'KeyCredentials[].EndDateTime') }
+            )
         }
     }
 

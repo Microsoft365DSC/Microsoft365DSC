@@ -822,6 +822,7 @@ function Start-M365DSCConfigurationExtract
         [void]$synchronizedHashtable.TryAdd('ResourceStatus', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('ResourceErrors', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('ResourceSkips', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
+        [void]$synchronizedHashtable.TryAdd('ResourceSkipReasons', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.String]]::new())
         [void]$synchronizedHashtable.TryAdd('InstanceCounts', [System.Collections.Concurrent.ConcurrentDictionary[System.String, System.Int32]]::new())
         [void]$synchronizedHashtable.TryAdd('InstanceErrors', [System.Collections.Concurrent.ConcurrentQueue[System.Collections.Hashtable]]::new())
         [void]$synchronizedHashtable.TryAdd('BusyWorkers', 0)
@@ -920,6 +921,7 @@ function Start-M365DSCConfigurationExtract
                     $Global:M365DSCExportInstanceTally = 0
                     $Global:M365DSCExportInstanceErrors = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
                     $Global:M365DSCExportResourceSkipMessage = $null
+                    $Global:M365DSCExportResourceSkipReason = $null
                     try
                     {
                         $exportOutput = Invoke-M365DSCResourceMethod -ResourceName $resourceName -MethodName 'Export' -Parameters $parameters
@@ -934,6 +936,12 @@ function Start-M365DSCConfigurationExtract
                         if ($null -ne $Global:M365DSCExportResourceSkipMessage)
                         {
                             [void]$sharedState.ResourceSkips.TryAdd($resourceName, $Global:M365DSCExportResourceSkipMessage)
+                            $skipReason = $Global:M365DSCExportResourceSkipReason
+                            if ([System.String]::IsNullOrEmpty($skipReason))
+                            {
+                                $skipReason = Get-M365DSCExportSkipReason -Message $Global:M365DSCExportResourceSkipMessage
+                            }
+                            [void]$sharedState.ResourceSkipReasons.TryAdd($resourceName, $skipReason)
                         }
                     }
                     catch
@@ -957,6 +965,7 @@ function Start-M365DSCConfigurationExtract
                         $Global:M365DSCExportInstanceErrors = $null
                         $Global:M365DSCExportInstanceFailureMessage = $null
                         $Global:M365DSCExportResourceSkipMessage = $null
+                        $Global:M365DSCExportResourceSkipReason = $null
                         Complete-M365DSCHostLine
                         Complete-M365DSCExportCollectionConsumer -ResourceName $resourceName
                     }
@@ -1346,6 +1355,7 @@ function Start-M365DSCConfigurationExtract
                 $skippedResources += @{
                     ResourceName = $resourceSkip.Key
                     Message      = $resourceSkip.Value
+                    Reason       = $synchronizedHashtable.ResourceSkipReasons[$resourceSkip.Key]
                 }
                 switch ($synchronizedHashtable.ResourceStatus[$resourceSkip.Key])
                 {

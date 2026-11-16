@@ -134,7 +134,7 @@ namespace Microsoft365DSC.Compare
                             return false;
                         }
 
-                        drifts!.Add(NullMismatch(frame.PropName!, frame.Left is null, frame.Right is null));
+                        drifts!.Add(DriftRecord.Create(frame.PropName!, frame.Right, frame.Left));
                         result = false;
                         continue;
                     }
@@ -222,10 +222,7 @@ namespace Microsoft365DSC.Compare
                 {
                     if (collecting)
                     {
-                        drifts!.Add(DriftRecord.Create(
-                            propName!,
-                            $"Current value has {{{rightArray.Length}}} items",
-                            $"Desired value has {{{leftArray.Length}}} items"));
+                        drifts!.Add(DriftRecord.Create(propName!, right, left));
                     }
 
                     return false;
@@ -407,7 +404,7 @@ namespace Microsoft365DSC.Compare
                             return false;
                         }
 
-                        drifts!.Add(NullMismatch($"{frame.PropName}.{key}", sourceValue is null, targetValue is null));
+                        drifts!.Add(DriftRecord.Create($"{frame.PropName}.{key}", targetValue, sourceValue));
                         returnResult = false;
                         continue;
                     }
@@ -458,14 +455,6 @@ namespace Microsoft365DSC.Compare
             }
 
             return result;
-        }
-
-        private static Hashtable NullMismatch(string propName, bool leftIsNull, bool rightIsNull)
-        {
-            return DriftRecord.Create(
-                propName,
-                rightIsNull ? "Current value is null" : "Current value is NOT null",
-                leftIsNull ? "Desired value is null" : "Desired value is NOT null");
         }
 
         private static bool IsIntuneAssignmentClass(string className)

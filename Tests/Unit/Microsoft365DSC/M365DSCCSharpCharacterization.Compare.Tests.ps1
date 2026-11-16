@@ -445,6 +445,23 @@ Describe 'ConfigurationComparer.Compare' {
             @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('S2')
         }
 
+        It 'Pairs a renamed instance by Id under the baseline key and reports the key change' {
+            $source = @(
+                New-Resource -ResourceName 'TestResource' -InstanceName 'S1' -Values @{ Identity = 'new'; Id = '1'; DisplayName = 'x' }
+                New-Resource -ResourceName 'TestResource' -InstanceName 'S2' -Values @{ Identity = 'other'; Id = '2' }
+            )
+            $destination = @(
+                New-Resource -ResourceName 'TestResource' -InstanceName 'D1' -Values @{ Identity = 'old'; Id = '1'; DisplayName = 'y' }
+                New-Resource -ResourceName 'TestResource' -InstanceName 'D2' -Values @{ Identity = 'gone'; Id = '3' }
+            )
+            $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination
+
+            @($deltas | ForEach-Object -Process { '{0}:{1}' -f $_['KeyValue'], $_['Properties'][0]['ParameterName'] }) |
+                Should -Be @('old:Identity', 'old:DisplayName', 'other:_IsInConfiguration_', 'gone:_IsInConfiguration_')
+            $deltas[0]['Properties'][0]['ValueInSource'] | Should -Be 'new'
+            $deltas[0]['Properties'][0]['ValueInDestination'] | Should -Be 'old'
+        }
+
         It 'Pairs a TeamsChannel by team name and display name' {
             $source = @(New-Resource -ResourceName 'TeamsChannel' -InstanceName 'S' -Values @{ TeamName = 't'; DisplayName = 'c'; Description = 'd1' })
             $destination = @(New-Resource -ResourceName 'TeamsChannel' -InstanceName 'D' -Values @{ TeamName = 't'; DisplayName = 'c'; Description = 'd2' })
@@ -684,8 +701,8 @@ Describe 'ResourceComparer.Compare complex properties' {
         $result = Invoke-ResourceCompare -Desired $desired -Current $current
 
         Get-DriftNames -Result $result | Should -Be @('Plain')
-        $result.DriftInfo[0]['CurrentValue'] | Should -Be 'Current value has {2} items'
-        $result.DriftInfo[0]['DesiredValue'] | Should -Be 'Desired value has {1} items'
+        $result.DriftInfo[0]['CurrentValue'].Count | Should -Be 2
+        $result.DriftInfo[0]['DesiredValue'][0]['Name'] | Should -Be 'a'
     }
 
     It 'Keeps only the failed attempts of the first unmatched element, in candidate order, for arrays without primary keys' {
@@ -1060,16 +1077,16 @@ Describe 'ComplexObjectComparer.Compare drift shapes' {
         }
     }
 
-    It 'Describes a null mismatch at the root and at key level' {
+    It 'Reports the values of a null mismatch at the root and at key level' {
         $root = Invoke-ComplexCompare -Source $null -Target @{ A = 1 }
         $root.Item1[0]['PropertyName'] | Should -Be 'Prop'
-        $root.Item1[0]['CurrentValue'] | Should -Be 'Current value is NOT null'
-        $root.Item1[0]['DesiredValue'] | Should -Be 'Desired value is null'
+        $root.Item1[0]['CurrentValue']['A'] | Should -Be 1
+        $root.Item1[0]['DesiredValue'] | Should -BeNullOrEmpty
 
         $key = Invoke-ComplexCompare -Source @{ A = $null } -Target @{ A = 1 }
         $key.Item1[0]['PropertyName'] | Should -Be 'Prop.A'
-        $key.Item1[0]['CurrentValue'] | Should -Be 'Current value is NOT null'
-        $key.Item1[0]['DesiredValue'] | Should -Be 'Desired value is null'
+        $key.Item1[0]['CurrentValue'] | Should -Be 1
+        $key.Item1[0]['DesiredValue'] | Should -BeNullOrEmpty
     }
 
     It 'Treats an empty collection and null as equal at the root and at key level' {
@@ -1125,8 +1142,8 @@ Describe 'ComplexObjectComparer.Compare drift shapes' {
     It 'Reports a count mismatch for complex arrays before comparing elements' {
         $result = Invoke-ComplexCompare -Source @(@{ A = 1 }) -Target @(@{ A = 1 }, @{ A = 2 })
 
-        $result.Item1[0]['CurrentValue'] | Should -Be 'Current value has {2} items'
-        $result.Item1[0]['DesiredValue'] | Should -Be 'Desired value has {1} items'
+        $result.Item1[0]['CurrentValue'].Count | Should -Be 2
+        $result.Item1[0]['DesiredValue'][0]['A'] | Should -Be 1
     }
 
     It 'Reports a drift for value-type arrays reached directly' {
@@ -1325,6 +1342,27 @@ Describe 'ConfigurationComparer.Compare with compare rules' {
         { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'IgnoreWhenOnlyCurrent' })) } | Should -Throw '*When*'
         { [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(@{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Any = @(@{ Property = 'Notes'; Truthy = $true }, @{ Side = 'Desired'; Property = 'Mode'; Truthy = $true }) } })) } |
             Should -Throw '*Current*'
+    }
+
+    It 'IgnoreEndedWhenOnlyDesired skips a desired-only instance whose schedule has ended' {
+        $parameters = New-CompareParameters
+        $parameters.Rules = [Microsoft365DSC.Compare.CompareRule]::ParseAll(@(
+                @{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.Expiration'; Start = 'ScheduleInfo.StartDateTime' }
+            ))
+        $parameters.Now = [System.DateTimeOffset]::Parse('2026-06-01T00:00:00Z')
+        $map = New-CompareParameterMap -ResourceName 'TestRules' -Parameters $parameters
+        $schedule = { param($Identity, $ScheduleInfo) New-Resource -ResourceName 'TestRules' -InstanceName $Identity -Values @{ Identity = $Identity; ScheduleInfo = $ScheduleInfo } }
+        $destination = @(
+            (& $schedule 'endedDate' @{ Expiration = @{ type = 'afterDateTime'; endDateTime = '2026-05-01T00:00:00Z' } })
+            (& $schedule 'endedDuration' @{ StartDateTime = '2026-05-01T00:00:00Z'; Expiration = @{ type = 'afterDuration'; duration = 'P7D' } })
+            (& $schedule 'future' @{ Expiration = @{ type = 'afterDateTime'; endDateTime = '2026-07-01T00:00:00Z' } })
+            (& $schedule 'noStart' @{ Expiration = @{ type = 'afterDuration'; duration = 'P7D' } })
+            (& $schedule 'permanent' @{ Expiration = @{ type = 'noExpiration' } })
+        )
+
+        $deltas = Invoke-ConfigurationCompare -Source @() -Destination $destination -CompareParameters $map
+
+        @($deltas | ForEach-Object -Process { $_['KeyValue'] }) | Should -Be @('future', 'noStart', 'permanent')
     }
 
     It 'Reads a condition property as a path and matches In against a list ignoring case' {

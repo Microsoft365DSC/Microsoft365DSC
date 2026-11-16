@@ -594,6 +594,7 @@ class PlannerTask : M365DSCResourceBase
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
 
                     $this.LogError($_, 'Error during Export:')
+                    $this.AddExportInstanceFailure($_, $group.DisplayName)
                 }
                 $i++
             }
