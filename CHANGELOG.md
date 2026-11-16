@@ -350,6 +350,7 @@
   * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
   * Added the `IgnoreEndedWhenOnlyDesired` compare rule for ended PIM schedules.
   * Fixed the delta report not pairing keys that differ only in case.
+  * Fixed the delta report not pairing renamed instances by `Id` or `Identity`.
   * Removed the relation templates of removed resources.
   * Updated the export to skip an instance that fails to export instead of stopping the
     export of all instances.

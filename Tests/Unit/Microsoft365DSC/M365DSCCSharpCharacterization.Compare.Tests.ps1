@@ -445,6 +445,23 @@ Describe 'ConfigurationComparer.Compare' {
             @($deltas | ForEach-Object -Process { $_['ResourceInstanceName'] }) | Should -Be @('S2')
         }
 
+        It 'Pairs a renamed instance by Id under the baseline key and reports the key change' {
+            $source = @(
+                New-Resource -ResourceName 'TestResource' -InstanceName 'S1' -Values @{ Identity = 'new'; Id = '1'; DisplayName = 'x' }
+                New-Resource -ResourceName 'TestResource' -InstanceName 'S2' -Values @{ Identity = 'other'; Id = '2' }
+            )
+            $destination = @(
+                New-Resource -ResourceName 'TestResource' -InstanceName 'D1' -Values @{ Identity = 'old'; Id = '1'; DisplayName = 'y' }
+                New-Resource -ResourceName 'TestResource' -InstanceName 'D2' -Values @{ Identity = 'gone'; Id = '3' }
+            )
+            $deltas = Invoke-ConfigurationCompare -Source $source -Destination $destination
+
+            @($deltas | ForEach-Object -Process { '{0}:{1}' -f $_['KeyValue'], $_['Properties'][0]['ParameterName'] }) |
+                Should -Be @('old:Identity', 'old:DisplayName', 'other:_IsInConfiguration_', 'gone:_IsInConfiguration_')
+            $deltas[0]['Properties'][0]['ValueInSource'] | Should -Be 'new'
+            $deltas[0]['Properties'][0]['ValueInDestination'] | Should -Be 'old'
+        }
+
         It 'Pairs a TeamsChannel by team name and display name' {
             $source = @(New-Resource -ResourceName 'TeamsChannel' -InstanceName 'S' -Values @{ TeamName = 't'; DisplayName = 'c'; Description = 'd1' })
             $destination = @(New-Resource -ResourceName 'TeamsChannel' -InstanceName 'D' -Values @{ TeamName = 't'; DisplayName = 'c'; Description = 'd2' })
