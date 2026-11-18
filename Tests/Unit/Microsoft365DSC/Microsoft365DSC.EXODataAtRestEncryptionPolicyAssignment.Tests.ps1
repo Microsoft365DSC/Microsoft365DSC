@@ -39,6 +39,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return $null
             }
 
+            Mock -CommandName Get-M365DataAtRestEncryptionPolicy -MockWith {
+                return @{
+                    Name = 'FakeStringValue'
+                }
+            }
+
             Mock -CommandName Get-M365DataAtRestEncryptionPolicyAssignment -MockWith {
                 return @{
                     Name                 = 'FakeStringValue';
@@ -95,6 +101,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Should -Invoke -CommandName Set-M365DataAtRestEncryptionPolicyAssignment -Exactly 0
             }
 
+            It 'Should return false from the Test method without querying the assignment when the tenant has no policy' {
+                Mock -CommandName Get-M365DataAtRestEncryptionPolicy -MockWith {
+                    return $null
+                }
+                Mock -CommandName Get-M365DataAtRestEncryptionPolicyAssignment -MockWith {
+                    Write-Error -Message "Value cannot be null. (Parameter 'scopeSet')"
+                }
+                ((New-M365DSCResourceInstance -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -Property $testParams).Get().ToHashtable()).DataEncryptionPolicy | Should -BeNullOrEmpty
+                (New-M365DSCResourceInstance -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -Property $testParams).Test() | Should -Be $false
+                Should -Invoke -CommandName Get-M365DataAtRestEncryptionPolicyAssignment -Exactly 0
+            }
+
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -Property $testParams).Set()
                 Should -Invoke -CommandName Set-M365DataAtRestEncryptionPolicyAssignment -Exactly 1
@@ -112,6 +130,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should Reverse Engineer resource from the Export method' {
                 $result = Invoke-M365DSCResourceMethod -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
+            }
+
+            It 'Should not export any content without querying the assignment when the tenant has no policy' {
+                Mock -CommandName Get-M365DataAtRestEncryptionPolicy -MockWith {
+                    return $null
+                }
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXODataAtRestEncryptionPolicyAssignment' -MethodName 'Export' -Parameters $testParams
+                $result | Should -BeNullOrEmpty
+                Should -Invoke -CommandName Get-M365DataAtRestEncryptionPolicyAssignment -Exactly 0
             }
         }
     }
