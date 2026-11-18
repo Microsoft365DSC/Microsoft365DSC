@@ -20,8 +20,4 @@ Describe 'M365DSCPowerShellSession' {
         $manifestPath | Should -Be $expectedPath
         Test-Path -Path $manifestPath | Should -BeTrue
     }
-
-    It 'Registers no PnP resolver when PnP.PowerShell ships no Microsoft.Identity.Client' {
-        { & $Script:ModuleMgmtModule { param($Base) Register-M365DSCPnPIdentityClientResolver -ModuleBase $Base } $TestDrive } | Should -Not -Throw
-    }
 }

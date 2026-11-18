@@ -393,9 +393,9 @@ function New-M365DSCConnection
     }
     #endregion
 
-    if ($Workload -eq 'PnP')
+    if ($Workload -in @('ExchangeOnline', 'SecurityComplianceCenter'))
     {
-        Register-M365DSCPnPIdentityClientResolver
+        Initialize-M365DSCIdentityClient
     }
 
     try

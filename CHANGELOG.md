@@ -5,6 +5,8 @@
 * EXODataAtRestEncryptionPolicyAssignment
   * Fixed `Get()` and the export failing with "Value cannot be null. (Parameter 'scopeSet')"
     in a tenant without a data-at-rest encryption policy.
+* MISC
+  * Fixed an issue with assemblies clashing between Exchange and Teams modules.
 
 # 2.26.1118.1
 
