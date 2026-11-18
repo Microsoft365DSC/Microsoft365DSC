@@ -1,6 +1,6 @@
 ﻿# Change log for Microsoft365DSC
 
-# UNRELEASED
+# 2.26.1118.1
 
 * AADApplication
   * Fixed `Get()` failing for an application without owners.
