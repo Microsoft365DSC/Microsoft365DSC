@@ -357,6 +357,7 @@
     for a lowercase `node localhost`.
 * DEPENDENCIES
   * Updated `DSCParser` to version `3.1.0.8`.
+  * Updated `Microsoft.Graph.Authentication` to version `2.41.2`.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Fixed `PartiallyExportedResourceCount` counting skipped resources.

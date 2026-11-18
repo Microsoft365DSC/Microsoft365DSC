@@ -43,7 +43,7 @@
         },
         @{
             ModuleName      = 'Microsoft.Graph.Authentication'
-            RequiredVersion = '2.41.1'
+            RequiredVersion = '2.41.2'
         },
         @{
             ModuleName      = 'MicrosoftTeams'
