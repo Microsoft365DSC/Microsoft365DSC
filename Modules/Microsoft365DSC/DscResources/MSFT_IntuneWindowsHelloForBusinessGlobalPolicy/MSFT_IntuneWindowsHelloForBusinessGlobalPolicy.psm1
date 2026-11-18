@@ -162,14 +162,6 @@ class IntuneWindowsHelloForBusinessGlobalPolicy : M365DSCResourceBase
                 SecurityKeyForSignIn        = $getValue.securityKeyForSignIn
                 State                       = $getValue.state
                 UnlockWithBiometricsEnabled = $getValue.unlockWithBiometricsEnabled
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
                 #endregion
             }
 
@@ -261,16 +253,7 @@ class IntuneWindowsHelloForBusinessGlobalPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -295,22 +278,5 @@ class IntuneWindowsHelloForBusinessGlobalPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneWindowsHelloForBusinessGlobalPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsHelloForBusinessGlobalPolicy])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsHelloForBusinessGlobalPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

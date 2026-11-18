@@ -235,14 +235,6 @@ class TeamsTeam : M365DSCResourceBase
                 AllowDeleteChannels               = $team.AllowDeleteChannels
                 ShowInTeamsSearchAndSuggestions   = $team.ShowInTeamsSearchAndSuggestions
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -454,27 +446,18 @@ class TeamsTeam : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($teams.Length)] $($team.DisplayName)" -DeferWrite
                     $params = @{
-                        DisplayName           = $team.DisplayName
-                        GroupID               = $team.GroupId
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName = $team.DisplayName
+                        GroupID     = $team.GroupId
                     }
 
                     $this.ExportedInstance = $team
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
@@ -498,22 +481,5 @@ class TeamsTeam : M365DSCResourceBase
         return @{
             ExcludedProperties = @('GroupID')
         }
-    }
-
-    hidden [TeamsTeam] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsTeam])
-        {
-            return $Values
-        }
-
-        $result = [TeamsTeam]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

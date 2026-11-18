@@ -52,6 +52,66 @@ function Import-M365DSCDscEngine
 
 <#
 .SYNOPSIS
+    Tests whether a script invokes the configuration outside of a function or configuration.
+
+.PARAMETER Path
+    Path of the configuration script.
+
+.PARAMETER ConfigurationName
+    Name of the configuration.
+
+.OUTPUTS
+    System.Boolean
+#>
+function Test-M365DSCScriptInvokesConfiguration
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Path,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ConfigurationName
+    )
+
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$parseErrors)
+    $invocations = $ast.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq $ConfigurationName
+    }, $true)
+
+    foreach ($invocation in $invocations)
+    {
+        $isNested = $false
+        $parent = $invocation.Parent
+        while ($null -ne $parent)
+        {
+            if ($parent -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
+                $parent -is [System.Management.Automation.Language.ConfigurationDefinitionAst])
+            {
+                $isNested = $true
+                break
+            }
+            $parent = $parent.Parent
+        }
+
+        if (-not $isNested)
+        {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+<#
+.SYNOPSIS
     Compiles an exported Microsoft365DSC configuration script to MOF.
 
 .DESCRIPTION
@@ -89,6 +149,12 @@ function Import-M365DSCDscEngine
 
 .PARAMETER OutputPath
     Folder for the generated MOF files.
+
+.NOTES
+    The standard pipeline runs the script's own invocation when ConfigurationName is not specified
+    or when the script invokes the configuration itself, as an exported script does. OutputPath,
+    ConfigurationData and ConfigurationDataPath then have no effect. The fast host behaves the same
+    for exported scripts. Edit the invocation at the end of the script to change them.
 
 .EXAMPLE
     Invoke-M365DSCConfigurationBuild -Path .\M365TenantConfig.ps1
@@ -140,11 +206,19 @@ function Invoke-M365DSCConfigurationBuild
         $OutputPath
     )
 
-    $Path = (Resolve-Path -Path $Path).ProviderPath
+    $Path = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).ProviderPath
+    if ($ConfigurationDataPath)
+    {
+        $ConfigurationDataPath = (Resolve-Path -LiteralPath $ConfigurationDataPath -ErrorAction Stop).ProviderPath
+    }
+    if ($OutputPath)
+    {
+        $OutputPath = $PSCmdlet.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
+    }
     if (-not $ConfigurationDataPath -and $null -eq $ConfigurationData)
     {
         $candidate = Join-Path -Path (Split-Path -Path $Path -Parent) -ChildPath 'ConfigurationData.psd1'
-        if (Test-Path -Path $candidate)
+        if (Test-Path -LiteralPath $candidate)
         {
             $ConfigurationDataPath = $candidate
         }
@@ -223,51 +297,61 @@ function Invoke-M365DSCConfigurationBuild
 
     # Standard pipeline: run the script itself. The recursion guard makes its
     # trailer take the plain invocation branch.
+    $previousGuard = Get-Variable -Name 'PSDscFastCompileActive' -Scope Global -ValueOnly -ErrorAction 'SilentlyContinue'
     $Global:PSDscFastCompileActive = $true
     try
     {
         $scriptDirectory = Split-Path -Path $Path -Parent
-        Push-Location -Path $scriptDirectory
+        Push-Location -LiteralPath $scriptDirectory
         try
         {
-            if (-not $ConfigurationName)
+            if (-not $ConfigurationName -or (Test-M365DSCScriptInvokesConfiguration -Path $Path -ConfigurationName $ConfigurationName))
             {
+                $ignoredParameters = @()
+                foreach ($parameterName in @('OutputPath', 'ConfigurationData', 'ConfigurationDataPath'))
+                {
+                    if ($PSBoundParameters.ContainsKey($parameterName))
+                    {
+                        $ignoredParameters += $parameterName
+                    }
+                }
+                if ($ignoredParameters.Count -gt 0)
+                {
+                    Write-Warning -Message "The standard pipeline runs the script's own invocation, which decides the MOF location and configuration data. Ignoring: $($ignoredParameters -join ', '). Edit the invocation at the end of the script, or use a script that only declares the configuration together with -ConfigurationName, to apply them."
+                }
+
                 return (& $Path @invokeParameters)
             }
 
-            # The script only declares the configuration, so dot-source and invoke it.
-            . $Path
-            try
+            if ($OutputPath)
             {
-                if ($OutputPath)
-                {
-                    $invokeParameters['OutputPath'] = $OutputPath
-                }
-
-                $data = if ($null -ne $ConfigurationData)
-                {
-                    $ConfigurationData
-                }
-                elseif ($ConfigurationDataPath)
-                {
-                    Import-PowerShellDataFile -Path $ConfigurationDataPath
-                }
-                else
-                {
-                    $null
-                }
-
-                if ($null -ne $data)
-                {
-                    $invokeParameters['ConfigurationData'] = $data
-                }
-
-                return (& $ConfigurationName @invokeParameters)
+                $invokeParameters['OutputPath'] = $OutputPath
             }
-            finally
+
+            $data = if ($null -ne $ConfigurationData)
             {
-                Remove-Item -Path "function:$ConfigurationName" -Force -Recurse -ErrorAction 'SilentlyContinue'
+                $ConfigurationData
             }
+            elseif ($ConfigurationDataPath)
+            {
+                Import-PowerShellDataFile -LiteralPath $ConfigurationDataPath
+            }
+            else
+            {
+                $null
+            }
+
+            if ($null -ne $data)
+            {
+                $invokeParameters['ConfigurationData'] = $data
+            }
+
+            # Dot-sources the script and invokes the configuration in a child scope
+            return (& {
+                    param($M365DSCBuildScriptPath, $M365DSCBuildConfigurationName, $M365DSCBuildParameters)
+                    . $M365DSCBuildScriptPath
+                    & $M365DSCBuildConfigurationName @M365DSCBuildParameters
+                } $Path $ConfigurationName $invokeParameters)
         }
         finally
         {
@@ -276,7 +360,7 @@ function Invoke-M365DSCConfigurationBuild
     }
     finally
     {
-        $Global:PSDscFastCompileActive = $false
+        $Global:PSDscFastCompileActive = [System.Boolean]$previousGuard
     }
 }
 

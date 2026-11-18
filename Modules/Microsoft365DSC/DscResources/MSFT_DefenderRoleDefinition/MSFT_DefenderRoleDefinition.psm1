@@ -124,20 +124,11 @@ class DefenderRoleDefinition : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                Id                    = $definition.Id
-                DisplayName           = $definition.DisplayName
-                Description           = $definition.Description
-                RolePermissions       = $rolePermissionsValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                ApplicationSecret     = $ApplicationSecret
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id              = $definition.Id
+                DisplayName     = $definition.DisplayName
+                Description     = $definition.Description
+                RolePermissions = $rolePermissionsValue
+                Ensure          = 'Present'
             })
         }
         catch
@@ -250,17 +241,9 @@ class DefenderRoleDefinition : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($roleDefinitions.Count)] $($role.displayName)" -DeferWrite
                 $params = @{
-                    Id                    = $role.id
-                    DisplayName           = $role.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationID         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $role.id
+                    DisplayName = $role.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $role
@@ -300,23 +283,6 @@ class DefenderRoleDefinition : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [DefenderRoleDefinition] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [DefenderRoleDefinition])
-        {
-            return $Values
-        }
-
-        $result = [DefenderRoleDefinition]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

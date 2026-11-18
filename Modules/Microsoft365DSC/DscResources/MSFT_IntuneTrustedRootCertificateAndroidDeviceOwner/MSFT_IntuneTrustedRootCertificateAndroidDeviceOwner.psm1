@@ -136,15 +136,6 @@ class IntuneTrustedRootCertificateAndroidDeviceOwner : M365DSCResourceBase
                 certFileName           = $getValue.certFileName
                 trustedRootCertificate = $getValue.trustedRootCertificate
                 Ensure                 = 'Present'
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                TenantId               = $this.TenantId
-                ApplicationSecret      = $this.ApplicationSecret
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                AccessTokens           = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -287,23 +278,13 @@ class IntuneTrustedRootCertificateAndroidDeviceOwner : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -324,7 +305,7 @@ class IntuneTrustedRootCertificateAndroidDeviceOwner : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -341,6 +322,7 @@ class IntuneTrustedRootCertificateAndroidDeviceOwner : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -352,23 +334,6 @@ class IntuneTrustedRootCertificateAndroidDeviceOwner : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneTrustedRootCertificateAndroidDeviceOwner] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneTrustedRootCertificateAndroidDeviceOwner])
-        {
-            return $Values
-        }
-
-        $result = [IntuneTrustedRootCertificateAndroidDeviceOwner]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

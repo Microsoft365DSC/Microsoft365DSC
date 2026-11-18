@@ -192,15 +192,6 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
                 Description                 = $configPolicy.Description
                 CustomSettings              = $configPolicy.customSettings
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
                 RoleScopeTagIds             = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $configPolicy.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 TargetedAppManagementLevels = [String]$configPolicy.TargetedAppManagementLevels
                 AppGroupType                = [String]$configPolicy.AppGroupType
@@ -440,23 +431,13 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configPolicies.Count)] $($configPolicy.displayName)" -DeferWrite
                 $params = @{
-                    Id                    = $configPolicy.Id
-                    DisplayName           = $configPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationID         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $configPolicy.Id
+                    DisplayName = $configPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.CustomSettings.Count -gt 0)
                 {
@@ -529,7 +510,7 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('CustomSettings', 'Assignments', 'Apps') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -545,6 +526,7 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -569,23 +551,6 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
             }
             $result += $currentSetting
         }
-        return $result
-    }
-
-    hidden [IntuneAppConfigurationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAppConfigurationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAppConfigurationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

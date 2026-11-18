@@ -90,18 +90,10 @@ class SCDeviceConditionalAccessPolicy : M365DSCResourceBase
 
             Write-Verbose "Found existing Device Conditional Access Policy $($this.Name)"
             $result = @{
-                Ensure                = 'Present'
-                Name                  = $PolicyObject.Name
-                Comment               = $PolicyObject.Comment
-                Enabled               = $PolicyObject.Enabled
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Ensure  = 'Present'
+                Name    = $PolicyObject.Name
+                Comment = $PolicyObject.Comment
+                Enabled = $PolicyObject.Enabled
             }
 
             return $this.AsResult($result)
@@ -213,22 +205,5 @@ class SCDeviceConditionalAccessPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCDeviceConditionalAccessPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCDeviceConditionalAccessPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCDeviceConditionalAccessPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

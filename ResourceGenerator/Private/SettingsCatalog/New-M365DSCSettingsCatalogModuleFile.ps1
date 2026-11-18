@@ -134,8 +134,6 @@ function New-M365DSCSettingsCatalogModuleFile
         ContainsDeviceAndUserSettingsFlag = $containsDeviceAndUserSettingsFlag
         SettingsConversionBlock     = New-M365DSCSettingsConversionBlock -ComplexSettings $complexSettings
         SettingsComplexMappingBlock = New-M365DSCSettingsComplexMappingBlock -ComplexSettings $complexSettings
-        AuthResultBlock             = New-M365DSCSettingsCatalogAuthBlock -ResourceModel $ResourceModel -IndentCount 16
-        ExportAuthParameterBlock    = New-M365DSCSettingsCatalogAuthBlock -ResourceModel $ResourceModel -IndentCount 20
         ExportComplexToStringBlock  = New-M365DSCExportComplexToStringBlock -ResourceModel ([PSCustomObject]@{ SchemaProperties = $complexSettings })
         NoEscapeList                = "'" + ($noEscapeNames -join "', '") + "'"
         CimInstanceClassBlock       = ($cimClassBlocks -join "`r`n`r`n")
@@ -265,35 +263,6 @@ function New-M365DSCSettingsComplexMappingBlock
         # Aligned with the literal keys in the template (CertificateThumbprint = 21 characters).
         $padding = ' ' * [System.Math]::Max(1, 21 - $setting.Name.Length)
         "$indent$($setting.Name)$padding= `$complex$($setting.Name)"
-    }
-
-    return ($lines -join "`r`n")
-}
-
-<#
-.SYNOPSIS
-    Renders the auth-property passthrough entries of a result or export hashtable.
-#>
-function New-M365DSCSettingsCatalogAuthBlock
-{
-    [CmdletBinding()]
-    [OutputType([System.String])]
-    param
-    (
-        [Parameter(Mandatory = $true)]
-        [System.Object]
-        $ResourceModel,
-
-        [Parameter()]
-        [System.Int32]
-        $IndentCount = 16
-    )
-
-    $indent = ' ' * $IndentCount
-    $lines = foreach ($authProperty in ($ResourceModel.Properties | Where-Object { $_.IsAuth }))
-    {
-        $padding = ' ' * [System.Math]::Max(1, 21 - $authProperty.Name.Length)
-        "$indent$($authProperty.Name)$padding= `$this.$($authProperty.Name)"
     }
 
     return ($lines -join "`r`n")

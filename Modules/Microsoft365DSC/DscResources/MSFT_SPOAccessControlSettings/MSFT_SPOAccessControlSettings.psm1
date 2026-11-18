@@ -135,15 +135,6 @@ class SPOAccessControlSettings : M365DSCResourceBase
                 EmailAttestationReAuthDays    = $SPOAccessControlSettings.EmailAttestationReAuthDays
                 RestrictResourceAccountAccess = $SPOAccessControlSettings.RestrictResourceAccountAccess
                 EnableRestrictedAccessControl = $SPOAccessControlSettings.EnableRestrictedAccessControl
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                ApplicationSecret             = $this.ApplicationSecret
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             })
         }
         catch
@@ -237,16 +228,7 @@ class SPOAccessControlSettings : M365DSCResourceBase
             $this.ExportedInstance = Get-PnPTenant -ErrorAction Stop
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                ApplicationSecret     = $this.ApplicationSecret
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $dscContent = [System.Text.StringBuilder]::new()
@@ -268,22 +250,5 @@ class SPOAccessControlSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOAccessControlSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOAccessControlSettings])
-        {
-            return $Values
-        }
-
-        $result = [SPOAccessControlSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

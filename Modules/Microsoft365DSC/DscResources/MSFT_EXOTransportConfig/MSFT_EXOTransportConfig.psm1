@@ -200,14 +200,6 @@ class EXOTransportConfig : M365DSCResourceBase
                 ReplyAllStormProtectionEnabled          = $TransportConfigSettings.ReplyAllStormProtectionEnabled
                 Rfc2231EncodingEnabled                  = $TransportConfigSettings.Rfc2231EncodingEnabled
                 SmtpClientAuthenticationDisabled        = $TransportConfigSettings.SmtpClientAuthenticationDisabled
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                TenantId                                = $this.TenantId
-                AccessTokens                            = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -277,15 +269,7 @@ class EXOTransportConfig : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $transportConfiguration
             $Results = $this.GetForExport($Params)
@@ -315,22 +299,5 @@ class EXOTransportConfig : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOTransportConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOTransportConfig])
-        {
-            return $Values
-        }
-
-        $result = [EXOTransportConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

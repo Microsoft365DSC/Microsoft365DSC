@@ -95,19 +95,10 @@ class EXOExternalInOutlook : M365DSCResourceBase
             Write-Verbose -Message "Found the settings for ExternalInOutlook: $($instance.Identity)"
 
             $results = @{
-                Identity              = $instance.Identity
-                Enabled               = $instance.Enabled
-                AllowList             = $instance.AllowList
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity  = $instance.Identity
+                Enabled   = $instance.Enabled
+                AllowList = $instance.AllowList
+                Ensure    = 'Present'
             }
 
             return $this.AsResult($results)
@@ -197,17 +188,8 @@ class EXOExternalInOutlook : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -231,22 +213,5 @@ class EXOExternalInOutlook : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOExternalInOutlook] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOExternalInOutlook])
-        {
-            return $Values
-        }
-
-        $result = [EXOExternalInOutlook]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -135,22 +135,13 @@ class IntuneDeviceConfigurationCustomPolicyiOS : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Id                    = $getValue.Id
-                Description           = $getValue.Description
-                DisplayName           = $getValue.DisplayName
-                PayloadName           = $getValue.payloadName
-                PayloadFileName       = $getValue.payloadFileName
-                Payload               = $getValue.payload
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id              = $getValue.Id
+                Description     = $getValue.Description
+                DisplayName     = $getValue.DisplayName
+                PayloadName     = $getValue.payloadName
+                PayloadFileName = $getValue.payloadFileName
+                Payload         = $getValue.payload
+                Ensure          = 'Present'
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $getValue
@@ -293,23 +284,13 @@ class IntuneDeviceConfigurationCustomPolicyiOS : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($config.DisplayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -330,7 +311,7 @@ class IntuneDeviceConfigurationCustomPolicyiOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -347,6 +328,7 @@ class IntuneDeviceConfigurationCustomPolicyiOS : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -358,23 +340,6 @@ class IntuneDeviceConfigurationCustomPolicyiOS : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceConfigurationCustomPolicyiOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationCustomPolicyiOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationCustomPolicyiOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

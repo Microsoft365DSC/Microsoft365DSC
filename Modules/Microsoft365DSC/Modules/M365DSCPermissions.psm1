@@ -126,6 +126,7 @@ function Get-M365DSCCompiledPermissionList
     else
     {
         $results = New-M365DSCPermissionsMatrix
+        $permissionKeys = Get-M365DSCPermissionsMatrixKeySet -Matrix $results
     }
 
     $total = $ResourceNameList.Count
@@ -141,6 +142,7 @@ function Get-M365DSCCompiledPermissionList
         if ($GroupByResourceName)
         {
             $currentResourceResults = New-M365DSCPermissionsMatrix
+            $permissionKeys = Get-M365DSCPermissionsMatrixKeySet -Matrix $currentResourceResults
         }
         $resourceSettings = Get-M365DSCResourceSetting -ResourceName $resourceName
         if ($null -eq $resourceSettings)
@@ -152,32 +154,18 @@ function Get-M365DSCCompiledPermissionList
             $targetMatrix = if ($GroupByResourceName) { $currentResourceResults } else { $results }
 
             # Entra / Administrative roles
-            if ($null -ne $resourceSettings.roles.read -or $null -ne $resourceSettings.roles.update)
+            foreach ($currentAccessType in @('Read', 'Update'))
             {
-                $readRoles = $resourceSettings.roles.read
-                $updateRoles = $resourceSettings.roles.update
-                foreach ($role in $readRoles)
+                foreach ($role in $resourceSettings.roles.$currentAccessType)
                 {
-                    if (-not $targetMatrix.AdministrativeRoles.Read.Contains($role))
+                    if (-not $targetMatrix.AdministrativeRoles.$currentAccessType.Contains($role))
                     {
-                        Write-Verbose -Message "    Found new Administrative Read role {$($role)}"
-                        $targetMatrix.AdministrativeRoles.Read += $role
+                        Write-Verbose -Message "    Found new Administrative $currentAccessType role {$($role)}"
+                        $targetMatrix.AdministrativeRoles.$currentAccessType += $role
                     }
                     else
                     {
-                        Write-Verbose -Message "    Administrative Read role {$($role)} was already added"
-                    }
-                }
-                foreach ($role in $updateRoles)
-                {
-                    if (-not $targetMatrix.AdministrativeRoles.Update.Contains($role))
-                    {
-                        Write-Verbose -Message "    Found new Administrative Update role {$($role)}"
-                        $targetMatrix.AdministrativeRoles.Update += $role
-                    }
-                    else
-                    {
-                        Write-Verbose -Message "    Administrative Update role {$($role)} was already added"
+                        Write-Verbose -Message "    Administrative $currentAccessType role {$($role)} was already added"
                     }
                 }
             }
@@ -200,7 +188,8 @@ function Get-M365DSCCompiledPermissionList
                         Update-M365DSCPermissionsMatrix -Source $apiName `
                             -PermissionType $currentPermissionType `
                             -AccessType $currentAccessType `
-                            -Matrix ([ref]$targetMatrix) `
+                            -Matrix $targetMatrix `
+                            -PermissionKeys $permissionKeys `
                             -Permissions ($api.Value)
                     }
                 }
@@ -251,36 +240,75 @@ function Get-M365DSCCompiledPermissionList
 
     if ($PSBoundParameters.ContainsKey('PermissionType'))
     {
-        $resultsByType = $results.$AccessType | Where-Object -FilterScript { $_.Permission.Type -eq $PermissionType }
+        $resultsByType = @($results.$AccessType | Where-Object -FilterScript { $_.Permission.Type -eq $PermissionType })
         $resultsByType | ForEach-Object -Process {
             $_.PermissionName = $_.Permission.Name
             $_.Remove('Permission')
         }
         $results = @{
-            AdministrativeRoles = $results.AdministrativeRoles.$AccessType
+            AdministrativeRoles = Get-M365DSCArrayFromProperty -PropertyValue ($results.AdministrativeRoles.$AccessType | Sort-Object -Unique) -ElementType ([System.String])
             Permissions         = $resultsByType
-            RequiredRoles       = ($results.RequiredRoles).$AccessType
-            RequiredRoleGroups  = ($results.RequiredRoleGroups).$AccessType
+            RequiredRoles       = Get-M365DSCArrayFromProperty -PropertyValue ($results.RequiredRoles.$AccessType | Sort-Object -Unique) -ElementType ([System.String])
+            RequiredRoleGroups  = Get-M365DSCArrayFromProperty -PropertyValue ($results.RequiredRoleGroups.$AccessType | Sort-Object -Unique) -ElementType ([System.String])
         }
     }
-
-    if (-not $GroupByResourceName)
+    elseif (-not $GroupByResourceName)
     {
-        $results.AdministrativeRoles = $results.AdministrativeRoles | Sort-Object -Unique
-        $results.RequiredRoleGroups  = $results.RequiredRoleGroups | Sort-Object -Unique
-        $results.RequiredRoles       = $results.RequiredRoles | Sort-Object -Unique
+        foreach ($section in @('AdministrativeRoles', 'RequiredRoleGroups', 'RequiredRoles'))
+        {
+            foreach ($currentAccessType in @('Read', 'Update'))
+            {
+                $results.$section.$currentAccessType = Get-M365DSCArrayFromProperty -PropertyValue ($results.$section.$currentAccessType | Sort-Object -Unique) -ElementType ([System.String])
+            }
+        }
     }
 
     return $results
 }
 
 <#
-.Description
-This function updates the inputted permissions matrix.
-It is generic code used in the Get-M365DSCCompiledPermissionList function.
+.DESCRIPTION
+    Returns a case-insensitive set with one 'AccessType|API|PermissionType|Name' key per Read and Update permission of the matrix.
+    Used by Update-M365DSCPermissionsMatrix to detect permissions that were already added.
 
-.Functionality
-Internal, Hidden
+.PARAMETER Matrix
+    Specifies the permissions matrix to read.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function Get-M365DSCPermissionsMatrixKeySet
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Generic.HashSet[System.String]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Matrix
+    )
+
+    $keySet = [System.Collections.Generic.HashSet[System.String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($accessType in @('Read', 'Update'))
+    {
+        foreach ($entry in $Matrix.$accessType)
+        {
+            $null = $keySet.Add("$accessType|$($entry.API)|$($entry.Permission.Type)|$($entry.Permission.Name)")
+        }
+    }
+
+    return , $keySet
+}
+
+<#
+.DESCRIPTION
+    This function updates the inputted permissions matrix.
+    It is generic code used in the Get-M365DSCCompiledPermissionList function.
+    PermissionKeys holds the permissions already in the matrix, keyed 'AccessType|Source|PermissionType|Name'.
+    When omitted, it is built from the current matrix content.
+
+.FUNCTIONALITY
+    Internal, Hidden
 #>
 function Update-M365DSCPermissionsMatrix
 {
@@ -302,22 +330,27 @@ function Update-M365DSCPermissionsMatrix
 
         [Parameter(Mandatory = $true)]
         [System.Collections.Hashtable]
-        [ref]$Matrix,
+        $Matrix,
 
         [Parameter(Mandatory = $true)]
         [PSCustomObject]
-        $Permissions
+        $Permissions,
+
+        [Parameter()]
+        [System.Collections.Generic.HashSet[System.String]]
+        $PermissionKeys
     )
+
+    if ($null -eq $PermissionKeys)
+    {
+        $PermissionKeys = Get-M365DSCPermissionsMatrixKeySet -Matrix $Matrix
+    }
 
     foreach ($permission in $Permissions.$PermissionType.$AccessType)
     {
         if ($permission.Name -ne 'NotSupported')
         {
-            $matrixPermission = $Matrix.$AccessType | Where-Object -FilterScript {
-                $_.API -eq $Source -and $_.Permission.Name -eq $permission.name -and $_.Permission.Type -eq $PermissionType
-            }
-
-            if ($null -eq $matrixPermission)
+            if ($PermissionKeys.Add("$AccessType|$Source|$PermissionType|$($permission.name)"))
             {
                 Write-Verbose -Message "    Found new $AccessType permission {$($permission.name)} for API {$Source}"
                 $Matrix.$AccessType += @{
@@ -384,7 +417,7 @@ function Update-M365DSCAllowedGraphScopes
         $Type,
 
         [Parameter()]
-        [ValidateSet('Global', 'China', 'USGov', 'USGovDoD', 'Germany')]
+        [ValidateSet('Global', 'China', 'USGov', 'USGovDoD')]
         [System.String]
         $Environment = 'Global'
     )
@@ -407,10 +440,14 @@ function Update-M365DSCAllowedGraphScopes
 
     Write-Verbose -Message "Specified type: $Type"
     $results = (Get-M365DSCCompiledPermissionList -ResourceNameList $resourceNames -PermissionType 'Delegated' -AccessType $Type).Permissions
-    [System.String[]]$permissions = ($results | Where-Object -Property API -EQ 'Graph').PermissionName
-
     # Remove the Tasks.Read.All permission from the list as it is causing an issue with the Graph SDK
-    $permissions = $permissions -ne 'Tasks.Read.All'
+    $permissions = Get-M365DSCArrayFromProperty -PropertyValue ($results | Where-Object -FilterScript { $_.API -eq 'Graph' -and $_.PermissionName -ne 'Tasks.Read.All' }).PermissionName -ElementType ([System.String])
+    if ($permissions.Count -eq 0)
+    {
+        Write-Warning -Message 'No delegated Microsoft Graph permissions are required for the specified resources.'
+        return
+    }
+
     Write-Verbose -Message "Found permissions: $($permissions -join ', ')"
     $params = @{
         Scopes = $permissions
@@ -435,6 +472,7 @@ function Update-M365DSCAllowedGraphScopes
 .DESCRIPTION
     Resolves the service principal using the API name provided. A known API name resolves through
     its application id because the Entra portal name may be different from what's in the settings file.
+    Throws when the lookup fails.
 
 .PARAMETER ApiName
     Name of the API as written in the settings file or passed by the caller.
@@ -503,10 +541,80 @@ function Get-M365DSCApiServicePrincipal
         return $Cache.$cacheKey
     }
 
-    $servicePrincipal = Get-MgServicePrincipal -Filter $filter -ErrorAction SilentlyContinue | Select-Object -First 1
+    $servicePrincipal = Get-MgServicePrincipal -Filter $filter -ErrorAction Stop | Select-Object -First 1
     $Cache.Add($cacheKey, $servicePrincipal)
 
     return $servicePrincipal
+}
+
+<#
+.SYNOPSIS
+    Resolves the service principal and app role id of an application permission.
+
+.DESCRIPTION
+    Returns a hashtable with the ServicePrincipal and AppRoleId keys, or with a Warning key when the API
+    has no service principal or no matching app role. A PermissionName that is a GUID and doesn't match any app
+    role value is used as the app role id.
+
+.PARAMETER Permission
+    Hashtable with the Api and PermissionName of the permission.
+
+.PARAMETER Cache
+    Hashtable holding the service principals already resolved during the current call.
+
+.FUNCTIONALITY
+    Internal, Hidden
+#>
+function Resolve-M365DSCPermissionAppRole
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Permission,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Hashtable]
+        $Cache
+    )
+
+    try
+    {
+        $servicePrincipal = Get-M365DSCApiServicePrincipal -ApiName ($Permission.Api) -Cache $Cache
+    }
+    catch
+    {
+        return @{
+            Warning = "    Unable to read the service principal of API '$($Permission.Api)': $($_.Exception.Message) Grant '$($Permission.PermissionName)' manually."
+        }
+    }
+
+    if ($null -eq $servicePrincipal)
+    {
+        return @{
+            Warning = "    No service principal found for API '$($Permission.Api)'. Grant '$($Permission.PermissionName)' manually."
+        }
+    }
+
+    $appRoleId = ($servicePrincipal.AppRoles | Where-Object -Property Value -EQ $Permission.PermissionName).Id
+    if ($null -eq $appRoleId -and [System.Guid]::TryParse($Permission.PermissionName, [ref][System.Guid]::Empty))
+    {
+        $appRoleId = $Permission.PermissionName
+    }
+
+    if ($null -eq $appRoleId)
+    {
+        return @{
+            Warning = "    API '$($Permission.Api)' has no application permission '$($Permission.PermissionName)'."
+        }
+    }
+
+    return @{
+        ServicePrincipal = $servicePrincipal
+        AppRoleId        = $appRoleId
+    }
 }
 
 <#
@@ -598,7 +706,7 @@ function Get-M365DSCApiServicePrincipal
     Specifies the application id used for app-based authentication.
 
 .PARAMETER TenantId
-    Specifies the tenant id or tenant domain used for authentication.
+    Specifies the tenant domain (for example contoso.onmicrosoft.com) used for authentication. A tenant GUID is not supported.
 
 .PARAMETER ApplicationSecret
     Specifies the application secret used for app-based authentication.
@@ -743,6 +851,30 @@ function Update-M365DSCAzureAdApplication
         Write-Host @params
     }
 
+    # Type follows the Certificate parameter set when it is not specified
+    if (-not $PSBoundParameters.ContainsKey('Type') -and $PSCmdlet.ParameterSetName -eq 'Certificate')
+    {
+        $Type = 'Certificate'
+    }
+
+    if ($Type -eq 'Secret' -and $PSCmdlet.ParameterSetName -eq 'Certificate')
+    {
+        Write-LogEntry -Message 'The CertificatePath and CreateSelfSignedCertificate parameters require Type Certificate.' -Type Error
+        return
+    }
+
+    if ($Type -eq 'Certificate' -and $CreateNewSecret)
+    {
+        Write-LogEntry -Message 'The CreateNewSecret parameter requires Type Secret.' -Type Error
+        return
+    }
+
+    if ($AdminConsent -and $Type -ne 'ManagedIdentity' -and -not $PSBoundParameters.ContainsKey('Credential'))
+    {
+        Write-LogEntry -Message 'You need to provide admin credentials when specifying the AdminConsent parameter.' -Type Error
+        return
+    }
+
     Confirm-M365DSCDependencies
 
     $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
@@ -771,7 +903,7 @@ function Update-M365DSCAzureAdApplication
 
             if (-not $PSBoundParameters.ContainsKey('CertificatePath'))
             {
-                if ($PSBoundParameters.ContainsKey('CreateSelfSignedCertificate'))
+                if ($CreateSelfSignedCertificate)
                 {
                     # CreateSelfSignedCertificate is specified, but CertificatePath is missing.
                     Write-LogEntry -Message 'You have to specify CertificatePath, when specifying the CreateSelfSignedCertificate parameter.' -Type Error
@@ -786,10 +918,13 @@ function Update-M365DSCAzureAdApplication
             }
             else
             {
-                if ($PSBoundParameters.ContainsKey('CreateSelfSignedCertificate'))
+                # Resolves a relative path against the current location
+                $CertificatePath = $PSCmdlet.GetUnresolvedProviderPathFromPSPath($CertificatePath)
+
+                if ($CreateSelfSignedCertificate)
                 {
                     # CreateSelfSignedCertificate is specified and path specified in CertificatePath already exists.
-                    if ((Test-Path -Path $CertificatePath) -eq $true)
+                    if ((Test-Path -LiteralPath $CertificatePath) -eq $true)
                     {
                         Write-LogEntry -Message "Specified CertificatePath '$CertificatePath', where the Self Signed Certificate should be exported, already exists." -Type Error
                         return
@@ -798,7 +933,7 @@ function Update-M365DSCAzureAdApplication
                 else
                 {
                     # CreateSelfSignedCertificate is NOT specified and path specified in CertificatePath does not exists.
-                    if (-not (Test-Path -Path $CertificatePath))
+                    if (-not (Test-Path -LiteralPath $CertificatePath))
                     {
                         Write-LogEntry -Message "Specified CertificatePath '$CertificatePath' does not exist." -Type Error
                         return
@@ -813,6 +948,14 @@ function Update-M365DSCAzureAdApplication
             {
                 Write-LogEntry -Message '  AdminConsent is ignored because permissions assigned to a managed identity need no consent.' -Type Warning
             }
+
+            foreach ($ignoredParameter in @('CertificatePath', 'CreateSelfSignedCertificate', 'CreateNewSecret', 'MonthsValid'))
+            {
+                if ($PSBoundParameters.ContainsKey($ignoredParameter))
+                {
+                    Write-LogEntry -Message "  $ignoredParameter is ignored because no credential is created for a managed identity." -Type Warning
+                }
+            }
         }
     }
 
@@ -826,7 +969,15 @@ function Update-M365DSCAzureAdApplication
             $identityFilter = "servicePrincipalType eq 'ManagedIdentity' and (id eq '$ApplicationName' or appId eq '$ApplicationName')"
         }
 
-        $identities = @(Get-MgServicePrincipal -Filter $identityFilter -ErrorAction SilentlyContinue)
+        try
+        {
+            $identities = @(Get-MgServicePrincipal -Filter $identityFilter -ErrorAction Stop)
+        }
+        catch
+        {
+            Write-LogEntry -Message "Unable to read the managed identity '$ApplicationName': $($_.Exception.Message)" -Type Error
+            return
+        }
         if ($identities.Count -eq 0)
         {
             Write-LogEntry -Message "No managed identity '$ApplicationName' found." -Type Error
@@ -855,23 +1006,14 @@ function Update-M365DSCAzureAdApplication
             }
             Write-LogEntry "  Checking permission '$($permission.Api)\$($permission.PermissionName)'"
 
-            $svcprincipal = Get-M365DSCApiServicePrincipal -ApiName ($permission.Api) -Cache $servicePrincipalCache
-            if ($null -eq $svcprincipal)
+            $resolvedPermission = Resolve-M365DSCPermissionAppRole -Permission $permission -Cache $servicePrincipalCache
+            if ($resolvedPermission.ContainsKey('Warning'))
             {
-                Write-LogEntry "    No service principal found for API '$($permission.Api)'. Grant '$($permission.PermissionName)' manually." -Type Warning
+                Write-LogEntry $resolvedPermission.Warning -Type Warning
                 continue
             }
-
-            $appRoleId = ($svcprincipal.AppRoles | Where-Object -Property Value -EQ $permission.PermissionName).Id
-            if ($null -eq $appRoleId -and [System.Guid]::TryParse($permission.PermissionName, [ref][System.Guid]::Empty))
-            {
-                $appRoleId = $permission.PermissionName
-            }
-            if ($null -eq $appRoleId)
-            {
-                Write-LogEntry "    API '$($permission.Api)' has no application permission '$($permission.PermissionName)'." -Type Warning
-                continue
-            }
+            $svcprincipal = $resolvedPermission.ServicePrincipal
+            $appRoleId = $resolvedPermission.AppRoleId
 
             if ($null -ne ($existingAssignments | Where-Object -FilterScript { $_.resourceId -eq $svcprincipal.Id -and $_.appRoleId -eq $appRoleId }))
             {
@@ -904,7 +1046,22 @@ function Update-M365DSCAzureAdApplication
 
     Write-LogEntry ' '
     Write-LogEntry 'Checking existence of AD Application'
-    if (-not ($azureADApp = Get-MgApplication -Filter "DisplayName eq '$($ApplicationName -replace "'", "''")'" -ErrorAction SilentlyContinue))
+    try
+    {
+        $azureADApps = @(Get-MgApplication -Filter "DisplayName eq '$($ApplicationName -replace "'", "''")'" -ErrorAction Stop)
+    }
+    catch
+    {
+        Write-LogEntry -Message "Unable to read the application '$ApplicationName': $($_.Exception.Message)" -Type Error
+        return
+    }
+    if ($azureADApps.Count -gt 1)
+    {
+        Write-LogEntry -Message "Multiple applications named '$ApplicationName' found. Specify a unique application name instead." -Type Error
+        return
+    }
+
+    if ($azureADApps.Count -eq 0)
     {
         $azureADApp = New-MgApplication -DisplayName $ApplicationName
         Write-LogEntry "  New Azure AD application '$ApplicationName' created!"
@@ -912,6 +1069,7 @@ function Update-M365DSCAzureAdApplication
     }
     else
     {
+        $azureADApp = $azureADApps[0]
         Write-LogEntry "  Application '$ApplicationName' already exists!"
     }
 
@@ -930,50 +1088,48 @@ function Update-M365DSCAzureAdApplication
             }
             Write-LogEntry "  Checking permission '$($permission.Api)\$($permission.PermissionName)'"
 
-            $svcprincipal = Get-M365DSCApiServicePrincipal -ApiName ($permission.Api) -Cache $servicePrincipalCache
-            if ($null -eq $svcprincipal)
+            $resolvedPermission = Resolve-M365DSCPermissionAppRole -Permission $permission -Cache $servicePrincipalCache
+            if ($resolvedPermission.ContainsKey('Warning'))
             {
-                Write-LogEntry "    No service principal found for API '$($permission.Api)'. Grant '$($permission.PermissionName)' manually." -Type Warning
+                Write-LogEntry $resolvedPermission.Warning -Type Warning
                 continue
             }
+            $svcprincipal = $resolvedPermission.ServicePrincipal
+            $appRoleId = $resolvedPermission.AppRoleId
 
-            $appRole = $azureADApp.AppRoles | Where-Object -Property Value -EQ $permission.PermissionName
-
-            if ($null -eq $appRole)
-            {
-                $currentAPIAccess = $allRequiredAccess.($svcprincipal.AppId)
-
-                if ($null -eq $currentAPIAccess)
-                {
-                    $allRequiredAccess.Add(($svcprincipal.AppId), @())
-                }
-                $role = $svcPrincipal.AppRoles | Where-Object -Property Value -EQ $permission.PermissionName
-                if ($null -eq $role)
-                {
-                    if ([System.Guid]::TryParse($permission.PermissionName , [ref][System.Guid]::Empty))
-                    {
-                        $appPermission = @{
-                            id   = $permission.PermissionName
-                            type = 'Role'
-                        }
-                    }
-                    else
-                    {
-                        continue
-                    }
-                }
-                else
-                {
-                    $appPermission = @{
-                        id   = $role.Id
-                        type = 'Role'
-                    }
-                }
-                $allRequiredAccess.($svcprincipal.AppId) += $appPermission
-            }
-            else
+            # Already requested permissions are only reported, they must stay in the PATCH body to be kept
+            $existingAccess = $azureADApp.RequiredResourceAccess | Where-Object -FilterScript { $_.ResourceAppId -eq $svcprincipal.AppId }
+            if ($existingAccess.ResourceAccess.Id -contains $appRoleId)
             {
                 Write-LogEntry "    Permission '$($permission.Api)\$($permission.PermissionName)' already added to the application!"
+            }
+
+            if (-not $allRequiredAccess.ContainsKey($svcprincipal.AppId))
+            {
+                $allRequiredAccess[$svcprincipal.AppId] = @()
+            }
+
+            if ($allRequiredAccess[$svcprincipal.AppId].id -notcontains $appRoleId)
+            {
+                $allRequiredAccess[$svcprincipal.AppId] += @{
+                    id   = $appRoleId
+                    type = 'Role'
+                }
+            }
+        }
+
+        # requiredResourceAccess is replaced as a whole, report what the PATCH drops
+        if ($allRequiredAccess.Count -gt 0)
+        {
+            foreach ($existingAccess in $azureADApp.RequiredResourceAccess)
+            {
+                foreach ($existingPermission in $existingAccess.ResourceAccess)
+                {
+                    if ($allRequiredAccess[$existingAccess.ResourceAppId].id -notcontains $existingPermission.Id)
+                    {
+                        Write-LogEntry "    Permission '$($existingPermission.Id)' ($($existingPermission.Type)) of API '$($existingAccess.ResourceAppId)' is not specified and will be removed from the application." -Type Warning
+                    }
+                }
             }
         }
 
@@ -996,60 +1152,62 @@ function Update-M365DSCAzureAdApplication
             $requiredResourceAccess += $valueToAdd
         }
 
-        Update-MgApplication -ApplicationId ($azureADApp.Id) `
-            -BodyParameter @{ requiredResourceAccess = $requiredResourceAccess } | Out-Null
+        if ($requiredResourceAccess.Count -eq 0)
+        {
+            Write-LogEntry '    None of the specified permissions could be resolved, the application permissions are left unchanged.' -Type Warning
+        }
+        else
+        {
+            Update-MgApplication -ApplicationId ($azureADApp.Id) `
+                -BodyParameter @{ requiredResourceAccess = $requiredResourceAccess } | Out-Null
 
-        Write-LogEntry '    Permission updated for application'
+            Write-LogEntry '    Permission updated for application'
+        }
 
         if ($AdminConsent)
         {
-            if (-not $PSBoundParameters.ContainsKey('Credential'))
+            if ($requireWait)
             {
-                Write-LogEntry '[ERROR] You need to provide admin credentials when specifying the AdminConsent parameter.'
-            }
-            else
-            {
-                $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
-                    -InboundParameters $PSBoundParameters
-                if ($requireWait)
-                {
-                    Write-LogEntry ' '
-                    Write-LogEntry 'Waiting 10 seconds for application creation'
-                    Write-LogEntry '  ...'
-                    Start-Sleep -Seconds 10
-                }
-
                 Write-LogEntry ' '
-                Write-LogEntry 'Providing Admin Consent for application permissions'
+                Write-LogEntry 'Waiting 10 seconds for application creation'
+                Write-LogEntry '  ...'
+                Start-Sleep -Seconds 10
+            }
 
-                $currentConnectionProfile = Get-MSCloudLoginConnectionProfile -Workload 'MicrosoftGraph'
-                $authorizationUrl = $currentConnectionProfile.AuthorizationUrl
-                $tenantId = $Credential.GetNetworkCredential().UserName.Split('@')[-1]
-                $token = Get-AuthToken -AuthorizationUrl $authorizationUrl `
-                    -ClientId '1950a258-227b-4e31-a9cf-717495945fc2' `
-                    -Scope '74658136-14ec-4630-ad9b-26e160ff0fc6/.default' `
-                    -Credentials $Credential `
-                    -TenantId $tenantId `
-                    -DeviceCode
+            Write-LogEntry ' '
+            Write-LogEntry 'Providing Admin Consent for application permissions'
 
-                $headers = @{
-                    authorization            = "Bearer $($token.access_token)"
-                    'x-ms-client-request-id' = [guid]::NewGuid().ToString()
-                    'x-ms-client-session-id' = [guid]::NewGuid().ToString()
-                }
+            $currentConnectionProfile = Get-MSCloudLoginConnectionProfile -Workload 'MicrosoftGraph'
+            $authorizationUrl = $currentConnectionProfile.AuthorizationUrl
+            $consentTenantId = $Credential.GetNetworkCredential().UserName.Split('@')[-1]
+            if ($PSBoundParameters.ContainsKey('TenantId'))
+            {
+                $consentTenantId = $TenantId
+            }
+            $token = Get-AuthToken -AuthorizationUrl $authorizationUrl `
+                -ClientId '1950a258-227b-4e31-a9cf-717495945fc2' `
+                -Scope '74658136-14ec-4630-ad9b-26e160ff0fc6/.default' `
+                -Credentials $Credential `
+                -TenantId $consentTenantId `
+                -DeviceCode
 
-                $applicationId = $azureADApp.AppId
-                $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$applicationId/Consent?onBehalfOfAll=true"
-                try
-                {
-                    $null = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop
-                    Write-LogEntry '  Admin Consent for application permissions provided'
-                }
-                catch
-                {
-                    Write-LogEntry '[ERROR] Error while providing consent to the requested permissions. Please make sure you provide consent via the Azure AD Admin Portal.' -Type Error
-                    Write-LogEntry "Error details: $($_.Exception.Message)"
-                }
+            $headers = @{
+                authorization            = "Bearer $($token.access_token)"
+                'x-ms-client-request-id' = [guid]::NewGuid().ToString()
+                'x-ms-client-session-id' = [guid]::NewGuid().ToString()
+            }
+
+            $consentAppId = $azureADApp.AppId
+            $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$consentAppId/Consent?onBehalfOfAll=true"
+            try
+            {
+                $null = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop
+                Write-LogEntry '  Admin Consent for application permissions provided'
+            }
+            catch
+            {
+                Write-LogEntry 'Error while providing consent to the requested permissions. Please make sure you provide consent via the Azure AD Admin Portal.' -Type Error
+                Write-LogEntry "Error details: $($_.Exception.Message)"
             }
         }
 
@@ -1113,10 +1271,10 @@ function Update-M365DSCAzureAdApplication
                 }
                 else
                 {
-                    if ($PSBoundParameters.ContainsKey('CreateSelfSignedCertificate') -eq $false)
+                    if (-not $CreateSelfSignedCertificate)
                     {
                         Write-LogEntry "  CertificatePath specified '$CertificatePath', using that certificate"
-                        $certCred = $certCreds | Where-Object { $_.DisplayName -eq $cerCert.Subject -and $_.EndDateTime -eq $cerCert.NotAfter.ToUniversalTime() }
+                        $certCred = $certCreds | Where-Object -FilterScript { Test-M365DSCKeyCredentialMatch -KeyCredential $_ -Certificate $cerCert }
                         if ($null -eq $certCred)
                         {
                             Write-LogEntry '    Specified certificate does not exist in the app, uploading now'
@@ -1153,6 +1311,12 @@ function Update-M365DSCAzureAdApplication
                     }
 
                     Write-LogEntry "    Certificate details: $($cerCert.Subject) ($($cerCert.Thumbprint))"
+
+                    foreach ($existingCred in $certCreds)
+                    {
+                        Write-LogEntry "    Existing certificate '$($existingCred.DisplayName)' (KeyId $($existingCred.KeyId), expires $($existingCred.EndDateTime)) will be replaced." -Type Warning
+                    }
+
                     $params = @()
                     $params += @{
                         type  = 'AsymmetricX509Cert'
@@ -1214,6 +1378,56 @@ function Update-M365DSCAzureAdApplication
         Write-LogEntry 'NOTE: Make sure you add the application to the required Microsoft 365 (e.g. Global Admin) or Exchange (e.g. Organization Management) role groups as well!'
         Write-LogEntry '      See the documentation for any required permissions.'
     }
+}
+
+<#
+.SYNOPSIS
+    Tests whether an application key credential has the specified certificate.
+
+.DESCRIPTION
+    Compares customKeyIdentifier with the certificate hash, as base64 or hex thumbprint.
+
+.PARAMETER KeyCredential
+    Specifies the key credential of the application.
+
+.PARAMETER Certificate
+    Specifies the certificate to look for.
+
+.FUNCTIONALITY
+    Internal, Hidden
+
+.OUTPUTS
+    System.Boolean
+#>
+function Test-M365DSCKeyCredentialMatch
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Object]
+        $KeyCredential,
+
+        [Parameter(Mandatory = $true)]
+        [System.Security.Cryptography.X509Certificates.X509Certificate2]
+        $Certificate
+    )
+
+    $identifier = $KeyCredential.CustomKeyIdentifier
+    if ($identifier -is [System.Byte[]])
+    {
+        $identifier = [System.Convert]::ToBase64String($identifier)
+    }
+
+    if (-not [System.String]::IsNullOrEmpty($identifier) -and
+        ($identifier -ceq [System.Convert]::ToBase64String($Certificate.GetCertHash()) -or $identifier -eq $Certificate.Thumbprint))
+    {
+        return $true
+    }
+
+    return ($KeyCredential.DisplayName -eq $Certificate.Subject -and
+        $KeyCredential.EndDateTime -eq $Certificate.NotAfter.ToUniversalTime())
 }
 
 Export-ModuleMember -Function @(

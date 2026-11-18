@@ -95,18 +95,10 @@ class EXOMailboxIRMAccess : M365DSCResourceBase
             Write-Verbose -Message "A Mailbox IRM Access with Identity {$($this.Identity)} for User {$($this.User)} was found."
 
             $results = @{
-                Identity              = $this.Identity
-                User                  = $this.User
-                AccessLevel           = $instance.AccessLevel
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity    = $this.Identity
+                User        = $this.User
+                AccessLevel = $instance.AccessLevel
+                Ensure      = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -200,16 +192,8 @@ class EXOMailboxIRMAccess : M365DSCResourceBase
                     Write-M365DSCHost -Message "        |---[$j/$($irmAccesses.Count)] $($irmAccess.User)" -DeferWrite
                     Write-M365DSCHost -Message "`r`n" -DeferWrite
                     $Params = @{
-                        Identity              = $mailbox.UserPrincipalName
-                        User                  = $irmAccess.User
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity = $mailbox.UserPrincipalName
+                        User     = $irmAccess.User
                     }
                     $this.ExportedInstance = $irmAccess
                     $Results = $this.GetForExport($Params)
@@ -235,22 +219,5 @@ class EXOMailboxIRMAccess : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxIRMAccess] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxIRMAccess])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxIRMAccess]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

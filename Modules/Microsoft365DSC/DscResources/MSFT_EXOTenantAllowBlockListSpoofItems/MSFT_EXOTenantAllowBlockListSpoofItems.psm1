@@ -116,14 +116,6 @@ class EXOTenantAllowBlockListSpoofItems : M365DSCResourceBase
                 SpoofType             = $instance.SpoofType
                 Action                = $instance.Action
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -225,16 +217,8 @@ class EXOTenantAllowBlockListSpoofItems : M365DSCResourceBase
                 $displayedKey = $config.SpoofedUser
                 Write-M365DSCHost -Message "    |---[$i/$($spoofItems.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    SpoofedUser           = $config.SpoofedUser
-                    Identity              = $config.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    SpoofedUser = $config.SpoofedUser
+                    Identity    = $config.Identity
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($params)
@@ -257,22 +241,5 @@ class EXOTenantAllowBlockListSpoofItems : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOTenantAllowBlockListSpoofItems] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOTenantAllowBlockListSpoofItems])
-        {
-            return $Values
-        }
-
-        $result = [EXOTenantAllowBlockListSpoofItems]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

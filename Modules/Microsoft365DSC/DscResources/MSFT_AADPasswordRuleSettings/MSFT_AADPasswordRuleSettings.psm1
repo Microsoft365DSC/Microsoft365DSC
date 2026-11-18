@@ -130,13 +130,6 @@ class AADPasswordRuleSettings : M365DSCResourceBase
                     LockoutThreshold                    = $valueLockoutThreshold.Value
                     BannedPasswordList                  = $bannedPasswordListArray
                     Ensure                              = 'Present'
-                    ApplicationId                       = $this.ApplicationId
-                    TenantId                            = $this.TenantId
-                    ApplicationSecret                   = $this.ApplicationSecret
-                    CertificateThumbprint               = $this.CertificateThumbprint
-                    Credential                          = $this.Credential
-                    ManagedIdentity                     = $this.ManagedIdentity
-                    AccessTokens                        = $this.AccessTokens
                 }
 
                 return $this.AsResult($result)
@@ -258,16 +251,7 @@ class AADPasswordRuleSettings : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $dscContent = [System.Text.StringBuilder]::new()
             $Results = $this.GetForExport($Params)
@@ -288,22 +272,5 @@ class AADPasswordRuleSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADPasswordRuleSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADPasswordRuleSettings])
-        {
-            return $Values
-        }
-
-        $result = [AADPasswordRuleSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

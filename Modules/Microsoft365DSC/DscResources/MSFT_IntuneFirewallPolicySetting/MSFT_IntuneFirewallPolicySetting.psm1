@@ -159,19 +159,11 @@ class IntuneFirewallPolicySetting : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.description
-                DisplayName           = $getValue.displayName
-                Id                    = $getValue.id
-                PolicySettings        = $reusableSettings
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Description    = $getValue.description
+                DisplayName    = $getValue.displayName
+                Id             = $getValue.id
+                PolicySettings = $reusableSettings
+                Ensure         = 'Present'
                 #endregion
             }
 
@@ -352,18 +344,9 @@ class IntuneFirewallPolicySetting : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -409,23 +392,6 @@ class IntuneFirewallPolicySetting : M365DSCResourceBase
         return @{
             IncludedProperties = @('PolicySettings', 'Addresses', 'AutoResolve', 'Keyword')
         }
-    }
-
-    hidden [IntuneFirewallPolicySetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneFirewallPolicySetting])
-        {
-            return $Values
-        }
-
-        $result = [IntuneFirewallPolicySetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

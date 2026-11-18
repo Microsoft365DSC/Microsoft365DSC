@@ -170,15 +170,6 @@ class IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 : M365DSCResou
                 RolloutSettings                                   = $complexRolloutSettings
                 Id                                                = $getValue.Id
                 Ensure                                            = 'Present'
-                Credential                                        = $this.Credential
-                ApplicationId                                     = $this.ApplicationId
-                TenantId                                          = $this.TenantId
-                ApplicationSecret                                 = $this.ApplicationSecret
-                CertificateThumbprint                             = $this.CertificateThumbprint
-                CertificatePath                                   = $this.CertificatePath
-                CertificatePassword                               = $this.CertificatePassword
-                ManagedIdentity                                   = $this.ManagedIdentity
-                AccessTokens                                      = $this.AccessTokens
                 #endregion
             }
 
@@ -515,23 +506,13 @@ class IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 : M365DSCResou
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ( $null -ne $Results.RolloutSettings)
                 {
@@ -565,7 +546,7 @@ class IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 : M365DSCResou
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('RolloutSettings', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -581,6 +562,7 @@ class IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 : M365DSCResou
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -602,23 +584,6 @@ class IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 : M365DSCResou
                 @{ Type = 'CustomCompare'; Name = 'FeatureUpdateRollout' }
             )
         }
-    }
-
-    hidden [IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

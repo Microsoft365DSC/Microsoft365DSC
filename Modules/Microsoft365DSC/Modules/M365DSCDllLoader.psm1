@@ -3,12 +3,11 @@
     Loads and initializes the Microsoft365DSC C# dll files.
 
 .DESCRIPTION
-    This module loads all of the Microsoft365DSC.*.dll at module import time.
-    It provides fail-fast validation of .NET Framework version requirements and
-    ensures that the necessary dll files are present and can be loaded successfully.
+    This module provides Initialize-M365DSCDllLoader, which loads all of the Microsoft365DSC.*.dll
+    files the first time a function that needs them calls it. It fails when a dll file is missing
+    or cannot be loaded.
 
 .NOTES
-    The dll loader requires .NET Framework 4.7.2 or higher.
     The DLLs are located in the Dependencies/Assemblies directory relative to the module root.
 #>
 
@@ -19,12 +18,12 @@ $Script:AssembliesInitialized = $false
     Initializes the Microsoft365DSC C# dll files.
 
 .DESCRIPTION
-    Validates .NET Framework version requirements and loads the compiled C# dll files.
+    Validates that the compiled C# dll files exist and loads the assemblies.
     This function is called by functions that require access to the Microsoft365DSC C# dll files.
 
 .EXAMPLE
     PS> Initialize-M365DSCDllLoader
-    Loads the dll files with standard version checks.
+    Loads the dll files.
 
 .OUTPUTS
     None.
@@ -42,24 +41,6 @@ function Initialize-M365DSCDllLoader
 
     try
     {
-        if ($PSVersionTable.PSEdition -eq 'Desktop')
-        {
-            # Validate .NET Framework version (4.7.2 = Release 461808+)
-            $netFrameworkVersion = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -ErrorAction Stop
-            $releaseKey = $netFrameworkVersion.Release
-
-            if ($releaseKey -lt 461808)
-            {
-                $versionString = $netFrameworkVersion.Version
-                $errorMessage = ".NET Framework 4.7.2 or higher is required for Microsoft365DSC C# dll files on Windows PowerShell. Current version: $versionString (Release: $releaseKey). Please install .NET Framework 4.7.2+ from https://dotnet.microsoft.com/download/dotnet-framework"
-
-                throw $errorMessage
-            }
-
-            Write-Verbose -Message ".NET Framework version check passed (Release: $releaseKey)"
-        }
-
-        # Locate the accelerator DLL
         $moduleRoot = Split-Path -Path $PSScriptRoot -Parent
         $dllsToLoad = @(
             'Microsoft365DSC.Cache.dll'
@@ -77,40 +58,37 @@ function Initialize-M365DSCDllLoader
             $dllPath = Join-Path -Path $moduleRoot -ChildPath "Dependencies/Assemblies/$dllName"
             if (-not (Test-Path -Path $dllPath))
             {
-                $errorMessage = "$dllName not found at: $dllPath. Please run Utilities/Build-DllFiles.ps1 to build the dll file."
-                Write-Warning $errorMessage
-
-                $Script:AssembliesInitialized = $false
+                throw "$dllName not found at: $dllPath. Please run Utilities/Build-DllFiles.ps1 to build the dll file."
             }
 
             Write-Verbose -Message "Loading dll from: $dllPath"
-        }
-
-        # Load the assembly
-        $loadedAssemblies = @()
-        foreach ($dllName in $dllsToLoad)
-        {
-            $dllPath = Join-Path -Path $moduleRoot -ChildPath "Dependencies/Assemblies/$dllName"
             try
             {
-                $loadedAssemblies += Add-Type -Path $dllPath -PassThru -ErrorAction Stop
+                Add-Type -Path $dllPath -ErrorAction Stop
+                Write-Verbose -Message "Loaded assembly: $([System.Reflection.AssemblyName]::GetAssemblyName($dllPath).FullName)"
             }
             catch
             {
-                if ($_.Exception.Message -like "*Assembly with same name is already loaded*")
+                if ($_.Exception.Message -notlike "*Assembly with same name is already loaded*")
                 {
-                    Write-Verbose -Message "Assembly $dllName is already loaded. Skipping."
+                    throw "$dllName could not be loaded from $($dllPath): $($_.Exception.Message)"
+                }
+
+                # Check if another copy of the assembly is loaded
+                $expectedVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath).Version
+                $assemblyName = [System.IO.Path]::GetFileNameWithoutExtension($dllName)
+                $loadedAssembly = [System.AppDomain]::CurrentDomain.GetAssemblies() | `
+                    Where-Object -FilterScript { $_.GetName().Name -eq $assemblyName } | `
+                    Select-Object -First 1
+                if ($null -ne $loadedAssembly -and $loadedAssembly.GetName().Version -ne $expectedVersion)
+                {
+                    Write-Warning -Message "$assemblyName version $($loadedAssembly.GetName().Version) is already loaded from $($loadedAssembly.Location), but version $expectedVersion is expected. Start a new PowerShell session to load the expected version."
                 }
                 else
                 {
-                    throw "Failed to load assembly $($dllName): $($_.Exception.Message)"
+                    Write-Verbose -Message "Assembly $dllName is already loaded. Skipping."
                 }
             }
-        }
-
-        foreach ($assembly in $loadedAssemblies)
-        {
-            Write-Verbose -Message "Loaded assembly: $($assembly.FullName)"
         }
 
         Write-Verbose -Message "Microsoft365DSC C# dll files loaded successfully."

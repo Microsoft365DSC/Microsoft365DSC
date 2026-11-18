@@ -135,14 +135,6 @@ class EXOSafeAttachmentRule : M365DSCResourceBase
                 RecipientDomainIs         = $SafeAttachmentRule.RecipientDomainIs
                 SentTo                    = $SafeAttachmentRule.SentTo
                 SentToMemberOf            = $SafeAttachmentRule.SentToMemberOf
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                TenantId                  = $this.TenantId
-                AccessTokens              = $this.AccessTokens
             }
             if ('Enabled' -eq $SafeAttachmentRule.State)
             {
@@ -264,26 +256,17 @@ class EXOSafeAttachmentRule : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($SafeAttachmentRules.Length)] $($SafeAttachmentRule.Identity)" -DeferWrite
                     $Params = @{
-                        Identity              = $SafeAttachmentRule.Identity
-                        SafeAttachmentPolicy  = $SafeAttachmentRule.SafeAttachmentPolicy
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity             = $SafeAttachmentRule.Identity
+                        SafeAttachmentPolicy = $SafeAttachmentRule.SafeAttachmentPolicy
                     }
                     $this.ExportedInstance = $SafeAttachmentRule
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
@@ -294,6 +277,7 @@ class EXOSafeAttachmentRule : M365DSCResourceBase
             else
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant doesn't have access to the Safe Attachment Rule API."
+                $this.SkipExport('The current tenant doesn''t have access to the Safe Attachment Rule API.')
             }
             return $dscContent.ToString()
         }
@@ -303,22 +287,5 @@ class EXOSafeAttachmentRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOSafeAttachmentRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSafeAttachmentRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOSafeAttachmentRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

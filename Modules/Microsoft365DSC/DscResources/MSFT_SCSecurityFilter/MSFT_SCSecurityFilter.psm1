@@ -220,26 +220,17 @@ class SCSecurityFilter : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($securityFilters.Count)] $($filter.FilterName)" -DeferWrite
 
                 $Params = @{
-                    FilterName            = $filter.FilterName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    FilterName = $filter.FilterName
                 }
                 $this.ExportedInstance = $filter
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 [void]$dscContent.Append($currentDSCBlock)
@@ -276,23 +267,6 @@ class SCSecurityFilter : M365DSCResourceBase
             ManagedIdentity       = $false
             AccessTokens          = $null
         }
-        return $result
-    }
-
-    hidden [SCSecurityFilter] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCSecurityFilter])
-        {
-            return $Values
-        }
-
-        $result = [SCSecurityFilter]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

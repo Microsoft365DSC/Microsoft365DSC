@@ -214,14 +214,6 @@ class IntuneUserSettingsPolicyWindows365 : M365DSCResourceBase
                 RestorePointSetting                = $complexRestorePointSetting
                 Id                                 = $getValue.Id
                 Ensure                             = 'Present'
-                Credential                         = $this.Credential
-                ApplicationId                      = $this.ApplicationId
-                TenantId                           = $this.TenantId
-                ApplicationSecret                  = $this.ApplicationSecret
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
                 #endregion
             }
             $assignmentsValues = $getValue.Assignments
@@ -400,23 +392,13 @@ class IntuneUserSettingsPolicyWindows365 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.CrossRegionDisasterRecoverySetting)
                 {
@@ -494,7 +476,7 @@ class IntuneUserSettingsPolicyWindows365 : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'CrossRegionDisasterRecoverySetting', 'NotificationSetting', 'RestorePointSetting') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -520,23 +502,6 @@ class IntuneUserSettingsPolicyWindows365 : M365DSCResourceBase
         {
             throw "The property UserInitiatedDisasterRecoveryAllowed can only be set to 'True' when DisasterRecoveryType is configured as 'premium'."
         }
-    }
-
-    hidden [IntuneUserSettingsPolicyWindows365] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneUserSettingsPolicyWindows365])
-        {
-            return $Values
-        }
-
-        $result = [IntuneUserSettingsPolicyWindows365]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

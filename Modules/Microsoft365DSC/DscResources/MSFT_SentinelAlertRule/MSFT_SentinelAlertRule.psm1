@@ -322,14 +322,7 @@ class SentinelAlertRule : M365DSCResourceBase
                 Kind                      = $instance.kind
                 Description               = $instance.properties.description
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
                 TenantId                  = $tenantIdValue
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -644,19 +637,12 @@ class SentinelAlertRule : M365DSCResourceBase
                     $displayedKey = $rule.properties.DisplayName
                     Write-M365DSCHost -Message "        |---[$j/$($rules.Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        DisplayName           = $rule.properties.displayName
-                        Id                    = $rule.name
-                        SubscriptionId        = $subscriptionIdValue
-                        ResourceGroupName     = $resourceGroupNameValue
-                        WorkspaceName         = $workspaceNameValue
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $tenantIdValue
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName       = $rule.properties.displayName
+                        Id                = $rule.name
+                        SubscriptionId    = $subscriptionIdValue
+                        ResourceGroupName = $resourceGroupNameValue
+                        WorkspaceName     = $workspaceNameValue
+                        TenantId          = $tenantIdValue
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -902,23 +888,6 @@ class SentinelAlertRule : M365DSCResourceBase
                 -TenantId $TenantId
             throw $_
         }
-    }
-
-    hidden [SentinelAlertRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SentinelAlertRule])
-        {
-            return $Values
-        }
-
-        $result = [SentinelAlertRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

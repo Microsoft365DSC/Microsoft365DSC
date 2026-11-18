@@ -68,7 +68,7 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
                 $this.AddTelemetry('Get')
 
-                $instance = Get-M365DataAtRestEncryptionPolicyAssignment -ErrorAction SilentlyContinue
+                $instance = Invoke-M365DSCCommand -ScriptBlock { Get-M365DataAtRestEncryptionPolicyAssignment -ErrorAction Stop }
             }
             else
             {
@@ -78,16 +78,8 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
             Write-Verbose -Message "The tenant uses the DataEncryptionPolicy {$($instance.Name)}"
 
             $results = @{
-                DataEncryptionPolicy  = [System.String]$instance.Name
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DataEncryptionPolicy = [System.String]$instance.Name
+                IsSingleInstance     = 'Yes'
             }
             return $this.AsResult($results)
         }
@@ -109,11 +101,11 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
         Write-Verbose -Message "Setting configuration for DataAtRestEncryptionPolicyAssignment with DataEncryptionPolicy $($this.DataEncryptionPolicy)"
 
+        $null = $this.Connect('ExchangeOnline')
+
         Confirm-M365DSCDependencies
 
         $this.AddTelemetry('Set')
-
-        $null = $this.Get().ToHashtable()
 
         $setParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
         $setParameters.Remove('IsSingleInstance') | Out-Null
@@ -160,26 +152,17 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
                 $displayedKey = 'Data Encryption Policy Assignment'
                 Write-M365DSCHost -Message "    |---[$i/$($assignments.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -194,22 +177,5 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXODataAtRestEncryptionPolicyAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODataAtRestEncryptionPolicyAssignment])
-        {
-            return $Values
-        }
-
-        $result = [EXODataAtRestEncryptionPolicyAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

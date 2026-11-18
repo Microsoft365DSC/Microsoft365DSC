@@ -245,14 +245,6 @@ class IntuneAppConfigurationDevicePolicy : M365DSCResourceBase
                 TargetedMobileApps          = $targetedApps
                 Id                          = $getValue.Id
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
                 #endregion
             }
             if ($platform -ne 'iOS')
@@ -448,23 +440,13 @@ class IntuneAppConfigurationDevicePolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.PermissionActions)
                 {
@@ -512,7 +494,7 @@ class IntuneAppConfigurationDevicePolicy : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('PermissionActions', 'Settings', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -528,23 +510,6 @@ class IntuneAppConfigurationDevicePolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneAppConfigurationDevicePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAppConfigurationDevicePolicy])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAppConfigurationDevicePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

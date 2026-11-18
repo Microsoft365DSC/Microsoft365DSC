@@ -139,15 +139,6 @@ class EXOEOPProtectionPolicyRule : M365DSCResourceBase
                 SentTo                    = $instance.SentTo
                 SentToMemberOf            = $instance.SentToMemberOf
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                ApplicationSecret         = $this.ApplicationSecret
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -258,17 +249,8 @@ class EXOEOPProtectionPolicyRule : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -301,22 +283,5 @@ class EXOEOPProtectionPolicyRule : M365DSCResourceBase
                 @{ Type = 'NullEqualsEmpty'; PropertyPattern = '^ExceptIf\w+$|^RecipientDomainIs$|^SentTo(\w+)?$' }
             )
         }
-    }
-
-    hidden [EXOEOPProtectionPolicyRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOEOPProtectionPolicyRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOEOPProtectionPolicyRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -99,25 +99,7 @@ class M365DSCRuleEvaluation : M365DSCResourceBase
         if ($null -ne $targetType)
         {
             $boundParameters = $this.GetBoundParameters()
-            $params = @{
-                Credential            = $boundParameters.Credential
-                ApplicationId         = $boundParameters.ApplicationId
-                TenantId              = $boundParameters.TenantId
-                CertificateThumbprint = $boundParameters.CertificateThumbprint
-            }
-
-            if ($null -ne $boundParameters.ApplicationSecret)
-            {
-                $params.Add('ApplicationSecret', $boundParameters.ApplicationSecret)
-            }
-            if ($null -ne $boundParameters.AccessTokens)
-            {
-                $params.Add('AccessTokens', $boundParameters.AccessTokens)
-            }
-            if ($null -ne $boundParameters.ManagedIdentity)
-            {
-                $params.Add('ManagedIdentity', $boundParameters.ManagedIdentity)
-            }
+            $params = Get-M365DSCAuthenticationParameter -BoundParameters $boundParameters
             if ($null -ne $boundParameters.Filter)
             {
                 $params.Add('Filter', $this.Filter)
@@ -309,22 +291,5 @@ class M365DSCRuleEvaluation : M365DSCResourceBase
 
         Write-M365DSCHost -Message "`r`n" -DeferWrite
         return $null
-    }
-
-    hidden [M365DSCRuleEvaluation] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [M365DSCRuleEvaluation])
-        {
-            return $Values
-        }
-
-        $result = [M365DSCRuleEvaluation]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

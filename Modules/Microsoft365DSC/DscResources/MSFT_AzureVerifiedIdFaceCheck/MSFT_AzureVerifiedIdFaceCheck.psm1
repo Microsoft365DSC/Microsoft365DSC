@@ -111,14 +111,6 @@ class AzureVerifiedIdFaceCheck : M365DSCResourceBase
                 VerifiedIdAuthorityLocation = $authorities.location
                 FaceCheckEnabled            = $EnabledValue
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -236,14 +228,6 @@ class AzureVerifiedIdFaceCheck : M365DSCResourceBase
                         VerifiedIdAuthorityId = $authority.id
                         SubscriptionId        = $resourceIdParts[2]
                         ResourceGroupName     = $resourceGroup.ResourceGroupName
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -269,22 +253,5 @@ class AzureVerifiedIdFaceCheck : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AzureVerifiedIdFaceCheck] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureVerifiedIdFaceCheck])
-        {
-            return $Values
-        }
-
-        $result = [AzureVerifiedIdFaceCheck]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -108,22 +108,14 @@ class EXOSafeAttachmentPolicy : M365DSCResourceBase
             Write-Verbose -Message "Found existing instance of SafeAttachmentPolicy $($this.Identity)"
 
             $result = @{
-                Ensure                = 'Present'
-                Identity              = $this.Identity
-                Action                = $SafeAttachmentPolicy.Action
-                AdminDisplayName      = $SafeAttachmentPolicy.AdminDisplayName
-                Enable                = $SafeAttachmentPolicy.Enable
-                QuarantineTag         = $SafeAttachmentPolicy.QuarantineTag
-                Redirect              = $SafeAttachmentPolicy.Redirect
-                RedirectAddress       = $SafeAttachmentPolicy.RedirectAddress
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Ensure           = 'Present'
+                Identity         = $this.Identity
+                Action           = $SafeAttachmentPolicy.Action
+                AdminDisplayName = $SafeAttachmentPolicy.AdminDisplayName
+                Enable           = $SafeAttachmentPolicy.Enable
+                QuarantineTag    = $SafeAttachmentPolicy.QuarantineTag
+                Redirect         = $SafeAttachmentPolicy.Redirect
+                RedirectAddress  = $SafeAttachmentPolicy.RedirectAddress
             }
 
             return $this.AsResult($result)
@@ -284,25 +276,16 @@ class EXOSafeAttachmentPolicy : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($SafeAttachmentPolicies.Length)] $($SafeAttachmentPolicy.Identity)" -DeferWrite
                     $Params = @{
-                        Credential            = $this.Credential
-                        Identity              = $SafeAttachmentPolicy.Identity
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity = $SafeAttachmentPolicy.Identity
                     }
                     $this.ExportedInstance = $SafeAttachmentPolicy
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
@@ -313,6 +296,7 @@ class EXOSafeAttachmentPolicy : M365DSCResourceBase
             else
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant doesn't have access to Safe Attachment Policy APIs."
+                $this.SkipExport('The current tenant doesn''t have access to Safe Attachment Policy APIs.')
             }
             return $dscContent.ToString()
         }
@@ -322,22 +306,5 @@ class EXOSafeAttachmentPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOSafeAttachmentPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSafeAttachmentPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOSafeAttachmentPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

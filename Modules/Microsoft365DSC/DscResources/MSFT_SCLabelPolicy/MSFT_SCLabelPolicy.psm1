@@ -184,19 +184,12 @@ class SCLabelPolicy : M365DSCResourceBase
                 Name                         = $policy.Name
                 Comment                      = $policy.Comment
                 AdvancedSettings             = $advancedSettingsValue
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
                 Ensure                       = 'Present'
                 Labels                       = $policy.Labels
-                ExchangeLocation             = Get-M365DSCArrayFromProperty -PropertyValue $policy.ExchangeLocation.Name -ElementType ([System.String])
-                ExchangeLocationException    = Get-M365DSCArrayFromProperty -PropertyValue $policy.ExchangeLocationException.Name -ElementType ([System.String])
-                ModernGroupLocation          = Get-M365DSCArrayFromProperty -PropertyValue $policy.ModernGroupLocation.Name -ElementType ([System.String])
-                ModernGroupLocationException = Get-M365DSCArrayFromProperty -PropertyValue $policy.ModernGroupLocationException.Name -ElementType ([System.String])
-                AccessTokens                 = $this.AccessTokens
+                ExchangeLocation             = $this.GetLocationIdentities($policy.ExchangeLocation)
+                ExchangeLocationException    = $this.GetLocationIdentities($policy.ExchangeLocationException)
+                ModernGroupLocation          = $this.GetLocationIdentities($policy.ModernGroupLocation)
+                ModernGroupLocationException = $this.GetLocationIdentities($policy.ModernGroupLocationException)
             }
 
             return $this.AsResult($result)
@@ -284,6 +277,11 @@ class SCLabelPolicy : M365DSCResourceBase
                 }
             }
             $boundParams.Remove($locationProperty) | Out-Null
+        }
+
+        if ($this.Ensure -eq 'Present')
+        {
+            $this.ResolveLocationIdentities($boundParams)
         }
 
         if ($this.Ensure -eq 'Present' -and $CurrentPolicy.Ensure -eq 'Absent')
@@ -477,7 +475,6 @@ class SCLabelPolicy : M365DSCResourceBase
 
                 $this.ExportedInstance = $policy
                 $Results = $this.GetForExport(@{ Name = $policy.Name })
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AdvancedSettings)
                 {
@@ -509,7 +506,7 @@ class SCLabelPolicy : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AdvancedSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 [void]$dscContent.Append($currentDSCBlock)
@@ -646,21 +643,75 @@ class SCLabelPolicy : M365DSCResourceBase
         return $settings
     }
 
-    hidden [SCLabelPolicy] AsResult([System.Object] $Values)
+    # Returns the identities of policy locations: the Name, or the display name of a location
+    # without a Name, such as a security group without an email address.
+    hidden [System.String[]] GetLocationIdentities([System.Object[]] $Locations)
     {
-        if ($Values -is [SCLabelPolicy])
+        [System.String[]]$identities = @()
+        foreach ($location in $Locations)
         {
-            return $Values
+            if (-not [System.String]::IsNullOrEmpty($location.Name))
+            {
+                $identities += $location.Name
+            }
+            elseif (-not [System.String]::IsNullOrEmpty($location.DisplayName))
+            {
+                $identities += $location.DisplayName
+            }
+            elseif (-not [System.String]::IsNullOrEmpty($location.ImmutableIdentity))
+            {
+                $identities += $location.ImmutableIdentity
+            }
         }
 
-        $result = [SCLabelPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
+        return $identities
+    }
 
-        return $result
+    # Replaces the group display names in the location parameters with the object IDs of the
+    # groups. The cmdlets only accept an email address or an object ID.
+    hidden [void] ResolveLocationIdentities([System.Collections.Hashtable] $Parameters)
+    {
+        foreach ($key in @($Parameters.Keys | Where-Object -FilterScript { $_ -like '*Location*' }))
+        {
+            $identities = @()
+            foreach ($identity in $Parameters[$key])
+            {
+                $guid = [System.Guid]::Empty
+                if ($identity -eq 'All' -or $identity -like '*@*' -or [System.Guid]::TryParse($identity, [ref]$guid))
+                {
+                    $identities += $identity
+                    continue
+                }
+
+                if ($null -eq $this.ResourceCache['GroupIds'])
+                {
+                    $null = $this.Connect('MicrosoftGraph')
+                    $this.ResourceCache['GroupIds'] = @{}
+                }
+
+                $groupIds = $this.ResourceCache['GroupIds']
+                if (-not $groupIds.ContainsKey($identity))
+                {
+                    $filter = "displayName eq '$($identity -replace "'", "''")'"
+                    $groups = @(Get-MgGroup -Filter $filter -Property Id -All -ErrorAction Stop)
+                    if ($groups.Count -eq 0)
+                    {
+                        throw "Could not find a group with the display name '$identity' for $key in policy '$($this.Name)'."
+                    }
+                    if ($groups.Count -gt 1)
+                    {
+                        throw "Found $($groups.Count) groups with the display name '$identity' for $key in policy '$($this.Name)'. Use the object ID of the group instead."
+                    }
+
+                    Write-Verbose -Message "Resolved the group '$identity' to the object ID $($groups[0].Id)."
+                    $groupIds[$identity] = $groups[0].Id
+                }
+
+                $identities += $groupIds[$identity]
+            }
+
+            $Parameters[$key] = $identities
+        }
     }
 }
 

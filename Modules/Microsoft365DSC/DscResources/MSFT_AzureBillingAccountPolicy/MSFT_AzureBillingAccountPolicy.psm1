@@ -124,14 +124,6 @@ class AzureBillingAccountPolicy : M365DSCResourceBase
                 SavingsPlanPurchases        = $instance.properties.savingsPlanPurchases
                 Ensure                      = 'Present'
                 SubscriptionId              = $this.SubscriptionId
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -225,16 +217,8 @@ class AzureBillingAccountPolicy : M365DSCResourceBase
                     $Global:M365DSCExportResourceInstancesCount++
                 }
                 $params = @{
-                    BillingAccount        = $account.name
-                    SubscriptionId        = $this.SubscriptionId
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    BillingAccount = $account.name
+                    SubscriptionId = $this.SubscriptionId
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -279,23 +263,6 @@ class AzureBillingAccountPolicy : M365DSCResourceBase
         return @{
             ExcludedProperties = @('SubscriptionId')
         }
-    }
-
-    hidden [AzureBillingAccountPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureBillingAccountPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AzureBillingAccountPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

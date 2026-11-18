@@ -27,7 +27,7 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
 
     [DscProperty(Key)]
     [System.ComponentModel.Description('The type of entry to add.')]
-    [ValidateSet('FileHash', 'Sender', 'Url')]
+    [ValidateSet('FileHash', 'IP', 'Sender', 'Url')]
     [System.String] $ListType
 
     [DscProperty()]
@@ -119,23 +119,15 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
             Write-Verbose -Message "Found an EXO Tenant Allow/Block List Item with Action {$($this.Action)}, Value {$($this.Value)}, and ListType {$($this.ListType)}"
 
             $results = @{
-                Action                = $instance.Action
-                Value                 = $instance.Value
-                ExpirationDate        = $instance.ExpirationDate
-                NoExpiration          = $null -eq $instance.ExpirationDate
-                ListSubType           = $instance.ListSubType
-                ListType              = $this.ListType
-                Notes                 = $instance.Notes
-                RemoveAfter           = $instance.RemoveAfter
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Action         = $instance.Action
+                Value          = $instance.Value
+                ExpirationDate = $instance.ExpirationDate
+                NoExpiration   = $null -eq $instance.ExpirationDate
+                ListSubType    = $instance.ListSubType
+                ListType       = $this.ListType
+                Notes          = $instance.Notes
+                RemoveAfter    = $instance.RemoveAfter
+                Ensure         = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -212,7 +204,6 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
 
     [string] Export()
     {
-        $listValues = $null
         if ($this.RequiresPowerShellCore())
         {
             return [string] $this.InvokeInPowerShellCore('Export')
@@ -226,14 +217,15 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
 
         try
         {
-            $ListTypes = ('FileHash', 'Sender', 'Url')
+            $ListTypes = ('FileHash', 'IP', 'Sender', 'Url')
+            $listValues = [System.Collections.Generic.List[System.Object]]::new()
 
             foreach ($ListType in $ListTypes)
             {
-                [array]$listValues = Get-TenantAllowBlockListItems -ListType $ListType -ErrorAction Stop
-                foreach ($value in $listValues)
+                foreach ($value in @(Get-TenantAllowBlockListItems -ListType $ListType -ErrorAction Stop))
                 {
-                    $value | Add-Member -MemberType NoteProperty -Name ListType -Value $ListType
+                    $value | Add-Member -MemberType NoteProperty -Name ListType -Value $ListType -Force
+                    $listValues.Add($value)
                 }
             }
 
@@ -261,18 +253,10 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($listValues.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Action                = $config.Action
-                    ListType              = $config.ListType
-                    Value                 = $config.Value
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Action   = $config.Action
+                    ListType = $config.ListType
+                    Value    = $config.Value
+                    Ensure   = 'Present'
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -301,23 +285,18 @@ class EXOTenantAllowBlockListItems : M365DSCResourceBase
     {
         return @{
             IncludedProperties = @('Action', 'ListType', 'Value')
+            CompareRules       = @(
+                @{
+                    Type = 'IgnoreWhenOnlyCurrent'
+                    When = @{ Any = @(
+                            @{ Property = 'ExpirationDate'; NotNullOrEmpty = $true }
+                            @{ All = @(
+                                    @{ Property = 'RemoveAfter'; NotNullOrEmpty = $true }
+                                    @{ Property = 'RemoveAfter'; NotEquals = 0 }
+                                ) }
+                        ) }
+                }
+            )
         }
-    }
-
-    hidden [EXOTenantAllowBlockListItems] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOTenantAllowBlockListItems])
-        {
-            return $Values
-        }
-
-        $result = [EXOTenantAllowBlockListItems]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

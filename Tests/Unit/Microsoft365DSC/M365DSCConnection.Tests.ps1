@@ -1,4 +1,6 @@
 BeforeAll {
+    Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1" -Force -Global
+    Initialize-M365DSCDllLoader
     Import-Module "$PSScriptRoot/../../../Modules/Microsoft365DSC/Modules/M365DSCConnection.psm1" -Force
     $Script:UtilModule = $null
     if ($null -eq (Get-Module -Name 'Microsoft365DSC'))
@@ -115,6 +117,15 @@ Describe 'New-M365DSCConnection' {
             { New-M365DSCConnection -Workload 'Azure' -InboundParameters $Script:SpSecret.Clone() } |
                 Should -Throw -ExpectedMessage '*does not have access to subscription ID*'
             Should -Invoke -ModuleName M365DSCConnection -CommandName Connect-M365Tenant -Exactly -Times 3
+        }
+
+        It 'keys the failure per url' {
+            Mock -ModuleName M365DSCConnection -CommandName Connect-M365Tenant -MockWith { throw 'Access denied' } -ParameterFilter { $Url -eq 'https://contoso.sharepoint.com/sites/locked' }
+            { New-M365DSCConnection -Workload 'PnP' -Url 'https://contoso.sharepoint.com/sites/locked' -InboundParameters $Script:SpThumbprint.Clone() } | Should -Throw -ExpectedMessage 'Access denied'
+            New-M365DSCConnection -Workload 'PnP' -Url 'https://contoso.sharepoint.com/sites/open' -InboundParameters $Script:SpThumbprint.Clone() | Should -Be 'ServicePrincipalWithThumbprint'
+            { New-M365DSCConnection -Workload 'PnP' -Url 'https://contoso.sharepoint.com/sites/locked' -InboundParameters $Script:SpThumbprint.Clone() } |
+                Should -Throw -ExpectedMessage '*failed earlier in this session: Access denied*'
+            Should -Invoke -ModuleName M365DSCConnection -CommandName Connect-M365Tenant -Exactly -Times 2
         }
 
         It 'attempts again after Reset-M365DSCConnectionFailureCache' {

@@ -127,6 +127,31 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result = Invoke-M365DSCResourceMethod -ResourceName 'AADAttributeSet' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
             }
+
+            It 'Should mark the resource as not read when the privileges are insufficient' {
+                Mock -CommandName Get-MgBetaDirectoryAttributeSet -MockWith {
+                    $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+                        [System.Exception]::new('Response status code does not indicate success: Forbidden (Forbidden).'),
+                        'Forbidden',
+                        [System.Management.Automation.ErrorCategory]::PermissionDenied,
+                        $null)
+                    $errorRecord.ErrorDetails = [System.Management.Automation.ErrorDetails]::new('Insufficient privileges to complete the operation.')
+                    throw $errorRecord
+                }
+                $Global:M365DSCExportResourceSkipMessage = $null
+
+                try
+                {
+                    $result = Invoke-M365DSCResourceMethod -ResourceName 'AADAttributeSet' -MethodName 'Export' -Parameters $testParams
+
+                    $result | Should -BeNullOrEmpty
+                    $Global:M365DSCExportResourceSkipMessage | Should -Be 'Response status code does not indicate success: Forbidden (Forbidden).'
+                }
+                finally
+                {
+                    $Global:M365DSCExportResourceSkipMessage = $null
+                }
+            }
         }
     }
 }

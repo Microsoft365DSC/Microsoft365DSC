@@ -106,18 +106,10 @@ class TeamsVoiceRoutingPolicy : M365DSCResourceBase
 
             Write-Verbose -Message "Found Voice Routing Policy {$($this.Identity)}"
             return $this.AsResult(@{
-                Identity              = $this.Identity
-                OnlinePstnUsages      = $policy.OnlinePstnUsages
-                Description           = $policy.Description
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity         = $this.Identity
+                OnlinePstnUsages = $policy.OnlinePstnUsages
+                Description      = $policy.Description
+                Ensure           = 'Present'
             })
         }
         catch
@@ -215,27 +207,18 @@ class TeamsVoiceRoutingPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -259,22 +242,5 @@ class TeamsVoiceRoutingPolicy : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('OnlinePstnUsages'); When = @{ Property = 'Ensure'; Equals = 'Absent' } }
             )
         }
-    }
-
-    hidden [TeamsVoiceRoutingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsVoiceRoutingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsVoiceRoutingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

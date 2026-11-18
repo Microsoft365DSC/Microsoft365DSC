@@ -77,16 +77,8 @@ class ADOOrganizationOwner : M365DSCResourceBase
             $ownerInfo = $allUsers.Items | Where-Object -FilterScript { $_.id -eq $organizationInfo.owner }
 
             $results = @{
-                OrganizationName      = $this.OrganizationName
-                Owner                 = $ownerInfo.user.principalName
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                OrganizationName = $this.OrganizationName
+                Owner            = $ownerInfo.user.principalName
             }
             return $this.AsResult($results)
         }
@@ -181,15 +173,7 @@ class ADOOrganizationOwner : M365DSCResourceBase
                 $displayedKey = $organization
                 Write-M365DSCHost -Message "    |---[$i/$($accounts.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    OrganizationName      = $organization
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    OrganizationName = $organization
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -213,22 +197,5 @@ class ADOOrganizationOwner : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [ADOOrganizationOwner] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [ADOOrganizationOwner])
-        {
-            return $Values
-        }
-
-        $result = [ADOOrganizationOwner]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

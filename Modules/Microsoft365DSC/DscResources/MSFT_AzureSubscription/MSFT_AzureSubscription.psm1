@@ -118,19 +118,11 @@ class AzureSubscription : M365DSCResourceBase
             }
 
             $results = @{
-                DisplayName           = $instance.properties.displayName
-                Id                    = $instance.name
-                InvoiceSectionId      = $instance.properties.invoiceSectionId
-                Status                = $instance.properties.status
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName      = $instance.properties.displayName
+                Id               = $instance.name
+                InvoiceSectionId = $instance.properties.invoiceSectionId
+                Status           = $instance.properties.status
+                Ensure           = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -265,15 +257,9 @@ class AzureSubscription : M365DSCResourceBase
                         $displayedKey = $config.properties.displayName
                         Write-M365DSCHost -Message "    |---[$i/$($subscriptions.Count)] $displayedKey" -DeferWrite
                         $params = @{
-                            DisplayName           = $config.properties.displayName
-                            Id                    = $config.Name
-                            InvoiceSectionId      = $config.properties.invoiceSectionId
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            DisplayName      = $config.properties.displayName
+                            Id               = $config.Name
+                            InvoiceSectionId = $config.properties.invoiceSectionId
                         }
 
                         $Results = $this.GetForExport($Params)
@@ -299,22 +285,5 @@ class AzureSubscription : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AzureSubscription] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureSubscription])
-        {
-            return $Values
-        }
-
-        $result = [AzureSubscription]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

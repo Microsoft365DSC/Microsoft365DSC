@@ -101,14 +101,6 @@ class TeamsAudioConferencingPolicy : M365DSCResourceBase
                 AllowTollFreeDialin       = $instance.AllowTollFreeDialin
                 MeetingInvitePhoneNumbers = [System.String[]]$instance.MeetingInvitePhoneNumbers
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -233,16 +225,8 @@ class TeamsAudioConferencingPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -267,22 +251,5 @@ class TeamsAudioConferencingPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsAudioConferencingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsAudioConferencingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsAudioConferencingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

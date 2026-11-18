@@ -79,15 +79,6 @@ class AADAccessReviewPolicy : M365DSCResourceBase
             $results = @{
                 IsSingleInstance              = 'Yes'
                 IsGroupOwnerManagementEnabled = $instance.IsGroupOwnerManagementEnabled
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                ApplicationSecret             = $this.ApplicationSecret
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -166,16 +157,7 @@ class AADAccessReviewPolicy : M365DSCResourceBase
                 $displayedKey = 'Access Review Policy'
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -199,22 +181,5 @@ class AADAccessReviewPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAccessReviewPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAccessReviewPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADAccessReviewPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

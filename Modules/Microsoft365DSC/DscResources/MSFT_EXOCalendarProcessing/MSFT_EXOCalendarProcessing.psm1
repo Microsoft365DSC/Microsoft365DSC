@@ -316,14 +316,6 @@ class EXOCalendarProcessing : M365DSCResourceBase
                 ScheduleOnlyDuringWorkHours          = $calendarProc.ScheduleOnlyDuringWorkHours
                 TentativePendingApproval             = $calendarProc.TentativePendingApproval
                 Ensure                               = 'Present'
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                TenantId                             = $this.TenantId
-                AccessTokens                         = $this.AccessTokens
             }
 
             Write-Verbose -Message "Found Availability Config for $($OrgWideAccount)"
@@ -437,15 +429,7 @@ class EXOCalendarProcessing : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $($mailbox.UserPrincipalName)" -DeferWrite
                 $Params = @{
-                    Identity              = $mailbox.UserPrincipalName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $mailbox.UserPrincipalName
                 }
                 $Results = $this.GetForExport($Params)
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -500,22 +484,5 @@ class EXOCalendarProcessing : M365DSCResourceBase
 
         $this.ResourceCache['UsersCache'][$Identity] = $resolvedIdentity
         return $resolvedIdentity
-    }
-
-    hidden [EXOCalendarProcessing] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOCalendarProcessing])
-        {
-            return $Values
-        }
-
-        $result = [EXOCalendarProcessing]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

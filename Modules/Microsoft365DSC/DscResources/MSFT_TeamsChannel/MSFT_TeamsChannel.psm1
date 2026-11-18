@@ -131,17 +131,11 @@ class TeamsChannel : M365DSCResourceBase
             }
 
             $results = @{
-                DisplayName           = $channel.DisplayName
-                TeamName              = $team.DisplayName
-                GroupId               = $team.GroupId
-                Description           = $channel.Description
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                Credential            = $this.Credential
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName = $channel.DisplayName
+                TeamName    = $team.DisplayName
+                GroupId     = $team.GroupId
+                Description = $channel.Description
+                Ensure      = 'Present'
             }
 
             if ($this.NewDisplayName)
@@ -176,7 +170,7 @@ class TeamsChannel : M365DSCResourceBase
 
         $CurrentParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
-        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName))
+        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName)) -RetryCount 5
 
         if ($team.Length -gt 1)
         {
@@ -269,29 +263,20 @@ class TeamsChannel : M365DSCResourceBase
 
                         Write-M365DSCHost -Message "        |---[$i/$($channels.Length)] $($channel.DisplayName)" -DeferWrite
                         $params = @{
-                            TeamName              = $team.DisplayName
-                            GroupId               = $team.GroupId
-                            DisplayName           = $channel.DisplayName
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            CertificatePath       = $this.CertificatePath
-                            CertificatePassword   = $this.CertificatePassword
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            TeamName    = $team.DisplayName
+                            GroupId     = $team.GroupId
+                            DisplayName = $channel.DisplayName
                         }
 
                         $this.ExportedInstance = $channel
                         $this.ResourceCache['currentTeam'] = $team
                         $Results = $this.GetForExport($Params)
-                        $rawResults = $Results.Clone()
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                             -ConnectionMode $ConnectionMode `
                             -ModulePath $this.GetModulePath() `
                             -Results $Results `
                             -Credential $this.Credential `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `
                             -FileName $Global:PartialExportFileName
@@ -320,22 +305,5 @@ class TeamsChannel : M365DSCResourceBase
         return @{
             ExcludedProperties = @('GroupID', 'NewDisplayName')
         }
-    }
-
-    hidden [TeamsChannel] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsChannel])
-        {
-            return $Values
-        }
-
-        $result = [TeamsChannel]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

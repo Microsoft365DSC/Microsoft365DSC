@@ -261,6 +261,7 @@ class AADApplication : M365DSCResourceBase
                     Write-Verbose -Message 'Could not retrieve and instance of the Azure AD App in the Get() method.'
                     return $this.AsResult($nullReturn)
                 }
+                $AADApp = $AADApp[0]
             }
             else
             {
@@ -673,15 +674,6 @@ class AADApplication : M365DSCResourceBase
                 TokenEncryptionKeyId            = $AADApp.TokenEncryptionKeyId
                 TokenLifetimePolicy             = $lifetimePolicy.displayName
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -909,13 +901,13 @@ class AADApplication : M365DSCResourceBase
             if (-not [System.String]::IsNullOrEmpty($this.AppId))
             {
                 Write-Verbose "Trying to retrieve existing deleted Applications from soft delete by Id {$($this.AppId)}."
-                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -DirectoryObjectId $this.AppId -ErrorAction SilentlyContinue
+                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -Filter "AppId eq '$($this.AppId)'" -ErrorAction Stop
             }
 
             if ($null -eq $deletedApp)
             {
                 Write-Verbose "Trying to retrieve existing deleted Applications from soft delete by DisplayName {$($this.DisplayName)}."
-                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" -ErrorAction SilentlyContinue
+                [Array]$deletedApp = Get-MgBetaDirectoryDeletedItemAsApplication -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'" -ErrorAction Stop
             }
 
             if ($null -ne $deletedApp -and $deletedApp.Length -eq 1)
@@ -950,12 +942,12 @@ class AADApplication : M365DSCResourceBase
                 }
                 else
                 {
-                    Write-Verbose -Message "Found existing deleted instance of {$($this.DisplayName)}. However, the deleted date was over days ago and it cannot be restored. Will recreate a new instance instead."
+                    Write-Verbose -Message "Found existing deleted instance of {$($this.DisplayName)}. However, the deleted date was over 30 days ago and it cannot be restored. Will recreate a new instance instead."
                 }
             }
             elseif ($deletedApp.Length -gt 1)
             {
-                Write-Verbose -Message "Multiple instances of a deleted application with name {$($this.DisplayName)} wehre found. Creating a new instance since we can't determine what instance to restore."
+                Write-Verbose -Message "Multiple instances of a deleted application with name {$($this.DisplayName)} were found. Creating a new instance since we can't determine what instance to restore."
             }
         }
 
@@ -1457,25 +1449,15 @@ class AADApplication : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($AADApp.DisplayName)" -DeferWrite
                 $Params = @{
-                    ApplicationId         = $this.ApplicationId
-                    AppId                 = $AADApp.AppId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    ApplicationSecret     = $this.ApplicationSecret
-                    Description           = $AADApp.Description
-                    DisplayName           = $AADApp.DisplayName
-                    ObjectID              = $AADApp.Id
-                    Credential            = $this.Credential
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    AppId       = $AADApp.AppId
+                    Description = $AADApp.Description
+                    DisplayName = $AADApp.DisplayName
+                    ObjectID    = $AADApp.Id
                 }
                 try
                 {
                     $this.ExportedInstance = $AADApp
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     if ($Results.Ensure -eq 'Present')
                     {
                         if ($Results.RequiredResourceAccess.Count -gt 0)
@@ -1714,14 +1696,14 @@ class AADApplication : M365DSCResourceBase
                             -Results $Results `
                             -Credential $this.Credential `
                             -NoEscape @('Api', 'Info', 'RequiredResourceAccess', 'OptionalClaims', 'OnPremisesPublishing', 'AuthenticationBehaviors', 'KeyCredentials', 'PasswordCredentials', 'AppRoles', 'Spa') `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
 
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `
                             -FileName $Global:PartialExportFileName
-                        Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                        $i++
                     }
+                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                    $i++
                 }
                 catch
                 {
@@ -1732,6 +1714,7 @@ class AADApplication : M365DSCResourceBase
                     }
                     $this.LogError($_, 'Error during Export:')
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
+                    $this.AddExportInstanceFailure($_, $AADApp.DisplayName)
                     $i++
                 }
             }
@@ -1749,6 +1732,9 @@ class AADApplication : M365DSCResourceBase
     {
         return @{
             ExcludedProperties = @('AppId', 'ObjectId', 'ApplicationTemplateId', 'AdminConsentGranted', 'PasswordCredentials')
+            CompareRules       = @(
+                @{ Type = 'IgnoreNested'; Paths = @('KeyCredentials[].StartDateTime', 'KeyCredentials[].EndDateTime', 'KeyCredentials[].KeyId', 'KeyCredentials[].Key') }
+            )
         }
     }
 
@@ -2113,23 +2099,6 @@ class AADApplication : M365DSCResourceBase
         }
 
         return $permissionResults
-    }
-
-    hidden [AADApplication] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADApplication])
-        {
-            return $Values
-        }
-
-        $result = [AADApplication]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

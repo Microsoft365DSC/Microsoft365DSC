@@ -154,23 +154,14 @@ class SPOHubSite : M365DSCResourceBase
             }
 
             $result = @{
-                Url                   = $this.Url
-                Title                 = $hubSite.Title
-                Description           = $hubSite.Description
-                LogoUrl               = $configuredLogo
-                RequiresJoinApproval  = $hubSite.RequiresJoinApproval
-                AllowedToJoin         = $principals
-                SiteDesignId          = $hubSite.SiteDesignId
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Url                  = $this.Url
+                Title                = $hubSite.Title
+                Description          = $hubSite.Description
+                LogoUrl              = $configuredLogo
+                RequiresJoinApproval = $hubSite.RequiresJoinApproval
+                AllowedToJoin        = $principals
+                SiteDesignId         = $hubSite.SiteDesignId
+                Ensure               = 'Present'
             }
             return $this.AsResult($result)
         }
@@ -440,16 +431,7 @@ class SPOHubSite : M365DSCResourceBase
                 Write-M365DSCHost -Message "    [$i/$($hubSites.Length)] $($hub.SiteUrl)" -DeferWrite
 
                 $Params = @{
-                    Url                   = $hub.SiteUrl
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Url = $hub.SiteUrl
                 }
 
                 $this.ExportedInstance = $hub
@@ -481,22 +463,5 @@ class SPOHubSite : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOHubSite] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOHubSite])
-        {
-            return $Values
-        }
-
-        $result = [SPOHubSite]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

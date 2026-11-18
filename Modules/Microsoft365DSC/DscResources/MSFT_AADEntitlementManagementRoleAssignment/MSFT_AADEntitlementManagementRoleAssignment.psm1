@@ -156,22 +156,13 @@ class AADEntitlementManagementRoleAssignment : M365DSCResourceBase
             Write-Verbose -Message "Found existing role assignment with ID {$($getValue.id)}."
 
             $results = @{
-                Id                    = $getValue.Id
-                Principal             = $principalName
-                RoleDefinition        = $this.RoleDefinition
-                DisplayName           = $getValue.DisplayName
-                AppScopeId            = $getValue.AppScopeId
-                DirectoryScopeId      = $getValue.DirectoryScopeId
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id               = $getValue.Id
+                Principal        = $principalName
+                RoleDefinition   = $this.RoleDefinition
+                DisplayName      = $getValue.DisplayName
+                AppScopeId       = $getValue.AppScopeId
+                DirectoryScopeId = $getValue.DirectoryScopeId
+                Ensure           = 'Present'
             }
 
             return $this.AsResult($results)
@@ -349,18 +340,9 @@ class AADEntitlementManagementRoleAssignment : M365DSCResourceBase
                     }
                 }
                 $params = @{
-                    Id                    = $config.Id
-                    Principal             = $principalName
-                    RoleDefinition        = $roleInfo.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id             = $config.Id
+                    Principal      = $principalName
+                    RoleDefinition = $roleInfo.DisplayName
                 }
 
                 $this.ExportedInstance = $config
@@ -387,6 +369,7 @@ class AADEntitlementManagementRoleAssignment : M365DSCResourceBase
             if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component or the user has not been granted the proper permissions."
+                $this.SkipExport($_)
             }
             else
             {
@@ -398,22 +381,5 @@ class AADEntitlementManagementRoleAssignment : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [AADEntitlementManagementRoleAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementRoleAssignment])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementRoleAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

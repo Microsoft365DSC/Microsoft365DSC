@@ -114,19 +114,10 @@ class SPOSiteDesignRights : M365DSCResourceBase
 
             Write-Verbose -Message "Site Design Rights User Principals = $($curUserPrincipals)"
             return $this.AsResult(@{
-                SiteDesignTitle       = $this.SiteDesignTitle
-                UserPrincipals        = $curUserPrincipals
-                Rights                = $this.Rights
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                SiteDesignTitle = $this.SiteDesignTitle
+                UserPrincipals  = $curUserPrincipals
+                Rights          = $this.Rights
+                Ensure          = 'Present'
             })
         }
         catch
@@ -255,17 +246,8 @@ class SPOSiteDesignRights : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($siteDesigns.Count)] $($siteDesign.Title)" -DeferWrite
 
                 $Params = @{
-                    SiteDesignTitle       = $siteDesign.Title
-                    Rights                = 'View'
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    SiteDesignTitle = $siteDesign.Title
+                    Rights          = 'View'
                 }
 
                 $this.ExportedInstance = $siteDesign
@@ -284,17 +266,8 @@ class SPOSiteDesignRights : M365DSCResourceBase
                 }
 
                 $Params = @{
-                    SiteDesignTitle       = $siteDesign.Title
-                    Rights                = 'None'
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificatePassword   = $this.CertificatePassword
-                    CertificatePath       = $this.CertificatePath
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    Credential            = $this.Credential
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    SiteDesignTitle = $siteDesign.Title
+                    Rights          = 'None'
                 }
                 $Results = $this.GetForExport($Params)
                 if ($Results.Ensure -eq 'Present')
@@ -329,22 +302,5 @@ class SPOSiteDesignRights : M365DSCResourceBase
         return @{
             ExcludedProperties = @('SiteDesignTitle')
         }
-    }
-
-    hidden [SPOSiteDesignRights] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSiteDesignRights])
-        {
-            return $Values
-        }
-
-        $result = [SPOSiteDesignRights]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

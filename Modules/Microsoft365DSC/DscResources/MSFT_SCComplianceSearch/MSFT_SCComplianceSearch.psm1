@@ -153,14 +153,6 @@ class SCComplianceSearch : M365DSCResourceBase
                 SharePointLocation                    = $Search.SharePointLocation
                 SharePointLocationExclusion           = $Search.SharePointLocationExclusion
                 Ensure                                = 'Present'
-                Credential                            = $this.Credential
-                ApplicationId                         = $this.ApplicationId
-                TenantId                              = $this.TenantId
-                CertificateThumbprint                 = $this.CertificateThumbprint
-                CertificatePath                       = $this.CertificatePath
-                CertificatePassword                   = $this.CertificatePassword
-                ManagedIdentity                       = $this.ManagedIdentity
-                AccessTokens                          = $this.AccessTokens
             }
 
             $nullParams = @()
@@ -270,13 +262,12 @@ class SCComplianceSearch : M365DSCResourceBase
 
                 $this.ExportedInstance = $search
                 $Results = $this.GetForExport(@{ Name = $search.Name })
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 $i++
@@ -294,26 +285,18 @@ class SCComplianceSearch : M365DSCResourceBase
                 foreach ($search in $searches)
                 {
                     $Params = @{
-                        Name                  = $search.Name
-                        Case                  = $case.Name
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        AccessTokens          = $this.AccessTokens
+                        Name = $search.Name
+                        Case = $case.Name
                     }
                     Write-M365DSCHost -Message "        |---[$i/$($searches.Name.Count)] $($search.Name)" -DeferWrite
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
 
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
 
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -339,22 +322,5 @@ class SCComplianceSearch : M365DSCResourceBase
         return @{
             ExcludedProperties = @('IncludeUserAppContent')
         }
-    }
-
-    hidden [SCComplianceSearch] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCComplianceSearch])
-        {
-            return $Values
-        }
-
-        $result = [SCComplianceSearch]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

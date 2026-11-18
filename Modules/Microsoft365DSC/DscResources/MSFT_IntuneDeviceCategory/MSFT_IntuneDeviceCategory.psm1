@@ -98,19 +98,10 @@ class IntuneDeviceCategory : M365DSCResourceBase
 
             Write-Verbose -Message "Found Device Category with Identity {$Identity}"
             return $this.AsResult(@{
-                DisplayName           = $category.DisplayName
-                Description           = $category.Description
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $category.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName     = $category.DisplayName
+                Description     = $category.Description
+                RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $category.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Ensure          = 'Present'
             })
         }
         catch
@@ -148,28 +139,33 @@ class IntuneDeviceCategory : M365DSCResourceBase
             Write-Verbose -Message "Creating new Device Category {$($this.DisplayName)}"
             $createParameters = @{
                 DisplayName = $this.DisplayName
-                Description = $this.Description
+            }
+            if ($null -ne $this.Description)
+            {
+                $createParameters.Description = $this.Description
             }
             if ($null -ne $resolvedRoleScopeTagIds)
             {
                 $createParameters.RoleScopeTagIds = $resolvedRoleScopeTagIds
             }
-            New-MgBetaDeviceManagementDeviceCategory @createParameters
+            New-MgBetaDeviceManagementDeviceCategory -BodyParameter $createParameters
         }
         elseif ($this.Ensure -eq 'Present' -and $currentCategory.Ensure -eq 'Present')
         {
             Write-Verbose -Message "Updating Device Category {$($this.DisplayName)}"
             $category = Get-MgBetaDeviceManagementDeviceCategory -All -Filter "DisplayName eq '$($this.DisplayName -replace "'", "''")'"
             $updateParameters = @{
-                DeviceCategoryId = $category.id
-                DisplayName      = $this.DisplayName
-                Description      = $this.Description
+                DisplayName = $this.DisplayName
+            }
+            if ($null -ne $this.Description)
+            {
+                $updateParameters.Description = $this.Description
             }
             if ($null -ne $resolvedRoleScopeTagIds)
             {
                 $updateParameters.RoleScopeTagIds = $resolvedRoleScopeTagIds
             }
-            Update-MgBetaDeviceManagementDeviceCategory @updateParameters
+            Update-MgBetaDeviceManagementDeviceCategory -DeviceCategoryId $category.id -BodyParameter $updateParameters
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentCategory.Ensure -eq 'Present')
         {
@@ -220,17 +216,8 @@ class IntuneDeviceCategory : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($categories.Count)] $($category.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $category.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $category.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $category
@@ -254,6 +241,7 @@ class IntuneDeviceCategory : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -265,22 +253,5 @@ class IntuneDeviceCategory : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceCategory] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceCategory])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceCategory]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

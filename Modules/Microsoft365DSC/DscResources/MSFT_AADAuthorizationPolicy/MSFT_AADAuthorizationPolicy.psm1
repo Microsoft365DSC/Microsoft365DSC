@@ -133,29 +133,20 @@ class AADAuthorizationPolicy : M365DSCResourceBase
             }
 
             $result = @{
-                IsSingleInstance                                        = 'Yes'
-                DisplayName                                             = $Policy.DisplayName
-                Description                                             = $Policy.Description
-                AllowedToSignUpEmailBasedSubscriptions                  = $Policy.AllowedToSignUpEmailBasedSubscriptions
-                AllowedToUseSSPR                                        = $Policy.AllowedToUseSSPR
-                AllowEmailVerifiedUsersToJoinOrganization               = $Policy.AllowEmailVerifiedUsersToJoinOrganization
-                AllowInvitesFrom                                        = $Policy.AllowInvitesFrom
-                AllowUserConsentForRiskyApps                            = $Policy.AllowUserConsentForRiskyApps
-                BlockMsolPowerShell                                     = $Policy.BlockMsolPowerShell
-                DefaultUserRolePermissions                              = $complexDefaultUserRolePermissions
-                EnabledPreviewFeatures                                  = $Policy.EnabledPreviewFeatures
-                PermissionGrantPolicyIdsAssignedToDefaultUserRole       = $Policy.PermissionGrantPolicyIdsAssignedToDefaultUserRole
-                GuestUserRole                                           = $this.GetGuestUserRoleNameFromId($Policy.GuestUserRoleId)
-                Ensure                                                  = 'Present'
-                Credential                                              = $this.Credential
-                ApplicationSecret                                       = $this.ApplicationSecret
-                ApplicationId                                           = $this.ApplicationId
-                TenantId                                                = $this.TenantId
-                CertificateThumbprint                                   = $this.CertificateThumbprint
-                CertificatePath                                         = $this.CertificatePath
-                CertificatePassword                                     = $this.CertificatePassword
-                ManagedIdentity                                         = $this.ManagedIdentity
-                AccessTokens                                            = $this.AccessTokens
+                IsSingleInstance                                  = 'Yes'
+                DisplayName                                       = $Policy.DisplayName
+                Description                                       = $Policy.Description
+                AllowedToSignUpEmailBasedSubscriptions            = $Policy.AllowedToSignUpEmailBasedSubscriptions
+                AllowedToUseSSPR                                  = $Policy.AllowedToUseSSPR
+                AllowEmailVerifiedUsersToJoinOrganization         = $Policy.AllowEmailVerifiedUsersToJoinOrganization
+                AllowInvitesFrom                                  = $Policy.AllowInvitesFrom
+                AllowUserConsentForRiskyApps                      = $Policy.AllowUserConsentForRiskyApps
+                BlockMsolPowerShell                               = $Policy.BlockMsolPowerShell
+                DefaultUserRolePermissions                        = $complexDefaultUserRolePermissions
+                EnabledPreviewFeatures                            = $Policy.EnabledPreviewFeatures
+                PermissionGrantPolicyIdsAssignedToDefaultUserRole = $Policy.PermissionGrantPolicyIdsAssignedToDefaultUserRole
+                GuestUserRole                                     = $this.GetGuestUserRoleNameFromId($Policy.GuestUserRoleId)
+                Ensure                                            = 'Present'
             }
 
             return $this.AsResult($result)
@@ -251,16 +242,7 @@ class AADAuthorizationPolicy : M365DSCResourceBase
             }
 
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -345,23 +327,6 @@ class AADAuthorizationPolicy : M365DSCResourceBase
         }
         Write-Verbose "return $roleName"
         return $roleName
-    }
-
-    hidden [AADAuthorizationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthorizationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthorizationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

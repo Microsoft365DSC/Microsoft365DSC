@@ -112,13 +112,6 @@ class TeamsTargetingPolicy : M365DSCResourceBase
                 ShiftBackedTagsMode                = $instance.ShiftBackedTagsMode
                 SuggestedPresetTags                = $instance.SuggestedPresetTags
                 TeamOwnersEditWhoCanManageTagsMode = $instance.TeamOwnersEditWhoCanManageTagsMode
-                Credential                         = $this.Credential
-                ApplicationId                      = $this.ApplicationId
-                TenantId                           = $this.TenantId
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
             }
             return $this.AsResult($results)
         }
@@ -197,15 +190,7 @@ class TeamsTargetingPolicy : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -228,22 +213,5 @@ class TeamsTargetingPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsTargetingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsTargetingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsTargetingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

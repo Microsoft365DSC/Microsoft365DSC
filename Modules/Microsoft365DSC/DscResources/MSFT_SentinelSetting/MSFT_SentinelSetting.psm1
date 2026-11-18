@@ -155,14 +155,6 @@ class SentinelSetting : M365DSCResourceBase
                 ResourceGroupName        = $ResourceGroupNameValue
                 WorkspaceName            = $WorkspaceNameValue
                 SubscriptionId           = $this.SubscriptionId
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                TenantId                 = $this.TenantId
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                AccessTokens             = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -273,17 +265,9 @@ class SentinelSetting : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $displayedKey" -DeferWrite
                 $subscriptionIdValue = $config.ResourceId.Split('/')[2]
                 $params = @{
-                    ResourceGroupName     = $config.ResourceGroupName
-                    WorkspaceName         = $config.Name
-                    SubscriptionId        = $subscriptionIdValue
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    ResourceGroupName = $config.ResourceGroupName
+                    WorkspaceName     = $config.Name
+                    SubscriptionId    = $subscriptionIdValue
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -307,22 +291,5 @@ class SentinelSetting : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SentinelSetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SentinelSetting])
-        {
-            return $Values
-        }
-
-        $result = [SentinelSetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

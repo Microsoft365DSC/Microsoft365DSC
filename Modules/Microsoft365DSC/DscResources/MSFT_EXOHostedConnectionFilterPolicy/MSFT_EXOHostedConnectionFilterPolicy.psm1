@@ -103,21 +103,13 @@ class EXOHostedConnectionFilterPolicy : M365DSCResourceBase
             Write-Verbose -Message "Found HostedConnectionFilterPolicy $($this.Identity)"
 
             $result = @{
-                Ensure                = 'Present'
-                Identity              = $this.Identity
-                AdminDisplayName      = $HostedConnectionFilterPolicy.AdminDisplayName
-                EnableSafeList        = $HostedConnectionFilterPolicy.EnableSafeList
-                IPAllowList           = $HostedConnectionFilterPolicy.IPAllowList
-                IPBlockList           = $HostedConnectionFilterPolicy.IPBlockList
-                MakeDefault           = $false
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Ensure           = 'Present'
+                Identity         = $this.Identity
+                AdminDisplayName = $HostedConnectionFilterPolicy.AdminDisplayName
+                EnableSafeList   = $HostedConnectionFilterPolicy.EnableSafeList
+                IPAllowList      = $HostedConnectionFilterPolicy.IPAllowList
+                IPBlockList      = $HostedConnectionFilterPolicy.IPBlockList
+                MakeDefault      = $false
             }
 
             if ($HostedConnectionFilterPolicy.IsDefault)
@@ -255,15 +247,7 @@ class EXOHostedConnectionFilterPolicy : M365DSCResourceBase
                 }
 
                 $Params = @{
-                    Credential            = $this.Credential
-                    Identity              = $HostedConnectionFilterPolicy.Identity
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $HostedConnectionFilterPolicy.Identity
                 }
                 $this.ExportedInstance = $HostedConnectionFilterPolicy
                 Write-M365DSCHost -Message "    |---[$i/$($HostedConnectionFilterPolicies.Length)] $($HostedConnectionFilterPolicy.Identity)" -DeferWrite
@@ -287,22 +271,5 @@ class EXOHostedConnectionFilterPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOHostedConnectionFilterPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOHostedConnectionFilterPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOHostedConnectionFilterPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

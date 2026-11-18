@@ -93,16 +93,8 @@ class TeamsPstnUsage : M365DSCResourceBase
 
             Write-Verbose -Message "Found PSTN usage {$($this.Usage)}"
             return $this.AsResult(@{
-                Usage                 = $this.Usage
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Usage  = $this.Usage
+                Ensure = 'Present'
             })
         }
         catch
@@ -181,16 +173,8 @@ class TeamsPstnUsage : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($usages.Count)] $usage" -DeferWrite
                 $params = @{
-                    Usage                 = $usage
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Usage  = $usage
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $usage
@@ -214,22 +198,5 @@ class TeamsPstnUsage : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsPstnUsage] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsPstnUsage])
-        {
-            return $Values
-        }
-
-        $result = [TeamsPstnUsage]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

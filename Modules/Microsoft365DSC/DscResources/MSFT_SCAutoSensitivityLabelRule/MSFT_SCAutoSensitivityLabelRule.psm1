@@ -331,14 +331,6 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
                 SentToMemberOf                               = $PolicyRule.SentToMemberOf
                 SubjectMatchesPatterns                       = $PolicyRule.SubjectMatchesPatterns
                 Ensure                                       = 'Present'
-                Credential                                   = $this.Credential
-                ApplicationId                                = $this.ApplicationId
-                TenantId                                     = $this.TenantId
-                CertificateThumbprint                        = $this.CertificateThumbprint
-                CertificatePath                              = $this.CertificatePath
-                CertificatePassword                          = $this.CertificatePassword
-                ManagedIdentity                              = $this.ManagedIdentity
-                AccessTokens                                 = $this.AccessTokens
             }
 
             $paramsToRemove = @()
@@ -565,7 +557,6 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($rules.Length)] $($rule.Name)" -DeferWrite
                 $this.ExportedInstance = $rule
                 $Results = $this.GetForExport(@{ Name = $rule.name; Policy = $rule.ParentPolicyName; Workload = $rule.LogicalWorkload })
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.ContentContainsSensitiveInformation)
                 {
@@ -667,7 +658,7 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('ContentContainsSensitiveInformation', 'ExceptIfContentContainsSensitiveInformation', 'HeaderMatchesPatterns', 'ExceptIfHeaderMatchesPatterns') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
 
@@ -682,9 +673,10 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
         }
         catch
         {
-            if ($_.Exception.Message -like '*is not recognized as the name of a cmdlet*')
+            if ($_.Exception.Message -like '*is not recognized as*name of a cmdlet*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for this feature."
+                $this.SkipExport($_)
             }
             else
             {
@@ -932,23 +924,6 @@ class SCAutoSensitivityLabelRule : M365DSCResourceBase
         $result.Add('groups', $groups)
         $returnValue += $result
         return $returnValue
-    }
-
-    hidden [SCAutoSensitivityLabelRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCAutoSensitivityLabelRule])
-        {
-            return $Values
-        }
-
-        $result = [SCAutoSensitivityLabelRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

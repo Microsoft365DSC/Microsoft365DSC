@@ -108,19 +108,12 @@ class SCDLPSensitiveInformationType : M365DSCResourceBase
                 $fileDataValue = (ConvertFrom-Json $SIT.FingerPrints[0]).Value
             }
             $result = @{
-                Ensure                = 'Present'
-                Name                  = $SIT.Name
-                Identity              = $SIT.Id
-                Description           = $SIT.Description
-                Locale                = $SIT.DefaultCulture.ToString()
-                FileData              = $fileDataValue
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                AccessTokens          = $this.AccessTokens
+                Ensure      = 'Present'
+                Name        = $SIT.Name
+                Identity    = $SIT.Id
+                Description = $SIT.Description
+                Locale      = $SIT.DefaultCulture.ToString()
+                FileData    = $fileDataValue
             }
 
             $paramsToRemove = @()
@@ -269,22 +262,5 @@ class SCDLPSensitiveInformationType : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Identity', 'FileData')
         }
-    }
-
-    hidden [SCDLPSensitiveInformationType] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCDLPSensitiveInformationType])
-        {
-            return $Values
-        }
-
-        $result = [SCDLPSensitiveInformationType]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

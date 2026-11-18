@@ -130,22 +130,13 @@ class PPPowerAppsEnvironment : M365DSCResourceBase
                 $envSku = 'Teams'
             }
             return $this.AsResult(@{
-                DisplayName           = $this.DisplayName
-                Location              = $environment.location
-                EnvironmentType       = $environment.properties.EnvironmentType
-                EnvironmentSKU        = $envSku
-                ProvisionDatabase     = $ProvisionDatabaseparam
-                LanguageName          = $LanguageNameparam
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName       = $this.DisplayName
+                Location          = $environment.location
+                EnvironmentType   = $environment.properties.EnvironmentType
+                EnvironmentSKU    = $envSku
+                ProvisionDatabase = $ProvisionDatabaseparam
+                LanguageName      = $LanguageNameparam
+                Ensure            = 'Present'
             })
         }
         catch
@@ -290,18 +281,9 @@ class PPPowerAppsEnvironment : M365DSCResourceBase
                         $environmentTypeValue = 'Teams'
                     }
                     $Params = @{
-                        DisplayName           = $environment.properties.displayName
-                        Location              = $environment.location
-                        EnvironmentSku        = $environmentTypeValue
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName    = $environment.properties.displayName
+                        Location       = $environment.location
+                        EnvironmentSku = $environmentTypeValue
                     }
 
                     $this.ExportedInstance = $environment
@@ -357,22 +339,5 @@ class PPPowerAppsEnvironment : M365DSCResourceBase
         }
 
         return $null
-    }
-
-    hidden [PPPowerAppsEnvironment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PPPowerAppsEnvironment])
-        {
-            return $Values
-        }
-
-        $result = [PPPowerAppsEnvironment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

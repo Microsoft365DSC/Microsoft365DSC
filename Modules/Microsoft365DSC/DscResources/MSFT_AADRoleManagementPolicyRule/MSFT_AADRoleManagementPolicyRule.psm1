@@ -249,14 +249,6 @@ class AADRoleManagementPolicyRule : M365DSCResourceBase
                 EnablementRule            = $complexRule.EnablementRule
                 ApprovalRule              = $complexRule.ApprovalRule
                 AuthenticationContextRule = $complexRule.AuthenticationContextRule
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                ApplicationSecret         = $this.ApplicationSecret
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
             }
 
             return $this.AsResult($results)
@@ -374,7 +366,7 @@ class AADRoleManagementPolicyRule : M365DSCResourceBase
                 }
                 elseif ($approver.'@odata.type' -eq '#microsoft.graph.groupMembers')
                 {
-                    [array]$ids = Get-M365DSCGroupIdByDisplayName -GroupDisplayName ($approver.id -replace "'", "''")
+                    [array]$ids = Get-M365DSCGroupIdByDisplayName -GroupDisplayName $approver.id
                 }
 
                 if ($ids.Count -ne 1 -or [System.String]::IsNullOrEmpty($ids[0]))
@@ -442,23 +434,13 @@ class AADRoleManagementPolicyRule : M365DSCResourceBase
                     }
                     Write-M365DSCHost -Message "        |---[$i/$($rules.Count)] $($role.DisplayName)_$($rule.Id)" -DeferWrite
                     $Params = @{
-                        RoleDisplayName       = $role.DisplayName
-                        Id                    = $rule.Id
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        RoleDisplayName = $role.DisplayName
+                        Id              = $rule.Id
                     }
 
                     $this.ExportedInstance = $rule
                     $this.ResourceCache['currentAssignment'] = $assignment
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
 
                     if ($null -ne $Results.ExpirationRule)
                     {
@@ -606,7 +588,7 @@ class AADRoleManagementPolicyRule : M365DSCResourceBase
                         -Results $Results `
                         -Credential $this.Credential `
                         -NoEscape @('ExpirationRule', 'NotificationRule', 'EnablementRule', 'ApprovalRule', 'AuthenticationContextRule') `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
 
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -631,23 +613,6 @@ class AADRoleManagementPolicyRule : M365DSCResourceBase
         return @{
             ExcludedProperties = @('PolicyId')
         }
-    }
-
-    hidden [AADRoleManagementPolicyRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADRoleManagementPolicyRule])
-        {
-            return $Values
-        }
-
-        $result = [AADRoleManagementPolicyRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

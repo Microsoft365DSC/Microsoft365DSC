@@ -152,15 +152,7 @@ class EXOQuarantinePolicy : M365DSCResourceBase
                     OrganizationBrandingEnabled              = $QuarantinePolicy.OrganizationBrandingEnabled
                     QuarantinePolicyType                     = $QuarantinePolicy.QuarantinePolicyType
                     Identity                                 = $this.Identity
-                    Credential                               = $this.Credential
                     Ensure                                   = 'Present'
-                    ApplicationId                            = $this.ApplicationId
-                    CertificateThumbprint                    = $this.CertificateThumbprint
-                    CertificatePath                          = $this.CertificatePath
-                    CertificatePassword                      = $this.CertificatePassword
-                    ManagedIdentity                          = $this.ManagedIdentity
-                    TenantId                                 = $this.TenantId
-                    AccessTokens                             = $this.AccessTokens
                 }
             }
             else
@@ -254,15 +246,7 @@ class EXOQuarantinePolicy : M365DSCResourceBase
                     MultiLanguageSenderName           = $QuarantinePolicy.MultiLanguageSenderName
                     MultiLanguageSetting              = $QuarantinePolicy.MultiLanguageSetting
                     OrganizationBrandingEnabled       = $QuarantinePolicy.OrganizationBrandingEnabled
-                    Credential                        = $this.Credential
                     Ensure                            = 'Present'
-                    ApplicationId                     = $this.ApplicationId
-                    CertificateThumbprint             = $this.CertificateThumbprint
-                    CertificatePath                   = $this.CertificatePath
-                    CertificatePassword               = $this.CertificatePassword
-                    ManagedIdentity                   = $this.ManagedIdentity
-                    TenantId                          = $this.TenantId
-                    AccessTokens                      = $this.AccessTokens
                 }
             }
 
@@ -385,16 +369,8 @@ class EXOQuarantinePolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($QuarantinePolicies.Length)] $($QuarantinePolicy.Name)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $QuarantinePolicy.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    QuarantinePolicyType  = $QuarantinePolicy.QuarantinePolicyType
-                    AccessTokens          = $this.AccessTokens
+                    Identity             = $QuarantinePolicy.Name
+                    QuarantinePolicyType = $QuarantinePolicy.QuarantinePolicyType
                 }
                 $this.ExportedInstance = $QuarantinePolicy
                 $Results = $this.GetForExport($Params)
@@ -429,22 +405,5 @@ class EXOQuarantinePolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOQuarantinePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOQuarantinePolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOQuarantinePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

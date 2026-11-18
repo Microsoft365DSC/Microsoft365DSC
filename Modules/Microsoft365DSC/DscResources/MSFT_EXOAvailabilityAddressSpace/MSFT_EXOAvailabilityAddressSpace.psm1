@@ -125,15 +125,7 @@ class EXOAvailabilityAddressSpace : M365DSCResourceBase
                 TargetTenantId        = $AvailabilityAddressSpace.TargetTenantId
                 ForestName            = $AvailabilityAddressSpace.ForestName
                 TargetAutodiscoverEpr = $targetAutodiscoverEprValue
-                Credential            = $this.Credential
                 Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -251,6 +243,7 @@ class EXOAvailabilityAddressSpace : M365DSCResourceBase
             if ($null -eq (Get-Command Get-AvailabilityAddressSpace -ErrorAction SilentlyContinue))
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiRedX) The specified account doesn't have permissions to access Availibility Address Space"
+                $this.SkipExport('The specified account doesn''t have permissions to access Availability Address Space')
                 return ''
             }
             try
@@ -260,6 +253,7 @@ class EXOAvailabilityAddressSpace : M365DSCResourceBase
             catch
             {
                 $this.LogError($_, "Couldn't get AvailabilityAddressSpaces")
+                $this.SkipExport($_)
             }
 
             $dscContent = [System.Text.StringBuilder]::new()
@@ -282,15 +276,7 @@ class EXOAvailabilityAddressSpace : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AvailabilityAddressSpaces.Length)] $($AvailabilityAddressSpace.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $AvailabilityAddressSpace.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $AvailabilityAddressSpace.Identity
                 }
                 $this.ExportedInstance = $AvailabilityAddressSpace
                 $Results = $this.GetForExport($Params)
@@ -321,22 +307,5 @@ class EXOAvailabilityAddressSpace : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Credentials')
         }
-    }
-
-    hidden [EXOAvailabilityAddressSpace] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAvailabilityAddressSpace])
-        {
-            return $Values
-        }
-
-        $result = [EXOAvailabilityAddressSpace]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

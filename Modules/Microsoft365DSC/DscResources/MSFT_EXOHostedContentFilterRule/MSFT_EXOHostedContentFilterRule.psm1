@@ -141,14 +141,6 @@ class EXOHostedContentFilterRule : M365DSCResourceBase
                 RecipientDomainIs         = $HostedContentFilterRule.RecipientDomainIs
                 SentTo                    = $HostedContentFilterRule.SentTo
                 SentToMemberOf            = $HostedContentFilterRule.SentToMemberOf
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                TenantId                  = $this.TenantId
-                AccessTokens              = $this.AccessTokens
             }
 
             if ('Enabled' -eq $HostedContentFilterRule.State)
@@ -296,26 +288,17 @@ class EXOHostedContentFilterRule : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($HostedContentFilterRules.Count)] $($HostedContentFilterRule.Identity)" -DeferWrite
                 $Params = @{
-                    Credential                = $this.Credential
                     Identity                  = $HostedContentFilterRule.Identity
                     HostedContentFilterPolicy = $HostedContentFilterRule.HostedContentFilterPolicy
-                    ApplicationId             = $this.ApplicationId
-                    TenantId                  = $this.TenantId
-                    CertificateThumbprint     = $this.CertificateThumbprint
-                    CertificatePassword       = $this.CertificatePassword
-                    CertificatePath           = $this.CertificatePath
-                    ManagedIdentity           = $this.ManagedIdentity
-                    AccessTokens              = $this.AccessTokens
                 }
                 $this.ExportedInstance = $HostedContentFilterRule
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -330,22 +313,5 @@ class EXOHostedContentFilterRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOHostedContentFilterRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOHostedContentFilterRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOHostedContentFilterRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -351,16 +351,7 @@ class IntuneAntivirusPolicyMacOS : M365DSCResourceBase
                     -All `
                     -ErrorAction Stop
             }
-            $settingTemplates = Get-M365DSCCachedSettingCatalogTemplate -TemplateId $getValue.TemplateReference.TemplateId
-            if ($null -eq $settingTemplates)
-            {
-                $settingTemplates = [System.Object[]] @(Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate `
-                        -DeviceManagementConfigurationPolicyTemplateId $getValue.TemplateReference.TemplateId `
-                        -ExpandProperty 'settingDefinitions' `
-                        -All `
-                        -ErrorAction Stop)
-                Set-M365DSCCachedSettingCatalogTemplate -TemplateId $getValue.TemplateReference.TemplateId -Templates $settingTemplates
-            }
+            $settingTemplates = Get-M365DSCSettingCatalogTemplate -TemplateId $getValue.TemplateReference.TemplateId
             [array]$settingDefinitions = $settingTemplates.SettingDefinitions
 
             $policySettings = @{}
@@ -518,14 +509,6 @@ class IntuneAntivirusPolicyMacOS : M365DSCResourceBase
                 threatTypeSettings          = $complexThreatTypeSettings
                 exclusions_tamperProtection = $complexExclusionsTamperProtection
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                TenantId                    = $this.TenantId
-                ApplicationSecret           = $this.ApplicationSecret
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
                 #endregion
             }
             $results += $policySettings
@@ -770,23 +753,13 @@ class IntuneAntivirusPolicyMacOS : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.Name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.exclusions)
                 {
@@ -849,7 +822,7 @@ class IntuneAntivirusPolicyMacOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('exclusions', 'exclusions_tamperProtection', 'threatTypeSettings', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -870,23 +843,6 @@ class IntuneAntivirusPolicyMacOS : M365DSCResourceBase
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return $this.GetSettingsCatalogCompareParameters()
-    }
-
-    hidden [IntuneAntivirusPolicyMacOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAntivirusPolicyMacOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAntivirusPolicyMacOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

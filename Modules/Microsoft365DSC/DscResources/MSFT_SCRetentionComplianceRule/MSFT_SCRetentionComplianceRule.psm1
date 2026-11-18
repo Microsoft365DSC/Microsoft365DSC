@@ -149,14 +149,6 @@ class SCRetentionComplianceRule : M365DSCResourceBase
                 ExpirationDateOption         = $RuleObject.ExpirationDateOption
                 PublishComplianceTag         = $PublishComplianceTagValue
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                AccessTokens                 = $this.AccessTokens
             }
             if (-not $associatedPolicy.TeamsPolicy)
             {
@@ -421,21 +413,23 @@ class SCRetentionComplianceRule : M365DSCResourceBase
 
                     $this.ExportedInstance = $rule
                     $Results = $this.GetForExport(@{ Name = $rule.Name; Policy = $rule.Policy })
-                    $rawResults = $Results.Clone()
 
-                    if ([System.String]::IsNullOrEmpty($Results.ExpirationDateOption))
+                    if ($null -ne $Results)
                     {
-                        $Results.Remove('ExpirationDateOption') | Out-Null
-                    }
-                    if ([System.String]::IsNullOrEmpty($Results.PublishComplianceTag))
-                    {
-                        $Results.Remove('PublishComplianceTag') | Out-Null
-                    }
-                    else
-                    {
-                        foreach ($property in @('Comment', 'ContentMatchQuery', 'ExcludedItemClasses', 'RetentionComplianceAction', 'RetentionDuration', 'RetentionDurationDisplayHint'))
+                        if ([System.String]::IsNullOrEmpty($Results.ExpirationDateOption))
                         {
-                            $Results.Remove($property) | Out-Null
+                            $Results.Remove('ExpirationDateOption') | Out-Null
+                        }
+                        if ([System.String]::IsNullOrEmpty($Results.PublishComplianceTag))
+                        {
+                            $Results.Remove('PublishComplianceTag') | Out-Null
+                        }
+                        else
+                        {
+                            foreach ($property in @('Comment', 'ContentMatchQuery', 'ExcludedItemClasses', 'RetentionComplianceAction', 'RetentionDuration', 'RetentionDurationDisplayHint'))
+                            {
+                                $Results.Remove($property) | Out-Null
+                            }
                         }
                     }
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -443,7 +437,7 @@ class SCRetentionComplianceRule : M365DSCResourceBase
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
@@ -488,22 +482,5 @@ class SCRetentionComplianceRule : M365DSCResourceBase
                 Start-Sleep -Seconds 30
             }
         }
-    }
-
-    hidden [SCRetentionComplianceRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCRetentionComplianceRule])
-        {
-            return $Values
-        }
-
-        $result = [SCRetentionComplianceRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

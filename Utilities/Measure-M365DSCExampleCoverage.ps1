@@ -99,17 +99,10 @@ if ($Format -ne 'Object' -and -not $OutputPath)
     throw "-OutputPath is required when -Format is '$Format'."
 }
 
-$script:AuthenticationProperties = @(
-    'Credential'
-    'ApplicationId'
-    'TenantId'
-    'ApplicationSecret'
-    'CertificateThumbprint'
-    'CertificatePassword'
-    'CertificatePath'
-    'ManagedIdentity'
-    'AccessTokens'
-)
+Import-Module -Name (Join-Path -Path $RepositoryRoot -ChildPath 'Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1')
+Initialize-M365DSCDllLoader
+
+$script:AuthenticationProperties = [Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames
 
 $script:StructuralProperties = @('Ensure', 'IsSingleInstance')
 

@@ -120,19 +120,11 @@ class EXORoleGroup : M365DSCResourceBase
                 }
             }
             $result = @{
-                Name                  = $RoleGroup.Name
-                Description           = $RoleGroup.Description
-                Members               = $roleGroupMembersValue
-                Roles                 = $RoleGroup.Roles
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name        = $RoleGroup.Name
+                Description = $RoleGroup.Description
+                Members     = $roleGroupMembersValue
+                Roles       = $RoleGroup.Roles
+                Ensure      = 'Present'
             }
 
             Write-Verbose -Message "Found Role Group $($this.Name)"
@@ -282,26 +274,17 @@ class EXORoleGroup : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($RoleGroup.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $RoleGroup.Name
-                    Roles                 = $RoleGroup.Roles
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name  = $RoleGroup.Name
+                    Roles = $RoleGroup.Roles
                 }
                 $this.ExportedInstance = $RoleGroup
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -371,22 +354,5 @@ class EXORoleGroup : M365DSCResourceBase
                 return [System.Tuple[Hashtable, Hashtable, Hashtable]]::new($DesiredValues, $CurrentValues, $ValuesToCheck)
             }
         }
-    }
-
-    hidden [EXORoleGroup] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXORoleGroup])
-        {
-            return $Values
-        }
-
-        $result = [EXORoleGroup]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

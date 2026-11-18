@@ -718,14 +718,6 @@ class SCSensitivityLabel : M365DSCResourceBase
                 SiteAndGroupProtectionBlockAccess              = $siteAndGroupBlockAccess
                 SiteAndGroupProtectionEnabled                  = $siteAndGroupEnabledValue
                 SiteAndGroupExternalSharingControlType         = ($protectsite | Where-Object { $_.Key -eq 'externalsharingcontroltype' }).Value
-                Credential                                     = $this.Credential
-                ApplicationId                                  = $this.ApplicationId
-                TenantId                                       = $this.TenantId
-                CertificateThumbprint                          = $this.CertificateThumbprint
-                CertificatePath                                = $this.CertificatePath
-                CertificatePassword                            = $this.CertificatePassword
-                ManagedIdentity                                = $this.ManagedIdentity
-                AccessTokens                                   = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -1081,7 +1073,6 @@ class SCSensitivityLabel : M365DSCResourceBase
 
                 $this.ExportedInstance = $label
                 $Results = $this.GetForExport(@{ Name = $label.Name })
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AdvancedSettings)
                 {
@@ -1181,7 +1172,7 @@ class SCSensitivityLabel : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AdvancedSettings', 'LocaleSettings', 'AutoLabelingSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 $currentDSCBlock = $currentDSCBlock.Replace("''", "'")
 
@@ -1393,23 +1384,6 @@ class SCSensitivityLabel : M365DSCResourceBase
         }
 
         return $settings
-    }
-
-    hidden [SCSensitivityLabel] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCSensitivityLabel])
-        {
-            return $Values
-        }
-
-        $result = [SCSensitivityLabel]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

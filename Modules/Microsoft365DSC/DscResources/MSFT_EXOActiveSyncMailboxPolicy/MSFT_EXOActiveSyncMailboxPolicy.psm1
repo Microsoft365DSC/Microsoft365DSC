@@ -368,14 +368,6 @@ class EXOActiveSyncMailboxPolicy : M365DSCResourceBase
                 UNCAccessEnabled                         = [System.Boolean]$instance.UNCAccessEnabled
                 WSSAccessEnabled                         = [System.Boolean]$instance.WSSAccessEnabled
                 Identity                                 = [System.String]$this.Identity
-                Credential                               = $this.Credential
-                ApplicationId                            = $this.ApplicationId
-                TenantId                                 = $this.TenantId
-                CertificateThumbprint                    = $this.CertificateThumbprint
-                CertificatePath                          = $this.CertificatePath
-                CertificatePassword                      = $this.CertificatePassword
-                ManagedIdentity                          = $this.ManagedIdentity
-                AccessTokens                             = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -474,15 +466,7 @@ class EXOActiveSyncMailboxPolicy : M365DSCResourceBase
                 $displayedKey = $config.Name
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Name
                 }
 
                 $this.ExportedInstance = $config
@@ -507,22 +491,5 @@ class EXOActiveSyncMailboxPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOActiveSyncMailboxPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOActiveSyncMailboxPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOActiveSyncMailboxPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

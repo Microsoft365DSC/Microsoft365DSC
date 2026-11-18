@@ -301,6 +301,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 )
             }
 
+            Mock -CommandName Get-M365DSCSettingCatalogTemplate -MockWith {
+                return , [System.Object[]]@(Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate)
+            }
+
             Mock -CommandName Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate -MockWith {
                 return @(
                     @{
@@ -445,6 +449,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName New-M365DSCConnection -ModuleName '_Shared' -MockWith {
                 return "Credentials"
             }
+
+            Invoke-Command -ScriptBlock $Global:DscHelper.InitializeRoleScopeTagCache
 
             Mock -ModuleName M365DSCIntuneUtil -CommandName Get-MgGroup -MockWith {
                 return @{

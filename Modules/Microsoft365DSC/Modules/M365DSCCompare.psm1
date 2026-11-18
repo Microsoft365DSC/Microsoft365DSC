@@ -5,8 +5,6 @@
     primary-key alignment, and drift detection.
 #>
 
-$Script:IsPowerShellCore = $PSVersionTable.PSEdition -eq 'Core'
-
 <#
 .SYNOPSIS
     Compares the current state of a resource with the desired state and returns whether they match.
@@ -33,6 +31,7 @@ $Script:IsPowerShellCore = $PSVersionTable.PSEdition -eq 'Core'
 .PARAMETER PostProcessing
     Specifies a script block or function that will be invoked after the initial comparison to allow for custom post-processing of the current and desired values.
     The script block should accept three parameters: DesiredValues, CurrentValues, and ValuesToCheck, and return a tuple containing the modified DesiredValues, CurrentValues, and ValuesToCheck.
+    The comparison throws when the script block fails or does not return a tuple of three hashtables.
 
 .PARAMETER PostProcessingArgs
     Specifies an array of additional arguments to pass to the PostProcessing script block or function.
@@ -70,7 +69,7 @@ function Compare-M365DSCResourceState
         $IncludedProperties,
 
         [Parameter()]
-        [System.Func[Hashtable, Hashtable, Hashtable, [Object[]], Tuple[Hashtable, Hashtable, Hashtable]]]
+        [System.Func[System.Collections.Hashtable, System.Collections.Hashtable, System.Collections.Hashtable, [System.Object[]], System.Tuple[System.Collections.Hashtable, System.Collections.Hashtable, System.Collections.Hashtable]]]
         $PostProcessing,
 
         [Parameter()]
@@ -82,7 +81,7 @@ function Compare-M365DSCResourceState
         $CompareRules
     )
 
-    Initialize-M365DSCDllLoader -ErrorAction Stop
+    Initialize-M365DSCSchemaCache -ErrorAction Stop
 
     $Global:AllDrifts = @{
         DriftInfo     = @()
@@ -90,19 +89,6 @@ function Compare-M365DSCResourceState
         DesiredValues = @{}
     }
     $Global:PotentialDrifts = @()
-
-    # Load the schema once via the C# CacheManager (avoids boxing on every call).
-    $currentPath = $PSScriptRoot
-    if (-not [Microsoft365DSC.Cache.CacheManager]::IsSchemaLoaded)
-    {
-        $schemaPath = Join-Path -Path $currentPath -ChildPath '../SchemaDefinition.json'
-        if (-not (Test-Path -Path $schemaPath))
-        {
-            throw "SchemaDefinition.json not found at expected path: $schemaPath. Ensure that the schema was properly included during module build and that the module is not being run from a non-standard location."
-        }
-        $schemaContent = [System.IO.File]::ReadAllText($schemaPath) | ConvertFrom-Json
-        [Microsoft365DSC.Cache.CacheManager]::LoadSchema($schemaContent)
-    }
 
     $ValuesToCheck = $DesiredValues.Clone()
     if ($null -ne $CompareRules -and $CompareRules.Count -gt 0)
@@ -132,21 +118,20 @@ function Compare-M365DSCResourceState
         try
         {
             $result = $PostProcessing.Invoke($DesiredValues, $CurrentValues, $ValuesToCheck, $PostProcessingArgs)
-            if ($null -ne $result -and $result.Item1 -is [Hashtable] -and $result.Item2 -is [Hashtable] -and $result.Item3 -is [Hashtable])
-            {
-                $DesiredValues = $result.Item1
-                $CurrentValues = $result.Item2
-                $ValuesToCheck = $result.Item3
-            }
-            else
-            {
-                Write-Warning -Message "PostProcessing function did not return a valid tuple for resource $ResourceName. Using original values."
-            }
         }
         catch
         {
-            Write-Warning -Message "Error occurred during post-processing for resource $ResourceName`: $_"
+            throw [System.InvalidOperationException]::new("PostProcessing failed for resource $($ResourceName): $($_.Exception.Message)", $_.Exception)
         }
+
+        if ($null -eq $result -or $result.Item1 -isnot [System.Collections.Hashtable] -or $result.Item2 -isnot [System.Collections.Hashtable] -or $result.Item3 -isnot [System.Collections.Hashtable])
+        {
+            throw [System.InvalidOperationException]::new("PostProcessing did not return a tuple of three hashtables for resource $ResourceName.")
+        }
+
+        $DesiredValues = $result.Item1
+        $CurrentValues = $result.Item2
+        $ValuesToCheck = $result.Item3
     }
 
     if ($VerbosePreference -ne 'SilentlyContinue')

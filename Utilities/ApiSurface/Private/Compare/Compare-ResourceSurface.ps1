@@ -809,11 +809,10 @@ function Get-DefaultNonVendorProperty
     [OutputType([System.String[]])]
     param ()
 
-    return [System.String[]] @(
-        'AccessTokens', 'ApplicationId', 'ApplicationSecret', 'Assignments', 'CertificatePassword',
-        'CertificatePath', 'CertificateThumbprint', 'Credential', 'DependsOn', 'Ensure',
-        'IsSingleInstance', 'ManagedIdentity', 'PsDscRunAsCredential', 'TenantId'
-    )
+    Initialize-M365DSCDllLoader
+
+    return [System.String[]] (@('Assignments', 'DependsOn', 'Ensure', 'IsSingleInstance', 'PsDscRunAsCredential') +
+        [Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames)
 }
 
 <#

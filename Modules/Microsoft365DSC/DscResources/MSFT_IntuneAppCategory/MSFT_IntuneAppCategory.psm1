@@ -110,18 +110,9 @@ class IntuneAppCategory : M365DSCResourceBase
             }
 
             $results = @{
-                Id                    = $instance.Id
-                DisplayName           = $instance.DisplayName
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ApplicationSecret     = $this.ApplicationSecret
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Id          = $instance.Id
+                DisplayName = $instance.DisplayName
+                Ensure      = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -208,18 +199,9 @@ class IntuneAppCategory : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -251,22 +233,5 @@ class IntuneAppCategory : M365DSCResourceBase
         return @{
             IncludedProperties = @('DisplayName')
         }
-    }
-
-    hidden [IntuneAppCategory] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAppCategory])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAppCategory]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -233,19 +233,11 @@ class IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr : M365DSCResourc
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.Description
-                DisplayName           = $getValue.Name
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Description     = $getValue.Description
+                DisplayName     = $getValue.Name
+                RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Id              = $getValue.Id
+                Ensure          = 'Present'
                 #endregion
             }
             $results += $policySettings
@@ -487,23 +479,13 @@ class IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr : M365DSCResourc
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.Name
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -524,7 +506,7 @@ class IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr : M365DSCResourc
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -545,23 +527,6 @@ class IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr : M365DSCResourc
     [System.Collections.Hashtable] GetCompareParameters()
     {
         return $this.GetSettingsCatalogCompareParameters()
-    }
-
-    hidden [IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr])
-        {
-            return $Values
-        }
-
-        $result = [IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -134,24 +134,17 @@ class AzureRoleDefinition : M365DSCResourceBase
             }
 
             $result = @{
-                CustomRoleName        = $AzureRoleDefinition.Name
-                Id                    = $AzureRoleDefinition.Id
-                Description           = $AzureRoleDefinition.Description
-                Actions               = [Array]$AzureRoleDefinition.Actions
-                NotActions            = [Array]$AzureRoleDefinition.NotActions
-                DataActions           = [Array]$AzureRoleDefinition.DataActions
-                NotDataActions        = [Array]$AzureRoleDefinition.NotDataActions
-                AssignableScopes      = [Array]$AzureRoleDefinition.AssignableScopes
-                IsCustom              = $AzureRoleDefinition.IsCustom
-                Ensure                = 'Present'
-                SubscriptionId        = $this.SubscriptionId
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                CustomRoleName   = $AzureRoleDefinition.Name
+                Id               = $AzureRoleDefinition.Id
+                Description      = $AzureRoleDefinition.Description
+                Actions          = [Array]$AzureRoleDefinition.Actions
+                NotActions       = [Array]$AzureRoleDefinition.NotActions
+                DataActions      = [Array]$AzureRoleDefinition.DataActions
+                NotDataActions   = [Array]$AzureRoleDefinition.NotDataActions
+                AssignableScopes = [Array]$AzureRoleDefinition.AssignableScopes
+                IsCustom         = $AzureRoleDefinition.IsCustom
+                Ensure           = 'Present'
+                SubscriptionId   = $this.SubscriptionId
             }
             return $this.AsResult($result)
         }
@@ -275,16 +268,9 @@ class AzureRoleDefinition : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $($role.Name)" -DeferWrite
                 $Params = @{
-                    CustomRoleName        = $role.Name
-                    Id                    = $role.Id
-                    SubscriptionId        = $this.SubscriptionId
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    CustomRoleName = $role.Name
+                    Id             = $role.Id
+                    SubscriptionId = $this.SubscriptionId
                 }
                 $this.ExportedInstance = $role
                 $Results = $this.GetForExport($Params)
@@ -346,22 +332,5 @@ class AzureRoleDefinition : M365DSCResourceBase
         {
             throw "Saving the role definition {$($this.CustomRoleName)} failed with status $($response.StatusCode): $($response.Content)"
         }
-    }
-
-    hidden [AzureRoleDefinition] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureRoleDefinition])
-        {
-            return $Values
-        }
-
-        $result = [AzureRoleDefinition]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

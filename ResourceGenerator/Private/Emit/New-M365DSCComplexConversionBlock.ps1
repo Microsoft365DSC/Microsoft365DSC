@@ -151,7 +151,7 @@ function New-M365DSCHashtableMappingBlock
     $indent = ' ' * $IndentCount
     $builder = [System.Text.StringBuilder]::new()
 
-    $longestName = ($ResourceModel.Properties | Measure-Object -Maximum { $_.Name.Length }).Maximum
+    $longestName = ($ResourceModel.Properties | Where-Object { -not $_.IsAuth } | Measure-Object -Maximum { $_.Name.Length }).Maximum
 
     foreach ($property in $ResourceModel.Properties)
     {
@@ -161,10 +161,15 @@ function New-M365DSCHashtableMappingBlock
             continue
         }
 
+        if ($property.IsAuth)
+        {
+            continue
+        }
+
         $name = $property.Name
         $padding = ' ' * ($longestName - $name.Length)
 
-        if ($property.IsAuth -or ($null -ne $property.PSObject.Properties['IsPathKey'] -and $property.IsPathKey))
+        if ($null -ne $property.PSObject.Properties['IsPathKey'] -and $property.IsPathKey)
         {
             $value = "`$this.$name"
         }

@@ -37,19 +37,37 @@ function Test-M365DSCAgent
     }
     #endregion
 
-    # We need to do a quick configuration of WinRM in order to be able to obtain configuration information;
-    Write-Progress -Activity 'Scanning WinRM MaxEnvelopeSize...' -PercentComplete (2 / $TotalSteps * 100)
-    WinRM QuickConfig -Force | Out-Null
-
     #region MaxEnvelopeSize
-    $CurrentMaxEnvelopeSize = (Get-Item -Path WSMan:\localhost\MaxEnvelopeSizekb).Value
-
-    if ($CurrentMaxEnvelopeSize -le 1024)
+    # Reading the WinRM configuration needs the WinRM service to be running
+    Write-Progress -Activity 'Scanning WinRM MaxEnvelopeSize...' -PercentComplete (2 / $TotalSteps * 100)
+    $winRMService = Get-Service -Name 'WinRM' -ErrorAction SilentlyContinue
+    if ($null -eq $winRMService -or $winRMService.Status -ne 'Running')
     {
-        $Recommendations += @{
-            ID      = 'R1'
-            Message = "We recommend increasing the MaxEnvelopeSize of the agent's WinRM to a minimum of 10 Mb." + `
-                ' To make the change, run: Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 10240'
+        $Issues += @{
+            ID      = 'I3'
+            Message = "The WinRM service is not running. Start it, or run 'winrm quickconfig' from an elevated session, to allow DSC to operate."
+        }
+    }
+    else
+    {
+        try
+        {
+            $currentMaxEnvelopeSize = [System.Int32](Get-Item -Path 'WSMan:\localhost\MaxEnvelopeSizekb' -ErrorAction Stop).Value
+            if ($currentMaxEnvelopeSize -lt 10240)
+            {
+                $Recommendations += @{
+                    ID      = 'R1'
+                    Message = "We recommend increasing the MaxEnvelopeSize of the agent's WinRM to a minimum of 10 Mb." + `
+                        ' To make the change, run: Set-Item -Path WSMan:\localhost\MaxEnvelopeSizekb -Value 10240'
+                }
+            }
+        }
+        catch
+        {
+            $Issues += @{
+                ID      = 'I3'
+                Message = "Unable to read the WinRM MaxEnvelopeSize: $($_.Exception.Message)"
+            }
         }
     }
     #endregion
@@ -76,17 +94,19 @@ function Test-M365DSCAgent
         foreach ($issue in $Issues)
         {
             $errorMessage += "    [$i/$($Issues.Count)] $($issue.Message)`r`n"
+            $i++
         }
         Write-Error -Message $errorMessage -ErrorAction Continue
     }
 
     if ($Recommendations.Count -gt 0)
     {
-        $warningMessage = 'The following recommendations were issued. We strongly recommend adressing those: '
+        $warningMessage = "The following recommendations were issued. We strongly recommend addressing those: `r`n"
         $i = 1
         foreach ($recommendation in $Recommendations)
         {
             $warningMessage += "    [$i/$($Recommendations.Count)] $($recommendation.Message)`r`n"
+            $i++
         }
         Write-Warning -Message $warningMessage
     }
@@ -111,7 +131,7 @@ Specifies that a new certificate should be forcefully created.
 Specifies that a PFX export should be created for the generated certificate.
 
 .Parameter Password
-Specifies the password for the PFX file.
+Specifies the password for the PFX file. We recommend using with -GeneratePFX.
 
 .Example
 Set-M365DSCAgentCertificateConfiguration -KeepCertificate
@@ -144,23 +164,42 @@ function Set-M365DSCAgentCertificateConfiguration
         $Password = 'Temp!P@ss123'
     )
 
-    $existingCertificate = Get-ChildItem -Path Cert:\LocalMachine\My | `
-        Where-Object { $_.Subject -match 'M365DSCEncryptionCert' }
+    if ($GeneratePFX)
+    {
+        if ([System.String]::IsNullOrEmpty($Password))
+        {
+            throw 'GeneratePFX requires a password.'
+        }
+
+        # TODO: Enforce password parameter in a future release.
+        if (-not $PSBoundParameters.ContainsKey('Password'))
+        {
+            Write-Warning -Message 'No -Password was specified and the PFX file is protected with a default password. Specify -Password to protect the private key. The default password will be removed in a future release.'
+        }
+    }
+
+    $matchingCertificates = @(Get-ChildItem -Path Cert:\LocalMachine\My | `
+        Where-Object { $_.Subject -match 'M365DSCEncryptionCert' })
+
+    if ($GeneratePFX -and $matchingCertificates.Count -gt 0 -and -not $ForceRenew)
+    {
+        throw 'GeneratePFX requires either no certificate to exist or the -ForceRenew parameter.'
+    }
 
     if ($ForceRenew)
     {
-        foreach ($cert in $existingCertificate)
+        foreach ($cert in $matchingCertificates)
         {
-            Remove-Item $cert.PSPath | Out-Null
+            Remove-Item -Path $cert.PSPath -DeleteKey | Out-Null
         }
-        $existingCertificate = $null
+        $matchingCertificates = @()
     }
 
-    $certificateExists = $false
-    if ($null -eq $existingCertificate)
+    $certificateCreated = $false
+    $certificateFilePath = "$env:TEMP\M365DSC.cer"
+    if ($matchingCertificates.Count -eq 0)
     {
         Write-Verbose -Message 'No existing M365DSC certificate found. Creating one.'
-        $certificateFilePath = "$env:TEMP\M365DSC.cer"
         $cert = New-SelfSignedCertificate -Type DocumentEncryptionCertLegacyCsp `
             -DnsName 'Microsoft365DSC' `
             -Subject 'M365DSCEncryptionCert' `
@@ -169,14 +208,17 @@ function Set-M365DSCAgentCertificateConfiguration
         $cert | Export-Certificate -FilePath $certificateFilePath -Force | Out-Null
         Import-Certificate -FilePath $certificateFilePath `
             -CertStoreLocation 'Cert:\LocalMachine\My' -Confirm:$false | Out-Null
-        $existingCertificate = Get-ChildItem -Path Cert:\LocalMachine\My | `
-            Where-Object { $_.Subject -match 'M365DSCEncryptionCert' }
+        $certificateCreated = $true
+        $matchingCertificates = @(Get-ChildItem -Path Cert:\LocalMachine\My | `
+            Where-Object { $_.Subject -match 'M365DSCEncryptionCert' })
     }
     else
     {
         Write-Verbose -Message 'An existing M365DSC certificate was found. Re-using it.'
-        $certificateExists = $true
     }
+
+    # Select the first matching certificate
+    $existingCertificate = $matchingCertificates | Sort-Object -Property NotAfter -Descending | Select-Object -First 1
     $thumbprint = $existingCertificate.Thumbprint
     Write-Verbose -Message "Using M365DSCEncryptionCert with thumbprint {$thumbprint}"
 
@@ -199,9 +241,36 @@ function Set-M365DSCAgentCertificateConfiguration
     $LCMConfigContent | Out-File $configOutputFile
     & $configOutputFile
 
+    if ($GeneratePFX)
+    {
+        $pfxFilePath = $certificateFilePath.Replace('.cer', '.pfx')
+        $securePassword = ConvertTo-SecureString -String $Password -Force -AsPlainText
+        Export-PfxCertificate -Cert $existingCertificate.PSPath `
+            -FilePath $pfxFilePath `
+            -Password $securePassword | Out-Null
+        Write-Host "Private Key stored at {$pfxFilePath}"
+    }
+
     if ($KeepCertificate)
     {
-        Write-Host "Certificate {$thumbprint} was stored under {$($env:TEMP)} with name M365DSC.cer and M365DSC.pfx"
+        $storedFiles = @()
+        if ($certificateCreated)
+        {
+            $storedFiles += 'M365DSC.cer'
+        }
+        if ($GeneratePFX)
+        {
+            $storedFiles += 'M365DSC.pfx'
+        }
+
+        if ($storedFiles.Count -gt 0)
+        {
+            Write-Host "Certificate {$thumbprint} was stored under {$($env:TEMP)} with name $($storedFiles -join ' and ')"
+        }
+        else
+        {
+            Write-Verbose -Message "The existing certificate {$thumbprint} was re-used, no certificate file was written."
+        }
     }
     else
     {
@@ -209,28 +278,15 @@ function Set-M365DSCAgentCertificateConfiguration
         {
             Remove-Item -Path $configOutputFile -Confirm:$false -ErrorAction SilentlyContinue
             Remove-Item -Path './M365AgentConfig' -Recurse -Confirm:$false -ErrorAction SilentlyContinue
+            if ($certificateCreated)
+            {
+                Remove-Item -Path $certificateFilePath -Confirm:$false -ErrorAction SilentlyContinue
+            }
         }
         catch
         {
             Write-Error $_
         }
-    }
-
-    if ($GeneratePFX)
-    {
-        if ([System.String]::IsNullOrEmpty($Password))
-        {
-            throw 'GeneratePFX requires a password.'
-        }
-        if ($certificateExists -and -not $PSBoundParameters.ContainsKey('ForceRenew'))
-        {
-            throw 'GeneratePFX requires either no certificate to exist or the -ForceRenew parameter.'
-        }
-        $securePassword = ConvertTo-SecureString -String $password -Force -AsPlainText
-        Export-PfxCertificate -Cert $existingCertificate.PSPath `
-            -FilePath $certificateFilePath.Replace('.cer', '.pfx') `
-            -Password $securePassword | Out-Null
-        Write-Host "Private Key stored at {$($certificateFilePath.Replace('.cer','.pfx'))}"
     }
     return $thumbprint
 }

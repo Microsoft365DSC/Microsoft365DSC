@@ -122,14 +122,6 @@ class EXORetentionPolicyTag : M365DSCResourceBase
                 RetentionEnabled          = $instance.RetentionEnabled
                 Type                      = $instance.Type
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
             }
             if (-not [System.String]::IsNullOrEmpty($instance.AgeLimitForRetention))
             {
@@ -227,15 +219,7 @@ class EXORetentionPolicyTag : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($retentionPolicyTags.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -259,22 +243,5 @@ class EXORetentionPolicyTag : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXORetentionPolicyTag] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXORetentionPolicyTag])
-        {
-            return $Values
-        }
-
-        $result = [EXORetentionPolicyTag]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

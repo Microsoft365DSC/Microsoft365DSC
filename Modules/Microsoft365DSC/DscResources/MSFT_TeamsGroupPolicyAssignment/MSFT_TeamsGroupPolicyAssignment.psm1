@@ -138,20 +138,12 @@ class TeamsGroupPolicyAssignment : M365DSCResourceBase
                 "PolicyName {$($GroupPolicyAssignment.PolicyName)} and Priority {$($GroupPolicyAssignment.Priority)} for Group {$($Group.Displayname)}"
             Write-Verbose -Message $Message
             return $this.AsResult(@{
-                GroupId               = $Group.Id
-                GroupDisplayName      = $Group.DisplayName
-                PolicyType            = $GroupPolicyAssignment.PolicyType
-                PolicyName            = $GroupPolicyAssignment.PolicyName
-                Priority              = $priorityValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                GroupId          = $Group.Id
+                GroupDisplayName = $Group.DisplayName
+                PolicyType       = $GroupPolicyAssignment.PolicyType
+                PolicyName       = $GroupPolicyAssignment.PolicyName
+                Priority         = $priorityValue
+                Ensure           = 'Present'
             })
         }
         catch
@@ -270,26 +262,17 @@ class TeamsGroupPolicyAssignment : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$j/$($instances.Length)] GroupPolicyAssignment {$($Group.DisplayName)-$($item.PolicyType)}" -DeferWrite
                 $Params = @{
-                    GroupDisplayName      = $Group.DisplayName
-                    GroupId               = $item.GroupId
-                    PolicyType            = $item.PolicyType
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    GroupDisplayName = $Group.DisplayName
+                    GroupId          = $item.GroupId
+                    PolicyType       = $item.PolicyType
                 }
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -312,22 +295,5 @@ class TeamsGroupPolicyAssignment : M365DSCResourceBase
         return @{
             ExcludedProperties = @('GroupId')
         }
-    }
-
-    hidden [TeamsGroupPolicyAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsGroupPolicyAssignment])
-        {
-            return $Values
-        }
-
-        $result = [TeamsGroupPolicyAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

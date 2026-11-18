@@ -170,14 +170,6 @@ class ADOSecurityPolicy : M365DSCResourceBase
                 EnforceAADConditionalAccess             = [Boolean]::Parse($EnforceAADConditionalAccessValue)
                 AllowTeamAdminsInvitationsAccessToken   = [Boolean]::Parse($AllowTeamAdminsInvitationsAccessTokenValue)
                 AllowRequestAccessToken                 = [Boolean]::Parse($AllowRequestAccessTokenValue)
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                TenantId                                = $this.TenantId
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                AccessTokens                            = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -331,15 +323,7 @@ class ADOSecurityPolicy : M365DSCResourceBase
                 $displayedKey = $organization
                 Write-M365DSCHost -Message "    |---[$i/$($accounts.Value.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    OrganizationName      = $organization
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    OrganizationName = $organization
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -363,22 +347,5 @@ class ADOSecurityPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [ADOSecurityPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [ADOSecurityPolicy])
-        {
-            return $Values
-        }
-
-        $result = [ADOSecurityPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

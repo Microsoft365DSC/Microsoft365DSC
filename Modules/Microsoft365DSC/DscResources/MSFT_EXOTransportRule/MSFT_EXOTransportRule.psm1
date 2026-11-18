@@ -908,14 +908,6 @@ class EXOTransportRule : M365DSCResourceBase
                 SubjectOrBodyMatchesPatterns                 = $TransportRule.SubjectOrBodyMatchesPatterns
                 WithImportance                               = $TransportRule.WithImportance
                 Ensure                                       = 'Present'
-                Credential                                   = $this.Credential
-                ApplicationId                                = $this.ApplicationId
-                CertificateThumbprint                        = $this.CertificateThumbprint
-                CertificatePath                              = $this.CertificatePath
-                CertificatePassword                          = $this.CertificatePassword
-                ManagedIdentity                              = $this.ManagedIdentity
-                TenantId                                     = $this.TenantId
-                AccessTokens                                 = $this.AccessTokens
             }
 
             foreach ($name in $this.GetSchemaPropertyNames())
@@ -1154,15 +1146,7 @@ class EXOTransportRule : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($AllTransportRules.Count)] $($TransportRule.Name)" -DeferWrite
                 $Params = @{
-                    Name                  = $TransportRule.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $TransportRule.Name
                 }
                 $this.ExportedInstance = $TransportRule
                 $Results = $this.GetForExport($Params)
@@ -1215,22 +1199,5 @@ class EXOTransportRule : M365DSCResourceBase
         }
 
         return $text
-    }
-
-    hidden [EXOTransportRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOTransportRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOTransportRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

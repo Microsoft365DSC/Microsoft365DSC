@@ -107,12 +107,6 @@ class TeamsMeetingBroadcastPolicy : M365DSCResourceBase
                     BroadcastAttendeeVisibilityMode = $config.BroadcastAttendeeVisibilityMode
                     BroadcastRecordingMode          = $config.BroadcastRecordingMode
                     Ensure                          = 'Present'
-                    Credential                      = $this.Credential
-                    ApplicationId                   = $this.ApplicationId
-                    TenantId                        = $this.TenantId
-                    CertificateThumbprint           = $this.CertificateThumbprint
-                    ManagedIdentity                 = $this.ManagedIdentity
-                    AccessTokens                    = $this.AccessTokens
                 })
             }
             return $this.AsResult($nullReturn)
@@ -205,15 +199,7 @@ class TeamsMeetingBroadcastPolicy : M365DSCResourceBase
                 }
 
                 $params = @{
-                    Identity              = $policy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Length)] $($policy.Identity)" -DeferWrite
 
@@ -238,22 +224,5 @@ class TeamsMeetingBroadcastPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsMeetingBroadcastPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsMeetingBroadcastPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsMeetingBroadcastPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

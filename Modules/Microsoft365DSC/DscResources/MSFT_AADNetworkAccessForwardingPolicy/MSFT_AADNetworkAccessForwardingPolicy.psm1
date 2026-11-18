@@ -86,17 +86,8 @@ class AADNetworkAccessForwardingPolicy : M365DSCResourceBase
             $complexPolicyRules = $this.GetMicrosoftGraphNetworkAccessForwardingPolicyRules($instance.PolicyRules)
 
             $results = @{
-                Name                  = $instance.Name
-                PolicyRules           = $complexPolicyRules
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name        = $instance.Name
+                PolicyRules = $complexPolicyRules
             }
             return $this.AsResult($results)
         }
@@ -246,16 +237,7 @@ class AADNetworkAccessForwardingPolicy : M365DSCResourceBase
                 $displayedKey = $config.Name
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Name                  = $config.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name = $config.Name
                 }
 
                 $this.ExportedInstance = $config
@@ -329,23 +311,6 @@ class AADNetworkAccessForwardingPolicy : M365DSCResourceBase
         }
 
         return $newPolicyRules
-    }
-
-    hidden [AADNetworkAccessForwardingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADNetworkAccessForwardingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADNetworkAccessForwardingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -665,11 +665,6 @@ function New-M365DSCExportParameterBlock
         $entries[$ResourceModel.AlternativeKey] = "`$exportedInstance.$($ResourceModel.AlternativeKey)"
     }
 
-    foreach ($authProperty in ($ResourceModel.Properties | Where-Object { $_.IsAuth }))
-    {
-        $entries[$authProperty.Name] = "`$this.$($authProperty.Name)"
-    }
-
     $longestName = ($entries.Keys | Measure-Object -Property Length -Maximum).Maximum
     foreach ($entryName in $entries.Keys)
     {

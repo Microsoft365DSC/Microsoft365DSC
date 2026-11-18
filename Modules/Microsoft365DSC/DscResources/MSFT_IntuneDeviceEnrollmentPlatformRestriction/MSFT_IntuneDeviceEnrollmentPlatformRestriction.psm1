@@ -190,15 +190,6 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
                 DeviceEnrollmentConfigurationType = $config.DeviceEnrollmentConfigurationType.ToString()
                 Priority                          = $config.Priority
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                ApplicationSecret                 = $this.ApplicationSecret
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             $results += $this.GetDevicePlatformRestrictionSetting($config)
@@ -441,23 +432,13 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configs.Count)] $($config.displayName)" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.Assignments)
                 {
@@ -610,7 +591,7 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
                     -NoEscape @('Assignments', 'IosRestriction', 'WindowsRestriction', 'WindowsHomeSkuRestriction',
                     'WindowsMobileRestriction', 'AndroidRestriction', 'AndroidForWorkRestriction',
                     'MacRestriction', 'MacOSRestriction', 'TvosRestriction', 'VisionOSRestriction') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -626,6 +607,7 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -731,23 +713,6 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
 
         return $results
     }
-
-    hidden [IntuneDeviceEnrollmentPlatformRestriction] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceEnrollmentPlatformRestriction])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceEnrollmentPlatformRestriction]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
-    }
 }
 
 class MSFT_DeviceEnrollmentPlatformRestriction
@@ -759,6 +724,10 @@ class MSFT_DeviceEnrollmentPlatformRestriction
     [DscProperty()]
     [System.ComponentModel.Description('Block personally owned devices from enrolling.')]
     [System.Nullable[System.Boolean]] $PersonalDeviceEnrollmentBlocked
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates whether server enrollment is blocked.')]
+    [System.Nullable[System.Boolean]] $IsServerEnrollmentBlocked
 
     [DscProperty()]
     [System.ComponentModel.Description('Min OS version supported.')]

@@ -114,14 +114,6 @@ class EXODkimSigningConfig : M365DSCResourceBase
                 Enabled                = $DkimSigningConfig.Enabled
                 HeaderCanonicalization = $DkimSigningConfig.HeaderCanonicalization
                 KeySize                = $DkimSigningConfig.Selector1KeySize
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                TenantId               = $this.TenantId
-                AccessTokens           = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -217,15 +209,7 @@ class EXODkimSigningConfig : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    |---[$i/$($DkimSigningConfigs.Count)] $($DkimSigningConfig.Identity)" -DeferWrite
                     $Params = @{
-                        Identity              = $DkimSigningConfig.Identity
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity = $DkimSigningConfig.Identity
                     }
                     $this.ExportedInstance = $DkimSigningConfig
                     $Results = $this.GetForExport($Params)
@@ -244,6 +228,7 @@ class EXODkimSigningConfig : M365DSCResourceBase
             else
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for DKIM Signing Config"
+                $this.SkipExport('The current tenant is not registered to allow for DKIM Signing Config')
                 return ''
             }
             return $dscContent.ToString()
@@ -254,22 +239,5 @@ class EXODkimSigningConfig : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXODkimSigningConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODkimSigningConfig])
-        {
-            return $Values
-        }
-
-        $result = [EXODkimSigningConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

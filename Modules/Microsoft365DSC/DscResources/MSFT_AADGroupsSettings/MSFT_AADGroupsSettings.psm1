@@ -148,13 +148,6 @@ class AADGroupsSettings : M365DSCResourceBase
                     AllowToAddGuests          = [Boolean]::Parse($valueAllowToAddGuests.Value)
                     UsageGuidelinesUrl        = $valueUsageGuidelinesUrl.Value
                     Ensure                    = 'Present'
-                    ApplicationId             = $this.ApplicationId
-                    TenantId                  = $this.TenantId
-                    ApplicationSecret         = $this.ApplicationSecret
-                    CertificateThumbprint     = $this.CertificateThumbprint
-                    Credential                = $this.Credential
-                    ManagedIdentity           = $this.ManagedIdentity
-                    AccessTokens              = $this.AccessTokens
                 }
                 if (-not [System.String]::IsNullOrEmpty($valueNewUnifiedGroupWritebackDefault.Value))
                 {
@@ -318,26 +311,16 @@ class AADGroupsSettings : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $dscContent = [System.Text.StringBuilder]::new()
             $Results = $this.GetForExport($Params)
-            $rawResults = $Results.Clone()
             $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                 -ConnectionMode $ConnectionMode `
                 -ModulePath $this.GetModulePath() `
                 -Results $Results `
                 -Credential $this.Credential `
-                -RawResults $rawResults
+                -RawResults $this.RawExportResults
             [void]$dscContent.Append($currentDSCBlock)
             Save-M365DSCPartialExport -Content $currentDSCBlock `
                 -FileName $Global:PartialExportFileName
@@ -350,22 +333,5 @@ class AADGroupsSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADGroupsSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADGroupsSettings])
-        {
-            return $Values
-        }
-
-        $result = [AADGroupsSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

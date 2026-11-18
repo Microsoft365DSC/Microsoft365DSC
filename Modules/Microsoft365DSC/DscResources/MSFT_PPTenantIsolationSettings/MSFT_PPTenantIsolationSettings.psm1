@@ -105,10 +105,6 @@ class PPTenantIsolationSettings : M365DSCResourceBase
             $uri = 'https://' + (Get-MSCloudLoginConnectionProfile -Workload 'PowerPlatformREST').BapEndpoint + `
                 "/providers/PowerPlatform.Governance/v1/tenants/$($graphTenantId)/tenantIsolationPolicy?api-version=2016-11-01"
             $tenantIsolationPolicy = Invoke-M365DSCPowerPlatformRESTWebRequest -Uri $uri -Method 'GET' -Body $RequestBody
-            if ($tenantIsolationPolicy.StatusCode -eq 403)
-            {
-                throw 'Invalid permission for the application. If you are using a custom app registration to authenticate, make sure it is defined as a Power Platform admin management application. For additional information refer to https://learn.microsoft.com/en-us/power-platform/admin/powershell-create-service-principal#registering-an-admin-management-application'
-            }
 
             [Array]$allowedTenants = $tenantIsolationPolicy.properties.allowedTenants | ForEach-Object {
                 $directions = $_.direction
@@ -139,18 +135,9 @@ class PPTenantIsolationSettings : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                IsSingleInstance      = 'Yes'
-                Enabled               = ($tenantIsolationPolicy.properties.isDisabled -eq $false)
-                Rules                 = $allowedTenants
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                Enabled          = ($tenantIsolationPolicy.properties.isDisabled -eq $false)
+                Rules            = $allowedTenants
             })
         }
         catch
@@ -414,16 +401,7 @@ class PPTenantIsolationSettings : M365DSCResourceBase
             $dscContent = [System.Text.StringBuilder]::new()
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -499,23 +477,6 @@ class PPTenantIsolationSettings : M365DSCResourceBase
                 @{ Type = 'CustomCompare'; Name = 'TenantIsolationRules'; TenantIds = $tenantIdMap }
             )
         }
-    }
-
-    hidden [PPTenantIsolationSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PPTenantIsolationSettings])
-        {
-            return $Values
-        }
-
-        $result = [PPTenantIsolationSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 
     <#

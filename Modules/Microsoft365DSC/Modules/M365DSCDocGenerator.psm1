@@ -325,7 +325,7 @@ function Get-DscResourceEmbeddedClass
         $Schema
     )
 
-    $embeddedClasses = [System.Collections.Generic.List[Object]]::new()
+    $embeddedClasses = @()
     $visited = [System.Collections.Generic.HashSet[String]]::new()
     $pending = [System.Collections.Generic.Queue[String]]::new()
 
@@ -356,12 +356,12 @@ function Get-DscResourceEmbeddedClass
                 continue
             }
 
-            $embeddedClasses.Add($Schema[$embeddedName])
+            $embeddedClasses += $Schema[$embeddedName]
             $pending.Enqueue($embeddedName)
         }
     }
 
-    return $embeddedClasses.ToArray()
+    return $embeddedClasses
 }
 
 <#
@@ -428,10 +428,58 @@ function Get-ResourceExampleAsMarkdown
 
 <#
 .DESCRIPTION
-    The New-DscClassResourceWikiPage cmdlet will review all of the class-based
-    resources in a specified module directory and will output the Markdown files to
-    the specified directory. These help files include details on the property types
-    for each resource, as well as a text description and examples where they exist.
+    Formats a permission list from a resource settings file as a comma-separated string.
+
+.PARAMETER List
+    The roles, role groups or permission objects to format.
+
+.PARAMETER ByName
+    Uses the 'name' property of each entry, as used by the Graph style permission objects.
+
+.OUTPUTS
+    The joined names, or 'None' when the list is empty.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Format-M365DSCPermissionList
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter()]
+        [AllowNull()]
+        [System.Object]
+        $List,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ByName
+    )
+
+    $items = @($List)
+    if ($ByName)
+    {
+        $items = @($items.name)
+    }
+
+    $items = @($items | Where-Object -FilterScript { -not [System.String]::IsNullOrEmpty($_) })
+    if ($items.Count -eq 0)
+    {
+        return 'None'
+    }
+
+    return $items -join ', '
+}
+
+<#
+.DESCRIPTION
+    The New-DscClassResourceWikiPage cmdlet will review all of the MOF-based resources
+    described in SchemaDefinition.json in a specified module directory and will output
+    the Markdown files to the specified directory. These help files include details on
+    the property types for each resource, as well as a text description and examples
+    where they exist.
 
 .PARAMETER OutputPath
     Where should the files be saved to.
@@ -439,9 +487,6 @@ function Get-ResourceExampleAsMarkdown
 .PARAMETER SourcePath
     The path to the root of the DSC resource module (where the PSD1 file is found,
     not the folder for and individual DSC resource).
-
-.PARAMETER Force
-    Overwrites any existing file when outputting the generated content.
 
 .EXAMPLE
     PS> New-DscClassResourceWikiPage `
@@ -466,11 +511,7 @@ function New-DscClassResourceWikiPage
 
         [Parameter(Mandatory = $true)]
         [System.String]
-        $SourcePath,
-
-        [Parameter()]
-        [System.Management.Automation.SwitchParameter]
-        $Force
+        $SourcePath
     )
 
     $schema = Get-M365DSCSchemaDefinition -SourcePath $SourcePath
@@ -556,50 +597,54 @@ function New-DscClassResourceWikiPage
             {
                 $null = $permissionsContent.AppendLine('## Permissions')
 
-                $workloads = @('exchange', 'purview')
+                if ($null -ne $settingsJson.roles)
+                {
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine('### Microsoft Entra ID roles')
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine('This resource requires the following Microsoft Entra ID roles:')
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine('* **Read**')
+                    $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.roles.read)")
+                    $null = $permissionsContent.AppendLine('* **Update**')
+                    $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.roles.update)")
+                }
+
+                # Entries with required roles or role groups list the roles, all other entries list the API permissions
+                $permissionNames = @($settingsJson.permissions.psobject.properties.Name)
+                $workloads = @($permissionNames | Where-Object -FilterScript {
+                        $null -ne $settingsJson.permissions.$_.requiredRoles -or $null -ne $settingsJson.permissions.$_.requiredRoleGroups
+                    })
                 foreach ($workload in $workloads)
                 {
-                    if ($null -ne $settingsJson.permissions.$workload)
+                    $workloadNameUpper = $workload.Substring(0, 1).ToUpper() + $workload.Substring(1, $workload.Length - 1)
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine("### $workloadNameUpper")
+                    $null = $permissionsContent.AppendLine()
+                    $null = $permissionsContent.AppendLine("To authenticate with Microsoft $workloadNameUpper, this resource requires the following permissions:")
+                    if ($null -ne $settingsJson.permissions.$workload.requiredRoles)
                     {
-                        $workloadNameUpper = $workload.Substring(0, 1).ToUpper() + $workload.Substring(1, $workload.Length - 1)
-                        $null = $permissionsContent.AppendLine()
-                        $null = $permissionsContent.AppendLine("### $workloadNameUpper")
-                        $null = $permissionsContent.AppendLine()
-                        $null = $permissionsContent.AppendLine("To authenticate with Microsoft $workloadNameUpper, this resource requires the following permissions:")
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('#### Roles')
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('* **Read**')
-                        $null = $permissionsContent.AppendLine("  * $($settingsJson.permissions.$workload.requiredroles.read -join ', ')")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$workload.requiredroles.read)")
                         $null = $permissionsContent.AppendLine('* **Update**')
-                        $null = $permissionsContent.AppendLine("  * $($settingsJson.permissions.$workload.requiredroles.update -join ', ')")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$workload.requiredroles.update)")
+                    }
+                    if ($null -ne $settingsJson.permissions.$workload.requiredRoleGroups)
+                    {
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('#### Role Groups')
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('* **Read**')
-                        if ($settingsJson.permissions.$workload.requiredrolegroups.read.Count -ne 0)
-                        {
-                            $roleGroups = $settingsJson.permissions.$workload.requiredrolegroups.read -join ', '
-                        }
-                        else
-                        {
-                            $roleGroups = 'None'
-                        }
-                        $null = $permissionsContent.AppendLine("  * $roleGroups")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$workload.requiredrolegroups.read)")
                         $null = $permissionsContent.AppendLine('* **Update**')
-                        if ($settingsJson.permissions.$workload.requiredrolegroups.update.Count -ne 0)
-                        {
-                            $roleGroups = $settingsJson.permissions.$workload.requiredrolegroups.update -join ', '
-                        }
-                        else
-                        {
-                            $roleGroups = 'None'
-                        }
-                        $null = $permissionsContent.AppendLine("  * $roleGroups")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$workload.requiredrolegroups.update)")
                     }
                 }
 
-                $otherApis = $settingsJson.permissions.psobject.properties.Name | Where-Object { $_ -notin $workloads }
+                $otherApis = $permissionNames | Where-Object -FilterScript { $_ -notin $workloads }
                 foreach ($otherApi in $otherApis)
                 {
                     $otherApiUpper = $otherApi.Substring(0, 1).ToUpper() + $otherApi.Substring(1, $otherApi.Length - 1)
@@ -613,57 +658,21 @@ function New-DscClassResourceWikiPage
                         $null = $permissionsContent.AppendLine('#### Delegated permissions')
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('* **Read**')
-
-                        if ($settingsJson.permissions.$otherApi.delegated.read.Count -eq 0)
-                        {
-                            $delegatedRead = 'None'
-                        }
-                        else
-                        {
-                            $delegatedRead = $settingsJson.permissions.$otherApi.delegated.read.name -join ', '
-                        }
-                        $null = $permissionsContent.AppendLine("  * $delegatedRead")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$otherApi.delegated.read -ByName)")
 
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('* **Update**')
-
-                        if ($settingsJson.permissions.$otherApi.delegated.update.Count -eq 0)
-                        {
-                            $delegatedUpdate = 'None'
-                        }
-                        else
-                        {
-                            $delegatedUpdate = $settingsJson.permissions.$otherApi.delegated.update.name -join ', '
-                        }
-                        $null = $permissionsContent.AppendLine("  * $delegatedUpdate")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$otherApi.delegated.update -ByName)")
 
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('#### Application permissions')
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('* **Read**')
-
-                        if ($settingsJson.permissions.$otherApi.application.read.Count -eq 0)
-                        {
-                            $applicationRead = 'None'
-                        }
-                        else
-                        {
-                            $applicationRead = $settingsJson.permissions.$otherApi.application.read.name -join ', '
-                        }
-                        $null = $permissionsContent.AppendLine("  * $applicationRead")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$otherApi.application.read -ByName)")
 
                         $null = $permissionsContent.AppendLine()
                         $null = $permissionsContent.AppendLine('* **Update**')
-
-                        if ($settingsJson.permissions.$otherApi.application.update.Count -eq 0)
-                        {
-                            $applicationUpdate = 'None'
-                        }
-                        else
-                        {
-                            $applicationUpdate = $settingsJson.permissions.$otherApi.application.update.name -join ', '
-                        }
-                        $null = $permissionsContent.AppendLine("  * $applicationUpdate")
+                        $null = $permissionsContent.AppendLine("  * $(Format-M365DSCPermissionList -List $settingsJson.permissions.$otherApi.application.update -ByName)")
                     }
                 }
             }
@@ -694,7 +703,6 @@ function New-DscClassResourceWikiPage
                 -InputObject ($output.ToString() -replace '\r?\n', "`r`n") `
                 -FilePath $savePath `
                 -Encoding utf8 `
-                -Force:$Force `
                 -NoNewline
         }
         elseif ($readmeFile.Count -gt 1)
@@ -710,18 +718,17 @@ function New-DscClassResourceWikiPage
 
 <#
 .DESCRIPTION
-    The Update-M365DSCResourceDocumentationPage cmdlet will review all of the
-    class-based resources in a specified module directory and will output the
-    Markdown files to the specified directory. These help files include details on
-    the property types for each resource, as well as a text description and examples
-    where they exist.
+    The Update-M365DSCResourceDocumentationPage cmdlet builds a Markdown page for each
+    MSFT_* resource under <SourcePath>/DscResources from its SchemaDefinition.json,
+    readme.md, settings.json and examples. The pages are written to
+    docs/docs/resources/<workload> of the repository that contains the loaded module.
 
 .PARAMETER SourcePath
     The path to the root of the DSC resource module (where the PSD1 file is found,
     not the folder for an individual DSC resource).
 
 .PARAMETER Force
-    Overwrites any existing file when outputting the generated content.
+    Has no effect. Existing pages are always overwritten.
 
 .EXAMPLE
     PS> Update-M365DSCResourceDocumentationPage `
@@ -734,6 +741,7 @@ function New-DscClassResourceWikiPage
 #>
 function Update-M365DSCResourceDocumentationPage
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
     [CmdletBinding()]
     param
@@ -742,6 +750,7 @@ function Update-M365DSCResourceDocumentationPage
         [System.String]
         $SourcePath,
 
+        # TODO: Remove during the next breaking change release
         [Parameter()]
         [System.Management.Automation.SwitchParameter]
         $Force
@@ -749,120 +758,120 @@ function Update-M365DSCResourceDocumentationPage
 
     Write-Output -InputObject 'Generating Resource Documentation pages'
 
-    $tempPath = Join-Path -Path $env:TEMP -ChildPath 'ResourceMarkdown'
+    $tempPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ("ResourceMarkdown_$([System.Guid]::NewGuid())")
+    $null = New-Item -Path $tempPath -ItemType 'Directory'
 
-    if ((Test-Path -Path $tempPath) -eq $false)
+    try
     {
-        $null = New-Item -Path $tempPath -ItemType 'Directory'
+        $newDscClassResourceWikiPageParameters = @{
+            OutputPath = $tempPath
+            SourcePath = $SourcePath
+        }
+
+        New-DscClassResourceWikiPage @newDscClassResourceWikiPageParameters
+
+        $resourceDocsRoot = Join-Path -Path $PSScriptRoot -ChildPath '../../../docs/docs/resources'
+
+        Write-Output -InputObject '  - Moving generated pages to the Docs folder'
+
+        $files = Get-ChildItem -Path $tempPath
+        foreach ($file in $files)
+        {
+            switch -Wildcard ($file.BaseName)
+            {
+                'AAD*'
+                {
+                    $targetFolder = 'azure-ad'
+                }
+                'ADO*'
+                {
+                    $targetFolder = 'azure-devops'
+                }
+                'Azure*'
+                {
+                    $targetFolder = 'azure'
+                }
+                'Commerce*'
+                {
+                    $targetFolder = 'commerce'
+                }
+                'Defender*'
+                {
+                    $targetFolder = 'defender'
+                }
+                'EXO*'
+                {
+                    $targetFolder = 'exchange'
+                }
+                'Fabric*'
+                {
+                    $targetFolder = 'fabric'
+                }
+                'Intune*'
+                {
+                    $targetFolder = 'intune'
+                }
+                'M365DSC*'
+                {
+                    $targetFolder = 'general'
+                }
+                'O365*'
+                {
+                    $targetFolder = 'office365'
+                }
+                'OD*'
+                {
+                    $targetFolder = 'onedrive'
+                }
+                'Planner*'
+                {
+                    $targetFolder = 'planner'
+                }
+                'PP*'
+                {
+                    $targetFolder = 'power-platform'
+                }
+                'SC*'
+                {
+                    $targetFolder = 'security-compliance'
+                }
+                'Sentinel*'
+                {
+                    $targetFolder = 'sentinel'
+                }
+                'SH*'
+                {
+                    $targetFolder = 'services-hub'
+                }
+                'SPO*'
+                {
+                    $targetFolder = 'sharepoint'
+                }
+                'Teams*'
+                {
+                    $targetFolder = 'teams'
+                }
+                'Viva*'
+                {
+                    $targetFolder = 'viva'
+                }
+                default
+                {
+                    throw "Unknown resource prefix for file '$($file.Name)'. Cannot determine target folder."
+                }
+            }
+            $destinationFolder = Join-Path -Path $resourceDocsRoot -ChildPath $targetFolder
+            if ((Test-Path -Path $destinationFolder) -eq $false)
+            {
+                $null = New-Item -Path $destinationFolder -ItemType 'Directory'
+            }
+            Move-Item -Path $file.FullName -Destination $destinationFolder -Force
+        }
     }
-
-    $newDscClassResourceWikiPageParameters = @{
-        OutputPath = $tempPath
-        SourcePath = $SourcePath
-        Force      = $Force
-    }
-
-    New-DscClassResourceWikiPage @newDscClassResourceWikiPageParameters
-
-    $resourceDocsRoot = Join-Path -Path $PSScriptRoot -ChildPath '../../../docs/docs/resources'
-
-    Write-Output -InputObject '  - Moving generated pages to the Docs folder'
-
-    $files = Get-ChildItem -Path $tempPath
-    foreach ($file in $files)
+    finally
     {
-        switch -Wildcard ($file.BaseName)
-        {
-            'AAD*'
-            {
-                $targetFolder = 'azure-ad'
-            }
-            'ADO*'
-            {
-                $targetFolder = 'azure-devops'
-            }
-            'Azure*'
-            {
-                $targetFolder = 'azure'
-            }
-            'Commerce*'
-            {
-                $targetFolder = 'commerce'
-            }
-            'Defender*'
-            {
-                $targetFolder = 'defender'
-            }
-            'EXO*'
-            {
-                $targetFolder = 'exchange'
-            }
-            'Fabric*'
-            {
-                $targetFolder = 'fabric'
-            }
-            'Intune*'
-            {
-                $targetFolder = 'intune'
-            }
-            'M365DSC*'
-            {
-                $targetFolder = 'general'
-            }
-            'O365*'
-            {
-                $targetFolder = 'office365'
-            }
-            'OD*'
-            {
-                $targetFolder = 'onedrive'
-            }
-            'Planner*'
-            {
-                $targetFolder = 'planner'
-            }
-            'PP*'
-            {
-                $targetFolder = 'power-platform'
-            }
-            'SC*'
-            {
-                $targetFolder = 'security-compliance'
-            }
-            'Sentinel*'
-            {
-                $targetFolder = 'sentinel'
-            }
-            'SH*'
-            {
-                $targetFolder = 'services-hub'
-            }
-            'SPO*'
-            {
-                $targetFolder = 'sharepoint'
-            }
-            'Teams*'
-            {
-                $targetFolder = 'teams'
-            }
-            'Viva*'
-            {
-                $targetFolder = 'viva'
-            }
-            default
-            {
-                throw "Unknown resource prefix for file '$($file.Name)'. Cannot determine target folder."
-            }
-        }
-        $destinationFolder = Join-Path -Path $resourceDocsRoot -ChildPath $targetFolder
-        if ((Test-Path -Path $destinationFolder) -eq $false)
-        {
-            $null = New-Item -Path $destinationFolder -ItemType 'Directory'
-        }
-        Move-Item -Path $file.FullName -Destination $destinationFolder -Force
+        Remove-Item -Path $tempPath -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
     }
-
-    Remove-Item -Path $tempPath -Force -Confirm:$false
 
     Write-Output -InputObject 'Generation of Resource Documentation pages completed'
 }

@@ -71,6 +71,11 @@ jobs:
       - name: Setup Microsoft365DSC
         uses: ./.github/actions/setup-m365dsc
 
+      - name: Disable Telemetry
+        shell: pwsh
+        run: |
+          [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine)
+
       - name: Run Test Harness
         id: tests
         shell: pwsh

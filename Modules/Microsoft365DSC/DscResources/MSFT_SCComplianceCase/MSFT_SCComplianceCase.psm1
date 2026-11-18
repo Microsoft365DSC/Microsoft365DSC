@@ -97,18 +97,10 @@ class SCComplianceCase : M365DSCResourceBase
                 $currentStatus = 'Closed'
             }
             $result = @{
-                Name                  = $Case.Name
-                Description           = $Case.Description
-                Status                = $currentStatus
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name        = $Case.Name
+                Description = $Case.Description
+                Status      = $currentStatus
+                Ensure      = 'Present'
             }
 
             return $this.AsResult($result)
@@ -260,22 +252,5 @@ class SCComplianceCase : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCComplianceCase] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCComplianceCase])
-        {
-            return $Values
-        }
-
-        $result = [SCComplianceCase]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

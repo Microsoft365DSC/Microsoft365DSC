@@ -142,13 +142,6 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
             $returnHashtable.Add('RoleScopeTags', $assignmentFilter.RoleScopeTags)
             $returnHashtable.Add('Rule', $assignmentFilter.Rule)
             $returnHashtable.Add('Ensure', 'Present')
-            $returnHashtable.Add('Credential', $this.Credential)
-            $returnHashtable.Add('ApplicationId', $this.ApplicationId)
-            $returnHashtable.Add('TenantId', $this.TenantId)
-            $returnHashtable.Add('ApplicationSecret', $this.ApplicationSecret)
-            $returnHashtable.Add('CertificateThumbprint', $this.CertificateThumbprint)
-            $returnHashtable.Add('ManagedIdentity', $this.ManagedIdentity)
-            $returnHashtable.Add('AccessTokens', $this.AccessTokens)
 
             return $this.AsResult($returnHashtable)
         }
@@ -180,13 +173,15 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
         {
             Write-Verbose -Message "Creating new assignment filter {$($this.DisplayName)}"
 
-            New-MgBetaDeviceManagementAssignmentFilter `
-                -DisplayName $this.DisplayName `
-                -Description $this.Description `
-                -Platform $this.Platform `
-                -RoleScopeTags $this.RoleScopeTags `
-                -Rule $this.Rule `
-                -AssignmentFilterManagementType $this.AssignmentFilterManagementType | Out-Null
+            $createParameters = @{}
+            foreach ($property in @('DisplayName', 'Description', 'Platform', 'RoleScopeTags', 'Rule', 'AssignmentFilterManagementType'))
+            {
+                if ($null -ne $this.$property)
+                {
+                    $createParameters[$property] = $this.$property
+                }
+            }
+            New-MgBetaDeviceManagementAssignmentFilter -BodyParameter $createParameters | Out-Null
 
         }
         elseif ($this.Ensure -eq 'Present' -and $currentPolicy.Ensure -eq 'Present')
@@ -198,13 +193,17 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
                 throw 'Cannot change the AssignmentFilterManagementType of an existing IntuneDeviceAndAppManagementAssignmentFilter. Remove and recreate the filter if you want to change the filter type.'
             }
 
+            $updateParameters = @{}
+            foreach ($property in @('DisplayName', 'Description', 'RoleScopeTags', 'Rule', 'AssignmentFilterManagementType'))
+            {
+                if ($null -ne $this.$property)
+                {
+                    $updateParameters[$property] = $this.$property
+                }
+            }
             Update-MgBetaDeviceManagementAssignmentFilter `
                 -DeviceAndAppManagementAssignmentFilterId $currentPolicy.Id `
-                -DisplayName $this.DisplayName `
-                -Description $this.Description `
-                -RoleScopeTags $this.RoleScopeTags `
-                -Rule $this.Rule `
-                -AssignmentFilterManagementType $this.AssignmentFilterManagementType | Out-Null
+                -BodyParameter $updateParameters | Out-Null
 
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
@@ -268,17 +267,8 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($assignmentFilters.Count)] $($assignmentFilter.displayName)" -DeferWrite
 
                 $params = @{
-                    DisplayName           = $assignmentFilter.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $assignmentFilter.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $assignmentFilter
@@ -294,10 +284,9 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
-
-                    Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
-                    $i++
                 }
+                Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
+                $i++
             }
             return $dscContent.ToString()
         }
@@ -307,6 +296,7 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -318,22 +308,5 @@ class IntuneDeviceAndAppManagementAssignmentFilter : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceAndAppManagementAssignmentFilter] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceAndAppManagementAssignmentFilter])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceAndAppManagementAssignmentFilter]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

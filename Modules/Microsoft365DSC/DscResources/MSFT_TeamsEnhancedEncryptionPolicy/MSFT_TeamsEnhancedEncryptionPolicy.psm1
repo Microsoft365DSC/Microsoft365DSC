@@ -106,14 +106,6 @@ class TeamsEnhancedEncryptionPolicy : M365DSCResourceBase
                 Description                          = $instance.Description
                 MeetingEndToEndEncryption            = $instance.MeetingEndToEndEncryption
                 Ensure                               = 'Present'
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                TenantId                             = $this.TenantId
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                AccessTokens                         = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -206,16 +198,8 @@ class TeamsEnhancedEncryptionPolicy : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -240,22 +224,5 @@ class TeamsEnhancedEncryptionPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsEnhancedEncryptionPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsEnhancedEncryptionPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsEnhancedEncryptionPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

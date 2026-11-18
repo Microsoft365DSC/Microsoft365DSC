@@ -98,14 +98,6 @@ class TeamsGuestMeetingConfiguration : M365DSCResourceBase
                 AllowMultipleScreenshare = $config.AllowMultipleScreenshare
                 AllowTranscription       = $config.AllowTranscription
                 IsSingleInstance         = 'Yes'
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                TenantId                 = $this.TenantId
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                AccessTokens             = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -161,15 +153,7 @@ class TeamsGuestMeetingConfiguration : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -203,22 +187,5 @@ class TeamsGuestMeetingConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsGuestMeetingConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsGuestMeetingConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [TeamsGuestMeetingConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

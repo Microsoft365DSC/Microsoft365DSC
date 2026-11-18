@@ -88,17 +88,9 @@ class SCRetentionEventType : M365DSCResourceBase
             Write-Verbose "Found existing RetentionComplianceEventType $($this.Name)"
 
             $result = @{
-                Name                  = $EventTypeObject.Name
-                Comment               = $EventTypeObject.Comment
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name    = $EventTypeObject.Name
+                Comment = $EventTypeObject.Comment
+                Ensure  = 'Present'
             }
 
             Write-Verbose -Message "Found RetentionComplianceEventType $($this.Name)"
@@ -212,22 +204,5 @@ class SCRetentionEventType : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCRetentionEventType] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCRetentionEventType])
-        {
-            return $Values
-        }
-
-        $result = [SCRetentionEventType]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

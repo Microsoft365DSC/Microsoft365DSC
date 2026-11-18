@@ -1723,15 +1723,6 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
                 Id                                                    = $getValue.Id
                 RoleScopeTagIds                                       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                                                = 'Present'
-                Credential                                            = $this.Credential
-                ApplicationId                                         = $this.ApplicationId
-                TenantId                                              = $this.TenantId
-                ApplicationSecret                                     = $this.ApplicationSecret
-                CertificateThumbprint                                 = $this.CertificateThumbprint
-                CertificatePath                                       = $this.CertificatePath
-                CertificatePassword                                   = $this.CertificatePassword
-                ManagedIdentity                                       = $this.ManagedIdentity
-                AccessTokens                                          = $this.AccessTokens
                 #endregion
             }
 
@@ -1912,23 +1903,13 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.DefenderDetectedMalwareActions)
                 {
@@ -2063,7 +2044,7 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
                     'DeviceManagementApplicabilityRuleOsEdition', 'DeviceManagementApplicabilityRuleOsVersion',
                     'EdgeHomeButtonConfiguration', 'EdgeSearchEngine', 'NetworkProxyServer',
                     'Windows10AppsForceUpdateSchedule', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -2079,6 +2060,7 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -2090,23 +2072,6 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceConfigurationPolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationPolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationPolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

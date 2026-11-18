@@ -118,14 +118,6 @@ class AADCrossTenantIdentitySyncPolicyPartner : M365DSCResourceBase
                 ExternalCloudAuthorizedApplicationId                = $instance.ExternalCloudAuthorizedApplicationId
                 IsRoleEnabledGroupSyncAllowed                       = $roleEnabledGroupSyncAllowed
                 Ensure                                              = 'Present'
-                Credential                                          = $this.Credential
-                ApplicationId                                       = $this.ApplicationId
-                TenantId                                            = $this.TenantId
-                CertificateThumbprint                               = $this.CertificateThumbprint
-                CertificatePath                                     = $this.CertificatePath
-                CertificatePassword                                 = $this.CertificatePassword
-                ManagedIdentity                                     = $this.ManagedIdentity
-                AccessTokens                                        = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -233,6 +225,7 @@ class AADCrossTenantIdentitySyncPolicyPartner : M365DSCResourceBase
                 {
                     Write-M365DSCHost -Message "    |---[$i/$($policyPartners.Count)] $($partner.TenantId)$Global:M365DSCEmojiRedX" -CommitWrite
                     $this.LogError($_, 'Error during Export:')
+                    $this.AddExportInstanceFailure($_, $partner.TenantId)
                     $i++
                     continue
                 }
@@ -248,14 +241,6 @@ class AADCrossTenantIdentitySyncPolicyPartner : M365DSCResourceBase
                     DisplayName                                         = $config.DisplayName
                     CrossTenantAccessPolicyConfigurationPartnerTenantId = $partner.TenantId
                     Ensure                                              = 'Present'
-                    Credential                                          = $this.Credential
-                    ApplicationId                                       = $this.ApplicationId
-                    TenantId                                            = $this.TenantId
-                    CertificateThumbprint                               = $this.CertificateThumbprint
-                    CertificatePath                                     = $this.CertificatePath
-                    CertificatePassword                                 = $this.CertificatePassword
-                    ManagedIdentity                                     = $this.ManagedIdentity
-                    AccessTokens                                        = $this.AccessTokens
                 }
 
                 $this.ExportedInstance = $config
@@ -297,22 +282,5 @@ class AADCrossTenantIdentitySyncPolicyPartner : M365DSCResourceBase
                 isSyncAllowed = $this.IsRoleEnabledGroupSyncAllowed
             }
         }
-    }
-
-    hidden [AADCrossTenantIdentitySyncPolicyPartner] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCrossTenantIdentitySyncPolicyPartner])
-        {
-            return $Values
-        }
-
-        $result = [AADCrossTenantIdentitySyncPolicyPartner]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

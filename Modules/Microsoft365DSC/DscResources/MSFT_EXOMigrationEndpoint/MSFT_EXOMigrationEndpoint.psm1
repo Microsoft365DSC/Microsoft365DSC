@@ -175,14 +175,6 @@ class EXOMigrationEndpoint : M365DSCResourceBase
                 SourceMailboxLegacyDN         = $migrationEndpoint.SourceMailboxLegacyDN
                 UseAutoDiscover               = $migrationEndpoint.UseAutoDiscover
                 Ensure                        = 'Present'
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -313,15 +305,7 @@ class EXOMigrationEndpoint : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($migrationEndpoints.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($params)
@@ -344,22 +328,5 @@ class EXOMigrationEndpoint : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMigrationEndpoint] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMigrationEndpoint])
-        {
-            return $Values
-        }
-
-        $result = [EXOMigrationEndpoint]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

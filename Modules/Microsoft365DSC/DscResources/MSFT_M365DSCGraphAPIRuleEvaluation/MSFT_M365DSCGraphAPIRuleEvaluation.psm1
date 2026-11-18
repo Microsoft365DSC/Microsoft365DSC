@@ -275,21 +275,4 @@ class M365DSCGraphAPIRuleEvaluation : M365DSCResourceBase
         Write-M365DSCHost -Message "`r`n" -DeferWrite
         return $null
     }
-
-    hidden [M365DSCGraphAPIRuleEvaluation] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [M365DSCGraphAPIRuleEvaluation])
-        {
-            return $Values
-        }
-
-        $result = [M365DSCGraphAPIRuleEvaluation]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
-    }
 }

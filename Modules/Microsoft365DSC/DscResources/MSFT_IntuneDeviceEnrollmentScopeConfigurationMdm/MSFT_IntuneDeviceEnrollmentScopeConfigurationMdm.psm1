@@ -102,8 +102,6 @@ class IntuneDeviceEnrollmentScopeConfigurationMdm : M365DSCResourceBase
                 DiscoveryUrl                              = $getValue.DiscoveryUrl
                 IncludedGroups                            = $includedGroupsValue
                 TermsOfUseUrl                             = $getValue.TermsOfUseUrl
-                Credential                                = $this.Credential
-                TenantId                                  = $this.TenantId
                 #endregion
             }
 
@@ -258,10 +256,7 @@ class IntuneDeviceEnrollmentScopeConfigurationMdm : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    TenantId              = $this.TenantId
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -295,22 +290,5 @@ class IntuneDeviceEnrollmentScopeConfigurationMdm : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('IncludedGroups'); When = @{ Property = 'AppliesTo'; NotEquals = 'Selected' } }
             )
         }
-    }
-
-    hidden [IntuneDeviceEnrollmentScopeConfigurationMdm] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceEnrollmentScopeConfigurationMdm])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceEnrollmentScopeConfigurationMdm]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

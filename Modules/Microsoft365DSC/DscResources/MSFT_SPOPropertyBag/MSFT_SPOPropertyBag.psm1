@@ -123,19 +123,10 @@ class SPOPropertyBag : M365DSCResourceBase
             {
                 Write-Verbose "Found existing SPOPropertyBag Key $($this.Key) at {$($this.Url)}"
                 $result = @{
-                    Ensure                = 'Present'
-                    Url                   = $this.Url
-                    Key                   = $this.Key
-                    Value                 = $property[0]
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Ensure = 'Present'
+                    Url    = $this.Url
+                    Key    = $this.Key
+                    Value  = $property[0]
                 }
 
                 return $this.AsResult($result)
@@ -228,6 +219,7 @@ class SPOPropertyBag : M365DSCResourceBase
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
 
                     $this.LogError($_, 'Error during Export:')
+                    $this.AddExportInstanceFailure($_, $siteUrl)
 
                     continue
                 }
@@ -255,18 +247,9 @@ class SPOPropertyBag : M365DSCResourceBase
 
                         Write-M365DSCHost -Message "        |---[$j/$($properties.Length)] $($property.Key)" -DeferWrite
                         $Params = @{
-                            Url                   = $siteUrl
-                            Key                   = $property.Key
-                            Value                 = '*'
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            ApplicationSecret     = $this.ApplicationSecret
-                            CertificatePassword   = $this.CertificatePassword
-                            CertificatePath       = $this.CertificatePath
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            ManagedIdentity       = $this.ManagedIdentity
-                            Credential            = $this.Credential
-                            AccessTokens          = $this.AccessTokens
+                            Url   = $siteUrl
+                            Key   = $property.Key
+                            Value = '*'
                         }
 
                         $this.ExportedInstance = @{
@@ -292,6 +275,7 @@ class SPOPropertyBag : M365DSCResourceBase
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
 
                     $this.LogError($_, 'Error during Export:')
+                    $this.AddExportInstanceFailure($_, $siteUrl)
 
                     continue
                 }
@@ -330,22 +314,5 @@ class SPOPropertyBag : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOPropertyBag] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOPropertyBag])
-        {
-            return $Values
-        }
-
-        $result = [SPOPropertyBag]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

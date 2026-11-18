@@ -118,18 +118,10 @@ class TeamsUser : M365DSCResourceBase
 
             Write-Verbose -Message "Found team user $($myUser.User) with role:$($myUser.Role)"
             return $this.AsResult(@{
-                User                  = $myUser.User
-                Role                  = $myUser.Role
-                TeamName              = $this.TeamName
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                User     = $myUser.User
+                Role     = $myUser.Role
+                TeamName = $this.TeamName
+                Ensure   = 'Present'
             })
         }
         catch
@@ -156,7 +148,7 @@ class TeamsUser : M365DSCResourceBase
 
         $null = $this.Connect('MicrosoftTeams')
 
-        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName))
+        $team = Get-TeamByName ([System.Net.WebUtility]::UrlEncode($this.TeamName)) -RetryCount 5
 
         Write-Verbose -Message "Retrieve team GroupId: $($team.GroupId)"
 
@@ -238,27 +230,18 @@ class TeamsUser : M365DSCResourceBase
                             Write-M365DSCHost -Message "        - [$k/$($users.Length)] $($user.User)" -DeferWrite
 
                             $getParams = @{
-                                TeamName              = $team.DisplayName
-                                User                  = $user.User
-                                Credential            = $this.Credential
-                                ApplicationId         = $this.ApplicationId
-                                TenantId              = $this.TenantId
-                                CertificateThumbprint = $this.CertificateThumbprint
-                                CertificatePath       = $this.CertificatePath
-                                CertificatePassword   = $this.CertificatePassword
-                                ManagedIdentity       = $this.ManagedIdentity
-                                AccessTokens          = $this.AccessTokens
+                                TeamName = $team.DisplayName
+                                User     = $user.User
                             }
 
                             $this.ExportedInstance = $user
                             $results = $this.GetForExport($getParams)
-                            $rawResults = $Results.Clone()
                             $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                                 -ConnectionMode $ConnectionMode `
                                 -ModulePath $this.GetModulePath() `
                                 -Results $Results `
                                 -Credential $this.Credential `
-                                -RawResults $rawResults
+                                -RawResults $this.RawExportResults
                             [void]$dscContent.Append($currentDSCBlock)
                             Save-M365DSCPartialExport -Content $currentDSCBlock `
                                 -FileName $Global:PartialExportFileName
@@ -270,6 +253,7 @@ class TeamsUser : M365DSCResourceBase
                     {
                         Write-Verbose -Message $_
                         Write-Verbose -Message "The current User doesn't have the required permissions to extract Users for Team {$($team.DisplayName)}."
+                        $this.AddExportInstanceFailure($_, $team.DisplayName)
                     }
                     $j++
                 }
@@ -289,22 +273,5 @@ class TeamsUser : M365DSCResourceBase
         return @{
             IncludedProperties = @('Role', 'User')
         }
-    }
-
-    hidden [TeamsUser] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsUser])
-        {
-            return $Values
-        }
-
-        $result = [TeamsUser]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

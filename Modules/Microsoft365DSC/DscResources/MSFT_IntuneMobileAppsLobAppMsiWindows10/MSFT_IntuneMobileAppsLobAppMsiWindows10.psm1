@@ -217,14 +217,6 @@ class IntuneMobileAppsLobAppMsiWindows10 : M365DSCResourceBase
                 UseDeviceContext       = $getValue.useDeviceContext
                 Id                     = $getValue.Id
                 Ensure                 = 'Present'
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                TenantId               = $this.TenantId
-                ApplicationSecret      = $this.ApplicationSecret
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
                 #endregion
             }
             $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppAssignment -MobileAppId $resolvedId
@@ -398,23 +390,13 @@ class IntuneMobileAppsLobAppMsiWindows10 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.Categories)
                 {
@@ -465,7 +447,7 @@ class IntuneMobileAppsLobAppMsiWindows10 : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'Categories', 'MinimumSupportedOperatingSystem', 'LargeIcon') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -481,23 +463,6 @@ class IntuneMobileAppsLobAppMsiWindows10 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneMobileAppsLobAppMsiWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsLobAppMsiWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsLobAppMsiWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

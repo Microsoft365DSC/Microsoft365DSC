@@ -147,14 +147,6 @@ class SCComplianceSearchAction : M365DSCResourceBase
                     RetryOnError                        = $currentAction.Retry
                     ActionScope                         = $ScopeValue
                     Ensure                              = 'Present'
-                    Credential                          = $this.Credential
-                    ApplicationId                       = $this.ApplicationId
-                    TenantId                            = $this.TenantId
-                    CertificateThumbprint               = $this.CertificateThumbprint
-                    CertificatePath                     = $this.CertificatePath
-                    CertificatePassword                 = $this.CertificatePassword
-                    ManagedIdentity                     = $this.ManagedIdentity
-                    AccessTokens                        = $this.AccessTokens
                 }
                 if ($ActionName -eq 'Preview')
                 {
@@ -165,34 +157,20 @@ class SCComplianceSearchAction : M365DSCResourceBase
             {
                 $PurgeTP = $this.GetResultProperty($currentAction.Results, 'Purge Type')
                 $result = @{
-                    Action                = $currentAction.Action
-                    SearchName            = $currentAction.SearchName
-                    PurgeType             = $PurgeTP
-                    RetryOnError          = $currentAction.Retry
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    Ensure                = 'Present'
-                    AccessTokens          = $this.AccessTokens
+                    Action       = $currentAction.Action
+                    SearchName   = $currentAction.SearchName
+                    PurgeType    = $PurgeTP
+                    RetryOnError = $currentAction.Retry
+                    Ensure       = 'Present'
                 }
             }
             else
             {
                 $result = @{
-                    Action                = $currentAction.Action
-                    SearchName            = $currentAction.SearchName
-                    RetryOnError          = $currentAction.Retry
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    Ensure                = 'Present'
-                    AccessTokens          = $this.AccessTokens
+                    Action       = $currentAction.Action
+                    SearchName   = $currentAction.SearchName
+                    RetryOnError = $currentAction.Retry
+                    Ensure       = 'Present'
                 }
             }
 
@@ -368,13 +346,12 @@ class SCComplianceSearchAction : M365DSCResourceBase
                 }
                 $this.ExportedInstance = $action
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -413,14 +390,13 @@ class SCComplianceSearchAction : M365DSCResourceBase
                         $Params.Action = 'Retention'
                     }
                     $Results = $this.Get().ToHashtable()
-                    $rawResults = $Results.Clone()
 
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                     $i++
@@ -517,22 +493,5 @@ class SCComplianceSearchAction : M365DSCResourceBase
         }
 
         return $currentAction
-    }
-
-    hidden [SCComplianceSearchAction] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCComplianceSearchAction])
-        {
-            return $Values
-        }
-
-        $result = [SCComplianceSearchAction]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

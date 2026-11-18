@@ -75,16 +75,8 @@ class EXOPerimeterConfiguration : M365DSCResourceBase
             Write-Verbose -Message 'Found Perimeter Configuration'
 
             $result = @{
-                IsSingleInstance      = 'Yes'
-                GatewayIPAddresses    = $PerimeterConfiguration.GatewayIPAddresses
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance   = 'Yes'
+                GatewayIPAddresses = $PerimeterConfiguration.GatewayIPAddresses
             }
 
             return $this.AsResult($result)
@@ -158,15 +150,7 @@ class EXOPerimeterConfiguration : M365DSCResourceBase
             Write-M365DSCHost -Message "    |---[1/1] $($PerimeterConfiguration.Identity)" -DeferWrite
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $PerimeterConfiguration
             $Results = $this.GetForExport($Params)
@@ -187,22 +171,5 @@ class EXOPerimeterConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOPerimeterConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOPerimeterConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [EXOPerimeterConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

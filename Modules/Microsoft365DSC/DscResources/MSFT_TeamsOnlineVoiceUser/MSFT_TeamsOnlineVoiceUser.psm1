@@ -111,18 +111,10 @@ class TeamsOnlineVoiceUser : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                Identity              = $this.Identity
-                LocationID            = $locationValue
-                TelephoneNumber       = $telephoneNumberValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity        = $this.Identity
+                LocationID      = $locationValue
+                TelephoneNumber = $telephoneNumberValue
+                Ensure          = 'Present'
             })
         }
         catch
@@ -216,15 +208,7 @@ class TeamsOnlineVoiceUser : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($users.Count)] $($user.UserPrincipalName)" -DeferWrite
                 $params = @{
-                    Identity              = $user.UserPrincipalName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $user.UserPrincipalName
                 }
 
                 $this.ExportedInstance = $user
@@ -248,22 +232,5 @@ class TeamsOnlineVoiceUser : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsOnlineVoiceUser] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsOnlineVoiceUser])
-        {
-            return $Values
-        }
-
-        $result = [TeamsOnlineVoiceUser]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

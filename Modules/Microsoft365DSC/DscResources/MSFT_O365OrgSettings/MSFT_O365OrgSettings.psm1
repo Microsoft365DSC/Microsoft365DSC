@@ -182,16 +182,7 @@ class O365OrgSettings : M365DSCResourceBase
             #endregion
 
             $results = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             if ($this.GetBoundParameters().ContainsKey('M365WebEnableUsersToOpenFilesFrom3PStorage') -or `
@@ -753,16 +744,7 @@ class O365OrgSettings : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $this.ExportedInstance = $true
@@ -1050,22 +1032,5 @@ class O365OrgSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [O365OrgSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [O365OrgSettings])
-        {
-            return $Values
-        }
-
-        $result = [O365OrgSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

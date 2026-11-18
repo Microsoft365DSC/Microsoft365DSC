@@ -100,20 +100,12 @@ class EXOJournalRule : M365DSCResourceBase
             Write-Verbose -Message "Found configuration of the Journal Rule {$($this.Name)}}"
 
             $result = @{
-                Name                  = $this.Name
-                JournalEmailAddress   = $rule.JournalEmailAddress
-                Enabled               = $rule.Enabled
-                Recipient             = $rule.Recipient
-                RuleScope             = $rule.Scope
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name                = $this.Name
+                JournalEmailAddress = $rule.JournalEmailAddress
+                Enabled             = $rule.Enabled
+                Recipient           = $rule.Recipient
+                RuleScope           = $rule.Scope
+                Ensure              = 'Present'
             }
 
             return $this.AsResult($result)
@@ -226,16 +218,8 @@ class EXOJournalRule : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($allRules.Length)] $($rule.Name)" -DeferWrite
                 $Params = @{
-                    Credential            = $this.Credential
-                    Name                  = $Rule.name
-                    JournalEmailAddress   = $Rule.JournalEmailAddress
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name                = $Rule.name
+                    JournalEmailAddress = $Rule.JournalEmailAddress
                 }
                 $this.ExportedInstance = $rule
                 $Results = $this.GetForExport($Params)
@@ -258,22 +242,5 @@ class EXOJournalRule : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOJournalRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOJournalRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOJournalRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

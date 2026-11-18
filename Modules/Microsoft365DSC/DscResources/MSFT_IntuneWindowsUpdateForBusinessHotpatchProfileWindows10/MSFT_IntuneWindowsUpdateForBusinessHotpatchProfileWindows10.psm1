@@ -168,21 +168,13 @@ class IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 : M365DSCResourceBa
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.description
-                DisplayName           = $getValue.displayName
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.roleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                ApprovalSettings      = $complexApprovalSettings
-                HotpatchEnabled       = $getValue.hotpatchEnabled
-                Id                    = $getValue.id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Description      = $getValue.description
+                DisplayName      = $getValue.displayName
+                RoleScopeTagIds  = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.roleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                ApprovalSettings = $complexApprovalSettings
+                HotpatchEnabled  = $getValue.hotpatchEnabled
+                Id               = $getValue.id
+                Ensure           = 'Present'
                 #endregion
             }
 
@@ -335,23 +327,13 @@ class IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 : M365DSCResourceBa
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.ApprovalSettings)
                 {
@@ -387,7 +369,7 @@ class IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 : M365DSCResourceBa
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'ApprovalSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -403,23 +385,6 @@ class IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 : M365DSCResourceBa
 
             throw
         }
-    }
-
-    hidden [IntuneWindowsUpdateForBusinessHotpatchProfileWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneWindowsUpdateForBusinessHotpatchProfileWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneWindowsUpdateForBusinessHotpatchProfileWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

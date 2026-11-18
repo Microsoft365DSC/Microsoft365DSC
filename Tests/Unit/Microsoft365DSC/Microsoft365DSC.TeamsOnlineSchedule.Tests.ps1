@@ -182,8 +182,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     Name           = 'Contoso Holidays'
                     Type           = 'Fixed'
-                    DateTimeRanges = [MSFT_TeamsOnlineScheduleDateTimeRange[]] @(
-                        ([MSFT_TeamsOnlineScheduleDateTimeRange] @{
+                    DateTimeRanges = [MSFT_TeamsOnlineScheduleFixedTimeRange[]] @(
+                        ([MSFT_TeamsOnlineScheduleFixedTimeRange] @{
                             Start = '24/12/2026 0:00'
                             End   = '27/12/2026 0:00'
                         })
@@ -357,8 +357,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $testParams = @{
                     Name           = 'Contoso Holidays'
                     Type           = 'Fixed'
-                    DateTimeRanges = [MSFT_TeamsOnlineScheduleDateTimeRange[]] @(
-                        ([MSFT_TeamsOnlineScheduleDateTimeRange] @{
+                    DateTimeRanges = [MSFT_TeamsOnlineScheduleFixedTimeRange[]] @(
+                        ([MSFT_TeamsOnlineScheduleFixedTimeRange] @{
                             Start = '24/12/2026 0:00'
                             End   = '27/12/2026 0:00'
                         })
@@ -399,8 +399,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return true from the Test method when the desired dates use another supported format' {
                 $paddedParams = $testParams.Clone()
-                $paddedParams.DateTimeRanges = [MSFT_TeamsOnlineScheduleDateTimeRange[]] @(
-                    ([MSFT_TeamsOnlineScheduleDateTimeRange] @{
+                $paddedParams.DateTimeRanges = [MSFT_TeamsOnlineScheduleFixedTimeRange[]] @(
+                    ([MSFT_TeamsOnlineScheduleFixedTimeRange] @{
                         Start = '24/12/2026 00:00'
                         End   = '27/12/2026'
                     })
@@ -411,8 +411,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should update the date time ranges from the Set method when they drift' {
                 $driftParams = $testParams.Clone()
-                $driftParams.DateTimeRanges = [MSFT_TeamsOnlineScheduleDateTimeRange[]] @(
-                    ([MSFT_TeamsOnlineScheduleDateTimeRange] @{
+                $driftParams.DateTimeRanges = [MSFT_TeamsOnlineScheduleFixedTimeRange[]] @(
+                    ([MSFT_TeamsOnlineScheduleFixedTimeRange] @{
                         Start = '24/12/2026 0:00'
                         End   = '28/12/2026 0:00'
                     })

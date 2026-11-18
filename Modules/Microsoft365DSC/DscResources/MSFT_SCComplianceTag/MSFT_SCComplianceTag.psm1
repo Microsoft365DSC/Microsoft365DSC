@@ -140,25 +140,17 @@ class SCComplianceTag : M365DSCResourceBase
 
             Write-Verbose "Found existing ComplianceTag $($this.Name)"
             $result = @{
-                Name                  = $tagObject.Name
-                Comment               = $tagObject.Comment
-                RetentionDuration     = $tagObject.RetentionDuration
-                IsRecordLabel         = $tagObject.IsRecordLabel
-                Regulatory            = $tagObject.Regulatory
-                Notes                 = $tagObject.Notes
-                ReviewerEmail         = $tagObject.ReviewerEmail
-                RetentionAction       = $tagObject.RetentionAction
-                EventType             = $eventTypeName
-                RetentionType         = $tagObject.RetentionType
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name              = $tagObject.Name
+                Comment           = $tagObject.Comment
+                RetentionDuration = $tagObject.RetentionDuration
+                IsRecordLabel     = $tagObject.IsRecordLabel
+                Regulatory        = $tagObject.Regulatory
+                Notes             = $tagObject.Notes
+                ReviewerEmail     = $tagObject.ReviewerEmail
+                RetentionAction   = $tagObject.RetentionAction
+                EventType         = $eventTypeName
+                RetentionType     = $tagObject.RetentionType
+                Ensure            = 'Present'
             }
 
             if (-not [System.String]::IsNullOrEmpty($tagObject.FilePlanMetadata))
@@ -348,7 +340,6 @@ class SCComplianceTag : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($totalTags)] $($tag.Name)" -DeferWrite
                 $this.ExportedInstance = $tag
                 $Results = $this.GetForExport(@{ Name = $tag.Name })
-                $rawResults = $Results.Clone()
                 if ($Results.FilePlanProperty)
                 {
                     $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
@@ -383,7 +374,7 @@ class SCComplianceTag : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('FilePlanProperty', 'MultiStageReviewProperty') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -454,23 +445,6 @@ class SCComplianceTag : M365DSCResourceBase
         foreach ($item in $JSONObject.Settings)
         {
             $result.Add($item.Key, $item.Value)
-        }
-
-        return $result
-    }
-
-    hidden [SCComplianceTag] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCComplianceTag])
-        {
-            return $Values
-        }
-
-        $result = [SCComplianceTag]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
         }
 
         return $result

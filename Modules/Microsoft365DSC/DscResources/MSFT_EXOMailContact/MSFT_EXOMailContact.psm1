@@ -261,14 +261,6 @@ class EXOMailContact : M365DSCResourceBase
                 SendModerationNotifications = $contact.SendModerationNotifications
                 UsePreferMessageFormat      = $contact.UsePreferMessageFormat
                 Ensure                      = 'Present'
-                Credential                  = $this.Credential
-                ApplicationId               = $this.ApplicationId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                TenantId                    = $this.TenantId
-                AccessTokens                = $this.AccessTokens
             }
 
             foreach ($i in (1..15))
@@ -428,16 +420,8 @@ class EXOMailContact : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($contactList.Count)] $($contact.Name)" -DeferWrite
                 $params = @{
-                    Name                  = $contact.Name
-                    ExternalEmailAddress  = $contact.ExternalEmailAddress
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name                 = $contact.Name
+                    ExternalEmailAddress = $contact.ExternalEmailAddress
                 }
                 $this.ExportedInstance = $contact
                 $Results = $this.GetForExport($Params)
@@ -468,22 +452,5 @@ class EXOMailContact : M365DSCResourceBase
         return @{
             ExcludedProperties = @('OrganizationalUnit')
         }
-    }
-
-    hidden [EXOMailContact] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailContact])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailContact]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

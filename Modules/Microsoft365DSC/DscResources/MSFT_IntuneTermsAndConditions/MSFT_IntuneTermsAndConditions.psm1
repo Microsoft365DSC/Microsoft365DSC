@@ -138,22 +138,14 @@ class IntuneTermsAndConditions : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                AcceptanceStatement   = $getValue.AcceptanceStatement
-                BodyText              = $getValue.BodyText
-                Description           = $getValue.Description
-                DisplayName           = $getValue.DisplayName
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Title                 = $getValue.Title
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                AcceptanceStatement = $getValue.AcceptanceStatement
+                BodyText            = $getValue.BodyText
+                Description         = $getValue.Description
+                DisplayName         = $getValue.DisplayName
+                RoleScopeTagIds     = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Title               = $getValue.Title
+                Id                  = $getValue.Id
+                Ensure              = 'Present'
                 #endregion
             }
             $assignmentsValues = Get-MgBetaDeviceManagementTermAndConditionAssignment -TermsAndConditionsId $resolvedId
@@ -304,23 +296,13 @@ class IntuneTermsAndConditions : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -341,7 +323,7 @@ class IntuneTermsAndConditions : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -357,23 +339,6 @@ class IntuneTermsAndConditions : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneTermsAndConditions] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneTermsAndConditions])
-        {
-            return $Values
-        }
-
-        $result = [IntuneTermsAndConditions]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

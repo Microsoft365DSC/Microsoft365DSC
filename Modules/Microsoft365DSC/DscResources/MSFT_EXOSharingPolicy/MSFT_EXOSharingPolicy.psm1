@@ -96,19 +96,11 @@ class EXOSharingPolicy : M365DSCResourceBase
             Write-Verbose -Message "An EXO Sharing Policy with Name $($SharingPolicy.Name) was found."
 
             $result = @{
-                Name                  = $SharingPolicy.Name
-                Default               = $SharingPolicy.Default
-                Domains               = $SharingPolicy.Domains
-                Enabled               = $SharingPolicy.Enabled
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Name    = $SharingPolicy.Name
+                Default = $SharingPolicy.Default
+                Domains = $SharingPolicy.Domains
+                Enabled = $SharingPolicy.Enabled
+                Ensure  = 'Present'
             }
 
             return $this.AsResult($result)
@@ -221,15 +213,7 @@ class EXOSharingPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllSharingPolicies.Length)] $($SharingPolicy.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $SharingPolicy.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $SharingPolicy.Name
                 }
                 $this.ExportedInstance = $SharingPolicy
                 $Results = $this.GetForExport($Params)
@@ -252,22 +236,5 @@ class EXOSharingPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOSharingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSharingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOSharingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

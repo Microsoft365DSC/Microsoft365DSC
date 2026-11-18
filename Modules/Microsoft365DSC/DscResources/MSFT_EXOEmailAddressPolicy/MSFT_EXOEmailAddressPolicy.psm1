@@ -106,14 +106,6 @@ class EXOEmailAddressPolicy : M365DSCResourceBase
                 EnabledPrimarySMTPAddressTemplate = $EmailAddressPolicy.EnabledPrimarySMTPAddressTemplate
                 ManagedByFilter                   = $EmailAddressPolicy.ManagedByFilter
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                TenantId                          = $this.TenantId
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -228,6 +220,7 @@ class EXOEmailAddressPolicy : M365DSCResourceBase
         if ($null -eq (Get-Command Get-EmailAddressPolicy -ErrorAction SilentlyContinue))
         {
             Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiRedX) The specified account doesn't have permissions to access Email Address Policy"
+            $this.SkipExport('The specified account doesn''t have permissions to access Email Address Policy')
             return ''
         }
 
@@ -255,15 +248,7 @@ class EXOEmailAddressPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllEmailAddressPolicies.Count)] $($EmailAddressPolicy.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $EmailAddressPolicy.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $EmailAddressPolicy.Name
                 }
                 $this.ExportedInstance = $EmailAddressPolicy
                 $Results = $this.GetForExport($Params)
@@ -286,22 +271,5 @@ class EXOEmailAddressPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOEmailAddressPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOEmailAddressPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOEmailAddressPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

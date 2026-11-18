@@ -92,18 +92,10 @@ class SCFilePlanPropertyCitation : M365DSCResourceBase
             Write-Verbose "Found existing SCFilePlanPropertyCitation $($this.Name)"
 
             $result = @{
-                Name                  = $property.Name
-                CitationUrl           = $property.CitationUrl
-                CitationJurisdiction  = $property.CitationJurisdiction
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name                 = $property.Name
+                CitationUrl          = $property.CitationUrl
+                CitationJurisdiction = $property.CitationJurisdiction
+                Ensure               = 'Present'
             }
 
             return $this.AsResult($result)
@@ -230,22 +222,5 @@ class SCFilePlanPropertyCitation : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCFilePlanPropertyCitation] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCFilePlanPropertyCitation])
-        {
-            return $Values
-        }
-
-        $result = [SCFilePlanPropertyCitation]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

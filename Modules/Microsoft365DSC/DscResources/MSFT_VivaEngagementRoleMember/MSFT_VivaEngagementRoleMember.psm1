@@ -92,16 +92,8 @@ class VivaEngagementRoleMember : M365DSCResourceBase
             }
 
             $results = @{
-                Role                  = $this.Role
-                Members               = $membersValue
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Role    = $this.Role
+                Members = $membersValue
             }
             return $this.AsResult($results)
         }
@@ -207,26 +199,17 @@ class VivaEngagementRoleMember : M365DSCResourceBase
                 $displayedKey = $role.displayName
                 Write-M365DSCHost -Message "    |---[$i/$($roles.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Role                  = $role.displayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Role = $role.displayName
                 }
 
                 $this.ExportedInstance = $role
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -241,22 +224,5 @@ class VivaEngagementRoleMember : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [VivaEngagementRoleMember] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [VivaEngagementRoleMember])
-        {
-            return $Values
-        }
-
-        $result = [VivaEngagementRoleMember]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

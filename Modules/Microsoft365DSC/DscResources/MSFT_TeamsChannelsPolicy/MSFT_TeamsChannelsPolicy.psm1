@@ -186,14 +186,6 @@ class TeamsChannelsPolicy : M365DSCResourceBase
                 AllowSharingPrivateChannelWithTeamInOrg       = $policy.AllowSharingPrivateChannelWithTeamInOrg
                 DefaultChannelTypeOnCreation                  = $policy.DefaultChannelTypeOnCreation
                 Ensure                                        = 'Present'
-                Credential                                    = $this.Credential
-                ApplicationId                                 = $this.ApplicationId
-                TenantId                                      = $this.TenantId
-                CertificateThumbprint                         = $this.CertificateThumbprint
-                CertificatePath                               = $this.CertificatePath
-                CertificatePassword                           = $this.CertificatePassword
-                ManagedIdentity                               = $this.ManagedIdentity
-                AccessTokens                                  = $this.AccessTokens
             })
         }
         catch
@@ -272,15 +264,7 @@ class TeamsChannelsPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
                 }
 
                 $this.ExportedInstance = $policy
@@ -304,22 +288,5 @@ class TeamsChannelsPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsChannelsPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsChannelsPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsChannelsPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

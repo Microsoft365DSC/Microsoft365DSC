@@ -112,18 +112,9 @@ class IntuneCorporateDeviceIdentifier : M365DSCResourceBase
             }
 
             $results = @{
-                IsSingleInstance      = 'Yes'
-                Devices               = $deviceArray
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                Devices          = $deviceArray
+                Ensure           = 'Present'
             }
 
             return $this.AsResult($results)
@@ -350,16 +341,7 @@ class IntuneCorporateDeviceIdentifier : M365DSCResourceBase
             }
 
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -445,23 +427,6 @@ class IntuneCorporateDeviceIdentifier : M365DSCResourceBase
 
         # If we can't determine a match, consider them different
         return $false
-    }
-
-    hidden [IntuneCorporateDeviceIdentifier] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneCorporateDeviceIdentifier])
-        {
-            return $Values
-        }
-
-        $result = [IntuneCorporateDeviceIdentifier]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

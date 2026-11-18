@@ -131,14 +131,6 @@ class TeamsMessagingConfiguration : M365DSCResourceBase
                 Storyline                         = $instance.Storyline
                 UrlReputationCheck                = $instance.UrlReputationCheck
                 IsSingleInstance                  = 'Yes'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -217,15 +209,7 @@ class TeamsMessagingConfiguration : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    IsSingleInstance      = 'Yes'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    IsSingleInstance = 'Yes'
                 }
 
                 $this.ExportedInstance = $config
@@ -249,22 +233,5 @@ class TeamsMessagingConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsMessagingConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsMessagingConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [TeamsMessagingConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

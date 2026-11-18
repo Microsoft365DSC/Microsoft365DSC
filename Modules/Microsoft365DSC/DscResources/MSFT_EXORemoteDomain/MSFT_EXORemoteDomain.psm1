@@ -201,14 +201,6 @@ class EXORemoteDomain : M365DSCResourceBase
                 TrustedMailInboundEnabled            = $RemoteDomain.TrustedMailInboundEnabled
                 TrustedMailOutboundEnabled           = $RemoteDomain.TrustedMailOutboundEnabled
                 UseSimpleDisplayName                 = $RemoteDomain.UseSimpleDisplayName
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                TenantId                             = $this.TenantId
-                AccessTokens                         = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -325,15 +317,7 @@ class EXORemoteDomain : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllRemoteDomains.Length)] $($domain.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $domain.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $domain.Identity
                 }
                 $this.ExportedInstance = $domain
                 $Results = $this.GetForExport($Params)
@@ -356,22 +340,5 @@ class EXORemoteDomain : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXORemoteDomain] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXORemoteDomain])
-        {
-            return $Values
-        }
-
-        $result = [EXORemoteDomain]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

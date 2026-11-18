@@ -194,6 +194,70 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
+
+        Context -Name 'ReverseDSC Tests when one billing account does not support associated tenants' -Fixture {
+            BeforeAll {
+                $Global:CurrentModeIsExport = $true
+                $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
+                $testParams = @{
+                    SubscriptionId = "00000000-0000-0000-0000-000000000000"
+                    Credential     = $Credential;
+                }
+
+                Mock -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -MockWith {
+                }
+
+                Mock -CommandName Get-M365DSCAzureBillingAccount -MockWith {
+                    return @{
+                        value = @(
+                            @{
+                                name       = 'unsupported-account'
+                                properties = @{
+                                    displayName = 'UnsupportedAccount'
+                                }
+                            }
+                            @{
+                                name       = "12345-12345-12345-12345-12345"
+                                properties = @{
+                                    displayName = 'MyBillingAccount'
+                                }
+                            }
+                        )
+                    }
+                }
+
+                Mock -CommandName Get-M365DSCAzureBillingAccountsAssociatedTenant -ParameterFilter { $BillingAccountId -eq 'unsupported-account' } -MockWith {
+                    throw 'Azure Billing GET failed (400 BadRequest): InvalidBillingAccountType'
+                }
+            }
+
+            It 'Should export the associated tenants of the other billing accounts' {
+                $Global:M365DSCExportInstanceErrors = [System.Collections.Generic.List[System.Collections.Hashtable]]::new()
+                try
+                {
+                    $result = Invoke-M365DSCResourceMethod -ResourceName 'AzureBillingAccountsAssociatedTenant' -MethodName 'Export' -Parameters $testParams
+                    $result | Should -Match 'Test Tenant'
+                    $result | Should -Not -Match 'UnsupportedAccount'
+                    Should -Invoke -CommandName New-M365DSCLogEntry -ModuleName '_Shared' -Exactly 1
+                    $Global:M365DSCExportInstanceErrors.Count | Should -Be 1
+                    $Global:M365DSCExportInstanceErrors[0].ResourceName | Should -Be 'AzureBillingAccountsAssociatedTenant'
+                    $Global:M365DSCExportInstanceErrors[0].InstanceName | Should -Be 'UnsupportedAccount'
+                }
+                finally
+                {
+                    $Global:M365DSCExportInstanceErrors = $null
+                }
+            }
+
+            It 'Should fail the export when the error is transient' {
+                Mock -CommandName Get-M365DSCAzureBillingAccountsAssociatedTenant -ParameterFilter { $BillingAccountId -eq 'unsupported-account' } -MockWith {
+                    throw 'Azure Billing GET failed (429 TooManyRequests): Throttled'
+                }
+
+                { Invoke-M365DSCResourceMethod -ResourceName 'AzureBillingAccountsAssociatedTenant' -MethodName 'Export' -Parameters $testParams } |
+                    Should -Throw -ExpectedMessage '*429*'
+            }
+        }
     }
 }
 

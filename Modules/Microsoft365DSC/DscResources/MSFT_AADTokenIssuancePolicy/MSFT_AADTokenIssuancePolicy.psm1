@@ -122,14 +122,6 @@ class AADTokenIssuancePolicy : M365DSCResourceBase
                 IsOrganizationDefault = $instance.IsOrganizationDefault
                 Definition            = $DefinitionValue
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -231,16 +223,8 @@ class AADTokenIssuancePolicy : M365DSCResourceBase
                 $displayedKey = $config.DisplayName
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    Id                    = $config.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.DisplayName
+                    Id          = $config.Id
                 }
 
                 $this.ExportedInstance = $config
@@ -264,22 +248,5 @@ class AADTokenIssuancePolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADTokenIssuancePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADTokenIssuancePolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADTokenIssuancePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

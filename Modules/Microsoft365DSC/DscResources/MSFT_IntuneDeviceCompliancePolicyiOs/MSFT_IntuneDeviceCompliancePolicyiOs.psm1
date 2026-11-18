@@ -250,15 +250,6 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
                 ManagedEmailProfileRequired                    = $devicePolicy.managedEmailProfileRequired
                 RestrictedApps                                 = $devicePolicy.restrictedApps
                 Ensure                                         = 'Present'
-                Credential                                     = $this.Credential
-                ApplicationId                                  = $this.ApplicationId
-                TenantId                                       = $this.TenantId
-                ApplicationSecret                              = $this.ApplicationSecret
-                CertificateThumbprint                          = $this.CertificateThumbprint
-                CertificatePath                                = $this.CertificatePath
-                CertificatePassword                            = $this.CertificatePassword
-                ManagedIdentity                                = $this.ManagedIdentity
-                AccessTokens                                   = $this.AccessTokens
             }
 
             $returnAssignments = @()
@@ -466,22 +457,12 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configDeviceiOsPolicies.Count)] $($configDeviceiOsPolicy.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $configDeviceiOsPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $configDeviceiOsPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configDeviceiOsPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.RestrictedApps)
                 {
@@ -530,7 +511,7 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('RestrictedApps', 'Assignments', 'ScheduledActionsForRule') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -546,6 +527,7 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -557,23 +539,6 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceCompliancePolicyiOs] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceCompliancePolicyiOs])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceCompliancePolicyiOs]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -253,10 +253,17 @@ class AADCrossTenantAccessPolicyConfigurationPartner : M365DSCResourceBase
                     UserSyncInbound = @{
                         IsSyncAllowed = $getValue.IdentitySynchronization.UserSyncInbound.IsSyncAllowed
                     }
+                    RoleEnabledGroupSyncInbound = @{
+                        IsSyncAllowed = $getValue.IdentitySynchronization.RoleEnabledGroupSyncInbound.IsSyncAllowed
+                    }
                 }
                 if ($null -eq $getValue.IdentitySynchronization.GroupSyncInbound.IsSyncAllowed)
                 {
                     $IdentitySynchronizationValue.Remove('GroupSyncInbound') | Out-Null
+                }
+                if ($null -eq $getValue.IdentitySynchronization.RoleEnabledGroupSyncInbound.IsSyncAllowed)
+                {
+                    $IdentitySynchronizationValue.Remove('RoleEnabledGroupSyncInbound') | Out-Null
                 }
                 if ($null -eq $getValue.IdentitySynchronization.UserSyncInbound.IsSyncAllowed)
                 {
@@ -309,15 +316,6 @@ class AADCrossTenantAccessPolicyConfigurationPartner : M365DSCResourceBase
                 M365CollaborationOutbound          = $M365CollaborationOutboundValue
                 TenantRestrictions                 = $TenantRestrictionsValue
                 Ensure                             = 'Present'
-                Credential                         = $this.Credential
-                ApplicationId                      = $this.ApplicationId
-                TenantId                           = $this.TenantId
-                ApplicationSecret                  = $this.ApplicationSecret
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
-                AccessTokens                       = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -474,16 +472,7 @@ class AADCrossTenantAccessPolicyConfigurationPartner : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $($entry.TenantId)" -DeferWrite
                 $Params = @{
-                    PartnerTenantId       = $entry.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    Credential            = $this.Credential
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    PartnerTenantId = $entry.TenantId
                 }
 
                 $this.ExportedInstance = $entry
@@ -727,6 +716,11 @@ class AADCrossTenantAccessPolicyConfigurationPartner : M365DSCResourceBase
                         @{
                             Name            = 'UserSyncInbound'
                             CimInstanceName = 'AADCrossTenantUserSyncInbound'
+                            IsRequired      = $False
+                        },
+                        @{
+                            Name            = 'RoleEnabledGroupSyncInbound'
+                            CimInstanceName = 'AADCrossTenantRoleEnabledGroupSyncInbound'
                             IsRequired      = $False
                         }
                     )
@@ -1012,7 +1006,7 @@ class AADCrossTenantAccessPolicyConfigurationPartner : M365DSCResourceBase
 
     hidden [System.Collections.Hashtable] GetIdentitySynchronization([System.Object] $Setting)
     {
-        return @{
+        $value = @{
             groupSyncInbound = @{
                 isSyncAllowed = $Setting.GroupSyncInbound.IsSyncAllowed
             }
@@ -1020,6 +1014,15 @@ class AADCrossTenantAccessPolicyConfigurationPartner : M365DSCResourceBase
                 isSyncAllowed = $Setting.UserSyncInbound.IsSyncAllowed
             }
         }
+
+        if ($null -ne $Setting.RoleEnabledGroupSyncInbound.IsSyncAllowed)
+        {
+            $value.roleEnabledGroupSyncInbound = @{
+                isSyncAllowed = $Setting.RoleEnabledGroupSyncInbound.IsSyncAllowed
+            }
+        }
+
+        return $value
     }
 
     hidden [void] SetIdentitySynchronization([System.String] $PartnerTenantId, [System.Collections.Hashtable] $Value, [System.Boolean] $UsePatch)
@@ -1136,23 +1139,6 @@ class AADCrossTenantAccessPolicyConfigurationPartner : M365DSCResourceBase
 
         return $result
     }
-
-    hidden [AADCrossTenantAccessPolicyConfigurationPartner] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCrossTenantAccessPolicyConfigurationPartner])
-        {
-            return $Values
-        }
-
-        $result = [AADCrossTenantAccessPolicyConfigurationPartner]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
-    }
 }
 
 class MSFT_AADCrossTenantAccessPolicyAppServiceConnectSetting
@@ -1187,12 +1173,16 @@ class MSFT_AADCrossTenantAccessPolicyAutomaticUserConsentSettings
 class MSFT_AADCrossTenantIdentitySyncPolicyPartnerInbound
 {
     [DscProperty()]
-    [System.ComponentModel.Description('Defines whether groups can be synchronized from a partner tenant. Key.')]
+    [System.ComponentModel.Description('Defines whether groups can be synchronized from a partner tenant.')]
     [MSFT_AADCrossTenantGroupSyncInbound] $GroupSyncInbound
 
     [DscProperty()]
-    [System.ComponentModel.Description('Specifies whether you want to automatically trust Outbound invitations.')]
+    [System.ComponentModel.Description('Defines whether users can be synchronized from the partner tenant.')]
     [MSFT_AADCrossTenantUserSyncInbound] $UserSyncInbound
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Defines whether role-assignable groups can be synchronized from the partner tenant.')]
+    [MSFT_AADCrossTenantRoleEnabledGroupSyncInbound] $RoleEnabledGroupSyncInbound
 }
 
 class MSFT_AADCrossTenantAccessPolicyInboundTrust
@@ -1267,6 +1257,13 @@ class MSFT_AADCrossTenantGroupSyncInbound
 {
     [DscProperty()]
     [System.ComponentModel.Description('Defines whether group objects should be synchronized from the partner tenant. false stops any current group synchronization from the source tenant to the target tenant. This property has no impact on existing groups that were synchronized.')]
+    [System.Nullable[System.Boolean]] $IsSyncAllowed
+}
+
+class MSFT_AADCrossTenantRoleEnabledGroupSyncInbound
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Defines whether role-assignable group objects should be synchronized from the partner tenant.')]
     [System.Nullable[System.Boolean]] $IsSyncAllowed
 }
 

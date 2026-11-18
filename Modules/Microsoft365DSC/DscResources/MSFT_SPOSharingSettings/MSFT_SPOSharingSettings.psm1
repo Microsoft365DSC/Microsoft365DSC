@@ -390,15 +390,6 @@ class SPOSharingSettings : M365DSCResourceBase
                 # TODO: Look up the principal id
                 WhoCanShareAllowListInTenant                               = Get-M365DSCArrayFromProperty -PropertyValue $SPOSharingSettings.WhoCanShareAllowListInTenant -ElementType ([System.String])
                 WhoCanShareAllowListInTenantByPrincipalIdentity            = Get-M365DSCArrayFromProperty -PropertyValue $SPOSharingSettings.WhoCanShareAllowListInTenantByPrincipalIdentity -ElementType ([System.String])
-                Credential                                                 = $this.Credential
-                ApplicationId                                              = $this.ApplicationId
-                TenantId                                                   = $this.TenantId
-                ApplicationSecret                                          = $this.ApplicationSecret
-                CertificateThumbprint                                      = $this.CertificateThumbprint
-                CertificatePath                                            = $this.CertificatePath
-                CertificatePassword                                        = $this.CertificatePassword
-                ManagedIdentity                                            = $this.ManagedIdentity
-                AccessTokens                                               = $this.AccessTokens
             }
 
             if (-not [System.String]::IsNullOrEmpty($mySiteSharingCapabilityValue))
@@ -556,16 +547,7 @@ class SPOSharingSettings : M365DSCResourceBase
             $this.ResourceCache['ExportMode'] = $true
             $dscContent = [System.Text.StringBuilder]::new()
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -606,22 +588,5 @@ class SPOSharingSettings : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('SharingAllowedDomainList'); When = @{ Property = 'SharingDomainRestrictionMode'; Equals = 'BlockList' }; AlsoFromDesired = $true }
             )
         }
-    }
-
-    hidden [SPOSharingSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSharingSettings])
-        {
-            return $Values
-        }
-
-        $result = [SPOSharingSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

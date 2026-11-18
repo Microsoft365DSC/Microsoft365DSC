@@ -172,15 +172,7 @@ class EXOInboundConnector : M365DSCResourceBase
                 SenderIPAddresses            = $InboundConnector.SenderIPAddresses
                 TlsSenderCertificateName     = $InboundConnector.TlsSenderCertificateName
                 TreatMessagesAsInternal      = $InboundConnector.TreatMessagesAsInternal
-                Credential                   = $this.Credential
                 Ensure                       = 'Present'
-                ApplicationId                = $this.ApplicationId
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                TenantId                     = $this.TenantId
-                AccessTokens                 = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -282,25 +274,16 @@ class EXOInboundConnector : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($InboundConnectors.Length)] $($InboundConnector.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $InboundConnector.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $InboundConnector.Identity
                 }
                 $this.ExportedInstance = $InboundConnector
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -315,22 +298,5 @@ class EXOInboundConnector : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOInboundConnector] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOInboundConnector])
-        {
-            return $Values
-        }
-
-        $result = [EXOInboundConnector]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

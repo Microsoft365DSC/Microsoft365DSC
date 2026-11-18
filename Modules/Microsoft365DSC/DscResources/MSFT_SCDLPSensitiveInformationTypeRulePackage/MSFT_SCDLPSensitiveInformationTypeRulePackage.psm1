@@ -89,17 +89,10 @@ class SCDLPSensitiveInformationTypeRulePackage : M365DSCResourceBase
             Write-Verbose "Found existing DLPSensitiveInformationTypeRulePackage $($this.Name)"
 
             $result = @{
-                Ensure                = 'Present'
-                Name                  = $SIT.RuleCollectionName
-                Identity              = $SIT.Identity
-                XmlFileData           = $SIT.ClassificationRuleCollectionXml -replace "lastModifiedTime=`".*?`"", '' # Remove last modified time as it is not relevant to the configuration and causes noise in diffs
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $CertificatePath
-                CertificatePassword   = $CertificatePassword
-                AccessTokens          = $this.AccessTokens
+                Ensure      = 'Present'
+                Name        = $SIT.RuleCollectionName
+                Identity    = $SIT.Identity
+                XmlFileData = $SIT.ClassificationRuleCollectionXml -replace "lastModifiedTime=`".*?`"", '' # Remove last modified time as it is not relevant to the configuration and causes noise in diffs
             }
 
             return $this.AsResult($result)
@@ -224,22 +217,5 @@ class SCDLPSensitiveInformationTypeRulePackage : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Identity')
         }
-    }
-
-    hidden [SCDLPSensitiveInformationTypeRulePackage] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCDLPSensitiveInformationTypeRulePackage])
-        {
-            return $Values
-        }
-
-        $result = [SCDLPSensitiveInformationTypeRulePackage]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

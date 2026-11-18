@@ -89,14 +89,6 @@ class AADB2CAuthenticationMethodsPolicy : M365DSCResourceBase
                 IsEmailPasswordAuthenticationEnabled        = $instance.IsEmailPasswordAuthenticationEnabled
                 IsUserNameAuthenticationEnabled             = $instance.IsUserNameAuthenticationEnabled
                 IsPhoneOneTimePasswordAuthenticationEnabled = $instance.IsPhoneOneTimePasswordAuthenticationEnabled
-                Credential                                  = $this.Credential
-                ApplicationId                               = $this.ApplicationId
-                TenantId                                    = $this.TenantId
-                CertificateThumbprint                       = $this.CertificateThumbprint
-                CertificatePath                             = $this.CertificatePath
-                CertificatePassword                         = $this.CertificatePassword
-                ManagedIdentity                             = $this.ManagedIdentity
-                AccessTokens                                = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -156,15 +148,7 @@ class AADB2CAuthenticationMethodsPolicy : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             if ($null -ne $Global:M365DSCExportResourceInstancesCount)
             {
@@ -191,22 +175,5 @@ class AADB2CAuthenticationMethodsPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADB2CAuthenticationMethodsPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADB2CAuthenticationMethodsPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADB2CAuthenticationMethodsPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -145,23 +145,14 @@ class SPOSearchResultSource : M365DSCResourceBase
             $mapping = $this.ResourceCache['InfoMapping'] | Where-Object -FilterScript { $_.ProviderID -eq $source.ProviderId }
 
             $returnValue = @{
-                Name                  = $this.Name
-                Description           = [string] $source.Description
-                Protocol              = $mapping.Protocol
-                Type                  = $mapping.Type
-                QueryTransform        = [string] $source.QueryTransform._QueryTemplate
-                SourceURL             = $ExoSource
-                UseAutoDiscover       = $SourceHasAutoDiscover
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Ensure                = 'Present'
-                AccessTokens          = $this.AccessTokens
+                Name            = $this.Name
+                Description     = [string] $source.Description
+                Protocol        = $mapping.Protocol
+                Type            = $mapping.Type
+                QueryTransform  = [string] $source.QueryTransform._QueryTemplate
+                SourceURL       = $ExoSource
+                UseAutoDiscover = $SourceHasAutoDiscover
+                Ensure          = 'Present'
             }
 
             return $this.AsResult($returnValue)
@@ -421,17 +412,8 @@ class SPOSearchResultSource : M365DSCResourceBase
                 }
 
                 $Params = @{
-                    Name                  = $source.Name
-                    Protocol              = $mapping.Protocol
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name     = $source.Name
+                    Protocol = $mapping.Protocol
                 }
                 $Results = $this.GetForExport($Params)
                 if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 2)
@@ -462,22 +444,5 @@ class SPOSearchResultSource : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOSearchResultSource] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSearchResultSource])
-        {
-            return $Values
-        }
-
-        $result = [SPOSearchResultSource]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -90,15 +90,7 @@ class O365AdminAuditLogConfig : M365DSCResourceBase
 
                 $Result = @{
                     IsSingleInstance                = $this.IsSingleInstance
-                    Credential                      = $this.Credential
-                    ApplicationId                   = $this.ApplicationId
-                    TenantId                        = $this.TenantId
-                    CertificateThumbprint           = $this.CertificateThumbprint
-                    CertificatePath                 = $this.CertificatePath
-                    CertificatePassword             = $this.CertificatePassword
-                    ManagedIdentity                 = $this.ManagedIdentity
                     UnifiedAuditLogIngestionEnabled = $UnifiedAuditLogIngestionEnabledReturnValue
-                    AccessTokens                    = $this.AccessTokens
                 }
                 return $this.AsResult($Result)
             }
@@ -197,14 +189,6 @@ class O365AdminAuditLogConfig : M365DSCResourceBase
             $Params = @{
                 IsSingleInstance                = 'Yes'
                 UnifiedAuditLogIngestionEnabled = $value
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePassword             = $this.CertificatePassword
-                CertificatePath                 = $this.CertificatePath
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -234,22 +218,5 @@ class O365AdminAuditLogConfig : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [O365AdminAuditLogConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [O365AdminAuditLogConfig])
-        {
-            return $Values
-        }
-
-        $result = [O365AdminAuditLogConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -63,7 +63,6 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name "When the Filter doesn't already exist" -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Description = 'Test'
                     DisplayName = 'Test Device Filter'
                     Ensure      = 'Present'
                     AssignmentFilterManagementType = 'devices'
@@ -88,7 +87,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should create the Android Device Compliance Policy from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceAndAppManagementAssignmentFilter' -Property $testParams).Set()
-                Should -Invoke -CommandName 'New-MgBetaDeviceManagementAssignmentFilter' -Exactly 1
+                Should -Invoke -CommandName 'New-MgBetaDeviceManagementAssignmentFilter' -Exactly 1 -ParameterFilter {
+                    -not $BodyParameter.ContainsKey('Description') -and $BodyParameter.Platform -eq 'windows10AndLater' -and $BodyParameter.Rule -eq '(device.manufacturer -ne "bibi")'
+                }
             }
         }
 
@@ -116,7 +117,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should update the Device and App Management Assignment Filter from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneDeviceAndAppManagementAssignmentFilter' -Property $testParams).Set()
-                Should -Invoke -CommandName 'Update-MgBetaDeviceManagementAssignmentFilter' -Exactly 1
+                Should -Invoke -CommandName 'Update-MgBetaDeviceManagementAssignmentFilter' -Exactly 1 -ParameterFilter {
+                    $BodyParameter.Rule -eq '(device.manufacturer -ne "test")' -and -not $BodyParameter.ContainsKey('Platform')
+                }
             }
         }
 

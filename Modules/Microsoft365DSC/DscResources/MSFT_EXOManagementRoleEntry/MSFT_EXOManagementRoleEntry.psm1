@@ -92,18 +92,10 @@ class EXOManagementRoleEntry : M365DSCResourceBase
             }
 
             $result = @{
-                Identity              = $this.Identity
-                Parameters            = $roleEntry.Parameters
-                Type                  = $roleEntry.Type
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity   = $this.Identity
+                Parameters = $roleEntry.Parameters
+                Type       = $roleEntry.Type
+                Ensure     = 'Present'
             }
 
             Write-Verbose -Message "Found Management Role Entry {$($this.Identity)}."
@@ -229,15 +221,7 @@ class EXOManagementRoleEntry : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($roleEntry.Identity + '\' + $roleEntry.Name)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $roleEntry.Identity + '\' + $roleEntry.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $roleEntry.Identity + '\' + $roleEntry.Name
                 }
                 $this.ExportedInstance = $roleEntry
                 $Results = $this.GetForExport($Params)
@@ -260,22 +244,5 @@ class EXOManagementRoleEntry : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOManagementRoleEntry] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOManagementRoleEntry])
-        {
-            return $Values
-        }
-
-        $result = [EXOManagementRoleEntry]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

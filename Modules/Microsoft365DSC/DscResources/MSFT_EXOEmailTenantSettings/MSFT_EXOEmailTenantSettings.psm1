@@ -101,14 +101,6 @@ class EXOEmailTenantSettings : M365DSCResourceBase
                 Name                            = $EmailTenantSettings.Name
                 IsValid                         = $EmailTenantSettings.IsValid
                 ObjectState                     = $EmailTenantSettings.ObjectState
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                TenantId                        = $this.TenantId
-                AccessTokens                    = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -189,15 +181,7 @@ class EXOEmailTenantSettings : M365DSCResourceBase
             Write-M365DSCHost -Message "    |---[1/1] $($EmailTenantSettings.Identity)" -DeferWrite
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                CertificatePath       = $this.CertificatePath
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $EmailTenantSettings
             $Results = $this.GetForExport($Params)
@@ -218,22 +202,5 @@ class EXOEmailTenantSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOEmailTenantSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOEmailTenantSettings])
-        {
-            return $Values
-        }
-
-        $result = [EXOEmailTenantSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -23,28 +23,37 @@
 
 .OUTPUTS
     If OutputPath is provided, the function will create a new configuration file with the evaluation rules. If OutputPath is not provided, the function will return the evaluation rules as a string.
+    The returned rules reference the variables an exported configuration defines: $CredsCredential for the Credentials* modes and $CredsCertificatePassword for ServicePrincipalWithPath.
+
+.EXAMPLE
+    PS> Get-M365DSCEvaluationRulesForConfiguration -ConfigurationPath 'C:\DSC\M365TenantConfig.ps1' -ConnectionMode 'ServicePrincipalWithThumbprint' -OutputPath 'C:\DSC\EvaluationRules.ps1'
+
+.FUNCTIONALITY
+    Public
 #>
 function Get-M365DSCEvaluationRulesForConfiguration
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Plaintext')]
     [OutputType([System.String], ParameterSetName = 'Plaintext')]
     [OutputType([System.Void], ParameterSetName = 'Configuration')]
     param (
-        [Parameter(ParameterSetName = ('Configuration', 'Plaintext'), Mandatory = $true)]
-        [string]
+        [Parameter(ParameterSetName = 'Configuration', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'Plaintext', Mandatory = $true)]
+        [System.String]
         $ConfigurationPath,
 
-        [Parameter(ParameterSetName = 'Configuration')]
-        [string]
+        [Parameter(ParameterSetName = 'Configuration', Mandatory = $true)]
+        [System.String]
         $OutputPath,
 
-        [Parameter(ParameterSetName = ('Configuration', 'Plaintext'), Mandatory = $true)]
+        [Parameter(ParameterSetName = 'Configuration', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'Plaintext', Mandatory = $true)]
         [ValidateSet('ServicePrincipalWithThumbprint', 'ServicePrincipalWithSecret', 'ServicePrincipalWithPath', 'CredentialsWithTenantId', 'CredentialsWithApplicationId', 'Credentials', 'ManagedIdentity')]
         [System.String]
         $ConnectionMode
     )
 
-    $configurationAsObject = ConvertTo-DSCObject -Path $ConfigurationPath
+    $configurationAsObject = ConvertTo-DSCObject -Content (Get-Content -LiteralPath $ConfigurationPath -Raw)
 
     $groupCondition = {
         $_.ResourceName
@@ -60,65 +69,47 @@ function Get-M365DSCEvaluationRulesForConfiguration
     # endregion
 '@
 
-    switch ($ConnectionMode)
+    Initialize-M365DSCDllLoader -ErrorAction Stop
+    $authenticationProperties = [Microsoft365DSC.Utilities.Utilities]::ConnectionModePropertyNames[$ConnectionMode]
+
+    $authenticationLines = @()
+    foreach ($property in $authenticationProperties)
     {
-        'ServicePrincipalWithThumbprint'
+        $value = switch ($property)
         {
-            $authentication = @"
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-        CertificateThumbprint   = `$ConfigurationData.NonNodeData.CertificateThumbprint
-"@
+            'ApplicationSecret'
+            {
+                "New-Object System.Management.Automation.PSCredential ('ApplicationSecret', (ConvertTo-SecureString `$ConfigurationData.NonNodeData.ApplicationSecret -AsPlainText -Force))"
+            }
+            'CertificatePassword'
+            {
+                '$CredsCertificatePassword'
+            }
+            'Credential'
+            {
+                '$CredsCredential'
+            }
+            'ManagedIdentity'
+            {
+                '$true'
+            }
+            'TenantId'
+            {
+                '$ConfigurationData.NonNodeData.OrganizationName'
+            }
+            default
+            {
+                "`$ConfigurationData.NonNodeData.$property"
+            }
         }
-        'ServicePrincipalWithSecret'
-        {
-            $authentication = @"
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-        CertificatePassword     = `$CertificatePassword
-"@
-        }
-        'ServicePrincipalWithPath'
-        {
-            $authentication = @"
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-        CertificatePath         = `$ConfigurationData.NonNodeData.CertificatePath
-"@
-        }
-        'CredentialsWithTenantId'
-        {
-            $authentication = @"
-        Credential              = `$CredsCredential
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-"@
-        }
-        'CredentialsWithApplicationId'
-        {
-            $authentication = @"
-        Credential              = `$CredsCredential
-        ApplicationId           = `$ConfigurationData.NonNodeData.ApplicationId
-        TenantId                = `$ConfigurationData.NonNodeData.OrganizationName
-"@
-        }
-        'ManagedIdentity'
-        {
-            $authentication = @"
-        ManagedIdentity         = `$true
-"@
-        }
-        'Credentials'
-        {
-            $authentication = @"
-        Credential              = `$CredsCredential
-"@
-        }
+        $authenticationLines += "        $($property.PadRight(24))= $value"
     }
+    $authentication = $authenticationLines -join "`n"
 
     $M365DSCRuleEvaluationResourceBlock = @'
     M365DSCRuleEvaluation '<ResourceName>'
     {
-        ResourceName            = '<ResourceName>'
+        ResourceTypeName        = '<ResourceName>'
         RuleDefinition          = "*"
         AfterRuleCountQuery     = "-eq <Count>"
 <Authentication>
@@ -128,29 +119,70 @@ function Get-M365DSCEvaluationRulesForConfiguration
     $resultConfiguration = @()
     foreach ($group in $groupedObjects)
     {
-        $resultConfiguration += $M365DSCRuleEvaluationResourceBlock -replace '<ResourceName>', $group.Name -replace '<Count>', $group.Count -replace '<Authentication>', $authentication
+        $resultConfiguration += $M365DSCRuleEvaluationResourceBlock.Replace('<ResourceName>', $group.Name).Replace('<Count>', [System.String]$group.Count).Replace('<Authentication>', $authentication)
     }
 
-    $M365DSCRuleEvaluationString = $M365DSCRuleEvaluationBlock -replace '<INSERT_RULES_HERE>', ($resultConfiguration -join "`n")
+    $M365DSCRuleEvaluationString = $M365DSCRuleEvaluationBlock.Replace('<INSERT_RULES_HERE>', ($resultConfiguration -join "`n"))
 
-    if ($PSBoundParameters.Keys.Contains('OutputPath'))
+    if ($PSCmdlet.ParameterSetName -eq 'Configuration')
     {
-        if (-not (Test-Path -Path $OutputPath))
+        $outputFolder = Split-Path -Path $OutputPath -Parent
+        if (-not [System.String]::IsNullOrEmpty($outputFolder) -and -not (Test-Path -LiteralPath $outputFolder))
         {
-            New-Item -Path $OutputPath -ItemType File -Force | Out-Null
+            New-Item -Path $outputFolder -ItemType Directory -Force | Out-Null
+        }
+
+        # Declare and resolve the PSCredential the rule blocks reference, the same way exported configurations do.
+        $parameterName = $null
+        if ($authenticationProperties -contains 'CertificatePassword')
+        {
+            $parameterName = 'CertificatePassword'
+            $variableName = 'CredsCertificatePassword'
+            $promptMessage = 'Certificate Password'
+        }
+        elseif ($authenticationProperties -contains 'Credential')
+        {
+            $parameterName = 'Credential'
+            $variableName = 'CredsCredential'
+            $promptMessage = 'Credentials'
+        }
+
+        $scriptParameters = ''
+        $configurationParameters = ''
+        $credentialResolution = ''
+        $launchArguments = ''
+        if ($null -ne $parameterName)
+        {
+            $scriptParameters = "            [Parameter()]`n            [System.Management.Automation.PSCredential]`n            `$$parameterName"
+            $configurationParameters = "                [Parameter()]`n                [System.Management.Automation.PSCredential]`n                `$$parameterName"
+            $credentialResolution = @"
+            if (`$null -eq `$$parameterName)
+            {
+                `$$variableName = Get-Credential -Message "$promptMessage"
+            }
+            else
+            {
+                `$$variableName = `$$parameterName
+            }
+
+"@
+            $launchArguments = " -$parameterName `$$parameterName"
         }
 
         $DSCString = @"
         # Generated with Microsoft365DSC
         # For additional information on how to use Microsoft365DSC, please visit https://aka.ms/M365DSC
         param (
+$scriptParameters
         )
 
         Configuration M365TenantConfig
         {
             param (
+$configurationParameters
             )
 
+$credentialResolution
             `$OrganizationName = `$ConfigurationData.NonNodeData.OrganizationName
 
             Import-DscResource -ModuleName 'Microsoft365DSC'
@@ -161,12 +193,12 @@ function Get-M365DSCEvaluationRulesForConfiguration
             }
         }
 
-        M365TenantConfig -ConfigurationData .\ConfigurationData.psd1
+        M365TenantConfig -ConfigurationData .\ConfigurationData.psd1$launchArguments
 "@
 
-        $M365DSCRuleEvaluationString = $DSCString -replace '<Instances>', $M365DSCRuleEvaluationString
+        $M365DSCRuleEvaluationString = $DSCString.Replace('<Instances>', $M365DSCRuleEvaluationString)
 
-        $M365DSCRuleEvaluationString | Out-File -FilePath $OutputPath
+        $M365DSCRuleEvaluationString | Out-File -LiteralPath $OutputPath
     }
     else
     {

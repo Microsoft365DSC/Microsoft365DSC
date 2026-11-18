@@ -518,7 +518,7 @@ if ($null -eq $sdkResolver -and -not $SkipSdkLookup)
 {
     Write-Warning -Message 'Find-MgGraphCommand is not available, so the uncovered routes are not resolved to a Graph SDK cmdlet.'
 }
-else
+elseif ($null -ne $sdkResolver)
 {
     foreach ($row in $uncovered)
     {
@@ -539,7 +539,12 @@ $shimGaps = @()
 $restOnly = @()
 foreach ($row in $uncovered)
 {
-    $found = @($sdkByRoute["$($row.Method) $($row.Route)"])
+    $key = "$($row.Method) $($row.Route)"
+    $found = @()
+    if ($sdkByRoute.ContainsKey($key))
+    {
+        $found = @($sdkByRoute[$key])
+    }
     if ($found.Count -eq 0)
     {
         $restOnly += $row

@@ -266,15 +266,6 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
                 AzureAdJoinLocalAdminsRegisteringMode   = $localAdminsRegisteringModeValue
                 AzureAdJoinLocalAdminsRegisteringGroups = $localAdminsRegisteringGroupsValue
                 AzureAdJoinLocalAdminsRegisteringUsers  = $localAdminsRegisteringUsersValue
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                TenantId                                = $this.TenantId
-                ApplicationSecret                       = $this.ApplicationSecret
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                AccessTokens                            = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -480,20 +471,10 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
             }
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
-            $rawResults = $Results.Clone()
 
             if ($null -ne $Results.AzureADRegistration)
             {
@@ -529,7 +510,7 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
                 -ModulePath $this.GetModulePath() `
                 -Results $Results `
                 -Credential $this.Credential `
-                -RawResults $rawResults `
+                -RawResults $this.RawExportResults `
                 -NoEscape @('AzureADRegistration')
 
             [void]$dscContent.Append($currentDSCBlock)
@@ -544,6 +525,7 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
             if ($_.ErrorDetails.Message -like '*Insufficient privileges*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Insufficient permissions or license to export Attribute Sets."
+                $this.SkipExport($_)
                 return ''
             }
             else
@@ -553,23 +535,6 @@ class AADDeviceRegistrationPolicy : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [AADDeviceRegistrationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADDeviceRegistrationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADDeviceRegistrationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -154,14 +154,6 @@ class TeamsClientConfiguration : M365DSCResourceBase
                 RestrictedSenderList             = $config.RestrictedSenderList
                 UseUnifiedDomain                 = $config.UseUnifiedDomain
                 IsSingleInstance                 = 'Yes'
-                Credential                       = $this.Credential
-                ApplicationId                    = $this.ApplicationId
-                TenantId                         = $this.TenantId
-                CertificateThumbprint            = $this.CertificateThumbprint
-                CertificatePath                  = $this.CertificatePath
-                CertificatePassword              = $this.CertificatePassword
-                ManagedIdentity                  = $this.ManagedIdentity
-                AccessTokens                     = $this.AccessTokens
             }
             if ([System.String]::IsNullOrEmpty($Config.RestrictedSenderList))
             {
@@ -233,15 +225,7 @@ class TeamsClientConfiguration : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $this.ResourceCache['exportMode'] = $true
@@ -286,22 +270,5 @@ class TeamsClientConfiguration : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('RestrictedSenderList'); When = @{ Property = 'RestrictedSenderList'; IsNullOrEmpty = $true } }
             )
         }
-    }
-
-    hidden [TeamsClientConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsClientConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [TeamsClientConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

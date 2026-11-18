@@ -254,22 +254,14 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
             Write-Verbose "PrincipalValue = $PrincipalValue"
             $results = @{
                 #region resource generator code
-                AccessId              = $getValue.accessId
-                GroupDisplayName      = $this.ResourceCache['CurrentGroup'].DisplayName
-                MemberType            = $getValue.memberType
-                PrincipalType         = $getValue.PrincipalType
-                Principal             = $PrincipalValue
-                ScheduleInfo          = $complexScheduleInfo
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                AccessId         = $getValue.accessId
+                GroupDisplayName = $this.ResourceCache['CurrentGroup'].DisplayName
+                MemberType       = $getValue.memberType
+                PrincipalType    = $getValue.PrincipalType
+                Principal        = $PrincipalValue
+                ScheduleInfo     = $complexScheduleInfo
+                Id               = $getValue.Id
+                Ensure           = 'Present'
                 #endregion
             }
 
@@ -299,6 +291,26 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
         $this.AddTelemetry('Set')
 
         $currentInstance = $this.Get().ToHashtable()
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo))
+        {
+            Write-Verbose -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has ended. It is not created again."
+            return
+        }
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Present' -and
+            [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo) -and
+            [M365DSCResourceBase]::TestScheduleEnded($currentInstance.ScheduleInfo))
+        {
+            Write-Verbose -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has ended in the tenant. It is not updated."
+            return
+        }
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            Write-Warning -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has a duration without a start date. It is created again each time it ends and the tenant no longer lists it. Set ScheduleInfo.StartDateTime to keep it ended."
+        }
+
         $boundParameters = Remove-M365DSCAuthenticationParameter -BoundParameters $this.GetBoundParameters()
 
         if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
@@ -491,6 +503,22 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
 
     [bool] Test()
     {
+        if ($this.Ensure -ne 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo) -and $this.Get().Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has ended and no longer exists. It is in the desired state."
+            return $true
+        }
+
+        if ($this.Ensure -ne 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            $currentInstance = $this.Get()
+            if ($currentInstance.Ensure -eq 'Present' -and [M365DSCResourceBase]::TestScheduleEnded($currentInstance.ScheduleInfo))
+            {
+                Write-Verbose -Message "The group eligibility schedule for principal {$($this.Principal)} in group {$($this.GroupDisplayName)} has ended in the tenant. It is in the desired state."
+                return $true
+            }
+        }
+
         return ([M365DSCResourceBase] $this).Test()
     }
 
@@ -623,26 +651,16 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
                     Write-Verbose "PrincipalValue for object is $PrincipalValue"
 
                     $params = @{
-                        Id                    = $config.Id
-                        GroupId               = $group.Id
-                        GroupDisplayName      = $group.DisplayName
-                        AccessId              = $config.accessId
-                        Principal             = $PrincipalValue
-                        Ensure                = 'Present'
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        Id               = $config.Id
+                        GroupId          = $group.Id
+                        GroupDisplayName = $group.DisplayName
+                        AccessId         = $config.accessId
+                        Principal        = $PrincipalValue
+                        Ensure           = 'Present'
                     }
 
                     $this.ExportedInstance = $config
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
 
                     if ($null -ne $Results.ScheduleInfo)
                     {
@@ -694,7 +712,7 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
                         -Results $Results `
                         -Credential $this.Credential `
                         -NoEscape @('ScheduleInfo') `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
 
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -719,6 +737,8 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
         return @{
             CompareRules = @(
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
+                @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.Expiration.Type'; In = @('afterDateTime', 'afterDuration') } }
+                @{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.Expiration'; Start = 'ScheduleInfo.StartDateTime' }
             )
         }
     }
@@ -735,23 +755,6 @@ class AADGroupEligibilitySchedule : M365DSCResourceBase
         }
 
         return Get-MgGroup -Filter "DisplayName eq '$($this.Principal -replace "'", "''")'" -ErrorAction SilentlyContinue
-    }
-
-    hidden [AADGroupEligibilitySchedule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADGroupEligibilitySchedule])
-        {
-            return $Values
-        }
-
-        $result = [AADGroupEligibilitySchedule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

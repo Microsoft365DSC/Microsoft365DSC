@@ -375,15 +375,6 @@ class SPOSite : M365DSCResourceBase
                 AnonymousLinkExpirationInDays                                  = $site.AnonymousLinkExpirationInDays
                 OverrideTenantAnonymousLinkExpirationPolicy                    = $site.OverrideTenantAnonymousLinkExpirationPolicy
                 Ensure                                                         = 'Present'
-                Credential                                                     = $this.Credential
-                ApplicationId                                                  = $this.ApplicationId
-                TenantId                                                       = $this.TenantId
-                ApplicationSecret                                              = $this.ApplicationSecret
-                CertificateThumbprint                                          = $this.CertificateThumbprint
-                CertificatePath                                                = $this.CertificatePath
-                CertificatePassword                                            = $this.CertificatePassword
-                ManagedIdentity                                                = $this.ManagedIdentity
-                AccessTokens                                                   = $this.AccessTokens
             })
         }
         catch
@@ -719,47 +710,41 @@ class SPOSite : M365DSCResourceBase
                     }
 
                     $Params = @{
-                        Url                   = $site.Url
-                        Template              = $site.Template
-                        Owner                 = 'admin@contoso.com' # Passing in bogus value to bypass null owner error
-                        Title                 = $siteTitle
-                        TimeZoneId            = $site.TimeZoneID
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        Credential            = $this.Credential
-                        AccessTokens          = $this.AccessTokens
+                        Url        = $site.Url
+                        Template   = $site.Template
+                        Owner      = 'admin@contoso.com' # Passing in bogus value to bypass null owner error
+                        Title      = $siteTitle
+                        TimeZoneId = $site.TimeZoneID
                     }
 
                     $this.ExportedInstance = $site
                     $Results = $this.GetForExport($Params)
-                    if ([System.String]::IsNullOrEmpty($Results.SharingDomainRestrictionMode))
+                    if ($null -ne $Results)
                     {
-                        $Results.Remove('SharingDomainRestrictionMode') | Out-Null
-                    }
-                    if ([System.String]::IsNullOrEmpty($Results.RestrictedToRegion))
-                    {
-                        $Results.Remove('RestrictedToRegion') | Out-Null
-                    }
-                    if ([System.String]::IsNullOrEmpty($Results.SharingAllowedDomainList))
-                    {
-                        $Results.Remove('SharingAllowedDomainList') | Out-Null
-                    }
-                    if ([System.String]::IsNullOrEmpty($Results.SharingBlockedDomainList))
-                    {
-                        $Results.Remove('SharingBlockedDomainList') | Out-Null
-                    }
-                    # Removing the HubUrl parameter if the value is equal to the Url parameter.
-                    # This is to prevent issues if the site col has just been created and not yet
-                    # configured as a hubsite.
-                    if ([System.String]::IsNullOrEmpty($Results.HubUrl) -or `
-                        ($Results.Url.TrimEnd('/') -eq $Results.HubUrl.TrimEnd('/')))
-                    {
-                        $Results.Remove('HubUrl') | Out-Null
+                        if ([System.String]::IsNullOrEmpty($Results.SharingDomainRestrictionMode))
+                        {
+                            $Results.Remove('SharingDomainRestrictionMode') | Out-Null
+                        }
+                        if ([System.String]::IsNullOrEmpty($Results.RestrictedToRegion))
+                        {
+                            $Results.Remove('RestrictedToRegion') | Out-Null
+                        }
+                        if ([System.String]::IsNullOrEmpty($Results.SharingAllowedDomainList))
+                        {
+                            $Results.Remove('SharingAllowedDomainList') | Out-Null
+                        }
+                        if ([System.String]::IsNullOrEmpty($Results.SharingBlockedDomainList))
+                        {
+                            $Results.Remove('SharingBlockedDomainList') | Out-Null
+                        }
+                        # Removing the HubUrl parameter if the value is equal to the Url parameter.
+                        # This is to prevent issues if the site col has just been created and not yet
+                        # configured as a hubsite.
+                        if ([System.String]::IsNullOrEmpty($Results.HubUrl) -or `
+                            ($Results.Url.TrimEnd('/') -eq $Results.HubUrl.TrimEnd('/')))
+                        {
+                            $Results.Remove('HubUrl') | Out-Null
+                        }
                     }
 
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -781,6 +766,7 @@ class SPOSite : M365DSCResourceBase
                 catch
                 {
                     Write-M365DSCHost -Message "$($Global:M365DSCEmojiYellowCircle) $_"
+                    $this.AddExportInstanceFailure($_, $site.Url)
                 }
                 $i++
             }
@@ -792,22 +778,5 @@ class SPOSite : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOSite] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSite])
-        {
-            return $Values
-        }
-
-        $result = [SPOSite]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

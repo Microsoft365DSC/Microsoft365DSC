@@ -108,18 +108,10 @@ class SHSpaceGroup : M365DSCResourceBase
             }
 
             $results = @{
-                SpaceName             = $this.SpaceName
-                GroupName             = $this.GroupName
-                Roles                 = $instance.roles
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                SpaceName = $this.SpaceName
+                GroupName = $this.GroupName
+                Roles     = $instance.roles
+                Ensure    = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -282,14 +274,8 @@ class SHSpaceGroup : M365DSCResourceBase
                     $displayedKey = $group.groupName
                     Write-M365DSCHost -Message "        |---[$i/$($groups.Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        SpaceName             = $space.name
-                        GroupName             = $group.groupName
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        SpaceName = $space.name
+                        GroupName = $group.groupName
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -314,22 +300,5 @@ class SHSpaceGroup : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SHSpaceGroup] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SHSpaceGroup])
-        {
-            return $Values
-        }
-
-        $result = [SHSpaceGroup]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

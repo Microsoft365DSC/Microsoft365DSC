@@ -141,20 +141,12 @@ class IntuneEpmCertificatePolicySetting : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                CertificateFile       = $getValue.settingInstance.simpleSettingValue.value
-                Description           = $getValue.description
-                DisplayName           = $getValue.displayName
-                Id                    = $getValue.id
-                PolicySettings        = $reusableSettings
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                CertificateFile = $getValue.settingInstance.simpleSettingValue.value
+                Description     = $getValue.description
+                DisplayName     = $getValue.displayName
+                Id              = $getValue.id
+                PolicySettings  = $reusableSettings
+                Ensure          = 'Present'
                 #endregion
             }
 
@@ -289,19 +281,10 @@ class IntuneEpmCertificatePolicySetting : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    CertificateFile       = $config.settingInstance.simpleSettingValue.value
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id              = $config.Id
+                    DisplayName     = $config.DisplayName
+                    CertificateFile = $config.settingInstance.simpleSettingValue.value
+                    Ensure          = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -333,22 +316,5 @@ class IntuneEpmCertificatePolicySetting : M365DSCResourceBase
         return @{
             IncludedProperties = @('CertificateFile')
         }
-    }
-
-    hidden [IntuneEpmCertificatePolicySetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneEpmCertificatePolicySetting])
-        {
-            return $Values
-        }
-
-        $result = [IntuneEpmCertificatePolicySetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

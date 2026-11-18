@@ -160,14 +160,6 @@ class TeamsOnlineVoicemailUserSettings : M365DSCResourceBase
                 VoicemailEnabled                         = $instance.VoicemailEnabled
                 VoiceToTextSummaryEnabled                = $instance.VoiceToTextSummaryEnabled
                 Ensure                                   = 'Present'
-                Credential                               = $this.Credential
-                ApplicationId                            = $this.ApplicationId
-                TenantId                                 = $this.TenantId
-                CertificateThumbprint                    = $this.CertificateThumbprint
-                CertificatePath                          = $this.CertificatePath
-                CertificatePassword                      = $this.CertificatePassword
-                ManagedIdentity                          = $this.ManagedIdentity
-                AccessTokens                             = $this.AccessTokens
             })
         }
         catch
@@ -246,16 +238,8 @@ class TeamsOnlineVoicemailUserSettings : M365DSCResourceBase
             {
                 Write-M365DSCHost -Message "    |---[$i/$($allUsers.Length)] $($user.UserPrincipalName)" -DeferWrite
                 $params = @{
-                    Identity              = $user.UserPrincipalName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $user.UserPrincipalName
+                    Ensure   = 'Present'
                 }
                 $Results = $this.GetForExport($Params)
                 if ($Results.Ensure -eq 'Present')
@@ -285,22 +269,5 @@ class TeamsOnlineVoicemailUserSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsOnlineVoicemailUserSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsOnlineVoicemailUserSettings])
-        {
-            return $Values
-        }
-
-        $result = [TeamsOnlineVoicemailUserSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

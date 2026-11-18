@@ -70,13 +70,6 @@ class TeamsOrgWideAppSettings : M365DSCResourceBase
             return $this.AsResult(@{
                 IsSingleInstance                   = 'Yes'
                 IsSideloadedAppsInteractionEnabled = $settings.IsSideloadedAppsInteractionEnabled
-                ApplicationId                      = $this.ApplicationId
-                TenantId                           = $this.TenantId
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
-                AccessTokens                       = $this.AccessTokens
             })
         }
         catch
@@ -130,15 +123,7 @@ class TeamsOrgWideAppSettings : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($params)
@@ -166,22 +151,5 @@ class TeamsOrgWideAppSettings : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsOrgWideAppSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsOrgWideAppSettings])
-        {
-            return $Values
-        }
-
-        $result = [TeamsOrgWideAppSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

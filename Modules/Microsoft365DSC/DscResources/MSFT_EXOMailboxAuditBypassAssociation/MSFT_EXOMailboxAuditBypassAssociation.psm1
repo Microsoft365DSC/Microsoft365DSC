@@ -86,16 +86,8 @@ class EXOMailboxAuditBypassAssociation : M365DSCResourceBase
             }
 
             $results = @{
-                Identity              = [System.String]$this.Identity
-                AuditBypassEnabled    = [System.Boolean]$instance.AuditBypassEnabled
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity           = [System.String]$this.Identity
+                AuditBypassEnabled = [System.Boolean]$instance.AuditBypassEnabled
             }
             return $this.AsResult($results)
         }
@@ -165,15 +157,7 @@ class EXOMailboxAuditBypassAssociation : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($associations.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity.Replace("`r", '')
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity.Replace("`r", '')
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
@@ -197,22 +181,5 @@ class EXOMailboxAuditBypassAssociation : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxAuditBypassAssociation] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxAuditBypassAssociation])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxAuditBypassAssociation]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

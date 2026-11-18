@@ -270,10 +270,22 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Id                              = 'FakeStringValue'
                     IsHidden                        = $false # Drift
                     IsRoleScopesVisible             = $true
-                    IncompatibleAccessPackages      = @('packageId1', 'packageId2')
-                    IncompatibleGroups              = @('groupId1', 'groupId2')
+                    IncompatibleAccessPackages      = @('packageId1') # Drift
+                    IncompatibleGroups              = @('groupId1') # Drift
                     Ensure                          = 'Present'
                     Credential                      = $Credential
+                }
+
+                Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
+                    return @{
+                        ResourceUrl = 'https://graph.microsoft.com/'
+                    }
+                }
+
+                Mock -CommandName Remove-MgBetaEntitlementManagementAccessPackageIncompatibleAccessPackageByRef -MockWith {
+                }
+
+                Mock -CommandName Remove-MgBetaEntitlementManagementAccessPackageIncompatibleGroupByRef -MockWith {
                 }
 
                 Mock -CommandName Remove-MgBetaEntitlementManagementAccessPackageResourceRoleScope -MockWith {
@@ -292,6 +304,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 (New-M365DSCResourceInstance -ResourceName 'AADEntitlementManagementAccessPackage' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaEntitlementManagementAccessPackage -Exactly 1
                 Should -Invoke -CommandName Remove-MgBetaEntitlementManagementAccessPackageResourceRoleScope -Exactly 0
+                Should -Invoke -CommandName Remove-MgBetaEntitlementManagementAccessPackageIncompatibleAccessPackageByRef -Exactly 1 -ParameterFilter {
+                    $AccessPackageId -eq 'FakeStringValue' -and $Id -eq 'https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackages/packageId2'
+                }
+                Should -Invoke -CommandName Remove-MgBetaEntitlementManagementAccessPackageIncompatibleGroupByRef -Exactly 1 -ParameterFilter {
+                    $AccessPackageId -eq 'FakeStringValue' -and $Id -eq 'https://graph.microsoft.com/beta/groups/groupId2'
+                }
             }
         }
 

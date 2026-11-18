@@ -184,32 +184,23 @@ class AADDomainFederation : M365DSCResourceBase
             }
 
             $results = @{
-                DomainId                                = $this.DomainId
-                Id                                      = $instance.Id
-                DisplayName                             = $instance.DisplayName
-                IssuerUri                               = $instance.IssuerUri
-                MetadataExchangeUri                     = $instance.MetadataExchangeUri
-                SigningCertificate                      = $instance.SigningCertificate
-                NextSigningCertificate                  = $instance.NextSigningCertificate
-                PassiveSignInUri                        = $instance.PassiveSignInUri
-                ActiveSignInUri                         = $instance.ActiveSignInUri
-                SignOutUri                              = $instance.SignOutUri
-                PreferredAuthenticationProtocol         = $instance.PreferredAuthenticationProtocol
-                PromptLoginBehavior                     = $instance.PromptLoginBehavior
-                FederatedIdpMfaBehavior                 = $instance.FederatedIdpMfaBehavior
-                PasswordResetUri                        = $instance.PasswordResetUri
-                IsSignedAuthenticationRequestRequired   = $instance.IsSignedAuthenticationRequestRequired
-                SystemBrowserEnabledOn                  = $enabledPlatforms
-                Ensure                                  = 'Present'
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                TenantId                                = $this.TenantId
-                ApplicationSecret                       = $this.ApplicationSecret
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                AccessTokens                            = $this.AccessTokens
+                DomainId                              = $this.DomainId
+                Id                                    = $instance.Id
+                DisplayName                           = $instance.DisplayName
+                IssuerUri                             = $instance.IssuerUri
+                MetadataExchangeUri                   = $instance.MetadataExchangeUri
+                SigningCertificate                    = $instance.SigningCertificate
+                NextSigningCertificate                = $instance.NextSigningCertificate
+                PassiveSignInUri                      = $instance.PassiveSignInUri
+                ActiveSignInUri                       = $instance.ActiveSignInUri
+                SignOutUri                            = $instance.SignOutUri
+                PreferredAuthenticationProtocol       = $instance.PreferredAuthenticationProtocol
+                PromptLoginBehavior                   = $instance.PromptLoginBehavior
+                FederatedIdpMfaBehavior               = $instance.FederatedIdpMfaBehavior
+                PasswordResetUri                      = $instance.PasswordResetUri
+                IsSignedAuthenticationRequestRequired = $instance.IsSignedAuthenticationRequestRequired
+                SystemBrowserEnabledOn                = $enabledPlatforms
+                Ensure                                = 'Present'
             }
 
             return $this.AsResult($results)
@@ -396,17 +387,8 @@ class AADDomainFederation : M365DSCResourceBase
                 $displayedKey = "$($config.DomainId) - $($config.DisplayName)"
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DomainId              = $config.DomainId
-                    Id                    = $config.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DomainId = $config.DomainId
+                    Id       = $config.Id
                 }
 
                 $this.ExportedInstance = $config
@@ -431,22 +413,5 @@ class AADDomainFederation : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADDomainFederation] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADDomainFederation])
-        {
-            return $Values
-        }
-
-        $result = [AADDomainFederation]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

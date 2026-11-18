@@ -370,14 +370,6 @@ class EXODistributionGroup : M365DSCResourceBase
                 SendOofMessageToOriginatorEnabled      = [Boolean]$distributionGroup.SendOofMessageToOriginatorEnabled
                 Type                                   = $groupTypeValue
                 Ensure                                 = 'Present'
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                CertificatePath                        = $this.CertificatePath
-                CertificatePassword                    = $this.CertificatePassword
-                ManagedIdentity                        = $this.ManagedIdentity
-                TenantId                               = $this.TenantId
-                AccessTokens                           = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -571,33 +563,28 @@ class EXODistributionGroup : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($distributionGroup.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $distributionGroup.Identity
-                    PrimarySmtpAddress    = $distributionGroup.PrimarySmtpAddress
-                    Name                  = $distributionGroup.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity           = $distributionGroup.Identity
+                    PrimarySmtpAddress = $distributionGroup.PrimarySmtpAddress
+                    Name               = $distributionGroup.Name
                 }
                 $this.ExportedInstance = $distributionGroup
                 $Results = $this.GetForExport($Params)
-                if ($Results.AcceptMessagesOnlyFromSendersOrMembers.Length -eq 0)
+                if ($null -ne $Results)
                 {
-                    $Results.Remove('AcceptMessagesOnlyFromSendersOrMembers') | Out-Null
-                }
+                    if ($Results.AcceptMessagesOnlyFromSendersOrMembers.Length -eq 0)
+                    {
+                        $Results.Remove('AcceptMessagesOnlyFromSendersOrMembers') | Out-Null
+                    }
 
-                if ($Results.AcceptMessagesOnlyFrom.Length -eq 0)
-                {
-                    $Results.Remove('AcceptMessagesOnlyFrom') | Out-Null
-                }
+                    if ($Results.AcceptMessagesOnlyFrom.Length -eq 0)
+                    {
+                        $Results.Remove('AcceptMessagesOnlyFrom') | Out-Null
+                    }
 
-                if ($Results.AcceptMessagesOnlyFromDLMembers.Length -eq 0)
-                {
-                    $Results.Remove('AcceptMessagesOnlyFromDLMembers') | Out-Null
+                    if ($Results.AcceptMessagesOnlyFromDLMembers.Length -eq 0)
+                    {
+                        $Results.Remove('AcceptMessagesOnlyFromDLMembers') | Out-Null
+                    }
                 }
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -675,22 +662,5 @@ class EXODistributionGroup : M365DSCResourceBase
             $simplifiedNames += $currentName.Split(',')[0].Replace('(','')
         }
         return @($simplifiedNames | Sort-Object)
-    }
-
-    hidden [EXODistributionGroup] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODistributionGroup])
-        {
-            return $Values
-        }
-
-        $result = [EXODistributionGroup]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -183,20 +183,14 @@ class TeamsChannelTab : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                DisplayName           = $tabInstance.DisplayName
-                TeamName              = $this.TeamName
-                TeamId                = $teamInstance.Id
-                ChannelName           = $channelInstance.DisplayName
-                SortOrderIndex        = $tabInstance.SortOrderIndex
-                Configuration         = $complexConfiguration
-                TeamsApp              = $tabInstance.teamsApp.id
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantID
-                CertificateThumbprint = $this.CertificateThumbprint
-                Ensure                = 'Present'
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName    = $tabInstance.DisplayName
+                TeamName       = $this.TeamName
+                TeamId         = $teamInstance.Id
+                ChannelName    = $channelInstance.DisplayName
+                SortOrderIndex = $tabInstance.SortOrderIndex
+                Configuration  = $complexConfiguration
+                TeamsApp       = $tabInstance.teamsApp.id
+                Ensure         = 'Present'
             })
         }
         catch
@@ -321,6 +315,7 @@ class TeamsChannelTab : M365DSCResourceBase
                 {
                     $message = "        $($Global:M365DSCEmojiRedX) The specified Service Principal doesn't have access to read Channel information. Permission Required: Channel.ReadBasic.All"
                     $this.LogError($_, $Message)
+                    $this.AddExportInstanceFailure($_, $team.DisplayName)
                 }
 
                 $j = 1
@@ -338,6 +333,7 @@ class TeamsChannelTab : M365DSCResourceBase
                     {
                         $message = "            $($Global:M365DSCEmojiRedX) The specified Service Principal doesn't have access to read Tab information. Permission Required: TeamsTab.Read.All"
                         $this.LogError($_, $Message)
+                        $this.AddExportInstanceFailure($_, "$($team.DisplayName), $($channel.DisplayName)")
                     }
 
                     $k = 1
@@ -350,25 +346,16 @@ class TeamsChannelTab : M365DSCResourceBase
 
                         Write-M365DSCHost -Message "            |---[$k/$($tabs.Length)] $($tab.DisplayName)" -DeferWrite
                         $params = @{
-                            TeamName              = $team.DisplayName
-                            TeamId                = $team.Id
-                            ChannelName           = $channel.DisplayName
-                            DisplayName           = $tab.DisplayName
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            CertificatePath       = $this.CertificatePath
-                            CertificatePassword   = $this.CertificatePassword
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            TeamName    = $team.DisplayName
+                            TeamId      = $team.Id
+                            ChannelName = $channel.DisplayName
+                            DisplayName = $tab.DisplayName
                         }
 
                         $this.ExportedInstance = $tab
                         $this.ResourceCache['currentTeam'] = $team
                         $this.ResourceCache['currentChannel'] = $channel
                         $Results = $this.GetForExport($Params)
-                        $rawResults = $Results.Clone()
                         if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 3)
                         {
                             if ($null -ne $Results.Configuration)
@@ -392,7 +379,7 @@ class TeamsChannelTab : M365DSCResourceBase
                                 -Results $Results `
                                 -Credential $this.Credential `
                                 -NoEscape @('Configuration') `
-                                -RawResults $rawResults
+                                -RawResults $this.RawExportResults
 
                             [void]$dscContent.Append($currentDSCBlock)
                             Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -419,23 +406,6 @@ class TeamsChannelTab : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsChannelTab] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsChannelTab])
-        {
-            return $Values
-        }
-
-        $result = [TeamsChannelTab]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

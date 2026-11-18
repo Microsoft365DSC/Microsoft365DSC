@@ -104,18 +104,10 @@ class EXOSecOpsOverrideRule : M365DSCResourceBase
             }
 
             $results = @{
-                IsSingleInstance      = 'Yes'
-                SentTo                = [System.String[]] $sentToValue
-                Comment               = $instance.Comment
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                SentTo           = [System.String[]] $sentToValue
+                Comment          = $instance.Comment
+                Ensure           = 'Present'
             }
 
             return $this.AsResult($results)
@@ -259,15 +251,7 @@ class EXOSecOpsOverrideRule : M365DSCResourceBase
             }
 
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $rule
             $Results = $this.GetForExport($params)
@@ -319,22 +303,5 @@ class EXOSecOpsOverrideRule : M365DSCResourceBase
         {
             $Parameters["Remove$Name"] = $toRemove
         }
-    }
-
-    hidden [EXOSecOpsOverrideRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOSecOpsOverrideRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOSecOpsOverrideRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

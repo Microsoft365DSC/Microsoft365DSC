@@ -173,8 +173,12 @@ Describe 'Get-M365DSCComponentsWithMostSecureAuthenticationType' {
         ($components | Where-Object -FilterScript { $_.Resource -eq 'MinimalThing' }).AuthMethod | Should -Be 'AccessTokens'
     }
 
-    It 'Throws when the schema contains none of the requested resources' {
-        { Get-M365DSCComponentsWithMostSecureAuthenticationType -AuthenticationMethod $Script:AllAuthenticationMethods -Resources @('Unknown') } |
+    It 'Returns nothing for unknown resources and throws when the schema contains no exported resource' {
+        @(Get-M365DSCComponentsWithMostSecureAuthenticationType -AuthenticationMethod $Script:AllAuthenticationMethods -Resources @('Unknown')).Count |
+            Should -Be 0
+
+        Mock -ModuleName M365DSCConnection -CommandName Get-M365DSCExportedResourceName -MockWith { return [System.String[]] @('Unknown') }
+        { Get-M365DSCComponentsWithMostSecureAuthenticationType -AuthenticationMethod $Script:AllAuthenticationMethods } |
             Should -Throw -ExpectedMessage '*schema cache does not contain*'
     }
 

@@ -22,3 +22,44 @@ Describe 'Fast compile host contract' {
         $script:CompilerText | Should -Match 'M365DSCFastHost'
     }
 }
+
+Describe 'Invoke-M365DSCConfigurationBuild standard pipeline' {
+    BeforeAll {
+        Import-Module (Join-Path $script:ModulesRoot 'M365DSCConfigurationCompiler.psm1') -Force
+        Mock -ModuleName 'M365DSCConfigurationCompiler' -CommandName Test-M365DSCFastCompileAvailable -MockWith { $false }
+
+        $script:ScriptPath = Join-Path $TestDrive 'M365TenantConfig.ps1'
+        Set-Content -Path $script:ScriptPath -Value "'compiled'; `$Global:PSDscFastCompileActive"
+    }
+
+    AfterEach {
+        Remove-Variable -Name 'PSDscFastCompileActive' -Scope Global -ErrorAction 'SilentlyContinue'
+    }
+
+    It 'runs the script and warns about parameters it cannot apply without ConfigurationName' {
+        $result = Invoke-M365DSCConfigurationBuild -Path $script:ScriptPath -Engine Standard -OutputPath (Join-Path $TestDrive 'Out') -ConfigurationData @{ AllNodes = @() } -WarningVariable warnings -WarningAction SilentlyContinue
+
+        $result[0] | Should -Be 'compiled'
+        $warnings.Count | Should -Be 1
+        $warnings[0].Message | Should -Match 'Ignoring: OutputPath, ConfigurationData\.'
+    }
+
+    It 'sets the recursion guard while running and restores the previous value afterwards' {
+        $Global:PSDscFastCompileActive = $true
+
+        $result = Invoke-M365DSCConfigurationBuild -Path $script:ScriptPath -Engine Standard
+
+        $result[1] | Should -BeTrue
+        $Global:PSDscFastCompileActive | Should -BeTrue
+    }
+
+    It 'resets the recursion guard to $false when it was not set before' {
+        $null = Invoke-M365DSCConfigurationBuild -Path $script:ScriptPath -Engine Standard
+
+        $Global:PSDscFastCompileActive | Should -BeFalse
+    }
+
+    It 'throws a terminating error for a missing script path' {
+        { Invoke-M365DSCConfigurationBuild -Path (Join-Path $TestDrive 'Missing.ps1') -Engine Standard } | Should -Throw -ErrorId 'PathNotFound*'
+    }
+}

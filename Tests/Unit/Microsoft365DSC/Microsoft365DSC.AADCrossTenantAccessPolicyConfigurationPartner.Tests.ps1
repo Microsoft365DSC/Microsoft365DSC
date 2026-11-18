@@ -130,6 +130,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             )
                         }
                     }
+                    IdentitySynchronization            = @{
+                        groupSyncInbound            = @{
+                            isSyncAllowed = $true
+                        }
+                        userSyncInbound             = @{
+                            isSyncAllowed = $true
+                        }
+                        roleEnabledGroupSyncInbound = @{
+                            isSyncAllowed = $true
+                        }
+                    }
                     TenantRestrictions                 = @{
                         applications = @{
                             accessType = 'blocked'
@@ -420,6 +431,17 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 }))
                         })
                     })
+                    IdentitySynchronization            = ([MSFT_AADCrossTenantIdentitySyncPolicyPartnerInbound] @{
+                        GroupSyncInbound            = ([MSFT_AADCrossTenantGroupSyncInbound] @{
+                            IsSyncAllowed = $true
+                        })
+                        UserSyncInbound             = ([MSFT_AADCrossTenantUserSyncInbound] @{
+                            IsSyncAllowed = $true
+                        })
+                        RoleEnabledGroupSyncInbound = ([MSFT_AADCrossTenantRoleEnabledGroupSyncInbound] @{
+                            IsSyncAllowed = $true
+                        })
+                    })
                     Credential                         = $Credential;
                     Ensure                             = "Present";
                     PartnerTenantId                    = "12345-12345-12345-12345-12345";
@@ -528,9 +550,23 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 }))
                         })
                     })
+                    IdentitySynchronization            = ([MSFT_AADCrossTenantIdentitySyncPolicyPartnerInbound] @{
+                        GroupSyncInbound            = ([MSFT_AADCrossTenantGroupSyncInbound] @{
+                            IsSyncAllowed = $true
+                        })
+                        UserSyncInbound             = ([MSFT_AADCrossTenantUserSyncInbound] @{
+                            IsSyncAllowed = $true
+                        })
+                        RoleEnabledGroupSyncInbound = ([MSFT_AADCrossTenantRoleEnabledGroupSyncInbound] @{
+                            IsSyncAllowed = $false # Drift
+                        })
+                    })
                     Credential                         = $Credential;
                     Ensure                             = "Present";
                     PartnerTenantId                    = "12345-12345-12345-12345-12345";
+                }
+
+                Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
                 }
             }
             It 'Should return Values from the Get method' {
@@ -542,6 +578,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should update the instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADCrossTenantAccessPolicyConfigurationPartner' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaPolicyCrossTenantAccessPolicyPartner -Exactly 1
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'PATCH' -and $Uri -like '*/identitySynchronization' -and $Body.roleEnabledGroupSyncInbound.isSyncAllowed -eq $false
+                }
             }
         }
 

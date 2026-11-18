@@ -238,31 +238,22 @@ class PlannerTask : M365DSCResourceBase
                     $DueDateTimeValue = $taskResponse.DueDateTime
                 }
                 $results = @{
-                    PlanId                = $this.PlanId
-                    Title                 = $this.Title
-                    Assignments           = $assignmentsValue
-                    Id                    = $taskResponse.Id
-                    Categories            = $categoriesValue
-                    Attachments           = $attachmentsValue
-                    Checklist             = $checklistValue
-                    BucketId              = $taskResponse.BucketId
-                    Priority              = $taskResponse.Priority
-                    ConversationThreadId  = $taskResponse.ConversationThreadId
-                    PercentComplete       = $taskResponse.PercentComplete
-                    StartDateTime         = $StartDateTimeValue
-                    DueDateTime           = $DueDateTimeValue
-                    Description           = $NotesValue
-                    PreviewType           = $taskDetailsResponse.PreviewType
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    PlanId               = $this.PlanId
+                    Title                = $this.Title
+                    Assignments          = $assignmentsValue
+                    Id                   = $taskResponse.Id
+                    Categories           = $categoriesValue
+                    Attachments          = $attachmentsValue
+                    Checklist            = $checklistValue
+                    BucketId             = $taskResponse.BucketId
+                    Priority             = $taskResponse.Priority
+                    ConversationThreadId = $taskResponse.ConversationThreadId
+                    PercentComplete      = $taskResponse.PercentComplete
+                    StartDateTime        = $StartDateTimeValue
+                    DueDateTime          = $DueDateTimeValue
+                    Description          = $NotesValue
+                    PreviewType          = $taskDetailsResponse.PreviewType
+                    Ensure               = 'Present'
                 }
                 return $this.AsResult($results)
             }
@@ -530,62 +521,56 @@ class PlannerTask : M365DSCResourceBase
                             $currentDSCBlock = ''
 
                             $params = @{
-                                Id                    = $task.Id
-                                PlanId                = $plan.Id
-                                Title                 = $task.Title
-                                Credential            = $this.Credential
-                                ApplicationId         = $this.ApplicationId
-                                TenantId              = $this.TenantId
-                                ApplicationSecret     = $this.ApplicationSecret
-                                CertificateThumbprint = $this.CertificateThumbprint
-                                CertificatePath       = $this.CertificatePath
-                                CertificatePassword   = $this.CertificatePassword
-                                ManagedIdentity       = $this.ManagedIdentity
-                                AccessTokens          = $this.AccessTokens
+                                Id     = $task.Id
+                                PlanId = $plan.Id
+                                Title  = $task.Title
                             }
 
                             $result = $this.GetForExport($params)
 
-                            if ($result.Assignments.Count -eq 0)
+                            if ($null -ne $result)
                             {
-                                $result.Remove('Assignments') | Out-Null
-                            }
+                                if ($result.Assignments.Count -eq 0)
+                                {
+                                    $result.Remove('Assignments') | Out-Null
+                                }
 
-                            if ($result.Attachments)
-                            {
-                                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                                    -ComplexObject $result.Attachments `
-                                    -CIMInstanceName 'PlannerTaskAttachment'
-                                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                if ($result.Attachments)
                                 {
-                                    $result.Attachments = $complexTypeStringResult
+                                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                        -ComplexObject $result.Attachments `
+                                        -CIMInstanceName 'PlannerTaskAttachment'
+                                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                    {
+                                        $result.Attachments = $complexTypeStringResult
+                                    }
+                                    else
+                                    {
+                                        $result.Remove('Attachments') | Out-Null
+                                    }
                                 }
-                                else
-                                {
-                                    $result.Remove('Attachments') | Out-Null
-                                }
-                            }
 
-                            if ($result.Checklist)
-                            {
-                                $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                                    -ComplexObject $result.Checklist `
-                                    -CIMInstanceName 'PlannerTaskChecklistItem'
-                                if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                if ($result.Checklist)
                                 {
-                                    $result.Checklist = $complexTypeStringResult
+                                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                        -ComplexObject $result.Checklist `
+                                        -CIMInstanceName 'PlannerTaskChecklistItem'
+                                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                                    {
+                                        $result.Checklist = $complexTypeStringResult
+                                    }
+                                    else
+                                    {
+                                        $result.Remove('Checklist') | Out-Null
+                                    }
                                 }
-                                else
-                                {
-                                    $result.Remove('Checklist') | Out-Null
-                                }
-                            }
 
-                            # Fix Description which can have multiple lines
-                            if (-not [System.String]::IsNullOrEmpty($result.Description))
-                            {
-                                $result.Description = $result.Description.Replace('"', '``"')
-                                $result.Description = $result.Description.Replace('&', "``&")
+                                # Fix Description which can have multiple lines
+                                if (-not [System.String]::IsNullOrEmpty($result.Description))
+                                {
+                                    $result.Description = $result.Description.Replace('"', '``"')
+                                    $result.Description = $result.Description.Replace('&', "``&")
+                                }
                             }
 
                             $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -609,6 +594,7 @@ class PlannerTask : M365DSCResourceBase
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
 
                     $this.LogError($_, 'Error during Export:')
+                    $this.AddExportInstanceFailure($_, $group.DisplayName)
                 }
                 $i++
             }
@@ -845,23 +831,6 @@ class PlannerTask : M365DSCResourceBase
             }
         }
         return $null
-    }
-
-    hidden [PlannerTask] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PlannerTask])
-        {
-            return $Values
-        }
-
-        $result = [PlannerTask]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

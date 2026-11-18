@@ -91,15 +91,6 @@ class IntuneDeviceManagementComplianceSettings : M365DSCResourceBase
                 IsSingleInstance                     = 'Yes'
                 DeviceComplianceCheckinThresholdDays = $thresholdInDays
                 SecureByDefault                      = [Boolean]$settings.secureByDefault
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                TenantId                             = $this.TenantId
-                ApplicationSecret                    = $this.ApplicationSecret
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                AccessTokens                         = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -156,16 +147,7 @@ class IntuneDeviceManagementComplianceSettings : M365DSCResourceBase
         try
         {
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
 
@@ -187,6 +169,7 @@ class IntuneDeviceManagementComplianceSettings : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -198,22 +181,5 @@ class IntuneDeviceManagementComplianceSettings : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceManagementComplianceSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceManagementComplianceSettings])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceManagementComplianceSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

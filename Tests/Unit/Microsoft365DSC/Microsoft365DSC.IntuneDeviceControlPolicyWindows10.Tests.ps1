@@ -501,6 +501,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return "Credentials"
             }
 
+            Invoke-Command -ScriptBlock $Global:DscHelper.InitializeRoleScopeTagCache
+
             Mock -ModuleName M365DSCIntuneUtil -CommandName Get-MgGroup -MockWith {
                 return @{
                     Id = '26d60dd1-fab6-47bf-8656-358194c1a49d'

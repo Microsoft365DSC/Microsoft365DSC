@@ -179,15 +179,6 @@ class AADAuthenticationMethodPolicyEmail : M365DSCResourceBase
                 State                        = $getValue.State
                 Id                           = $getValue.Id
                 Ensure                       = 'Present'
-                Credential                   = $this.Credential
-                ApplicationId                = $this.ApplicationId
-                TenantId                     = $this.TenantId
-                ApplicationSecret            = $this.ApplicationSecret
-                CertificateThumbprint        = $this.CertificateThumbprint
-                CertificatePath              = $this.CertificatePath
-                CertificatePassword          = $this.CertificatePassword
-                ManagedIdentity              = $this.ManagedIdentity
-                AccessTokens                 = $this.AccessTokens
                 #endregion
             }
 
@@ -291,17 +282,8 @@ class AADAuthenticationMethodPolicyEmail : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -357,23 +339,6 @@ class AADAuthenticationMethodPolicyEmail : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationMethodPolicyEmail] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationMethodPolicyEmail])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationMethodPolicyEmail]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

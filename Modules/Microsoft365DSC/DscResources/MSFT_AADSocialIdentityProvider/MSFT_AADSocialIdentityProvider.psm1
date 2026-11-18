@@ -108,20 +108,11 @@ class AADSocialIdentityProvider : M365DSCResourceBase
                 $ClientSecretValue = $getValue.clientSecret
             }
             $results = @{
-                ClientId              = $getValue.Id
-                ClientSecret          = $ClientSecretValue
-                DisplayName           = $getValue.DisplayName
-                IdentityProviderType  = $getValue.identityProviderType
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                ClientId             = $getValue.Id
+                ClientSecret         = $ClientSecretValue
+                DisplayName          = $getValue.DisplayName
+                IdentityProviderType = $getValue.identityProviderType
+                Ensure               = 'Present'
             }
 
             return $this.AsResult($results)
@@ -223,17 +214,8 @@ class AADSocialIdentityProvider : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    ClientId              = $config.Id
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    ClientId = $config.Id
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -266,22 +248,5 @@ class AADSocialIdentityProvider : M365DSCResourceBase
         return @{
             ExcludedProperties = @('ClientSecret')
         }
-    }
-
-    hidden [AADSocialIdentityProvider] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADSocialIdentityProvider])
-        {
-            return $Values
-        }
-
-        $result = [AADSocialIdentityProvider]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

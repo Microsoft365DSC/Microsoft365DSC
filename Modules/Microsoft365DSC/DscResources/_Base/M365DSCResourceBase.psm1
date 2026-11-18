@@ -221,6 +221,17 @@ class M365DSCResourceBase
     # $Script:AllSchedules, $Script:exportedGroups, ...).
     hidden [Hashtable] $ResourceCache = @{}
 
+    # Unmodified copy of the last GetForExport result, $null for a skipped instance.
+    hidden [Hashtable] $RawExportResults
+
+    hidden static [System.Int32] $MaxConsecutiveExportFailures = 3
+
+    hidden [System.String] $_exportFailureKind
+
+    hidden [System.Int32] $_exportFailureCount
+
+    hidden [bool] $_exportInstanceRead
+
     # Each runspace compiles its own class types. A PowerShell class instance references only the session
     # state it was created in.
     hidden static [System.Runtime.CompilerServices.ConditionalWeakTable[Runspace, ConcurrentDictionary[String, ConcurrentDictionary[Type, System.Object]]]] $_runspaceTypeCaches = `
@@ -656,7 +667,7 @@ class M365DSCResourceBase
                 return "$where of type '$($item.GetType().FullName)' does not convert to '$($elementType.FullName)'."
             }
 
-            $known = @($elementType.GetProperties() | ForEach-Object { $_.Name })
+            $known = @($elementType.GetProperties().Name)
             $unknown = @($item.Keys | Where-Object { $_ -notin $known })
             if ($unknown.Count -gt 0)
             {
@@ -854,6 +865,41 @@ class M365DSCResourceBase
                 $this.($entry.Key) = $entry.Value
             }
         }
+    }
+
+    # Sets the authentication properties of this instance on Result, except the ones Values contains.
+    hidden [void] CopyAuthenticationProperties([M365DSCResourceBase] $Result, [System.Object] $Values)
+    {
+        $authenticationParameters = Get-M365DSCAuthenticationParameter -BoundParameters $this.ReadBoundParameters()
+        foreach ($entry in $authenticationParameters.GetEnumerator())
+        {
+            if ($Values -is [Hashtable] -and $Values.ContainsKey($entry.Key))
+            {
+                continue
+            }
+
+            $Result._SetProperty($entry.Key, $entry.Value)
+        }
+    }
+
+    # Returns Values as an instance of the resource type, with the authentication properties of this instance.
+    hidden [M365DSCResourceBase] AsResult([System.Object] $Values)
+    {
+        $resourceType = $this.GetType()
+        if ($resourceType.IsInstanceOfType($Values))
+        {
+            return $Values
+        }
+
+        $result = $resourceType::new()
+        $result.ClearNonSchemaProperties()
+        if ($Values -is [Hashtable])
+        {
+            $result.FromHashtable($Values)
+        }
+        $this.CopyAuthenticationProperties($result, $Values)
+
+        return $result
     }
 
     #endregion
@@ -1143,6 +1189,39 @@ class M365DSCResourceBase
         return [System.Xml.XmlConvert]::ToString([System.TimeSpan]$span)
     }
 
+    # An afterDuration schedule without a start date never counts as ended.
+    hidden static [System.Boolean] TestScheduleEnded([System.Object] $ScheduleInfo)
+    {
+        $expiration = $ScheduleInfo.Expiration
+        if ($null -eq $expiration)
+        {
+            return $false
+        }
+
+        $end = $null
+        if ($expiration.Type -eq 'afterDateTime')
+        {
+            $end = [M365DSCResourceBase]::ConvertToDateTimeOffset($expiration.EndDateTime)
+        }
+        elseif ($expiration.Type -eq 'afterDuration')
+        {
+            $start = [M365DSCResourceBase]::ConvertToDateTimeOffset($ScheduleInfo.StartDateTime)
+            $duration = [M365DSCResourceBase]::ConvertToTimeSpan($expiration.Duration)
+            if ($null -ne $start -and $null -ne $duration)
+            {
+                $end = $start.Add($duration)
+            }
+        }
+
+        return $null -ne $end -and $end -lt [System.DateTimeOffset]::UtcNow
+    }
+
+    hidden static [System.Boolean] TestDurationWithoutStart([System.Object] $ScheduleInfo)
+    {
+        return $ScheduleInfo.Expiration.Type -eq 'afterDuration' -and
+            $null -eq [M365DSCResourceBase]::ConvertToDateTimeOffset($ScheduleInfo.StartDateTime)
+    }
+
     # Warns that the resource is deprecated, names its replacement and, when given, a link with more information.
     hidden [void] WarnResourceDeprecated([System.String] $Replacement, [System.String] $InformationUrl)
     {
@@ -1215,10 +1294,121 @@ class M365DSCResourceBase
         return $result
     }
 
+    # During Export-M365DSCConfiguration, returns $null for an instance whose Get() failed,
+    # after recording the failure for the export statistics and the progress output.
+    # Single-instance resources and consecutive transient or access errors still end the
+    # export of the resource. Outside of it, every error is rethrown.
     [Hashtable] GetForExport([Hashtable] $Values)
     {
-        $this.FromHashtable($Values)
-        return $this.Get().ToHashtable()
+        $Global:M365DSCExportInstanceFailureMessage = $null
+        $this.RawExportResults = $null
+        if ($this._exportInstanceRead)
+        {
+            $this._exportFailureKind = $null
+            $this._exportFailureCount = 0
+            $this._exportInstanceRead = $false
+        }
+
+        try
+        {
+            $this.FromHashtable($Values)
+            $result = $this.Get().ToHashtable()
+            $this.RawExportResults = $result.Clone()
+            $this._exportInstanceRead = $true
+            return $result
+        }
+        catch
+        {
+            if ($null -eq $Global:M365DSCExportInstanceErrors -or
+                $this._info.Meta.ContainsKey('IsSingleInstance'))
+            {
+                throw
+            }
+
+            $this.CountExportFailure($_)
+
+            $instanceNameParts = @()
+            foreach ($meta in $this._info.Meta.Values)
+            {
+                if ($meta.IsSchema -and $meta.IsRequired -and $Values.ContainsKey($meta.Property.Name))
+                {
+                    $instanceNameParts += [System.String]$Values[$meta.Property.Name]
+                }
+            }
+
+            $this.AddExportInstanceError(($instanceNameParts -join ', '), $_.Exception.Message)
+            $Global:M365DSCExportInstanceFailureMessage = $_.Exception.Message
+            return $null
+        }
+    }
+
+    hidden [void] AddExportInstanceFailure([System.Management.Automation.ErrorRecord] $ErrorRecord, [System.String] $InstanceName)
+    {
+        if ($null -eq $Global:M365DSCExportInstanceErrors)
+        {
+            return
+        }
+
+        $this.CountExportFailure($ErrorRecord)
+        $this.AddExportInstanceError($InstanceName, $ErrorRecord.Exception.Message)
+    }
+
+    # Throws the error once MaxConsecutiveExportFailures instances in a row fail with one kind of transient or access error.
+    hidden [void] CountExportFailure([System.Management.Automation.ErrorRecord] $ErrorRecord)
+    {
+        $this._exportInstanceRead = $false
+        $kind = $null
+        if (Test-M365DSCTransientError -ErrorRecord $ErrorRecord)
+        {
+            $kind = 'Transient'
+        }
+        elseif (Test-M365DSCAccessError -ErrorRecord $ErrorRecord)
+        {
+            $kind = 'Access'
+        }
+
+        if ($kind -ne $this._exportFailureKind)
+        {
+            $this._exportFailureKind = $kind
+            $this._exportFailureCount = 0
+        }
+
+        if ($null -eq $kind)
+        {
+            return
+        }
+
+        $this._exportFailureCount++
+        if ($this._exportFailureCount -ge [M365DSCResourceBase]::MaxConsecutiveExportFailures)
+        {
+            throw $ErrorRecord
+        }
+    }
+
+    # Records a skipped export instance.
+    hidden [void] AddExportInstanceError([System.String] $InstanceName, [System.String] $Message)
+    {
+        if ($null -ne $Global:M365DSCExportInstanceErrors)
+        {
+            $Global:M365DSCExportInstanceErrors.Add(@{
+                ResourceName = $this.GetResourceName()
+                InstanceName = $InstanceName
+                Message      = $Message
+            })
+        }
+    }
+
+    # Marks the resource as not read in the export statistics.
+    hidden [void] SkipExport([System.Management.Automation.ErrorRecord] $ErrorRecord)
+    {
+        $Global:M365DSCExportResourceSkipMessage = $ErrorRecord.Exception.Message
+        $Global:M365DSCExportResourceSkipReason = Get-M365DSCExportSkipReason -ErrorRecord $ErrorRecord
+    }
+
+    hidden [void] SkipExport([System.String] $Message)
+    {
+        $Global:M365DSCExportResourceSkipMessage = $Message
+        $Global:M365DSCExportResourceSkipReason = Get-M365DSCExportSkipReason -Message $Message
     }
 
     #endregion

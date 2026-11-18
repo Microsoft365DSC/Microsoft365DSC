@@ -97,14 +97,6 @@ class TeamsMeetingBroadcastConfiguration : M365DSCResourceBase
                 SdnApiToken                         = $config.SdnApiToken
                 SupportURL                          = $config.SupportURL
                 IsSingleInstance                    = 'Yes'
-                Credential                          = $this.Credential
-                ApplicationId                       = $this.ApplicationId
-                TenantId                            = $this.TenantId
-                CertificateThumbprint               = $this.CertificateThumbprint
-                CertificatePath                     = $this.CertificatePath
-                CertificatePassword                 = $this.CertificatePassword
-                ManagedIdentity                     = $this.ManagedIdentity
-                AccessTokens                        = $this.AccessTokens
             })
         }
         catch
@@ -159,15 +151,7 @@ class TeamsMeetingBroadcastConfiguration : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $Results = $this.GetForExport($Params)
             if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
@@ -213,22 +197,5 @@ class TeamsMeetingBroadcastConfiguration : M365DSCResourceBase
                 @{ Type = 'RemoveWhen'; Properties = @('SdnApiToken'); When = @{ Any = @(@{ Property = 'SdnApiToken'; Equals = '**********' }; @{ Side = 'Current'; Property = 'SdnApiToken'; Equals = '**********' }) } }
             )
         }
-    }
-
-    hidden [TeamsMeetingBroadcastConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsMeetingBroadcastConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [TeamsMeetingBroadcastConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

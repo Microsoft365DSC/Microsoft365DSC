@@ -46,7 +46,7 @@ class TeamsOnlineSchedule : M365DSCResourceBase
 
     [DscProperty()]
     [System.ComponentModel.Description('The date time ranges of a fixed schedule.')]
-    [MSFT_TeamsOnlineScheduleDateTimeRange[]] $DateTimeRanges
+    [MSFT_TeamsOnlineScheduleFixedTimeRange[]] $DateTimeRanges
 
     [DscProperty()]
     [System.ComponentModel.Description('Specify if the schedule should exist.')]
@@ -121,15 +121,9 @@ class TeamsOnlineSchedule : M365DSCResourceBase
             Write-Verbose -Message "Found Teams Online Schedule with Name {$($this.Name)}"
 
             $result = @{
-                Name                  = $schedule.Name
-                Type                  = [System.String] $schedule.Type
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name   = $schedule.Name
+                Type   = [System.String] $schedule.Type
+                Ensure = 'Present'
             }
 
             if ($null -ne $schedule.WeeklyRecurrentSchedule)
@@ -342,7 +336,7 @@ class TeamsOnlineSchedule : M365DSCResourceBase
                 Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
 
-            $complexProperties = @{ DateTimeRanges = 'TeamsOnlineScheduleDateTimeRange' }
+            $complexProperties = @{ DateTimeRanges = 'TeamsOnlineScheduleFixedTimeRange' }
             foreach ($day in [TeamsOnlineSchedule]::GetDayPropertyNames())
             {
                 $complexProperties.$day = 'TeamsOnlineScheduleTimeRange'
@@ -358,13 +352,7 @@ class TeamsOnlineSchedule : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($exportedInstance.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $exportedInstance.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name = $exportedInstance.Name
                 }
 
                 $this.ExportedInstance = $exportedInstance
@@ -411,8 +399,6 @@ class TeamsOnlineSchedule : M365DSCResourceBase
         }
         catch
         {
-            Write-M365DSCHost -Message $Global:M365DSCEmojiRedX
-
             $this.LogError($_, 'Error during Export:')
 
             throw
@@ -517,23 +503,6 @@ class TeamsOnlineSchedule : M365DSCResourceBase
 
         return $result
     }
-
-    hidden [TeamsOnlineSchedule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsOnlineSchedule])
-        {
-            return $Values
-        }
-
-        $result = [TeamsOnlineSchedule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
-    }
 }
 
 class MSFT_TeamsOnlineScheduleTimeRange
@@ -547,7 +516,7 @@ class MSFT_TeamsOnlineScheduleTimeRange
     [System.String] $End
 }
 
-class MSFT_TeamsOnlineScheduleDateTimeRange
+class MSFT_TeamsOnlineScheduleFixedTimeRange
 {
     [DscProperty(Mandatory)]
     [System.ComponentModel.Description('The start of the date time range in the format d/M/yyyy H:mm, for example 24/12/2026 0:00.')]

@@ -145,14 +145,6 @@ class TeamsUpdateManagementPolicy : M365DSCResourceBase
                 UpdateTime                = $policy.UpdateTime
                 UseNewTeamsClient         = $policy.UseNewTeamsClient
                 Ensure                    = 'Present'
-                Credential                = $this.Credential
-                ApplicationId             = $this.ApplicationId
-                TenantId                  = $this.TenantId
-                CertificateThumbprint     = $this.CertificateThumbprint
-                CertificatePath           = $this.CertificatePath
-                CertificatePassword       = $this.CertificatePassword
-                ManagedIdentity           = $this.ManagedIdentity
-                AccessTokens              = $this.AccessTokens
             }
             if (-not [System.String]::IsNullOrEmpty($policy.UpdateTimeOfDay))
             {
@@ -247,15 +239,7 @@ class TeamsUpdateManagementPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity.Replace('Tag:', ''))" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity.Replace('Tag:', '')
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity.Replace('Tag:', '')
                 }
 
                 $this.ExportedInstance = $policy
@@ -279,22 +263,5 @@ class TeamsUpdateManagementPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsUpdateManagementPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsUpdateManagementPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsUpdateManagementPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

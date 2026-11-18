@@ -110,13 +110,6 @@ class AADGroupLifecyclePolicy : M365DSCResourceBase
                     ManagedGroupTypes           = $Policy.ManagedGroupTypes
                     AlternateNotificationEmails = $Policy.AlternateNotificationEmails.Split(';')
                     Ensure                      = 'Present'
-                    Credential                  = $this.Credential
-                    ApplicationId               = $this.ApplicationId
-                    ApplicationSecret           = $this.ApplicationSecret
-                    TenantId                    = $this.TenantId
-                    CertificateThumbprint       = $this.CertificateThumbprint
-                    ManagedIdentity             = $this.ManagedIdentity
-                    AccessTokens                = $this.AccessTokens
                 }
 
                 return $this.AsResult($result)
@@ -215,19 +208,10 @@ class AADGroupLifecyclePolicy : M365DSCResourceBase
 
             $dscContent = [System.Text.StringBuilder]::new()
             $Params = @{
-                Credential                  = $this.Credential
                 IsSingleInstance            = 'Yes'
                 GroupLifetimeInDays         = 1
                 ManagedGroupTypes           = 'All'
                 AlternateNotificationEmails = 'empty@contoso.com'
-                ApplicationId               = $this.ApplicationId
-                ApplicationSecret           = $this.ApplicationSecret
-                TenantId                    = $this.TenantId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                AccessTokens                = $this.AccessTokens
             }
             $Results = $this.GetForExport($Params)
             if ($Results.Ensure -eq 'Present')
@@ -252,22 +236,5 @@ class AADGroupLifecyclePolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADGroupLifecyclePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADGroupLifecyclePolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADGroupLifecyclePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

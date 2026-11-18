@@ -144,20 +144,11 @@ class SPOSiteGroup : M365DSCResourceBase
                 $permissions += $entry.ToString()
             }
             return $this.AsResult(@{
-                Url                   = $this.Url
-                Identity              = $siteGroup.Title
-                Owner                 = ([System.String]$siteGroup.Owner.LoginName).Split('|')[-1]
-                PermissionLevels      = [array]$permissions
-                Credential            = $this.Credential
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Url              = $this.Url
+                Identity         = $siteGroup.Title
+                Owner            = ([System.String]$siteGroup.Owner.LoginName).Split('|')[-1]
+                PermissionLevels = [array]$permissions
+                Ensure           = 'Present'
             })
         }
         catch
@@ -308,6 +299,7 @@ class SPOSiteGroup : M365DSCResourceBase
                 catch
                 {
                     Write-Warning -Message "Could not retrieve sitegroups for site $($site.Url): $($_.Exception.Message)"
+                    $this.AddExportInstanceFailure($_, $site.Url)
                 }
 
                 $j = 1
@@ -324,17 +316,8 @@ class SPOSiteGroup : M365DSCResourceBase
                 {
                     Write-M365DSCHost -Message "        |---[$j/$($siteGroups.Length)] $($siteGroup.Title)" -DeferWrite
                     $Params = @{
-                        Url                   = $site.Url
-                        Identity              = $siteGroup.Title
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        ApplicationSecret     = $this.ApplicationSecret
-                        CertificatePassword   = $this.CertificatePassword
-                        CertificatePath       = $this.CertificatePath
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        Credential            = $this.Credential
-                        AccessTokens          = $this.AccessTokens
+                        Url      = $site.Url
+                        Identity = $siteGroup.Title
                     }
                     try
                     {
@@ -365,6 +348,7 @@ class SPOSiteGroup : M365DSCResourceBase
                     catch
                     {
                         Write-Verbose -Message "There was an issue retrieving the SiteGroups for $($this.Url)"
+                        $this.AddExportInstanceFailure($_, "$($site.Url), $($siteGroup.Title)")
                     }
                     $j++
                     Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
@@ -386,22 +370,5 @@ class SPOSiteGroup : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOSiteGroup] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSiteGroup])
-        {
-            return $Values
-        }
-
-        $result = [SPOSiteGroup]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

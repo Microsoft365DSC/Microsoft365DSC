@@ -572,14 +572,6 @@ class SCPolicyConfig : M365DSCResourceBase
                 EnableLabelCoauth                       = $EnableLabelCoauthValue
                 EnableSpoAipMigration                   = $instance.EnableSpoAipMigration
                 QuarantineParameters                    = $QuarantineParametersValue
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                TenantId                                = $this.TenantId
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                AccessTokens                            = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -986,15 +978,7 @@ class SCPolicyConfig : M365DSCResourceBase
         {
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             if ($null -ne $Global:M365DSCExportResourceInstancesCount)
             {
@@ -1271,23 +1255,6 @@ class SCPolicyConfig : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCPolicyConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCPolicyConfig])
-        {
-            return $Values
-        }
-
-        $result = [SCPolicyConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

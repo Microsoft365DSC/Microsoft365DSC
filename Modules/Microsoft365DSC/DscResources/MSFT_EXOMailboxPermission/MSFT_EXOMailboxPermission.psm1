@@ -109,21 +109,13 @@ class EXOMailboxPermission : M365DSCResourceBase
             }
 
             $result = @{
-                Identity              = $userInfo
-                AccessRights          = [System.String[]]$permission.AccessRights.Replace(' ', '').Split(',')
-                InheritanceType       = $permission.InheritanceType
-                Owner                 = $permission.Owner
-                User                  = $permission.User
-                Deny                  = [Boolean]$permission.Deny
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Identity        = $userInfo
+                AccessRights    = [System.String[]]$permission.AccessRights.Replace(' ', '').Split(',')
+                InheritanceType = $permission.InheritanceType
+                Owner           = $permission.Owner
+                User            = $permission.User
+                Deny            = [Boolean]$permission.Deny
+                Ensure          = 'Present'
             }
 
             Write-Verbose -Message "Found permissions for mailbox {$($this.Identity)}"
@@ -223,18 +215,10 @@ class EXOMailboxPermission : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "        |---[$j/$($permissions.Count)] $($permission.Identity)" -DeferWrite
                     $Params = @{
-                        Identity              = $mailbox.UserPrincipalName
-                        AccessRights          = [System.String[]]$permission.AccessRights.Replace(' ', '').Replace('SendAs,', '').Split(',') # ignore SendAs permissions since they are not supported by *-MailboxPermission cmdlets
-                        InheritanceType       = $permission.InheritanceType
-                        User                  = $permission.User
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        Identity        = $mailbox.UserPrincipalName
+                        AccessRights    = [System.String[]]$permission.AccessRights.Replace(' ', '').Replace('SendAs,', '').Split(',') # ignore SendAs permissions since they are not supported by *-MailboxPermission cmdlets
+                        InheritanceType = $permission.InheritanceType
+                        User            = $permission.User
                     }
 
                     $this.ExportedInstance = $permission
@@ -270,22 +254,5 @@ class EXOMailboxPermission : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMailboxPermission] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMailboxPermission])
-        {
-            return $Values
-        }
-
-        $result = [EXOMailboxPermission]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

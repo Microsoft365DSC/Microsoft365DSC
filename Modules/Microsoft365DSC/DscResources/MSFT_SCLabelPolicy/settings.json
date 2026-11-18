@@ -21,6 +21,20 @@
     ]
   },
   "permissions": {
+    "graph": {
+      "delegated": {
+        "read": [],
+        "update": []
+      },
+      "application": {
+        "read": [],
+        "update": [
+          {
+            "name": "GroupMember.Read.All"
+          }
+        ]
+      }
+    },
     "Office 365 Exchange Online": {
       "application": {
         "read": [
@@ -36,7 +50,9 @@
       }
     }
   },
-  "requiredModules": [],
+  "requiredModules": [
+    "Microsoft.Graph.Groups"
+  ],
   "supportedEnvironments": [
     "Global",
     "USGov"
@@ -51,6 +67,12 @@
         "New-LabelPolicy",
         "Remove-LabelPolicy",
         "Set-LabelPolicy"
+      ]
+    },
+    {
+      "module": "Microsoft.Graph.Groups",
+      "cmdlets": [
+        "Get-MgGroup"
       ]
     }
   ]

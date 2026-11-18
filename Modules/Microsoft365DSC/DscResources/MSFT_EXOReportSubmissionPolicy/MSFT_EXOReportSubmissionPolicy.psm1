@@ -216,15 +216,7 @@ class EXOReportSubmissionPolicy : M365DSCResourceBase
                 ThirdPartyReportAddresses                   = $ReportSubmissionPolicy.ThirdPartyReportAddresses
                 ReportChatMessageEnabled                    = $ReportSubmissionPolicy.ReportChatMessageEnabled
                 ReportChatMessageToCustomizedAddressEnabled = $ReportSubmissionPolicy.ReportChatMessageToCustomizedAddressEnabled
-                Credential                                  = $this.Credential
                 Ensure                                      = 'Present'
-                ApplicationId                               = $this.ApplicationId
-                CertificateThumbprint                       = $this.CertificateThumbprint
-                CertificatePath                             = $this.CertificatePath
-                CertificatePassword                         = $this.CertificatePassword
-                ManagedIdentity                             = $this.ManagedIdentity
-                TenantId                                    = $this.TenantId
-                AccessTokens                                = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -304,15 +296,7 @@ class EXOReportSubmissionPolicy : M365DSCResourceBase
             }
 
             $Params = @{
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                IsSingleInstance      = 'Yes'
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $ReportSubmissionPolicy
             $Results = $this.GetForExport($Params)
@@ -346,22 +330,5 @@ class EXOReportSubmissionPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOReportSubmissionPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOReportSubmissionPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOReportSubmissionPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

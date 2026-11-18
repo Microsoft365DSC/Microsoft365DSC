@@ -97,18 +97,10 @@ class SCDeviceConfigurationPolicy : M365DSCResourceBase
 
             Write-Verbose "Found existing Device Configuration Policy $($this.Name)"
             $result = @{
-                Ensure                = 'Present'
-                Name                  = $PolicyObject.Name
-                Comment               = $CommentValue
-                Enabled               = $PolicyObject.Enabled
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Ensure  = 'Present'
+                Name    = $PolicyObject.Name
+                Comment = $CommentValue
+                Enabled = $PolicyObject.Enabled
             }
 
             return $this.AsResult($result)
@@ -220,22 +212,5 @@ class SCDeviceConfigurationPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SCDeviceConfigurationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCDeviceConfigurationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCDeviceConfigurationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

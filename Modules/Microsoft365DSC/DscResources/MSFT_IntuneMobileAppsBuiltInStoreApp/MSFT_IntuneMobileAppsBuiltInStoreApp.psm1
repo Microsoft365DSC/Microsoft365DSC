@@ -271,14 +271,6 @@ class IntuneMobileAppsBuiltInStoreApp : M365DSCResourceBase
                 TargetPlatform                  = $getValue.'@odata.type'.Replace('#microsoft.graph.managed', '').Replace('StoreApp', '')
                 Id                              = $getValue.Id
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
                 #endregion
             }
             $assignmentsValues = Get-MgBetaDeviceAppManagementMobileAppAssignment -MobileAppId $resolvedId
@@ -477,24 +469,14 @@ class IntuneMobileAppsBuiltInStoreApp : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    TargetPlatform        = $config.'@odata.type'.Replace('#microsoft.graph.managed', '').Replace('StoreApp', '')
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id             = $config.Id
+                    DisplayName    = $config.DisplayName
+                    TargetPlatform = $config.'@odata.type'.Replace('#microsoft.graph.managed', '').Replace('StoreApp', '')
+                    Ensure         = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.ApplicableDeviceType)
                 {
@@ -584,7 +566,7 @@ class IntuneMobileAppsBuiltInStoreApp : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'ApplicableDeviceType', 'Categories', 'LargeIcon', 'MinimumSupportedOperatingSystem') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -636,23 +618,6 @@ class IntuneMobileAppsBuiltInStoreApp : M365DSCResourceBase
                 }
             }
         }
-    }
-
-    hidden [IntuneMobileAppsBuiltInStoreApp] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsBuiltInStoreApp])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsBuiltInStoreApp]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

@@ -130,6 +130,52 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
+        Context -Name 'The application should exist and a soft-deleted instance exists' -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    AppId       = '22222222-2222-2222-2222-222222222222'
+                    DisplayName = 'App1'
+                    Ensure      = 'Present'
+                    Credential  = $Credential
+                }
+
+                Mock -CommandName Get-MgBetaApplication -MockWith {
+                    if ($PSBoundParameters.ContainsKey('ApplicationId'))
+                    {
+                        return @{
+                            Id          = '11111111-1111-1111-1111-111111111111'
+                            AppId       = '22222222-2222-2222-2222-222222222222'
+                            DisplayName = 'App1'
+                            Owners      = @()
+                        }
+                    }
+                    return $null
+                }
+
+                Mock -CommandName Get-MgBetaDirectoryDeletedItemAsApplication -ParameterFilter {
+                    $Filter -eq "AppId eq '22222222-2222-2222-2222-222222222222'"
+                } -MockWith {
+                    return @{
+                        Id              = '11111111-1111-1111-1111-111111111111'
+                        AppId           = '22222222-2222-2222-2222-222222222222'
+                        DisplayName     = 'App1'
+                        DeletedDateTime = [System.DateTime]::Now.AddDays(-1)
+                    }
+                }
+
+                Mock -CommandName Restore-MgBetaDirectoryDeletedItem -MockWith {
+                }
+            }
+
+            It 'Should restore the deleted application from the set method' {
+                (New-M365DSCResourceInstance -ResourceName 'AADApplication' -Property $testParams).Set()
+                Should -Invoke -CommandName 'Restore-MgBetaDirectoryDeletedItem' -Exactly 1 -ParameterFilter {
+                    $DirectoryObjectId -eq '11111111-1111-1111-1111-111111111111'
+                }
+                Should -Invoke -CommandName 'New-MgBetaApplication' -Exactly 0
+            }
+        }
+
         Context -Name 'The application exists but it should not' -Fixture {
             BeforeAll {
                 $testParams = @{

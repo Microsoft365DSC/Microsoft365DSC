@@ -877,17 +877,9 @@ class SCInsiderRiskPolicy : M365DSCResourceBase
             }
 
             $results = @{
-                Name                  = $nameValue
-                InsiderRiskScenario   = $instance.InsiderRiskScenario
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name                = $nameValue
+                InsiderRiskScenario = $instance.InsiderRiskScenario
+                Ensure              = 'Present'
             }
 
             if (-not [System.String]::IsNullOrEmpty($instance.SessionRecordingSettings))
@@ -1292,16 +1284,8 @@ class SCInsiderRiskPolicy : M365DSCResourceBase
                 $displayedKey = $config.Name
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Name                  = $config.Name
-                    InsiderRiskScenario   = $config.InsiderRiskScenario
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name                = $config.Name
+                    InsiderRiskScenario = $config.InsiderRiskScenario
                 }
 
                 $this.ExportedInstance = $config
@@ -1497,23 +1481,6 @@ class SCInsiderRiskPolicy : M365DSCResourceBase
         {
             $result.Add($indicatorName, ($Indicators | Where-Object -Property Name -EQ $indicatorName).Enabled)
         }
-        return $result
-    }
-
-    hidden [SCInsiderRiskPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCInsiderRiskPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCInsiderRiskPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
         return $result
     }
 }

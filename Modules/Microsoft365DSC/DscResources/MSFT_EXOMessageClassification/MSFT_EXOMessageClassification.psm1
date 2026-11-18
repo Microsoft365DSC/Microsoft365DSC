@@ -131,15 +131,7 @@ class EXOMessageClassification : M365DSCResourceBase
                 RecipientDescription        = $MessageClassification.RecipientDescription
                 RetainClassificationEnabled = $MessageClassification.RetainClassificationEnabled
                 SenderDescription           = $MessageClassification.SenderDescription
-                Credential                  = $this.Credential
                 Ensure                      = 'Present'
-                ApplicationId               = $this.ApplicationId
-                CertificateThumbprint       = $this.CertificateThumbprint
-                CertificatePath             = $this.CertificatePath
-                CertificatePassword         = $this.CertificatePassword
-                ManagedIdentity             = $this.ManagedIdentity
-                TenantId                    = $this.TenantId
-                AccessTokens                = $this.AccessTokens
             }
 
             Write-Verbose -Message "Found Message Classification policy $($this.Identity)"
@@ -235,16 +227,8 @@ class EXOMessageClassification : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($MessageClassifications.Length)] $($MessageClassification.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $MessageClassification.Identity
-                    DisplayName           = $MessageClassification.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $MessageClassification.Identity
+                    DisplayName = $MessageClassification.Name
                 }
 
                 $this.ExportedInstance = $MessageClassification
@@ -268,22 +252,5 @@ class EXOMessageClassification : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMessageClassification] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMessageClassification])
-        {
-            return $Values
-        }
-
-        $result = [EXOMessageClassification]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -81,19 +81,10 @@ class AADSecurityDefaults : M365DSCResourceBase
             $defaults = Get-MgBetaPolicyIdentitySecurityDefaultEnforcementPolicy -ErrorAction Stop
 
             $result = @{
-                IsSingleInstance      = 'Yes'
-                DisplayName           = $defaults.DisplayName
-                Description           = $defaults.Description
-                IsEnabled             = $defaults.IsEnabled
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                DisplayName      = $defaults.DisplayName
+                Description      = $defaults.Description
+                IsEnabled        = $defaults.IsEnabled
             }
 
             return $this.AsResult($result)
@@ -164,16 +155,7 @@ class AADSecurityDefaults : M365DSCResourceBase
             }
 
             $Params = @{
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                IsSingleInstance      = 'Yes'
-                ApplicationSecret     = $this.ApplicationSecret
-                Credential            = $this.Credential
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $dscContent = [System.Text.StringBuilder]::new()
             $Results = $this.GetForExport($Params)
@@ -194,22 +176,5 @@ class AADSecurityDefaults : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADSecurityDefaults] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADSecurityDefaults])
-        {
-            return $Values
-        }
-
-        $result = [AADSecurityDefaults]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

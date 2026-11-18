@@ -178,14 +178,7 @@ class SentinelThreatIntelligenceIndicator : M365DSCResourceBase
                 Confidence             = $instance.properties.confidence
                 Source                 = $instance.properties.source
                 Ensure                 = 'Present'
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
                 TenantId               = $tenantIdValue
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                AccessTokens           = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -342,19 +335,12 @@ class SentinelThreatIntelligenceIndicator : M365DSCResourceBase
                     $displayedKey = $indicator.properties.DisplayName
                     Write-M365DSCHost -Message "        |---[$j/$($indicators.Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        DisplayName           = $indicator.properties.displayName
-                        Id                    = $indicator.name
-                        SubscriptionId        = $subscriptionIdValue
-                        ResourceGroupName     = $resourceGroupNameValue
-                        WorkspaceName         = $workspaceNameValue
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $tenantIdValue
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePath       = $this.CertificatePath
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName       = $indicator.properties.displayName
+                        Id                = $indicator.name
+                        SubscriptionId    = $subscriptionIdValue
+                        ResourceGroupName = $resourceGroupNameValue
+                        WorkspaceName     = $workspaceNameValue
+                        TenantId          = $tenantIdValue
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -476,22 +462,5 @@ class SentinelThreatIntelligenceIndicator : M365DSCResourceBase
                 -TenantId $TenantId
             throw $_
         }
-    }
-
-    hidden [SentinelThreatIntelligenceIndicator] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SentinelThreatIntelligenceIndicator])
-        {
-            return $Values
-        }
-
-        $result = [SentinelThreatIntelligenceIndicator]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

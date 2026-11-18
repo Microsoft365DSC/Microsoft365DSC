@@ -155,14 +155,6 @@ class TeamsEmergencyCallingPolicy : M365DSCResourceBase
                 NotificationGroup                  = $policy.NotificationGroup
                 NotificationMode                   = [String]$policy.NotificationMode
                 Ensure                             = 'Present'
-                Credential                         = $this.Credential
-                ApplicationId                      = $this.ApplicationId
-                TenantId                           = $this.TenantId
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
-                AccessTokens                       = $this.AccessTokens
             }
 
             if ([System.String]::IsNullOrEmpty($result.NotificationMode))
@@ -291,15 +283,7 @@ class TeamsEmergencyCallingPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
                 }
 
                 $this.ExportedInstance = $policy
@@ -340,23 +324,6 @@ class TeamsEmergencyCallingPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsEmergencyCallingPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsEmergencyCallingPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsEmergencyCallingPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

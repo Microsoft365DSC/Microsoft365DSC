@@ -143,14 +143,6 @@ class EXOAuthenticationPolicy : M365DSCResourceBase
                 AllowBasicAuthSmtp                 = $AuthenticationPolicy.AllowBasicAuthSmtp
                 AllowBasicAuthWebServices          = $AuthenticationPolicy.AllowBasicAuthWebServices
                 Ensure                             = 'Present'
-                Credential                         = $this.Credential
-                ApplicationId                      = $this.ApplicationId
-                CertificateThumbprint              = $this.CertificateThumbprint
-                CertificatePath                    = $this.CertificatePath
-                CertificatePassword                = $this.CertificatePassword
-                ManagedIdentity                    = $this.ManagedIdentity
-                TenantId                           = $this.TenantId
-                AccessTokens                       = $this.AccessTokens
             }
 
             Write-Verbose -Message "Found Authentication Policy $($this.Identity)"
@@ -248,6 +240,7 @@ class EXOAuthenticationPolicy : M365DSCResourceBase
                 if ($_.Exception -like "*The operation couldn't be performed because object*")
                 {
                     Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for Authentication Policies"
+                    $this.SkipExport($_)
                     return ''
                 }
                 throw $_
@@ -273,15 +266,7 @@ class EXOAuthenticationPolicy : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($AllAuthenticationPolicies.Count)] $($AuthenticationPolicy.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $AuthenticationPolicy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $AuthenticationPolicy.Identity
                 }
                 $this.ExportedInstance = $AuthenticationPolicy
                 $Results = $this.GetForExport($Params)
@@ -305,22 +290,5 @@ class EXOAuthenticationPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAuthenticationPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAuthenticationPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXOAuthenticationPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

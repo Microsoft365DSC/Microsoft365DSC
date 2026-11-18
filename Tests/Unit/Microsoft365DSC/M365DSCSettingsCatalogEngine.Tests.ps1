@@ -59,7 +59,7 @@ BeforeAll {
     {
         param([System.String] $Name)
 
-        return (Get-Content -Path (Join-Path -Path $Script:FixtureRoot -ChildPath $Name) -Raw).TrimEnd()
+        return (Get-Content -Path (Join-Path -Path $Script:FixtureRoot -ChildPath $Name) -Raw).TrimEnd() -replace '\r\n', "`n"
     }
 }
 
@@ -81,14 +81,14 @@ Describe 'Settings Catalog engine against captured Security Baseline payloads' -
     }
 
     It 'Exports <Baseline> settings into the pinned DSC parameter set' {
-        ((ConvertTo-Canonical -Node $Script:Exported) | ConvertTo-Json -Depth 40).TrimEnd() | Should -BeExactly (Get-Golden -Name "$Baseline.export.expected.json")
+        ((ConvertTo-Canonical -Node $Script:Exported) | ConvertTo-Json -Depth 40).TrimEnd() -replace '\r\n', "`n" | Should -BeExactly (Get-Golden -Name "$Baseline.export.expected.json")
     }
 
     It 'Builds the pinned <Baseline> policy body from the exported parameters' {
         $built = [Microsoft365DSC.Intune.SettingCatalogPolicySettingBuilder]::Build([System.Collections.Generic.List[object]] $Script:Templates, $Script:Exported.Clone(), $true)
 
         $built.Count | Should -Be $Settings
-        ((ConvertTo-Canonical -Node @($built)) | ConvertTo-Json -Depth 40).TrimEnd() | Should -BeExactly (Get-Golden -Name "$Baseline.build.expected.json")
+        ((ConvertTo-Canonical -Node @($built)) | ConvertTo-Json -Depth 40).TrimEnd() -replace '\r\n', "`n" | Should -BeExactly (Get-Golden -Name "$Baseline.build.expected.json")
     }
 
     It 'Resolves the same setting names on repeated calls for <Baseline>' {

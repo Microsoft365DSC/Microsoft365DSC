@@ -440,13 +440,6 @@ class AADRoleSetting : M365DSCResourceBase
                 AuthenticationContextId                                   = $AuthenticationContextIdValue
                 AuthenticationContextName                                 = $AuthenticationContextNameValue
                 Ensure                                                    = 'Present'
-                ApplicationId                                             = $this.ApplicationId
-                TenantId                                                  = $this.TenantId
-                CertificateThumbprint                                     = $this.CertificateThumbprint
-                ApplicationSecret                                         = $this.ApplicationSecret
-                Credential                                                = $this.Credential
-                ManagedIdentity                                           = $this.ManagedIdentity
-                AccessTokens                                              = $this.AccessTokens
             }
             return $this.AsResult($result)
         }
@@ -1015,6 +1008,7 @@ class AADRoleSetting : M365DSCResourceBase
             if ($_.ErrorDetails.Message -like '*The tenant needs to have Microsoft Entra*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) AAD Premium License is required to get the role."
+                $this.SkipExport($_)
                 return ''
             }
         }
@@ -1033,22 +1027,12 @@ class AADRoleSetting : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($role.DisplayName)" -DeferWrite
                 $Params = @{
-                    Id                    = $role.Id
-                    DisplayName           = $role.DisplayName
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    ApplicationSecret     = $this.ApplicationSecret
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $role.Id
+                    DisplayName = $role.DisplayName
                 }
 
                 $this.ExportedInstance = $role
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 if ($Results.Ensure -eq 'Present')
                 {
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -1056,7 +1040,7 @@ class AADRoleSetting : M365DSCResourceBase
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
@@ -1073,22 +1057,5 @@ class AADRoleSetting : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADRoleSetting] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADRoleSetting])
-        {
-            return $Values
-        }
-
-        $result = [AADRoleSetting]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

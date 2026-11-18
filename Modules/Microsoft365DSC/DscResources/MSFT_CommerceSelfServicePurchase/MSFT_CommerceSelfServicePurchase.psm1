@@ -97,18 +97,10 @@ class CommerceSelfServicePurchase : M365DSCResourceBase
             }
 
             $results = @{
-                ProductId             = $instance.ProductId
-                ProductName           = $instance.ProductName
-                PolicyValue           = $instance.PolicyValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                ProductId   = $instance.ProductId
+                ProductName = $instance.ProductName
+                PolicyValue = $instance.PolicyValue
+                Ensure      = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -193,16 +185,8 @@ class CommerceSelfServicePurchase : M365DSCResourceBase
                 $displayedKey = $config.ProductName
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].items.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    ProductId             = $config.productId
-                    ProductName           = $config.productName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    ProductId   = $config.productId
+                    ProductName = $config.productName
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -226,22 +210,5 @@ class CommerceSelfServicePurchase : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [CommerceSelfServicePurchase] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [CommerceSelfServicePurchase])
-        {
-            return $Values
-        }
-
-        $result = [CommerceSelfServicePurchase]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

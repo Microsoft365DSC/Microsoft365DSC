@@ -96,14 +96,6 @@ class EXOAuthenticationPolicyAssignment : M365DSCResourceBase
                 UserName                 = $this.UserName
                 AuthenticationPolicyName = $user.AuthenticationPolicy
                 Ensure                   = 'Present'
-                Credential               = $this.Credential
-                ApplicationId            = $this.ApplicationId
-                CertificateThumbprint    = $this.CertificateThumbprint
-                CertificatePath          = $this.CertificatePath
-                CertificatePassword      = $this.CertificatePassword
-                ManagedIdentity          = $this.ManagedIdentity
-                TenantId                 = $this.TenantId
-                AccessTokens             = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -177,6 +169,7 @@ class EXOAuthenticationPolicyAssignment : M365DSCResourceBase
                 if ($_.Exception -like "*The operation couldn't be performed because object*")
                 {
                     Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered to allow for Authentication Policies"
+                    $this.SkipExport($_)
                     return ''
                 }
                 throw $_
@@ -205,25 +198,16 @@ class EXOAuthenticationPolicyAssignment : M365DSCResourceBase
                     }
 
                     $Params = @{
-                        UserName              = $user.UserPrincipalName
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        UserName = $user.UserPrincipalName
                     }
                     $this.ExportedInstance = $user
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
 
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -240,22 +224,5 @@ class EXOAuthenticationPolicyAssignment : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOAuthenticationPolicyAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAuthenticationPolicyAssignment])
-        {
-            return $Values
-        }
-
-        $result = [EXOAuthenticationPolicyAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

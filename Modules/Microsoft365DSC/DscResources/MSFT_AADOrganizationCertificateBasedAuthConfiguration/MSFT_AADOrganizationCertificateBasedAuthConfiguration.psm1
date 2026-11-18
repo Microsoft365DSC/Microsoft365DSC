@@ -121,14 +121,6 @@ class AADOrganizationCertificateBasedAuthConfiguration : M365DSCResourceBase
                 CertificateAuthorities = $complexCertificateAuthorities
                 OrganizationId         = $this.OrganizationId
                 Ensure                 = 'Present'
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                TenantId               = $this.TenantId
-                ApplicationSecret      = $this.ApplicationSecret
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
                 #endregion
             }
 
@@ -236,17 +228,8 @@ class AADOrganizationCertificateBasedAuthConfiguration : M365DSCResourceBase
                 $displayedKey = "CertificateBasedAuthConfigurations for $($getValue.DisplayName)"
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Ensure                = 'Present'
-                    OrganizationId        = $getValue.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Ensure         = 'Present'
+                    OrganizationId = $getValue.Id
                 }
 
                 $Results = $this.GetForExport($Params)
@@ -303,23 +286,6 @@ class AADOrganizationCertificateBasedAuthConfiguration : M365DSCResourceBase
         }
 
         return $organization.Id
-    }
-
-    hidden [AADOrganizationCertificateBasedAuthConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADOrganizationCertificateBasedAuthConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [AADOrganizationCertificateBasedAuthConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

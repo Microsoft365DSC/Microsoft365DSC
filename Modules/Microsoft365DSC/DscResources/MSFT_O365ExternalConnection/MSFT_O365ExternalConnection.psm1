@@ -159,21 +159,13 @@ class O365ExternalConnection : M365DSCResourceBase
             }
 
             $results = @{
-                Name                  = $instance.Name
-                Id                    = $instance.id
-                Description           = $instance.Description
-                AuthorizedAppIds      = $AuthorizedAppIdsValue
-                ActivitySettings      = $activitySettingsValue
-                ContentCategory       = $instance.ContentCategory
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name             = $instance.Name
+                Id               = $instance.id
+                Description      = $instance.Description
+                AuthorizedAppIds = $AuthorizedAppIdsValue
+                ActivitySettings = $activitySettingsValue
+                ContentCategory  = $instance.ContentCategory
+                Ensure           = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -322,16 +314,8 @@ class O365ExternalConnection : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Name                  = $config.Name
-                    Id                    = $config.Id
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Name = $config.Name
+                    Id   = $config.Id
                 }
 
                 $this.ExportedInstance = $config
@@ -391,23 +375,6 @@ class O365ExternalConnection : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [O365ExternalConnection] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [O365ExternalConnection])
-        {
-            return $Values
-        }
-
-        $result = [O365ExternalConnection]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

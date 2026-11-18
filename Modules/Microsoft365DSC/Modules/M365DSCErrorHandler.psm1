@@ -1,5 +1,3 @@
-$Script:M365DSCPartialExportPath = $null
-
 <#
 .SYNOPSIS
     Saves the already exported configuration to a temporary file to prevent data loss
@@ -24,6 +22,7 @@ function Save-M365DSCPartialExport
     param
     (
         [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
         [System.String]
         $Content,
 
@@ -32,10 +31,14 @@ function Save-M365DSCPartialExport
         $FileName
     )
 
+    if ([System.String]::IsNullOrEmpty($Content))
+    {
+        return
+    }
+
     if (-not [System.String]::IsNullOrEmpty($env:TEMP))
     {
         $tempPath = Join-Path -Path $env:TEMP -ChildPath $FileName
-        $Script:M365DSCPartialExportPath = $tempPath
         [Microsoft365DSC.Cache.PartialExportWriter]::Append($tempPath, $Content)
     }
 }
@@ -44,18 +47,25 @@ function Save-M365DSCPartialExport
 .DESCRIPTION
     Releases the lock used by Save-M365DSCPartialExport. Call at export completion or on error.
 
+.PARAMETER FileName
+    Specifies the name of the partial export file in the temp folder.
+
 .FUNCTIONALITY
     Internal
 #>
 function Close-M365DSCPartialExport
 {
     [CmdletBinding()]
-    param()
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $FileName
+    )
 
-    if ($null -ne $Script:M365DSCPartialExportPath)
+    if (-not [System.String]::IsNullOrEmpty($env:TEMP))
     {
-        [Microsoft365DSC.Cache.PartialExportWriter]::Release($Script:M365DSCPartialExportPath)
-        $Script:M365DSCPartialExportPath = $null
+        [Microsoft365DSC.Cache.PartialExportWriter]::Release((Join-Path -Path $env:TEMP -ChildPath $FileName))
     }
 }
 
@@ -90,18 +100,8 @@ function Test-M365DSCTransientError
     )
 
     $message = $ErrorRecord.Exception.Message
-
-    # HTTP status code patterns (5XX server errors + 429 throttling)
     $transientStatusCodes = @(429, 500, 502, 503, 504)
-    foreach ($code in $transientStatusCodes)
-    {
-        if ($message -match "\b$code\b")
-        {
-            return $true
-        }
-    }
 
-    # Check for HttpResponseException or similar with a Response.StatusCode property
     $response = $null
     if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
     {
@@ -109,8 +109,25 @@ function Test-M365DSCTransientError
     }
     if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
     {
-        $statusCodeInt = [int]$response.StatusCode
-        if ($statusCodeInt -in $transientStatusCodes)
+        $statusCodeInt = [System.Int32]$response.StatusCode
+        if ($statusCodeInt -gt 0)
+        {
+            return ($statusCodeInt -in $transientStatusCodes)
+        }
+    }
+
+    # Status codes in the message count only where the message reports a status, e.g. 'Status: 503',
+    # '(503)', 'does not indicate success: 503' or '429 (Too Many Requests)'
+    $codes = $transientStatusCodes -join '|'
+    $statusCodePatterns = @(
+        "(?i)\bstatus(\s*code)?\s*[:=]?\s*($codes)\b",
+        "\(\s*($codes)\s*\)",
+        "(?i)does not indicate success:\s*($codes)\b",
+        "\b($codes)\s*\("
+    )
+    foreach ($pattern in $statusCodePatterns)
+    {
+        if ($message -match $pattern)
         {
             return $true
         }
@@ -119,8 +136,6 @@ function Test-M365DSCTransientError
     # Common transient error message patterns across all workloads
     $transientPatterns = @(
         '*timed out*',
-        '*timeout*',
-        '*time out*',
         '*Too Many Requests*',
         '*throttled*',
         '*Service Unavailable*',
@@ -146,6 +161,12 @@ function Test-M365DSCTransientError
         }
     }
 
+    # match 'timeout' as a whole word
+    if ($message -match '(?i)\btime\s?outs?\b')
+    {
+        return $true
+    }
+
     # Check ErrorDetails.Message for JSON error bodies (common in Graph/Intune)
     if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
     {
@@ -156,6 +177,11 @@ function Test-M365DSCTransientError
             {
                 return $true
             }
+        }
+
+        if ($detailsMessage -match '(?i)\btime\s?outs?\b')
+        {
+            return $true
         }
     }
 
@@ -193,20 +219,46 @@ function Test-M365DSCNotFoundError
         $ErrorRecord
     )
 
+    # If it's a missing cmdlet, it could be missing RBAC roles in EXO/SCC
+    if (Test-M365DSCAccessError -ErrorRecord $ErrorRecord)
+    {
+        return $false
+    }
+
     # Check for HTTP 404 status code on the response object
     if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
     {
         $response = $ErrorRecord.Exception.Response
         if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
         {
-            if ([int]$response.StatusCode -eq 404)
+            $statusCodeInt = [System.Int32]$response.StatusCode
+            if ($statusCodeInt -gt 0)
             {
-                return $true
+                return ($statusCodeInt -eq 404)
             }
         }
     }
 
+    if ($ErrorRecord.Exception -is [System.Management.Automation.ParameterBindingException] -or
+        $ErrorRecord.Exception -is [System.Management.Automation.ItemNotFoundException])
+    {
+        return $false
+    }
+
     $message = $ErrorRecord.Exception.Message
+
+    # Remote sessions return binding and validation errors as plain messages
+    $otherErrorPatterns = @(
+        '*A parameter cannot be found that matches parameter name*',
+        '*does not exist as a declared property*'
+    )
+    foreach ($pattern in $otherErrorPatterns)
+    {
+        if ($message -like $pattern)
+        {
+            return $false
+        }
+    }
 
     # Common "not found" patterns across all workloads
     $notFoundPatterns = @(
@@ -220,28 +272,186 @@ function Test-M365DSCNotFoundError
         '*could not be found*',
         '*couldn''t be found*',
         '*cannot be found*',
-        '*is not recognized*',
         '*Item not found*',
         '*File Not Found*',
         '*Not Found*',
-        '*Cannot find*',
-        '*404*'
+        '*Cannot find*'
     )
-    foreach ($pattern in $notFoundPatterns)
+
+    $messages = @($message)
+    if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
     {
-        if ($message -like $pattern)
+        # JSON error bodies (common in Graph/Intune)
+        $messages += $ErrorRecord.ErrorDetails.Message
+    }
+
+    foreach ($currentMessage in $messages)
+    {
+        foreach ($pattern in $notFoundPatterns)
+        {
+            if ($currentMessage -like $pattern)
+            {
+                return $true
+            }
+        }
+
+        if ($currentMessage -match '\b404\b')
         {
             return $true
         }
     }
 
-    # Check ErrorDetails.Message for JSON error bodies
+    return $false
+}
+
+<#
+.SYNOPSIS
+    Returns the reason category of a resource the export skipped.
+
+.DESCRIPTION
+    Returns AccessDenied for a failed sign-in or a missing permission and NotAvailable for any
+    other reason, such as a missing license or a feature the tenant does not offer.
+
+.PARAMETER ErrorRecord
+    The error that made the export skip the resource.
+
+.PARAMETER Message
+    The message the export skipped the resource with.
+
+.OUTPUTS
+    [System.String] AccessDenied or NotAvailable.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Get-M365DSCExportSkipReason
+{
+    [CmdletBinding(DefaultParameterSetName = 'Message')]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter(Mandatory = $true, ParameterSetName = 'ErrorRecord')]
+        [System.Management.Automation.ErrorRecord]
+        $ErrorRecord,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'Message')]
+        [AllowEmptyString()]
+        [System.String]
+        $Message
+    )
+
+    $messages = @($Message)
+    if ($PSCmdlet.ParameterSetName -eq 'ErrorRecord')
+    {
+        if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
+        {
+            $response = $ErrorRecord.Exception.Response
+            if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'] -and
+                [System.Int32]$response.StatusCode -in @(401, 403))
+            {
+                return 'AccessDenied'
+            }
+        }
+
+        $messages = @($ErrorRecord.Exception.Message)
+        if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
+        {
+            $messages += $ErrorRecord.ErrorDetails.Message
+        }
+    }
+
+    $accessPatterns = @(
+        '*Unauthorized*',
+        '*Forbidden*',
+        '*Authorization_RequestDenied*',
+        '*Insufficient privileges*',
+        '*Access denied*',
+        '*AccessDenied*',
+        '*Access is denied*',
+        '*AADSTS*',
+        '*permission*'
+    )
+
+    foreach ($text in $messages)
+    {
+        foreach ($pattern in $accessPatterns)
+        {
+            if ($text -like $pattern)
+            {
+                return 'AccessDenied'
+            }
+        }
+    }
+
+    return 'NotAvailable'
+}
+
+<#
+.SYNOPSIS
+    Determines whether an error record represents an authentication or authorization error.
+
+.DESCRIPTION
+    Inspects the HTTP status code, the exception message and the error details of a
+    PowerShell ErrorRecord to determine if the error indicates a failed sign-in or missing
+    permissions. A cmdlet that is not available counts as missing permissions, because
+    Exchange Online and Security & Compliance only load the cmdlets the assigned roles allow.
+
+.PARAMETER ErrorRecord
+    The PowerShell ErrorRecord to inspect.
+
+.OUTPUTS
+    [System.Boolean] $true if the error indicates an authentication or authorization failure, $false otherwise.
+
+.FUNCTIONALITY
+    Internal
+#>
+function Test-M365DSCAccessError
+{
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.ErrorRecord]
+        $ErrorRecord
+    )
+
+    if ($null -ne $ErrorRecord.Exception.PSObject.Properties['Response'])
+    {
+        $response = $ErrorRecord.Exception.Response
+        if ($null -ne $response -and $null -ne $response.PSObject.Properties['StatusCode'])
+        {
+            if ([System.Int32]$response.StatusCode -in @(401, 403))
+            {
+                return $true
+            }
+        }
+    }
+
+    $accessPatterns = @(
+        '*Unauthorized*',
+        '*Forbidden*',
+        '*Authorization_RequestDenied*',
+        '*Insufficient privileges*',
+        '*Access denied*',
+        '*AccessDenied*',
+        '*Access is denied*',
+        '*AADSTS*',
+        '*is not recognized as a name of a cmdlet*',
+        '*is not recognized as the name of a cmdlet*'
+    )
+
+    $messages = @($ErrorRecord.Exception.Message)
     if ($null -ne $ErrorRecord.ErrorDetails -and -not [System.String]::IsNullOrEmpty($ErrorRecord.ErrorDetails.Message))
     {
-        $detailsMessage = $ErrorRecord.ErrorDetails.Message
-        foreach ($pattern in $notFoundPatterns)
+        $messages += $ErrorRecord.ErrorDetails.Message
+    }
+
+    foreach ($message in $messages)
+    {
+        foreach ($pattern in $accessPatterns)
         {
-            if ($detailsMessage -like $pattern)
+            if ($message -like $pattern)
             {
                 return $true
             }
@@ -270,8 +480,9 @@ function Test-M365DSCNotFoundError
     report resources as absent.
 
 .PARAMETER ScriptBlock
-    The scriptblock containing the cmdlet call to execute. The cmdlet inside should
-    use -ErrorAction Stop to ensure errors are catchable.
+    The scriptblock containing the cmdlet call to execute. Non-terminating errors are
+    promoted to terminating errors, but only after the scriptblock finishes. Use
+    -ErrorAction Stop inside it when later statements must not run after a failure.
 
 .PARAMETER SuppressNotFoundError
     When specified, errors classified as "resource not found" (HTTP 404, various
@@ -322,7 +533,7 @@ function Invoke-M365DSCCommand
     param
     (
         [Parameter(Mandatory = $true)]
-        [scriptblock]
+        [System.Management.Automation.ScriptBlock]
         $ScriptBlock,
 
         [Parameter()]
@@ -343,31 +554,37 @@ function Invoke-M365DSCCommand
     )
 
     $retryCount = 0
-    $previousErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Stop' # Ensure all errors are catchable
     while ($true)
     {
         try
         {
-            $result = (& $ScriptBlock)
-            $ErrorActionPreference = $previousErrorActionPreference
-            return $result
+            # The scriptblock resolves $ErrorActionPreference in the caller's scope.
+            # Promote non-terminating errors explicitly.
+            $output = & $ScriptBlock 2>&1
+            $errorRecord = $output | Where-Object -FilterScript { $_ -is [System.Management.Automation.ErrorRecord] } | Select-Object -First 1
+            if ($null -ne $errorRecord)
+            {
+                throw $errorRecord
+            }
+            return $output
         }
         catch
         {
+            $isTransient = Test-M365DSCTransientError -ErrorRecord $_
+
             # Check if this is a "not found" error that should return $null
-            if ($SuppressNotFoundError -and -not $RetryOnNotFoundError -and (Test-M365DSCNotFoundError -ErrorRecord $_))
+            # Transient errors are never suppressed.
+            if ($SuppressNotFoundError -and -not $RetryOnNotFoundError -and -not $isTransient -and (Test-M365DSCNotFoundError -ErrorRecord $_))
             {
                 Write-Verbose -Message "Resource not found (expected): $($_.Exception.Message)"
-                $ErrorActionPreference = $previousErrorActionPreference
                 return $null
             }
 
             # Check if this is a transient error that warrants retry
-            if ((Test-M365DSCTransientError -ErrorRecord $_) -and $retryCount -lt $MaxRetries -or ($RetryOnNotFoundError -and (Test-M365DSCNotFoundError -ErrorRecord $_) -and $retryCount -lt $MaxRetries))
+            if ($isTransient -and $retryCount -lt $MaxRetries -or ($RetryOnNotFoundError -and (Test-M365DSCNotFoundError -ErrorRecord $_) -and $retryCount -lt $MaxRetries))
             {
                 $retryCount++
-                $delay = $BaseDelayInSeconds * [Math]::Pow(2, $retryCount - 1)
+                $delay = $BaseDelayInSeconds * [System.Math]::Pow(2, $retryCount - 1)
                 Write-Verbose -Message "Transient error detected (attempt $retryCount/$MaxRetries). Retrying after ${delay}s: $($_.Exception.Message)"
                 Start-Sleep -Seconds $delay
                 continue
@@ -375,7 +592,6 @@ function Invoke-M365DSCCommand
 
             # Permanent error or retries exhausted. Throw the exception to be handled by the caller.
             Write-Verbose -Message "Permanent error or max retries reached: $($_.Exception.Message)"
-            $ErrorActionPreference = $previousErrorActionPreference
             throw
         }
     }
@@ -418,7 +634,7 @@ function Wait-M365DSCCondition
     param
     (
         [Parameter(Mandatory = $true)]
-        [scriptblock]
+        [System.Management.Automation.ScriptBlock]
         $ScriptBlock,
 
         [Parameter(Mandatory = $true)]
@@ -465,8 +681,10 @@ function Wait-M365DSCCondition
 
 Export-ModuleMember -Function @(
     'Close-M365DSCPartialExport',
+    'Get-M365DSCExportSkipReason',
     'Invoke-M365DSCCommand',
     'Save-M365DSCPartialExport',
+    'Test-M365DSCAccessError',
     'Test-M365DSCNotFoundError',
     'Test-M365DSCTransientError',
     'Wait-M365DSCCondition'

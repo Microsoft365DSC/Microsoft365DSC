@@ -133,20 +133,12 @@ class AADRemoteNetwork : M365DSCResourceBase
             #endregion
 
             $results = @{
-                Id                    = $getValue.Id
-                Name                  = $getValue.Name
-                Region                = $getValue.Region
-                ForwardingProfiles    = [Array]$forwardingProfilesList
-                DeviceLinks           = [Array]$complexDeviceLinks
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Id                 = $getValue.Id
+                Name               = $getValue.Name
+                Region             = $getValue.Region
+                ForwardingProfiles = [Array]$forwardingProfilesList
+                DeviceLinks        = [Array]$complexDeviceLinks
+                Ensure             = 'Present'
             }
 
             return $this.AsResult($results)
@@ -299,23 +291,13 @@ class AADRemoteNetwork : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Name                  = $config.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Name   = $config.Name
+                    Ensure = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.DeviceLinks)
                 {
@@ -362,7 +344,7 @@ class AADRemoteNetwork : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('DeviceLinks') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -517,23 +499,6 @@ class AADRemoteNetwork : M365DSCResourceBase
         }
 
         return $newDeviceLinks
-    }
-
-    hidden [AADRemoteNetwork] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADRemoteNetwork])
-        {
-            return $Values
-        }
-
-        $result = [AADRemoteNetwork]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

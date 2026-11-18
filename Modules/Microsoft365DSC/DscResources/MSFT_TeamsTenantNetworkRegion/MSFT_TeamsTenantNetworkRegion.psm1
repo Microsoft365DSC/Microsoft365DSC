@@ -97,18 +97,10 @@ class TeamsTenantNetworkRegion : M365DSCResourceBase
 
             Write-Verbose -Message "Found an instance with Identity {$($this.Identity)}"
             $results = @{
-                Identity              = $instance.Identity
-                CentralSite           = $instance.CentralSite
-                Description           = $instance.Description
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity    = $instance.Identity
+                CentralSite = $instance.CentralSite
+                Description = $instance.Description
+                Ensure      = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -202,28 +194,19 @@ class TeamsTenantNetworkRegion : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
+                    Ensure   = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -238,22 +221,5 @@ class TeamsTenantNetworkRegion : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsTenantNetworkRegion] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsTenantNetworkRegion])
-        {
-            return $Values
-        }
-
-        $result = [TeamsTenantNetworkRegion]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

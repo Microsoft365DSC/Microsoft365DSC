@@ -96,17 +96,9 @@ class EXOFocusedInbox : M365DSCResourceBase
             }
 
             $results = @{
-                Identity              = $this.Identity
-                FocusedInboxOn        = [Boolean]$instance.FocusedInboxOn
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity       = $this.Identity
+                FocusedInboxOn = [Boolean]$instance.FocusedInboxOn
+                Ensure         = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -179,15 +171,7 @@ class EXOFocusedInbox : M365DSCResourceBase
                 $displayedKey = $config.UserPrincipalName
                 Write-M365DSCHost -Message "    |---[$i/$($mailboxes.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $displayedKey
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $displayedKey
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($params)
@@ -217,22 +201,5 @@ class EXOFocusedInbox : M365DSCResourceBase
         return @{
             ExcludedProperties = @('FocusedInboxOnLastUpdateTime')
         }
-    }
-
-    hidden [EXOFocusedInbox] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOFocusedInbox])
-        {
-            return $Values
-        }
-
-        $result = [EXOFocusedInbox]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

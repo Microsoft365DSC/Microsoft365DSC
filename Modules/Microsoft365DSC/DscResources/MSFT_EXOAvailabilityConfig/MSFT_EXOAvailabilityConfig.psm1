@@ -102,18 +102,10 @@ class EXOAvailabilityConfig : M365DSCResourceBase
             }
 
             $result = @{
-                OrgWideAccount        = $orgWideAccountValue
-                AllowedTenantIds      = [System.String[]]$availabilityConfig.AllowedTenantIds
-                IsSingleInstance      = 'Yes'
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                OrgWideAccount   = $orgWideAccountValue
+                AllowedTenantIds = [System.String[]]$availabilityConfig.AllowedTenantIds
+                IsSingleInstance = 'Yes'
+                Ensure           = 'Present'
             }
 
             return $this.AsResult($result)
@@ -195,6 +187,7 @@ class EXOAvailabilityConfig : M365DSCResourceBase
             if ($null -eq (Get-Command Get-AvailabilityConfig -ErrorAction SilentlyContinue))
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiRedX) The specified account doesn't have permissions to access Availibility Config"
+                $this.SkipExport('The specified account doesn''t have permissions to access Availability Config')
                 return ''
             }
             $AvailabilityConfig = Get-AvailabilityConfig -ErrorAction Stop
@@ -206,15 +199,7 @@ class EXOAvailabilityConfig : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $AvailabilityConfig
             $dscContent = [System.Text.StringBuilder]::new()
@@ -246,22 +231,5 @@ class EXOAvailabilityConfig : M365DSCResourceBase
                 @{ Type = 'SetWhen'; Property = 'OrgWideAccount'; Value = ''; When = @{ Property = 'OrgWideAccount'; Equals = 'NotConfigured' } }
             )
         }
-    }
-
-    hidden [EXOAvailabilityConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOAvailabilityConfig])
-        {
-            return $Values
-        }
-
-        $result = [EXOAvailabilityConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -176,23 +176,14 @@ class IntuneSettingCatalogCustomPolicyWindows10 : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                Description           = $getValue.Description
-                Name                  = $getValue.Name
-                Platforms             = $getValue.Platforms
-                RoleScopeTagIds       = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
-                Technologies          = $getValue.Technologies
-                Settings              = $complexSettings
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Description     = $getValue.Description
+                Name            = $getValue.Name
+                Platforms       = $getValue.Platforms
+                RoleScopeTagIds = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $getValue.RoleScopeTagIds -DesiredValues $this.RoleScopeTagIds
+                Technologies    = $getValue.Technologies
+                Settings        = $complexSettings
+                Id              = $getValue.Id
+                Ensure          = 'Present'
                 #endregion
             }
             $assignmentsValues = Get-MgBetaDeviceManagementConfigurationPolicyAssignment -DeviceManagementConfigurationPolicyId $resolvedId
@@ -355,22 +346,12 @@ class IntuneSettingCatalogCustomPolicyWindows10 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Name                  = $config.Name
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id     = $config.Id
+                    Name   = $config.Name
+                    Ensure = 'Present'
                 }
 
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.Settings)
                 {
@@ -459,7 +440,7 @@ class IntuneSettingCatalogCustomPolicyWindows10 : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Settings', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -475,6 +456,7 @@ class IntuneSettingCatalogCustomPolicyWindows10 : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -726,23 +708,6 @@ class IntuneSettingCatalogCustomPolicyWindows10 : M365DSCResourceBase
         }
 
         return $null
-    }
-
-    hidden [IntuneSettingCatalogCustomPolicyWindows10] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneSettingCatalogCustomPolicyWindows10])
-        {
-            return $Values
-        }
-
-        $result = [IntuneSettingCatalogCustomPolicyWindows10]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

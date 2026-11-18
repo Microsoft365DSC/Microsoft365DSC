@@ -175,14 +175,6 @@ class SCRetentionCompliancePolicy : M365DSCResourceBase
                     TeamsChannelLocationException = @()
                     TeamsChatLocation             = @()
                     TeamsChatLocationException    = @()
-                    Credential                    = $this.Credential
-                    ApplicationId                 = $this.ApplicationId
-                    TenantId                      = $this.TenantId
-                    CertificateThumbprint         = $this.CertificateThumbprint
-                    CertificatePath               = $this.CertificatePath
-                    CertificatePassword           = $this.CertificatePassword
-                    ManagedIdentity               = $this.ManagedIdentity
-                    AccessTokens                  = $this.AccessTokens
                 }
 
                 if ($PolicyObject.TeamsChannelLocation.Count -gt 0)
@@ -223,14 +215,6 @@ class SCRetentionCompliancePolicy : M365DSCResourceBase
                     SharePointLocationException  = @()
                     SkypeLocation                = @()
                     SkypeLocationException       = @()
-                    Credential                   = $this.Credential
-                    ApplicationId                = $this.ApplicationId
-                    TenantId                     = $this.TenantId
-                    CertificateThumbprint        = $this.CertificateThumbprint
-                    CertificatePath              = $this.CertificatePath
-                    CertificatePassword          = $this.CertificatePassword
-                    ManagedIdentity              = $this.ManagedIdentity
-                    AccessTokens                 = $this.AccessTokens
                 }
 
                 if ($PolicyObject.AdaptiveScopeLocation.Count -gt 0)
@@ -926,22 +910,5 @@ class SCRetentionCompliancePolicy : M365DSCResourceBase
                 Start-Sleep -Seconds 30
             }
         }
-    }
-
-    hidden [SCRetentionCompliancePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCRetentionCompliancePolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCRetentionCompliancePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -413,6 +413,88 @@
       "Type": "System.String"
     }
   ],
+  "Get-MgApplicationOwner": [
+    {
+      "Name": "ApplicationId",
+      "Type": "System.String"
+    },
+    {
+      "Name": "ExpandProperty",
+      "Type": "System.String[]"
+    },
+    {
+      "Name": "Filter",
+      "Type": "System.String"
+    },
+    {
+      "Name": "Property",
+      "Type": "System.String[]"
+    },
+    {
+      "Name": "Search",
+      "Type": "System.String"
+    },
+    {
+      "Name": "Skip",
+      "Type": "System.Int32"
+    },
+    {
+      "Name": "Sort",
+      "Type": "System.String[]"
+    },
+    {
+      "Name": "Top",
+      "Type": "System.Int32"
+    },
+    {
+      "Name": "ConsistencyLevel",
+      "Type": "System.String"
+    },
+    {
+      "Name": "ResponseHeadersVariable",
+      "Type": "System.String"
+    },
+    {
+      "Name": "Break",
+      "Type": "System.Management.Automation.SwitchParameter"
+    },
+    {
+      "Name": "Headers",
+      "Type": "System.Collections.IDictionary"
+    },
+    {
+      "Name": "HttpPipelineAppend",
+      "Type": "System.Object[]"
+    },
+    {
+      "Name": "HttpPipelinePrepend",
+      "Type": "System.Object[]"
+    },
+    {
+      "Name": "Proxy",
+      "Type": "System.Uri"
+    },
+    {
+      "Name": "ProxyCredential",
+      "Type": "System.Management.Automation.PSCredential"
+    },
+    {
+      "Name": "ProxyUseDefaultCredentials",
+      "Type": "System.Management.Automation.SwitchParameter"
+    },
+    {
+      "Name": "PageSize",
+      "Type": "System.Int32"
+    },
+    {
+      "Name": "All",
+      "Type": "System.Management.Automation.SwitchParameter"
+    },
+    {
+      "Name": "CountVariable",
+      "Type": "System.String"
+    }
+  ],
   "Get-MgBetaAdminReportSetting": [
     {
       "Name": "ExpandProperty",
@@ -17531,6 +17613,10 @@
       "Type": "System.Object"
     },
     {
+      "Name": "AppActionIfDeveloperOptionsEnabled",
+      "Type": "System.Object"
+    },
+    {
       "Name": "AppActionIfDeviceComplianceRequired",
       "Type": "System.Object"
     },
@@ -18927,11 +19013,19 @@
       "Type": "System.Collections.Hashtable"
     },
     {
+      "Name": "AllowedInboundDataTransferSourceApps",
+      "Type": "System.Object"
+    },
+    {
       "Name": "AllowedInboundDataTransferSources",
       "Type": "System.Object"
     },
     {
       "Name": "AllowedOutboundClipboardSharingLevel",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "AllowedOutboundDataTransferDestinationApps",
       "Type": "System.Object"
     },
     {
@@ -22879,6 +22973,10 @@
       "Type": "System.DateTime"
     },
     {
+      "Name": "PrivilegeLevel",
+      "Type": "System.String"
+    },
+    {
       "Name": "UniqueName",
       "Type": "System.String"
     },
@@ -24675,8 +24773,28 @@
       "Type": "System.DateTime"
     },
     {
+      "Name": "PreviewScope",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "QuarantineDetails",
+      "Type": "System.Object"
+    },
+    {
       "Name": "Runs",
       "Type": "System.Object"
+    },
+    {
+      "Name": "Settings",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "SubjectProcessingResults",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "TargetSubjectType",
+      "Type": "System.String"
     },
     {
       "Name": "TaskReports",
@@ -24783,6 +24901,10 @@
     {
       "Name": "LastModifiedDateTime",
       "Type": "System.DateTime"
+    },
+    {
+      "Name": "ReplyMode",
+      "Type": "System.String"
     },
     {
       "Name": "Break",
@@ -25882,6 +26004,10 @@
     },
     {
       "Name": "CreatedDateTime",
+      "Type": "System.DateTime"
+    },
+    {
+      "Name": "DeletedDateTime",
       "Type": "System.DateTime"
     },
     {
@@ -28601,6 +28727,10 @@
       "Type": "System.Object"
     },
     {
+      "Name": "OrganizationId",
+      "Type": "System.String"
+    },
+    {
       "Name": "Owners",
       "Type": "System.Object"
     },
@@ -29805,6 +29935,10 @@
       "Type": "System.String"
     },
     {
+      "Name": "Notes",
+      "Type": "System.Object"
+    },
+    {
       "Name": "Oauth2PermissionGrants",
       "Type": "System.Object"
     },
@@ -29990,6 +30124,10 @@
     },
     {
       "Name": "Solutions",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "SponsorOf",
       "Type": "System.Object"
     },
     {
@@ -36681,6 +36819,10 @@
       "Type": "System.Object"
     },
     {
+      "Name": "RoleEnabledGroupSyncInbound",
+      "Type": "System.Object"
+    },
+    {
       "Name": "TenantId",
       "Type": "System.String"
     },
@@ -37427,6 +37569,10 @@
       "Type": "System.String"
     },
     {
+      "Name": "SharePoint",
+      "Type": "System.Object"
+    },
+    {
       "Name": "Break",
       "Type": "System.Management.Automation.SwitchParameter"
     },
@@ -37878,6 +38024,10 @@
     },
     {
       "Name": "AppActionIfAndroidSafetyNetDeviceAttestationFailed",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "AppActionIfDeveloperOptionsEnabled",
       "Type": "System.Object"
     },
     {
@@ -39411,11 +39561,19 @@
       "Type": "System.Collections.Hashtable"
     },
     {
+      "Name": "AllowedInboundDataTransferSourceApps",
+      "Type": "System.Object"
+    },
+    {
       "Name": "AllowedInboundDataTransferSources",
       "Type": "System.Object"
     },
     {
       "Name": "AllowedOutboundClipboardSharingLevel",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "AllowedOutboundDataTransferDestinationApps",
       "Type": "System.Object"
     },
     {
@@ -43885,6 +44043,10 @@
       "Type": "System.DateTime"
     },
     {
+      "Name": "PrivilegeLevel",
+      "Type": "System.String"
+    },
+    {
       "Name": "UniqueName",
       "Type": "System.String"
     },
@@ -45095,6 +45257,10 @@
       "Type": "System.DateTime"
     },
     {
+      "Name": "ReplyMode",
+      "Type": "System.String"
+    },
+    {
       "Name": "Break",
       "Type": "System.Management.Automation.SwitchParameter"
     },
@@ -45143,6 +45309,10 @@
     {
       "Name": "Id",
       "Type": "System.String"
+    },
+    {
+      "Name": "QuarantineConfiguration",
+      "Type": "System.Object"
     },
     {
       "Name": "WorkflowScheduleIntervalInHours",
@@ -45929,6 +46099,10 @@
       "Type": "System.Object"
     },
     {
+      "Name": "ResourceQuotas",
+      "Type": "System.Object"
+    },
+    {
       "Name": "SecurityComplianceNotificationMails",
       "Type": "System.String[]"
     },
@@ -46403,6 +46577,10 @@
       "Type": "System.Object"
     },
     {
+      "Name": "DeletedDateTime",
+      "Type": "System.DateTime"
+    },
+    {
       "Name": "Description",
       "Type": "System.String"
     },
@@ -46568,6 +46746,10 @@
     },
     {
       "Name": "CreatedDateTime",
+      "Type": "System.DateTime"
+    },
+    {
+      "Name": "DeletedDateTime",
       "Type": "System.DateTime"
     },
     {
@@ -50025,6 +50207,10 @@
       "Type": "System.String"
     },
     {
+      "Name": "Notes",
+      "Type": "System.Object"
+    },
+    {
       "Name": "Oauth2PermissionGrants",
       "Type": "System.Object"
     },
@@ -50210,6 +50396,10 @@
     },
     {
       "Name": "Solutions",
+      "Type": "System.Object"
+    },
+    {
+      "Name": "SponsorOf",
       "Type": "System.Object"
     },
     {

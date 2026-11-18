@@ -107,18 +107,10 @@ class TeamsApplicationInstance : M365DSCResourceBase
             }
 
             $results = @{
-                DisplayName           = $instance.DisplayName
-                UserPrincipalName     = $instance.UserPrincipalName
-                ResourceAccountType   = $ResourceAccountTypeValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                DisplayName         = $instance.DisplayName
+                UserPrincipalName   = $instance.UserPrincipalName
+                ResourceAccountType = $ResourceAccountTypeValue
+                Ensure              = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -240,16 +232,8 @@ class TeamsApplicationInstance : M365DSCResourceBase
                 $displayedKey = $config.DisplayName
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    UserPrincipalName     = $config.UserPrincipalName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName       = $config.DisplayName
+                    UserPrincipalName = $config.UserPrincipalName
                 }
 
                 $this.ExportedInstance = $config
@@ -273,22 +257,5 @@ class TeamsApplicationInstance : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsApplicationInstance] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsApplicationInstance])
-        {
-            return $Values
-        }
-
-        $result = [TeamsApplicationInstance]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

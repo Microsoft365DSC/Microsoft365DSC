@@ -253,15 +253,6 @@ class IntuneMobileAppsWindowsOfficeSuiteApp : M365DSCResourceBase
                 ExcludedApps                         = $complexExcludedApps
                 Categories                           = $complexCategories
                 Ensure                               = 'Present'
-                Credential                           = $this.Credential
-                ApplicationId                        = $this.ApplicationId
-                TenantId                             = $this.TenantId
-                ApplicationSecret                    = $this.ApplicationSecret
-                CertificateThumbprint                = $this.CertificateThumbprint
-                CertificatePath                      = $this.CertificatePath
-                CertificatePassword                  = $this.CertificatePassword
-                ManagedIdentity                      = $this.ManagedIdentity
-                AccessTokens                         = $this.AccessTokens
             }
 
             #Assignments
@@ -498,23 +489,13 @@ class IntuneMobileAppsWindowsOfficeSuiteApp : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
 
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.Id
+                    DisplayName = $config.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 #region complex types
                 if ($null -ne $Results.Categories)
@@ -591,7 +572,7 @@ class IntuneMobileAppsWindowsOfficeSuiteApp : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Categories', 'ExcludedApps', 'Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -615,23 +596,6 @@ class IntuneMobileAppsWindowsOfficeSuiteApp : M365DSCResourceBase
         return @{
             ExcludedProperties = @('OfficePlatformArchitecture')
         }
-    }
-
-    hidden [IntuneMobileAppsWindowsOfficeSuiteApp] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneMobileAppsWindowsOfficeSuiteApp])
-        {
-            return $Values
-        }
-
-        $result = [IntuneMobileAppsWindowsOfficeSuiteApp]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

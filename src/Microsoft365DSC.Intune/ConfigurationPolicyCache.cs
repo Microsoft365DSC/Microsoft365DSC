@@ -9,7 +9,7 @@ namespace Microsoft365DSC.Intune
     /// </summary>
     public static class ConfigurationPolicyCache
     {
-        private static readonly ConcurrentDictionary<string, object[]> _cache = new();
+        private static readonly ConcurrentDictionary<string, object[]> _cache = new(StringComparer.OrdinalIgnoreCase);
         private static bool _isPopulated;
         private static readonly object _lock = new();
 
@@ -47,6 +47,14 @@ namespace Microsoft365DSC.Intune
                 }
                 _isPopulated = true;
             }
+        }
+
+        /// <summary>
+        /// True once Populate ran. A template without an entry then has no policies.
+        /// </summary>
+        public static bool IsPopulated
+        {
+            get { lock (_lock) { return _isPopulated; } }
         }
 
         public static object[]? GetByTemplateId(string templateId) =>

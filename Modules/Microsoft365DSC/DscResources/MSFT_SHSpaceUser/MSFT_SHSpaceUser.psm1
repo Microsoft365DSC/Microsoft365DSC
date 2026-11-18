@@ -108,18 +108,10 @@ class SHSpaceUser : M365DSCResourceBase
             }
 
             $results = @{
-                SpaceName             = $this.SpaceName
-                Email                 = $instance.email
-                Roles                 = $instance.roles
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                SpaceName = $this.SpaceName
+                Email     = $instance.email
+                Roles     = $instance.roles
+                Ensure    = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -263,14 +255,8 @@ class SHSpaceUser : M365DSCResourceBase
                     $displayedKey = $user.email
                     Write-M365DSCHost -Message "        |---[$i/$($users.Count)] $displayedKey" -DeferWrite
                     $params = @{
-                        SpaceName             = $space.name
-                        Email                 = $user.email
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        SpaceName = $space.name
+                        Email     = $user.email
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -295,22 +281,5 @@ class SHSpaceUser : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SHSpaceUser] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SHSpaceUser])
-        {
-            return $Values
-        }
-
-        $result = [SHSpaceUser]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

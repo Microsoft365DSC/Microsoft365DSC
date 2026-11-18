@@ -46,6 +46,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ContactEmail = 'privacy@contoso.com'
                         StatementUrl = 'https://www.contoso.com/privacy'
                     }
+                    ResourceQuotas                       = @(
+                        @{
+                            ResourceType  = 'agentIdentity'
+                            MaxPercentage = 80
+                            Total         = 40000
+                        }
+                    )
                     SecurityComplianceNotificationMails  = 'exapmle@contoso.com'
                     SecurityComplianceNotificationPhones = '+1123456789'
                     State                                = 'WA'
@@ -144,6 +151,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ContactEmail = 'privacy@contoso.com'
                         StatementUrl = 'https://www.contoso.com/privacy'
                     })
+                    ResourceQuotas                       = [MSFT_AADTenantDetailsResourceQuota[]] @(
+                        [MSFT_AADTenantDetailsResourceQuota] @{
+                            ResourceType  = 'agentIdentity'
+                            MaxPercentage = 80
+                        }
+                    )
                     State                                = 'WA'
                     Street                               = '1 Contoso Plaza'
                     Credential                           = $Credential
@@ -153,7 +166,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return Values from the get method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADTenantDetails' -Property $testParams).Get().ToHashtable()
-                Should -Invoke -CommandName 'Get-MgBetaOrganization' -Exactly 1
+                Should -Invoke -CommandName 'Get-MgBetaOrganization' -Exactly 2
             }
 
             It 'Should return true from the test method' {
@@ -176,6 +189,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ContactEmail = 'legal@contoso.com'
                         StatementUrl = 'https://www.contoso.com/legal/privacy'
                     }) #Drift
+                    ResourceQuotas                       = [MSFT_AADTenantDetailsResourceQuota[]] @(
+                        [MSFT_AADTenantDetailsResourceQuota] @{
+                            ResourceType  = 'agentIdentity'
+                            MaxPercentage = 60
+                        }
+                    ) #Drift
                     State                                = 'OR' #Drift
                     Street                               = '2 Contoso Plaza' #Drift
                     Credential                           = $Credential
@@ -185,7 +204,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should return values from the get method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADTenantDetails' -Property $testParams).Get().ToHashtable()
-                Should -Invoke -CommandName 'Get-MgBetaOrganization' -Exactly 1
+                Should -Invoke -CommandName 'Get-MgBetaOrganization' -Exactly 2
             }
 
             It 'Should return false from the test method' {
@@ -194,7 +213,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should call the set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADTenantDetails' -Property $testParams).Set()
-                Should -Invoke -CommandName 'Update-MgBetaOrganization' -Exactly 1
+                Should -Invoke -CommandName 'Update-MgBetaOrganization' -Exactly 1 -ParameterFilter {
+                    $BodyParameter.ResourceQuotas[0].resourceType -eq 'agentIdentity' -and $BodyParameter.ResourceQuotas[0].maxPercentage -eq 60
+                }
             }
         }
 

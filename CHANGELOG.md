@@ -1,5 +1,376 @@
 ﻿# Change log for Microsoft365DSC
 
+# 2.26.1118.1
+
+* AADApplication
+  * Fixed `Get()` failing for an application without owners.
+    FIXES [#7615](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7615)
+  * Fixed `Set()` creating a new application instead of restoring a soft-deleted one.
+    FIXES [#7617](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7617)
+  * Fixed key credential dates, key ids and certificate blobs reported as drift.
+* AADCrossTenantAccessPolicyConfigurationPartner
+  * Added `RoleEnabledGroupSyncInbound` to `IdentitySynchronization`.
+* AADEntitlementManagementAccessPackage
+  * Fixed `Set()` failing to remove incompatible access packages and groups.
+* AADGroupEligibilitySchedule
+  * Added the `RoleManagementPolicy.ReadWrite.AzureADGroup` permission. Without it, `Set()`
+    cannot read or update the expiration rule of the group policy, which it does for the
+    `noExpiration`, `afterDateTime` and `afterDuration` expiration types.
+  * Added a `Set()` warning for a duration schedule without a start date.
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
+* AADGroupEligibilityScheduleSettings
+  * Added the `RoleManagementPolicy.Read.AzureADGroup` permission. Without it, the export
+    returns no instance.
+* AADNetworkAccessSettingConditionalAccess
+  * Fixed `Set()` sending an empty `SignalingStatus` when it is not specified.
+* AADNetworkAccessSettingCrossTenantAccess
+  * Fixed `Set()` sending an empty `NetworkPacketTaggingStatus` when it is not specified.
+* AADPIMGroupSetting
+  * Added the `RoleManagementPolicy.Read.AzureADGroup` and
+    `RoleManagementPolicy.ReadWrite.AzureADGroup` permissions. Without them, the export
+    returns no instance and `Set()` cannot update the policy rules of a group.
+* AADRoleAssignmentScheduleRequest
+  * Added a `Set()` warning for a duration schedule without a start date.
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
+* AADRoleEligibilityScheduleRequest
+  * Added a `Set()` warning for a duration schedule without a start date.
+  * Fixed `Set()` creating a schedule again after it has ended, read from the
+    tenant for a duration without a start.
+* AADTenantDetails
+  * Added the `ResourceQuotas` property.
+* AADUserFlowAttribute
+  * Fixed `Set()` clearing the description and sending an empty data type when
+    `Description` or `DataType` is not specified.
+* AzureBillingAccountsAssociatedTenant
+  * Fixed the export stopping at billing accounts which do not support associated tenants.
+* AzureBillingAccountsRoleAssignment
+  * Fixed the export stopping at a billing account with unreadable role assignments.
+* EXODataAtRestEncryptionPolicyAssignment
+  * Fixed service errors of `Get()` being reported as drift and triggering `Set()`.
+    FIXES [#7622](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7622)
+* EXOTenantAllowBlockListItems
+  * Fixed the export only returning entries of the `Url` list type.
+  * Added the `IP` list type.
+* IntuneDeviceAndAppManagementAssignmentFilter
+  * Fixed `Set()` clearing the description and rule when `Description` or `Rule` is not specified.
+* IntuneDeviceCategory
+  * Fixed `Set()` clearing the description when `Description` is not specified.
+* IntuneDeviceEnrollmentPlatformRestriction
+  * Added missing property `isServerEnrollmentBlocked` to `MSFT_DeviceEnrollmentPlatformRestriction`.
+* IntuneMobileThreatDefenseConnector
+  * Fixed connector Ids for `Trellix Mobile Security` and `Windows Security Center` and
+    added Id for `iVerify`.
+    FIXES [#7609](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7609)
+* IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10
+  * Fixed pause and rollback dates set by the service being reported as drift.
+* M365DSCRuleEvaluation
+  * Fixed `CertificatePath` and `CertificatePassword` not being passed to the evaluated
+    resource.
+* PlannerPlan
+  * Updated the export to show the plan line before the plan export completes.
+* SCAutoSensitivityLabelPolicy
+  * Fixed the export not detecting a tenant that is not registered for the feature.
+* SCAutoSensitivityLabelRule
+  * Fixed the export not detecting a tenant that is not registered for the feature.
+* SCLabelPolicy
+  * Fixed locations without a name being exported as empty. Display Name resolution
+    requires the `GroupMember.Read.All` permission.
+    FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
+* SPOStorageEntity
+  * Fixed the export checking for the `Credential` connection mode instead of `Credentials`.
+* TeamsOnlineSchedule
+  * [BREAKING CHANGE] Renamed the class `MSFT_TeamsOnlineScheduleDateTimeRange` to
+    `MSFT_TeamsOnlineScheduleFixedTimeRange`. Windows PowerShell failed to compile a
+    configuration with `DateTimeRanges`.
+    FIXES [#7657](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7657)
+* M365DSCAgent
+  * Fixed `Test-M365DSCAgent` numbering every issue and recommendation as the first one,
+    changing the WinRM configuration and missing the `MaxEnvelopeSize`.
+  * Fixed several issues in `Set-M365DSCAgentCertificateConfiguration` regarding
+    certificate creation and storing handling.
+  * Fixed `Set-M365DSCAgentCertificateConfiguration -ForceRenew` keeping the private keys
+    of the replaced certificates.
+* M365DSCAzureDevOPSHelper
+  * Fixed list requests returning only the first page of groups and user entitlements.
+* M365DSCAzureHelper
+  * Fixed Azure Billing requests treating failures as empty results, returning only the
+    first page and ignoring the `includeAll` parameter for the billing account list.
+* M365DSCCompare
+  * Updated `Compare-M365DSCResourceState` to fail when post-processing fails.
+  * Fixed an empty desired collection drifting from a missing or null value.
+  * Fixed null and item count drifts showing fixed text instead of values.
+* M365DSCConfigurationCompiler
+  * Added a warning to `Invoke-M365DSCConfigurationBuild` for parameters the standard
+    pipeline without `ConfigurationName` ignores.
+  * Fixed `Invoke-M365DSCConfigurationBuild` resetting the recursion guard of an outer build.
+  * Fixed `Invoke-M365DSCConfigurationBuild` resolving a relative `ConfigurationDataPath`
+    and `OutputPath` against the folder of the script.
+  * Fixed `Invoke-M365DSCConfigurationBuild` failing for paths with `[` or `]`.
+  * Fixed `Invoke-M365DSCConfigurationBuild -ConfigurationName` compiling an exported
+    configuration twice and prompting for its credential.
+  * Fixed `Invoke-M365DSCConfigurationBuild -ConfigurationName` letting the variables of
+    the script replace the build parameters.
+* M365DSCConfigurationHelper
+  * Fixed `Get-M365DSCEvaluationRulesForConfiguration` generating configurations that do
+    not compile and omitting `TenantId` for `ManagedIdentity`.
+  * Fixed `Get-M365DSCEvaluationRulesForConfiguration` failing for paths with `[` or `]`.
+  * Fixed `Get-M365DSCEvaluationRulesForConfiguration` missing from the cmdlet documentation.
+* M365DSCConnection
+  * Fixed `New-M365DSCConnection` replacing the `ApplicationSecret` credential of the
+    caller with its plain text value.
+  * Fixed `New-M365DSCConnection` not naming the valid parameter combinations when the
+    authentication parameters are incomplete.
+  * Fixed a failed connection to one SharePoint site during an export blocking the
+    connections to all other sites.
+  * Fixed `Export-M365DSCConfiguration` with only invalid components failing with a schema
+    cache error.
+* M365DSCDefenderHelper
+  * Fixed requests without a body sending a `null` JSON body.
+* M365DSCDocGenerator
+  * Fixed stale documentation pages being published after an aborted run.
+  * Fixed resource pages missing the required Microsoft Entra ID roles.
+  * Fixed the pages of Azure, Power Platform and Sentinel resources listing empty API
+    permissions instead of their required roles.
+* M365DSCDRGUtil
+  * Fixed the drift event XML not escaping values and showing type names or CIM class
+    names instead of the desired and current values.
+* M365DSCErrorHandler
+  * Added `Test-M365DSCAccessError` to detect authentication and permission errors.
+  * Updated `Save-M365DSCPartialExport` to accept empty content.
+  * Fixed `Invoke-M365DSCCommand` not retrying or suppressing non-terminating errors.
+  * Fixed resources being reported as absent on missing roles, throttling, server errors,
+    parameter binding errors or invalid property errors.
+  * Fixed permanent errors being retried as transient when an object or property name
+    contains a status code or `Timeout`.
+* M365DSCExportUtil
+  * Updated `Get-M365DSCExportContentForResource` to return an empty string for a skipped instance.
+  * Updated `-TokenReplacement` to reject names that are not valid ConfigurationData property names.
+  * Fixed the export session state not being restored when the export fails or uses `-LaunchWebUI`.
+  * Fixed `-LaunchWebUI` writing its status to the output and failing on Linux and macOS.
+  * Fixed the organization name and token replacement targets not being replaced sometimes.
+  * Fixed overlapping `-TokenReplacement` targets replacing each other.
+  * Fixed `-TokenReplacement` targets that contain the organization name not being replaced.
+  * Fixed a partial or empty Exchange user list being cached when its retrieval failed.
+  * Fixed `Split-M365DSCConfiguration` using a hard-coded configuration name and
+    dropping the credential arguments.
+  * Fixed `Split-M365DSCConfiguration` dropping the last resource of a file with LF line endings.
+  * Fixed `Split-M365DSCConfiguration` failing for a file in the current folder, a missing
+    output folder or a path with `[` or `]`.
+  * Fixed `Join-M365DSCConfiguration` corrupting values that contain `$` and failing for
+    paths with `[` or `]`.
+  * Fixed the dependency stub blocks missing the credential when it was prompted.
+  * Fixed `CertificateThumbprint` without `ApplicationId` being ignored when a credential is passed.
+  * Fixed failed lookups of PIM-enabled groups being skipped without a warning.
+  * Fixed filters with `&`, `#` or `+` breaking the export of Intune reusable policy settings.
+  * Fixed Intune exports with a filter also returning derived policy types.
+* M365DSCGraphShim
+  * Fixed update and remove cmdlets sending the request without the item ID when an
+    identity parameter is empty, and get cmdlets sending it with an empty parent ID.
+  * Fixed IDs containing `#` not being encoded in update and remove requests, and remove
+    cmdlets not sending the `If-Match` header.
+  * Fixed the Multi Admin Approval error not being reported when the response has no
+    status code.
+  * Fixed common parameters such as `-Verbose` and `-PassThru` being sent in the request body.
+  * Fixed `-OdataId` and `-OdataType` being sent as `odataId` and `odataType` instead of
+    `@odata.id` and `@odata.type`.
+* M365DSCIntuneUtil
+  * Updated `Wait-M365DSCIntuneMobileAppPublished` to warn when the app is not published in time.
+  * Removed `Get-M365DSCCachedSettingCatalogTemplate` and `Set-M365DSCCachedSettingCatalogTemplate`.
+  * Removed the `Setting` parameter set of `Export-IntuneSettingCatalogPolicySettings`
+    with the `SettingInstance`, `SettingDefinitions` and `IsRoot` parameters.
+  * Fixed handling of group lookup failures, such as missing permissions or network errors.
+  * Fixed assignments with an unresolved assignment filter or exclusion group being
+    applied without the filter or the exclusion.
+  * Fixed the Azure Storage upload retrying without limit and `Wait-ForFileProcessing`
+    waiting forever on timed-out or failed uploads.
+  * Fixed the writable Azure Storage SAS URI and Settings Catalog secret values being
+    written to the verbose stream.
+  * Fixed `Update-DeviceAppManagementAppCategory` reusing the category of the previous item.
+  * Fixed `startsWith`, `endsWith` and `contains` filters in other casings being sent to
+    Graph and filter values with escaped quotes being cut off.
+  * Fixed `Find-GraphDataUsingComplexFunctions` treating filter values as wildcard patterns.
+  * Fixed `Remove-ComplexFunctionsFromFilterQuery` leaving a dangling `and` or `or` in
+    the filter.
+  * Fixed a `not` in front of `startsWith`, `endsWith` and `contains` filters being lost.
+  * Fixed `Get-M365DSCIntuneDeviceConfigurationSettings` reading only the first template
+    category and matching the wrong property when several property names share a suffix.
+  * Fixed role scope tags created after the tags were loaded being skipped and a transient
+    error while reading the role scope tags.
+  * Fixed error log entries missing the tenant.
+* M365DSCLogEngine
+  * Updated notification requests to time out instead of blocking the run.
+  * Fixed the notification endpoint registry parsing to work correctly in PowerShell 7.
+  * Fixed the notification bearer token lookup using the domain before it was computed.
+  * Fixed notification endpoints registered for `Error` never being notified.
+  * Fixed `Get-M365DSCLoggingOption` reporting `IncludeNonDrifted` as `$true` after it
+    was set to `$false`.
+  * Fixed `Get-M365DSCNotificationEndpointRegistration` ignoring `-Url` when both
+    filters are given.
+  * Fixed several issues in `Export-M365DSCDiagnosticData` regarding the anonymization,
+    missing DSC status files and the collected data left in the temporary folder.
+  * Fixed long event messages not being written to the event log.
+* M365DSCModuleMgmt
+  * Removed the unused `Preference` and `ModuleName` parameters of `Set-M365DSCVerboseScope`.
+  * Fixed `Update-M365DSCDependencies` skipping dependencies in PowerShell 7 on Windows.
+    FIXES [#7596](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7596)
+  * Fixed `Update-M365DSCDependencies -ValidateOnly` failing without PSResourceGet.
+  * Fixed `Update-M365DSCDependencies` installing without administrator rights under
+    `-ErrorAction Stop` and reporting the administrator error once per dependency.
+  * Fixed `Test-M365DSCDependenciesForNewVersions` reusing the installed versions of the
+    previous dependency and querying other repositories than the PowerShell Gallery.
+  * Fixed `Uninstall-M365DSCOutdatedDependencies` using an undefined scope.
+  * Fixed `Uninstall-M365DSCOutdatedDependencies` removing the dependencies of the newest
+    version when an older version is loaded.
+  * Fixed `Uninstall-M365DSCOutdatedDependencies` removing a second copy of the newest
+    Microsoft365DSC version.
+  * Fixed failed dependency imports being treated as loaded for the rest of the session.
+  * Fixed a module missing from the dependency manifest failing when it is already loaded.
+  * Fixed `Update-M365DSCModule` ignoring a failed module update.
+  * Fixed the check for a newer Microsoft365DSC version failing reports and exports
+    without access to the PowerShell Gallery.
+* M365DSCPermissions
+  * Removed the retired `Germany` environment from `Update-M365DSCAllowedGraphScopes`.
+  * Fixed several issues in `Update-M365DSCAzureAdApplication` regarding API permissions,
+    certificate handling, admin consent, applications with the same name and failed lookups.
+  * Fixed `Get-M365DSCCompiledPermissionList` not sorting the roles and output and
+    returning a single permission as a hashtable instead of an array.
+  * Fixed `Update-M365DSCAllowedGraphScopes` requesting an invalid scope.
+* M365DSCPowerPlatformRESTHelper
+  * Fixed the hint for a missing Power Platform admin management application never
+    being shown on a 403 error.
+  * Fixed responses that are not JSON failing the request.
+* M365DSCReport
+  * Updated HTML, JSON, CSV and Excel reports to hide the authentication properties like
+    the Markdown report.
+  * Fixed HTML reports not encoding tenant values, writing broken list tags and cutting
+    the title at the first dot of the file name.
+  * Fixed array values containing commas being shown as several items.
+  * Fixed CSV and Excel reports removing `@`, `(` and `)` from values, cutting complex
+    values, showing type names and leaving a row blank when the key is the first property.
+  * Fixed CSV reports showing non-ASCII characters incorrectly in Excel.
+  * Fixed Excel reports being slow for large configurations, failing for a relative path
+    or an existing file and not releasing the Excel process.
+  * Fixed JSON reports writing an object instead of an array for a single resource.
+  * Fixed `New-M365DSCReportFromConfiguration` returning status messages.
+  * Fixed several issues in `New-M365DSCDeltaReport` regarding the drift count, the passed
+    `Delta`, variable substitution and temporary files.
+  * Fixed several issues in `New-M365DSCDeltaReport` regarding the custom header file,
+    reports without drift and the compared properties.
+  * Fixed `Get-M365DSCCIMInstanceKey` returning all keys instead of the first.
+  * Fixed Commerce, Fabric and Viva resources not being grouped under their workload.
+  * Fixed reports failing for relative configuration paths and for file names or output
+    paths with `[` or `]`.
+* M365DSCResourceBase
+  * Updated `GetForExport` to skip a failed instance of a multi-instance resource
+    during `Export-M365DSCConfiguration`.
+  * Updated `GetForExport` to still stop the export of a resource for single-instance
+    resources.
+  * Updated `GetForExport` to stop after three consecutive transient or access errors.
+  * Added `RawExportResults` with an unmodified copy of the last `GetForExport` result.
+  * Fixed `Get()` of several resources not returning all authentication properties.
+  * Added `SkipExport` for resources whose export cannot read the tenant.
+* M365DSCReverse
+  * Added the `PartiallySucceeded` resource status for resources with skipped instances
+    with new statistics information.
+  * Added `SkippedResources` to the `-WithStatistics` output for unreadable resources,
+    left out of `ExportedResourceCount`.
+  * Fixed `-ErrorAction Stop` being ignored and the output lines being interleaved in
+    parallel mode.
+  * Fixed verbose output being lost in parallel mode.
+  * Fixed the parallel export failing when no resource is left to export.
+  * Fixed a failure in the validation or SharePoint app steps losing the export.
+  * Fixed the early return when no selected resource can be exported, and the working
+    directory not being restored on failure.
+  * Fixed a `-Path` that cannot be created prompting for another folder instead of failing.
+  * Fixed a failure before the export starts being replaced by a parameter binding error.
+  * Fixed the warning for resources that do not support filters never being shown.
+  * Fixed the `[x/y]` total counting resources without a definition.
+  * Fixed a `-Components` wildcard that matches no resource failing the export.
+  * Fixed invalid `-Components` names being reported as unsupported by the authentication
+    parameters.
+  * Fixed the generated parameter block and authentication prompts of a combined
+    credential and certificate export.
+  * Fixed the generated configuration ignoring the `Credential` and `CertificatePassword`
+    passed to the script.
+  * Fixed the Intune configuration policy prefetch failing exports with several
+    authentication methods.
+  * Fixed relative export paths for the SharePoint app packages and the LCM certificate,
+    and output paths with `[` or `]` writing the export to the current folder.
+  * Fixed the `CertificateFile` entry being added when the LCM certificate export failed.
+  * Fixed the export duration being rounded to whole seconds.
+* M365DSCServicesHubHelper
+  * Fixed HTTP errors being replaced by a method invocation error.
+  * Fixed responses that are not JSON failing the request.
+* M365DSCTelemetryEngine
+  * Fixed `Set-M365DSCTelemetryOption` overwriting options that were not passed and
+    failing with a registry error without admin privileges.
+  * Fixed `Set-M365DSCTelemetryOption` not applying a new instrumentation key or
+    connection string to the current session.
+  * Fixed a telemetry client failure, such as an invalid connection string, stopping
+    resource operations and exports.
+  * Fixed the telemetry options not being stored on Linux and macOS.
+  * Fixed telemetry events reporting the LCM state of the first operation of the session.
+* M365DSCTenantInfo
+  * Removed the function `Get-M365DSCTenantDomain`.
+  * Fixed `Get-M365TenantName` and `Get-SPOAdministrationUrl` always returning an empty
+    tenant name.
+  * Fixed `Get-SPOAdministrationUrl` returning the commercial admin URL for US Government,
+    DoD, China and sovereign cloud tenants.
+  * Fixed `Get-M365DSCAPIEndpoint` returning no Azure management URL for US DoD tenants
+    and the global Azure management URL for China tenants.
+* M365DSCUtil
+  * Updated `Write-M365DSCHost` to show the error of a skipped export instance.
+  * Updated `Write-M365DSCHost` to show the `[x/y] Extracting ...` line as soon as the
+    export of a resource starts and to append the check mark to it when it completes.
+  * Fixed the throttling and retry handling of `Invoke-M365DSCGraphBatchRequest` and failed
+    Graph batch requests being skipped without a warning.
+  * Fixed several issues in `Assert-M365DSCBlueprint` regarding authentication
+    parameters, excluded resources and invalid or empty blueprints.
+  * Fixed `Assert-M365DSCBlueprint` sending the blueprint to telemetry and leaving
+    temporary files with secrets behind.
+  * Fixed several issues in `Install-M365DSCDevBranch` regarding the install result, the
+    dependencies and the `-Scope` of the module files.
+  * Fixed `Install-M365DSCDevBranch` keeping files that were removed from the Dev branch
+    and failing with an unclear error outside Windows.
+  * Fixed the LCM state being reported as `Unauthorized` after the first drift in a session.
+  * Fixed `Get-M365DSCArrayFromProperty` losing the requested element type.
+  * Fixed `Get-M365DSCGroupIdByDisplayName` returning several ids for an ambiguous display name.
+  * Fixed user principal names with an apostrophe not resolving to a user id.
+  * Fixed `Get-TeamByName` waiting 30 seconds for a missing team. Added `RetryCount`.
+  * Fixed the duplicate team warning showing the URL-encoded team name.
+  * Fixed `Get-M365DSCConfigurationConflict` missing conflicts that differ only in case.
+  * Fixed `Convert-M365DscHashtableToString` writing access tokens in plain text.
+  * Fixed `Test-M365DSCParameterState` writing access tokens and type names to the event log.
+  * Fixed the UTF-8 code page warning never being shown.
+  * Fixed the PowerShell 7 session being used after the module failed to load in it.
+  * Fixed the access package exports reading the same group or application name again
+    for every scope.
+  * Fixed `Get-M365DSCResourceDifferences` returning an array when no version is installed.
+  * Fixed `Test-M365DSCTargetResource` importing the compare module again on every call.
+  * Fixed the cmdlet documentation showing `True True` as required for parameters in
+    several parameter sets and no default for `$true`, `$false` and expression defaults.
+  * Fixed `Update-M365DSCAuthenticationConfiguration` keeping the credential arguments of
+    the previous connection mode in the configuration invocation.
+  * Fixed `Update-M365DSCAuthenticationConfiguration` failing for paths with `[` or `]` and
+    for a lowercase `node localhost`.
+* DEPENDENCIES
+  * Updated `DSCParser` to version `3.1.0.8`.
+  * Updated `Microsoft.Graph.Authentication` to version `2.41.2`.
+* MISC
+  * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
+  * Fixed `PartiallyExportedResourceCount` counting skipped resources.
+  * Added a `Reason` of `AccessDenied` or `NotAvailable` to `SkippedResources`.
+  * Added the `IgnoreWhenOnlyCurrent` compare rule for expiring PIM and allow/block entries.
+  * Added the `IgnoreEndedWhenOnlyDesired` compare rule for ended PIM schedules.
+  * Fixed the delta report not pairing keys that differ only in case.
+  * Fixed the delta report not pairing renamed instances by `Id` or `Identity`.
+  * Removed the relation templates of removed resources.
+  * Updated the export to skip an instance that fails to export instead of stopping the
+    export of all instances.
+  * Fixed exports dropping instances that fail outside `GetForExport` without recording them.
+
 # 2.26.1104.1
 
 * AADPermissionGrantPolicy

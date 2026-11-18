@@ -85,16 +85,8 @@ class EXOArcConfig : M365DSCResourceBase
             Write-Verbose -Message 'Found Arc config settings'
 
             $result = @{
-                IsSingleInstance      = 'Yes'
-                ArcTrustedSealers     = $ArcConfigSettings.ArcTrustedSealers -split ','
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance  = 'Yes'
+                ArcTrustedSealers = $ArcConfigSettings.ArcTrustedSealers -split ','
             }
 
             return $this.AsResult($result)
@@ -168,15 +160,7 @@ class EXOArcConfig : M365DSCResourceBase
             Write-M365DSCHost -Message '    |---[1/1]' -DeferWrite
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $this.ExportedInstance = $ArcConfigSettings
@@ -198,22 +182,5 @@ class EXOArcConfig : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOArcConfig] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOArcConfig])
-        {
-            return $Values
-        }
-
-        $result = [EXOArcConfig]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

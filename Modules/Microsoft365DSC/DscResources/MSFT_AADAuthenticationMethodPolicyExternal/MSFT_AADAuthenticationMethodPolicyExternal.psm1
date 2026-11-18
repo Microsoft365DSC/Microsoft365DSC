@@ -182,22 +182,13 @@ class AADAuthenticationMethodPolicyExternal : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                ExcludeTargets        = $complexExcludeTargets
-                IncludeTargets        = $complexincludeTargets
-                OpenIdConnectSetting  = $complexOpenIdConnectSetting
-                State                 = $getValue.State
-                AppId                 = $getValue.appId
-                DisplayName           = $getValue.displayName
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                ExcludeTargets       = $complexExcludeTargets
+                IncludeTargets       = $complexincludeTargets
+                OpenIdConnectSetting = $complexOpenIdConnectSetting
+                State                = $getValue.State
+                AppId                = $getValue.appId
+                DisplayName          = $getValue.displayName
+                Ensure               = 'Present'
                 #endregion
             }
 
@@ -307,17 +298,8 @@ class AADAuthenticationMethodPolicyExternal : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -388,23 +370,6 @@ class AADAuthenticationMethodPolicyExternal : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADAuthenticationMethodPolicyExternal] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADAuthenticationMethodPolicyExternal])
-        {
-            return $Values
-        }
-
-        $result = [AADAuthenticationMethodPolicyExternal]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

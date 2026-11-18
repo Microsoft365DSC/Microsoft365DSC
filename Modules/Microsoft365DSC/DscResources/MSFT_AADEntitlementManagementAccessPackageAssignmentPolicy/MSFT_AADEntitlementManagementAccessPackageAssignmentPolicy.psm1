@@ -354,15 +354,6 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                 RequestorSettings                 = $formattedRequestorSettings
                 VerifiableCredentialSettings      = $formattedVerifiableCredentialSettings
                 Ensure                            = 'Present'
-                Credential                        = $this.Credential
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                ApplicationSecret                 = $this.ApplicationSecret
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -613,22 +604,12 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    id                    = $config.id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    id          = $config.id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.AccessReviewSettings)
                 {
@@ -806,7 +787,7 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AccessReviewSettings', 'Questions', 'RequestApprovalSettings', 'RequestorSettings', 'CustomExtensionHandlers', 'AccessPackageNotificationSettings', 'VerifiableCredentialSettings') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -821,6 +802,7 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
             if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
+                $this.SkipExport($_)
                 return ''
             }
             else
@@ -840,23 +822,6 @@ class AADEntitlementManagementAccessPackageAssignmentPolicy : M365DSCResourceBas
                 @{ Type = 'IgnoreWhenPast'; Path = 'AccessReviewSettings.StartDateTime' }
             )
         }
-    }
-
-    hidden [AADEntitlementManagementAccessPackageAssignmentPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementAccessPackageAssignmentPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementAccessPackageAssignmentPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

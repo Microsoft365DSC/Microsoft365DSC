@@ -162,28 +162,21 @@ class SentinelWatchlist : M365DSCResourceBase
 
             Write-Verbose -Message "Found watchlist {$($this.Name)}"
             $results = @{
-                SubscriptionId        = $this.SubscriptionId
-                ResourceGroupName     = $this.ResourceGroupName
-                WorkspaceName         = $this.WorkspaceName
-                Name                  = $instance.Name
-                Id                    = $instance.properties.watchlistId
-                DisplayName           = $instance.properties.displayName
-                SourceType            = $instance.properties.sourceType
-                ItemsSearchKey        = $instance.properties.itemsSearchKey
-                Description           = $instance.properties.description
-                DefaultDuration       = $instance.properties.defaultDuration
-                Alias                 = $instance.properties.watchListAlias
-                NumberOfLinesToSkip   = $instance.properties.numberOfLinesToSkip
-                RawContent            = $this.RawContent
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $tenantIdValue
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                SubscriptionId      = $this.SubscriptionId
+                ResourceGroupName   = $this.ResourceGroupName
+                WorkspaceName       = $this.WorkspaceName
+                Name                = $instance.Name
+                Id                  = $instance.properties.watchlistId
+                DisplayName         = $instance.properties.displayName
+                SourceType          = $instance.properties.sourceType
+                ItemsSearchKey      = $instance.properties.itemsSearchKey
+                Description         = $instance.properties.description
+                DefaultDuration     = $instance.properties.defaultDuration
+                Alias               = $instance.properties.watchListAlias
+                NumberOfLinesToSkip = $instance.properties.numberOfLinesToSkip
+                RawContent          = $this.RawContent
+                Ensure              = 'Present'
+                TenantId            = $tenantIdValue
             }
             return $this.AsResult($results)
         }
@@ -332,17 +325,12 @@ class SentinelWatchlist : M365DSCResourceBase
                     $displayedKey = $watchList.Name
                     Write-M365DSCHost -Message "        |---[$j/$($currentWatchLists.Length)] $displayedKey" -DeferWrite
                     $params = @{
-                        SubscriptionId        = $subscriptionIdValue
-                        ResourceGroupName     = $resourceGroupNameValue
-                        WorkspaceName         = $workspaceNameValue
-                        Name                  = $watchList.Name
-                        Id                    = $watchlist.properties.watchlistId
-                        Credential            = $this.Credential
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $tenantIdValue
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        AccessTokens          = $this.AccessTokens
+                        SubscriptionId    = $subscriptionIdValue
+                        ResourceGroupName = $resourceGroupNameValue
+                        WorkspaceName     = $workspaceNameValue
+                        Name              = $watchList.Name
+                        Id                = $watchlist.properties.watchlistId
+                        TenantId          = $tenantIdValue
                     }
 
                     $Results = $this.GetForExport($Params)
@@ -440,22 +428,5 @@ class SentinelWatchlist : M365DSCResourceBase
                 -TenantId $TenantId
             throw $_
         }
-    }
-
-    hidden [SentinelWatchlist] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SentinelWatchlist])
-        {
-            return $Values
-        }
-
-        $result = [SentinelWatchlist]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

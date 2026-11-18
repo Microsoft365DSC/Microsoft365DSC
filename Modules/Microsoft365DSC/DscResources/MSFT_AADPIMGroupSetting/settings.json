@@ -253,6 +253,9 @@
             "name": "PrivilegedAccess.Read.AzureADGroup"
           },
           {
+            "name": "RoleManagementPolicy.Read.AzureADGroup"
+          },
+          {
             "name": "RoleManagementPolicy.Read.Directory"
           },
           {
@@ -265,6 +268,9 @@
           },
           {
             "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "RoleManagementPolicy.ReadWrite.AzureADGroup"
           },
           {
             "name": "RoleManagementPolicy.ReadWrite.Directory"
@@ -286,6 +292,9 @@
             "name": "PrivilegedAccess.Read.AzureADGroup"
           },
           {
+            "name": "RoleManagementPolicy.Read.AzureADGroup"
+          },
+          {
             "name": "RoleManagementPolicy.Read.Directory"
           },
           {
@@ -298,6 +307,9 @@
           },
           {
             "name": "GroupMember.Read.All"
+          },
+          {
+            "name": "RoleManagementPolicy.ReadWrite.AzureADGroup"
           },
           {
             "name": "RoleManagementPolicy.ReadWrite.Directory"

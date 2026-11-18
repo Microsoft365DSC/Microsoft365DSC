@@ -37,6 +37,7 @@ Configuration Example
                     duration = "P180D" # Updated Property
                     type     = "afterDuration"
                 }
+                startDateTime = "2026-01-01T00:00:00.0000000Z"
             };
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId

@@ -2,6 +2,8 @@
     Loader for the Microsoft365DSC API surface module.
 #>
 
+Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath '../../Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1')
+
 $scriptFiles = @(
     Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Private') -Filter '*.ps1' -Recurse -File
     Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Public') -Filter '*.ps1' -File

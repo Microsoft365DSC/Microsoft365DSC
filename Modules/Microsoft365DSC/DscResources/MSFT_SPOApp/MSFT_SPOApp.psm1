@@ -99,20 +99,11 @@ class SPOApp : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                Identity              = $app.Title
-                Path                  = $this.Path
-                Publish               = $app.Deployed
-                Overwrite             = $this.Overwrite
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                Credential            = $this.Credential
-                AccessTokens          = $this.AccessTokens
+                Identity  = $app.Title
+                Path      = $this.Path
+                Publish   = $app.Deployed
+                Overwrite = $this.Overwrite
+                Ensure    = 'Present'
             })
         }
         catch
@@ -229,17 +220,8 @@ class SPOApp : M365DSCResourceBase
                         }
 
                         $Params = @{
-                            Identity              = $identityValue
-                            Path                  = ("`$PSScriptRoot\" + $file.Name)
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            ApplicationSecret     = $this.ApplicationSecret
-                            CertificatePassword   = $this.CertificatePassword
-                            CertificatePath       = $this.CertificatePath
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            ManagedIdentity       = $this.ManagedIdentity
-                            Credential            = $this.Credential
-                            AccessTokens          = $this.AccessTokens
+                            Identity = $identityValue
+                            Path     = ("`$PSScriptRoot\" + $file.Name)
                         }
 
                         $this.ExportedInstance = $app
@@ -284,22 +266,5 @@ class SPOApp : M365DSCResourceBase
         return @{
             ExcludedProperties = @('Path', 'Publish', 'Overwrite')
         }
-    }
-
-    hidden [SPOApp] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOApp])
-        {
-            return $Values
-        }
-
-        $result = [SPOApp]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

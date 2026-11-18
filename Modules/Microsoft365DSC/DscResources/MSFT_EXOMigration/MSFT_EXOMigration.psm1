@@ -137,25 +137,17 @@ class EXOMigration : M365DSCResourceBase
             }
 
             $results = @{
-                Identity              = $this.Identity
-                NotificationEmails    = [System.String[]]$instance.NotificationEmails
-                AddUsers              = [System.Boolean]$instance.AddUsers
-                MoveOptions           = [System.String[]]$instance.MoveOptions
-                SkipMerging           = [System.String[]]$instance.SkipMerging
-                Update                = [System.Boolean]$instance.Update
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
-                Status                = $instance.Status.Value
-                MigrationUsers        = $UserEmails
-                SourceEndpoint        = $instance.SourceEndpoint.Identity.Id
-                TargetDeliveryDomain  = $instance.TargetDeliveryDomain
+                Identity             = $this.Identity
+                NotificationEmails   = [System.String[]]$instance.NotificationEmails
+                AddUsers             = [System.Boolean]$instance.AddUsers
+                MoveOptions          = [System.String[]]$instance.MoveOptions
+                SkipMerging          = [System.String[]]$instance.SkipMerging
+                Update               = [System.Boolean]$instance.Update
+                Ensure               = 'Present'
+                Status               = $instance.Status.Value
+                MigrationUsers       = $UserEmails
+                SourceEndpoint       = $instance.SourceEndpoint.Identity.Id
+                TargetDeliveryDomain = $instance.TargetDeliveryDomain
             }
 
             if ($null -ne $instance.CompleteAfter)
@@ -330,25 +322,16 @@ class EXOMigration : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($migrationBatches.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -363,22 +346,5 @@ class EXOMigration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOMigration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOMigration])
-        {
-            return $Values
-        }
-
-        $result = [EXOMigration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

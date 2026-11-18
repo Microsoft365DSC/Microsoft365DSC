@@ -140,18 +140,9 @@ class PlannerPlan : M365DSCResourceBase
             {
                 Write-Verbose -Message 'Plan found, returning Ensure = Present'
                 $results = @{
-                    Title                 = $this.Title
-                    OwnerGroup            = $OwnerGroupValue
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Title      = $this.Title
+                    OwnerGroup = $OwnerGroupValue
+                    Ensure     = 'Present'
                 }
             }
             return $this.AsResult($results)
@@ -263,28 +254,18 @@ class PlannerPlan : M365DSCResourceBase
                         }
 
                         $params = @{
-                            Title                 = $plan.Title
-                            OwnerGroup            = $group.Id
-                            Credential            = $this.Credential
-                            ApplicationId         = $this.ApplicationId
-                            TenantId              = $this.TenantId
-                            ApplicationSecret     = $this.ApplicationSecret
-                            CertificateThumbprint = $this.CertificateThumbprint
-                            CertificatePath       = $this.CertificatePath
-                            CertificatePassword   = $this.CertificatePassword
-                            ManagedIdentity       = $this.ManagedIdentity
-                            AccessTokens          = $this.AccessTokens
+                            Title      = $plan.Title
+                            OwnerGroup = $group.Id
                         }
 
-                        Write-M365DSCHost -Message "        [$j/$($plans.Length)] $($plan.Title)"
+                        Write-M365DSCHost -Message "        [$j/$($plans.Length)] $($plan.Title)" -DeferWrite
                         $results = $this.GetForExport($params)
-                        $rawResults = $Results.Clone()
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                             -ConnectionMode $ConnectionMode `
                             -ModulePath $this.GetModulePath() `
                             -Results $Results `
                             -Credential $this.Credential `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
                         [void]$dscContent.Append($currentDSCBlock)
 
                         Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -299,6 +280,7 @@ class PlannerPlan : M365DSCResourceBase
                     Write-M365DSCHost -Message $Global:M365DSCEmojiRedX -CommitWrite
 
                     $this.LogError($_, 'Error during Export:')
+                    $this.AddExportInstanceFailure($_, $group.DisplayName)
                 }
             }
 
@@ -310,22 +292,5 @@ class PlannerPlan : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [PlannerPlan] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [PlannerPlan])
-        {
-            return $Values
-        }
-
-        $result = [PlannerPlan]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

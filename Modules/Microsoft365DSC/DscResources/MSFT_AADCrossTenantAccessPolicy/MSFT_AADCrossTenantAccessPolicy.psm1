@@ -96,15 +96,6 @@ class AADCrossTenantAccessPolicy : M365DSCResourceBase
                 DisplayName           = $getValue.DisplayName
                 AllowedCloudEndpoints = $getValue.AllowedCloudEndpoints
                 Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -185,17 +176,8 @@ class AADCrossTenantAccessPolicy : M365DSCResourceBase
 
             $dscContent = [System.Text.StringBuilder]::new()
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                Ensure           = 'Present'
             }
 
             $Results = $this.GetForExport($Params)
@@ -218,22 +200,5 @@ class AADCrossTenantAccessPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADCrossTenantAccessPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCrossTenantAccessPolicy])
-        {
-            return $Values
-        }
-
-        $result = [AADCrossTenantAccessPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

@@ -1412,3 +1412,95 @@ function Reset-MSCloudLoginConnectionProfileContext
 {
 }
 #endregion
+
+#region PKI
+function New-SelfSignedCertificate
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $Type,
+
+        [Parameter()]
+        [System.String[]]
+        $DnsName,
+
+        [Parameter()]
+        [System.String]
+        $Subject,
+
+        [Parameter()]
+        [System.String]
+        $HashAlgorithm,
+
+        [Parameter()]
+        [System.DateTime]
+        $NotAfter,
+
+        [Parameter()]
+        [System.String]
+        $CertStoreLocation
+    )
+}
+
+function Export-PfxCertificate
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.Object]
+        $Cert,
+
+        [Parameter()]
+        [System.String]
+        $FilePath,
+
+        [Parameter()]
+        [System.Security.SecureString]
+        $Password
+    )
+}
+
+function Export-Certificate
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.Object]
+        $Cert,
+
+        [Parameter()]
+        [System.String]
+        $FilePath,
+
+        [Parameter()]
+        [System.String]
+        $Type,
+
+        [Parameter()]
+        [switch]
+        $NoClobber,
+
+        [Parameter()]
+        [switch]
+        $Force
+    )
+}
+#endregion
+
+#region PSDesiredStateConfiguration
+function Get-DscLocalConfigurationManager
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.Object]
+        $CimSession
+    )
+}
+#endregion

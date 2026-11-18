@@ -297,24 +297,15 @@ class AzureRoleEligibilityScheduleRequest : M365DSCResourceBase
             }
 
             $results = @{
-                Principal             = $PrincipalValue
-                PrincipalType         = $principalTypeValue
-                RoleDefinition        = $this.RoleDefinition
-                DirectoryScopeId      = $schedule.Scope
-                Id                    = $schedule.Name
-                Justification         = "Eligibility of Azure role '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
-                ScheduleInfo          = $ScheduleInfoValue
-                Ensure                = 'Present'
-                SubscriptionId        = $this.SubscriptionId
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Principal        = $PrincipalValue
+                PrincipalType    = $principalTypeValue
+                RoleDefinition   = $this.RoleDefinition
+                DirectoryScopeId = $schedule.Scope
+                Id               = $schedule.Name
+                Justification    = "Eligibility of Azure role '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
+                ScheduleInfo     = $ScheduleInfoValue
+                Ensure           = 'Present'
+                SubscriptionId   = $this.SubscriptionId
             }
             return $this.AsResult($results)
         }
@@ -638,22 +629,13 @@ class AzureRoleEligibilityScheduleRequest : M365DSCResourceBase
                     $this.ResourceCache['RoleDefinitions'][$roleDefinitionGuid] = $currentRoleDefinition
                 }
                 $Params = @{
-                    Id                    = $request.Name
-                    Principal             = $PrincipalValue
-                    PrincipalType         = $requestPrincipalType
-                    DirectoryScopeId      = $request.Scope
-                    RoleDefinition        = $currentRoleDefinition.Name
-                    Ensure                = 'Present'
-                    SubscriptionId        = $this.SubscriptionId
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id               = $request.Name
+                    Principal        = $PrincipalValue
+                    PrincipalType    = $requestPrincipalType
+                    DirectoryScopeId = $request.Scope
+                    RoleDefinition   = $currentRoleDefinition.Name
+                    Ensure           = 'Present'
+                    SubscriptionId   = $this.SubscriptionId
                 }
 
                 $this.ExportedInstance = $request
@@ -723,6 +705,7 @@ class AzureRoleEligibilityScheduleRequest : M365DSCResourceBase
                     $_.ErrorDetails.Message -like '*[AadPremiumLicenseRequired]*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component."
+                $this.SkipExport($_)
                 return ''
             }
             else
@@ -742,23 +725,6 @@ class AzureRoleEligibilityScheduleRequest : M365DSCResourceBase
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
             )
         }
-    }
-
-    hidden [AzureRoleEligibilityScheduleRequest] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AzureRoleEligibilityScheduleRequest])
-        {
-            return $Values
-        }
-
-        $result = [AzureRoleEligibilityScheduleRequest]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

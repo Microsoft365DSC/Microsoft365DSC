@@ -140,14 +140,6 @@ class AADCertificateBasedApplicationConfiguration : M365DSCResourceBase
                 Description                   = $instance.Description
                 TrustedCertificateAuthorities = $trustedCAs
                 Ensure                        = 'Present'
-                Credential                    = $this.Credential
-                ApplicationId                 = $this.ApplicationId
-                TenantId                      = $this.TenantId
-                CertificateThumbprint         = $this.CertificateThumbprint
-                CertificatePath               = $this.CertificatePath
-                CertificatePassword           = $this.CertificatePassword
-                ManagedIdentity               = $this.ManagedIdentity
-                AccessTokens                  = $this.AccessTokens
             }
             Write-Verbose -Message "GET: Returning results => $($results | ConvertTo-Json -Depth 6)"
             return $this.AsResult($results)
@@ -481,49 +473,44 @@ class AADCertificateBasedApplicationConfiguration : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
 
                 $params = @{
-                    DisplayName           = $config.DisplayName
-                    Id                    = $config.Id
-                    Description           = $config.Description
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $config.DisplayName
+                    Id          = $config.Id
+                    Description = $config.Description
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
 
-                if ($null -ne $Results.TrustedCertificateAuthorities -and $Results.TrustedCertificateAuthorities.Count -gt 0)
+                if ($null -ne $Results)
                 {
-                    $complexMapping = @(
-                        @{
-                            Name            = 'TrustedCertificateAuthorities'
-                            CimInstanceName = 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority'
-                            IsRequired      = $False
-                        }
-                    )
-
-                    $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-                        -ComplexObject $Results.TrustedCertificateAuthorities `
-                        -CIMInstanceName 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority' `
-                        -ComplexTypeMapping $complexMapping
-
-                    if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                    if ($null -ne $Results.TrustedCertificateAuthorities -and $Results.TrustedCertificateAuthorities.Count -gt 0)
                     {
-                        $Results.TrustedCertificateAuthorities = $complexTypeStringResult
+                        $complexMapping = @(
+                            @{
+                                Name            = 'TrustedCertificateAuthorities'
+                                CimInstanceName = 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority'
+                                IsRequired      = $False
+                            }
+                        )
+
+                        $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                            -ComplexObject $Results.TrustedCertificateAuthorities `
+                            -CIMInstanceName 'AADCertificateBasedApplicationConfigurationTrustedCertificateAuthority' `
+                            -ComplexTypeMapping $complexMapping
+
+                        if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                        {
+                            $Results.TrustedCertificateAuthorities = $complexTypeStringResult
+                        }
+                        else
+                        {
+                            $Results.Remove('TrustedCertificateAuthorities') | Out-Null
+                        }
                     }
                     else
                     {
                         $Results.Remove('TrustedCertificateAuthorities') | Out-Null
                     }
-                }
-                else
-                {
-                    $Results.Remove('TrustedCertificateAuthorities') | Out-Null
                 }
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -568,23 +555,6 @@ class AADCertificateBasedApplicationConfiguration : M365DSCResourceBase
         }
 
         return $CertificateValue
-    }
-
-    hidden [AADCertificateBasedApplicationConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADCertificateBasedApplicationConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [AADCertificateBasedApplicationConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

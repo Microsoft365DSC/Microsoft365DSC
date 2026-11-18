@@ -232,14 +232,6 @@ class TeamsEventsPolicy : M365DSCResourceBase
                 TranscriptionForWebinar                 = $policy.TranscriptionForWebinar
                 UseMicrosoftECDN                        = $policy.UseMicrosoftECDN
                 Ensure                                  = 'Present'
-                Credential                              = $this.Credential
-                ApplicationId                           = $this.ApplicationId
-                TenantId                                = $this.TenantId
-                CertificateThumbprint                   = $this.CertificateThumbprint
-                CertificatePath                         = $this.CertificatePath
-                CertificatePassword                     = $this.CertificatePassword
-                ManagedIdentity                         = $this.ManagedIdentity
-                AccessTokens                            = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -319,15 +311,7 @@ class TeamsEventsPolicy : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity
                 }
 
                 $this.ExportedInstance = $policy
@@ -351,22 +335,5 @@ class TeamsEventsPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsEventsPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsEventsPolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsEventsPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

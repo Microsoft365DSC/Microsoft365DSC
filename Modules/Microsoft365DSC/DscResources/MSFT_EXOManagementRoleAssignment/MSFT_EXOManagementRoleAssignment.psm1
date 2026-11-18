@@ -189,14 +189,6 @@ class EXOManagementRoleAssignment : M365DSCResourceBase
                 RecipientRelativeWriteScope      = $RecipientRelativeWriteScopeValue
                 Role                             = $roleAssignment.Role
                 Ensure                           = 'Present'
-                Credential                       = $this.Credential
-                ApplicationId                    = $this.ApplicationId
-                CertificateThumbprint            = $this.CertificateThumbprint
-                CertificatePath                  = $this.CertificatePath
-                CertificatePassword              = $this.CertificatePassword
-                ManagedIdentity                  = $this.ManagedIdentity
-                TenantId                         = $this.TenantId
-                AccessTokens                     = $this.AccessTokens
             }
 
             if ($roleAssignment.RoleAssigneeType -eq 'SecurityGroup' -or $roleAssignment.RoleAssigneeType -eq 'RoleGroup')
@@ -353,26 +345,17 @@ class EXOManagementRoleAssignment : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $($assignment.Name)" -DeferWrite
 
                 $Params = @{
-                    Name                  = $assignment.Name
-                    Role                  = $assignment.Role
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Name = $assignment.Name
+                    Role = $assignment.Role
                 }
                 $this.ExportedInstance = $assignment
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -402,22 +385,5 @@ class EXOManagementRoleAssignment : M365DSCResourceBase
         }
 
         return ($Value.TrimEnd('/') -split '/')[-1]
-    }
-
-    hidden [EXOManagementRoleAssignment] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOManagementRoleAssignment])
-        {
-            return $Values
-        }
-
-        $result = [EXOManagementRoleAssignment]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

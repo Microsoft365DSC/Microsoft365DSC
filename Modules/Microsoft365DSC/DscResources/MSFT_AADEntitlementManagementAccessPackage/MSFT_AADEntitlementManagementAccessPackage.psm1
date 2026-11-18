@@ -199,15 +199,6 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
                 AccessPackagesIncompatibleWith  = $getAccessPackagesIncompatibleWith #read-only
                 IncompatibleGroups              = $getIncompatibleGroups
                 Ensure                          = 'Present'
-                Credential                      = $this.Credential
-                ApplicationId                   = $this.ApplicationId
-                TenantId                        = $this.TenantId
-                ApplicationSecret               = $this.ApplicationSecret
-                CertificateThumbprint           = $this.CertificateThumbprint
-                CertificatePath                 = $this.CertificatePath
-                CertificatePassword             = $this.CertificatePassword
-                ManagedIdentity                 = $this.ManagedIdentity
-                AccessTokens                    = $this.AccessTokens
             }
 
             return $this.AsResult($results)
@@ -434,7 +425,7 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
             {
                 Remove-MgBetaEntitlementManagementAccessPackageIncompatibleAccessPackageByRef `
                     -AccessPackageId $currentInstance.Id `
-                    -AccessPackageId1 $incompatibleAccessPackage
+                    -Id ((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/identityGovernance/entitlementManagement/accessPackages/$incompatibleAccessPackage")
             }
             #endregion
 
@@ -471,7 +462,7 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
             {
                 Remove-MgBetaEntitlementManagementAccessPackageIncompatibleGroupByRef `
                     -AccessPackageId $currentInstance.Id `
-                    -GroupId $incompatibleGroup
+                    -Id ((Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "beta/groups/$incompatibleGroup")
             }
             #endregion
 
@@ -759,23 +750,13 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.id
-                    DisplayName           = $config.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id          = $config.id
+                    DisplayName = $config.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
                 if ($null -ne $Results.AccessPackageResourceRoleScopes)
                 {
                     $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString -ComplexObject ([Array]$Results.AccessPackageResourceRoleScopes) `
@@ -795,7 +776,7 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('AccessPackageResourceRoleScopes') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -812,6 +793,7 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
             if ($_.ErrorDetails.Message -like '*User is not authorized to perform the operation.*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) Tenant does not meet license requirement to extract this component or the user has not been granted the proper permissions."
+                $this.SkipExport($_)
                 return ''
             }
             else
@@ -821,23 +803,6 @@ class AADEntitlementManagementAccessPackage : M365DSCResourceBase
                 throw
             }
         }
-    }
-
-    hidden [AADEntitlementManagementAccessPackage] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADEntitlementManagementAccessPackage])
-        {
-            return $Values
-        }
-
-        $result = [AADEntitlementManagementAccessPackage]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

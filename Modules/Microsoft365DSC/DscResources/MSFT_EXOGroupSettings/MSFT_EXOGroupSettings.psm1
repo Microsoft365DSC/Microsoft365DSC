@@ -420,14 +420,6 @@ class EXOGroupSettings : M365DSCResourceBase
                 SensitivityLabelId                     = $group.SensitivityLabelId
                 SubscriptionEnabled                    = $group.SubscriptionEnabled
                 WelcomeMessageEnabled                  = $group.WelcomeMessageEnabled
-                Credential                             = $this.Credential
-                ApplicationId                          = $this.ApplicationId
-                TenantId                               = $this.TenantId
-                CertificateThumbprint                  = $this.CertificateThumbprint
-                CertificatePath                        = $this.CertificatePath
-                CertificatePassword                    = $this.CertificatePassword
-                ManagedIdentity                        = $this.ManagedIdentity
-                AccessTokens                           = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -545,20 +537,11 @@ class EXOGroupSettings : M365DSCResourceBase
                     }
 
                     $Params = @{
-                        Credential            = $this.Credential
-                        DisplayName           = $groupName
-                        Id                    = $group.Id
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        CertificatePassword   = $this.CertificatePassword
-                        ManagedIdentity       = $this.ManagedIdentity
-                        CertificatePath       = $this.CertificatePath
-                        AccessTokens          = $this.AccessTokens
+                        DisplayName = $groupName
+                        Id          = $group.Id
                     }
                     $this.ExportedInstance = $group
                     $Results = $this.GetForExport($Params)
-                    $rawResults = $Results.Clone()
                     if ($Results -is [System.Collections.Hashtable] -and $Results.Count -gt 1)
                     {
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
@@ -566,7 +549,7 @@ class EXOGroupSettings : M365DSCResourceBase
                             -ModulePath $this.GetModulePath() `
                             -Results $Results `
                             -Credential $this.Credential `
-                            -RawResults $rawResults
+                            -RawResults $this.RawExportResults
                         [void]$dscContent.Append($currentDSCBlock)
                         Save-M365DSCPartialExport -Content $currentDSCBlock `
                             -FileName $Global:PartialExportFileName
@@ -641,22 +624,5 @@ class EXOGroupSettings : M365DSCResourceBase
             $simplifiedNames += $name.Split(',')[0].Replace('(', '')
         }
         return @($simplifiedNames | Sort-Object)
-    }
-
-    hidden [EXOGroupSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOGroupSettings])
-        {
-            return $Values
-        }
-
-        $result = [EXOGroupSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

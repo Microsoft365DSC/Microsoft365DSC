@@ -67,6 +67,7 @@
   },
   "requiredModules": [
     "Microsoft.Graph.Applications",
+    "Microsoft.Graph.Authentication",
     "Microsoft.Graph.Beta.Search"
   ],
   "mode": "Configuration",
@@ -76,6 +77,12 @@
       "cmdlets": [
         "Get-MgApplication",
         "Get-MgServicePrincipal"
+      ]
+    },
+    {
+      "module": "Microsoft.Graph.Authentication",
+      "cmdlets": [
+        "Get-MgContext"
       ]
     },
     {

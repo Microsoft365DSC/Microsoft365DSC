@@ -100,20 +100,12 @@ class SCCaseHoldRule : M365DSCResourceBase
             Write-Verbose "Found existing SCCaseHoldRule $($this.Name)"
 
             $result = @{
-                Name                  = $Rule.Name
-                Policy                = $this.Policy
-                Comment               = $Rule.Comment
-                Disabled              = $Rule.Disabled
-                ContentMatchQuery     = $Rule.ContentMatchQuery
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Name              = $Rule.Name
+                Policy            = $this.Policy
+                Comment           = $Rule.Comment
+                Disabled          = $Rule.Disabled
+                ContentMatchQuery = $Rule.ContentMatchQuery
+                Ensure            = 'Present'
             }
 
             return $this.AsResult($result)
@@ -235,13 +227,12 @@ class SCCaseHoldRule : M365DSCResourceBase
 
                     $this.ExportedInstance = $Rule
                     $Results = $this.GetForExport(@{ Name = $Rule.Name; Policy = $policyObject.Name })
-                    $rawResults = $Results.Clone()
                     $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                         -ConnectionMode $ConnectionMode `
                         -ModulePath $this.GetModulePath() `
                         -Results $Results `
                         -Credential $this.Credential `
-                        -RawResults $rawResults
+                        -RawResults $this.RawExportResults
                     [void]$dscContent.Append($currentDSCBlock)
                     Save-M365DSCPartialExport -Content $currentDSCBlock `
                         -FileName $Global:PartialExportFileName
@@ -249,6 +240,7 @@ class SCCaseHoldRule : M365DSCResourceBase
                 catch
                 {
                     Write-Verbose -Message "You are not authorized to access Case Hold Policy {$($Rule.Policy)}"
+                    $this.AddExportInstanceFailure($_, $Rule.Name)
                 }
                 Write-M365DSCHost -Message $Global:M365DSCEmojiGreenCheckMark -CommitWrite
                 $i++
@@ -270,22 +262,5 @@ class SCCaseHoldRule : M365DSCResourceBase
             throw $ErrorRecord
         }
         Write-Warning -Message ($ErrorRecord.Exception.Message -split "`r?`n")[0]
-    }
-
-    hidden [SCCaseHoldRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCCaseHoldRule])
-        {
-            return $Values
-        }
-
-        $result = [SCCaseHoldRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

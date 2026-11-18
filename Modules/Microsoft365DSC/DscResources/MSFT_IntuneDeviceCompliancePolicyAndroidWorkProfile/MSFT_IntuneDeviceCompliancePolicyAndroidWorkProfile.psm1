@@ -320,15 +320,6 @@ class IntuneDeviceCompliancePolicyAndroidWorkProfile : M365DSCResourceBase
                 SecurityRequiredAndroidSafetyNetEvaluationType     = $devicePolicy.securityRequiredAndroidSafetyNetEvaluationType
                 RoleScopeTagIds                                    = Resolve-M365DSCIntuneRoleScopeTagNames -CurrentValues $devicePolicy.roleScopeTagIds -DesiredValues $this.RoleScopeTagIds
                 Ensure                                             = 'Present'
-                Credential                                         = $this.Credential
-                ApplicationId                                      = $this.ApplicationId
-                TenantId                                           = $this.TenantId
-                ApplicationSecret                                  = $this.ApplicationSecret
-                CertificateThumbprint                              = $this.CertificateThumbprint
-                CertificatePath                                    = $this.CertificatePath
-                CertificatePassword                                = $this.CertificatePassword
-                ManagedIdentity                                    = $this.ManagedIdentity
-                AccessTokens                                       = $this.AccessTokens
             }
 
             $returnAssignments = @()
@@ -523,22 +514,12 @@ class IntuneDeviceCompliancePolicyAndroidWorkProfile : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configDeviceAndroidPolicies.Count)] $($configDeviceAndroidPolicy.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $configDeviceAndroidPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $configDeviceAndroidPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configDeviceAndroidPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -575,7 +556,7 @@ class IntuneDeviceCompliancePolicyAndroidWorkProfile : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'ScheduledActionsForRule') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -591,6 +572,7 @@ class IntuneDeviceCompliancePolicyAndroidWorkProfile : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -602,23 +584,6 @@ class IntuneDeviceCompliancePolicyAndroidWorkProfile : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceCompliancePolicyAndroidWorkProfile] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceCompliancePolicyAndroidWorkProfile])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceCompliancePolicyAndroidWorkProfile]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

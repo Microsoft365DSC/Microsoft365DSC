@@ -92,7 +92,6 @@ class <ResourceName> : M365DSCResourceBase
                 Id                    = $getValue.Id
 <SettingsComplexMappingBlock>
                 Ensure                = 'Present'
-<AuthResultBlock>
             }
             $result += $policySettings
 
@@ -278,7 +277,6 @@ class <ResourceName> : M365DSCResourceBase
                 $Params = @{
                     Id          = $config.Id
                     DisplayName = $config.Name
-<ExportAuthParameterBlock>
                 }
 
                 $this.ExportedInstance = $config
@@ -324,23 +322,6 @@ class <ResourceName> : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [<ResourceName>] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [<ResourceName>])
-        {
-            return $Values
-        }
-
-        $result = [<ResourceName>]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 <#IF CimInstanceClassBlock#>

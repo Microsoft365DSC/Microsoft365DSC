@@ -91,14 +91,6 @@ class SPORetentionLabelsSettings : M365DSCResourceBase
                 AllowFilesWithKeepLabelToBeDeletedSPO = $AllowFilesWithKeepLabelToBeDeletedSPOValue
                 AdvancedRecordVersioningDisabled      = $AdvancedRecordVersioningDisabledValue
                 MetadataEditBlockingEnabled           = $MetadataEditBlockingEnabledValue
-                Credential                            = $this.Credential
-                ApplicationId                         = $this.ApplicationId
-                TenantId                              = $this.TenantId
-                CertificateThumbprint                 = $this.CertificateThumbprint
-                CertificatePath                       = $this.CertificatePath
-                CertificatePassword                   = $this.CertificatePassword
-                ManagedIdentity                       = $this.ManagedIdentity
-                AccessTokens                          = $this.AccessTokens
             }
             return $this.AsResult($results)
         }
@@ -176,15 +168,7 @@ class SPORetentionLabelsSettings : M365DSCResourceBase
                 $Global:M365DSCExportResourceInstancesCount++
             }
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
 
             $Results = $this.GetForExport($Params)
@@ -239,22 +223,5 @@ class SPORetentionLabelsSettings : M365DSCResourceBase
         }
 
         return $true
-    }
-
-    hidden [SPORetentionLabelsSettings] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPORetentionLabelsSettings])
-        {
-            return $Values
-        }
-
-        $result = [SPORetentionLabelsSettings]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

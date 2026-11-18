@@ -77,14 +77,6 @@ class EXOResourceConfiguration : M365DSCResourceBase
             $result = @{
                 IsSingleInstance       = 'Yes'
                 ResourcePropertySchema = $ResourceConfiguration.ResourcePropertySchema
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                TenantId               = $this.TenantId
-                AccessTokens           = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -158,15 +150,7 @@ class EXOResourceConfiguration : M365DSCResourceBase
             }
 
             $Params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                CertificatePath       = $this.CertificatePath
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $ResourceConfiguration
             $Results = $this.GetForExport($Params)
@@ -187,22 +171,5 @@ class EXOResourceConfiguration : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOResourceConfiguration] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOResourceConfiguration])
-        {
-            return $Values
-        }
-
-        $result = [EXOResourceConfiguration]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

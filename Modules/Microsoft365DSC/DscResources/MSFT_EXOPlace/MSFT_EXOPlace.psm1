@@ -206,15 +206,7 @@ class EXOPlace : M365DSCResourceBase
                 Street                 = $place.Street
                 Tags                   = $TagsValue
                 VideoDeviceName        = $place.VideoDeviceName
-                Credential             = $this.Credential
                 Ensure                 = 'Present'
-                ApplicationId          = $this.ApplicationId
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                TenantId               = $this.TenantId
-                AccessTokens           = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -299,16 +291,8 @@ class EXOPlace : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($places.Length)] $($place.Identity)" -DeferWrite
 
                 $Params = @{
-                    Identity              = $place.Identity
-                    DisplayName           = $place.DisplayName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity    = $place.Identity
+                    DisplayName = $place.DisplayName
                 }
                 $this.ExportedInstance = $place
                 $Results = $this.GetForExport($Params)
@@ -331,22 +315,5 @@ class EXOPlace : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXOPlace] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOPlace])
-        {
-            return $Values
-        }
-
-        $result = [EXOPlace]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

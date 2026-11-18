@@ -142,11 +142,12 @@ Describe 'M365DSCExportCollectionCache' {
             Should -Invoke -ModuleName M365DSCExportUtil -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -Times 1 -Exactly -ParameterFilter {
                 $Filter -eq "isof('microsoft.graph.windowsKioskConfiguration')" -and $ExpandProperty -contains 'assignments' -and $All
             }
-            $result.Count | Should -Be 3
+            @($result).id | Should -Be '1'
         }
 
         It 'builds the exclusion and multi-type filters' {
-            $null = Get-M365DSCExportCachedCollection -Collection 'deviceConfigurations' -ODataType 'microsoft.graph.windowsWifiConfiguration' -ExcludeODataType 'microsoft.graph.windowsWifiEnterpriseEAPConfiguration'
+            $wifi = Get-M365DSCExportCachedCollection -Collection 'deviceConfigurations' -ODataType 'microsoft.graph.windowsWifiConfiguration' -ExcludeODataType 'microsoft.graph.windowsWifiEnterpriseEAPConfiguration'
+            @($wifi).id | Should -Be '2'
             Should -Invoke -ModuleName M365DSCExportUtil -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -Times 1 -Exactly -ParameterFilter {
                 $Filter -eq "isof('microsoft.graph.windowsWifiConfiguration') and not isof('microsoft.graph.windowsWifiEnterpriseEAPConfiguration')"
             }
@@ -162,6 +163,8 @@ Describe 'M365DSCExportCollectionCache' {
             Should -Invoke -ModuleName M365DSCExportUtil -CommandName Get-MgBetaDeviceManagementDeviceConfiguration -Times 1 -Exactly -ParameterFilter {
                 $Filter -eq "(isof('microsoft.graph.windowsKioskConfiguration')) and (displayName eq 'x')"
             }
+            $wifi = Get-M365DSCExportCachedCollection -Collection 'deviceConfigurations' -ODataType 'microsoft.graph.windowsWifiConfiguration' -Filter "displayName eq 'x'"
+            @($wifi).id | Should -Be '2'
             [Microsoft365DSC.Cache.ExportCollectionCache]::ShouldPopulate('deviceConfigurations') | Should -BeTrue
         }
 
@@ -199,9 +202,11 @@ Describe 'M365DSCExportCollectionCache' {
             Mock -ModuleName M365DSCExportUtil -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
                 return @(
                     @{ id = 'g1'; status = 200; body = @{ id = 'g1'; displayName = 'Group 1' } },
-                    @{ id = 'g2'; status = 404; body = @{ error = @{ code = 'Request_ResourceNotFound' } } }
+                    @{ id = 'g2'; status = 404; body = @{ error = @{ code = 'Request_ResourceNotFound' } } },
+                    @{ id = 'g3'; status = 503; body = @{ error = @{ code = 'ServiceUnavailable' } } }
                 )
             }
+            Mock -ModuleName M365DSCExportUtil -CommandName Write-Warning
         }
 
         It 'lists the PIM group resources and resolves their display names' {
@@ -215,6 +220,9 @@ Describe 'M365DSCExportCollectionCache' {
             @($result).Count | Should -Be 1
             @($result)[0].Id | Should -Be 'g1'
             @($result)[0].DisplayName | Should -Be 'Group 1'
+            Should -Invoke -ModuleName M365DSCExportUtil -CommandName Write-Warning -Times 1 -Exactly -ParameterFilter {
+                $Message -like '*{g3}*503*'
+            }
         }
 
         It 'returns an empty array when no group is enabled in PIM' {
@@ -282,6 +290,28 @@ Describe 'M365DSCExportCollectionCache' {
             [Microsoft365DSC.Cache.ExportCollectionCache]::IsEnabled | Should -BeTrue
             Reset-M365DSCExportCollectionCache
             [Microsoft365DSC.Cache.ExportCollectionCache]::IsEnabled | Should -BeFalse
+        }
+
+        It 'clears the directory name cache when the export cache is reset' {
+            Mock -ModuleName M365DSCUtil -CommandName Get-MgGroup -MockWith { return [PSCustomObject] @{ DisplayName = 'Group Name' } }
+            $previousExportFlag = $Global:M365DSCExportInProgress
+            try
+            {
+                $Global:M365DSCExportInProgress = $true
+                Initialize-M365DSCExportCollectionCache
+                $null = Get-M365DSCGroupDisplayNameById -GroupId 'aaaa'
+                $null = Get-M365DSCGroupDisplayNameById -GroupId 'aaaa'
+                Should -Invoke -ModuleName M365DSCUtil -CommandName Get-MgGroup -Exactly -Times 1 -Scope It
+
+                Reset-M365DSCExportCollectionCache
+                $null = Get-M365DSCGroupDisplayNameById -GroupId 'aaaa'
+                Should -Invoke -ModuleName M365DSCUtil -CommandName Get-MgGroup -Exactly -Times 2 -Scope It
+            }
+            finally
+            {
+                $Global:M365DSCExportInProgress = $previousExportFlag
+                Reset-M365DSCExportCollectionCache
+            }
         }
     }
 
@@ -434,5 +464,67 @@ Describe 'SettingTemplateCache' {
         [Microsoft365DSC.Intune.SettingTemplateCache]::Reset()
         $null = Get-M365DSCSettingCatalogTemplate -TemplateId 'tmpl_1'
         Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicyTemplateSettingTemplate -ModuleName M365DSCIntuneUtil -Times 2 -Exactly
+    }
+}
+
+Describe 'Get-M365DSCExportCachedConfigurationPolicies' {
+    BeforeAll {
+        function global:Get-MgBetaDeviceManagementConfigurationPolicy
+        {
+            [CmdletBinding()]
+            param ($Filter, $ExpandProperty, [switch] $All)
+        }
+
+        $Script:PolicyCache = [Microsoft365DSC.Intune.ConfigurationPolicyCache]
+        $Script:TemplateSelector = [System.Func[System.Object, System.String]] { param($policy) $policy.templateReference.templateId }
+    }
+
+    BeforeEach {
+        Mock -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -MockWith {
+            return @(@{ id = 'live'; templateReference = @{ templateId = 'tmpl_b' } })
+        }
+    }
+
+    AfterEach {
+        $Script:PolicyCache::Reset()
+    }
+
+    It 'Returns no policies for a template without policies once the cache is populated' {
+        $Script:PolicyCache::Populate([object[]] @(@{ id = 'p1'; templateReference = @{ templateId = 'tmpl_a' } }), $Script:TemplateSelector)
+        $Script:PolicyCache::IsPopulated | Should -BeTrue
+
+        [array] $result = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_b' -Filter "templateReference/TemplateId eq 'tmpl_b'"
+
+        $result.Length | Should -Be 0
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 0 -Exactly
+    }
+
+    It 'Matches the template id without regard to case' {
+        $Script:PolicyCache::Populate([object[]] @(@{ id = 'p1'; templateReference = @{ templateId = 'TMPL_A' } }), $Script:TemplateSelector)
+
+        $result = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_a' -Filter "templateReference/templateId eq 'tmpl_a'"
+
+        @($result).Count | Should -Be 1
+        @($result)[0].id | Should -Be 'p1'
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 0 -Exactly
+    }
+
+    It 'Calls Graph once a reset cleared the populated state' {
+        $Script:PolicyCache::Populate([object[]] @(), $Script:TemplateSelector)
+        $Script:PolicyCache::Reset()
+        $Script:PolicyCache::IsPopulated | Should -BeFalse
+
+        $result = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_b' -Filter "templateReference/templateId eq 'tmpl_b'"
+
+        @($result)[0].id | Should -Be 'live'
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 1 -Exactly
+    }
+
+    It 'Calls Graph for a filter other than the templateId filter' {
+        $Script:PolicyCache::Populate([object[]] @(), $Script:TemplateSelector)
+
+        $null = Get-M365DSCExportCachedConfigurationPolicies -TemplateId 'tmpl_b' -Filter "name eq 'Policy'"
+
+        Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ModuleName M365DSCIntuneUtil -Times 1 -Exactly
     }
 }

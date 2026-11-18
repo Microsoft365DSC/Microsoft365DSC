@@ -143,24 +143,15 @@ class SPOSiteDesign : M365DSCResourceBase
             }
 
             return $this.AsResult(@{
-                Title                 = $siteDesign.Title
-                SiteScriptNames       = $scriptTitles
-                WebTemplate           = $webtemp
-                IsDefault             = $siteDesign.IsDefault
-                Description           = $siteDesign.Description
-                PreviewImageAltText   = $siteDesign.PreviewImageAltText
-                PreviewImageUrl       = $siteDesign.PreviewImageUrl
-                Version               = $siteDesign.Version
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Title               = $siteDesign.Title
+                SiteScriptNames     = $scriptTitles
+                WebTemplate         = $webtemp
+                IsDefault           = $siteDesign.IsDefault
+                Description         = $siteDesign.Description
+                PreviewImageAltText = $siteDesign.PreviewImageAltText
+                PreviewImageUrl     = $siteDesign.PreviewImageUrl
+                Version             = $siteDesign.Version
+                Ensure              = 'Present'
             })
         }
         catch
@@ -270,16 +261,7 @@ class SPOSiteDesign : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($designs.Length)] $($design.Title)" -DeferWrite
                 $Params = @{
-                    Title                 = $design.Title
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    Credential            = $this.Credential
-                    AccessTokens          = $this.AccessTokens
+                    Title = $design.Title
                 }
 
                 $this.ExportedInstance = $design
@@ -304,22 +286,5 @@ class SPOSiteDesign : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOSiteDesign] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOSiteDesign])
-        {
-            return $Values
-        }
-
-        $result = [SPOSiteDesign]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

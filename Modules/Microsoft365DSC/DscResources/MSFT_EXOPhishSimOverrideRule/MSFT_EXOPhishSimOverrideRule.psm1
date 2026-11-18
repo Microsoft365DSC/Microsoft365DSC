@@ -100,19 +100,11 @@ class EXOPhishSimOverrideRule : M365DSCResourceBase
             Write-Verbose -Message "Found Phishing Simulation Override Rule {$($instance.Identity)}"
 
             $results = @{
-                IsSingleInstance      = 'Yes'
-                SenderIpRanges        = [System.String[]] $instance.SenderIpRanges
-                Domains               = [System.String[]] $instance.Domains
-                Comment               = $instance.Comment
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
+                SenderIpRanges   = [System.String[]] $instance.SenderIpRanges
+                Domains          = [System.String[]] $instance.Domains
+                Comment          = $instance.Comment
+                Ensure           = 'Present'
             }
 
             return $this.AsResult($results)
@@ -237,15 +229,7 @@ class EXOPhishSimOverrideRule : M365DSCResourceBase
             }
 
             $params = @{
-                IsSingleInstance      = 'Yes'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                IsSingleInstance = 'Yes'
             }
             $this.ExportedInstance = $rule
             $Results = $this.GetForExport($params)
@@ -297,22 +281,5 @@ class EXOPhishSimOverrideRule : M365DSCResourceBase
         {
             $Parameters["Remove$Name"] = $toRemove
         }
-    }
-
-    hidden [EXOPhishSimOverrideRule] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXOPhishSimOverrideRule])
-        {
-            return $Values
-        }
-
-        $result = [EXOPhishSimOverrideRule]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

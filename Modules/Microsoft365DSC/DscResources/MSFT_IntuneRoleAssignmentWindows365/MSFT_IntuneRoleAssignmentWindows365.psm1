@@ -192,22 +192,14 @@ class IntuneRoleAssignmentWindows365 : M365DSCResourceBase
 
             $results = @{
                 #region resource generator code
-                AppScopeIds           = $getValue.AppScopeIds # RoleScopeTagIds
-                Description           = $getValue.Description
-                DirectoryScopes       = $groupDisplayNames
-                DisplayName           = $getValue.DisplayName
-                Principals            = $principalDisplayNames
-                RoleDefinition        = $roleDefinitionName
-                Id                    = $getValue.Id
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                AppScopeIds     = $getValue.AppScopeIds # RoleScopeTagIds
+                Description     = $getValue.Description
+                DirectoryScopes = $groupDisplayNames
+                DisplayName     = $getValue.DisplayName
+                Principals      = $principalDisplayNames
+                RoleDefinition  = $roleDefinitionName
+                Id              = $getValue.Id
+                Ensure          = 'Present'
                 #endregion
             }
 
@@ -400,31 +392,21 @@ class IntuneRoleAssignmentWindows365 : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    DisplayName           = $config.DisplayName
-                    RoleDefinition        = $config.RoleDefinitionId
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id             = $config.Id
+                    DisplayName    = $config.DisplayName
+                    RoleDefinition = $config.RoleDefinitionId
+                    Ensure         = 'Present'
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                     -ConnectionMode $ConnectionMode `
                     -ModulePath $this.GetModulePath() `
                     -Results $Results `
                     -Credential $this.Credential `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
                     -FileName $Global:PartialExportFileName
@@ -441,22 +423,5 @@ class IntuneRoleAssignmentWindows365 : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [IntuneRoleAssignmentWindows365] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneRoleAssignmentWindows365])
-        {
-            return $Values
-        }
-
-        $result = [IntuneRoleAssignmentWindows365]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

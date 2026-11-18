@@ -253,24 +253,15 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
             }
 
             $results = @{
-                Principal             = $PrincipalValue
-                PrincipalType         = $principalTypeValue
-                RoleDefinition        = $this.RoleDefinition
-                DirectoryScopeId      = $schedule.DirectoryScopeId
-                AppScopeId            = $schedule.AppScopeId
-                Id                    = $schedule.Id
-                Justification         = "Assignment of role eligibility '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
-                ScheduleInfo          = $ScheduleInfoValue
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Principal        = $PrincipalValue
+                PrincipalType    = $principalTypeValue
+                RoleDefinition   = $this.RoleDefinition
+                DirectoryScopeId = $schedule.DirectoryScopeId
+                AppScopeId       = $schedule.AppScopeId
+                Id               = $schedule.Id
+                Justification    = "Assignment of role eligibility '$($this.RoleDefinition)' to principal '$PrincipalValue' of type '$($this.PrincipalType)'."
+                ScheduleInfo     = $ScheduleInfoValue
+                Ensure           = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -295,6 +286,25 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
         $this.AddTelemetry('Set')
 
         $currentInstance = $this.Get().ToHashtable()
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo))
+        {
+            Write-Verbose -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended. It is not created again."
+            return
+        }
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Present' -and
+            [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo) -and
+            [M365DSCResourceBase]::TestScheduleEnded($currentInstance.ScheduleInfo))
+        {
+            Write-Verbose -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended in the tenant. It is not updated."
+            return
+        }
+
+        if ($this.Ensure -ne 'Absent' -and $currentInstance.Ensure -eq 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            Write-Warning -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has a duration without a start date. It is created again each time it ends and the tenant no longer lists it. Set ScheduleInfo.StartDateTime to keep it ended."
+        }
 
         $PrincipalId = $null
         $PrincipalId = ($this.FindPrincipal() | Select-Object -First 1).Id
@@ -406,6 +416,22 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
 
     [bool] Test()
     {
+        if ($this.Ensure -ne 'Absent' -and [M365DSCResourceBase]::TestScheduleEnded($this.ScheduleInfo) -and $this.Get().Ensure -eq 'Absent')
+        {
+            Write-Verbose -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended and no longer exists. It is in the desired state."
+            return $true
+        }
+
+        if ($this.Ensure -ne 'Absent' -and [M365DSCResourceBase]::TestDurationWithoutStart($this.ScheduleInfo))
+        {
+            $currentInstance = $this.Get()
+            if ($currentInstance.Ensure -eq 'Present' -and [M365DSCResourceBase]::TestScheduleEnded($currentInstance.ScheduleInfo))
+            {
+                Write-Verbose -Message "The role eligibility schedule for principal {$($this.Principal)} and role {$($this.RoleDefinition)} has ended in the tenant. It is in the desired state."
+                return $true
+            }
+        }
+
         return ([M365DSCResourceBase] $this).Test()
     }
 
@@ -493,21 +519,12 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
                     $this.ResourceCache['RoleDefinitions'].Add($config.RoleDefinitionId, $currentRoleDefinition)
                 }
                 $params = @{
-                    Id                    = $config.Id
-                    Principal             = $PrincipalValue
-                    PrincipalType         = $principalTypeValue
-                    DirectoryScopeId      = $config.DirectoryScopeId
-                    RoleDefinition        = $currentRoleDefinition.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id               = $config.Id
+                    Principal        = $PrincipalValue
+                    PrincipalType    = $principalTypeValue
+                    DirectoryScopeId = $config.DirectoryScopeId
+                    RoleDefinition   = $currentRoleDefinition.DisplayName
+                    Ensure           = 'Present'
                 }
 
                 $this.ExportedInstance = $config
@@ -578,6 +595,8 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
             CompareRules       = @(
                 @{ Type = 'IgnoreWhenPast'; Path = 'ScheduleInfo.StartDateTime' }
                 @{ Type = 'DurationMatchesEnd'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
+                @{ Type = 'IgnoreWhenOnlyCurrent'; When = @{ Property = 'ScheduleInfo.expiration.type'; In = @('afterDateTime', 'afterDuration') } }
+                @{ Type = 'IgnoreEndedWhenOnlyDesired'; Expiration = 'ScheduleInfo.expiration'; Start = 'ScheduleInfo.startDateTime' }
             )
         }
     }
@@ -637,23 +656,6 @@ class AADRoleEligibilityScheduleRequest : M365DSCResourceBase
         }
 
         return $true
-    }
-
-    hidden [AADRoleEligibilityScheduleRequest] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADRoleEligibilityScheduleRequest])
-        {
-            return $Values
-        }
-
-        $result = [AADRoleEligibilityScheduleRequest]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

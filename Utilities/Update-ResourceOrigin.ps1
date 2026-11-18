@@ -81,6 +81,9 @@ param
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module -Name (Join-Path -Path $RepositoryRoot -ChildPath 'Modules/Microsoft365DSC/Modules/M365DSCDllLoader.psm1')
+Initialize-M365DSCDllLoader
+
 $script:GraphWorkloads = @('MicrosoftGraph', 'Intune')
 $script:CmdletWorkloads = @('ExchangeOnline', 'SecurityComplianceCenter', 'MicrosoftTeams', 'PnP', 'PowerPlatforms')
 $script:CrudVerbs = @('Get', 'New', 'Update', 'Set', 'Remove')
@@ -91,11 +94,8 @@ $script:LookupNouns = @(
     'MgDirectoryRoleTemplate', 'MgBetaDirectoryRoleTemplate', 'MgBetaDeviceManagementAssignmentFilter',
     'AzResource', 'AzResourceGroup', 'AzSubscription', 'AzContext'
 )
-$script:GenericPropertyNames = @(
-    'Id', 'DisplayName', 'Description', 'Ensure', 'IsSingleInstance', 'Filter', 'Credential', 'ApplicationId',
-    'TenantId', 'CertificateThumbprint', 'CertificatePath', 'CertificatePassword', 'ManagedIdentity',
-    'AccessTokens', 'ApplicationSecret', 'Assignments'
-)
+$script:GenericPropertyNames = @('Id', 'DisplayName', 'Description', 'Ensure', 'IsSingleInstance', 'Filter', 'Assignments') +
+    [Microsoft365DSC.Utilities.Utilities]::AuthenticationPropertyNames
 $script:WorkloadConnectMap = @{
     'MicrosoftGraph'           = @('MicrosoftGraph')
     'Intune'                   = @('MicrosoftGraph')

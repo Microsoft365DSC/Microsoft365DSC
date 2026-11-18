@@ -89,14 +89,6 @@ class TeamsUpgradePolicy : M365DSCResourceBase
                 #DEPRECATED
                 #Users                  = $usersList
                 MigrateMeetingsToTeams = $this.MigrateMeetingsToTeams
-                Credential             = $this.Credential
-                ApplicationId          = $this.ApplicationId
-                TenantId               = $this.TenantId
-                CertificateThumbprint  = $this.CertificateThumbprint
-                CertificatePath        = $this.CertificatePath
-                CertificatePassword    = $this.CertificatePassword
-                ManagedIdentity        = $this.ManagedIdentity
-                AccessTokens           = $this.AccessTokens
             })
         }
         catch
@@ -171,15 +163,7 @@ class TeamsUpgradePolicy : M365DSCResourceBase
             {
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.Identity.Replace('Tag:', ''))" -DeferWrite
                 $params = @{
-                    Identity              = $policy.Identity.Replace('Tag:', '')
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $policy.Identity.Replace('Tag:', '')
                 }
 
                 $this.ExportedInstance = $policy
@@ -218,22 +202,5 @@ class TeamsUpgradePolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [TeamsUpgradePolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsUpgradePolicy])
-        {
-            return $Values
-        }
-
-        $result = [TeamsUpgradePolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

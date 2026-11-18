@@ -181,7 +181,6 @@ class SCAutoSensitivityLabelPolicy : M365DSCResourceBase
                 Name                              = $policy.Name
                 Comment                           = $policy.Comment
                 ApplySensitivityLabel             = $policy.ApplySensitivityLabel
-                Credential                        = $this.Credential
                 Ensure                            = 'Present'
                 ExchangeSender                    = [SCAutoSensitivityLabelPolicy]::GetRecipientAddresses($policy.ExchangeSender)
                 ExchangeSenderException           = [SCAutoSensitivityLabelPolicy]::GetRecipientAddresses($policy.ExchangeSenderException)
@@ -204,13 +203,6 @@ class SCAutoSensitivityLabelPolicy : M365DSCResourceBase
                 RemoveSharePointLocationException = $policy.RemoveSharePointLocationException.Name
                 AddSharePointLocation             = $policy.AddSharePointLocation
                 RemoveSharePointLocation          = $policy.RemoveSharePointLocation
-                ApplicationId                     = $this.ApplicationId
-                TenantId                          = $this.TenantId
-                CertificateThumbprint             = $this.CertificateThumbprint
-                CertificatePath                   = $this.CertificatePath
-                CertificatePassword               = $this.CertificatePassword
-                ManagedIdentity                   = $this.ManagedIdentity
-                AccessTokens                      = $this.AccessTokens
             }
 
             return $this.AsResult($result)
@@ -401,9 +393,10 @@ class SCAutoSensitivityLabelPolicy : M365DSCResourceBase
         }
         catch
         {
-            if ($_.Exception.Message -like '*is not recognized as the name of a cmdlet*')
+            if ($_.Exception.Message -like '*is not recognized as*name of a cmdlet*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for this feature."
+                $this.SkipExport($_)
             }
             else
             {
@@ -445,22 +438,5 @@ class SCAutoSensitivityLabelPolicy : M365DSCResourceBase
         }
 
         return $addresses
-    }
-
-    hidden [SCAutoSensitivityLabelPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SCAutoSensitivityLabelPolicy])
-        {
-            return $Values
-        }
-
-        $result = [SCAutoSensitivityLabelPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

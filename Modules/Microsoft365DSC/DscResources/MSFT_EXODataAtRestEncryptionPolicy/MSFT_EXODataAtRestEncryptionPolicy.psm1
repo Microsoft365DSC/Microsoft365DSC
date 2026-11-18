@@ -102,20 +102,12 @@ class EXODataAtRestEncryptionPolicy : M365DSCResourceBase
             Write-Verbose -Message "An EXO DataAtRestEncryptionPolicy with Identity $($this.Identity) was found"
 
             $results = @{
-                Identity              = $this.Identity
-                Description           = [System.String]$instance.Description
-                Enabled               = [System.Boolean]$instance.Enabled
-                Name                  = [System.String]$instance.Name
-                AzureKeyIDs           = [System.String[]]$instance.AzureKeyIDs
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity    = $this.Identity
+                Description = [System.String]$instance.Description
+                Enabled     = [System.Boolean]$instance.Enabled
+                Name        = [System.String]$instance.Name
+                AzureKeyIDs = [System.String[]]$instance.AzureKeyIDs
+                Ensure      = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -203,15 +195,7 @@ class EXODataAtRestEncryptionPolicy : M365DSCResourceBase
                 $displayedKey = $config.Identity
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Identity              = $config.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $config.Identity
                 }
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($params)
@@ -234,22 +218,5 @@ class EXODataAtRestEncryptionPolicy : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXODataAtRestEncryptionPolicy] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXODataAtRestEncryptionPolicy])
-        {
-            return $Values
-        }
-
-        $result = [EXODataAtRestEncryptionPolicy]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

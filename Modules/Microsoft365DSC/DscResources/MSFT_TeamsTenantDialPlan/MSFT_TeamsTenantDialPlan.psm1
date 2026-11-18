@@ -108,19 +108,11 @@ class TeamsTenantDialPlan : M365DSCResourceBase
             }
 
             $result = @{
-                Identity              = $this.Identity.Replace('Tag:', '')
-                Description           = $config.Description
-                NormalizationRules    = $rules
-                SimpleName            = $config.SimpleName
-                Credential            = $this.Credential
-                Ensure                = 'Present'
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                Identity           = $this.Identity.Replace('Tag:', '')
+                Description        = $config.Description
+                NormalizationRules = $rules
+                SimpleName         = $config.SimpleName
+                Ensure             = 'Present'
             }
 
             return $this.AsResult($result)
@@ -292,15 +284,7 @@ class TeamsTenantDialPlan : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($tenantDialPlans.Count)] $($plan.Identity)" -DeferWrite
                 $params = @{
-                    Identity              = $plan.Identity
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Identity = $plan.Identity
                 }
 
                 $this.ExportedInstance = $plan
@@ -430,23 +414,6 @@ class TeamsTenantDialPlan : M365DSCResourceBase
                 $currentRule.Remove('Priority') | Out-Null
             }
             $result += $currentRule
-        }
-
-        return $result
-    }
-
-    hidden [TeamsTenantDialPlan] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [TeamsTenantDialPlan])
-        {
-            return $Values
-        }
-
-        $result = [TeamsTenantDialPlan]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
         }
 
         return $result

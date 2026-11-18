@@ -43,6 +43,12 @@ function Get-M365DSCComponentsWithMostSecureAuthenticationType
     $propertyNames = Get-M365DSCResourcePropertyNameMap -Resources $Resources
     if ($propertyNames.Count -eq 0)
     {
+        if ($null -ne $Resources -and $Resources.Count -gt 0)
+        {
+            # None of the requested resources exists
+            return @()
+        }
+
         throw 'The schema cache does not contain any of the requested resources. Run Utilities/New-M365DSCDscSchemaCache.ps1 to regenerate SchemaDefinition.json.'
     }
 
@@ -265,12 +271,10 @@ function New-M365DSCConnection
     }
 
     # Convert ApplicationSecret from SecureString to plain string for MSCloudLoginAssistant
-    if (-not [System.String]::IsNullOrEmpty($InboundParameters.ApplicationSecret))
+    $applicationSecretPlain = $InboundParameters.ApplicationSecret
+    if ($InboundParameters.ApplicationSecret -is [System.Management.Automation.PSCredential])
     {
-        if ($InboundParameters.ApplicationSecret -is [System.Management.Automation.PSCredential])
-        {
-            $InboundParameters.ApplicationSecret = ConvertFrom-SecureString -SecureString $InboundParameters.ApplicationSecret.Password -AsPlainText
-        }
+        $applicationSecretPlain = ConvertFrom-SecureString -SecureString $InboundParameters.ApplicationSecret.Password -AsPlainText
     }
 
     #region Validation
@@ -308,11 +312,18 @@ function New-M365DSCConnection
     $connectionMode = Get-M365DSCAuthenticationMode -Parameters $InboundParameters
     if ($connectionMode -eq 'Interactive')
     {
-        throw 'Could not determine authentication method'
+        $message = 'Could not determine authentication method'
+        Write-Verbose -Message $message
+        $message += "`r`nProvided Keys --> $($InboundParameters.Keys)"
+        $data.Add('Exception', $message)
+        $errorText = 'Could not determine the authentication method. Specify Credential, ManagedIdentity, AccessTokens, or ApplicationId and TenantId with CertificateThumbprint, ApplicationSecret or CertificatePath and CertificatePassword.'
+        $data.Add('CustomMessage', $errorText)
+        Add-M365DSCTelemetryEvent -Type 'Error' -Data $data
+        throw $errorText
     }
     Write-Verbose -Message "Connecting via $connectionMode"
 
-    $failureKey = "$Workload-$connectionMode"
+    $failureKey = "$Workload-$connectionMode-$Url-$($EnableSearchOnlySession.IsPresent)"
     if ($Global:M365DSCExportInProgress -and $Script:M365DSCConnectionFailures.ContainsKey($failureKey))
     {
         throw "Connection to $Workload failed earlier in this session: $($Script:M365DSCConnectionFailures[$failureKey]) Skipping."
@@ -361,7 +372,7 @@ function New-M365DSCConnection
         {
             $connectParams.ApplicationId = $InboundParameters.ApplicationId
             $connectParams.TenantId = $InboundParameters.TenantId
-            $connectParams.ApplicationSecret = $InboundParameters.ApplicationSecret
+            $connectParams.ApplicationSecret = $applicationSecretPlain
         }
         'ServicePrincipalWithThumbprint'
         {
@@ -404,7 +415,7 @@ function New-M365DSCConnection
         'CredentialsWithApplicationId'   { @('Credential', 'ApplicationId') }
         'CredentialsWithTenantId'        { @('Credential', 'TenantId') }
         'ServicePrincipalWithPath'       { @('ApplicationId', 'TenantId', 'CertificatePath') }
-        'ServicePrincipalWithSecret'     { @('ApplicationId', 'TenantId', 'ApplicationSecret') }
+        'ServicePrincipalWithSecret'     { @('ApplicationId', 'TenantId') }
         'ServicePrincipalWithThumbprint' { @('ApplicationId', 'TenantId', 'CertificateThumbprint') }
         'ManagedIdentity'                { @('TenantId') }
         'AccessTokens'                   { @('AccessTokens', 'TenantId') }
@@ -425,10 +436,9 @@ function New-M365DSCConnection
     {
         $Script:M365DSCTelemetryConnectionToGraphParams.Add('Identity', $true)
     }
-    if ($ConnectionMode -eq 'ServicePrincipalWithSecret' -and
-        -not $Script:M365DSCTelemetryConnectionToGraphParams.ContainsKey('ApplicationSecret'))
+    if ($connectionMode -eq 'ServicePrincipalWithSecret' -and $null -ne $applicationSecretPlain)
     {
-        $Script:M365DSCTelemetryConnectionToGraphParams.Add('ApplicationSecret', $InboundParameters.ApplicationSecret.Password)
+        $Script:M365DSCTelemetryConnectionToGraphParams.ApplicationSecret = $applicationSecretPlain
     }
     if ($connectionMode -eq 'ServicePrincipalWithPath' -and
         -not $Script:M365DSCTelemetryConnectionToGraphParams.ContainsKey('CertificatePassword'))
@@ -601,11 +611,11 @@ function Set-M365DSCTelemetryConnectionParameter
     Records a failed connection attempt for the running export.
 
 .DESCRIPTION
-    While an export is running, stores the failure message under the workload and connection mode key
-    so later attempts fail immediately.
+    While an export is running, stores the failure message under the workload, connection mode, URL
+    and search-only session key so later attempts fail immediately.
 
 .PARAMETER FailureKey
-    Specifies the cache key in the form 'Workload-ConnectionMode'.
+    Specifies the cache key in the form 'Workload-ConnectionMode-Url-EnableSearchOnlySession'.
 
 .PARAMETER Message
     Specifies the failure message.

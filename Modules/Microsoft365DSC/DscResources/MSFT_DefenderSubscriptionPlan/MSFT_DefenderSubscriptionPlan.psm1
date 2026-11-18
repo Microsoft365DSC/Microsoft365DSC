@@ -121,21 +121,13 @@ class DefenderSubscriptionPlan : M365DSCResourceBase
             }
 
             $results = @{
-                SubscriptionId        = $instance.SubscriptionId
-                SubscriptionName      = $instance.SubscriptionName
-                PlanName              = $this.PlanName
-                PricingTier           = $instance.PricingTier
-                SubPlanName           = $instance.SubPlan
-                Extensions            = $instance.Extensions
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                SubscriptionId   = $instance.SubscriptionId
+                SubscriptionName = $instance.SubscriptionName
+                PlanName         = $this.PlanName
+                PricingTier      = $instance.PricingTier
+                SubPlanName      = $instance.SubPlan
+                Extensions       = $instance.Extensions
+                Ensure           = 'Present'
             }
             return $this.AsResult($results)
         }
@@ -212,17 +204,9 @@ class DefenderSubscriptionPlan : M365DSCResourceBase
                 $displayedKey = $config.Id
                 Write-M365DSCHost -Message "    |---[$i/$($this.ResourceCache['exportedInstances'].Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    SubscriptionName      = $config.SubscriptionName
-                    SubscriptionId        = $config.SubscriptionId
-                    PlanName              = $config.PlanName
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    SubscriptionName = $config.SubscriptionName
+                    SubscriptionId   = $config.SubscriptionId
+                    PlanName         = $config.PlanName
                 }
 
                 $this.ExportedInstance = $config
@@ -273,22 +257,5 @@ securityresources | where type == "microsoft.security/pricings" | project Id=id,
         {
             throw $_
         }
-    }
-
-    hidden [DefenderSubscriptionPlan] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [DefenderSubscriptionPlan])
-        {
-            return $Values
-        }
-
-        $result = [DefenderSubscriptionPlan]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

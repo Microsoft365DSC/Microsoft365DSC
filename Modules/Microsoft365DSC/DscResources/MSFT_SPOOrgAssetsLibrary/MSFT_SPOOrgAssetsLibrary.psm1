@@ -145,19 +145,10 @@ class SPOOrgAssetsLibrary : M365DSCResourceBase
             }
 
             $result = @{
-                LibraryUrl            = $orgLibraryUrl
-                ThumbnailUrl          = $orgthumbnailUrl
-                CdnType               = $cdn
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                AccessTokens          = $this.AccessTokens
+                LibraryUrl   = $orgLibraryUrl
+                ThumbnailUrl = $orgthumbnailUrl
+                CdnType      = $cdn
+                Ensure       = 'Present'
             }
 
             return $this.AsResult($result)
@@ -304,16 +295,7 @@ class SPOOrgAssetsLibrary : M365DSCResourceBase
 
                     Write-M365DSCHost -Message "    [$i/$($orgAssets.Length)] $($orgAssetLib.libraryurl.DecodedUrl)" -DeferWrite
                     $Params = @{
-                        Credential            = $this.Credential
-                        LibraryUrl            = "https://$tenantName.sharepoint.com/$($orgAssetLib.libraryurl.DecodedUrl)"
-                        ApplicationId         = $this.ApplicationId
-                        TenantId              = $this.TenantId
-                        CertificatePassword   = $this.CertificatePassword
-                        CertificatePath       = $this.CertificatePath
-                        CertificateThumbprint = $this.CertificateThumbprint
-                        ManagedIdentity       = $this.ManagedIdentity
-                        ApplicationSecret     = $this.ApplicationSecret
-                        AccessTokens          = $this.AccessTokens
+                        LibraryUrl = "https://$tenantName.sharepoint.com/$($orgAssetLib.libraryurl.DecodedUrl)"
                     }
 
                     $this.ExportedInstance = $orgAssetLib
@@ -338,22 +320,5 @@ class SPOOrgAssetsLibrary : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [SPOOrgAssetsLibrary] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [SPOOrgAssetsLibrary])
-        {
-            return $Values
-        }
-
-        $result = [SPOOrgAssetsLibrary]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }

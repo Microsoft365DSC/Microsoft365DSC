@@ -360,15 +360,6 @@ class IntuneDeviceConfigurationPolicyAndroidWorkProfile : M365DSCResourceBase
                 AllowedGoogleAccountDomains                               = $policy.allowedGoogleAccountDomains
                 WorkProfileAccountUse                                     = $policy.workProfileAccountUse
                 Ensure                                                    = 'Present'
-                Credential                                                = $this.Credential
-                ApplicationId                                             = $this.ApplicationId
-                TenantId                                                  = $this.TenantId
-                ApplicationSecret                                         = $this.ApplicationSecret
-                CertificateThumbprint                                     = $this.CertificateThumbprint
-                CertificatePath                                           = $this.CertificatePath
-                CertificatePassword                                       = $this.CertificatePassword
-                ManagedIdentity                                           = $this.ManagedIdentity
-                AccessTokens                                              = $this.AccessTokens
             }
 
             $assignmentsValues = Get-M365DSCIntuneExpandedAssignments -Instance $policy
@@ -501,22 +492,12 @@ class IntuneDeviceConfigurationPolicyAndroidWorkProfile : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($policies.Count)] $($policy.DisplayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $policy.DisplayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $policy.DisplayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $policy
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -538,7 +519,7 @@ class IntuneDeviceConfigurationPolicyAndroidWorkProfile : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -554,6 +535,7 @@ class IntuneDeviceConfigurationPolicyAndroidWorkProfile : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -565,23 +547,6 @@ class IntuneDeviceConfigurationPolicyAndroidWorkProfile : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceConfigurationPolicyAndroidWorkProfile] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceConfigurationPolicyAndroidWorkProfile])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceConfigurationPolicyAndroidWorkProfile]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

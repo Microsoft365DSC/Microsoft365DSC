@@ -32,6 +32,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return 'Credentials'
             }
 
+            Invoke-Command -ScriptBlock $Global:DscHelper.InitializeRoleScopeTagCache
+
             Mock -CommandName Update-MgBetaDeviceManagementDeviceCompliancePolicy -MockWith {
             }
 

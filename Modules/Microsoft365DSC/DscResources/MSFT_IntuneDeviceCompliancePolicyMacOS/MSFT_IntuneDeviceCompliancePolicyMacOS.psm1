@@ -290,15 +290,6 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
                 FirewallBlockAllIncoming                      = $devicePolicy.firewallBlockAllIncoming
                 FirewallEnableStealthMode                     = $devicePolicy.firewallEnableStealthMode
                 Ensure                                        = 'Present'
-                Credential                                    = $this.Credential
-                ApplicationId                                 = $this.ApplicationId
-                TenantId                                      = $this.TenantId
-                ApplicationSecret                             = $this.ApplicationSecret
-                CertificateThumbprint                         = $this.CertificateThumbprint
-                CertificatePath                               = $this.CertificatePath
-                CertificatePassword                           = $this.CertificatePassword
-                ManagedIdentity                               = $this.ManagedIdentity
-                AccessTokens                                  = $this.AccessTokens
             }
 
             $returnAssignments = @()
@@ -531,22 +522,12 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
 
                 Write-M365DSCHost -Message "    |---[$i/$($configDeviceMacOsPolicies.Count)] $($configDeviceMacOsPolicy.displayName)" -DeferWrite
                 $params = @{
-                    DisplayName           = $configDeviceMacOsPolicy.displayName
-                    Ensure                = 'Present'
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    DisplayName = $configDeviceMacOsPolicy.displayName
+                    Ensure      = 'Present'
                 }
 
                 $this.ExportedInstance = $configDeviceMacOsPolicy
                 $Results = $this.GetForExport($params)
-                $rawResults = $Results.Clone()
 
                 if ($Results.Assignments)
                 {
@@ -598,7 +579,7 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Assignments', 'ScheduledActionsForRule', 'DeviceCompliancePolicyScript') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -614,6 +595,7 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
                     $_.Exception -like '*Request not applicable to target tenant*')
             {
                 Write-M365DSCHost -Message "`r`n    $($Global:M365DSCEmojiYellowCircle) The current tenant is not registered for Intune."
+                $this.SkipExport($_)
             }
             else
             {
@@ -625,23 +607,6 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
 
         # Every code path must return in a method with a declared return type.
         return ''
-    }
-
-    hidden [IntuneDeviceCompliancePolicyMacOS] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [IntuneDeviceCompliancePolicyMacOS])
-        {
-            return $Values
-        }
-
-        $result = [IntuneDeviceCompliancePolicyMacOS]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

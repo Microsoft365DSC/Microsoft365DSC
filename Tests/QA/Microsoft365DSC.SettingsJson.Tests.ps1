@@ -263,6 +263,31 @@ Describe -Name 'Every resource calls one Graph API version per cmdlet noun' {
     }
 }
 
+Describe -Name 'Every resource declares the Graph cmdlets it calls' {
+    It "'<ResourceName>' declares every Graph cmdlet it calls" -TestCases $settingsFiles {
+        $modulePath = Join-Path -Path (Split-Path -Path $FullName -Parent) -ChildPath "$ResourceName.psm1"
+        if (-not (Test-Path -Path $modulePath))
+        {
+            Set-ItResult -Skipped -Because "$ResourceName has no resource module"
+            return
+        }
+
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($modulePath, [ref] $null, [ref] $null)
+        $localFunctions = @($ast.FindAll({ param($Item) $Item -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+                ForEach-Object -Process { $_.Name })
+        $called = @($ast.FindAll({ param($Item) $Item -is [System.Management.Automation.Language.CommandAst] }, $true) |
+                ForEach-Object -Process { $_.GetCommandName() } |
+                Where-Object -FilterScript { $_ -match '^[A-Za-z]+-Mg(Beta)?[A-Za-z0-9]+$' -and $_ -notlike '*-Mgx*' -and $_ -notin $localFunctions } |
+                Sort-Object -Unique)
+
+        $settings = Get-Content -Path $FullName -Raw | ConvertFrom-Json
+        $declared = @(@($settings.commands) | ForEach-Object -Process { @($_.cmdlets) })
+        $undeclared = @($called | Where-Object -FilterScript { $_ -notin $declared })
+
+        $undeclared | Should -BeNullOrEmpty -Because "the Graph shim only wraps declared cmdlets. Run Utilities/Build-DscResourceCmdletsByModule.ps1 and Utilities/New-M365DSCGraphShimModule.ps1"
+    }
+}
+
 Describe -Name 'The Graph shim covers every cmdlet the resources declare' {
     BeforeAll {
         $repoRoot = Join-Path -Path $PSScriptRoot -ChildPath '../..' -Resolve

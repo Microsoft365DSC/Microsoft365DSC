@@ -135,18 +135,10 @@ class AADNetworkAccessForwardingProfile : M365DSCResourceBase
             }
 
             $results = @{
-                Name                  = $getValue.Name
-                Id                    = $getValue.Id
-                State                 = $getValue.State
-                Policies              = $complexPolicies
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                TenantId              = $this.TenantId
-                ApplicationSecret     = $this.ApplicationSecret
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
+                Name     = $getValue.Name
+                Id       = $getValue.Id
+                State    = $getValue.State
+                Policies = $complexPolicies
             }
 
             return $this.AsResult($results)
@@ -259,22 +251,12 @@ class AADNetworkAccessForwardingProfile : M365DSCResourceBase
                 }
                 Write-M365DSCHost -Message "    |---[$i/$($getValue.Count)] $displayedKey" -DeferWrite
                 $params = @{
-                    Id                    = $config.Id
-                    Name                  = $config.Name
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    ApplicationSecret     = $this.ApplicationSecret
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePath       = $this.CertificatePath
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    AccessTokens          = $this.AccessTokens
+                    Id   = $config.Id
+                    Name = $config.Name
                 }
 
                 $this.ExportedInstance = $config
                 $Results = $this.GetForExport($Params)
-                $rawResults = $Results.Clone()
 
                 if ($null -ne $Results.Policies)
                 {
@@ -306,7 +288,7 @@ class AADNetworkAccessForwardingProfile : M365DSCResourceBase
                     -Results $Results `
                     -Credential $this.Credential `
                     -NoEscape @('Policies') `
-                    -RawResults $rawResults
+                    -RawResults $this.RawExportResults
 
                 [void]$dscContent.Append($currentDSCBlock)
                 Save-M365DSCPartialExport -Content $currentDSCBlock `
@@ -323,23 +305,6 @@ class AADNetworkAccessForwardingProfile : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [AADNetworkAccessForwardingProfile] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [AADNetworkAccessForwardingProfile])
-        {
-            return $Values
-        }
-
-        $result = [AADNetworkAccessForwardingProfile]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
 

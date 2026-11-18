@@ -95,18 +95,10 @@ class EXORecipientPermission : M365DSCResourceBase
             [Array]$trusteeValues = $recipientPermission.Trustee
 
             $result = @{
-                Identity              = $this.Identity
-                Trustee               = $trusteeValues[0]
-                AccessRights          = $recipientPermission.AccessRights
-                Ensure                = 'Present'
-                Credential            = $this.Credential
-                ApplicationId         = $this.ApplicationId
-                CertificateThumbprint = $this.CertificateThumbprint
-                CertificatePath       = $this.CertificatePath
-                CertificatePassword   = $this.CertificatePassword
-                ManagedIdentity       = $this.ManagedIdentity
-                TenantId              = $this.TenantId
-                AccessTokens          = $this.AccessTokens
+                Identity     = $this.Identity
+                Trustee      = $trusteeValues[0]
+                AccessRights = $recipientPermission.AccessRights
+                Ensure       = 'Present'
             }
 
             return $this.AsResult($result)
@@ -219,17 +211,9 @@ class EXORecipientPermission : M365DSCResourceBase
                 Write-M365DSCHost -Message "    |---[$i/$($recipientPermissions.Length)] $($IdentityValue)" -DeferWrite
 
                 $params = @{
-                    Identity              = $IdentityValue
-                    Trustee               = $recipientPermission.Trustee
-                    AccessRights          = $recipientPermission.AccessRights
-                    Credential            = $this.Credential
-                    ApplicationId         = $this.ApplicationId
-                    TenantId              = $this.TenantId
-                    CertificateThumbprint = $this.CertificateThumbprint
-                    CertificatePassword   = $this.CertificatePassword
-                    ManagedIdentity       = $this.ManagedIdentity
-                    CertificatePath       = $this.CertificatePath
-                    AccessTokens          = $this.AccessTokens
+                    Identity     = $IdentityValue
+                    Trustee      = $recipientPermission.Trustee
+                    AccessRights = $recipientPermission.AccessRights
                 }
                 $this.ExportedInstance = $recipientPermission
                 $Results = $this.GetForExport($Params)
@@ -263,22 +247,5 @@ class EXORecipientPermission : M365DSCResourceBase
 
             throw
         }
-    }
-
-    hidden [EXORecipientPermission] AsResult([System.Object] $Values)
-    {
-        if ($Values -is [EXORecipientPermission])
-        {
-            return $Values
-        }
-
-        $result = [EXORecipientPermission]::new()
-        $result.ClearNonSchemaProperties()
-        if ($Values -is [System.Collections.Hashtable])
-        {
-            $result.FromHashtable($Values)
-        }
-
-        return $result
     }
 }
