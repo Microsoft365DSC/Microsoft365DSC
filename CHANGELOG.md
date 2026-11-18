@@ -1,5 +1,11 @@
 ﻿# Change log for Microsoft365DSC
 
+# UNRELEASED
+
+* EXODataAtRestEncryptionPolicyAssignment
+  * Fixed `Get()` and the export failing with "Value cannot be null. (Parameter 'scopeSet')"
+    in a tenant without a data-at-rest encryption policy.
+
 # 2.26.1118.1
 
 * AADApplication

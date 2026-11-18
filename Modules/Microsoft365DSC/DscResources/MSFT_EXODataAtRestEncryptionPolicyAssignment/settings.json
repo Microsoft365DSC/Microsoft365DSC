@@ -64,6 +64,7 @@
     {
       "module": "ExchangeOnlineManagement",
       "cmdlets": [
+        "Get-M365DataAtRestEncryptionPolicy",
         "Get-M365DataAtRestEncryptionPolicyAssignment",
         "Set-M365DataAtRestEncryptionPolicyAssignment"
       ]
