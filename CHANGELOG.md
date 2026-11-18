@@ -355,6 +355,8 @@
     the previous connection mode in the configuration invocation.
   * Fixed `Update-M365DSCAuthenticationConfiguration` failing for paths with `[` or `]` and
     for a lowercase `node localhost`.
+* DEPENDENCIES
+  * Updated `DSCParser` to version `3.1.0.8`.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Fixed `PartiallyExportedResourceCount` counting skipped resources.
