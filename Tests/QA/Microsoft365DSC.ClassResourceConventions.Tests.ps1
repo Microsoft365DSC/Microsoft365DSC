@@ -31,6 +31,12 @@ BeforeDiscovery {
     # deliberately implement their own Get/Test/Export rather than the standard flow.
     $metaResources = @('MSFT_M365DSCRuleEvaluation', 'MSFT_M365DSCGraphAPIRuleEvaluation')
 
+    # ConvertTo-MOFInstance in the Windows PowerShell PSDesiredStateConfiguration module matches
+    # these patterns against the CIM type name of a property, embedded instance class names included.
+    $dscTypeNamePatterns = @(
+        '^sint[0-9]{1,2}', '^char16', '^uint[0-9]{0,2}', '^real32|^real64', '^boolean', 'datetime', 'Array'
+    )
+
     $testCompareExceptions = @{
         # Skips the comparison entirely when the configured rollout window has already passed, so
         # the decision is "should we compare at all", which the comparer has no way to express.
@@ -151,6 +157,7 @@ BeforeDiscovery {
     $staleReportDeclare    = [System.Collections.Generic.List[string]]::new()
     $reportDeclarations    = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $exportMissingPlumbing = [System.Collections.Generic.List[string]]::new()
+    $dscTypeNameConflicts  = [System.Collections.Generic.List[string]]::new()
 
     foreach ($file in (Get-ChildItem -Path $resourcesPath -Filter 'MSFT_*.psm1' -File -Recurse))
     {
@@ -165,6 +172,21 @@ BeforeDiscovery {
                 param($a) $a -is [System.Management.Automation.Language.TypeDefinitionAst] -and $a.IsClass }, $true)
         $mainClass = $classes | Where-Object { $_.Name -eq ($resourceName -replace '^MSFT_', '') } | Select-Object -First 1
         if ($null -eq $mainClass) { continue }
+
+        #region nested class names the DSC v1.1 compiler mistakes for a CIM type
+        foreach ($class in $classes)
+        {
+            if ($class -eq $mainClass) { continue }
+
+            foreach ($pattern in $dscTypeNamePatterns)
+            {
+                if ($class.Name -match $pattern)
+                {
+                    $dscTypeNameConflicts.Add(('{0}: {1} matches ''{2}''' -f $resourceName, $class.Name, $pattern))
+                }
+            }
+        }
+        #endregion
 
         $methods = @{}
         foreach ($m in ($mainClass.Members | Where-Object {
@@ -580,6 +602,13 @@ BeforeDiscovery {
             Because   = 'Get-M365DSCExportContentForResource and Save-M365DSCPartialExport produce the emitted ' +
                         'block and the partial-export file; GetForExport() is what routes a multi-instance export ' +
                         'through Get() instead of a hand-built hashtable that drifts from it'
+        }
+        @{
+            Name      = 'names its nested classes so the DSC v1.1 compiler keeps their CIM type'
+            Offenders = @($dscTypeNameConflicts)
+            Because   = 'Windows PowerShell compiles a configuration with PSDesiredStateConfiguration v1.1, which ' +
+                        'converts a property whose type name contains "datetime" to [datetime] and one containing ' +
+                        '"Array" to an array, so the embedded instance fails to compile'
         }
     )
 }

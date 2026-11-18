@@ -80,6 +80,11 @@
     FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
 * SPOStorageEntity
   * Fixed the export checking for the `Credential` connection mode instead of `Credentials`.
+* TeamsOnlineSchedule
+  * [BREAKING CHANGE] Renamed the class `MSFT_TeamsOnlineScheduleDateTimeRange` to
+    `MSFT_TeamsOnlineScheduleFixedTimeRange`. Windows PowerShell failed to compile a
+    configuration with `DateTimeRanges`.
+    FIXES [#7657](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7657)
 * M365DSCAgent
   * Fixed `Test-M365DSCAgent` numbering every issue and recommendation as the first one,
     changing the WinRM configuration and missing the `MaxEnvelopeSize`.

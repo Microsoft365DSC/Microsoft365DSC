@@ -46,7 +46,7 @@ class TeamsOnlineSchedule : M365DSCResourceBase
 
     [DscProperty()]
     [System.ComponentModel.Description('The date time ranges of a fixed schedule.')]
-    [MSFT_TeamsOnlineScheduleDateTimeRange[]] $DateTimeRanges
+    [MSFT_TeamsOnlineScheduleFixedTimeRange[]] $DateTimeRanges
 
     [DscProperty()]
     [System.ComponentModel.Description('Specify if the schedule should exist.')]
@@ -336,7 +336,7 @@ class TeamsOnlineSchedule : M365DSCResourceBase
                 Write-M365DSCHost -Message "`r`n" -DeferWrite
             }
 
-            $complexProperties = @{ DateTimeRanges = 'TeamsOnlineScheduleDateTimeRange' }
+            $complexProperties = @{ DateTimeRanges = 'TeamsOnlineScheduleFixedTimeRange' }
             foreach ($day in [TeamsOnlineSchedule]::GetDayPropertyNames())
             {
                 $complexProperties.$day = 'TeamsOnlineScheduleTimeRange'
@@ -516,7 +516,7 @@ class MSFT_TeamsOnlineScheduleTimeRange
     [System.String] $End
 }
 
-class MSFT_TeamsOnlineScheduleDateTimeRange
+class MSFT_TeamsOnlineScheduleFixedTimeRange
 {
     [DscProperty(Mandatory)]
     [System.ComponentModel.Description('The start of the date time range in the format d/M/yyyy H:mm, for example 24/12/2026 0:00.')]
