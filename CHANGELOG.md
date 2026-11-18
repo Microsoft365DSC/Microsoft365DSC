@@ -80,6 +80,11 @@
     FIXES [#7597](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7597)
 * SPOStorageEntity
   * Fixed the export checking for the `Credential` connection mode instead of `Credentials`.
+* TeamsOnlineSchedule
+  * [BREAKING CHANGE] Renamed the class `MSFT_TeamsOnlineScheduleDateTimeRange` to
+    `MSFT_TeamsOnlineScheduleFixedTimeRange`. Windows PowerShell failed to compile a
+    configuration with `DateTimeRanges`.
+    FIXES [#7657](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7657)
 * M365DSCAgent
   * Fixed `Test-M365DSCAgent` numbering every issue and recommendation as the first one,
     changing the WinRM configuration and missing the `MaxEnvelopeSize`.
@@ -350,6 +355,9 @@
     the previous connection mode in the configuration invocation.
   * Fixed `Update-M365DSCAuthenticationConfiguration` failing for paths with `[` or `]` and
     for a lowercase `node localhost`.
+* DEPENDENCIES
+  * Updated `DSCParser` to version `3.1.0.8`.
+  * Updated `Microsoft.Graph.Authentication` to version `2.41.2`.
 * MISC
   * Fixed the delta report listing a destination resource with `Ensure = Absent` as missing.
   * Fixed `PartiallyExportedResourceCount` counting skipped resources.
