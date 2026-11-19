@@ -504,12 +504,12 @@ function Import-M365DSCDependencyModule
 
 <#
 .SYNOPSIS
-    Loads the Microsoft.Identity.Client version of MicrosoftTeams before Exchange Online loads its own.
+    Loads the newest Microsoft.Identity.Client of ExchangeOnlineManagement and MicrosoftTeams.
 
 .DESCRIPTION
     Only the first Microsoft.Identity.Client loaded into the default load context of PowerShell 7
-    stays. MicrosoftTeams needs its newer version and fails to import after Exchange Online loaded
-    the older one. Doesn't do anything in Windows PowerShell or when Microsoft.Identity.Client is already loaded.
+    stays, and a module fails to load with an older version than its own. Doesn't do anything in
+    Windows PowerShell or when Microsoft.Identity.Client is already loaded.
 
 .EXAMPLE
     PS> Initialize-M365DSCIdentityClient
@@ -535,27 +535,166 @@ function Initialize-M365DSCIdentityClient
         }
     }
 
-    $requiredModule = @{
-        ModuleName      = 'MicrosoftTeams'
-        RequiredVersion = $Script:M365DSCDependencies['MicrosoftTeams'].RequiredVersion
+    $candidates = @{
+        ExchangeOnlineManagement = 'netCore/Microsoft.Identity.Client.dll'
+        MicrosoftTeams           = 'netcoreapp3.1/Microsoft.Identity.Client.dll'
     }
-    $teamsModule = Get-Module -FullyQualifiedName $requiredModule -ListAvailable | Select-Object -First 1
-    if ($null -eq $teamsModule)
+    $identityClientPath = $null
+    $identityClientVersion = $null
+    foreach ($candidate in $candidates.GetEnumerator())
     {
-        Write-Verbose -Message "MicrosoftTeams $($requiredModule.RequiredVersion) is not installed. Microsoft.Identity.Client is not preloaded."
-        return
+        $requiredModule = @{
+            ModuleName      = $candidate.Key
+            RequiredVersion = $Script:M365DSCDependencies[$candidate.Key].RequiredVersion
+        }
+        $module = Get-Module -FullyQualifiedName $requiredModule -ListAvailable | Select-Object -First 1
+        if ($null -eq $module)
+        {
+            continue
+        }
+
+        $path = Join-Path -Path $module.ModuleBase -ChildPath $candidate.Value
+        if (-not (Test-Path -Path $path))
+        {
+            continue
+        }
+
+        $version = [System.Reflection.AssemblyName]::GetAssemblyName($path).Version
+        if ($null -eq $identityClientVersion -or $version -gt $identityClientVersion)
+        {
+            $identityClientPath = $path
+            $identityClientVersion = $version
+        }
     }
 
-    $identityClientPath = Join-Path -Path $teamsModule.ModuleBase -ChildPath 'netcoreapp3.1/Microsoft.Identity.Client.dll'
-    if (-not (Test-Path -Path $identityClientPath))
+    if ($null -eq $identityClientPath)
     {
-        Write-Verbose -Message "No Microsoft.Identity.Client found at '$identityClientPath'. Microsoft.Identity.Client is not preloaded."
+        Write-Verbose -Message 'Neither ExchangeOnlineManagement nor MicrosoftTeams ships Microsoft.Identity.Client in the required version. Microsoft.Identity.Client is not preloaded.'
         return
     }
 
     $null = [System.Reflection.Assembly]::LoadFrom($identityClientPath)
-    Write-Verbose -Message "Preloaded Microsoft.Identity.Client from '$identityClientPath'."
+    Write-Verbose -Message "Preloaded Microsoft.Identity.Client $identityClientVersion from '$identityClientPath'."
 }
+
+<#
+.SYNOPSIS
+    Ensures the module of a workload loads in the version the dependency manifest requires.
+
+.DESCRIPTION
+    Imports the required version only when PowerShell would auto-load another one. Warns when
+    another version is already loaded.
+
+.PARAMETER Workload
+    Specifies the MSCloudLoginAssistant workload that is about to connect.
+
+.EXAMPLE
+    PS> Confirm-M365DSCWorkloadModule -Workload 'ExchangeOnline'
+
+.FUNCTIONALITY
+    Internal
+#>
+function Confirm-M365DSCWorkloadModule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Workload
+    )
+
+    $moduleName = switch ($Workload)
+    {
+        'ExchangeOnline' { 'ExchangeOnlineManagement' }
+        'SecurityComplianceCenter' { 'ExchangeOnlineManagement' }
+        'MicrosoftTeams' { 'MicrosoftTeams' }
+        'PnP' { 'PnP.PowerShell' }
+    }
+
+    if ($null -eq $moduleName -or $Script:M365DSCValidatedDependencies.Contains($moduleName))
+    {
+        return
+    }
+
+    $manifestModule = $Script:M365DSCDependencies[$moduleName]
+    if ($null -eq $manifestModule -or ($manifestModule.PowerShellCore -and $PSEdition -ne 'Core'))
+    {
+        return
+    }
+
+    $requiredVersion = [System.Version]$manifestModule.RequiredVersion
+    $loadedModule = Get-Module -Name $moduleName
+    if ($null -ne $loadedModule)
+    {
+        if ($loadedModule.Version -ne $requiredVersion)
+        {
+            Write-Warning -Message "Module '$moduleName' is already loaded with version '$($loadedModule.Version)' instead of the required version '$requiredVersion'. Start a new PowerShell session to load the required version."
+        }
+        $Script:M365DSCValidatedDependencies.Add($moduleName)
+        return
+    }
+
+    $autoloadVersion = $null
+    $requiredManifestPath = $null
+    foreach ($modulePath in ($env:PSModulePath -split [System.IO.Path]::PathSeparator))
+    {
+        $moduleFolder = Join-Path -Path $modulePath -ChildPath $moduleName
+        if ([System.String]::IsNullOrEmpty($modulePath) -or -not (Test-Path -Path $moduleFolder))
+        {
+            continue
+        }
+
+        $highestVersion = $null
+        foreach ($versionFolder in (Get-ChildItem -Path $moduleFolder -Directory))
+        {
+            $version = $null
+            if (-not [System.Version]::TryParse($versionFolder.Name, [ref]$version) -or
+                -not (Test-Path -Path (Join-Path -Path $versionFolder.FullName -ChildPath "$moduleName.psd1")))
+            {
+                continue
+            }
+
+            if ($null -eq $requiredManifestPath -and $version -eq $requiredVersion)
+            {
+                $requiredManifestPath = Join-Path -Path $versionFolder.FullName -ChildPath "$moduleName.psd1"
+            }
+
+            if ($null -eq $highestVersion -or $version -gt $highestVersion)
+            {
+                $highestVersion = $version
+            }
+        }
+
+        if ($null -eq $autoloadVersion)
+        {
+            $autoloadVersion = $highestVersion
+        }
+
+        if ($null -ne $requiredManifestPath -and $null -ne $autoloadVersion)
+        {
+            break
+        }
+    }
+
+    if ($null -eq $requiredManifestPath)
+    {
+        throw "Module '$moduleName' with the required version '$requiredVersion' is not installed. Please run Update-M365DSCDependencies."
+    }
+
+    if ($autoloadVersion -ne $requiredVersion)
+    {
+        Write-Warning -Message "Module '$moduleName' would auto-load with version '$autoloadVersion' instead of the required version '$requiredVersion'. Importing the required version. Run Uninstall-M365DSCOutdatedDependencies to remove the other versions."
+        Import-M365DSCDependencyModule -Parameters @{
+            Name                = $requiredManifestPath
+            Global              = $true
+            DisableNameChecking = $true
+            ErrorAction         = 'Stop'
+        }
+    }
+
+    $Script:M365DSCValidatedDependencies.Add($moduleName)
+}
+
 <#
 .SYNOPSIS
     Ensures a dependency module is loaded at the required version.
@@ -1466,6 +1605,7 @@ Export-ModuleMember -Function @(
     'Get-M365DSCResourceSetting',
     'Get-M365DSCResourceSettings',
     'Import-M365DSCDependencyModule',
+    'Confirm-M365DSCWorkloadModule',
     'Initialize-M365DSCIdentityClient',
     'Set-M365DSCVerboseScope',
     'Set-M365DSCModuleConfiguration',

@@ -30,7 +30,7 @@
         },
         @{
             ModuleName      = 'ExchangeOnlineManagement'
-            RequiredVersion = '3.9.2'
+            RequiredVersion = '3.11.1'
         },
         @{
             ModuleName      = 'M365DSC.mgx'

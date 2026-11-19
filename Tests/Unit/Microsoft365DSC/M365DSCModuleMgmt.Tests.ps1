@@ -202,6 +202,95 @@ Describe 'M365DSCModuleMgmt' {
         }
     }
 
+    Context 'Confirm-M365DSCWorkloadModule' {
+        BeforeAll {
+            $Script:Saved = Set-TestDependencies -Dependencies @(
+                @{ ModuleName = 'ExchangeOnlineManagement'; RequiredVersion = '3.11.1' }
+            )
+            $Script:SavedModulePath = $env:PSModulePath
+
+            function New-TestModuleFolder
+            {
+                param ($Root, $Version)
+
+                $folder = Join-Path -Path $TestDrive -ChildPath "$Root/ExchangeOnlineManagement/$Version"
+                New-Item -Path $folder -ItemType Directory -Force | Out-Null
+                New-Item -Path (Join-Path -Path $folder -ChildPath 'ExchangeOnlineManagement.psd1') -ItemType File -Force | Out-Null
+                return Join-Path -Path $TestDrive -ChildPath $Root
+            }
+        }
+
+        AfterAll {
+            Restore-TestDependencies -Saved $Script:Saved
+            $env:PSModulePath = $Script:SavedModulePath
+        }
+
+        BeforeEach {
+            & $Script:ModuleMgmtModule { [void]$Script:M365DSCValidatedDependencies.Remove('ExchangeOnlineManagement') }
+            Mock -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -MockWith {}
+            Mock -ModuleName M365DSCModuleMgmt -CommandName Get-Module -MockWith { $null }
+        }
+
+        AfterEach {
+            & $Script:ModuleMgmtModule { [void]$Script:M365DSCValidatedDependencies.Remove('ExchangeOnlineManagement') }
+        }
+
+        It 'Leaves the module to auto-load and validates it once when the first module path holds the required version as the highest one' {
+            $first = New-TestModuleFolder -Root 'onlyRequired' -Version '3.11.1'
+            New-TestModuleFolder -Root 'onlyRequired' -Version '3.9.2' | Out-Null
+            $second = New-TestModuleFolder -Root 'laterHigher' -Version '3.12.0'
+            $env:PSModulePath = $first, $second -join [System.IO.Path]::PathSeparator
+
+            Confirm-M365DSCWorkloadModule -Workload 'SecurityComplianceCenter' -WarningVariable warnings -WarningAction SilentlyContinue
+            Confirm-M365DSCWorkloadModule -Workload 'ExchangeOnline'
+
+            $warnings | Should -HaveCount 0
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -Times 0 -Exactly
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Get-Module -Times 1 -Exactly
+        }
+
+        It 'Warns and imports the required version by path when a higher version would auto-load' {
+            $first = New-TestModuleFolder -Root 'firstHigher' -Version '3.12.0'
+            $second = New-TestModuleFolder -Root 'secondRequired' -Version '3.11.1'
+            $env:PSModulePath = $first, $second -join [System.IO.Path]::PathSeparator
+
+            Confirm-M365DSCWorkloadModule -Workload 'ExchangeOnline' -WarningVariable warnings -WarningAction SilentlyContinue
+
+            $warnings | Should -HaveCount 1
+            $warnings[0].Message | Should -BeLike "Module 'ExchangeOnlineManagement' would auto-load with version '3.12.0' instead of the required version '3.11.1'*Uninstall-M365DSCOutdatedDependencies*"
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -Times 1 -Exactly -ParameterFilter {
+                $Parameters.Name -like '*secondRequired*3.11.1*ExchangeOnlineManagement.psd1' -and
+                -not $Parameters.ContainsKey('Cmdlet') -and
+                -not $Parameters.ContainsKey('Function')
+            }
+        }
+
+        It 'Warns and does not import anything when another version is already loaded' {
+            Mock -ModuleName M365DSCModuleMgmt -CommandName Get-Module -MockWith {
+                [PSCustomObject]@{ Name = 'ExchangeOnlineManagement'; Version = [System.Version]'3.12.0' }
+            }
+
+            Confirm-M365DSCWorkloadModule -Workload 'ExchangeOnline' -WarningVariable warnings -WarningAction SilentlyContinue
+
+            $warnings | Should -HaveCount 1
+            $warnings[0].Message | Should -BeLike "Module 'ExchangeOnlineManagement' is already loaded with version '3.12.0'*"
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -Times 0 -Exactly
+        }
+
+        It 'Throws when the required version is not installed' {
+            $env:PSModulePath = New-TestModuleFolder -Root 'notInstalled' -Version '3.9.2'
+
+            { Confirm-M365DSCWorkloadModule -Workload 'ExchangeOnline' } | Should -Throw -ExpectedMessage "*'ExchangeOnlineManagement' with the required version '3.11.1' is not installed*"
+        }
+
+        It 'Does not do anything for a workload without a dedicated module' {
+            Confirm-M365DSCWorkloadModule -Workload 'MicrosoftGraph'
+
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Get-Module -Times 0 -Exactly
+            Should -Invoke -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCDependencyModule -Times 0 -Exactly
+        }
+    }
+
     Context 'Initialize-M365DSCModuleMgmt' {
         It 'Warns about a settings.json commands module that is missing from the manifest instead of failing' {
             Mock -ModuleName M365DSCModuleMgmt -CommandName Import-M365DSCResourceSettings -MockWith {

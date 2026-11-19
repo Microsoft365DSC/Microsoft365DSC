@@ -393,10 +393,11 @@ function New-M365DSCConnection
     }
     #endregion
 
-    if ($Workload -in @('ExchangeOnline', 'SecurityComplianceCenter'))
+    if ($Workload -in @('ExchangeOnline', 'MicrosoftTeams', 'SecurityComplianceCenter'))
     {
         Initialize-M365DSCIdentityClient
     }
+    Confirm-M365DSCWorkloadModule -Workload $Workload
 
     try
     {
