@@ -5,6 +5,14 @@
 * EXODataAtRestEncryptionPolicyAssignment
   * Fixed `Get()` and the export failing with "Value cannot be null. (Parameter 'scopeSet')"
     in a tenant without a data-at-rest encryption policy.
+* DEPENDENCIES
+  * Updated ExchangeOnlineManagement to version 3.11.1.
+  * Updated PnP.PowerShell to version 3.5.0.
+    FIXES [#7581](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7581)
+* MISC
+  * Fixed an issue with assemblies clashing between Exchange and Teams modules.
+  * Fixed ExchangeOnlineManagement, MicrosoftTeams and PnP.PowerShell loading a different
+    version than the required one when several versions are installed.
 
 # 2.26.1118.1
 

@@ -30,7 +30,7 @@
         },
         @{
             ModuleName      = 'ExchangeOnlineManagement'
-            RequiredVersion = '3.9.2'
+            RequiredVersion = '3.11.1'
         },
         @{
             ModuleName      = 'M365DSC.mgx'
@@ -55,7 +55,7 @@
         },
         @{
             ModuleName      = 'PnP.PowerShell'
-            RequiredVersion = '3.4.1'
+            RequiredVersion = '3.5.0'
             PowerShellCore  = $true
         },
         @{

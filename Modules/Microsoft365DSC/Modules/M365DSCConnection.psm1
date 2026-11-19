@@ -393,10 +393,11 @@ function New-M365DSCConnection
     }
     #endregion
 
-    if ($Workload -eq 'PnP')
+    if ($Workload -in @('ExchangeOnline', 'MicrosoftTeams', 'SecurityComplianceCenter'))
     {
-        Register-M365DSCPnPIdentityClientResolver
+        Initialize-M365DSCIdentityClient
     }
+    Confirm-M365DSCWorkloadModule -Workload $Workload
 
     try
     {
