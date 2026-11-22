@@ -2,9 +2,13 @@
 
 # UNRELEASED
 
+* EXOAcceptedDomain
+  * Fixed the export stopping at the first 1000 accepted domains.
 * EXODataAtRestEncryptionPolicyAssignment
   * Fixed `Get()` and the export failing with "Value cannot be null. (Parameter 'scopeSet')"
     in a tenant without a data-at-rest encryption policy.
+* EXODnssecForVerifiedDomain
+  * Fixed the export stopping at the first 1000 accepted domains.
 * DEPENDENCIES
   * Updated ExchangeOnlineManagement to version 3.11.1.
   * Updated PnP.PowerShell to version 3.5.0.
