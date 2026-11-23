@@ -174,7 +174,7 @@ class EXOAcceptedDomain : M365DSCResourceBase
 
         try
         {
-            [array]$AllAcceptedDomains = Get-AcceptedDomain -ErrorAction Stop
+            [array]$AllAcceptedDomains = Get-AcceptedDomain -ResultSize Unlimited -ErrorAction Stop
 
             $dscContent = [System.Text.StringBuilder]::new()
             $i = 1
