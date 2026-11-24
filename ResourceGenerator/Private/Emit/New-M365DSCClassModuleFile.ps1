@@ -425,7 +425,7 @@ function New-M365DSCSetInvocationBlock
         elseif ($ResourceModel.HasAssignments -and $Operation -eq 'Update')
         {
             $null = $builder.AppendLine("$indent$cmdletName $($argumentList -join ' ') | Out-Null")
-            $null = $builder.Append((New-M365DSCAssignmentsSetBlock -ResourceModel $ResourceModel -PolicyIdExpression "$targetVariable.$primaryKey"))
+            $null = $builder.Append((New-M365DSCAssignmentsSetBlock -ResourceModel $ResourceModel -PolicyIdExpression "$targetVariable.$primaryKey" -RequireBoundAssignments))
             $null = $builder.AppendLine('')
         }
         else

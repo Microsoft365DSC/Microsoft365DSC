@@ -684,11 +684,14 @@ class IntuneAntivirusPolicyWindows10SettingCatalog : M365DSCResourceBase
                 -Settings $settings `
                 -RoleScopeTagIds $resolvedRoleScopeTagIds
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentPolicy.Identity `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/configurationPolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentPolicy.Identity `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/configurationPolicies'
+            }
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
         {

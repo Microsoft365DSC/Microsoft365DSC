@@ -595,10 +595,13 @@ class IntuneMobileAppsWin32AppWindows10 : M365DSCResourceBase
                 Update-DeviceAppManagementAppCategory -App $currentInstance -Categories $this.Categories -Compare
             }
 
-            $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceAppManagementPolicyAssignment `
-                -AppManagementPolicyId $currentInstance.Id `
-                -Assignments $assignmentsHash
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceAppManagementPolicyAssignment `
+                    -AppManagementPolicyId $currentInstance.Id `
+                    -Assignments $assignmentsHash
+            }
 
             if ($this.GetBoundParameters().ContainsKey('Relationships'))
             {

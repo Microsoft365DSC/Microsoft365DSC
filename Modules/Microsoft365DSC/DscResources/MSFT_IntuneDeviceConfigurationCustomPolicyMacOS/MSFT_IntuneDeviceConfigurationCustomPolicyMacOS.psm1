@@ -234,13 +234,16 @@ class IntuneDeviceConfigurationCustomPolicyMacOS : M365DSCResourceBase
                 $updateParameters = $boundParameters
                 Update-MgBetaDeviceManagementDeviceConfiguration -DeviceConfigurationId $currentInstance.Id -BodyParameter $updateParameters | Out-Null
 
-                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-                if ($currentInstance.Id)
+                if ($this.GetBoundParameters().ContainsKey('Assignments'))
                 {
-                    Update-DeviceConfigurationPolicyAssignment `
-                        -DeviceConfigurationPolicyId $currentInstance.Id `
-                        -Targets $assignmentsHash `
-                        -Repository 'deviceManagement/deviceConfigurations'
+                    $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                    if ($currentInstance.Id)
+                    {
+                        Update-DeviceConfigurationPolicyAssignment `
+                            -DeviceConfigurationPolicyId $currentInstance.Id `
+                            -Targets $assignmentsHash `
+                            -Repository 'deviceManagement/deviceConfigurations'
+                    }
                 }
             }
             elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

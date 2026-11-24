@@ -227,11 +227,14 @@ class IntuneWindowsUpdateForBusinessDriverUpdateProfileWindows10 : M365DSCResour
             #region resource generator code
             $uri = "/beta/deviceManagement/windowsDriverUpdateProfiles/$($currentInstance.Id)"
             Invoke-M365DSCGraphRequest -Method PATCH -Uri $uri -Body $($updateParameters | ConvertTo-Json)
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/windowsDriverUpdateProfiles'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/windowsDriverUpdateProfiles'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

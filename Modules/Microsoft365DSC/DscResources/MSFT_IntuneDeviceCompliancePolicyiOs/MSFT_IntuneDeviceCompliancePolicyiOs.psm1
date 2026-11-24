@@ -392,10 +392,13 @@ class IntuneDeviceCompliancePolicyiOs : M365DSCResourceBase
                 -DeviceComplianceScheduledActionForRules $complexScheduledActionsForRule
 
             #region Assignments
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceiOsPolicy.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceCompliancePolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceiOsPolicy.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceCompliancePolicies'
+            }
             #endregion
 
         }

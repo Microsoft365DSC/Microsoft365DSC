@@ -251,12 +251,15 @@ class IntuneDeviceConfigurationPlatformScriptMacOS : M365DSCResourceBase
             Update-MgBetaDeviceManagementDeviceShellScript `
                 -DeviceShellScriptId $currentInstance.Id `
                 -BodyParameter $updateParameters
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceShellScripts' `
-                -RootIdentifier 'deviceManagementScriptAssignments'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceShellScripts' `
+                    -RootIdentifier 'deviceManagementScriptAssignments'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

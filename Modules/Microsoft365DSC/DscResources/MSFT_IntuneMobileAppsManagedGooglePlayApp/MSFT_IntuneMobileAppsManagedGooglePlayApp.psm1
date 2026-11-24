@@ -255,10 +255,13 @@ class IntuneMobileAppsManagedGooglePlayApp : M365DSCResourceBase
                 -BodyParameter $updateParameters
 
             #Assignments
-            $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceAppManagementPolicyAssignment `
-                -AppManagementPolicyId $currentInstance.Id `
-                -Assignments $assignmentsHash
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceAppManagementPolicyAssignment `
+                    -AppManagementPolicyId $currentInstance.Id `
+                    -Assignments $assignmentsHash
+            }
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
         {

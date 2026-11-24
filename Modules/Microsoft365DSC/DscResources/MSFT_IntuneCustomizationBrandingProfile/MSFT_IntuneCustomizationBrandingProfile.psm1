@@ -424,11 +424,14 @@ class IntuneCustomizationBrandingProfile : M365DSCResourceBase
                 -IntuneBrandingProfileId $currentInstance.Id `
                 -BodyParameter $updateParameters
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/intuneBrandingProfiles'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/intuneBrandingProfiles'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

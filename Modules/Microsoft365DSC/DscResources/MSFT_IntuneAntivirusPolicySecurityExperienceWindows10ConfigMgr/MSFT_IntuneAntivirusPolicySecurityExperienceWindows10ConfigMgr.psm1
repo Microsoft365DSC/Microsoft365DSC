@@ -406,11 +406,14 @@ class IntuneAntivirusPolicySecurityExperienceWindows10ConfigMgr : M365DSCResourc
 
             #region resource generator code
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/configurationPolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/configurationPolicies'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

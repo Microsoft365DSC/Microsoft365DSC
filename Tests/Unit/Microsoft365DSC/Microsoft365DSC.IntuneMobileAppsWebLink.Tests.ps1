@@ -309,6 +309,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneMobileAppsWebLink' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceAppManagementMobileApp -Exactly 1
+                Should -Invoke -CommandName Update-DeviceAppManagementPolicyAssignment -Exactly 0
             }
         }
 

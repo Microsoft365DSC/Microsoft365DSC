@@ -507,10 +507,13 @@ class IntuneWindowsInformationProtectionPolicyWindows10MdmEnrolled : M365DSCReso
                 -BodyParameter $updateParameters
             #endregion
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceAppManagement/mdmWindowsInformationProtectionPolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceAppManagement/mdmWindowsInformationProtectionPolicies'
+            }
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
         {

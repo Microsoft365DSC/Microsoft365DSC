@@ -360,14 +360,17 @@ class IntuneDeviceEnrollmentStatusPageWindows10 : M365DSCResourceBase
 
             if ($currentInstance.Id -notlike '*_DefaultWindows10EnrollmentCompletionPageConfiguration')
             {
-                $intuneAssignments = @()
-                if ($null -ne $this.Assignments -and $this.Assignments.Count -gt 0)
+                if ($this.GetBoundParameters().ContainsKey('Assignments'))
                 {
-                    $intuneAssignments += ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments
+                    $intuneAssignments = @()
+                    if ($null -ne $this.Assignments -and $this.Assignments.Count -gt 0)
+                    {
+                        $intuneAssignments += ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments
+                    }
+                    Set-MgBetaDeviceManagementDeviceEnrollmentConfiguration -DeviceEnrollmentConfigurationId $currentInstance.Id `
+                        -EnrollmentConfigurationAssignments $intuneAssignments `
+                        -ErrorAction Stop
                 }
-                Set-MgBetaDeviceManagementDeviceEnrollmentConfiguration -DeviceEnrollmentConfigurationId $currentInstance.Id `
-                    -EnrollmentConfigurationAssignments $intuneAssignments `
-                    -ErrorAction Stop
 
                 if ($updateParameters.ContainsKey('Priority') -and $this.Priority -ne $currentInstance.Priority)
                 {

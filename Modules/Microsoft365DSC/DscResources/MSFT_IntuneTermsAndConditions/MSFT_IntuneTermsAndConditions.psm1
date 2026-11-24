@@ -225,15 +225,18 @@ class IntuneTermsAndConditions : M365DSCResourceBase
                 -TermsAndConditionsId $currentInstance.Id `
                 -BodyParameter $updateParameters
 
-            $currentGroupAssignments = Get-MgBetaDeviceManagementTermAndConditionAssignment -TermsAndConditionsId $currentInstance.Id
-            foreach ($assignment in $currentGroupAssignments)
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
             {
-                Remove-MgBetaDeviceManagementTermAndConditionAssignment -TermsAndConditionsId $currentInstance.Id -TermsAndConditionsAssignmentId $assignment.Id
-            }
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            foreach ($assignment in $assignmentsHash)
-            {
-                New-MgBetaDeviceManagementTermAndConditionAssignment -TermsAndConditionsId $currentInstance.Id -BodyParameter $assignment
+                $currentGroupAssignments = Get-MgBetaDeviceManagementTermAndConditionAssignment -TermsAndConditionsId $currentInstance.Id
+                foreach ($assignment in $currentGroupAssignments)
+                {
+                    Remove-MgBetaDeviceManagementTermAndConditionAssignment -TermsAndConditionsId $currentInstance.Id -TermsAndConditionsAssignmentId $assignment.Id
+                }
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                foreach ($assignment in $assignmentsHash)
+                {
+                    New-MgBetaDeviceManagementTermAndConditionAssignment -TermsAndConditionsId $currentInstance.Id -BodyParameter $assignment
+                }
             }
             #endregion
         }

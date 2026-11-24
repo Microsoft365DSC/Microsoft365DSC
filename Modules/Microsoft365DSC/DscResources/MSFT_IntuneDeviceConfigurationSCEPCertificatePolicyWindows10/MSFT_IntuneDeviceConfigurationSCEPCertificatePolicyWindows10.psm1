@@ -422,11 +422,14 @@ class IntuneDeviceConfigurationSCEPCertificatePolicyWindows10 : M365DSCResourceB
             Update-MgBetaDeviceManagementDeviceConfiguration `
                 -DeviceConfigurationId $currentInstance.Id `
                 -BodyParameter $updateParameters
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceConfigurations'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceConfigurations'
+            }
             #endregion
 
             $rootCertificate = $null

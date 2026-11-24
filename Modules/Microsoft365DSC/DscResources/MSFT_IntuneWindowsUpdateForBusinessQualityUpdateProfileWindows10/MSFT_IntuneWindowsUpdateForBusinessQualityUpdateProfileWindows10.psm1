@@ -231,11 +231,14 @@ class IntuneWindowsUpdateForBusinessQualityUpdateProfileWindows10 : M365DSCResou
                 -WindowsQualityUpdateProfileId $currentInstance.Id `
                 -BodyParameter $updateParameters
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments -IncludeDeviceFilter:$true
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/windowsQualityUpdateProfiles'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments -IncludeDeviceFilter:$true
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/windowsQualityUpdateProfiles'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

@@ -17,6 +17,11 @@
   * Fixed an issue with assemblies clashing between Exchange and Teams modules.
   * Fixed ExchangeOnlineManagement, MicrosoftTeams and PnP.PowerShell loading a different
     version than the required one when several versions are installed.
+  * Fixed `Set()` of the Intune resources removing all assignments of an existing policy
+    when `Assignments` is not specified.
+    FIXES [#7669](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7669)
+  * Updated the resource generator to update the assignments of an existing policy only
+    when `Assignments` is specified.
 
 # 2.26.1118.1
 

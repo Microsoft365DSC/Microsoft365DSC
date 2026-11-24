@@ -516,11 +516,14 @@ class IntuneDeviceConfigurationWiredNetworkPolicyWindows10 : M365DSCResourceBase
             Update-MgBetaDeviceManagementDeviceConfiguration `
                 -DeviceConfigurationId $currentInstance.Id `
                 -BodyParameter $updateParameters
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceConfigurations'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceConfigurations'
+            }
             #endregion
 
             if ($null -ne $this.RootCertificatesForServerValidationIds -and $this.RootCertificatesForServerValidationIds.Count -gt 0 )

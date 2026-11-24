@@ -800,6 +800,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 Should -Invoke -CommandName Update-IntuneDeviceConfigurationPolicy -Exactly 1 -ParameterFilter {
                     [System.String]::IsNullOrEmpty($TemplateReferenceId)
                 }
+                Should -Invoke -CommandName Update-DeviceConfigurationPolicyAssignment -Exactly 0
             }
         }
 
