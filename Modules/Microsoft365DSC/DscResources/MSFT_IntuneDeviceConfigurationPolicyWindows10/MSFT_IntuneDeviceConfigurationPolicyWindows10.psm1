@@ -1812,34 +1812,37 @@ class IntuneDeviceConfigurationPolicyWindows10 : M365DSCResourceBase
                 -BodyParameter $updateParameters
             #endregion
             #region new Intune assignment management
-            $currentAssignments = @()
-            $currentAssignments += Get-MgBetaDeviceManagementDeviceConfigurationAssignment -DeviceConfigurationId $currentInstance.id
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $currentAssignments = @()
+                $currentAssignments += Get-MgBetaDeviceManagementDeviceConfigurationAssignment -DeviceConfigurationId $currentInstance.id
 
-            $intuneAssignments = @()
-            if ($null -ne $this.Assignments -and $this.Assignments.Count -gt 0)
-            {
-                $intuneAssignments += ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments
-            }
-            foreach ($assignment in $intuneAssignments)
-            {
-                if ( $null -eq ($currentAssignments | Where-Object { $_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type' }))
+                $intuneAssignments = @()
+                if ($null -ne $this.Assignments -and $this.Assignments.Count -gt 0)
                 {
-                    New-MgBetaDeviceManagementDeviceConfigurationAssignment `
-                        -DeviceConfigurationId $currentInstance.id `
-                        -BodyParameter $assignment
+                    $intuneAssignments += ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments
                 }
-                else
+                foreach ($assignment in $intuneAssignments)
                 {
-                    $currentAssignments = $currentAssignments | Where-Object { -not ($_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type') }
+                    if ( $null -eq ($currentAssignments | Where-Object { $_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type' }))
+                    {
+                        New-MgBetaDeviceManagementDeviceConfigurationAssignment `
+                            -DeviceConfigurationId $currentInstance.id `
+                            -BodyParameter $assignment
+                    }
+                    else
+                    {
+                        $currentAssignments = $currentAssignments | Where-Object { -not ($_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type') }
+                    }
                 }
-            }
-            if ($currentAssignments.Count -gt 0)
-            {
-                foreach ($assignment in $currentAssignments)
+                if ($currentAssignments.Count -gt 0)
                 {
-                    Remove-MgBetaDeviceManagementDeviceConfigurationAssignment `
-                        -DeviceConfigurationId $currentInstance.Id `
-                        -DeviceConfigurationAssignmentId $assignment.Id
+                    foreach ($assignment in $currentAssignments)
+                    {
+                        Remove-MgBetaDeviceManagementDeviceConfigurationAssignment `
+                            -DeviceConfigurationId $currentInstance.Id `
+                            -DeviceConfigurationAssignmentId $assignment.Id
+                    }
                 }
             }
             #endregion

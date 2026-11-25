@@ -300,35 +300,38 @@ class IntuneWindowsAutopilotDeploymentProfileAzureADJoined : M365DSCResourceBase
             #endregion
 
             #region new Intune assignment management
-            $currentAssignments = @()
-            $currentAssignments += Get-MgBetaDeviceManagementWindowsAutopilotDeploymentProfileAssignment -WindowsAutopilotDeploymentProfileId $currentInstance.id
-            $currentAssignments = $currentAssignments | Where-Object -FilterScript { $_.source -eq 'direct' }
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $currentAssignments = @()
+                $currentAssignments += Get-MgBetaDeviceManagementWindowsAutopilotDeploymentProfileAssignment -WindowsAutopilotDeploymentProfileId $currentInstance.id
+                $currentAssignments = $currentAssignments | Where-Object -FilterScript { $_.source -eq 'direct' }
 
-            $intuneAssignments = @()
-            if ($null -ne $this.Assignments -and $this.Assignments.Count -gt 0)
-            {
-                $intuneAssignments += ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments
-            }
-            foreach ($assignment in $intuneAssignments)
-            {
-                if ( $null -eq ($currentAssignments | Where-Object { $_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type' }))
+                $intuneAssignments = @()
+                if ($null -ne $this.Assignments -and $this.Assignments.Count -gt 0)
                 {
-                    New-MgBetaDeviceManagementWindowsAutopilotDeploymentProfileAssignment `
-                        -WindowsAutopilotDeploymentProfileId $currentInstance.id `
-                        -BodyParameter $assignment
+                    $intuneAssignments += ConvertTo-IntunePolicyAssignment -Assignments $this.Assignments
                 }
-                else
+                foreach ($assignment in $intuneAssignments)
                 {
-                    $currentAssignments = $currentAssignments | Where-Object { -not($_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type') }
+                    if ( $null -eq ($currentAssignments | Where-Object { $_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type' }))
+                    {
+                        New-MgBetaDeviceManagementWindowsAutopilotDeploymentProfileAssignment `
+                            -WindowsAutopilotDeploymentProfileId $currentInstance.id `
+                            -BodyParameter $assignment
+                    }
+                    else
+                    {
+                        $currentAssignments = $currentAssignments | Where-Object { -not($_.Target.groupId -eq $assignment.Target.groupId -and $_.Target.'@odata.type' -eq $assignment.Target.'@odata.type') }
+                    }
                 }
-            }
-            if ($currentAssignments.Count -gt 0)
-            {
-                foreach ($assignment in $currentAssignments)
+                if ($currentAssignments.Count -gt 0)
                 {
-                    Remove-MgBetaDeviceManagementWindowsAutopilotDeploymentProfileAssignment `
-                        -WindowsAutopilotDeploymentProfileId $currentInstance.Id `
-                        -WindowsAutopilotDeploymentProfileAssignmentId $assignment.Id
+                    foreach ($assignment in $currentAssignments)
+                    {
+                        Remove-MgBetaDeviceManagementWindowsAutopilotDeploymentProfileAssignment `
+                            -WindowsAutopilotDeploymentProfileId $currentInstance.Id `
+                            -WindowsAutopilotDeploymentProfileAssignmentId $assignment.Id
+                    }
                 }
             }
             #endregion

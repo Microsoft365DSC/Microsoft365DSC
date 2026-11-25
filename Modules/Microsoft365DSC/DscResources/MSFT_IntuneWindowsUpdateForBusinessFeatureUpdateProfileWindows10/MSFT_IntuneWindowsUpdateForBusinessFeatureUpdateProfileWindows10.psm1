@@ -392,10 +392,13 @@ class IntuneWindowsUpdateForBusinessFeatureUpdateProfileWindows10 : M365DSCResou
                 -WindowsFeatureUpdateProfileId $currentInstance.Id `
                 -BodyParameter $updateParameters
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/windowsFeatureUpdateProfiles'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/windowsFeatureUpdateProfiles'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

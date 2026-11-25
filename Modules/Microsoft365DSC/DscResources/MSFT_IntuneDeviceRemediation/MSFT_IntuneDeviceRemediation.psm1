@@ -379,43 +379,46 @@ class IntuneDeviceRemediation : M365DSCResourceBase
                 -DeviceHealthScriptId $currentInstance.Id `
                 -BodyParameter $updateParameters
 
-            $assignmentsHash = @()
-            foreach ($assignment in $this.Assignments)
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
             {
-                $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment.Assignment
-                $runSchedule = $null
-                if ($null -ne $assignment.RunSchedule.DataType)
+                $assignmentsHash = @()
+                foreach ($assignment in $this.Assignments)
                 {
-                    $runSchedule = @{
-                        '@odata.type' = $assignment.RunSchedule.DataType
-                    }
-                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Date))
+                    $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment.Assignment
+                    $runSchedule = $null
+                    if ($null -ne $assignment.RunSchedule.DataType)
                     {
-                        $runSchedule.Add('date', $assignment.RunSchedule.Date)
+                        $runSchedule = @{
+                            '@odata.type' = $assignment.RunSchedule.DataType
+                        }
+                        if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Date))
+                        {
+                            $runSchedule.Add('date', $assignment.RunSchedule.Date)
+                        }
+                        if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Interval))
+                        {
+                            $runSchedule.Add('interval', $assignment.RunSchedule.Interval)
+                        }
+                        if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Time))
+                        {
+                            $runSchedule.Add('time', $assignment.RunSchedule.Time)
+                        }
+                        if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.UseUtc))
+                        {
+                            $runSchedule.Add('useUtc', $assignment.RunSchedule.UseUtc)
+                        }
                     }
-                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Interval))
-                    {
-                        $runSchedule.Add('interval', $assignment.RunSchedule.Interval)
-                    }
-                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.Time))
-                    {
-                        $runSchedule.Add('time', $assignment.RunSchedule.Time)
-                    }
-                    if (-not [string]::IsNullOrEmpty($assignment.RunSchedule.UseUtc))
-                    {
-                        $runSchedule.Add('useUtc', $assignment.RunSchedule.UseUtc)
+                    $assignmentsHash += @{
+                        runRemediationScript = $true
+                        runSchedule          = $runSchedule
+                        target               = $assignmentTarget.target
                     }
                 }
-                $assignmentsHash += @{
-                    runRemediationScript = $true
-                    runSchedule          = $runSchedule
-                    target               = $assignmentTarget.target
-                }
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceHealthScripts' `
+                    -RootIdentifier 'deviceHealthScriptAssignments'
             }
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceHealthScripts' `
-                -RootIdentifier 'deviceHealthScriptAssignments'
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

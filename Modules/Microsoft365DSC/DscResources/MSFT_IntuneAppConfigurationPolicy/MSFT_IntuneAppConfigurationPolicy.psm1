@@ -370,10 +370,13 @@ class IntuneAppConfigurationPolicy : M365DSCResourceBase
 
             Update-MgBetaDeviceAppManagementTargetedManagedAppConfiguration -TargetedManagedAppConfigurationId $currentconfigPolicy.Id -BodyParameter $updateParams
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentconfigPolicy.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceAppManagement/targetedManagedAppConfigurations'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentconfigPolicy.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceAppManagement/targetedManagedAppConfigurations'
+            }
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentconfigPolicy.Ensure -eq 'Present')
         {

@@ -258,11 +258,14 @@ class IntuneWindowsUpdateForBusinessHotpatchProfileWindows10 : M365DSCResourceBa
             Invoke-M365DSCGraphRequest -Method PATCH -Uri "$($this.ResourceCache['BaseUrl'])/$($currentInstance.Id)" `
                 -Body $($updateParameters | ConvertTo-Json -Depth 10)
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/windowsQualityUpdatePolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/windowsQualityUpdatePolicies'
+            }
 
             #endregion
         }

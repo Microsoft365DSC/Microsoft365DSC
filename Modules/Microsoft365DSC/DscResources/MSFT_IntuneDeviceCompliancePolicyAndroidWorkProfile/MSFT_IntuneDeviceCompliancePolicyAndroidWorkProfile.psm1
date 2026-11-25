@@ -450,10 +450,13 @@ class IntuneDeviceCompliancePolicyAndroidWorkProfile : M365DSCResourceBase
                 -DeviceComplianceScheduledActionForRules $complexScheduledActionsForRule
 
             #region Assignments
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceAndroidPolicy.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceCompliancePolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceAndroidPolicy.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceCompliancePolicies'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentDeviceAndroidPolicy.Ensure -eq 'Present')

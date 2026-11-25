@@ -266,20 +266,23 @@ class IntuneManagedInstallerPolicyWindows10 : M365DSCResourceBase
                 -DeviceHealthScriptId $currentInstance.Id `
                 -BodyParameter $updateParameters
 
-            $assignmentsHash = @()
-            foreach ($assignment in $this.Assignments)
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
             {
-                $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment
-                $assignmentsHash += @{
-                    runRemediationScript = $assignment.RunRemediationScript
-                    target               = $assignmentTarget.target
+                $assignmentsHash = @()
+                foreach ($assignment in $this.Assignments)
+                {
+                    $assignmentTarget = ConvertTo-IntunePolicyAssignment -Assignments $assignment
+                    $assignmentsHash += @{
+                        runRemediationScript = $assignment.RunRemediationScript
+                        target               = $assignmentTarget.target
+                    }
                 }
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceHealthScripts' `
+                    -RootIdentifier 'deviceHealthScriptAssignments'
             }
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceHealthScripts' `
-                -RootIdentifier 'deviceHealthScriptAssignments'
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
