@@ -65,7 +65,8 @@ function New-M365DSCLogEntry
         $outputMessage = $Message
         if ($PSBoundParameters.ContainsKey('Exception'))
         {
-            $exceptionMessage = '{ ' + $Exception.Exception.Message + ' } \ ' + $Exception.ScriptStackTrace -replace '\n', ' \ '
+            $exceptionStackTrace = Resolve-M365DSCSourceLocation -InputObject $Exception.ScriptStackTrace
+            $exceptionMessage = '{ ' + $Exception.Exception.Message + ' } \ ' + $exceptionStackTrace -replace '\n', ' \ '
             $outputMessage += ' ' + $exceptionMessage
         }
         Write-Verbose -Message $outputMessage
@@ -106,7 +107,7 @@ function New-M365DSCLogEntry
         {
             $driftedData.Add('Category', $Exception.CategoryInfo.Category.ToString())
             $driftedData.Add('Exception', $Exception.Exception.ToString())
-            $driftedData.Add('StackTrace', $Exception.ScriptStackTrace)
+            $driftedData.Add('StackTrace', $exceptionStackTrace)
         }
 
         if ($tenantIdValue -ne '')
@@ -135,7 +136,7 @@ function New-M365DSCLogEntry
         $LogContent += "`"" + $Message + "`"`r`n"
         if ($PSBoundParameters.ContainsKey('Exception'))
         {
-            $LogContent += $Exception.ScriptStackTrace + "`r`n"
+            $LogContent += $exceptionStackTrace + "`r`n"
         }
         if ($null -ne $Credential)
         {
@@ -868,13 +869,252 @@ function Get-M365DSCLoggingOption
     }
 }
 
+<#
+.SYNOPSIS
+    Returns the source map of the generated class files.
+
+.DESCRIPTION
+    Reads Classes/SourceMap.json written by Utilities/Build-Microsoft365DSC.ps1 once per session.
+    Keys are generated file names, values the blocks with StartLine, EndLine, Source and SourceLine.
+
+.FUNCTIONALITY
+    Private
+
+.OUTPUTS
+    System.Collections.Hashtable
+#>
+function Get-M365DSCSourceMap
+{
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param()
+
+    if ($null -eq $Script:M365DSCSourceMap)
+    {
+        $map = @{}
+        $mapPath = Join-Path -Path $PSScriptRoot -ChildPath '../Classes/SourceMap.json'
+        if (Test-Path -Path $mapPath)
+        {
+            $content = Get-Content -Path $mapPath -Raw | ConvertFrom-Json
+            foreach ($property in $content.PSObject.Properties)
+            {
+                $map[$property.Name] = @($property.Value)
+            }
+        }
+        $Script:M365DSCSourceMap = $map
+    }
+
+    return $Script:M365DSCSourceMap
+}
+
+<#
+.SYNOPSIS
+    Maps a line of a generated class file to its resource source file.
+
+.DESCRIPTION
+    Returns the source path and line for a line of Classes/Part<NN>.psm1 or Classes/_Shared.psm1,
+    or $null when the line is not part of a mapped block. The path is absolute when the source file
+    exists, otherwise relative to the module root.
+
+.PARAMETER Path
+    Path or file name of the generated file.
+
+.PARAMETER Line
+    Line number in the generated file.
+
+.FUNCTIONALITY
+    Internal
+
+.OUTPUTS
+    System.Management.Automation.PSObject
+#>
+function Get-M365DSCSourceLocation
+{
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.PSObject])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Path,
+
+        [Parameter(Mandatory = $true)]
+        [System.Int32]
+        $Line
+    )
+
+    $blocks = (Get-M365DSCSourceMap)[[System.IO.Path]::GetFileName($Path)]
+    foreach ($block in $blocks)
+    {
+        if ($Line -ge $block.StartLine -and $Line -le $block.EndLine)
+        {
+            $sourcePath = Join-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -ChildPath $block.Source
+            if (-not (Test-Path -Path $sourcePath))
+            {
+                $sourcePath = $block.Source
+            }
+
+            return [PSCustomObject]@{
+                Path = $sourcePath
+                Line = $block.SourceLine + $Line - $block.StartLine
+            }
+        }
+    }
+
+    return $null
+}
+
+<#
+.SYNOPSIS
+    Adds the resource source location to every generated class file location in a text.
+
+.DESCRIPTION
+    Finds locations in Classes/Part<NN>.psm1 and Classes/_Shared.psm1, in both the stack trace
+    form 'Part03.psm1: line 120' and the position form 'Part03.psm1:120', and appends the mapped
+    source location as ' [<path>:<line>]'. An ErrorRecord is resolved from its ScriptStackTrace and
+    PositionMessage.
+
+.PARAMETER InputObject
+    Text, such as a stack trace, or an ErrorRecord.
+
+.FUNCTIONALITY
+    Public
+
+.OUTPUTS
+    System.String
+#>
+function Resolve-M365DSCSourceLocation
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [System.Object]
+        $InputObject
+    )
+
+    process
+    {
+        $text = $InputObject
+        if ($InputObject -is [System.Management.Automation.ErrorRecord])
+        {
+            $text = $InputObject.ScriptStackTrace + [System.Environment]::NewLine + $InputObject.InvocationInfo.PositionMessage
+        }
+
+        if ([System.String]::IsNullOrEmpty($text))
+        {
+            return $text
+        }
+
+        $evaluator = [System.Text.RegularExpressions.MatchEvaluator] {
+            param ($Match)
+
+            $location = Get-M365DSCSourceLocation -Path $Match.Groups['file'].Value -Line $Match.Groups['line'].Value
+            if ($null -eq $location)
+            {
+                return $Match.Value
+            }
+
+            return "$($Match.Value) [$($location.Path):$($location.Line)]"
+        }
+
+        return [System.Text.RegularExpressions.Regex]::Replace($text, '(?<file>(?:Part\d{2}|_Shared)\.psm1)(?:: line |:)(?<line>\d+)', $evaluator)
+    }
+}
+
+<#
+.SYNOPSIS
+    Sets a breakpoint on a line of a resource source file.
+
+.DESCRIPTION
+    Maps the source line to the generated class file that the module runs and sets a line
+    breakpoint there with Set-PSBreakpoint.
+
+.PARAMETER Path
+    Source file path, file name or resource name, for example AADAgreement, MSFT_AADAgreement or
+    M365DSCResourceBase.psm1.
+
+.PARAMETER Line
+    Line numbers in the source file.
+
+.FUNCTIONALITY
+    Public
+
+.OUTPUTS
+    System.Management.Automation.LineBreakpoint
+#>
+function Set-M365DSCSourceBreakpoint
+{
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.LineBreakpoint])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Path,
+
+        [Parameter(Mandatory = $true)]
+        [System.Int32[]]
+        $Line
+    )
+
+    $fileName = [System.IO.Path]::GetFileName($Path)
+    if (-not $fileName.EndsWith('.psm1', [System.StringComparison]::OrdinalIgnoreCase))
+    {
+        $fileName += '.psm1'
+    }
+    $candidates = @($fileName, "MSFT_$fileName")
+
+    $classRoot = Join-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -ChildPath 'Classes'
+    $map = Get-M365DSCSourceMap
+
+    foreach ($sourceLine in $Line)
+    {
+        $target = $null
+        foreach ($generatedFile in $map.Keys)
+        {
+            foreach ($block in $map[$generatedFile])
+            {
+                $lastSourceLine = $block.SourceLine + $block.EndLine - $block.StartLine
+                if ([System.IO.Path]::GetFileName($block.Source) -in $candidates -and
+                    $sourceLine -ge $block.SourceLine -and $sourceLine -le $lastSourceLine)
+                {
+                    $target = @{
+                        Script = Join-Path -Path $classRoot -ChildPath $generatedFile
+                        Line   = $block.StartLine + $sourceLine - $block.SourceLine
+                    }
+                    break
+                }
+            }
+
+            if ($null -ne $target)
+            {
+                break
+            }
+        }
+
+        if ($null -eq $target)
+        {
+            throw "Line $sourceLine of '$Path' is not part of a generated class file. Run Utilities/Build-Microsoft365DSC.ps1."
+        }
+
+        Set-PSBreakpoint -Script $target.Script -Line $target.Line
+    }
+}
+
 Export-ModuleMember -Function @(
     'Add-M365DSCEvent',
     'Export-M365DSCDiagnosticData',
     'Get-M365DSCLoggingOption',
+    'Get-M365DSCSourceLocation',
     'New-M365DSCLogEntry',
     'Get-M365DSCNotificationEndpointRegistration',
     'New-M365DSCNotificationEndpointRegistration',
     'Remove-M365DSCNotificationEndpointRegistration',
-    'Set-M365DSCLoggingOption'
+    'Resolve-M365DSCSourceLocation',
+    'Set-M365DSCLoggingOption',
+    'Set-M365DSCSourceBreakpoint'
 )

@@ -273,6 +273,14 @@ function Export-M365DSCCoverageData
     $repoDir = (Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath '..')).Path
     $coverage = $TestResult.CodeCoverage
 
+    $classRoot = [System.IO.Path]::GetFullPath((Join-Path -Path $repoDir -ChildPath 'Modules/Microsoft365DSC/Classes'))
+    $sourceMapPath = Join-Path -Path $classRoot -ChildPath 'SourceMap.json'
+    $sourceMap = @{}
+    if (Test-Path -Path $sourceMapPath)
+    {
+        $sourceMap = Get-Content -Path $sourceMapPath -Raw | ConvertFrom-Json -AsHashtable
+    }
+
     $commands = foreach ($command in @($coverage.CommandsExecuted) + @($coverage.CommandsMissed))
     {
         if ($null -eq $command)
@@ -280,12 +288,27 @@ function Export-M365DSCCoverageData
             continue
         }
 
+        $file = [System.IO.Path]::GetRelativePath($repoDir, $command.File) -replace '\\', '/'
+        $offset = 0
+        if ([System.IO.Path]::GetDirectoryName([System.IO.Path]::GetFullPath($command.File)) -eq $classRoot)
+        {
+            foreach ($block in $sourceMap[[System.IO.Path]::GetFileName($command.File)])
+            {
+                if ($command.StartLine -ge $block.StartLine -and $command.StartLine -le $block.EndLine)
+                {
+                    $file = 'Modules/Microsoft365DSC/' + $block.Source
+                    $offset = $block.SourceLine - $block.StartLine
+                    break
+                }
+            }
+        }
+
         [ordered]@{
-            File        = [System.IO.Path]::GetRelativePath($repoDir, $command.File) -replace '\\', '/'
+            File        = $file
             Class       = $command.Class
             Function    = $command.Function
-            StartLine   = $command.StartLine
-            EndLine     = $command.EndLine
+            StartLine   = $command.StartLine + $offset
+            EndLine     = $command.EndLine + $offset
             StartColumn = $command.StartColumn
             EndColumn   = $command.EndColumn
             HitCount    = [System.Int32] $command.HitCount

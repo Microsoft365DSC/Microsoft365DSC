@@ -57,6 +57,81 @@ Describe 'ConvertTo-M365DSCNotificationEndpointRegistration' {
     }
 }
 
+Describe 'Source location mapping' {
+    BeforeAll {
+        InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+            $Script:SavedSourceMap = $Script:M365DSCSourceMap
+            $Script:M365DSCSourceMap = @{
+                'Part03.psm1'  = @(
+                    [PSCustomObject]@{ StartLine = 10; EndLine = 50; Source = 'DscResources/MSFT_Foo/MSFT_Foo.psm1'; SourceLine = 3 }
+                    [PSCustomObject]@{ StartLine = 60; EndLine = 90; Source = 'DscResources/MSFT_Bar/MSFT_Bar.psm1'; SourceLine = 1 }
+                )
+                '_Shared.psm1' = @(
+                    [PSCustomObject]@{ StartLine = 4; EndLine = 100; Source = 'DscResources/_Base/M365DSCResourceBase.psm1'; SourceLine = 1 }
+                )
+            }
+        }
+    }
+
+    AfterAll {
+        InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+            $Script:M365DSCSourceMap = $Script:SavedSourceMap
+        }
+    }
+
+    It 'Should map a generated line to its source line' {
+        $result = InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+            Get-M365DSCSourceLocation -Path 'C:\Modules\Microsoft365DSC\Classes\Part03.psm1' -Line 65
+        }
+
+        $result.Path | Should -BeLike '*MSFT_Bar.psm1'
+        $result.Line | Should -Be 6
+    }
+
+    It 'Should not return a source location for a line outside every block' {
+        InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+            Get-M365DSCSourceLocation -Path 'Part03.psm1' -Line 55
+        } | Should -BeNullOrEmpty
+    }
+
+    It 'Should append the source location to stack trace and position frames' {
+        $result = InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+            Resolve-M365DSCSourceLocation -InputObject "at Get, C:\x\Classes\Part03.psm1: line 12`nAt C:\x\Classes\_Shared.psm1:5 char:9`nat <ScriptBlock>, C:\x\Other.psm1: line 7"
+        }
+
+        $lines = $result -split "`n"
+        $lines[0] | Should -BeLike 'at Get, C:\x\Classes\Part03.psm1: line 12 `[*MSFT_Foo.psm1:5`]'
+        $lines[1] | Should -BeLike 'At C:\x\Classes\_Shared.psm1:5 `[*M365DSCResourceBase.psm1:2`] char:9'
+        $lines[2] | Should -BeExactly 'at <ScriptBlock>, C:\x\Other.psm1: line 7'
+    }
+
+    It 'Should pass empty input through' {
+        InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+            Resolve-M365DSCSourceLocation -InputObject $null
+        } | Should -BeNullOrEmpty
+    }
+
+    It 'Should set the breakpoint on the generated line' {
+        Mock -ModuleName M365DSCLogEngine -CommandName Set-PSBreakpoint
+
+        InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+            Set-M365DSCSourceBreakpoint -Path 'Foo' -Line 5
+        }
+
+        Should -Invoke -ModuleName M365DSCLogEngine -CommandName Set-PSBreakpoint -Exactly 1 -ParameterFilter {
+            $Script -like '*Classes*Part03.psm1' -and $Line -eq 12
+        }
+    }
+
+    It 'Should throw for a source line that is not mapped' {
+        {
+            InModuleScope -ModuleName M365DSCLogEngine -ScriptBlock {
+                Set-M365DSCSourceBreakpoint -Path 'MSFT_Foo.psm1' -Line 200
+            }
+        } | Should -Throw '*not part of a generated class file*'
+    }
+}
+
 Describe 'Send-M365DSCNotificationEndPointMessage' {
     BeforeAll {
         Mock -ModuleName M365DSCLogEngine -CommandName Get-M365DSCNotificationEndpointRegistration -MockWith {
