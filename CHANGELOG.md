@@ -11,7 +11,7 @@
   * Fixed the export stopping at the first 1000 accepted domains.
 * DEPENDENCIES
   * Updated ExchangeOnlineManagement to version 3.11.1.
-  * Updated M365DSC.PSDesiredStateConfiguration to version 3.1.12.
+  * Updated M365DSC.PSDesiredStateConfiguration to version 3.1.14.
   * Updated MSCloudLoginAssistant to version 1.2.11.
   * Updated PnP.PowerShell to version 3.5.0.
     FIXES [#7581](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7581)
