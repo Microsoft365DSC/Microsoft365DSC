@@ -186,7 +186,7 @@ Write a real body only when the comparison itself is non-standard. If all you ne
 
 Microsoft365DSC also supports [ReverseDSC](https://github.com/Microsoft/ReverseDSC) natively, which is what `Export()` provides. It loops through each instance of your resource in the tenant and converts them into DSC strings. For each instance, assign it to `$this.ExportedInstance` and call `$this.GetForExport($Params)` - that populates the instance and runs `Get()` without a second round trip to the service. `Export()` must honour the `$Filter` property. Please refer to existing resources to better understand the logic of this method.
 
-Anything the class cannot express as a method - a conversion or comparison used in several places - goes into a module scope function below the class, in the same file. All resources share one module scope once built, so prefix the function name with the resource name: `Get-SCComplianceCaseSomething`, not `Get-Something`. Those functions have no `$this`; if one needs to cache, give it a `[System.Collections.Hashtable] $Cache` parameter and pass `$this.ResourceCache`.
+Do not add module scope functions to a resource file. The build merges many resources into one module, so a function there is visible to all of them. Inline code that `Get()` or `Set()` uses once. Code used in several places becomes a `hidden static` method on the class, called as e.g. `[SCComplianceCase]::ConvertSomething(...)`. Note that a static method has no `$this` variable available. If the static method needs to cache information, give it a `[System.Collections.Hashtable] $Cache` parameter and pass `$this.ResourceCache`.
 
 Some things that work in a normal function do not work inside a class method:
 
@@ -206,8 +206,87 @@ Some things that work in a normal function do not work inside a class method:
 
 The build reports how many resources it found and discovered - your new resource should appear in both counts. It also updates `Microsoft365DSC.psd1`, so commit that file along with your resource.
 
+While you iteratively work on a resource, `-Dev` writes only the class files and the manifest and skips the schema, permission, manifest bundle and discovery steps:
+
+```powershell
+./Utilities/Build-Microsoft365DSC.ps1 -Dev
+```
+
+`-Dev` keeps `SchemaDefinition.json` and the other files of the last full build, which `Test()` reads. Run the full build first, again after you add, remove or rename a property, and before you open a pull request. `Utilities/Build-DllFiles.ps1` is only needed after a change under `src/`.
+
 Add a unit test at `Tests/Unit/Microsoft365DSC/Microsoft365DSC.<ResourceName>.Tests.ps1`, modelled on an existing one for the same workload, then run it:
 
 ```powershell
 Invoke-Pester -Path Tests/Unit/Microsoft365DSC/Microsoft365DSC.SCComplianceCase.Tests.ps1
 ```
+
+## Debug a Resource
+
+The module runs the previously generated `Classes/Part<NN>.psm1` files and not the files under `DscResources/`. Error messages, stack traces and code coverage therefore start out with lines of those files. To still be able to correctly point to a DSC resource, the build writes `Classes/SourceMap.json`, which maps every generated line back to its source file and line, and puts a `# Source: DscResources/MSFT_<Name>/MSFT_<Name>.psm1:<line>` comment above every class.
+
+Errors that go through `New-M365DSCLogEntry` already show the source location next to each generated frame:
+
+```text
+at Get, C:\...\Classes\Part12.psm1: line 4711 [C:\...\DscResources\MSFT_SCComplianceCase\MSFT_SCComplianceCase.psm1:118]
+```
+
+For any other error, pass the stack trace or the error record to `Resolve-M365DSCSourceLocation`:
+
+```powershell
+Resolve-M365DSCSourceLocation -InputObject $Error[0]
+```
+
+A breakpoint set on a source file in the editor never hits because that file does not run. Set it on the source line with `Set-M365DSCSourceBreakpoint`, which places it on the generated line:
+
+```powershell
+Set-M365DSCSourceBreakpoint -Path SCComplianceCase -Line 118
+```
+
+`-Path` takes the resource name, the file name or the full path of the source file. Rebuild and set the breakpoint again after you edit the resource because its generated line moves as you change the resource.
+
+To run a single method without the Local Configuration Manager, create the instance inside the scope of the part module that contains the class:
+
+```powershell
+$part = (Get-Module -Name Microsoft365DSC).NestedModules |
+    Where-Object -FilterScript { (Get-Content -Path $_.Path -Raw) -match 'class SCComplianceCase\b' }
+& $part {
+    $resource = [SCComplianceCase]::new()
+    $resource.Name = 'Case 1'
+    $resource.Credential = $Global:Credential
+    $resource.Get()
+}
+```
+
+### Test through the Local Configuration Manager
+
+You can link the module of your local Microsoft365DSC checkout into the Windows PowerShell module path instead of copying every build. The version folder has to match `ModuleVersion` in `Microsoft365DSC.psd1`, and no other copy of that version may be installed. Run this elevated from the root of your checkout:
+
+```powershell
+$version = (Import-PowerShellDataFile -Path ./Modules/Microsoft365DSC/Microsoft365DSC.psd1).ModuleVersion
+New-Item -ItemType Junction `
+    -Path "$env:ProgramFiles\WindowsPowerShell\Modules\Microsoft365DSC\$version" `
+    -Target (Resolve-Path -Path ./Modules/Microsoft365DSC).Path
+```
+
+Rename the junction when `ModuleVersion` changes. The Local Configuration Manager runs as SYSTEM, so the checkout has to be readable by SYSTEM.
+
+The Local Configuration Manager caches the resource classes. You can set the property `DebugMode` to `ForceModuleImport` once, in Windows PowerShell, for the LCM to automatically import the module again on every run and pick up each build:
+
+```powershell
+[DSCLocalConfigurationManager()]
+configuration M365DSCDevelopmentLcm
+{
+    Node localhost
+    {
+        Settings
+        {
+            DebugMode = 'ForceModuleImport'
+        }
+    }
+}
+
+M365DSCDevelopmentLcm -OutputPath "$env:TEMP\M365DSCDevelopmentLcm"
+Set-DscLocalConfigurationManager -Path "$env:TEMP\M365DSCDevelopmentLcm" -Verbose
+```
+
+The meta configuration replaces the current settings. Make sure to add any setting you changed from its default to the `Settings` block. When you are done, reset `DebugMode` back to `None`.

@@ -9,6 +9,7 @@
         Modules/Microsoft365DSC/Classes/_Shared.psm1     base class and factory
         Modules/Microsoft365DSC/Classes/_Types<NN>.psm1  the complex types, bucketed
         Modules/Microsoft365DSC/Classes/Part<NN>.psm1    the [DscResource()] classes, bucketed
+        Modules/Microsoft365DSC/Classes/SourceMap.json   generated line ranges to source file and line
 
     then wires both into Microsoft365DSC.psd1 and regenerates SchemaDefinition.json from class
     reflection.
@@ -79,8 +80,15 @@
 .PARAMETER SkipValidation
     Skip the post-build import and discovery check.
 
+.PARAMETER Dev
+    Output the class files and the manifest only. Implies every Skip* switch, so SchemaDefinition.json
+    and the other generated files stay at the last full build.
+
 .EXAMPLE
     .\Build-Microsoft365DSC.ps1
+
+.EXAMPLE
+    .\Build-Microsoft365DSC.ps1 -Dev
 
 .EXAMPLE
     .\Build-Microsoft365DSC.ps1 -BucketCount 8 -SkipSchema
@@ -136,10 +144,23 @@ param
 
     [Parameter()]
     [Switch]
-    $SkipValidation
+    $SkipValidation,
+
+    [Parameter()]
+    [Switch]
+    $Dev
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($Dev)
+{
+    $SkipSchema = $true
+    $SkipSchemaCache = $true
+    $SkipResourcePermissions = $true
+    $SkipAdaptedManifests = $true
+    $SkipValidation = $true
+}
 
 Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath 'M365DSCBuildHelpers.psm1') -Force
 
@@ -232,8 +253,8 @@ function Get-M365DSCClassDefinition
         { $args[0] -is [System.Management.Automation.Language.TypeDefinitionAst] },
         $false)
 
-    $resourceClasses = [System.Collections.Generic.List[Object]]::new()
-    $complexTypes = [System.Collections.Generic.List[Object]]::new()
+    $resourceClasses = [System.Collections.Generic.List[System.Object]]::new()
+    $complexTypes = [System.Collections.Generic.List[System.Object]]::new()
 
     foreach ($typeDefinition in $typeDefinitions)
     {
@@ -307,14 +328,58 @@ function Get-NormalizedText
 
 <#
 .SYNOPSIS
+    Returns the SourceMap.json blocks of one generated file.
+
+.PARAMETER Text
+    Full text of the generated file.
+
+.PARAMETER Block
+    Blocks with the character Offset of their first line in Text, the outputted Text, the Source path
+    relative to the module root and the SourceLine of their first line.
+#>
+function Get-M365DSCSourceMapBlock
+{
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $Text,
+
+        [Parameter(Mandatory = $true)]
+        [System.Object[]]
+        $Block
+    )
+
+    $result = [System.Collections.Generic.List[System.Object]]::new()
+    $line = 1
+    $position = 0
+
+    foreach ($item in ($Block | Sort-Object -Property Offset))
+    {
+        $line += [System.Text.RegularExpressions.Regex]::Matches($Text.Substring($position, $item.Offset - $position), '\n').Count
+        $position = $item.Offset
+
+        $result.Add([ordered] @{
+                StartLine  = $line
+                EndLine    = $line + [System.Text.RegularExpressions.Regex]::Matches($item.Text.TrimEnd(), '\n').Count
+                Source     = $item.Source
+                SourceLine = $item.SourceLine
+            })
+    }
+
+    return $result.ToArray()
+}
+
+<#
+.SYNOPSIS
     Returns the class text as it should be emitted.
 
 .DESCRIPTION
-    [System.ComponentModel.Description()] carries the documentation for every property. Nothing
-    reads it at runtime - SchemaDefinition.json is generated from the sources, which keep it - but
-    it is 53% of _Shared.psm1 and every byte is parsed again by DscClassCache on each
-    Get-DscResourceV2, and turned into a CustomAttributeBuilder on each import. So it is dropped
-    here unless -KeepDescriptions was passed.
+    Strips [System.ComponentModel.Description()] unless -KeepDescriptions is set. Nothing reads it
+    at runtime and DscClassCache parses it on every Get-DscResourceV2. Its line breaks are kept,
+    for SourceMap.json to be able to map each block with one line offset.
 #>
 function Get-M365DSCEmittedText
 {
@@ -348,20 +413,14 @@ function Get-M365DSCEmittedText
         $start = $attribute.Extent.StartOffset - $origin
         $end = $attribute.Extent.EndOffset - $origin
 
-        # Swallow the indentation in front of the attribute, and - when that leaves the line empty -
-        # the line break behind it, so no blank line is left where the attribute was.
         while ($start -gt 0 -and ($text[$start - 1] -eq ' ' -or $text[$start - 1] -eq "`t"))
         {
             $start--
         }
 
-        if ($start -eq 0 -or $text[$start - 1] -eq "`n")
-        {
-            if ($end -lt $text.Length -and $text[$end] -eq "`r") { $end++ }
-            if ($end -lt $text.Length -and $text[$end] -eq "`n") { $end++ }
-        }
-
-        $text = $text.Remove($start, $end - $start)
+        $attributeText = $text.Substring($start, $end - $start)
+        $lineBreaks = $attributeText -replace '[^\r\n]', ''
+        $text = $text.Remove($start, $end - $start).Insert($start, $lineBreaks)
     }
 
     return $text
@@ -639,7 +698,7 @@ $sourceFiles = @(Get-ChildItem -Path $script:SourceRoot -Directory -Filter 'MSFT
 
 Write-BuildLog "Found $($sourceFiles.Count) resource source files"
 
-$resourceEntries = [System.Collections.Generic.List[Object]]::new()
+$resourceEntries = [System.Collections.Generic.List[System.Object]]::new()
 
 # Keyed case-insensitively on purpose. Complex types are declared once per resource that uses
 # them and the casing is not always consistent between those copies.
@@ -670,8 +729,15 @@ foreach ($file in $sourceFiles)
             Name       = $resourceClass.Name
             SourceFile = $file.FullName
             SourceDir  = $file.DirectoryName
+            Source     = "DscResources/$($file.Directory.Name)/$($file.Name)"
+            SourceLine = $resourceClass.Extent.StartLineNumber
             Text       = Get-M365DSCEmittedText -Ast $resourceClass
-            Helpers    = @($definition.HelperFunctions | ForEach-Object { $_.Extent.Text })
+            Helpers    = @($definition.HelperFunctions | ForEach-Object {
+                    [PSCustomObject]@{
+                        Text = $_.Extent.Text
+                        SourceLine = $_.Extent.StartLineNumber
+                    }
+                })
         })
 
     foreach ($complexType in $definition.ComplexTypes)
@@ -733,6 +799,7 @@ else
 }
 
 $generatedFiles = [System.Collections.Generic.List[String]]::new()
+$sourceMap = [ordered] @{}
 
 # --- _Shared.psm1 -----------------------------------------------------------------------------
 # Order matters inside one parse unit: the base class first, then the factory that references it.
@@ -740,12 +807,30 @@ $shared = [System.Text.StringBuilder]::new()
 [void] $shared.AppendLine('# GENERATED FILE - do not edit.')
 [void] $shared.AppendLine('# Produced by Utilities/Build-Microsoft365DSC.ps1 from DscResources/_Base.')
 [void] $shared.AppendLine('')
-[void] $shared.AppendLine((Get-Content -Path (Join-Path $script:BaseRoot 'M365DSCResourceBase.psm1') -Raw))
-[void] $shared.AppendLine('')
-[void] $shared.AppendLine((Get-Content -Path (Join-Path $script:BaseRoot 'M365DSCResourceFactory.psm1') -Raw))
+
+$sharedBlocks = [System.Collections.Generic.List[System.Object]]::new()
+foreach ($baseFile in @('M365DSCResourceBase.psm1', 'M365DSCResourceFactory.psm1'))
+{
+    if ($sharedBlocks.Count -gt 0)
+    {
+        [void] $shared.AppendLine('')
+    }
+
+    $baseText = Get-Content -Path (Join-Path $script:BaseRoot $baseFile) -Raw
+    $sharedBlocks.Add([PSCustomObject] @{
+            Offset     = $shared.Length
+            Text       = $baseText
+            Source     = "DscResources/_Base/$baseFile"
+            SourceLine = 1
+        })
+    [void] $shared.AppendLine($baseText)
+}
+
+$sharedText = $shared.ToString()
+$sourceMap['_Shared.psm1'] = @(Get-M365DSCSourceMapBlock -Text $sharedText -Block $sharedBlocks.ToArray())
 
 $sharedPath = Join-Path -Path $script:ClassRoot -ChildPath '_Shared.psm1'
-Set-Content -Path $sharedPath -Value $shared.ToString() -Encoding UTF8
+Set-Content -Path $sharedPath -Value $sharedText -Encoding UTF8
 $generatedFiles.Add('Classes/_Shared.psm1')
 Write-BuildLog "Wrote $($sharedPath.Substring($RepositoryRoot.Length + 1)) ($([math]::Round((Get-Item $sharedPath).Length / 1KB)) KB)" -Level Detail
 
@@ -804,7 +889,7 @@ $effectiveTypeBuckets = [System.Math]::Min($TypeBucketCount, $componentMembers.C
 $perTypeBucket = [System.Math]::Ceiling($totalTypeWeight / $effectiveTypeBuckets)
 $pendingWeight = 0
 
-$typeBuckets = [System.Collections.Generic.List[Object]]::new()
+$typeBuckets = [System.Collections.Generic.List[System.Object]]::new()
 $typeBucketByName = [System.Collections.Generic.Dictionary[String, Int32]]::new([StringComparer]::OrdinalIgnoreCase)
 $pending = [System.Collections.Generic.List[String]]::new()
 
@@ -880,12 +965,19 @@ $effectiveBuckets = [System.Math]::Min($BucketCount, $sortedResources.Count)
 $resourceWeight = @{}
 foreach ($resource in $sortedResources)
 {
-    $resourceWeight[$resource.Name] = if ($BalanceBy -eq 'Bytes') { $resource.Text.Length + (@($resource.Helpers) -join '').Length } else { 1 }
+    if ($BalanceBy -eq 'Bytes')
+    {
+        $resourceWeight[$resource.Name] = $resource.Text.Length + (@($resource.Helpers.Text) -join '').Length
+    }
+    else
+    {
+        $resourceWeight[$resource.Name] = 1
+    }
 }
 $perBucket = [System.Math]::Ceiling((($resourceWeight.Values | Measure-Object -Sum).Sum) / $effectiveBuckets)
 
-$partSlices = [System.Collections.Generic.List[Object]]::new()
-$pendingResources = [System.Collections.Generic.List[Object]]::new()
+$partSlices = [System.Collections.Generic.List[System.Object]]::new()
+$pendingResources = [System.Collections.Generic.List[System.Object]]::new()
 $pendingResourceWeight = 0
 foreach ($resource in $sortedResources)
 {
@@ -893,7 +985,7 @@ foreach ($resource in $sortedResources)
     if ($pendingResources.Count -gt 0 -and ($pendingResourceWeight + $weight) -gt $perBucket -and $partSlices.Count -lt ($effectiveBuckets - 1))
     {
         $partSlices.Add($pendingResources.ToArray())
-        $pendingResources = [System.Collections.Generic.List[Object]]::new()
+        $pendingResources = [System.Collections.Generic.List[System.Object]]::new()
         $pendingResourceWeight = 0
     }
 
@@ -910,7 +1002,17 @@ for ($bucket = 0; $bucket -lt $partSlices.Count; $bucket++)
 {
     $slice = @($partSlices[$bucket])
 
-    $sliceText = (@($slice | ForEach-Object { $_.Text; $_.Helpers }) -join "`n")
+    $sliceParts = [System.Collections.Generic.List[System.String]]::new()
+    foreach ($resource in $slice)
+    {
+        $sliceParts.Add($resource.Text)
+        foreach ($helper in $resource.Helpers)
+        {
+            $sliceParts.Add($helper.Text)
+        }
+    }
+    $sliceText = $sliceParts -join "`n"
+
     $required = [System.Collections.Generic.SortedSet[Int32]]::new()
     foreach ($name in (Get-M365DSCComplexReference -Text $sliceText -ComplexType $complexByName))
     {
@@ -930,14 +1032,28 @@ for ($bucket = 0; $bucket -lt $partSlices.Count; $bucket++)
     }
     [void] $part.AppendLine('')
 
+    $partBlocks = [System.Collections.Generic.List[System.Object]]::new()
     foreach ($resource in $slice)
     {
+        [void] $part.AppendLine("# Source: $($resource.Source):$($resource.SourceLine)")
+        $partBlocks.Add([PSCustomObject] @{
+                Offset     = $part.Length
+                Text       = $resource.Text
+                Source     = $resource.Source
+                SourceLine = $resource.SourceLine
+            })
         [void] $part.AppendLine($resource.Text)
         [void] $part.AppendLine('')
 
         foreach ($helper in $resource.Helpers)
         {
-            [void] $part.AppendLine($helper)
+            $partBlocks.Add([PSCustomObject] @{
+                    Offset     = $part.Length
+                    Text       = $helper.Text
+                    Source     = $resource.Source
+                    SourceLine = $helper.SourceLine
+                })
+            [void] $part.AppendLine($helper.Text)
             [void] $part.AppendLine('')
         }
     }
@@ -967,11 +1083,18 @@ for ($bucket = 0; $bucket -lt $partSlices.Count; $bucket++)
             '_Types<NN>.psm1. Class-text extraction must exclude file-level using statements.')
     }
 
-    Set-Content -Path (Join-Path $script:ClassRoot $fileName) -Value $part.ToString() -Encoding UTF8
+    $partText = $part.ToString()
+    $sourceMap[$fileName] = @(Get-M365DSCSourceMapBlock -Text $partText -Block $partBlocks.ToArray())
+
+    Set-Content -Path (Join-Path $script:ClassRoot $fileName) -Value $partText -Encoding UTF8
     $generatedFiles.Add("Classes/$fileName")
 }
 
 Write-BuildLog "Wrote $($partSlices.Count) part file(s) balanced by $BalanceBy"
+
+$sourceMapPath = Join-Path -Path $script:ClassRoot -ChildPath 'SourceMap.json'
+$sourceMap | ConvertTo-Json -Depth 4 -Compress | Set-Content -Path $sourceMapPath -Encoding UTF8
+Write-BuildLog "Wrote $($sourceMapPath.Substring($RepositoryRoot.Length + 1))" -Level Detail
 
 #endregion
 
