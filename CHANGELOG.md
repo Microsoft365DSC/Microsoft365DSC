@@ -2,6 +2,17 @@
 
 # UNRELEASED
 
+* AADApplication
+  * Added `ServicePrincipalLockConfiguration`, `RequestSignatureVerification`,
+    `EnableIdTokenIssuance` and `EnableAccessTokenIssuance`.
+  * Fixed `Set()` failing with "Could not find existing permission with DisplayName" when
+    `Api` configures `PreAuthorizedApplications`.
+  * Fixed `Set()` failing to create an application whose `Api` configures
+    `Oauth2PermissionScopes`.
+* AADAuthenticationMethodPolicyX509
+  * Added `RequireCertificateSidAlignment`.
+* AADUser
+  * Added `Manager`, `Sponsors`, `EmployeeOrgData` and `AuthorizationInfo`.
 * EXOAcceptedDomain
   * Fixed the export stopping at the first 1000 accepted domains.
 * EXODataAtRestEncryptionPolicyAssignment
@@ -9,6 +20,17 @@
     in a tenant without a data-at-rest encryption policy.
 * EXODnssecForVerifiedDomain
   * Fixed the export stopping at the first 1000 accepted domains.
+* IntuneAlertRuleWindows365
+  * Added the `notEqual` operator and the `phoneCall` and `sms` notification channel types.
+* IntuneMobileAppsBuiltInStoreApp, IntuneMobileAppsBundleMacOS, IntuneMobileAppsLobAppiOS,
+  IntuneMobileAppsStoreApp
+  * Added the minimum operating system versions `V26_0` and `V27_0`.
+* IntuneMobileAppsMacOSLobApp
+  * Added the minimum operating system versions `v15_0`, `v26_0` and `v27_0`.
+* IntuneSettingCatalogCustomPolicyWindows10
+  * Fixed `Set()` creating a duplicate policy on every run when `TemplateFamily` is not `none`.
+  * Fixed updates of a policy with a `TemplateId` failing with BadRequest.
+  * Fixed updates failing with BadRequest when `RoleScopeTagIds` is not specified.
 * DEPENDENCIES
   * Updated ExchangeOnlineManagement to version 3.11.1.
   * Updated M365DSC.PSDesiredStateConfiguration to version 3.1.11.

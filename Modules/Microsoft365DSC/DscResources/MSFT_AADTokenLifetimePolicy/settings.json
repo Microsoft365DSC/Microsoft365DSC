@@ -10,7 +10,13 @@
     "includeNavigationProperties": false,
     "generatorVersion": "2.0.0"
   },
-  "excludedProperties": [],
+  "excludedProperties": [
+    {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "The service rejects description on create and update and never returns it."
+    }
+  ],
   "description": "This resource configures the Azure AD Token Lifetime Policies.",
   "roles": {
     "read": [],

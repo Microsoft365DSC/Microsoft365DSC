@@ -76,6 +76,7 @@ Configuration Example
             IssuerHintsConfiguration        = MSFT_MicrosoftGraphx509CertificateIssuerHintsConfiguration{
                 State = 'enabled'
             };
+            RequireCertificateSidAlignment  = $false;
             State                           = "enabled";
             ApplicationId                   = $ApplicationId
             TenantId                        = $TenantId

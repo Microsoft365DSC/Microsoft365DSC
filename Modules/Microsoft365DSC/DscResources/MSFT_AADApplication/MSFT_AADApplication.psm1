@@ -97,6 +97,22 @@ class AADApplication : M365DSCResourceBase
     [System.String] $LogoutURL
 
     [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether this web application can request an ID token using the OAuth 2.0 implicit flow.')]
+    [System.Nullable[System.Boolean]] $EnableIdTokenIssuance
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether this web application can request an access token using the OAuth 2.0 implicit flow.')]
+    [System.Nullable[System.Boolean]] $EnableAccessTokenIssuance
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies which properties of the application''s service principals are locked against modification in the tenants where they are provisioned.')]
+    [MSFT_AADApplicationServicePrincipalLockConfiguration] $ServicePrincipalLockConfiguration
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether this application accepts only signed SAML authentication requests and which weak signing algorithms remain allowed.')]
+    [MSFT_AADApplicationRequestSignatureVerification] $RequestSignatureVerification
+
+    [DscProperty()]
     [System.ComponentModel.Description('Specifies whether this application is a public client (such as an installed application running on a mobile device). Default is false.')]
     [System.Nullable[System.Boolean]] $PublicClient
 
@@ -199,7 +215,7 @@ class AADApplication : M365DSCResourceBase
 
     AADApplication() : base()
     {
-        $this.ResourceCache['PropertiesToRetrieve'] = 'appRoles, defaultRedirectUri, info, identifierUris, displayName, description, groupMembershipClaims, optionalClaims, web, api, id, appId, spa, applicationTemplateId, serviceManagementReference, signInAudience, authenticationBehaviors, isFallbackPublicClient, publicClient, keyCredentials, passwordCredentials, requiredResourceAccess, isDeviceOnlyAuthSupported, isDisabled, nativeAuthenticationApisEnabled, notes, samlMetadataUrl, tags, tokenEncryptionKeyId'
+        $this.ResourceCache['PropertiesToRetrieve'] = 'appRoles, defaultRedirectUri, info, identifierUris, displayName, description, groupMembershipClaims, optionalClaims, web, api, id, appId, spa, applicationTemplateId, serviceManagementReference, signInAudience, authenticationBehaviors, isFallbackPublicClient, publicClient, keyCredentials, passwordCredentials, requiredResourceAccess, isDeviceOnlyAuthSupported, isDisabled, nativeAuthenticationApisEnabled, notes, samlMetadataUrl, tags, tokenEncryptionKeyId, servicePrincipalLockConfiguration, requestSignatureVerification'
     }
 
     [AADApplication] Get()
@@ -635,45 +651,72 @@ class AADApplication : M365DSCResourceBase
                 }
             }
 
+            $complexServicePrincipalLockConfiguration = $null
+            if ($null -ne $AADApp.servicePrincipalLockConfiguration)
+            {
+                $complexServicePrincipalLockConfiguration = @{
+                    AllProperties              = $AADApp.servicePrincipalLockConfiguration.allProperties
+                    CredentialsWithUsageSign   = $AADApp.servicePrincipalLockConfiguration.credentialsWithUsageSign
+                    CredentialsWithUsageVerify = $AADApp.servicePrincipalLockConfiguration.credentialsWithUsageVerify
+                    EnforcementScope           = $AADApp.servicePrincipalLockConfiguration.enforcementScope
+                    IdentifierUris             = $AADApp.servicePrincipalLockConfiguration.identifierUris
+                    IsEnabled                  = $AADApp.servicePrincipalLockConfiguration.isEnabled
+                    TokenEncryptionKeyId       = $AADApp.servicePrincipalLockConfiguration.tokenEncryptionKeyId
+                }
+            }
+
+            $complexRequestSignatureVerification = $null
+            if ($null -ne $AADApp.requestSignatureVerification)
+            {
+                $complexRequestSignatureVerification = @{
+                    AllowedWeakAlgorithms   = $AADApp.requestSignatureVerification.allowedWeakAlgorithms
+                    IsSignedRequestRequired = $AADApp.requestSignatureVerification.isSignedRequestRequired
+                }
+            }
+
             $result = @{
-                Api                             = $complexApi
-                AppId                           = $AADApp.AppId
-                ApplicationTemplateId           = $AADApp.applicationTemplateId
-                AppRoles                        = $complexAppRoles
-                AuthenticationBehaviors         = $complexAuthenticationBehaviors
-                DefaultRedirectUri              = $AADApp.DefaultRedirectUri
-                Description                     = $AADApp.Description
-                DisplayName                     = $AADApp.DisplayName
-                GroupMembershipClaims           = $AADApp.GroupMembershipClaims
-                Homepage                        = $AADApp.web.HomepageUrl
-                IdentifierUris                  = $IdentifierUrisValue
-                Info                            = $complexInfoValue
-                IsDeviceOnlyAuthSupported       = $AADApp.IsDeviceOnlyAuthSupported
-                IsDisabled                      = $AADApp.IsDisabled
-                IsFallbackPublicClient          = $IsFallbackPublicClientValue
-                KeyCredentials                  = $complexKeyCredentials
-                KnownClientApplications         = $AADApp.Api.KnownClientApplications
-                Logo                            = $logoResponse
-                LogoutURL                       = $AADApp.web.LogoutURL
-                NativeAuthenticationApisEnabled = $AADApp.NativeAuthenticationApisEnabled
-                Notes                           = $AADApp.Notes
-                ObjectId                        = $AADApp.Id
-                OnPremisesPublishing            = $onPremisesPublishingValue
-                OptionalClaims                  = $complexOptionalClaims
-                Owners                          = $OwnersValues
-                PasswordCredentials             = $complexPasswordCredentials
-                RequiredResourceAccess          = $permissionsObj
-                PublicClient                    = $isPublicClient
-                PublicClientRedirectUris        = $PublicClientRedirectUrisValue
-                ReplyURLs                       = $AADApp.web.RedirectUris
-                SamlMetadataUrl                 = $AADApp.SamlMetadataUrl
-                ServiceManagementReference      = $AADApp.ServiceManagementReference
-                SignInAudience                  = $AADApp.SignInAudience
-                Spa                             = $spaValue
-                Tags                            = $TagsValue
-                TokenEncryptionKeyId            = $AADApp.TokenEncryptionKeyId
-                TokenLifetimePolicy             = $lifetimePolicy.displayName
-                Ensure                          = 'Present'
+                Api                               = $complexApi
+                AppId                             = $AADApp.AppId
+                ApplicationTemplateId             = $AADApp.applicationTemplateId
+                AppRoles                          = $complexAppRoles
+                AuthenticationBehaviors           = $complexAuthenticationBehaviors
+                DefaultRedirectUri                = $AADApp.DefaultRedirectUri
+                Description                       = $AADApp.Description
+                DisplayName                       = $AADApp.DisplayName
+                EnableAccessTokenIssuance         = $AADApp.web.implicitGrantSettings.enableAccessTokenIssuance
+                EnableIdTokenIssuance             = $AADApp.web.implicitGrantSettings.enableIdTokenIssuance
+                GroupMembershipClaims             = $AADApp.GroupMembershipClaims
+                Homepage                          = $AADApp.web.HomepageUrl
+                IdentifierUris                    = $IdentifierUrisValue
+                Info                              = $complexInfoValue
+                IsDeviceOnlyAuthSupported         = $AADApp.IsDeviceOnlyAuthSupported
+                IsDisabled                        = $AADApp.IsDisabled
+                IsFallbackPublicClient            = $IsFallbackPublicClientValue
+                KeyCredentials                    = $complexKeyCredentials
+                KnownClientApplications           = $AADApp.Api.KnownClientApplications
+                Logo                              = $logoResponse
+                LogoutURL                         = $AADApp.web.LogoutURL
+                NativeAuthenticationApisEnabled   = $AADApp.NativeAuthenticationApisEnabled
+                Notes                             = $AADApp.Notes
+                ObjectId                          = $AADApp.Id
+                OnPremisesPublishing              = $onPremisesPublishingValue
+                OptionalClaims                    = $complexOptionalClaims
+                Owners                            = $OwnersValues
+                PasswordCredentials               = $complexPasswordCredentials
+                RequiredResourceAccess            = $permissionsObj
+                PublicClient                      = $isPublicClient
+                PublicClientRedirectUris          = $PublicClientRedirectUrisValue
+                ReplyURLs                         = $AADApp.web.RedirectUris
+                RequestSignatureVerification      = $complexRequestSignatureVerification
+                SamlMetadataUrl                   = $AADApp.SamlMetadataUrl
+                ServiceManagementReference        = $AADApp.ServiceManagementReference
+                ServicePrincipalLockConfiguration = $complexServicePrincipalLockConfiguration
+                SignInAudience                    = $AADApp.SignInAudience
+                Spa                               = $spaValue
+                Tags                              = $TagsValue
+                TokenEncryptionKeyId              = $AADApp.TokenEncryptionKeyId
+                TokenLifetimePolicy               = $lifetimePolicy.displayName
+                Ensure                            = 'Present'
             }
 
             return $this.AsResult($result)
@@ -800,7 +843,11 @@ class AADApplication : M365DSCResourceBase
                 {
                     Write-Verbose -Message "Retrieving Scope by Display Name {$($scope.value)}"
 
-                    $existingScope = $currentAADApp.Api.Oauth2PermissionScopes | Where-Object -FilterScript { $_.Value -eq $scope.value }
+                    $existingScope = $null
+                    if ($currentAADApp.Ensure -eq 'Present')
+                    {
+                        $existingScope = $currentAADApp.Api.Oauth2PermissionScopes | Where-Object -Property Value -EQ $scope.value
+                    }
                     $existingScopeId = (New-Guid).ToString()
                     if ($null -ne $existingScope)
                     {
@@ -821,6 +868,15 @@ class AADApplication : M365DSCResourceBase
         if ($currentParameters.Api.PreAuthorizedApplications)
         {
             $PreAuthorizedApplicationsValue = @()
+            $availablePermissionScopes = $null
+            if ($currentAADApp.Ensure -eq 'Present')
+            {
+                $availablePermissionScopes = $currentAADApp.Api.Oauth2PermissionScopes
+            }
+            if ($apiValue.ContainsKey('Oauth2PermissionScopes'))
+            {
+                $availablePermissionScopes = $apiValue.Oauth2PermissionScopes
+            }
 
             foreach ($preAuthApp in $currentParameters.Api.PreAuthorizedApplications)
             {
@@ -833,23 +889,25 @@ class AADApplication : M365DSCResourceBase
                     }
                     $preAuthApp.AppId = $servicePrincipal.appId
                 }
+                $permissionIdsValue = @()
+                foreach ($permissionName in $preAuthApp.PermissionIds)
+                {
+                    if ($permissionName -match "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+                    {
+                        $permissionIdsValue += $permissionName
+                        continue
+                    }
+
+                    $permission = $availablePermissionScopes | Where-Object -Property Value -EQ $permissionName
+                    if ($null -eq $permission)
+                    {
+                        throw "Could not find existing permission with DisplayName {$permissionName} in the application for pre-authorized application. Please make sure the permission exists and the DisplayName is correct."
+                    }
+                    $permissionIdsValue += $permission.Id
+                }
                 $PreAuthorizedApplicationsValue += @{
-                    appId                  = $preAuthApp.AppId
-                    delegatedPermissionIds = Get-M365DSCArrayFromProperty -PropertyValue ($preAuthApp.PermissionIds | Foreach-Object {
-                        if ($_ -match "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-                        {
-                            $_
-                        }
-                        else
-                        {
-                            $permission = $currentAADApp.Api.Oauth2PermissionScopes | Where-Object -FilterScript { $_.Value -eq $_ }
-                            if ($null -eq $permission)
-                            {
-                                throw "Could not find existing permission with DisplayName {$_.Value} in the application for pre-authorized application. Please make sure the permission exists and the DisplayName is correct."
-                            }
-                            $permission.Id
-                        }
-                    }) -ElementType ([System.String])
+                    appId         = $preAuthApp.AppId
+                    permissionIds = $permissionIdsValue
                 }
             }
             $apiValue.Add('PreAuthorizedApplications', $PreAuthorizedApplicationsValue)
@@ -868,9 +926,20 @@ class AADApplication : M365DSCResourceBase
             $currentParameters.Add('Api', $apiValue)
         }
 
+        $implicitGrantValue = @{}
+        if ($this.GetBoundParameters().ContainsKey('EnableIdTokenIssuance'))
+        {
+            $implicitGrantValue.Add('enableIdTokenIssuance', $this.EnableIdTokenIssuance)
+        }
+        if ($this.GetBoundParameters().ContainsKey('EnableAccessTokenIssuance'))
+        {
+            $implicitGrantValue.Add('enableAccessTokenIssuance', $this.EnableAccessTokenIssuance)
+        }
+
         if ($this.GetBoundParameters().ContainsKey('ReplyUrls') -or `
             $this.GetBoundParameters().ContainsKey('LogoutURL') -or `
-            $this.GetBoundParameters().ContainsKey('Homepage'))
+            $this.GetBoundParameters().ContainsKey('Homepage') -or `
+            $implicitGrantValue.Count -gt 0)
         {
             $webValue = @{}
             if ($this.GetBoundParameters().ContainsKey('ReplyUrls'))
@@ -885,12 +954,18 @@ class AADApplication : M365DSCResourceBase
             {
                 $webValue.Add('HomePageUrl', $currentParameters.Homepage)
             }
+            if ($implicitGrantValue.Count -gt 0)
+            {
+                $webValue.Add('implicitGrantSettings', $implicitGrantValue)
+            }
 
             $currentParameters.Add('web', $webValue)
         }
         $currentParameters.Remove('ReplyURLs') | Out-Null
         $currentParameters.Remove('LogoutURL') | Out-Null
         $currentParameters.Remove('Homepage') | Out-Null
+        $currentParameters.Remove('EnableIdTokenIssuance') | Out-Null
+        $currentParameters.Remove('EnableAccessTokenIssuance') | Out-Null
         $currentParameters.Remove('OnPremisesPublishing') | Out-Null
         $currentParameters = Rename-M365DSCCimInstanceParameter -Properties $currentParameters
 
@@ -1690,12 +1765,42 @@ class AADApplication : M365DSCResourceBase
                             }
                         }
 
+                        if ($null -ne $Results.ServicePrincipalLockConfiguration)
+                        {
+                            $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                -ComplexObject $Results.ServicePrincipalLockConfiguration `
+                                -CIMInstanceName 'AADApplicationServicePrincipalLockConfiguration'
+                            if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                            {
+                                $Results.ServicePrincipalLockConfiguration = $complexTypeStringResult
+                            }
+                            else
+                            {
+                                $Results.Remove('ServicePrincipalLockConfiguration') | Out-Null
+                            }
+                        }
+
+                        if ($null -ne $Results.RequestSignatureVerification)
+                        {
+                            $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                -ComplexObject $Results.RequestSignatureVerification `
+                                -CIMInstanceName 'AADApplicationRequestSignatureVerification'
+                            if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                            {
+                                $Results.RequestSignatureVerification = $complexTypeStringResult
+                            }
+                            else
+                            {
+                                $Results.Remove('RequestSignatureVerification') | Out-Null
+                            }
+                        }
+
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                             -ConnectionMode $ConnectionMode `
                             -ModulePath $this.GetModulePath() `
                             -Results $Results `
                             -Credential $this.Credential `
-                            -NoEscape @('Api', 'Info', 'RequiredResourceAccess', 'OptionalClaims', 'OnPremisesPublishing', 'AuthenticationBehaviors', 'KeyCredentials', 'PasswordCredentials', 'AppRoles', 'Spa') `
+                            -NoEscape @('Api', 'Info', 'RequiredResourceAccess', 'OptionalClaims', 'OnPremisesPublishing', 'AuthenticationBehaviors', 'KeyCredentials', 'PasswordCredentials', 'AppRoles', 'Spa', 'ServicePrincipalLockConfiguration', 'RequestSignatureVerification') `
                             -RawResults $this.RawExportResults
 
                         [void]$dscContent.Append($currentDSCBlock)
@@ -2306,6 +2411,50 @@ class MSFT_AADApplicationOnPremisesPublishing
     [DscProperty()]
     [System.ComponentModel.Description('Represents the single sign-on configuration for the on-premises application.')]
     [MSFT_AADApplicationOnPremisesPublishingSingleSignOnSetting] $singleSignOnSettings
+}
+
+class MSFT_AADApplicationServicePrincipalLockConfiguration
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables service principal lock configuration. To allow the sensitive properties to be updated, update this property to false to disable the lock on the service principal.')]
+    [System.Nullable[System.Boolean]] $IsEnabled
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables locking all sensitive properties. The sensitive properties are keyCredentials, passwordCredentials, and tokenEncryptionKeyId.')]
+    [System.Nullable[System.Boolean]] $AllProperties
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Locks the keyCredentials and passwordCredentials properties for modification where credential usage type is Sign.')]
+    [System.Nullable[System.Boolean]] $CredentialsWithUsageSign
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Locks the keyCredentials and passwordCredentials properties for modification where credential usage type is Verify. This locks OAuth service principals.')]
+    [System.Nullable[System.Boolean]] $CredentialsWithUsageVerify
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Locks the identifierUris property for modification on the service principal.')]
+    [System.Nullable[System.Boolean]] $IdentifierUris
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Locks the tokenEncryptionKeyId property for modification on the service principal.')]
+    [System.Nullable[System.Boolean]] $TokenEncryptionKeyId
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the scope where service principal lock validation is enforced. The possible values are: foreignTenantOnly, everywhere.')]
+    [ValidateSet('foreignTenantOnly', 'everywhere')]
+    [System.String] $EnforcementScope
+}
+
+class MSFT_AADApplicationRequestSignatureVerification
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies whether signed authentication requests for this application should be required.')]
+    [System.Nullable[System.Boolean]] $IsSignedRequestRequired
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies which weak algorithms are allowed. The possible value is: rsaSha1.')]
+    [ValidateSet('rsaSha1')]
+    [System.String] $AllowedWeakAlgorithms
 }
 
 class MSFT_AADApplicationSpa

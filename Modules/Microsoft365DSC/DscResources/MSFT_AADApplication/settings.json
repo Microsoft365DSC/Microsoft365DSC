@@ -22,6 +22,11 @@
       "note": "The app compliance program stamps these values."
     },
     {
+      "name": "ConnectorGroup",
+      "reason": "Accepted",
+      "note": "Assigns an Application Proxy app to a connector group and applies only to apps published through OnPremisesPublishing."
+    },
+    {
       "name": "DisabledByMicrosoftStatus",
       "reason": "ReadOnly",
       "note": "Microsoft sets this status when it disables a registration."
@@ -75,6 +80,11 @@
       "name": "UniqueName",
       "reason": "Deferred",
       "note": "Accepted on create and immutable afterwards."
+    },
+    {
+      "name": "WebRedirectUriSettings",
+      "reason": "Accepted",
+      "note": "Mirrors the web redirect URIs that ReplyURLs manages, and the SAML index stays null on every tenant application."
     }
   ],
   "description": "This resource configures an Azure Active Directory Application.",

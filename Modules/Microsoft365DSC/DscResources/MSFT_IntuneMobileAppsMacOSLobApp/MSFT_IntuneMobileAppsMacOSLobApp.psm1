@@ -602,6 +602,18 @@ class MSFT_DeviceManagementMinimumOperatingSystem
     [DscProperty()]
     [System.ComponentModel.Description('Indicates if Mac OS X 14.0 or later is required to install the app.')]
     [System.Nullable[System.Boolean]] $v14_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates if macOS 15.0 or later is required to install the app.')]
+    [System.Nullable[System.Boolean]] $v15_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates if macOS 26.0 or later is required to install the app.')]
+    [System.Nullable[System.Boolean]] $v26_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates if macOS 27.0 or later is required to install the app.')]
+    [System.Nullable[System.Boolean]] $v27_0
 }
 
 class MSFT_DeviceManagementMobileAppCategory

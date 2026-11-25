@@ -221,6 +221,8 @@ class IntuneMobileAppsLobAppiOS : M365DSCResourceBase
             $complexMinimumSupportedOperatingSystem.Add('V16_0', $getValue.minimumSupportedOperatingSystem.v16_0)
             $complexMinimumSupportedOperatingSystem.Add('V17_0', $getValue.minimumSupportedOperatingSystem.v17_0)
             $complexMinimumSupportedOperatingSystem.Add('V18_0', $getValue.minimumSupportedOperatingSystem.v18_0)
+            $complexMinimumSupportedOperatingSystem.Add('V26_0', $getValue.minimumSupportedOperatingSystem.v26_0)
+            $complexMinimumSupportedOperatingSystem.Add('V27_0', $getValue.minimumSupportedOperatingSystem.v27_0)
             if ($complexMinimumSupportedOperatingSystem.Values.Where({ $null -ne $_ }).Count -eq 0)
             {
                 $complexMinimumSupportedOperatingSystem = $null
@@ -611,6 +613,14 @@ class MSFT_MicrosoftGraphIosMinimumOperatingSystem
     [DscProperty()]
     [System.ComponentModel.Description('Indicates the minimum iOS version support required for the managed device. When ''True'', iOS with OS Version 18.0 or later is required to install the app. If ''False'', iOS Version 18.0 is not the minimum version. Default value is False. Exactly one of the minimum operating system boolean values will be TRUE.')]
     [System.Nullable[System.Boolean]] $V18_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the minimum iOS version support required for the managed device. When ''True'', iOS with OS Version 26.0 or later is required to install the app. If ''False'', iOS Version 26.0 is not the minimum version. Default value is False. Exactly one of the minimum operating system boolean values will be TRUE.')]
+    [System.Nullable[System.Boolean]] $V26_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the minimum iOS version support required for the managed device. When ''True'', iOS with OS Version 27.0 or later is required to install the app. If ''False'', iOS Version 27.0 is not the minimum version. Default value is False. Exactly one of the minimum operating system boolean values will be TRUE.')]
+    [System.Nullable[System.Boolean]] $V27_0
 
     [DscProperty()]
     [System.ComponentModel.Description('Indicates the minimum iOS version support required for the managed device. When ''True'', iOS with OS Version 8.0 or later is required to install the app. If ''False'', iOS Version 8.0  is not the minimum version. Default value is False. Exactly one of the minimum operating system boolean values will be TRUE.')]

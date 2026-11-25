@@ -161,6 +161,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         ExtensionAttribute1 = 'Head Office'
                         ExtensionAttribute2 = 'Cost Center 4100'
                     })
+                    EmployeeOrgData               = ([MSFT_AADUserEmployeeOrgData] @{
+                        CostCenter = 'CC-4100'
+                        Division   = 'Corporate Services'
+                    })
+                    AuthorizationInfo             = ([MSFT_AADUserAuthorizationInfo] @{
+                        CertificateUserIds = [System.String[]]@('X509:<PN>JohnSmith@contoso.onmicrosoft.com')
+                    })
+                    Manager                       = 'Manager@contoso.onmicrosoft.com'
+                    Sponsors                      = @('Sponsor@contoso.onmicrosoft.com', 'Finance Team')
                     Credential                    = $Credential
                 }
 
@@ -182,6 +191,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             ExtensionAttribute1 = 'Head Office'
                             ExtensionAttribute2 = 'Cost Center 4100'
                         }
+                        EmployeeOrgData               = @{
+                            costCenter = 'CC-4100'
+                            division   = 'Corporate Services'
+                        }
+                        AuthorizationInfo             = @{
+                            certificateUserIds = @('X509:<PN>JohnSmith@contoso.onmicrosoft.com')
+                        }
                         Ensure                        = 'Present'
                     }
                 }
@@ -196,7 +212,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 }
                             }
                         }
-
+                        @{
+                            id   = 'Manager'
+                            body = @{
+                                userPrincipalName = 'Manager@contoso.onmicrosoft.com'
+                            }
+                        }
+                        @{
+                            id   = 'Sponsors'
+                            body = @{
+                                value = @(
+                                    @{
+                                        userPrincipalName = 'Sponsor@contoso.onmicrosoft.com'
+                                    }
+                                    @{
+                                        displayName = 'Finance Team'
+                                    }
+                                )
+                            }
+                        }
                     )
                 }
 
@@ -209,7 +243,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return present from the Get method' {
-                ((New-M365DSCResourceInstance -ResourceName 'AADUser' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADUser' -Property $testParams).Get().ToHashtable()
+                $result.Ensure | Should -Be 'Present'
+                $result.Manager | Should -Be 'Manager@contoso.onmicrosoft.com'
+                $result.Sponsors | Should -Be @('Sponsor@contoso.onmicrosoft.com', 'Finance Team')
+                $result.EmployeeOrgData.CostCenter | Should -Be 'CC-4100'
+                $result.AuthorizationInfo.CertificateUserIds | Should -Be @('X509:<PN>JohnSmith@contoso.onmicrosoft.com')
             }
 
             It 'Should return true from the Test method' {
@@ -607,6 +646,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             )
                         })
                     )
+                    EmployeeOrgData               = ([MSFT_AADUserEmployeeOrgData] @{
+                        CostCenter = 'CC-4100'
+                        Division   = 'Corporate Services'
+                    })
+                    AuthorizationInfo             = ([MSFT_AADUserAuthorizationInfo] @{
+                        CertificateUserIds = [System.String[]]@('X509:<PN>JohnSmith@contoso.onmicrosoft.com')
+                    })
+                    Manager                       = 'NewManager@contoso.onmicrosoft.com'
+                    Sponsors                      = @('NewSponsor@contoso.onmicrosoft.com', 'Finance Team')
                 }
 
                 Mock -CommandName Get-MgUser -MockWith {
@@ -621,7 +669,48 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             'Datacenter@odata.type' = '#String'
                         }
                     }
+                    $user.EmployeeOrgData = @{
+                        costCenter = 'CC-1000'
+                        division   = 'Corporate Services'
+                    }
+                    $user.AuthorizationInfo = @{
+                        certificateUserIds = @()
+                    }
                     return $user
+                }
+
+                Mock -CommandName Invoke-M365DSCGraphBatchRequest -MockWith {
+                    return @(
+                        @{
+                            id   = 'Manager'
+                            body = @{
+                                userPrincipalName = 'OldManager@contoso.onmicrosoft.com'
+                            }
+                        }
+                        @{
+                            id   = 'Sponsors'
+                            body = @{
+                                value = @(
+                                    @{
+                                        userPrincipalName = 'OldSponsor@contoso.onmicrosoft.com'
+                                        displayName       = 'Old Sponsor'
+                                    }
+                                    @{
+                                        displayName = 'Finance Team'
+                                    }
+                                )
+                            }
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-MgGroup -MockWith {
+                    return @{
+                        Id = '67890-67890-67890-67890-67890'
+                    }
+                }
+
+                Mock -CommandName Invoke-M365DSCGraphRequest -MockWith {
                 }
 
                 Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
@@ -639,6 +728,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should return the current custom security attributes from the Get method' {
                 $result = (New-M365DSCResourceInstance -ResourceName 'AADUser' -Property $testParams).Get().ToHashtable()
                 $result.CustomSecurityAttributes.AttributeSetName | Should -Be 'Engineering'
+                $result.Manager | Should -Be 'OldManager@contoso.onmicrosoft.com'
+                $result.Sponsors | Should -Be @('OldSponsor@contoso.onmicrosoft.com', 'Finance Team')
+                $result.EmployeeOrgData.CostCenter | Should -Be 'CC-1000'
+                $result.AuthorizationInfo.CertificateUserIds.Count | Should -Be 0
             }
 
             It 'Should return false from the Test method' {
@@ -649,7 +742,18 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 (New-M365DSCResourceInstance -ResourceName 'AADUser' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Update-MgUser' -Exactly 1 -ParameterFilter {
                     $BodyParameter.customSecurityAttributes.Engineering.Datacenter -eq 'Portland' -and
-                    $BodyParameter.customSecurityAttributes.Engineering.Project.Count -eq 2
+                    $BodyParameter.customSecurityAttributes.Engineering.Project.Count -eq 2 -and
+                    $BodyParameter.employeeOrgData.costCenter -eq 'CC-4100' -and
+                    $BodyParameter.authorizationInfo.certificateUserIds -contains 'X509:<PN>JohnSmith@contoso.onmicrosoft.com'
+                }
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'PUT' -and $Uri -like '*/manager/$ref'
+                }
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'POST' -and $Uri -like '*/sponsors/$ref'
+                }
+                Should -Invoke -CommandName Invoke-M365DSCGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'DELETE' -and $Uri -like '*/sponsors/*/$ref'
                 }
             }
         }
