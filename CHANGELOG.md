@@ -1,6 +1,6 @@
 ﻿# Change log for Microsoft365DSC
 
-# UNRELEASED
+# 2.26.1125.1
 
 * AADApplication
   * Added `ServicePrincipalLockConfiguration`, `RequestSignatureVerification`,
