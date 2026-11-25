@@ -26,40 +26,50 @@ Configuration Example
     {
         AADApplication 'AADApplication-Example'
         {
-            DisplayName                     = "AppDisplayName"
-            AuthenticationBehaviors         = MSFT_MicrosoftGraphauthenticationBehaviors{
+            DisplayName                       = "AppDisplayName"
+            AuthenticationBehaviors           = MSFT_MicrosoftGraphauthenticationBehaviors{
                 BlockAzureADGraphAccess    = 'Null'
                 RemoveUnverifiedEmailClaim = 'Null'
             }
-            Description                     = "Application Description"
-            GroupMembershipClaims           = "None"
-            Homepage                        = "https://$TenantId"
-            IdentifierUris                  = "https://$TenantId"
-            KnownClientApplications         = ""
-            LogoutURL                       = "https://$TenantId/logout"
-            PublicClient                    = $false
-            ReplyURLs                       = "https://$TenantId"
-            DefaultRedirectUri              = "https://$TenantId"
-            IsFallbackPublicClient          = $false
-            IsDeviceOnlyAuthSupported       = $false
-            IsDisabled                      = $false
-            NativeAuthenticationApisEnabled = "none"
-            Notes                           = "Reviewed annually by the identity governance team"
-            SamlMetadataUrl                 = "https://$TenantId/federationmetadata/2007-06/federationmetadata.xml"
-            PublicClientRedirectUris        = @("https://login.microsoftonline.com/common/oauth2/nativeclient")
-            ServiceManagementReference      = "IT-SVC-0001"
-            SignInAudience                  = "AzureADMyOrg"
-            Owners                          = @("admin@$TenantId")
-            Info                            = MSFT_MicrosoftGraphInformationalUrl{
+            Description                       = "Application Description"
+            GroupMembershipClaims             = "None"
+            Homepage                          = "https://$TenantId"
+            IdentifierUris                    = "https://$TenantId"
+            KnownClientApplications           = ""
+            LogoutURL                         = "https://$TenantId/logout"
+            EnableIdTokenIssuance             = $true
+            EnableAccessTokenIssuance         = $false
+            PublicClient                      = $false
+            ReplyURLs                         = "https://$TenantId"
+            DefaultRedirectUri                = "https://$TenantId"
+            IsFallbackPublicClient            = $false
+            IsDeviceOnlyAuthSupported         = $false
+            IsDisabled                        = $false
+            NativeAuthenticationApisEnabled   = "none"
+            Notes                             = "Reviewed annually by the identity governance team"
+            SamlMetadataUrl                   = "https://$TenantId/federationmetadata/2007-06/federationmetadata.xml"
+            PublicClientRedirectUris          = @("https://login.microsoftonline.com/common/oauth2/nativeclient")
+            ServiceManagementReference        = "IT-SVC-0001"
+            SignInAudience                    = "AzureADMyOrg"
+            Owners                            = @("admin@$TenantId")
+            Info                              = MSFT_MicrosoftGraphInformationalUrl{
                 MarketingUrl               = "https://$TenantId/marketing"
                 PrivacyStatementUrl        = "https://$TenantId/privacy"
                 SupportUrl                 = "https://$TenantId/support"
                 TermsOfServiceUrl          = "https://$TenantId/termsofservice"
             }
-            Spa                             = MSFT_AADApplicationSpa{
+            Spa                               = MSFT_AADApplicationSpa{
                 RedirectUris               = @("https://$TenantId/spa")
             }
-            OptionalClaims                  = MSFT_MicrosoftGraphoptionalClaims{
+            ServicePrincipalLockConfiguration = MSFT_AADApplicationServicePrincipalLockConfiguration{
+                IsEnabled                  = $true
+                AllProperties              = $true
+                EnforcementScope           = "everywhere"
+            }
+            RequestSignatureVerification      = MSFT_AADApplicationRequestSignatureVerification{
+                IsSignedRequestRequired    = $true
+            }
+            OptionalClaims                    = MSFT_MicrosoftGraphoptionalClaims{
                 AccessToken                = @(
                     MSFT_MicrosoftGraphOptionalClaim{
                         Name                    = "groups"
@@ -79,7 +89,7 @@ Configuration Example
                     }
                 )
             }
-            Api                             = MSFT_MicrosoftGraphapiApplication{
+            Api                               = MSFT_MicrosoftGraphapiApplication{
                 Oauth2PermissionScopes     = @(
                     MSFT_MicrosoftGraphAPIOauth2PermissionScopes{
                         adminConsentDescription = "Allows the app to read the signed-in user's profile."
@@ -92,7 +102,7 @@ Configuration Example
                     }
                 )
             }
-            AppRoles                        = @(
+            AppRoles                          = @(
                 MSFT_MicrosoftGraphappRole{
                     AllowedMemberTypes  = @("User")
                     Description         = "Readers can view expense report data."
@@ -103,7 +113,7 @@ Configuration Example
                     Value               = "Expenses.Read"
                 }
             )
-            RequiredResourceAccess          = @(
+            RequiredResourceAccess            = @(
                 MSFT_AADApplicationPermission
                 {
                     Name                = 'User.Read'
@@ -126,13 +136,13 @@ Configuration Example
                     AdminConsentGranted = $True
                 }
             )
-            Tags                            = @("Finance", "Expense Reporting")
-            TokenEncryptionKeyId            = "<token-encryption-key-id>"
-            TokenLifetimePolicy             = 'AADTokenLifetimePolicy_1'
-            Ensure                          = "Present"
-            ApplicationId                   = $ApplicationId
-            TenantId                        = $TenantId
-            CertificateThumbprint           = $CertificateThumbprint
+            Tags                              = @("Finance", "Expense Reporting")
+            TokenEncryptionKeyId              = "<token-encryption-key-id>"
+            TokenLifetimePolicy               = 'AADTokenLifetimePolicy_1'
+            Ensure                            = "Present"
+            ApplicationId                     = $ApplicationId
+            TenantId                          = $TenantId
+            CertificateThumbprint             = $CertificateThumbprint
         }
     }
 }

@@ -15,6 +15,11 @@
       "name": "Definition",
       "reason": "Deferred",
       "note": "Modelled as a complex type. Members it does not carry are dropped on write."
+    },
+    {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "The service rejects description on create and update and never returns it."
     }
   ],
   "description": "This resource configures an Azure AD Claims Mapping Policy.",

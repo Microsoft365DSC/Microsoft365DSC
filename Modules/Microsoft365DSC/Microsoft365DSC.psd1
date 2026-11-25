@@ -109,7 +109,6 @@
     'Classes/_Types05.psm1',
     'Classes/_Types06.psm1',
     'Classes/_Types07.psm1',
-    'Classes/_Types08.psm1',
     'Classes/Part00.psm1',
     'Classes/Part01.psm1',
     'Classes/Part02.psm1',

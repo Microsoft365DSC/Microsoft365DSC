@@ -131,7 +131,7 @@ class IntuneMobileAppsBuiltInStoreApp : M365DSCResourceBase
     IntuneMobileAppsBuiltInStoreApp() : base()
     {
         $this.ResourceCache['androidExclusive'] = @('V4_0', 'V4_0_3', 'V4_1', 'V4_2', 'V4_3', 'V4_4', 'V5_0', 'V5_1', 'V6_0', 'V7_0', 'V7_1', 'V8_1')
-        $this.ResourceCache['iOSExclusive'] = @('V16_0', 'V17_0', 'V18_0')
+        $this.ResourceCache['iOSExclusive'] = @('V16_0', 'V17_0', 'V18_0', 'V26_0', 'V27_0')
     }
 
     [IntuneMobileAppsBuiltInStoreApp] Get()
@@ -243,6 +243,8 @@ class IntuneMobileAppsBuiltInStoreApp : M365DSCResourceBase
             $complexMinimumSupportedOperatingSystem.Add('V16_0', $getValue.minimumSupportedOperatingSystem.v16_0)
             $complexMinimumSupportedOperatingSystem.Add('V17_0', $getValue.minimumSupportedOperatingSystem.v17_0)
             $complexMinimumSupportedOperatingSystem.Add('V18_0', $getValue.minimumSupportedOperatingSystem.v18_0)
+            $complexMinimumSupportedOperatingSystem.Add('V26_0', $getValue.minimumSupportedOperatingSystem.v26_0)
+            $complexMinimumSupportedOperatingSystem.Add('V27_0', $getValue.minimumSupportedOperatingSystem.v27_0)
             if ($complexMinimumSupportedOperatingSystem.Values.Where({ $null -ne $_ }).Count -eq 0)
             {
                 $complexMinimumSupportedOperatingSystem = $null
@@ -728,6 +730,14 @@ class MSFT_MicrosoftGraphMinimumOperatingSystem
     [DscProperty()]
     [System.ComponentModel.Description('Indicates the minimum version support required for the managed device. When ''True'', OS Version 18.0 or later is required to install the app. If ''False'', Version 18.0 is not the minimum version. Applicable only for the ''iOS'' TargetPlatform.')]
     [System.Nullable[System.Boolean]] $V18_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the minimum version support required for the managed device. When ''True'', OS Version 26.0 or later is required to install the app. If ''False'', Version 26.0 is not the minimum version. Applicable only for the ''iOS'' TargetPlatform.')]
+    [System.Nullable[System.Boolean]] $V26_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the minimum version support required for the managed device. When ''True'', OS Version 27.0 or later is required to install the app. If ''False'', Version 27.0 is not the minimum version. Applicable only for the ''iOS'' TargetPlatform.')]
+    [System.Nullable[System.Boolean]] $V27_0
 }
 
 class MSFT_DeviceManagementMimeContent

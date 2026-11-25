@@ -27,6 +27,11 @@
       "note": "Synthesized from / to AzurePortalTimeOut and DefaultTimeOut. Other applicationIds are not expressible."
     },
     {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "The service rejects description on create and update and never returns it."
+    },
+    {
       "name": "IsOrganizationDefault",
       "reason": "NotConfigurable",
       "note": "The policy has no appliesTo collection and always scopes to the organization."

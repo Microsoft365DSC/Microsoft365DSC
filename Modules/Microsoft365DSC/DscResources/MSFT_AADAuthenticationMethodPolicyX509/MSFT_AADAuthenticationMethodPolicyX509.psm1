@@ -28,6 +28,10 @@ class AADAuthenticationMethodPolicyX509 : M365DSCResourceBase
     [MSFT_MicrosoftGraphx509CertificateIssuerHintsConfiguration] $IssuerHintsConfiguration
 
     [DscProperty()]
+    [System.ComponentModel.Description('When set to true, Microsoft Entra ID matches the SID in the Security Identifier (SID) extension or the SAN URI SID value from the user''s X.509 certificate to the user''s on-premises SID attribute for hybrid users and cloud SID for cloud-only users. Certificate-based authentication fails if the values don''t match. The default value is false.')]
+    [System.Nullable[System.Boolean]] $RequireCertificateSidAlignment
+
+    [DscProperty()]
     [System.ComponentModel.Description('The state of the policy. Possible values are: enabled, disabled.')]
     [ValidateSet('enabled', 'disabled')]
     [System.String] $State
@@ -294,6 +298,7 @@ class AADAuthenticationMethodPolicyX509 : M365DSCResourceBase
                 ExcludeTargets                  = $complexExcludeTargets
                 IncludeTargets                  = $complexIncludeTargets
                 IssuerHintsConfiguration        = $complexIssuerHintsConfiguration
+                RequireCertificateSidAlignment  = $getValue.requireCertificateSidAlignment
                 State                           = $getValue.State
                 Id                              = $getValue.Id
                 Ensure                          = 'Present'

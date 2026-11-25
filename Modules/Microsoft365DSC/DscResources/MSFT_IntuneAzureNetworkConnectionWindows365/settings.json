@@ -17,6 +17,11 @@
       "note": "The service populates the partner resource link"
     },
     {
+      "name": "DomainJoinCredential",
+      "reason": "Deferred",
+      "note": "Supersedes AdDomainUsername and AdDomainPassword but cannot be verified without an Azure virtual network."
+    },
+    {
       "name": "HealthCheckPaused",
       "reason": "ReadOnly",
       "note": "Windows 365 pauses and resumes the recurring health checks itself"

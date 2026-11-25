@@ -26,16 +26,16 @@ Configuration Example
     {
         AADUser 'AADUser-Example'
         {
-            UserPrincipalName     = "John.Smith@$TenantId"
-            GivenName             = "John"
-            Surname               = "Smith"
-            DisplayName           = "John J. Smith"
-            AgeGroup              = "Adult"
-            City                  = "Gatineau"
-            Country               = "Canada"
-            OfficeLocation        = "Ottawa - Queen"
-            UsageLocation         = "US"
-            CustomSecurityAttributes = @(
+            UserPrincipalName             = "John.Smith@$TenantId"
+            GivenName                     = "John"
+            Surname                       = "Smith"
+            DisplayName                   = "John J. Smith"
+            AgeGroup                      = "Adult"
+            City                          = "Gatineau"
+            Country                       = "Canada"
+            OfficeLocation                = "Ottawa - Queen"
+            UsageLocation                 = "US"
+            CustomSecurityAttributes      = @(
                 MSFT_AADUserAttributeSet{
                     AttributeSetName = 'Engineering'
                     AttributeValues  = @(
@@ -54,28 +54,37 @@ Configuration Example
                 ExtensionAttribute1 = "Head Office"
                 ExtensionAttribute2 = "Cost Center 4100"
             }
-            AccountEnabled        = $true
-            CompanyName           = "Contoso"
-            Department            = "Human Resources"
-            EmployeeHireDate      = "2026-01-01T00:00:00.0000000Z"
-            EmployeeId            = "E1234567"
-            EmployeeLeaveDateTime = "2027-06-30T00:00:00.0000000Z"
-            EmployeeType          = "Employee"
-            JobTitle              = "Senior Program Manager"
-            StreetAddress         = "100 Rue Principale"
-            State                 = "Quebec"
-            PostalCode            = "K1A 0B1"
-            PhoneNumber           = "+1 613 555 0100"
-            MobilePhone           = "+1 613 555 0177"
-            FaxNumber             = "+1 613 555 0143"
-            OtherMails            = @("john.smith.contoso@outlook.com")
-            PreferredLanguage     = "en-US"
-            PasswordPolicies      = "DisablePasswordExpiration"
-            UserType              = "Member"
-            Ensure                = "Present"
-            ApplicationId         = $ApplicationId
-            TenantId              = $TenantId
-            CertificateThumbprint = $CertificateThumbprint
+            EmployeeOrgData               = MSFT_AADUserEmployeeOrgData{
+                CostCenter = "CC-4100"
+                Division   = "Corporate Services"
+            }
+            AuthorizationInfo             = MSFT_AADUserAuthorizationInfo{
+                CertificateUserIds = @("X509:<PN>John.Smith@$TenantId")
+            }
+            Manager                       = "AdeleV@$TenantId"
+            Sponsors                      = @("AdeleV@$TenantId")
+            AccountEnabled                = $true
+            CompanyName                   = "Contoso"
+            Department                    = "Human Resources"
+            EmployeeHireDate              = "2026-01-01T00:00:00.0000000Z"
+            EmployeeId                    = "E1234567"
+            EmployeeLeaveDateTime         = "2027-06-30T00:00:00.0000000Z"
+            EmployeeType                  = "Employee"
+            JobTitle                      = "Senior Program Manager"
+            StreetAddress                 = "100 Rue Principale"
+            State                         = "Quebec"
+            PostalCode                    = "K1A 0B1"
+            PhoneNumber                   = "+1 613 555 0100"
+            MobilePhone                   = "+1 613 555 0177"
+            FaxNumber                     = "+1 613 555 0143"
+            OtherMails                    = @("john.smith.contoso@outlook.com")
+            PreferredLanguage             = "en-US"
+            PasswordPolicies              = "DisablePasswordExpiration"
+            UserType                      = "Member"
+            Ensure                        = "Present"
+            ApplicationId                 = $ApplicationId
+            TenantId                      = $TenantId
+            CertificateThumbprint         = $CertificateThumbprint
         }
     }
 }

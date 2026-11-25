@@ -64,6 +64,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     )
                     minimumSupportedOperatingSystem = @{
                         v10_15 = $true
+                        v26_0  = $false
+                        v27_0  = $false
                     }
                     CommittedContentVersion = "FakeStringValue"
                     DependentAppCount = 25
@@ -105,6 +107,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     )
                     minimumSupportedOperatingSystem = @{
                         v10_15 = $true
+                        v26_0  = $false
+                        v27_0  = $false
                     }
                     Categories = @(
                         @{
@@ -184,6 +188,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     })
                     MinimumSupportedOperatingSystem = ([MSFT_MicrosoftGraphMacOSMinimumOperatingSystem] @{
                         V10_15 = $true
+                        V26_0  = $false
+                        V27_0  = $false
                     })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"
@@ -248,6 +254,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     })
                     MinimumSupportedOperatingSystem = ([MSFT_MicrosoftGraphMacOSMinimumOperatingSystem] @{
                         V10_15 = $true
+                        V26_0  = $false
+                        V27_0  = $false
                     })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"
@@ -301,6 +309,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     })
                     MinimumSupportedOperatingSystem = ([MSFT_MicrosoftGraphMacOSMinimumOperatingSystem] @{
                         V10_15 = $true
+                        V26_0  = $false
+                        V27_0  = $false
                     })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"
@@ -345,6 +355,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     })
                     MinimumSupportedOperatingSystem = ([MSFT_MicrosoftGraphMacOSMinimumOperatingSystem] @{
                         V10_15 = $true
+                        V26_0  = $false
+                        V27_0  = $false
                     })
                     Notes = "FakeStringValue"
                     Owner = "FakeStringValue"

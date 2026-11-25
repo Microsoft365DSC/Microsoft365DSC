@@ -32,9 +32,29 @@
       "note": "Graph marks the property as read only on this type."
     },
     {
+      "name": "Description",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
+    },
+    {
+      "name": "Developer",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
+    },
+    {
+      "name": "InformationUrl",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
+    },
+    {
       "name": "IsAssigned",
       "reason": "ReadOnly",
       "note": "Graph marks the property as read only on this type."
+    },
+    {
+      "name": "IsFeatured",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
     },
     {
       "name": "IsPrivate",
@@ -45,6 +65,31 @@
       "name": "IsSystemApp",
       "reason": "Accepted",
       "note": "Not used in this resource. Defaults to false."
+    },
+    {
+      "name": "LargeIcon",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
+    },
+    {
+      "name": "Notes",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
+    },
+    {
+      "name": "Owner",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
+    },
+    {
+      "name": "PrivacyInformationUrl",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
+    },
+    {
+      "name": "Publisher",
+      "reason": "ReadOnly",
+      "note": "Intune accepts only RoleScopeTagIds on PATCH of an approved Managed Google Play app."
     },
     {
       "name": "PublishingState",

@@ -15,6 +15,11 @@
   },
   "excludedProperties": [
     {
+      "name": "AppleDeviceAppDeliveryProtocolType",
+      "reason": "Accepted",
+      "note": "Intune never returns the property on iosStoreApp and rejects it on PATCH with ModelValidationFailure."
+    },
+    {
       "name": "DependentAppCount",
       "reason": "ReadOnly",
       "note": "Graph marks the property as read only on this type."

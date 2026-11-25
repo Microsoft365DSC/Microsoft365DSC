@@ -142,6 +142,22 @@ class AADUser : M365DSCResourceBase
     [MSFT_AADUserAttributeSet[]] $CustomSecurityAttributes
 
     [DscProperty()]
+    [System.ComponentModel.Description('Represents organization data (for example, division and costCenter) associated with a user.')]
+    [MSFT_AADUserEmployeeOrgData] $EmployeeOrgData
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Identifiers that can be used to identify and authenticate a user in non-Azure AD environments. This property can store identifiers for smartcard-based certificates that users use to access on-premises Active Directory deployments or federated access. It can also be used to store the Subject Alternate Name (SAN) that''s associated with a Common Access Card (CAC).')]
+    [MSFT_AADUserAuthorizationInfo] $AuthorizationInfo
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The user that is this user''s manager, identified by UserPrincipalName. Use an empty string to remove the manager.')]
+    [System.String] $Manager
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The users and groups responsible for this guest user''s privileges in the tenant and keep the guest user''s information and access updated. Users are identified by UserPrincipalName and groups by DisplayName.')]
+    [System.String[]] $Sponsors
+
+    [DscProperty()]
     [System.ComponentModel.Description('Present ensures the user exists, absent ensures it is removed')]
     [ValidateSet('Present', 'Absent')]
     [System.String] $Ensure
@@ -187,8 +203,8 @@ class AADUser : M365DSCResourceBase
 
     AADUser() : base()
     {
-        $this.ResourceCache['propertiesToRetrieve'] = @('Id', 'AccountEnabled', 'UserPrincipalName', 'DisplayName', 'GivenName', 'Surname', 'UsageLocation', 'AgeGroup', 'City', 'CompanyName', 'Country', 'Department', 'EmployeeHireDate', 'EmployeeId', 'EmployeeLeaveDateTime', 'EmployeeType', 'FaxNumber', 'MobilePhone', 'OfficeLocation', 'Mail', 'OtherMails', 'BusinessPhones', 'OnPremisesExtensionAttributes', 'PostalCode', 'PreferredLanguage', 'State', 'StreetAddress', 'JobTitle', 'UserType', 'PasswordPolicies', 'customSecurityAttributes')
-        $this.ResourceCache['creationParamsMap'] = @{AccountEnabled = 'AccountEnabled'; AgeGroup = 'AgeGroup'; City = 'City'; CompanyName = 'CompanyName'; Country = 'Country'; Department = 'Department'; DisplayName = 'DisplayName'; EmployeeHireDate = 'EmployeeHireDate'; EmployeeId = 'EmployeeId'; EmployeeLeaveDateTime = 'EmployeeLeaveDateTime'; EmployeeType = 'EmployeeType'; FaxNumber = 'FaxNumber'; GivenName = 'GivenName'; JobTitle = 'JobTitle'; MobilePhone = 'MobilePhone'; OfficeLocation = 'OfficeLocation'; Mail = 'Mail'; OtherMails = 'OtherMails'; OnPremisesExtensionAttributes = 'OnPremisesExtensionAttributes'; PostalCode = 'PostalCode'; PreferredLanguage = 'PreferredLanguage'; State = 'State'; StreetAddress = 'StreetAddress'; Surname = 'Surname'; BusinessPhones = 'PhoneNumber'; UsageLocation = 'UsageLocation'; UserPrincipalName = 'UserPrincipalName'; UserType = 'UserType'; PasswordPolicies = 'PasswordPolicies'}
+        $this.ResourceCache['propertiesToRetrieve'] = @('Id', 'AccountEnabled', 'UserPrincipalName', 'DisplayName', 'GivenName', 'Surname', 'UsageLocation', 'AgeGroup', 'City', 'CompanyName', 'Country', 'Department', 'EmployeeHireDate', 'EmployeeId', 'EmployeeLeaveDateTime', 'EmployeeType', 'FaxNumber', 'MobilePhone', 'OfficeLocation', 'Mail', 'OtherMails', 'BusinessPhones', 'OnPremisesExtensionAttributes', 'PostalCode', 'PreferredLanguage', 'State', 'StreetAddress', 'JobTitle', 'UserType', 'PasswordPolicies', 'customSecurityAttributes', 'EmployeeOrgData', 'AuthorizationInfo')
+        $this.ResourceCache['creationParamsMap'] = @{AccountEnabled = 'AccountEnabled'; AgeGroup = 'AgeGroup'; AuthorizationInfo = 'AuthorizationInfo'; City = 'City'; CompanyName = 'CompanyName'; Country = 'Country'; Department = 'Department'; DisplayName = 'DisplayName'; EmployeeHireDate = 'EmployeeHireDate'; EmployeeId = 'EmployeeId'; EmployeeLeaveDateTime = 'EmployeeLeaveDateTime'; EmployeeOrgData = 'EmployeeOrgData'; EmployeeType = 'EmployeeType'; FaxNumber = 'FaxNumber'; GivenName = 'GivenName'; JobTitle = 'JobTitle'; MobilePhone = 'MobilePhone'; OfficeLocation = 'OfficeLocation'; Mail = 'Mail'; OtherMails = 'OtherMails'; OnPremisesExtensionAttributes = 'OnPremisesExtensionAttributes'; PostalCode = 'PostalCode'; PreferredLanguage = 'PreferredLanguage'; State = 'State'; StreetAddress = 'StreetAddress'; Surname = 'Surname'; BusinessPhones = 'PhoneNumber'; UsageLocation = 'UsageLocation'; UserPrincipalName = 'UserPrincipalName'; UserType = 'UserType'; PasswordPolicies = 'PasswordPolicies'}
     }
 
     [AADUser] Get()
@@ -255,6 +271,16 @@ class AADUser : M365DSCResourceBase
                         'ConsistencyLevel' = 'eventual'
                     }
                 }
+                @{
+                    id     = 'Manager'
+                    method = 'GET'
+                    url    = "/users/$($this.UserPrincipalName)/manager?`$select=userPrincipalName"
+                }
+                @{
+                    id     = 'Sponsors'
+                    method = 'GET'
+                    url    = "/users/$($this.UserPrincipalName)/sponsors?`$select=userPrincipalName,displayName"
+                }
             )
             $batchResponse = $null
             $navigationCache = $this.ResourceCache['NavigationCache']
@@ -271,7 +297,8 @@ class AADUser : M365DSCResourceBase
             # If the user was deleted in the meantime, then return an empty hashtable
             # This only happens during Export because we cache the user objects
             # During normal Get or Test, we would have already returned $nullReturn above
-            if ($null -ne $this.ExportedInstance -and $batchResponse.status -contains '404')
+            $licenseResponse = $batchResponse | Where-Object -Property id -EQ 'License'
+            if ($null -ne $this.ExportedInstance -and $licenseResponse.status -contains '404')
             {
                 Write-Verbose -Message 'The specified user was deleted in the meantime.'
                 return $this.AsResult(@{})
@@ -279,7 +306,7 @@ class AADUser : M365DSCResourceBase
 
             Write-Verbose -Message "Found User $($this.UserPrincipalName)"
             $currentLicenseAssignment = @()
-            $skus = ($batchResponse | Where-Object -FilterScript { $_.id -eq 'License' }).body.value
+            $skus = $licenseResponse.body.value
             foreach ($sku in $skus)
             {
                 $currentLicenseAssignment += $sku.SkuPartNumber
@@ -312,6 +339,38 @@ class AADUser : M365DSCResourceBase
             }
 
             $complexOnPremisesExtensionAttributes = $this.GetOnPremisesExtensionAttributes($user)
+
+            $complexEmployeeOrgData = $null
+            if ($null -ne $user.EmployeeOrgData)
+            {
+                $complexEmployeeOrgData = @{
+                    CostCenter = $user.EmployeeOrgData.costCenter
+                    Division   = $user.EmployeeOrgData.division
+                }
+            }
+
+            $complexAuthorizationInfo = $null
+            if ($null -ne $user.AuthorizationInfo)
+            {
+                $complexAuthorizationInfo = @{
+                    CertificateUserIds = Get-M365DSCArrayFromProperty -PropertyValue $user.AuthorizationInfo.certificateUserIds -ElementType ([System.String])
+                }
+            }
+
+            $managerValue = ($batchResponse | Where-Object -Property id -EQ 'Manager').body.userPrincipalName
+
+            $sponsorsValue = @()
+            foreach ($sponsor in ($batchResponse | Where-Object -Property id -EQ 'Sponsors').body.value)
+            {
+                if (-not [System.String]::IsNullOrEmpty($sponsor.userPrincipalName))
+                {
+                    $sponsorsValue += $sponsor.userPrincipalName
+                }
+                else
+                {
+                    $sponsorsValue += $sponsor.displayName
+                }
+            }
 
             $employeeHireDateValue = $null
             if ($null -ne $user.EmployeeHireDate)
@@ -360,6 +419,10 @@ class AADUser : M365DSCResourceBase
                 UserType                      = $user.UserType
                 Roles                         = $rolesValue
                 CustomSecurityAttributes      = $complexCustomSecurityAttributes
+                EmployeeOrgData               = $complexEmployeeOrgData
+                AuthorizationInfo             = $complexAuthorizationInfo
+                Manager                       = $managerValue
+                Sponsors                      = $sponsorsValue
                 Ensure                        = 'Present'
             }
             return $this.AsResult($results)
@@ -624,6 +687,71 @@ class AADUser : M365DSCResourceBase
             }
             #endregion
 
+            #region Manager
+            if ($this.GetBoundParameters().ContainsKey('Manager') -and $this.Manager -ne [System.String]$user.Manager)
+            {
+                $managerRefUri = "/v1.0/users/$userId/manager/`$ref"
+                if ([System.String]::IsNullOrEmpty($this.Manager))
+                {
+                    Write-Verbose -Message "Removing the manager of user {$($this.UserPrincipalName)}"
+                    Invoke-M365DSCGraphRequest -Method DELETE -Uri $managerRefUri
+                }
+                else
+                {
+                    Write-Verbose -Message "Setting the manager of user {$($this.UserPrincipalName)} to {$($this.Manager)}"
+                    $managerId = (Get-MgUser -UserId $this.Manager -Property Id -ErrorAction Stop).Id
+                    Invoke-M365DSCCommand -ScriptBlock {
+                        Invoke-M365DSCGraphRequest -Method PUT -Uri $managerRefUri -Body @{
+                            '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/users/$managerId"
+                        }
+                    } -RetryOnNotFoundError
+                }
+            }
+            #endregion
+
+            #region Sponsors
+            if ($null -ne $this.Sponsors)
+            {
+                $currentSponsors = $user.Sponsors
+                if ($null -eq $currentSponsors)
+                {
+                    $currentSponsors = @()
+                }
+
+                foreach ($sponsorDifference in (Compare-Object -ReferenceObject $currentSponsors -DifferenceObject $this.Sponsors))
+                {
+                    $sponsorName = $sponsorDifference.InputObject
+                    if ($sponsorName.Contains('@'))
+                    {
+                        $sponsorId = (Get-MgUser -UserId $sponsorName -Property Id -ErrorAction Stop).Id
+                    }
+                    else
+                    {
+                        $sponsorId = (Get-MgGroup -Filter "DisplayName eq '$($sponsorName -replace "'", "''")'" -Property Id).Id
+                    }
+                    if ([System.String]::IsNullOrEmpty($sponsorId))
+                    {
+                        throw "Sponsor {$sponsorName} of user {$($this.UserPrincipalName)} does not exist in the tenant."
+                    }
+
+                    if ($sponsorDifference.SideIndicator -eq '=>')
+                    {
+                        Write-Verbose -Message "Adding sponsor {$sponsorName} to user {$($this.UserPrincipalName)}"
+                        Invoke-M365DSCCommand -ScriptBlock {
+                            Invoke-M365DSCGraphRequest -Method POST -Uri "/v1.0/users/$userId/sponsors/`$ref" -Body @{
+                                '@odata.id' = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl + "v1.0/directoryObjects/$sponsorId"
+                            }
+                        } -RetryOnNotFoundError
+                    }
+                    else
+                    {
+                        Write-Verbose -Message "Removing sponsor {$sponsorName} from user {$($this.UserPrincipalName)}"
+                        Invoke-M365DSCGraphRequest -Method DELETE -Uri "/v1.0/users/$userId/sponsors/$sponsorId/`$ref"
+                    }
+                }
+            }
+            #endregion
+
             #region Roles
             if ($null -ne $this.Roles)
             {
@@ -828,7 +956,7 @@ class AADUser : M365DSCResourceBase
             }
             $this.ResourceCache['M365DSCExportInstances'] = Get-MgUser @ExportParameters
 
-            $navigationRequests = [System.Collections.Generic.List[System.Object]]::new(@($this.ResourceCache['M365DSCExportInstances']).Count * 2)
+            $navigationRequests = [System.Collections.Generic.List[System.Object]]::new(@($this.ResourceCache['M365DSCExportInstances']).Count * 4)
             foreach ($exportedUser in $this.ResourceCache['M365DSCExportInstances'])
             {
                 if ([System.String]::IsNullOrEmpty($exportedUser.UserPrincipalName))
@@ -849,6 +977,16 @@ class AADUser : M365DSCResourceBase
                             'ConsistencyLevel' = 'eventual'
                         }
                     })
+                $navigationRequests.Add(@{
+                        id     = "$($exportedUser.UserPrincipalName)|Manager"
+                        method = 'GET'
+                        url    = "/users/$($exportedUser.UserPrincipalName)/manager?`$select=userPrincipalName"
+                    })
+                $navigationRequests.Add(@{
+                        id     = "$($exportedUser.UserPrincipalName)|Sponsors"
+                        method = 'GET'
+                        url    = "/users/$($exportedUser.UserPrincipalName)/sponsors?`$select=userPrincipalName,displayName"
+                    })
             }
 
             $navigationCache = @{}
@@ -867,7 +1005,7 @@ class AADUser : M365DSCResourceBase
                     $principalName = $responseId.Substring(0, $separatorIndex)
                     if (-not $navigationCache.ContainsKey($principalName))
                     {
-                        $navigationCache[$principalName] = [System.Collections.Generic.List[System.Object]]::new(2)
+                        $navigationCache[$principalName] = [System.Collections.Generic.List[System.Object]]::new(4)
                     }
 
                     $navigationCache[$principalName].Add(@{
@@ -950,12 +1088,46 @@ class AADUser : M365DSCResourceBase
                             }
                         }
 
+                        if ($null -ne $Results.EmployeeOrgData)
+                        {
+                            $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                -ComplexObject $Results.EmployeeOrgData `
+                                -CIMInstanceName 'AADUserEmployeeOrgData'
+                            if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                            {
+                                $Results.EmployeeOrgData = $complexTypeStringResult
+                            }
+                            else
+                            {
+                                $Results.Remove('EmployeeOrgData') | Out-Null
+                            }
+                        }
+
+                        if ($Results.AuthorizationInfo.CertificateUserIds.Count -gt 0)
+                        {
+                            $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
+                                -ComplexObject $Results.AuthorizationInfo `
+                                -CIMInstanceName 'AADUserAuthorizationInfo'
+                            if (-not [String]::IsNullOrWhiteSpace($complexTypeStringResult))
+                            {
+                                $Results.AuthorizationInfo = $complexTypeStringResult
+                            }
+                            else
+                            {
+                                $Results.Remove('AuthorizationInfo') | Out-Null
+                            }
+                        }
+                        else
+                        {
+                            $Results.Remove('AuthorizationInfo') | Out-Null
+                        }
+
                         $currentDSCBlock = Get-M365DSCExportContentForResource -ResourceName $this.GetResourceName() `
                             -ConnectionMode $ConnectionMode `
                             -ModulePath $this.GetModulePath() `
                             -Results $Results `
                             -Credential $this.Credential `
-                            -NoEscape @('Password', 'CustomSecurityAttributes', 'OnPremisesExtensionAttributes') `
+                            -NoEscape @('Password', 'CustomSecurityAttributes', 'OnPremisesExtensionAttributes', 'EmployeeOrgData', 'AuthorizationInfo') `
                             -RawResults $this.RawExportResults
 
                         [void]$dscContent.Append($currentDSCBlock)
@@ -1167,6 +1339,24 @@ class MSFT_AADUserAttributeSet
     [DscProperty()]
     [System.ComponentModel.Description('List of attribute values.')]
     [MSFT_AADUserAttributeValue[]] $AttributeValues
+}
+
+class MSFT_AADUserEmployeeOrgData
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The cost center associated with the user.')]
+    [System.String] $CostCenter
+
+    [DscProperty()]
+    [System.ComponentModel.Description('The name of the division in which the user works.')]
+    [System.String] $Division
+}
+
+class MSFT_AADUserAuthorizationInfo
+{
+    [DscProperty()]
+    [System.ComponentModel.Description('The collection of unique identifiers that can be associated with a user and can be used to bind the Microsoft Entra user to a certificate for authentication and authorization into non-Azure AD environments. The identifiers must be unique in the tenant.')]
+    [System.String[]] $CertificateUserIds
 }
 
 class MSFT_AADUserOnPremisesExtensionAttributes

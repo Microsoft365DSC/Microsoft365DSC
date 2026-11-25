@@ -71,6 +71,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                     }
+                    @{
+                        notificationChannelType = "sms"
+                        notificationReceivers   = @(
+                            @{
+                                contactInformation = "FakeStringValue"
+                                locale             = "en-us"
+                            }
+                        )
+                    }
                 )
                 Severity = "warning"
                 Threshold = $null
@@ -109,6 +118,15 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     NotificationChannels = @(
                         [MSFT_IntuneAlertRuleNotificationChannel] @{
                             NotificationChannelType = "email"
+                            NotificationReceivers   = @(
+                                [MSFT_IntuneAlertRuleNotificationChannelReceiver] @{
+                                    ContactInformation = "FakeStringValue"
+                                    Locale             = "en-us"
+                                }
+                            )
+                        }
+                        [MSFT_IntuneAlertRuleNotificationChannel] @{
+                            NotificationChannelType = "sms"
                             NotificationReceivers   = @(
                                 [MSFT_IntuneAlertRuleNotificationChannelReceiver] @{
                                     ContactInformation = "FakeStringValue"
@@ -181,9 +199,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         [MSFT_IntuneAlertRuleCondition] @{
                             Aggregation       = "affectedCloudPcPercentage"
                             ConditionCategory = "cloudPcConnectionErrors"
-                            Operator          = "greaterOrEqual"
+                            Operator          = "notEqual"
                             RelationshipType  = "or"
-                            ThresholdValue = "25"
+                            ThresholdValue    = "25"
                         }
                     )
                     Enabled = $False # Drift
@@ -219,7 +237,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneAlertRuleWindows365' -Property $testParams).Set()
-                Should -Invoke -CommandName Update-MgBetaDeviceManagementMonitoringAlertRule -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaDeviceManagementMonitoringAlertRule -Exactly 1 -ParameterFilter {
+                    $BodyParameter.conditions[0].operator -eq 'notEqual'
+                }
             }
         }
 
