@@ -556,10 +556,13 @@ class IntuneDeviceCompliancePolicyWindows10 : M365DSCResourceBase
                 -DeviceCompliancePolicyId $currentDeviceWindows10Policy.Id `
                 -DeviceComplianceScheduledActionForRules $complexScheduledActionsForRule
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceWindows10Policy.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceCompliancePolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceWindows10Policy.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceCompliancePolicies'
+            }
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentDeviceWindows10Policy.Ensure -eq 'Present')
         {

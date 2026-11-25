@@ -774,11 +774,14 @@ class IntuneAppProtectionPolicyAndroid : M365DSCResourceBase
             $Url = "/beta/deviceAppManagement/androidManagedAppProtections('$($currentPolicy.Id)')/targetApps"
             Invoke-M365DSCGraphRequest -Method POST -Uri $Url -Body $targetApps
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentPolicy.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceAppManagement/androidManagedAppProtections'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentPolicy.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceAppManagement/androidManagedAppProtections'
+            }
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentPolicy.Ensure -eq 'Present')
         {

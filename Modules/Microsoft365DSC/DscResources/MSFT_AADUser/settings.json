@@ -142,6 +142,11 @@
       "note": "Computed from the manager relationship set on other users"
     },
     {
+      "name": "DistributionLists",
+      "reason": "Accepted",
+      "note": "Personal Outlook contact lists in the user mailbox rather than directory configuration."
+    },
+    {
       "name": "Drive",
       "reason": "ReadOnly",
       "note": "Graph documents the OneDrive navigation as read only."
@@ -290,6 +295,11 @@
       "name": "MySite",
       "reason": "OwnedByOtherResource",
       "note": "Stored in the SharePoint user profile, which SPOUserProfileProperty writes."
+    },
+    {
+      "name": "Notes",
+      "reason": "Accepted",
+      "note": "Personal Outlook notes in the user mailbox rather than directory configuration."
     },
     {
       "name": "Oauth2PermissionGrants",

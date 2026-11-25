@@ -70,6 +70,10 @@ function New-M365DSCAssignmentsGetBlock
 
 .PARAMETER PolicyIdExpression
     Specifies the expression holding the policy id, e.g. '$createdInstance.Id' or '$this.Id'.
+
+.PARAMETER RequireBoundAssignments
+    Wraps the block in a check that Assignments is part of the configuration. Used for the
+    update branch, which must keep the assignments of the policy when Assignments is not specified.
 #>
 function New-M365DSCAssignmentsSetBlock
 {
@@ -83,36 +87,58 @@ function New-M365DSCAssignmentsSetBlock
 
         [Parameter(Mandatory = $true)]
         [System.String]
-        $PolicyIdExpression
+        $PolicyIdExpression,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $RequireBoundAssignments
     )
 
-    $indent = ' ' * 16
+    $outerIndent = ' ' * 16
+    $indent = $outerIndent
+    if ($RequireBoundAssignments)
+    {
+        $indent = ' ' * 20
+    }
     $cmdlets = $ResourceModel.Cmdlets
     $builder = [System.Text.StringBuilder]::new()
 
+    $null = $builder.AppendLine('')
+    if ($RequireBoundAssignments)
+    {
+        $null = $builder.AppendLine("${outerIndent}if (`$this.GetBoundParameters().ContainsKey('Assignments'))")
+        $null = $builder.AppendLine("$outerIndent{")
+    }
+
     if ($ResourceModel.AssignmentKind -eq 'MobileApp')
     {
-        $null = $builder.AppendLine('')
         $null = $builder.AppendLine("$indent`$assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:`$true -Assignments `$this.Assignments")
         $null = $builder.AppendLine("${indent}if ($PolicyIdExpression)")
         $null = $builder.AppendLine("$indent{")
         $null = $builder.AppendLine("$indent    Update-DeviceAppManagementPolicyAssignment ``")
         $null = $builder.AppendLine("$indent        -AppManagementPolicyId $PolicyIdExpression ``")
         $null = $builder.AppendLine("$indent        -Assignments `$assignmentsHash")
-        $null = $builder.Append("$indent}")
-
-        return $builder.ToString()
+    }
+    else
+    {
+        $null = $builder.AppendLine("$indent`$assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:`$true -Assignments `$this.Assignments")
+        $null = $builder.AppendLine("${indent}if ($PolicyIdExpression)")
+        $null = $builder.AppendLine("$indent{")
+        $null = $builder.AppendLine("$indent    Update-DeviceConfigurationPolicyAssignment ``")
+        $null = $builder.AppendLine("$indent        -DeviceConfigurationPolicyId $PolicyIdExpression ``")
+        $null = $builder.AppendLine("$indent        -Targets `$assignmentsHash ``")
+        $null = $builder.AppendLine("$indent        -Repository '$($cmdlets.AssignmentRepository)'")
     }
 
-    $null = $builder.AppendLine('')
-    $null = $builder.AppendLine("$indent`$assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:`$true -Assignments `$this.Assignments")
-    $null = $builder.AppendLine("${indent}if ($PolicyIdExpression)")
-    $null = $builder.AppendLine("$indent{")
-    $null = $builder.AppendLine("$indent    Update-DeviceConfigurationPolicyAssignment ``")
-    $null = $builder.AppendLine("$indent        -DeviceConfigurationPolicyId $PolicyIdExpression ``")
-    $null = $builder.AppendLine("$indent        -Targets `$assignmentsHash ``")
-    $null = $builder.AppendLine("$indent        -Repository '$($cmdlets.AssignmentRepository)'")
-    $null = $builder.Append("$indent}")
+    if ($RequireBoundAssignments)
+    {
+        $null = $builder.AppendLine("$indent}")
+        $null = $builder.Append("$outerIndent}")
+    }
+    else
+    {
+        $null = $builder.Append("$indent}")
+    }
 
     return $builder.ToString()
 }

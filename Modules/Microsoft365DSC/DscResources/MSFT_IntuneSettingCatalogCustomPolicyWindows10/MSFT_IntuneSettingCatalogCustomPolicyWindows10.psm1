@@ -122,9 +122,15 @@ class IntuneSettingCatalogCustomPolicyWindows10 : M365DSCResourceBase
 
                 if (-not [string]::IsNullOrEmpty($this.Name))
                 {
+                    $templateFamily = 'none'
+                    if (-not [string]::IsNullOrEmpty($this.TemplateReference.TemplateFamily))
+                    {
+                        $templateFamily = $this.TemplateReference.TemplateFamily
+                    }
+
                     [array]$getValue = Get-MgBetaDeviceManagementConfigurationPolicy `
                         -All `
-                        -Filter "Name eq '$($this.Name -replace "'", "''")' and Platforms eq 'windows10' and Technologies eq 'mdm' and TemplateReference/TemplateFamily eq 'none'" `
+                        -Filter "Name eq '$($this.Name -replace "'", "''")' and Platforms eq 'windows10' and Technologies eq 'mdm' and TemplateReference/TemplateFamily eq '$templateFamily'" `
                         -ErrorAction SilentlyContinue
 
                     if ($getValue.Count -gt 1)
@@ -260,17 +266,28 @@ class IntuneSettingCatalogCustomPolicyWindows10 : M365DSCResourceBase
             $updateParameters = ([Hashtable]$boundParameters).Clone()
             $updateParameters.Remove('Id') | Out-Null
             $updateParameters.Remove('TemplateReference') | Out-Null
+            if (-not [string]::IsNullOrEmpty($this.TemplateReference.TemplateId))
+            {
+                $updateParameters.Add('TemplateReferenceId', $this.TemplateReference.TemplateId)
+            }
+            if (-not $updateParameters.ContainsKey('RoleScopeTagIds'))
+            {
+                $updateParameters.Add('RoleScopeTagIds', (Resolve-M365DSCIntuneRoleScopeTagIds -RoleScopeTagIds $currentInstance.RoleScopeTagIds))
+            }
 
             #region resource generator code
             Update-IntuneDeviceConfigurationPolicy `
                 -DeviceConfigurationPolicyId $currentInstance.Id `
                 @updateParameters
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment `
-                -DeviceConfigurationPolicyId $currentInstance.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/configurationPolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment `
+                    -DeviceConfigurationPolicyId $currentInstance.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/configurationPolicies'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

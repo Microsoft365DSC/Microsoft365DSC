@@ -457,10 +457,13 @@ class IntuneDeviceCompliancePolicyMacOS : M365DSCResourceBase
                 -DeviceComplianceScheduledActionForRules $complexScheduledActionsForRule
 
             #region Assignments
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceMacOsPolicy.Id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/deviceCompliancePolicies'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentDeviceMacOsPolicy.Id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/deviceCompliancePolicies'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentDeviceMacOsPolicy.Ensure -eq 'Present')

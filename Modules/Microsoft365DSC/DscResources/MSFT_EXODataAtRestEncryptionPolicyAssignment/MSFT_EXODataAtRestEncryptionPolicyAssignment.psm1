@@ -68,7 +68,7 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
                 $this.AddTelemetry('Get')
 
-                $instance = Invoke-M365DSCCommand -ScriptBlock { Get-M365DataAtRestEncryptionPolicyAssignment -ErrorAction Stop }
+                $instance = $this.GetAssignment()
             }
             else
             {
@@ -135,7 +135,7 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
         try
         {
-            [array]$assignments = Get-M365DataAtRestEncryptionPolicyAssignment -ErrorAction Stop
+            [array]$assignments = $this.GetAssignment()
 
             $i = 1
             $dscContent = [System.Text.StringBuilder]::new()
@@ -177,5 +177,17 @@ class EXODataAtRestEncryptionPolicyAssignment : M365DSCResourceBase
 
             throw
         }
+    }
+
+    hidden [System.Object] GetAssignment()
+    {
+        [array]$policies = Invoke-M365DSCCommand -ScriptBlock { Get-M365DataAtRestEncryptionPolicy -ErrorAction Stop }
+        if ($policies.Count -eq 0)
+        {
+            Write-Verbose -Message 'The tenant has no data-at-rest encryption policy and assignments.'
+            return $null
+        }
+
+        return Invoke-M365DSCCommand -ScriptBlock { Get-M365DataAtRestEncryptionPolicyAssignment -ErrorAction Stop }
     }
 }

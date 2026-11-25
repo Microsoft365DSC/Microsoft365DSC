@@ -274,9 +274,12 @@ class IntunePolicySets : M365DSCResourceBase
                     -BodyParameter $itemamendments
             }
 
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-MgBetaDeviceAppManagementMultiplePolicySet -PolicySetId $currentInstance.Id `
-                -Assignments $assignmentsHash
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-MgBetaDeviceAppManagementMultiplePolicySet -PolicySetId $currentInstance.Id `
+                    -Assignments $assignmentsHash
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

@@ -360,10 +360,13 @@ class IntuneDeviceConfigurationAdministrativeTemplatePolicyWindows10 : M365DSCRe
                 -BodyParameter $updateParameters
 
             #Update Assignments
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceManagement/groupPolicyConfigurations'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceManagement/groupPolicyConfigurations'
+            }
             #endregion
 
             #Update DefinitionValues

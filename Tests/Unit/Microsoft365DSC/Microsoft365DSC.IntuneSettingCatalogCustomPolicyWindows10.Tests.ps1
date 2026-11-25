@@ -238,11 +238,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The IntuneSettingCatalogCustomPolicyWindows10 should exist but it DOES NOT' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Description  = 'FakeStringValue'
-                    Id           = 'FakeStringValue'
-                    Name         = 'FakeStringValue'
-                    Platforms    = 'Windows10'
-                    Settings     = @(
+                    Description       = 'FakeStringValue'
+                    Id                = 'FakeStringValue'
+                    Name              = 'FakeStringValue'
+                    Platforms         = 'Windows10'
+                    Settings          = @(
                         ([MSFT_MicrosoftGraphdeviceManagementConfigurationSetting] @{
                             SettingInstance = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSettingInstance] @{
                                     simpleSettingValue  = ([MSFT_MicrosoftGraphDeviceManagementConfigurationSimpleSettingValue] @{
@@ -311,9 +311,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 })
                         })
                     )
-                    Technologies = 'mdm'
-                    Ensure       = 'Present'
-                    Credential   = $Credential
+                    TemplateReference = [MSFT_MicrosoftGraphdeviceManagementConfigurationPolicyTemplateReference] @{
+                        TemplateFamily = 'endpointSecurityFirewall'
+                        TemplateId     = 'fakeTemplateId'
+                    }
+                    Technologies      = 'mdm'
+                    Ensure            = 'Present'
+                    Credential        = $Credential
                 }
 
                 Mock -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -MockWith {
@@ -322,6 +326,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             It 'Should return Values from the Get method' {
                 ((New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Absent'
+                Should -Invoke -CommandName Get-MgBetaDeviceManagementConfigurationPolicy -ParameterFilter {
+                    $Filter -like "*TemplateReference/TemplateFamily eq 'endpointSecurityFirewall'"
+                } -Exactly 1
             }
             It 'Should return false from the Test method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Test() | Should -Be $false
@@ -780,6 +787,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     )
                     TemplateReference = [MSFT_MicrosoftGraphdeviceManagementConfigurationPolicyTemplateReference] @{
                         TemplateFamily = 'none'
+                        TemplateId     = 'fakeTemplateId'
                     }
                     Technologies = 'mdm'
                     Ensure       = 'Present'
@@ -798,8 +806,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneSettingCatalogCustomPolicyWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-IntuneDeviceConfigurationPolicy -Exactly 1 -ParameterFilter {
-                    [System.String]::IsNullOrEmpty($TemplateReferenceId)
+                    $TemplateReferenceId -eq 'fakeTemplateId' -and $null -ne $RoleScopeTagIds
                 }
+                Should -Invoke -CommandName Update-DeviceConfigurationPolicyAssignment -Exactly 0
             }
         }
 

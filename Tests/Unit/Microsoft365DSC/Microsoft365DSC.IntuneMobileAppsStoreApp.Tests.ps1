@@ -61,10 +61,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         v10_0 = $True
                         v11_0 = $True
                         v17_0 = $True
-                        v9_0 = $True
+                        v9_0  = $True
                         v18_0 = $True
+                        v26_0 = $True
+                        v27_0 = $True
                         v13_0 = $True
-                        v8_0 = $True
+                        v8_0  = $True
                         v14_0 = $True
                     }
                     bundleId = "FakeStringValue"
@@ -105,10 +107,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         v10_0 = $True
                         v11_0 = $True
                         v17_0 = $True
-                        v9_0 = $True
+                        v9_0  = $True
                         v18_0 = $True
+                        v26_0 = $True
+                        v27_0 = $True
                         v13_0 = $True
-                        v8_0 = $True
+                        v8_0  = $True
                         v14_0 = $True
                     }
                     bundleId = "FakeStringValue"
@@ -193,10 +197,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         v10_0 = $True
                         v11_0 = $True
                         v17_0 = $True
-                        v9_0 = $True
+                        v9_0  = $True
                         v18_0 = $True
+                        v26_0 = $True
+                        v27_0 = $True
                         v13_0 = $True
-                        v8_0 = $True
+                        v8_0  = $True
                         v14_0 = $True
                     })
                     Notes = "FakeStringValue"
@@ -272,10 +278,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         v10_0 = $True
                         v11_0 = $True
                         v17_0 = $True
-                        v9_0 = $True
+                        v9_0  = $True
                         v18_0 = $True
+                        v26_0 = $True
+                        v27_0 = $True
                         v13_0 = $True
-                        v8_0 = $True
+                        v8_0  = $True
                         v14_0 = $True
                     })
                     Notes = "FakeStringValue"
@@ -333,10 +341,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         v10_0 = $True
                         v11_0 = $True
                         v17_0 = $True
-                        v9_0 = $True
+                        v9_0  = $True
                         v18_0 = $True
+                        v26_0 = $True
+                        v27_0 = $True
                         v13_0 = $True
-                        v8_0 = $True
+                        v8_0  = $True
                         v14_0 = $True
                     })
                     Notes = "FakeStringValue"
@@ -385,10 +395,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         v10_0 = $True
                         v11_0 = $True
                         v17_0 = $True
-                        v9_0 = $True
+                        v9_0  = $True
                         v18_0 = $True
+                        v26_0 = $True
+                        v27_0 = $True
                         v13_0 = $True
-                        v8_0 = $True
+                        v8_0  = $True
                         v14_0 = $True
                     })
                     Notes = "FakeStringValue"

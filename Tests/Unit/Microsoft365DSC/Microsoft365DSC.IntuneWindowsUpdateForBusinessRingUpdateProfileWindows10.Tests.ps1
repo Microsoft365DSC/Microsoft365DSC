@@ -430,6 +430,29 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Ensure                                      = 'Present'
                     Credential                                  = $Credential
                 }
+
+                Mock -CommandName Get-MgBetaDeviceManagementDeviceConfigurationAssignment -MockWith {
+                    return @(
+                        @{
+                            Id     = 'FakeAssignmentId'
+                            Source = 'direct'
+                            Target = @{
+                                '@odata.type' = '#microsoft.graph.groupAssignmentTarget'
+                                groupId       = '42a638ec-2bf2-47a8-8f5f-176ce2124b7b'
+                            }
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-M365DSCIntuneGroup -MockWith {
+                    return @{
+                        Id          = '42a638ec-2bf2-47a8-8f5f-176ce2124b7b'
+                        DisplayName = 'FakeStringValue'
+                    }
+                }
+
+                Mock -CommandName Remove-MgBetaDeviceManagementDeviceConfigurationAssignment -MockWith {
+                }
             }
 
             It 'Should return Values from the Get method' {
@@ -443,6 +466,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementDeviceConfiguration -Exactly 1
+            }
+
+            It 'Should keep the assignments of the policy from the Set method when Assignments is not specified' {
+                (New-M365DSCResourceInstance -ResourceName 'IntuneWindowsUpdateForBusinessRingUpdateProfileWindows10' -Property $testParams).Set()
+                Should -Invoke -CommandName Remove-MgBetaDeviceManagementDeviceConfigurationAssignment -Exactly 0
             }
         }
 

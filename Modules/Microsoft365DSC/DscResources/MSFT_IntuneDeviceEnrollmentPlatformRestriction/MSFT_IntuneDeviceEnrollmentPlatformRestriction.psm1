@@ -365,12 +365,15 @@ class IntuneDeviceEnrollmentPlatformRestriction : M365DSCResourceBase
             # Assignments from DefaultPolicy are not editable and will raise an alert
             if ($currentInstance.Id -notlike '*_DefaultPlatformRestrictions')
             {
-                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-                Update-DeviceConfigurationPolicyAssignment `
-                    -DeviceConfigurationPolicyId $currentInstance.Id `
-                    -Targets $assignmentsHash `
-                    -Repository 'deviceManagement/deviceEnrollmentConfigurations' `
-                    -RootIdentifier 'enrollmentConfigurationAssignments'
+                if ($this.GetBoundParameters().ContainsKey('Assignments'))
+                {
+                    $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                    Update-DeviceConfigurationPolicyAssignment `
+                        -DeviceConfigurationPolicyId $currentInstance.Id `
+                        -Targets $assignmentsHash `
+                        -Repository 'deviceManagement/deviceEnrollmentConfigurations' `
+                        -RootIdentifier 'enrollmentConfigurationAssignments'
+                }
 
                 if ($PriorityPresent -and $this.Priority -ne $currentInstance.Priority)
                 {

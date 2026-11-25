@@ -35,14 +35,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Get-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -MockWith {
                 return @{
-                    IncludeTargets        = @(
+                    IncludeTargets                  = @(
                         @{
                             TargetType = 'group'
                             Id         = '00000000-0000-0000-0000-000000000000'
                         }
                     )
-                    '@odata.type' = "#microsoft.graph.x509CertificateAuthenticationMethodConfiguration"
-                    certificateAuthorityScopes = @(
+                    '@odata.type'                   = "#microsoft.graph.x509CertificateAuthenticationMethodConfiguration"
+                    certificateAuthorityScopes      = @(
                         @{
                             includeTargets = @(
                                 @{
@@ -54,10 +54,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             subjectKeyIdentifier = "FakeStringValue"
                         }
                     )
-                    issuerHintsConfiguration = @{
+                    issuerHintsConfiguration        = @{
                         state = "enabled"
                     }
-                    certificateUserBindings = @(
+                    requireCertificateSidAlignment  = $false
+                    certificateUserBindings         = @(
                         @{
                             x509CertificateField = "FakeStringValue"
                             userProperty = "FakeStringValue"
@@ -74,14 +75,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                     }
-                    ExcludeTargets = @(
+                    ExcludeTargets                  = @(
                         @{
                             TargetType = "group"
                             Id = "00000000-0000-0000-0000-000000000000"
                         }
                     )
-                    Id = "X509Certificate0"
-                    State = "enabled"
+                    Id                              = "X509Certificate0"
+                    State                           = "enabled"
                 }
             }
 
@@ -252,7 +253,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             })
                         )
                     })
-                    CertificateAuthorityScopes = @(
+                    CertificateAuthorityScopes      = @(
                         ([MSFT_MicrosoftGraphx509CertificateAuthorityScope] @{
                             IncludeTargets = @(
                                 ([MSFT_MicrosoftGraphIncludeTarget] @{
@@ -264,32 +265,33 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             SubjectKeyIdentifier = "FakeStringValue"
                         })
                     )
-                    certificateUserBindings = @(
+                    certificateUserBindings         = @(
                         ([MSFT_MicrosoftGraphx509CertificateUserBinding] @{
                             x509CertificateField = "FakeStringValue"
                             userProperty = "FakeStringValue"
                             priority = 25
                         })
                     )
-                    ExcludeTargets = @(
+                    ExcludeTargets                  = @(
                         ([MSFT_AADAuthenticationMethodPolicyX509ExcludeTarget] @{
                             TargetType = "group"
                             Id = "Fakegroup"
                         })
                     )
-                    IncludeTargets        = @(
+                    IncludeTargets                  = @(
                         ([MSFT_AADAuthenticationMethodPolicyX509IncludeTarget] @{
                             TargetType = 'group'
                             Id         = 'Fakegroup'
                         })
                     )
-                    IssuerHintsConfiguration = ([MSFT_MicrosoftGraphx509CertificateIssuerHintsConfiguration] @{
+                    IssuerHintsConfiguration        = ([MSFT_MicrosoftGraphx509CertificateIssuerHintsConfiguration] @{
                         State = "enabled"
                     })
-                    Id = "X509Certificate"
-                    State = "enabled"
-                    Ensure = 'Present'
-                    Credential = $Credential;
+                    Id                              = "X509Certificate"
+                    RequireCertificateSidAlignment  = $false
+                    State                           = "enabled"
+                    Ensure                          = 'Present'
+                    Credential                      = $Credential;
                 }
             }
 
@@ -311,7 +313,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             })
                         )
                     })
-                    CertificateAuthorityScopes = @(
+                    CertificateAuthorityScopes      = @(
                         ([MSFT_MicrosoftGraphx509CertificateAuthorityScope] @{
                             IncludeTargets = @(
                                 ([MSFT_MicrosoftGraphIncludeTarget] @{
@@ -323,37 +325,40 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             SubjectKeyIdentifier = "FakeStringValue2" # Drift
                         })
                     )
-                    certificateUserBindings = @(
+                    certificateUserBindings         = @(
                         ([MSFT_MicrosoftGraphx509CertificateUserBinding] @{
                             x509CertificateField = "FakeStringValue"
                             userProperty = "FakeStringValue"
                             priority = 7 # Drift
                         })
                     )
-                    ExcludeTargets = @(
+                    ExcludeTargets                  = @(
                         ([MSFT_AADAuthenticationMethodPolicyX509ExcludeTarget] @{
                             TargetType = "group"
                             Id = "Fakegroup2"
                         })
                     )
-                    IncludeTargets        = @(
+                    IncludeTargets                  = @(
                         ([MSFT_AADAuthenticationMethodPolicyX509IncludeTarget] @{
                             TargetType = 'group'
                             Id         = 'Fakegroup'
                         })
                     )
-                    IssuerHintsConfiguration = ([MSFT_MicrosoftGraphx509CertificateIssuerHintsConfiguration] @{
+                    IssuerHintsConfiguration        = ([MSFT_MicrosoftGraphx509CertificateIssuerHintsConfiguration] @{
                         State = "disabled" # Drift
                     })
-                    Id = "X509Certificate"
-                    State = "enabled"
-                    Ensure = 'Present'
-                    Credential = $Credential;
+                    Id                              = "X509Certificate"
+                    RequireCertificateSidAlignment  = $true
+                    State                           = "enabled"
+                    Ensure                          = 'Present'
+                    Credential                      = $Credential;
                 }
             }
 
             It 'Should return Values from the Get method' {
-                ((New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicyX509' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicyX509' -Property $testParams).Get().ToHashtable()
+                $result.Ensure | Should -Be 'Present'
+                $result.RequireCertificateSidAlignment | Should -Be $false
             }
 
             It 'Should return false from the Test method' {
@@ -362,7 +367,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADAuthenticationMethodPolicyX509' -Property $testParams).Set()
-                Should -Invoke -CommandName Update-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -Exactly 1 -ParameterFilter {
+                    $BodyParameter.requireCertificateSidAlignment -eq $true
+                }
             }
         }
 

@@ -30,7 +30,7 @@
         },
         @{
             ModuleName      = 'ExchangeOnlineManagement'
-            RequiredVersion = '3.9.2'
+            RequiredVersion = '3.11.1'
         },
         @{
             ModuleName      = 'M365DSC.mgx'
@@ -39,7 +39,7 @@
         },
         @{
             ModuleName      = 'M365DSC.PSDesiredStateConfiguration'
-            RequiredVersion = '3.1.10'
+            RequiredVersion = '3.1.14'
         },
         @{
             ModuleName      = 'Microsoft.Graph.Authentication'
@@ -51,11 +51,11 @@
         },
         @{
             ModuleName      = "MSCloudLoginAssistant"
-            RequiredVersion = "1.2.10"
+            RequiredVersion = "1.2.11"
         },
         @{
             ModuleName      = 'PnP.PowerShell'
-            RequiredVersion = '3.4.1'
+            RequiredVersion = '3.5.0'
             PowerShellCore  = $true
         },
         @{

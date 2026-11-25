@@ -12,6 +12,11 @@
   },
   "excludedProperties": [
     {
+      "name": "ComplianceSettings",
+      "reason": "Accepted",
+      "note": "eDiscovery display templates bind to the connection schema, which the connector deployment publishes and this resource does not manage."
+    },
+    {
       "name": "Configuration",
       "reason": "Accepted",
       "note": "The container holds only authorizedAppIds, which the resource models as AuthorizedAppIds"
@@ -30,6 +35,11 @@
       "name": "IngestedItemsCount",
       "reason": "ReadOnly",
       "note": "The service counts the items ingested into the connection"
+    },
+    {
+      "name": "SearchSettings",
+      "reason": "Accepted",
+      "note": "Search result templates bind to the connection schema, which the connector deployment publishes and this resource does not manage."
     },
     {
       "name": "State",

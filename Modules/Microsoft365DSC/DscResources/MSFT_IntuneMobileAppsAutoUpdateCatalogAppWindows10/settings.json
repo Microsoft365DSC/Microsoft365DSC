@@ -16,6 +16,11 @@
   },
   "excludedProperties": [
     {
+      "name": "AllowedArchitectures",
+      "reason": "Accepted",
+      "note": "Intune accepts only x64 on create and doesn't allow to patch the property."
+    },
+    {
       "name": "DependentAppCount",
       "reason": "ReadOnly",
       "note": "Graph marks the property as read only on this type."

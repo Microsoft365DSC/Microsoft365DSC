@@ -1,5 +1,52 @@
 ﻿# Change log for Microsoft365DSC
 
+# 2.26.1125.1
+
+* AADApplication
+  * Added `ServicePrincipalLockConfiguration`, `RequestSignatureVerification`,
+    `EnableIdTokenIssuance` and `EnableAccessTokenIssuance`.
+  * Fixed `Set()` failing with "Could not find existing permission with DisplayName" when
+    `Api` configures `PreAuthorizedApplications`.
+  * Fixed `Set()` failing to create an application whose `Api` configures
+    `Oauth2PermissionScopes`.
+* AADAuthenticationMethodPolicyX509
+  * Added `RequireCertificateSidAlignment`.
+* AADUser
+  * Added `Manager`, `Sponsors`, `EmployeeOrgData` and `AuthorizationInfo`.
+* EXOAcceptedDomain
+  * Fixed the export stopping at the first 1000 accepted domains.
+* EXODataAtRestEncryptionPolicyAssignment
+  * Fixed `Get()` and the export failing with "Value cannot be null. (Parameter 'scopeSet')"
+    in a tenant without a data-at-rest encryption policy.
+* EXODnssecForVerifiedDomain
+  * Fixed the export stopping at the first 1000 accepted domains.
+* IntuneAlertRuleWindows365
+  * Added the `notEqual` operator and the `phoneCall` and `sms` notification channel types.
+* IntuneMobileAppsBuiltInStoreApp, IntuneMobileAppsBundleMacOS, IntuneMobileAppsLobAppiOS,
+  IntuneMobileAppsStoreApp
+  * Added the minimum operating system versions `V26_0` and `V27_0`.
+* IntuneMobileAppsMacOSLobApp
+  * Added the minimum operating system versions `v15_0`, `v26_0` and `v27_0`.
+* IntuneSettingCatalogCustomPolicyWindows10
+  * Fixed `Set()` creating a duplicate policy on every run when `TemplateFamily` is not `none`.
+  * Fixed updates of a policy with a `TemplateId` failing with BadRequest.
+  * Fixed updates failing with BadRequest when `RoleScopeTagIds` is not specified.
+* DEPENDENCIES
+  * Updated ExchangeOnlineManagement to version 3.11.1.
+  * Updated M365DSC.PSDesiredStateConfiguration to version 3.1.14.
+  * Updated MSCloudLoginAssistant to version 1.2.11.
+  * Updated PnP.PowerShell to version 3.5.0.
+    FIXES [#7581](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7581)
+* MISC
+  * Fixed an issue with assemblies clashing between Exchange and Teams modules.
+  * Fixed ExchangeOnlineManagement, MicrosoftTeams and PnP.PowerShell loading a different
+    version than the required one when several versions are installed.
+  * Fixed `Set()` of the Intune resources removing all assignments of an existing policy
+    when `Assignments` is not specified.
+    FIXES [#7669](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7669)
+  * Updated the resource generator to update the assignments of an existing policy only
+    when `Assignments` is specified.
+
 # 2.26.1118.1
 
 * AADApplication

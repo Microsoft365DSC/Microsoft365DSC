@@ -92,24 +92,40 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The application should exist but it does not' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName               = 'App1'
-                    Description               = 'App description'
-                    GroupMembershipClaims     = '0'
-                    Homepage                  = 'https://app.contoso.com'
-                    IdentifierUris            = 'https://app.contoso.com'
-                    KnownClientApplications   = ''
-                    LogoutURL                 = 'https://app.contoso.com/logout'
-                    PublicClient              = $false
-                    ReplyURLs                 = @('https://app.contoso.com')
-                    IsDeviceOnlyAuthSupported = $false
-                    IsDisabled                = $false
+                    DisplayName                     = 'App1'
+                    Description                     = 'App description'
+                    GroupMembershipClaims           = '0'
+                    Homepage                        = 'https://app.contoso.com'
+                    IdentifierUris                  = 'https://app.contoso.com'
+                    KnownClientApplications         = ''
+                    LogoutURL                       = 'https://app.contoso.com/logout'
+                    PublicClient                    = $false
+                    ReplyURLs                       = @('https://app.contoso.com')
+                    IsDeviceOnlyAuthSupported       = $false
+                    IsDisabled                      = $false
                     NativeAuthenticationApisEnabled = 'none'
-                    Notes                     = 'Reviewed annually by the identity governance team'
-                    SamlMetadataUrl           = 'https://app.contoso.com/federationmetadata.xml'
-                    Tags                      = @('Finance', 'Expense Reporting')
-                    TokenEncryptionKeyId      = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
-                    Ensure                    = 'Present'
-                    Credential                = $Credential
+                    Notes                           = 'Reviewed annually by the identity governance team'
+                    SamlMetadataUrl                 = 'https://app.contoso.com/federationmetadata.xml'
+                    Tags                            = @('Finance', 'Expense Reporting')
+                    TokenEncryptionKeyId            = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
+                    Api                             = [MSFT_MicrosoftGraphapiApplication] @{
+                        Oauth2PermissionScopes    = @(
+                            [MSFT_MicrosoftGraphAPIOauth2PermissionScopes] @{
+                                adminConsentDisplayName = 'Read tasks'
+                                isEnabled               = $true
+                                type                    = 'User'
+                                value                   = 'Task.Read'
+                            }
+                        )
+                        PreAuthorizedApplications = @(
+                            [MSFT_MicrosoftGraphPreAuthorizedApplication] @{
+                                AppId         = 'Microsoft Graph'
+                                PermissionIds = @('Task.Read')
+                            }
+                        )
+                    }
+                    Ensure                          = 'Present'
+                    Credential                      = $Credential
                 }
 
                 Mock -CommandName Get-MgBetaApplication -MockWith {
@@ -126,7 +142,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
             It 'Should create the application from the set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADApplication' -Property $testParams).Set()
-                Should -Invoke -CommandName 'New-MgBetaApplication' -Exactly 1
+                Should -Invoke -CommandName 'New-MgBetaApplication' -Exactly 1 -ParameterFilter {
+                    -not [System.String]::IsNullOrEmpty($BodyParameter.api.Oauth2PermissionScopes[0].id) -and
+                    $BodyParameter.api.PreAuthorizedApplications[0].permissionIds -contains $BodyParameter.api.Oauth2PermissionScopes[0].id
+                }
             }
         }
 
@@ -243,16 +262,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'The app exists and values are already in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName               = 'App1'
-                    Description               = 'App description'
-                    GroupMembershipClaims     = '0'
-                    Homepage                  = 'https://app.contoso.com'
-                    IdentifierUris            = 'https://app.contoso.com'
-                    KnownClientApplications   = ''
-                    LogoutURL                 = 'https://app.contoso.com/logout'
-                    PublicClient              = $false
-                    ReplyURLs                 = 'https://app.contoso.com'
-                    AppRoles                  = @(
+                    DisplayName                       = 'App1'
+                    Description                       = 'App description'
+                    GroupMembershipClaims             = '0'
+                    Homepage                          = 'https://app.contoso.com'
+                    IdentifierUris                    = 'https://app.contoso.com'
+                    KnownClientApplications           = ''
+                    LogoutURL                         = 'https://app.contoso.com/logout'
+                    PublicClient                      = $false
+                    ReplyURLs                         = 'https://app.contoso.com'
+                    AppRoles                          = @(
                         [MSFT_MicrosoftGraphappRole] @{
                             AllowedMemberTypes = @('Application')
                             Id = 'Task Reader'
@@ -272,7 +291,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             DisplayName = 'Writers'
                         }
                     )
-                    PasswordCredentials       = @(
+                    PasswordCredentials               = @(
                         [MSFT_MicrosoftGraphpasswordCredential] @{
                             KeyId = 'keyid'
                             EndDateTime = '2025-03-15T19:50:29.0310000+00:00'
@@ -281,7 +300,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             StartDateTime = '2024-09-16T19:50:29.0310000+00:00'
                         }
                     )
-                    KeyCredentials = @(
+                    KeyCredentials                    = @(
                         [MSFT_MicrosoftGraphkeyCredential] @{
                             Usage = 'Verify'
                             StartDateTime = '2024-09-25T09:13:11.0000000+00:00'
@@ -291,7 +310,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             DisplayName = 'anexas_test_2'
                         }
                     )
-                    OptionalClaims = [MSFT_MicrosoftGraphoptionalClaims] @{
+                    OptionalClaims                    = [MSFT_MicrosoftGraphoptionalClaims] @{
                         Saml2Token = @(
                             [MSFT_MicrosoftGraphOptionalClaim] @{
                                 Name = 'groups'
@@ -315,11 +334,11 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                     }
-                    AuthenticationBehaviors   = [MSFT_MicrosoftGraphauthenticationBehaviors] @{
+                    AuthenticationBehaviors           = [MSFT_MicrosoftGraphauthenticationBehaviors] @{
                              blockAzureADGraphAccess       = 'false'
                              removeUnverifiedEmailClaim    = 'true'
                      }
-                    Api = [MSFT_MicrosoftGraphapiApplication] @{
+                    Api                               = [MSFT_MicrosoftGraphapiApplication] @{
                         PreAuthorizedApplications = @(
                             [MSFT_MicrosoftGraphPreAuthorizedApplication] @{
                                 AppId = 'Microsoft Graph'
@@ -327,31 +346,55 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                             }
                         )
                     }
-                    IsDeviceOnlyAuthSupported = $false
-                    IsDisabled                = $false
-                    NativeAuthenticationApisEnabled = 'none'
-                    Notes                     = 'Reviewed annually by the identity governance team'
-                    SamlMetadataUrl           = 'https://app.contoso.com/federationmetadata.xml'
-                    Tags                      = @('Finance', 'Expense Reporting')
-                    TokenEncryptionKeyId      = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
-                    Ensure                    = 'Present'
-                    Credential                = $Credential
+                    IsDeviceOnlyAuthSupported         = $false
+                    IsDisabled                        = $false
+                    NativeAuthenticationApisEnabled   = 'none'
+                    Notes                             = 'Reviewed annually by the identity governance team'
+                    SamlMetadataUrl                   = 'https://app.contoso.com/federationmetadata.xml'
+                    Tags                              = @('Finance', 'Expense Reporting')
+                    TokenEncryptionKeyId              = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
+                    EnableIdTokenIssuance             = $true
+                    EnableAccessTokenIssuance         = $false
+                    ServicePrincipalLockConfiguration = [MSFT_AADApplicationServicePrincipalLockConfiguration] @{
+                        IsEnabled        = $true
+                        AllProperties    = $true
+                        EnforcementScope = 'everywhere'
+                    }
+                    RequestSignatureVerification      = [MSFT_AADApplicationRequestSignatureVerification] @{
+                        IsSignedRequestRequired = $true
+                        AllowedWeakAlgorithms   = 'rsaSha1'
+                    }
+                    Ensure                            = 'Present'
+                    Credential                        = $Credential
                 }
                 Mock -CommandName Get-MgBetaApplication -MockWith {
                     return @{
-                        DisplayName = 'App1'
-                        Id = '5dcb2237-c61b-4258-9c85-eae2aaeba9d6'
-                        Description = 'App description'
-                        GroupMembershipClaims = 0
-                        SignInAudience = 'AzureADMyOrg'
-                        IsDeviceOnlyAuthSupported = $false
-                        IsDisabled = $false
-                        NativeAuthenticationApisEnabled = 'none'
-                        Notes = 'Reviewed annually by the identity governance team'
-                        SamlMetadataUrl = 'https://app.contoso.com/federationmetadata.xml'
-                        Tags = @('Expense Reporting', 'Finance')
-                        TokenEncryptionKeyId = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
-                        OptionalClaims = @{
+                        DisplayName                       = 'App1'
+                        Id                                = '5dcb2237-c61b-4258-9c85-eae2aaeba9d6'
+                        Description                       = 'App description'
+                        GroupMembershipClaims             = 0
+                        SignInAudience                    = 'AzureADMyOrg'
+                        servicePrincipalLockConfiguration = @{
+                            isEnabled                  = $true
+                            allProperties              = $true
+                            credentialsWithUsageSign   = $null
+                            credentialsWithUsageVerify = $null
+                            identifierUris             = $null
+                            tokenEncryptionKeyId       = $null
+                            enforcementScope           = 'everywhere'
+                        }
+                        requestSignatureVerification      = @{
+                            isSignedRequestRequired = $true
+                            allowedWeakAlgorithms   = 'rsaSha1'
+                        }
+                        IsDeviceOnlyAuthSupported         = $false
+                        IsDisabled                        = $false
+                        NativeAuthenticationApisEnabled   = 'none'
+                        Notes                             = 'Reviewed annually by the identity governance team'
+                        SamlMetadataUrl                   = 'https://app.contoso.com/federationmetadata.xml'
+                        Tags                              = @('Expense Reporting', 'Finance')
+                        TokenEncryptionKeyId              = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
+                        OptionalClaims                    = @{
                             Saml2Token = @(
                                 @{
                                     Name = 'groups'
@@ -375,12 +418,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 }
                             )
                         }
-                        Web = @{
-                            HomepageUrl  = 'https://app.contoso.com'
-                            LogoutURL    = 'https://app.contoso.com/logout'
-                            RedirectUris = @('https://app.contoso.com')
+                        Web                               = @{
+                            HomepageUrl           = 'https://app.contoso.com'
+                            LogoutURL             = 'https://app.contoso.com/logout'
+                            RedirectUris          = @('https://app.contoso.com')
+                            implicitGrantSettings = @{
+                                enableIdTokenIssuance     = $true
+                                enableAccessTokenIssuance = $false
+                            }
                         }
-                        AppRoles = @(
+                        AppRoles                          = @(
                             @{
                                 AllowedMemberTypes = @('Application')
                                 Id = 'Task Reader'
@@ -400,7 +447,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 DisplayName = 'Writers'
                             }
                         )
-                        KeyCredentials = @(
+                        KeyCredentials                    = @(
                             @{
                                 Usage = 'Verify'
                                 StartDateTime = '2024-09-25T09:13:11.0000000+00:00'
@@ -410,7 +457,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 DisplayName = 'anexas_test_2'
                             }
                         )
-                        PasswordCredentials = @(
+                        PasswordCredentials               = @(
                             @{
                                 KeyId = 'keyid'
                                 EndDateTime = '2025-03-15T19:50:29.0310000+00:00'
@@ -419,7 +466,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 StartDateTime = '2024-09-16T19:50:29.0310000+00:00'
                             }
                         )
-                        API = @{
+                        API                               = @{
                             KnownClientApplications = ''
                             PreAuthorizedApplications = @(
                                 @{
@@ -434,10 +481,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                                 }
                             )
                         }
-                        IdentifierUris = @('https://app.contoso.com')
-                        Oauth2RequirePostResponse = $false
-                        PublicClient = $false
-                        AuthenticationBehaviors = @{
+                        IdentifierUris                    = @('https://app.contoso.com')
+                        Oauth2RequirePostResponse         = $false
+                        PublicClient                      = $false
+                        AuthenticationBehaviors           = @{
                             blockAzureADGraphAccess       = 'false'
                             removeUnverifiedEmailClaim    = 'true'
                         }
@@ -446,8 +493,12 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the get method' {
-                (New-M365DSCResourceInstance -ResourceName 'AADApplication' -Property $testParams).Get().ToHashtable()
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADApplication' -Property $testParams).Get().ToHashtable()
                 Should -Invoke -CommandName 'Get-MgBetaApplication' -Exactly 1
+                $result.ServicePrincipalLockConfiguration.EnforcementScope | Should -Be 'everywhere'
+                $result.RequestSignatureVerification.IsSignedRequestRequired | Should -Be $true
+                $result.EnableIdTokenIssuance | Should -Be $true
+                $result.EnableAccessTokenIssuance | Should -Be $false
             }
 
             It 'Should return true from the test method' {
@@ -470,47 +521,90 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'Values are not in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    DisplayName               = 'App1'
-                    Description               = 'App description'
-                    GroupMembershipClaims     = '0'
-                    Homepage                  = 'https://app1.contoso.com' #drift
-                    IdentifierUris            = 'https://app.contoso.com'
-                    KnownClientApplications   = ''
-                    LogoutURL                 = 'https://app.contoso.com/logout'
-                    PublicClient              = $false
-                    ReplyURLs                 = 'https://app.contoso.com'
-                    IsDeviceOnlyAuthSupported = $false
-                    IsDisabled                = $true
-                    NativeAuthenticationApisEnabled = 'none'
-                    Notes                     = 'Reviewed annually by the identity governance team'
-                    SamlMetadataUrl           = 'https://app.contoso.com/federationmetadata.xml'
-                    Tags                      = @('Finance', 'Expense Reporting')
-                    TokenEncryptionKeyId      = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
-                    Ensure                    = 'Present'
-                    Credential                = $Credential
+                    DisplayName                       = 'App1'
+                    Description                       = 'App description'
+                    GroupMembershipClaims             = '0'
+                    Homepage                          = 'https://app1.contoso.com' #drift
+                    IdentifierUris                    = 'https://app.contoso.com'
+                    KnownClientApplications           = ''
+                    LogoutURL                         = 'https://app.contoso.com/logout'
+                    PublicClient                      = $false
+                    ReplyURLs                         = 'https://app.contoso.com'
+                    IsDeviceOnlyAuthSupported         = $false
+                    IsDisabled                        = $true
+                    NativeAuthenticationApisEnabled   = 'none'
+                    Notes                             = 'Reviewed annually by the identity governance team'
+                    SamlMetadataUrl                   = 'https://app.contoso.com/federationmetadata.xml'
+                    Tags                              = @('Finance', 'Expense Reporting')
+                    TokenEncryptionKeyId              = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
+                    EnableIdTokenIssuance             = $false
+                    EnableAccessTokenIssuance         = $true
+                    ServicePrincipalLockConfiguration = [MSFT_AADApplicationServicePrincipalLockConfiguration] @{
+                        IsEnabled        = $true
+                        AllProperties    = $true
+                        EnforcementScope = 'everywhere'
+                    }
+                    RequestSignatureVerification      = [MSFT_AADApplicationRequestSignatureVerification] @{
+                        IsSignedRequestRequired = $true
+                        AllowedWeakAlgorithms   = 'rsaSha1'
+                    }
+                    Api                               = [MSFT_MicrosoftGraphapiApplication] @{
+                        PreAuthorizedApplications = @(
+                            [MSFT_MicrosoftGraphPreAuthorizedApplication] @{
+                                AppId         = 'Microsoft Graph'
+                                PermissionIds = @('Task.Read')
+                            }
+                        )
+                    }
+                    Ensure                            = 'Present'
+                    Credential                        = $Credential
                 }
 
                 Mock -CommandName Get-MgBetaApplication -MockWith {
                     return @{
-                        DisplayName = 'App1'
-                        Id = '5dcb2237-c61b-4258-9c85-eae2aaeba9d6'
-                        AvailableToOtherTenants = $false
-                        Description = 'App description'
-                        GroupMembershipClaims = 0
-                        Homepage = 'https://app.contoso.com'
-                        IdentifierUris = 'https://app.contoso.com'
-                        KnownClientApplications = ''
-                        LogoutURL = 'https://app.contoso.com/logout'
-                        Oauth2RequirePostResponse = $false
-                        PublicClient = $false
-                        ReplyURLs = 'https://app.contoso.com'
-                        IsDeviceOnlyAuthSupported = $false
-                        IsDisabled = $false
-                        NativeAuthenticationApisEnabled = 'none'
-                        Notes = 'Reviewed annually by the identity governance team'
-                        SamlMetadataUrl = 'https://app.contoso.com/federationmetadata.xml'
-                        Tags = @('Expense Reporting', 'Finance')
-                        TokenEncryptionKeyId = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
+                        DisplayName                       = 'App1'
+                        Id                                = '5dcb2237-c61b-4258-9c85-eae2aaeba9d6'
+                        AvailableToOtherTenants           = $false
+                        servicePrincipalLockConfiguration = @{
+                            isEnabled        = $true
+                            allProperties    = $true
+                            enforcementScope = 'foreignTenantOnly'
+                        }
+                        requestSignatureVerification      = @{
+                            isSignedRequestRequired = $false
+                            allowedWeakAlgorithms   = 'rsaSha1'
+                        }
+                        Web                               = @{
+                            implicitGrantSettings = @{
+                                enableIdTokenIssuance     = $true
+                                enableAccessTokenIssuance = $false
+                            }
+                        }
+                        API                               = @{
+                            PreAuthorizedApplications = @()
+                            OAuth2PermissionScopes    = @(
+                                @{
+                                    Id    = '6a5b2c1d-3e4f-4a5b-8c6d-7e8f9a0b1c2d'
+                                    Value = 'Task.Read'
+                                }
+                            )
+                        }
+                        Description                       = 'App description'
+                        GroupMembershipClaims             = 0
+                        Homepage                          = 'https://app.contoso.com'
+                        IdentifierUris                    = 'https://app.contoso.com'
+                        KnownClientApplications           = ''
+                        LogoutURL                         = 'https://app.contoso.com/logout'
+                        Oauth2RequirePostResponse         = $false
+                        PublicClient                      = $false
+                        ReplyURLs                         = 'https://app.contoso.com'
+                        IsDeviceOnlyAuthSupported         = $false
+                        IsDisabled                        = $false
+                        NativeAuthenticationApisEnabled   = 'none'
+                        Notes                             = 'Reviewed annually by the identity governance team'
+                        SamlMetadataUrl                   = 'https://app.contoso.com/federationmetadata.xml'
+                        Tags                              = @('Expense Reporting', 'Finance')
+                        TokenEncryptionKeyId              = '2b5d1c0f-6a72-4b19-9e27-8c5a3d94f1ab'
                     }
                 }
             }
@@ -527,6 +621,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should call the set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADApplication' -Property $testParams).Set()
                 Should -Invoke -CommandName 'Update-MgBetaApplication' -Exactly 1
+                Should -Invoke -CommandName 'Update-MgBetaApplication' -ParameterFilter {
+                    $BodyParameter.servicePrincipalLockConfiguration.enforcementScope -eq 'everywhere' -and
+                    $BodyParameter.requestSignatureVerification.isSignedRequestRequired -eq $true -and
+                    $BodyParameter.web.implicitGrantSettings.enableIdTokenIssuance -eq $false -and
+                    $BodyParameter.web.implicitGrantSettings.enableAccessTokenIssuance -eq $true -and
+                    $BodyParameter.api.PreAuthorizedApplications.permissionIds -contains '6a5b2c1d-3e4f-4a5b-8c6d-7e8f9a0b1c2d'
+                } -Exactly 1
             }
         }
 

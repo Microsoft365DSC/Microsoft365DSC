@@ -297,10 +297,13 @@ class IntuneAndroidManagedStoreAppConfiguration : M365DSCResourceBase
             $updateParameters.Add('@odata.type', '#microsoft.graph.androidManagedStoreAppConfiguration')
             Update-MgBetaDeviceAppManagementMobileAppConfiguration -BodyParameter $updateParameters `
                 -ManagedDeviceMobileAppConfigurationId $currentInstance.Id
-            $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
-                -Targets $assignmentsHash `
-                -Repository 'deviceAppManagement/mobileAppConfigurations'
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntunePolicyAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceConfigurationPolicyAssignment -DeviceConfigurationPolicyId $currentInstance.id `
+                    -Targets $assignmentsHash `
+                    -Repository 'deviceAppManagement/mobileAppConfigurations'
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')

@@ -236,6 +236,8 @@ class IntuneMobileAppsBundleMacOS : M365DSCResourceBase
             $complexMinimumSupportedOperatingSystem.Add('V13_0', $getValue.minimumSupportedOperatingSystem.v13_0)
             $complexMinimumSupportedOperatingSystem.Add('V14_0', $getValue.minimumSupportedOperatingSystem.v14_0)
             $complexMinimumSupportedOperatingSystem.Add('V15_0', $getValue.minimumSupportedOperatingSystem.v15_0)
+            $complexMinimumSupportedOperatingSystem.Add('V26_0', $getValue.minimumSupportedOperatingSystem.v26_0)
+            $complexMinimumSupportedOperatingSystem.Add('V27_0', $getValue.minimumSupportedOperatingSystem.v27_0)
             if ($complexMinimumSupportedOperatingSystem.Values.Where({ $null -ne $_ }).Count -eq 0)
             {
                 $complexMinimumSupportedOperatingSystem = $null
@@ -393,10 +395,13 @@ class IntuneMobileAppsBundleMacOS : M365DSCResourceBase
                 Update-DeviceAppManagementAppCategory -App $currentInstance -Categories $this.Categories -Compare
             }
 
-            $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceAppManagementPolicyAssignment `
-                -AppManagementPolicyId $currentInstance.Id `
-                -Assignments $assignmentsHash
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceAppManagementPolicyAssignment `
+                    -AppManagementPolicyId $currentInstance.Id `
+                    -Assignments $assignmentsHash
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
@@ -677,6 +682,14 @@ class MSFT_MicrosoftGraphMacOSMinimumOperatingSystem
     [DscProperty()]
     [System.ComponentModel.Description('Indicates the minimum version support required for the managed device. When ''True'', OS Version 15.0 or later is required to install the app. If ''False'', Version 15.0 is not the minimum version.')]
     [System.Nullable[System.Boolean]] $V15_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the minimum version support required for the managed device. When ''True'', OS Version 26.0 or later is required to install the app. If ''False'', Version 26.0 is not the minimum version.')]
+    [System.Nullable[System.Boolean]] $V26_0
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Indicates the minimum version support required for the managed device. When ''True'', OS Version 27.0 or later is required to install the app. If ''False'', Version 27.0 is not the minimum version.')]
+    [System.Nullable[System.Boolean]] $V27_0
 }
 
 class MSFT_DeviceManagementMobileAppAssignment

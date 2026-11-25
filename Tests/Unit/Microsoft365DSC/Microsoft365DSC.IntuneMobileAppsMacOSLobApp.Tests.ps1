@@ -72,6 +72,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     '@odata.type' = '#microsoft.graph.macOSLobApp'
                     minimumSupportedOperatingSystem = @{
                         v11_0 = $true
+                        v15_0 = $false
+                        v26_0 = $false
+                        v27_0 = $false
                     }
                 }
             }
@@ -98,6 +101,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     '@odata.type' = '#microsoft.graph.macOSLobApp'
                     minimumSupportedOperatingSystem = @{
                         v11_0 = $true
+                        v15_0 = $false
+                        v26_0 = $false
+                        v27_0 = $false
                     }
                     Ensure                = 'Present'
                 }
@@ -134,6 +140,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     MinimumSupportedOperatingSystem = (
                         [MSFT_DeviceManagementMinimumOperatingSystem] @{
                         v11_0 = $true
+                        v15_0 = $false
+                        v26_0 = $false
+                        v27_0 = $false
                     })
                     Notes                 = ""
                     Owner                 = ""
@@ -184,6 +193,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     MinimumSupportedOperatingSystem = (
                         [MSFT_DeviceManagementMinimumOperatingSystem] @{
                         v11_0 = $true
+                        v15_0 = $false
+                        v26_0 = $false
+                        v27_0 = $false
                     })
                     Notes                 = ""
                     Owner                 = ""
@@ -221,6 +233,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     MinimumSupportedOperatingSystem = (
                         [MSFT_DeviceManagementMinimumOperatingSystem] @{
                         v11_0 = $true
+                        v15_0 = $false
+                        v26_0 = $false
+                        v27_0 = $false
                     })
                     Notes                 = ""
                     Owner                 = ""
@@ -250,6 +265,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     MinimumSupportedOperatingSystem = (
                         [MSFT_DeviceManagementMinimumOperatingSystem] @{
                         v11_0 = $true
+                        v15_0 = $false
+                        v26_0 = $false
+                        v27_0 = $false
                     })
                     Notes                 = ""
                     Owner                 = ""

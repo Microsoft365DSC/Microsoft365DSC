@@ -353,7 +353,7 @@ class MSFT_IntuneAlertRuleCondition
 
     [DscProperty()]
     [System.ComponentModel.Description('The built-in operator for the rule condition. The possible values are: greaterOrEqual, equal, greater, less, lessOrEqual, notEqual.')]
-    [ValidateSet('greaterOrEqual', 'greater', 'equal', 'less', 'lessOrEqual')]
+    [ValidateSet('greaterOrEqual', 'greater', 'equal', 'less', 'lessOrEqual', 'notEqual')]
     [System.String] $Operator
 
     [DscProperty()]
@@ -369,19 +369,19 @@ class MSFT_IntuneAlertRuleCondition
 class MSFT_IntuneAlertRuleNotificationChannel
 {
     [DscProperty(Mandatory)]
-    [System.ComponentModel.Description('The notification channel type.')]
-    [ValidateSet('portal', 'email')]
+    [System.ComponentModel.Description('The notification channel type. The possible values are: portal, email, phoneCall, sms.')]
+    [ValidateSet('portal', 'email', 'phoneCall', 'sms')]
     [System.String] $NotificationChannelType
 
     [DscProperty()]
-    [System.ComponentModel.Description('The receivers of the notification. Only applicable if the NotificationChannelType is ''email''.')]
+    [System.ComponentModel.Description('The receivers of the notification. Only applicable if the NotificationChannelType is ''email'', ''phoneCall'' or ''sms''.')]
     [MSFT_IntuneAlertRuleNotificationChannelReceiver[]] $NotificationReceivers
 }
 
 class MSFT_IntuneAlertRuleNotificationChannelReceiver
 {
     [DscProperty(Mandatory)]
-    [System.ComponentModel.Description('The email address of the receiver.')]
+    [System.ComponentModel.Description('The email address or phone number of the receiver.')]
     [System.String] $ContactInformation
 
     [DscProperty()]

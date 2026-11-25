@@ -141,7 +141,7 @@ class EXODnssecForVerifiedDomain : M365DSCResourceBase
 
         try
         {
-            [array] $exportedInstances = Get-AcceptedDomain -ErrorAction Stop
+            [array] $exportedInstances = Get-AcceptedDomain -ResultSize Unlimited -ErrorAction Stop
 
             $i = 1
             $dscContent = [System.Text.StringBuilder]::new()

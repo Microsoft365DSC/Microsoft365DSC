@@ -332,6 +332,54 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'IntuneCloudProvisioningPolicyWindows365' -Property $testParams).Set()
                 Should -Invoke -CommandName Update-MgBetaDeviceManagementVirtualEndpointProvisioningPolicy -Exactly 1
+                Should -Invoke -CommandName Update-DeviceConfigurationPolicyAssignment -Exactly 1
+            }
+        }
+
+        Context -Name "The IntuneCloudProvisioningPolicyWindows365 exists, values are NOT in the desired state and Assignments is not specified" -Fixture {
+            BeforeAll {
+                $testParams = @{
+                    Autopatch = ([MSFT_MicrosoftGraphcloudPcProvisioningPolicyAutopatch] @{
+                        AutopatchGroupId = "FakeStringValue"
+                    })
+                    CloudPcNamingTemplate = "FakeStringValue"
+                    Description = "FakeStringValue"
+                    DisplayName = "FakeStringValue"
+                    DomainJoinConfigurations = @(
+                        ([MSFT_MicrosoftGraphcloudPcDomainJoinConfiguration] @{
+                            RegionGroup = "default"
+                            RegionName = "FakeStringValue"
+                            DomainJoinType = "azureADJoin"
+                            Type = "azureADJoin"
+                        })
+                    )
+                    EnableSingleSignOn = $False
+                    Id = "FakeStringValue"
+                    ImageDisplayName = "FakeStringValue"
+                    ImageId = "FakeStringValue"
+                    ImageType = "gallery"
+                    LocalAdminEnabled = $True
+                    ProvisioningType = "dedicated"
+                    ScopeIds        = @("FakeStringValue")
+                    WindowsSetting = ([MSFT_MicrosoftGraphcloudPcWindowsSetting] @{
+                        Locale = "en-US"
+                    })
+                    WindowsSettings = ([MSFT_MicrosoftGraphcloudPcWindowsSettings] @{
+                        Language = "en-US"
+                    })
+                    Ensure = "Present"
+                    Credential = $Credential;
+                }
+            }
+
+            It 'Should return false from the Test method' {
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCloudProvisioningPolicyWindows365' -Property $testParams).Test() | Should -Be $false
+            }
+
+            It 'Should update the policy and keep its assignments from the Set method' {
+                (New-M365DSCResourceInstance -ResourceName 'IntuneCloudProvisioningPolicyWindows365' -Property $testParams).Set()
+                Should -Invoke -CommandName Update-MgBetaDeviceManagementVirtualEndpointProvisioningPolicy -Exactly 1
+                Should -Invoke -CommandName Update-DeviceConfigurationPolicyAssignment -Exactly 0
             }
         }
 

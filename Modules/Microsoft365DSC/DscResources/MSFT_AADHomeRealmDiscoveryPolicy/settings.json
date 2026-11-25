@@ -17,6 +17,11 @@
       "note": "Modelled as a complex type. DomainHintPolicy is dropped on write."
     },
     {
+      "name": "Description",
+      "reason": "NotConfigurable",
+      "note": "The service rejects description on create and update and never returns it."
+    },
+    {
       "name": "Id",
       "reason": "ReadOnly",
       "note": "Entra ID sets the id at creation. The resource keys on DisplayName and re-queries it"

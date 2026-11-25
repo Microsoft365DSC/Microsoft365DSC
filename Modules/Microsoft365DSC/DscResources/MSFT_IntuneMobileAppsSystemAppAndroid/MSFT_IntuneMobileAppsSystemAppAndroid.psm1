@@ -274,10 +274,13 @@ class IntuneMobileAppsSystemAppAndroid : M365DSCResourceBase
                 -MobileAppId $currentInstance.Id `
                 -BodyParameter $updateParameters
 
-            $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
-            Update-DeviceAppManagementPolicyAssignment `
-                -AppManagementPolicyId $currentInstance.Id `
-                -Assignments $assignmentsHash
+            if ($this.GetBoundParameters().ContainsKey('Assignments'))
+            {
+                $assignmentsHash = ConvertTo-IntuneMobileAppAssignment -IncludeDeviceFilter:$true -Assignments $this.Assignments
+                Update-DeviceAppManagementPolicyAssignment `
+                    -AppManagementPolicyId $currentInstance.Id `
+                    -Assignments $assignmentsHash
+            }
             #endregion
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
