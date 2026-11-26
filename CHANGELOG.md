@@ -6,6 +6,26 @@
   * Added a `Filter` property that applies a scriptblock to role entries after retrieval,
     allowing built-in entries to be excluded from the export.
     FIXES [#7673](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7673)
+* ODSettings
+  * Added `MassDeleteNotificationDisabledForODB`, `DefaultLanguageForSiteCreation` and
+    `UnlicensedOneDriveAccountsActiveStoragePeriod`.
+* SPOAccessControlSettings
+  * Added `LimitedAccessFileType`, `BlockAppAccessWithAuthenticationContext`,
+    `AppOnlyBypassPeoplePickerPolicies`, `DelegateRestrictedAccessControlManagement`,
+    `DelegateRestrictedContentDiscoverabilityManagement` and
+    `RestrictedAccessControlForOneDriveErrorHelpLink`.
+* SPOSharingSettings
+  * Added `CoreAnyoneSharingLinkMaxExpirationInDays`,
+    `CoreAnyoneSharingLinkRecommendedExpirationInDays`,
+    `OneDriveAnyoneSharingLinkMaxExpirationInDays`,
+    `OneDriveAnyoneSharingLinkRecommendedExpirationInDays`, `BlockDownloadLinksFileType`,
+    `WhoCanShareAuthenticatedGuestAllowList` and `WhoCanShareAnonymousAllowList`.
+* SPOTenantSettings
+  * Added `DisableSharePointStoreAccess`, `DisableSpfxTopBottomPlaceholdersInElevatedContent`,
+    `DisableTeamsMeetingRecordingDeletedNotification`, `FilePreviewAllowedDomainList`,
+    `IsFilePreviewDomainRestrictionEnabled`, `MassDeleteNotificationDisabledForSPO`,
+    `SiteOwnersCanAccessMissingContent` and `StopAlerts`.
+  * Fixed `IsSharePointAddInsDisabled` never returning the tenant value.
 * MISC
   * Added the resource source file and line to the stack traces of error log entries.
   * Added `Resolve-M365DSCSourceLocation` and `Set-M365DSCSourceBreakpoint` to map lines

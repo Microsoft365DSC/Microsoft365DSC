@@ -26,22 +26,27 @@ Configuration Example
     {
         SPOAccessControlSettings 'SPOAccessControlSettings-Example'
         {
-            IsSingleInstance              = "Yes"
-            DisplayStartASiteOption       = $false
-            StartASiteFormUrl             = "https://contoso.sharepoint.com"
-            IPAddressEnforcement          = $false
-            IPAddressAllowList            = "10.20.0.0/16, 2001:db8:4a2f::/48"
-            IPAddressWACTokenLifetime     = 15
-            DisallowInfectedFileDownload  = $true
-            ExternalServicesEnabled       = $true
-            EmailAttestationRequired      = $false
-            EmailAttestationReAuthDays    = 30
-            EnableRestrictedAccessControl = $false
-            RestrictResourceAccountAccess = $false
-            ConditionalAccessPolicy       = "AllowFullAccess"
-            ApplicationId                 = $ApplicationId
-            TenantId                      = $TenantId
-            CertificateThumbprint         = $CertificateThumbprint
+            IsSingleInstance                                   = "Yes"
+            DisplayStartASiteOption                            = $false
+            StartASiteFormUrl                                  = "https://contoso.sharepoint.com"
+            IPAddressEnforcement                               = $false
+            IPAddressAllowList                                 = "10.20.0.0/16, 2001:db8:4a2f::/48"
+            IPAddressWACTokenLifetime                          = 15
+            DisallowInfectedFileDownload                       = $true
+            ExternalServicesEnabled                            = $true
+            EmailAttestationRequired                           = $false
+            EmailAttestationReAuthDays                         = 30
+            EnableRestrictedAccessControl                      = $false
+            RestrictResourceAccountAccess                      = $false
+            ConditionalAccessPolicy                            = "AllowFullAccess"
+            BlockAppAccessWithAuthenticationContext            = $false
+            AppOnlyBypassPeoplePickerPolicies                  = $false
+            DelegateRestrictedAccessControlManagement          = $false
+            DelegateRestrictedContentDiscoverabilityManagement = $false
+            RestrictedAccessControlForOneDriveErrorHelpLink    = "https://contoso.sharepoint.com/sites/help/SitePages/AccessDenied.aspx"
+            ApplicationId                                      = $ApplicationId
+            TenantId                                           = $TenantId
+            CertificateThumbprint                              = $CertificateThumbprint
         }
     }
 }

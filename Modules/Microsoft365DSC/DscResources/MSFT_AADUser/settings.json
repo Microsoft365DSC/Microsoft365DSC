@@ -352,6 +352,11 @@
       "note": "Directory synchronization writes this value from the on premises directory."
     },
     {
+      "name": "OnPremisesSyncBehavior",
+      "reason": "NotConfigurable",
+      "note": "Source of authority switch between on-premises and cloud, like OnPremisesSyncEnabled."
+    },
+    {
       "name": "OnPremisesSyncEnabled",
       "reason": "ReadOnly",
       "note": "The directory sets this flag from on premises sync state."

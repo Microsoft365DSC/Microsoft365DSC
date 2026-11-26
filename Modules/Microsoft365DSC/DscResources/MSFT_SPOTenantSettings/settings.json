@@ -10,7 +10,73 @@
     "includeNavigationProperties": false,
     "generatorVersion": "2.0.0"
   },
-  "excludedProperties": [],
+  "excludedProperties": [
+    {
+      "name": "AllowLegacyAuthProtocolsEnabledSetting",
+      "reason": "Accepted",
+      "note": "Undocumented companion of LegacyAuthProtocolsEnabled, which the resource configures."
+    },
+    {
+      "name": "AllowLegacyBrowserAuthProtocolsEnabledSetting",
+      "reason": "Accepted",
+      "note": "Undocumented companion of LegacyBrowserAuthProtocolsEnabled, which the resource configures."
+    },
+    {
+      "name": "AppAccessInformationBarriersAllowList",
+      "reason": "Deferred",
+      "note": "Not rolled out yet. Set-PnPTenant fails with an unexpected error."
+    },
+    {
+      "name": "BlockUserInfoVisibility",
+      "reason": "Deferred",
+      "note": "Not rolled out to production yet and has no documented values."
+    },
+    {
+      "name": "CopilotSearchOptIn",
+      "reason": "Deferred",
+      "note": "Experimental feature. The service rejects it as not supported in the current environment."
+    },
+    {
+      "name": "DefaultContentCenterSite",
+      "reason": "NotConfigurable",
+      "note": "Can only be set once and requires a Syntex license."
+    },
+    {
+      "name": "IsSharePointAddInsBlocked",
+      "reason": "Deprecated",
+      "note": "SharePoint Add-ins are retired and the service keeps them blocked."
+    },
+    {
+      "name": "PermissiveBrowserFileHandlingOverride",
+      "reason": "Deprecated",
+      "note": "Permissive browser file handling is deprecated and can no longer be enabled."
+    },
+    {
+      "name": "RemoveVersionExpirationFileTypeOverride",
+      "reason": "NotConfigurable",
+      "note": "One-time action that removes overrides rather than a stored setting."
+    },
+    {
+      "name": "ReSyncTenantPrivacyProfile",
+      "reason": "NotConfigurable",
+      "note": "One-time action that triggers a privacy profile synchronization."
+    },
+    {
+      "name": "StopNew2010Workflows",
+      "reason": "Deprecated",
+      "note": "SharePoint 2010 workflows are retired and the service keeps new ones stopped."
+    },
+    {
+      "name": "SyncPrivacyProfileProperties",
+      "reason": "Deprecated",
+      "note": "Obsolete and renamed to ReSyncTenantPrivacyProfile."
+    },
+    {
+      "name": "Workflows2013Enabled",
+      "reason": "Deprecated",
+      "note": "SharePoint 2013 workflows are retired and can no longer be enabled."
+    }
+  ],
   "description": "",
   "permissions": {
     "graph": {

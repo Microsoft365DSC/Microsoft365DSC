@@ -35,6 +35,11 @@
       "name": "SigningCertificateUpdateStatus",
       "reason": "ReadOnly",
       "note": "Rollover result, with the certificates in SigningCertificate and NextSigningCertificate"
+    },
+    {
+      "name": "SystemBrowserEnabledOn",
+      "reason": "Accepted",
+      "note": "Declared in the v1.0 CSDL only. The beta endpoint reads and writes it."
     }
   ],
   "description": "Manages Azure Active Directory Domain Federation configurations including SAML/WS-Fed settings, signing certificates, and authentication protocols for federated domains.",

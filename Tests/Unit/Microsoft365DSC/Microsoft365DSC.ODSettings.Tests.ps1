@@ -37,7 +37,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             Mock -CommandName Get-PnPTenant -MockWith {
                 return @{
-                    OneDriveStorageQuota = '1024'
+                    OneDriveStorageQuota                          = '1024'
+                    DefaultLanguageForSiteCreation                = 'en-US'
+                    MassDeleteNotificationDisabledForODB          = $false
+                    UnlicensedOneDriveAccountsActiveStoragePeriod = 93
                 }
             }
 
@@ -92,29 +95,54 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'Set OneDrive Quota' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    OneDriveStorageQuota                      = 1024
-                    IsSingleInstance                          = 'Yes'
-                    OrphanedPersonalSitesRetentionPeriod      = 60
-                    OneDriveForGuestsEnabled                  = $true
-                    NotificationsInOneDriveForBusinessEnabled = $true
-                    ODBMembersCanShare                        = 'On'
-                    ODBAccessRequests                         = 'On'
-                    BlockMacSync                              = $true
-                    DisableReportProblemDialog                = $true
-                    TenantRestrictionEnabled                  = $true
-                    DomainGuids                               = @('00000000-0000-0000-0000-000000000000')
-                    ExcludedFileExtensions                    = @('.asmx')
-                    GrooveBlockOption                         = 'HardOptIn'
-                    Credential                                = $Credential
+                    OneDriveStorageQuota                          = 1024
+                    IsSingleInstance                              = 'Yes'
+                    OrphanedPersonalSitesRetentionPeriod          = 60
+                    OneDriveForGuestsEnabled                      = $true
+                    NotificationsInOneDriveForBusinessEnabled     = $true
+                    ODBMembersCanShare                            = 'On'
+                    ODBAccessRequests                             = 'On'
+                    BlockMacSync                                  = $true
+                    DisableReportProblemDialog                    = $true
+                    TenantRestrictionEnabled                      = $true
+                    DomainGuids                                   = @('00000000-0000-0000-0000-000000000000')
+                    ExcludedFileExtensions                        = @('.asmx')
+                    GrooveBlockOption                             = 'HardOptIn'
+                    DefaultLanguageForSiteCreation                = 'de-DE'
+                    MassDeleteNotificationDisabledForODB          = $true
+                    UnlicensedOneDriveAccountsActiveStoragePeriod = 120
+                    Credential                                    = $Credential
+                }
+
+                Mock -CommandName Set-PnPTenant -ParameterFilter { $UnlicensedOneDriveAccountsActiveStoragePeriod -eq 120 } -MockWith {
+                    throw "Tenant isn't enrolled in pay-as-you-go active storage billing."
+                }
+
+                Mock -CommandName Write-Warning -MockWith {
                 }
             }
 
             It 'Should return Values from the Get method' {
-                ((New-M365DSCResourceInstance -ResourceName 'ODSettings' -Property $testParams).Get().ToHashtable()).OneDriveStorageQuota | Should -Be 1024
+                $result = (New-M365DSCResourceInstance -ResourceName 'ODSettings' -Property $testParams).Get().ToHashtable()
+                $result.OneDriveStorageQuota | Should -Be 1024
+                $result.DefaultLanguageForSiteCreation | Should -Be 'en-US'
+                $result.UnlicensedOneDriveAccountsActiveStoragePeriod | Should -Be 93
+                $result.MassDeleteNotificationDisabledForODB | Should -Be $false
             }
 
             It 'Should configure OneDrive settings in the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'ODSettings' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-PnPTenant -Times 1 -Exactly -ParameterFilter {
+                    $DefaultLanguageForSiteCreation -eq 'de-DE' -and
+                    $MassDeleteNotificationDisabledForODB -eq $true -and
+                    -not $PSBoundParameters.ContainsKey('UnlicensedOneDriveAccountsActiveStoragePeriod')
+                }
+                Should -Invoke -CommandName Set-PnPTenant -Times 1 -Exactly -ParameterFilter {
+                    $UnlicensedOneDriveAccountsActiveStoragePeriod -eq 120
+                }
+                Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -ParameterFilter {
+                    $Message -like '*pay-as-you-go active storage billing*'
+                }
             }
 
             It 'Should return false from the Test method' {

@@ -47,6 +47,13 @@ Configuration Example
             OneDriveLoopDefaultSharingLinkRole                         = "View"
             OneDriveOrganizationSharingLinkMaxExpirationInDays         = 180
             OneDriveOrganizationSharingLinkRecommendedExpirationInDays = 90
+            CoreAnyoneSharingLinkMaxExpirationInDays                   = 30
+            CoreAnyoneSharingLinkRecommendedExpirationInDays           = 7
+            OneDriveAnyoneSharingLinkMaxExpirationInDays               = 30
+            OneDriveAnyoneSharingLinkRecommendedExpirationInDays       = 7
+            BlockDownloadLinksFileType                                 = "WebPreviewableFiles"
+            WhoCanShareAuthenticatedGuestAllowList                     = @()
+            WhoCanShareAnonymousAllowList                              = @()
             ShowEveryoneClaim                                          = $false
             ShowAllUsersClaim                                          = $false
             ShowEveryoneExceptExternalUsersClaim                       = $true
