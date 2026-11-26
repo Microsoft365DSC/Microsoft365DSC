@@ -33,22 +33,34 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Add-M365DSCTelemetryEvent -ModuleName '_Shared' -MockWith {
             }
 
-            Mock -CommandName New-MgBetaNetworkAccessTlInspectionPolicy -MockWith { return @{ Id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' } }
-            Mock -CommandName Update-MgBetaNetworkAccessTlInspectionPolicy -MockWith {}
-            Mock -CommandName Remove-MgBetaNetworkAccessTlInspectionPolicy -MockWith {}
-            Mock -CommandName Get-MgBetaNetworkAccessTlInspectionPolicyRule -MockWith {}
-            Mock -CommandName New-MgBetaNetworkAccessTlInspectionPolicyRule -MockWith {}
-            Mock -CommandName Update-MgBetaNetworkAccessTlInspectionPolicyRule -MockWith {}
-            Mock -CommandName Remove-MgBetaNetworkAccessTlInspectionPolicyRule -MockWith {}
-            Mock -CommandName Get-MgBetaNetworkAccessTlInspectionPolicy -MockWith {
+            Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
                 return @{
-                    Name        = 'Contoso TLS Inspection Policy'
-                    Id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-                    Description = 'Default TLS inspection policy for Contoso'
-                    Settings    = @{
-                        DefaultAction = 'bypass'
+                    ResourceUrl = 'https://graph.microsoft.com/'
+                }
+            }
+
+            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                param($Method, $Uri, $Body)
+                if ($Method -eq 'GET' -and $Uri -like '*/tlsInspectionPolicies?*expand=policyRules*')
+                {
+                    return @{
+                        value = @(
+                            @{
+                                name        = 'Contoso TLS Inspection Policy'
+                                id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                                description = 'Default TLS inspection policy for Contoso'
+                                settings    = @{
+                                    defaultAction = 'bypass'
+                                }
+                            }
+                        )
                     }
                 }
+                if ($Method -eq 'POST' -and $Uri -like '*/tlsInspectionPolicies')
+                {
+                    return @{ id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }
+                }
+                return $null
             }
 
             Mock -CommandName Write-M365DSCHost -MockWith {}
@@ -68,7 +80,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential    = $Credential
                 }
 
-                Mock -CommandName Get-MgBetaNetworkAccessTlInspectionPolicy -MockWith {
+                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                    param($Method, $Uri, $Body)
+                    if ($Method -eq 'GET' -and $Uri -like '*/tlsInspectionPolicies?*expand=policyRules*')
+                    {
+                        return @{ value = @() }
+                    }
+                    if ($Method -eq 'POST' -and $Uri -like '*/tlsInspectionPolicies')
+                    {
+                        return @{ id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }
+                    }
                     return $null
                 }
             }
@@ -83,7 +104,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should create a new instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSATLSInspectionPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName New-MgBetaNetworkAccessTlInspectionPolicy -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'POST' -and $Uri -like '*/tlsInspectionPolicies'
+                }
             }
         }
 
@@ -108,7 +131,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should remove the instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSATLSInspectionPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName Remove-MgBetaNetworkAccessTlInspectionPolicy -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'DELETE' -and $Uri -like '*/tlsInspectionPolicies/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                }
             }
         }
 
@@ -153,7 +178,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should update the instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSATLSInspectionPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName Update-MgBetaNetworkAccessTlInspectionPolicy -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'PATCH' -and $Uri -like '*/tlsInspectionPolicies/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                }
             }
         }
 
@@ -188,25 +215,34 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     )
                 }
 
-                Mock -CommandName Get-MgBetaNetworkAccessTlInspectionPolicy -MockWith {
-                    return @{
-                        Name        = 'Contoso TLS Inspection Policy'
-                        Id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-                        Description = 'Default TLS inspection policy for Contoso'
-                        Settings    = @{
-                            DefaultAction = 'bypass'
+                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                    param($Method, $Uri, $Body)
+                    if ($Method -eq 'GET' -and $Uri -like '*/tlsInspectionPolicies?*expand=policyRules*')
+                    {
+                        return @{
+                            value = @(
+                                @{
+                                    name        = 'Contoso TLS Inspection Policy'
+                                    id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                                    description = 'Default TLS inspection policy for Contoso'
+                                    settings    = @{
+                                        defaultAction = 'bypass'
+                                    }
+                                    policyRules = @(
+                                        @{
+                                            id                 = 'existing-rule-id'
+                                            name               = 'test rule to remove'
+                                            priority           = 200
+                                            action             = 'bypass'
+                                            settings           = @{ status = 'enabled' }
+                                            matchingConditions = $null
+                                        }
+                                    )
+                                }
+                            )
                         }
-                        PolicyRules = @(
-                            @{
-                                Id                 = 'existing-rule-id'
-                                Name               = 'test rule to remove'
-                                Priority           = 200
-                                Action             = 'bypass'
-                                Settings           = @{ Status = 'enabled' }
-                                MatchingConditions = $null
-                            }
-                        )
                     }
+                    return $null
                 }
             }
 
@@ -216,16 +252,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should create the new rules and remove the stale rule from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSATLSInspectionPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName New-MgBetaNetworkAccessTlInspectionPolicyRule -Exactly 2
-                Should -Invoke -CommandName Remove-MgBetaNetworkAccessTlInspectionPolicyRule -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 2 -ParameterFilter {
+                    $Method -eq 'POST' -and $Uri -like '*/tlsInspectionPolicies/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/policyRules'
+                }
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'DELETE' -and $Uri -like '*/policyRules/existing-rule-id'
+                }
             }
 
             It 'Should always send matchingConditions, even for a rule without destinations' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSATLSInspectionPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName New-MgBetaNetworkAccessTlInspectionPolicyRule -ParameterFilter {
-                    $BodyParameter.name -eq 'System Bypass TLS inspection rule' -and
-                    $BodyParameter.ContainsKey('matchingConditions') -and
-                    $BodyParameter.matchingConditions.destinations.Count -eq 0
+                Should -Invoke -CommandName Invoke-MgGraphRequest -ParameterFilter {
+                    $Method -eq 'POST' -and $Uri -like '*/policyRules' -and
+                    $Body.name -eq 'System Bypass TLS inspection rule' -and
+                    $Body.ContainsKey('matchingConditions') -and
+                    $Body.matchingConditions.destinations.Count -eq 0
                 }
             }
         }
@@ -238,60 +279,67 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential = $Credential
                 }
 
-                Mock -CommandName Get-MgBetaNetworkAccessTlInspectionPolicy -MockWith {
-                    return @(
-                        @{
-                            Name        = 'Contoso TLS Inspection Policy'
-                            Id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-                            Description = 'Default TLS inspection policy for Contoso'
-                            Settings    = @{
-                                DefaultAction = 'bypass'
-                            }
-                            PolicyRules = @(
+                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                    param($Method, $Uri, $Body)
+                    if ($Method -eq 'GET' -and $Uri -like '*/tlsInspectionPolicies?*expand=policyRules*')
+                    {
+                        return @{
+                            value = @(
                                 @{
-                                    Id                 = 'e0cf2cb9-29cf-4e3e-b73f-0f521b2a095c'
-                                    Name               = 'test rule 01'
-                                    Priority           = 100
-                                    Description        = 'test rule 01 description'
-                                    Action             = 'inspect'
-                                    Settings           = @{ Status = 'enabled' }
-                                    MatchingConditions = @{
-                                        Destinations = @(
-                                            @{
-                                                '@odata.type' = '#microsoft.graph.networkaccess.tlsInspectionFqdnDestination'
-                                                Values        = @('contoso.com')
-                                            }
-                                        )
+                                    name        = 'Contoso TLS Inspection Policy'
+                                    id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                                    description = 'Default TLS inspection policy for Contoso'
+                                    settings    = @{
+                                        defaultAction = 'bypass'
                                     }
-                                },
-                                @{
-                                    Id                 = '72d8838d-2b8f-4f0a-aba2-ee5302b10457'
-                                    Name               = 'System Bypass TLS inspection rule'
-                                    Priority           = 50
-                                    Description        = 'Auto-created TLS rule for system bypass categories.'
-                                    Action             = 'bypass'
-                                    Settings           = @{ Status = 'enabled' }
-                                    MatchingConditions = $null
-                                },
-                                @{
-                                    Id                 = '70c325ce-29f1-4cc5-a821-8e6e6ecd37ec'
-                                    Name               = 'Recommended TLS inspection bypass categories rule'
-                                    Priority           = 65000
-                                    Description        = 'Auto-created TLS rule for recommended bypass categories.'
-                                    Action             = 'bypass'
-                                    Settings           = @{ Status = 'enabled' }
-                                    MatchingConditions = @{
-                                        Destinations = @(
-                                            @{
-                                                '@odata.type' = '#microsoft.graph.networkaccess.tlsInspectionWebCategoryDestination'
-                                                Values        = @('Education', 'Finance', 'Government', 'HealthAndMedicine')
+                                    policyRules = @(
+                                        @{
+                                            id                 = 'e0cf2cb9-29cf-4e3e-b73f-0f521b2a095c'
+                                            name               = 'test rule 01'
+                                            priority           = 100
+                                            description        = 'test rule 01 description'
+                                            action             = 'inspect'
+                                            settings           = @{ status = 'enabled' }
+                                            matchingConditions = @{
+                                                destinations = @(
+                                                    @{
+                                                        '@odata.type' = '#microsoft.graph.networkaccess.tlsInspectionFqdnDestination'
+                                                        values        = @('contoso.com')
+                                                    }
+                                                )
                                             }
-                                        )
-                                    }
+                                        },
+                                        @{
+                                            id                 = '72d8838d-2b8f-4f0a-aba2-ee5302b10457'
+                                            name               = 'System Bypass TLS inspection rule'
+                                            priority           = 50
+                                            description        = 'Auto-created TLS rule for system bypass categories.'
+                                            action             = 'bypass'
+                                            settings           = @{ status = 'enabled' }
+                                            matchingConditions = $null
+                                        },
+                                        @{
+                                            id                 = '70c325ce-29f1-4cc5-a821-8e6e6ecd37ec'
+                                            name               = 'Recommended TLS inspection bypass categories rule'
+                                            priority           = 65000
+                                            description        = 'Auto-created TLS rule for recommended bypass categories.'
+                                            action             = 'bypass'
+                                            settings           = @{ status = 'enabled' }
+                                            matchingConditions = @{
+                                                destinations = @(
+                                                    @{
+                                                        '@odata.type' = '#microsoft.graph.networkaccess.tlsInspectionWebCategoryDestination'
+                                                        values        = @('Education', 'Finance', 'Government', 'HealthAndMedicine')
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    )
                                 }
                             )
                         }
-                    )
+                    }
+                    return $null
                 }
             }
 

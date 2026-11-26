@@ -91,21 +91,30 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
             $nullResult.Ensure = 'Absent'
 
             $instance = $null
-            if (-not $this.ExportedInstance -or $this.ExportedInstance.Name -ne $this.Name)
+            if (-not $this.ExportedInstance -or $this.ExportedInstance.name -ne $this.Name)
             {
+                $baseUrl = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl
+
                 if (-not [System.String]::IsNullOrEmpty($this.Id))
                 {
                     Write-Verbose -Message "Retrieving Web Content Filtering Policy by Id {$($this.Id)}"
-                    $instance = Get-MgBetaNetworkAccessWebFilteringPolicy -WebFilteringPolicyId $this.Id `
-                        -ExpandProperty 'policyRules' `
-                        -ErrorAction SilentlyContinue
+                    try
+                    {
+                        $instance = Invoke-MgGraphRequest -Method GET `
+                            -Uri ($baseUrl + "beta/networkAccess/webFilteringPolicies/$($this.Id)?`$expand=policyRules") `
+                            -ErrorAction Stop
+                    }
+                    catch
+                    {
+                        # Invoke-MgGraphRequest throws a terminating error on 404 even with -ErrorAction SilentlyContinue, so fall back to the Name lookup below.
+                        $instance = $null
+                    }
                 }
                 if ($null -eq $instance)
                 {
                     Write-Verbose -Message "Retrieving Web Content Filtering Policy by Name {$($this.Name)}"
-                    $instance = Get-MgBetaNetworkAccessWebFilteringPolicy -All `
-                        -ExpandProperty 'policyRules' `
-                        -ErrorAction SilentlyContinue | Where-Object -FilterScript { $_.Name -eq $this.Name }
+                    $allInstances = $this.GetAllGraphPages(($baseUrl + 'beta/networkAccess/webFilteringPolicies?$expand=policyRules'))
+                    $instance = $allInstances | Where-Object -FilterScript { $_.name -eq $this.Name } | Select-Object -First 1
                 }
             }
             else
@@ -120,16 +129,16 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
             }
 
             $rulesValue = @()
-            if ($null -ne $instance.PolicyRules)
+            if ($null -ne $instance.policyRules)
             {
-                $rulesValue = [AADGSAWebContentFilteringPolicy]::GetRulesAsHashtable($instance.PolicyRules)
+                $rulesValue = [AADGSAWebContentFilteringPolicy]::GetRulesAsHashtable($instance.policyRules)
             }
 
             $results = @{
-                Name          = $instance.Name
-                Id            = $instance.Id
-                Description   = $instance.Description
-                DefaultAction = [AADGSAWebContentFilteringPolicy]::GetActionValue($instance.Settings.DefaultAction)
+                Name          = $instance.name
+                Id            = $instance.id
+                Description   = $instance.description
+                DefaultAction = [AADGSAWebContentFilteringPolicy]::GetActionValue($instance.settings.defaultAction)
                 Rules         = $rulesValue
                 Ensure        = 'Present'
             }
@@ -157,6 +166,7 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
 
         $null = $this.Connect('MicrosoftGraph')
 
+        $baseUrl = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl
         $currentInstance = $this.Get().ToHashtable()
 
         $instanceParams = @{
@@ -172,19 +182,23 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
         if ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
         {
             Write-Verbose -Message "Creating new AAD GSA Web Content Filtering Policy {$($this.Name)}"
-            $newInstance = New-MgBetaNetworkAccessWebFilteringPolicy -BodyParameter $instanceParams
-            $policyId = $newInstance.Id
+            $newInstance = Invoke-MgGraphRequest -Method POST `
+                -Uri ($baseUrl + 'beta/networkAccess/webFilteringPolicies') `
+                -Body $instanceParams
+            $policyId = $newInstance.id
         }
         elseif ($this.Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
         {
             Write-Verbose -Message "Updating AAD GSA Web Content Filtering Policy {$($this.Name)} with Id {$($currentInstance.Id)}"
-            Update-MgBetaNetworkAccessWebFilteringPolicy -WebFilteringPolicyId $currentInstance.Id `
-                -BodyParameter $instanceParams
+            Invoke-MgGraphRequest -Method PATCH `
+                -Uri ($baseUrl + "beta/networkAccess/webFilteringPolicies/$($currentInstance.Id)") `
+                -Body $instanceParams | Out-Null
         }
         elseif ($this.Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
         {
             Write-Verbose -Message "Removing AAD GSA Web Content Filtering Policy {$($this.Name)} with Id {$($currentInstance.Id)}"
-            Remove-MgBetaNetworkAccessWebFilteringPolicy -WebFilteringPolicyId $currentInstance.Id
+            Invoke-MgGraphRequest -Method DELETE `
+                -Uri ($baseUrl + "beta/networkAccess/webFilteringPolicies/$($currentInstance.Id)") | Out-Null
         }
 
         if ($this.Ensure -eq 'Present' -and $null -ne $this.Rules)
@@ -232,15 +246,16 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
                 {
                     $matchedCurrentRuleIds += $matchedRule.Id
                     Write-Verbose -Message "Updating Web Content Filtering Rule {$($desiredRule.Name)} with Id {$($matchedRule.Id)}"
-                    Update-MgBetaNetworkAccessWebFilteringPolicyRule -WebFilteringPolicyId $policyId `
-                        -PolicyRuleId $matchedRule.Id `
-                        -BodyParameter $ruleBody
+                    Invoke-MgGraphRequest -Method PATCH `
+                        -Uri ($baseUrl + "beta/networkAccess/webFilteringPolicies/$policyId/policyRules/$($matchedRule.Id)") `
+                        -Body $ruleBody | Out-Null
                 }
                 else
                 {
                     Write-Verbose -Message "Creating new Web Content Filtering Rule {$($desiredRule.Name)}"
-                    New-MgBetaNetworkAccessWebFilteringPolicyRule -WebFilteringPolicyId $policyId `
-                        -BodyParameter $ruleBody
+                    Invoke-MgGraphRequest -Method POST `
+                        -Uri ($baseUrl + "beta/networkAccess/webFilteringPolicies/$policyId/policyRules") `
+                        -Body $ruleBody | Out-Null
                 }
             }
 
@@ -249,8 +264,8 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
                 if ($currentRule.Id -notin $matchedCurrentRuleIds)
                 {
                     Write-Verbose -Message "Removing Web Content Filtering Rule {$($currentRule.Name)} with Id {$($currentRule.Id)}"
-                    Remove-MgBetaNetworkAccessWebFilteringPolicyRule -WebFilteringPolicyId $policyId `
-                        -PolicyRuleId $currentRule.Id
+                    Invoke-MgGraphRequest -Method DELETE `
+                        -Uri ($baseUrl + "beta/networkAccess/webFilteringPolicies/$policyId/policyRules/$($currentRule.Id)") | Out-Null
                 }
             }
         }
@@ -285,7 +300,8 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
 
         try
         {
-            [array] $exportedInstances = Get-MgBetaNetworkAccessWebFilteringPolicy -All -ExpandProperty 'policyRules' -ErrorAction Stop
+            $baseUrl = (Get-MSCloudLoginConnectionProfile -Workload MicrosoftGraph).ResourceUrl
+            [array] $exportedInstances = $this.GetAllGraphPages(($baseUrl + 'beta/networkAccess/webFilteringPolicies?$expand=policyRules'))
 
             $i = 1
             $dscContent = [System.Text.StringBuilder]::new()
@@ -304,11 +320,11 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
                     $Global:M365DSCExportResourceInstancesCount++
                 }
 
-                $displayedKey = $config.Name
+                $displayedKey = $config.name
                 Write-M365DSCHost -Message "    |---[$i/$($exportedInstances.Count)] $displayedKey" -DeferWrite
                 $Params = @{
-                    Name = $config.Name
-                    Id   = $config.Id
+                    Name = $config.name
+                    Id   = $config.id
                 }
 
                 $this.ExportedInstance = $config
@@ -367,6 +383,22 @@ class AADGSAWebContentFilteringPolicy : M365DSCResourceBase
 
             throw
         }
+    }
+
+    hidden [System.Object[]] GetAllGraphPages([System.String] $Uri)
+    {
+        $pageResults = @()
+        $nextUri = $Uri
+        while (-not [System.String]::IsNullOrEmpty($nextUri))
+        {
+            $response = Invoke-MgGraphRequest -Method GET -Uri $nextUri -ErrorAction Stop
+            if ($null -ne $response -and $null -ne $response.value)
+            {
+                $pageResults += $response.value
+            }
+            $nextUri = $response.'@odata.nextLink'
+        }
+        return $pageResults
     }
 
     hidden static [System.Collections.Hashtable[]] GetRulesAsHashtable([System.Object[]] $PolicyRules)

@@ -5,8 +5,8 @@
     "apiVersion": "beta",
     "entityType": "networkaccess.filteringPolicy",
     "odataSubtype": null,
-    "cmdletNoun": "MgBetaNetworkAccessWebFilteringPolicy",
-    "cmdletVerb": "New",
+    "cmdletNoun": null,
+    "cmdletVerb": null,
     "includeNavigationProperties": true,
     "generatorVersion": "2.0.0"
   },
@@ -45,7 +45,8 @@
     }
   },
   "requiredModules": [
-    "Microsoft.Graph.Beta.NetworkAccess"
+    "Microsoft.Graph.Authentication",
+    "MSCloudLoginAssistant"
   ],
   "supportedEnvironments": [
     "Global"
@@ -53,16 +54,9 @@
   "mode": "Configuration",
   "commands": [
     {
-      "module": "Microsoft.Graph.Beta.NetworkAccess",
+      "module": "Microsoft.Graph.Authentication",
       "cmdlets": [
-        "Get-MgBetaNetworkAccessWebFilteringPolicy",
-        "Get-MgBetaNetworkAccessWebFilteringPolicyRule",
-        "New-MgBetaNetworkAccessWebFilteringPolicy",
-        "New-MgBetaNetworkAccessWebFilteringPolicyRule",
-        "Remove-MgBetaNetworkAccessWebFilteringPolicy",
-        "Remove-MgBetaNetworkAccessWebFilteringPolicyRule",
-        "Update-MgBetaNetworkAccessWebFilteringPolicy",
-        "Update-MgBetaNetworkAccessWebFilteringPolicyRule"
+        "Invoke-MgGraphRequest"
       ]
     }
   ]

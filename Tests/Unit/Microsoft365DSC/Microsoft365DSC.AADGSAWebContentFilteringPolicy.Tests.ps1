@@ -33,24 +33,36 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             Mock -CommandName Add-M365DSCTelemetryEvent -ModuleName '_Shared' -MockWith {
             }
 
-            Mock -CommandName New-MgBetaNetworkAccessWebFilteringPolicy -MockWith { return @{ Id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' } }
-            Mock -CommandName Update-MgBetaNetworkAccessWebFilteringPolicy -MockWith {}
-            Mock -CommandName Remove-MgBetaNetworkAccessWebFilteringPolicy -MockWith {}
-            Mock -CommandName Get-MgBetaNetworkAccessWebFilteringPolicyRule -MockWith {}
-            Mock -CommandName New-MgBetaNetworkAccessWebFilteringPolicyRule -MockWith {}
-            Mock -CommandName Update-MgBetaNetworkAccessWebFilteringPolicyRule -MockWith {}
-            Mock -CommandName Remove-MgBetaNetworkAccessWebFilteringPolicyRule -MockWith {}
-            Mock -CommandName Get-MgBetaNetworkAccessWebFilteringPolicy -MockWith {
+            Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
                 return @{
-                    Name        = 'Block social media websites'
-                    Id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-                    Description = 'Policy to block access to social media categories'
-                    Settings    = @{
-                        DefaultAction = @{
-                            '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionAllow'
-                        }
+                    ResourceUrl = 'https://graph.microsoft.com/'
+                }
+            }
+
+            Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                param($Method, $Uri, $Body)
+                if ($Method -eq 'GET' -and $Uri -like '*/webFilteringPolicies?*expand=policyRules*')
+                {
+                    return @{
+                        value = @(
+                            @{
+                                name        = 'Block social media websites'
+                                id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                                description = 'Policy to block access to social media categories'
+                                settings    = @{
+                                    defaultAction = @{
+                                        '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionAllow'
+                                    }
+                                }
+                            }
+                        )
                     }
                 }
+                if ($Method -eq 'POST' -and $Uri -like '*/webFilteringPolicies')
+                {
+                    return @{ id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }
+                }
+                return $null
             }
 
             Mock -CommandName Write-M365DSCHost -MockWith {}
@@ -70,7 +82,16 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential    = $Credential
                 }
 
-                Mock -CommandName Get-MgBetaNetworkAccessWebFilteringPolicy -MockWith {
+                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                    param($Method, $Uri, $Body)
+                    if ($Method -eq 'GET' -and $Uri -like '*/webFilteringPolicies?*expand=policyRules*')
+                    {
+                        return @{ value = @() }
+                    }
+                    if ($Method -eq 'POST' -and $Uri -like '*/webFilteringPolicies')
+                    {
+                        return @{ id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }
+                    }
                     return $null
                 }
             }
@@ -85,7 +106,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should create a new instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSAWebContentFilteringPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName New-MgBetaNetworkAccessWebFilteringPolicy -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'POST' -and $Uri -like '*/webFilteringPolicies'
+                }
             }
         }
 
@@ -110,7 +133,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should remove the instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSAWebContentFilteringPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName Remove-MgBetaNetworkAccessWebFilteringPolicy -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'DELETE' -and $Uri -like '*/webFilteringPolicies/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                }
             }
         }
 
@@ -155,7 +180,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should update the instance from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSAWebContentFilteringPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName Update-MgBetaNetworkAccessWebFilteringPolicy -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'PATCH' -and $Uri -like '*/webFilteringPolicies/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                }
             }
         }
 
@@ -186,40 +213,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     )
                 }
 
-                Mock -CommandName Get-MgBetaNetworkAccessWebFilteringPolicy -MockWith {
-                    return @{
-                        Name        = 'Block social media websites'
-                        Id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-                        Description = 'Policy to block access to social media categories'
-                        Settings    = @{
-                            DefaultAction = @{
-                                '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionAllow'
-                            }
-                        }
-                        PolicyRules = @(
-                            @{
-                                Id       = 'existing-rule-id'
-                                Name     = 'Block a stale category'
-                                Priority = 200
-                                Action   = @{
-                                    '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionBlock'
-                                }
-                                Settings           = @{ Status = 'enabled' }
-                                MatchingConditions = @{
-                                    Destinations = @{
-                                        HttpRequestMethod = 'get'
-                                        Targets           = @(
-                                            @{
-                                                '@odata.type' = '#microsoft.graph.networkaccess.webFilteringWebCategoryDestination'
-                                                Values        = @('Gambling')
-                                            }
-                                        )
+                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                    param($Method, $Uri, $Body)
+                    if ($Method -eq 'GET' -and $Uri -like '*/webFilteringPolicies?*expand=policyRules*')
+                    {
+                        return @{
+                            value = @(
+                                @{
+                                    name        = 'Block social media websites'
+                                    id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                                    description = 'Policy to block access to social media categories'
+                                    settings    = @{
+                                        defaultAction = @{
+                                            '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionAllow'
+                                        }
                                     }
-                                    Sources = @{ SessionType = 'user' }
+                                    policyRules = @(
+                                        @{
+                                            id       = 'existing-rule-id'
+                                            name     = 'Block a stale category'
+                                            priority = 200
+                                            action   = @{
+                                                '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionBlock'
+                                            }
+                                            settings           = @{ status = 'enabled' }
+                                            matchingConditions = @{
+                                                destinations = @{
+                                                    httpRequestMethod = 'get'
+                                                    targets           = @(
+                                                        @{
+                                                            '@odata.type' = '#microsoft.graph.networkaccess.webFilteringWebCategoryDestination'
+                                                            values        = @('Gambling')
+                                                        }
+                                                    )
+                                                }
+                                                sources = @{ sessionType = 'user' }
+                                            }
+                                        }
+                                    )
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
+                    return $null
                 }
             }
 
@@ -229,16 +265,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should create the new rule and remove the stale rule from the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSAWebContentFilteringPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName New-MgBetaNetworkAccessWebFilteringPolicyRule -Exactly 1
-                Should -Invoke -CommandName Remove-MgBetaNetworkAccessWebFilteringPolicyRule -Exactly 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'POST' -and $Uri -like '*/webFilteringPolicies/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/policyRules'
+                }
+                Should -Invoke -CommandName Invoke-MgGraphRequest -Exactly 1 -ParameterFilter {
+                    $Method -eq 'DELETE' -and $Uri -like '*/policyRules/existing-rule-id'
+                }
             }
 
             It 'Should always send matchingConditions, even when destinations would be empty' {
                 (New-M365DSCResourceInstance -ResourceName 'AADGSAWebContentFilteringPolicy' -Property $testParams).Set()
-                Should -Invoke -CommandName New-MgBetaNetworkAccessWebFilteringPolicyRule -ParameterFilter {
-                    $BodyParameter.name -eq 'Block Facebook' -and
-                    $BodyParameter.ContainsKey('matchingConditions') -and
-                    $BodyParameter.matchingConditions.destinations.targets.Count -eq 1
+                Should -Invoke -CommandName Invoke-MgGraphRequest -ParameterFilter {
+                    $Method -eq 'POST' -and $Uri -like '*/policyRules' -and
+                    $Body.name -eq 'Block Facebook' -and
+                    $Body.ContainsKey('matchingConditions') -and
+                    $Body.matchingConditions.destinations.targets.Count -eq 1
                 }
             }
         }
@@ -251,42 +292,49 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     Credential = $Credential
                 }
 
-                Mock -CommandName Get-MgBetaNetworkAccessWebFilteringPolicy -MockWith {
-                    return @(
-                        @{
-                            Name        = 'Block social media websites'
-                            Id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-                            Description = 'Policy to block access to social media categories'
-                            Settings    = @{
-                                DefaultAction = @{
-                                    '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionAllow'
-                                }
-                            }
-                            PolicyRules = @(
+                Mock -CommandName Invoke-MgGraphRequest -MockWith {
+                    param($Method, $Uri, $Body)
+                    if ($Method -eq 'GET' -and $Uri -like '*/webFilteringPolicies?*expand=policyRules*')
+                    {
+                        return @{
+                            value = @(
                                 @{
-                                    Id       = 'e0cf2cb9-29cf-4e3e-b73f-0f521b2a095c'
-                                    Name     = 'Block Facebook'
-                                    Priority = 100
-                                    Action   = @{
-                                        '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionBlock'
-                                    }
-                                    Settings           = @{ Status = 'enabled' }
-                                    MatchingConditions = @{
-                                        Destinations = @{
-                                            HttpRequestMethod = 'get'
-                                            Targets           = @(
-                                                @{
-                                                    '@odata.type' = '#microsoft.graph.networkaccess.webFilteringWebCategoryDestination'
-                                                    Values        = @('SocialNetworking')
-                                                }
-                                            )
+                                    name        = 'Block social media websites'
+                                    id          = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+                                    description = 'Policy to block access to social media categories'
+                                    settings    = @{
+                                        defaultAction = @{
+                                            '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionAllow'
                                         }
-                                        Sources = @{ SessionType = 'user' }
                                     }
+                                    policyRules = @(
+                                        @{
+                                            id       = 'e0cf2cb9-29cf-4e3e-b73f-0f521b2a095c'
+                                            name     = 'Block Facebook'
+                                            priority = 100
+                                            action   = @{
+                                                '@odata.type' = '#microsoft.graph.networkaccess.webFilteringActionBlock'
+                                            }
+                                            settings           = @{ status = 'enabled' }
+                                            matchingConditions = @{
+                                                destinations = @{
+                                                    httpRequestMethod = 'get'
+                                                    targets           = @(
+                                                        @{
+                                                            '@odata.type' = '#microsoft.graph.networkaccess.webFilteringWebCategoryDestination'
+                                                            values        = @('SocialNetworking')
+                                                        }
+                                                    )
+                                                }
+                                                sources = @{ sessionType = 'user' }
+                                            }
+                                        }
+                                    )
                                 }
                             )
                         }
-                    )
+                    }
+                    return $null
                 }
             }
 
