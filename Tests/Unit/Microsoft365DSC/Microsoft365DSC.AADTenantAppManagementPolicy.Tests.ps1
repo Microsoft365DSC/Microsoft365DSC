@@ -99,7 +99,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name "Get-TargetResource returns ApplicationRestrictions with maxLifetime converted to ISO 8601" -Fixture {
+        Context -Name "Get method returns ApplicationRestrictions with maxLifetime converted to ISO 8601" -Fixture {
             BeforeAll {
                 $testParams = @{
                     DisplayName      = "MyPolicy"

@@ -137,7 +137,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
             }
 
-            It 'Should return present from the Get-TargetResource function' {
+            It 'Should return present from the Get method' {
                 ((New-M365DSCResourceInstance -ResourceName 'EXOMessageClassification' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
             }
 

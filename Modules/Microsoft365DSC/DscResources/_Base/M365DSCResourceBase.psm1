@@ -913,8 +913,6 @@ class M365DSCResourceBase
         return $this.GetType().Name
     }
 
-    # Replaces $PSScriptRoot, used by every Export-TargetResource as
-    # Get-M365DSCExportContentForResource -ModulePath $PSScriptRoot.
     [System.String] GetModulePath()
     {
         $module = Get-Module -Name 'Microsoft365DSC'

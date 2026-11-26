@@ -31,7 +31,7 @@ namespace Microsoft365DSC.Compare
         /// Both sides are normalized to Hashtable trees before comparison.
         /// </summary>
         /// <param name="desiredValues">Desired state hashtable (from PSBoundParameters)</param>
-        /// <param name="currentValues">Current state hashtable (from Get-TargetResource)</param>
+        /// <param name="currentValues">Current state hashtable (from the resource Get() method)</param>
         /// <param name="valuesToCheck">Subset of keys from desiredValues to check (after filtering out keys/credentials/excluded)</param>
         /// <param name="schema">The full schema array (deserialized SchemaDefinition.json)</param>
         /// <param name="resourceName">Resource name without MSFT_ prefix (e.g. "AADUser")</param>

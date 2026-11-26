@@ -832,7 +832,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'Get-TargetResource resolves ResourceApplication and Permissions to names' -Fixture {
+        Context -Name 'Get method resolves ResourceApplication and Permissions to names' -Fixture {
             BeforeAll {
                 Mock -CommandName Get-MgBetaPolicyPermissionGrantPolicy -MockWith {
                     return @{
