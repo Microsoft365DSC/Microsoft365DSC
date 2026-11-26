@@ -78,9 +78,7 @@ function New-M365DSCResourceInstance
     Indicates whether a class-based resource declares a given property.
 
 .DESCRIPTION
-    The class-based replacement for
-    (Get-Command 'Export-TargetResource').Parameters.Keys.Contains('Filter'). Export support for
-    -Filter and -SubscriptionId varies per resource, and the reverse engine has to ask before
+    Export support for -Filter and -SubscriptionId varies per resource, and the reverse engine has to ask before
     passing them.
 
 .PARAMETER ResourceName

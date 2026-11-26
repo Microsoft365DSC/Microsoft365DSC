@@ -17,7 +17,6 @@
 BeforeDiscovery {
     $resourcesPath = Join-Path -Path $PSScriptRoot -ChildPath '../../Modules/Microsoft365DSC/DscResources'
 
-    # Only converted resources. Script-based ones have no class and are not in scope.
     $classResourceFiles = @(
         Get-ChildItem -Path $resourcesPath -Filter 'MSFT_*.psm1' -File -Recurse |
             Where-Object { (Get-Content -Path $_.FullName -Raw) -match '(?m)^\s*\[DscResource\(\)\]' } |

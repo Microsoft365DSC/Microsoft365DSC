@@ -286,7 +286,7 @@ function Get-M365DSCClassDefinition
     }
 
     <#
-        Converted resources carry private helpers alongside the class (Get-<Resource>SettingValue
+        Some resources carry private helpers alongside the class (Get-<Resource>SettingValue
         and friends). They are module-scope functions, not class members, so they must be emitted
         into the same part file or every call site fails at runtime.
     #>
@@ -704,7 +704,6 @@ $resourceEntries = [System.Collections.Generic.List[System.Object]]::new()
 # them and the casing is not always consistent between those copies.
 $complexByName = [System.Collections.Generic.Dictionary[String, Object]]::new([StringComparer]::OrdinalIgnoreCase)
 $collisions = [System.Collections.Generic.List[String]]::new()
-$skipped = [System.Collections.Generic.List[String]]::new()
 
 foreach ($file in $sourceFiles)
 {
@@ -712,9 +711,7 @@ foreach ($file in $sourceFiles)
 
     if ($definition.ResourceClasses.Count -eq 0)
     {
-        # Not converted yet - still a script-based resource. Expected during the transition.
-        $skipped.Add($file.BaseName)
-        continue
+        throw "'$($file.Name)' does not declare any [DscResource()] class."
     }
 
     if ($definition.ResourceClasses.Count -gt 1)
@@ -772,7 +769,6 @@ if ($collisions.Count -gt 0)
 
 Write-BuildLog "Class-based resources : $($resourceEntries.Count)"
 Write-BuildLog "Complex types         : $($complexByName.Count)"
-Write-BuildLog "Still script-based    : $($skipped.Count)" -Level $(if ($skipped.Count -gt 0) { 'Warning' } else { 'Info' })
 
 if ($resourceEntries.Count -eq 0)
 {

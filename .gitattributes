@@ -4,12 +4,6 @@
 * text=auto
 
 ###############################################################################
-# Mark auto-generated files so editors, GitHub Linguist, and AI coding agents
-# treat them as generated (read-only) artifacts.
-###############################################################################
-*.schema.mof linguist-generated=true
-
-###############################################################################
 # Set default behavior for command prompt diff.
 #
 # This is need for earlier builds of msysgit that does not have it on by

@@ -5,11 +5,7 @@
     Regenerates SchemaDefinition.json by reflecting over the built class-based resources.
 
 .DESCRIPTION
-    Replaced the MOF-based generator, which walked *.schema.mof with regular expressions. Once
-    resources are classes there are no .mof files to walk, and the class metadata is richer and
-    cannot drift from the code.
-
-    The output shape is unchanged, because it is consumed at runtime:
+    The class metadata cannot drift from the code. The output shape is consumed at runtime:
 
         [ { "ClassName": "MSFT_AADGroup",
             "Description": "...",
@@ -55,7 +51,7 @@ if (-not (Test-Path -Path $manifestPath))
     throw "Manifest not found: $manifestPath"
 }
 
-# Resource descriptions still come from readme.md, exactly as the MOF-based generator did.
+# Resource descriptions come from readme.md.
 $descriptions = @{}
 foreach ($directory in (Get-ChildItem -Path $sourceRoot -Directory -Filter 'MSFT_*'))
 {
