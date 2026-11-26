@@ -2,6 +2,12 @@
 
 # UNRELEASED
 
+* ADGSAPrivateAccessApplication
+  * Initial release
+* AADGSATLSInspectionPolicy
+  * Initial release
+* AADGSAWebContentFilteringPolicy
+  * Initial release
 * MISC
   * Added the resource source file and line to the stack traces of error log entries.
   * Added `Resolve-M365DSCSourceLocation` and `Set-M365DSCSourceBreakpoint` to map lines
