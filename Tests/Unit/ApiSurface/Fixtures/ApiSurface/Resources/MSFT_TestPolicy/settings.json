@@ -1,0 +1,35 @@
+{
+  "resourceName": "TestPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "testPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaTestPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Fixture for MSFT_TestPolicy.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Test",
+      "cmdlets": [
+        "Get-MgBetaTestPolicy",
+        "New-MgBetaTestPolicy",
+        "Remove-MgBetaTestPolicy"
+      ]
+    }
+  ]
+}

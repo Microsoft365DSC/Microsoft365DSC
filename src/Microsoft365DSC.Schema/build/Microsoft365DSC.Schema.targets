@@ -1,0 +1,12 @@
+<Project>
+
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)..\schema\**\*.json">
+      <Link>assets\schema\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>false</Pack>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
+
+</Project>

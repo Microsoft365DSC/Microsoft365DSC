@@ -1,0 +1,665 @@
+[
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "54d0ed8e-d09e-4c02-bfbd-b9e20efc5c26"
+        },
+        "value": "device_vendor_msft_policy_config_accounts_allowmicrosoftaccountconnection_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_accounts_allowmicrosoftaccountconnection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "771bc35b-17ad-4dd1-984a-f22cb01aa738"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_power_displayofftimeoutpluggedin_entervideoacpowerdowntimeout",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+              "value": 300
+            }
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "ad96a771-f56a-412f-8d47-f48c1c865f43"
+        },
+        "value": "device_vendor_msft_policy_config_power_displayofftimeoutpluggedin_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_power_displayofftimeoutpluggedin",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "bb55ad43-b5cc-4d70-9f39-e24ce7c32f4a"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "b4656832-9e52-4608-9cb1-fcfb8c6e4ff2"
+        },
+        "value": "device_vendor_msft_policy_config_browser_allowcookies_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_browser_allowcookies",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "0a769cc6-dce2-428a-b853-22308a452a59"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "f5580a8c-8bdd-4fe2-ad29-c73fa3cabd8f"
+        },
+        "value": "device_vendor_msft_policy_config_browser_allowpasswordmanager_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_browser_allowpasswordmanager",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "932d07c0-5380-49a6-80f2-9139b0facbfe"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "736e6ac0-7124-484d-9585-5dfbfb049467"
+        },
+        "value": "device_vendor_msft_policy_config_browser_allowsmartscreen_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_browser_allowsmartscreen",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "ad097289-c522-412a-be13-559097276cf2"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "22f7cbb4-53e3-48eb-9362-a812a89ac8ad"
+        },
+        "value": "device_vendor_msft_policy_config_connectivity_allowusbconnection_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_connectivity_allowusbconnection",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "88d54a03-e6f6-4199-931d-1f7063e08fa1"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_devicepasswordexpiration",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+              "value": 90
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_mindevicepasswordlength",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+              "value": 6
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_maxdevicepasswordfailedattempts",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+              "value": 10
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [
+                {
+                  "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                  "choiceSettingValue": {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                    "children": [],
+                    "value": "device_vendor_msft_policy_config_devicelock_mindevicepasswordcomplexcharacters_3"
+                  },
+                  "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_mindevicepasswordcomplexcharacters"
+                }
+              ],
+              "value": "device_vendor_msft_policy_config_devicelock_alphanumericdevicepasswordrequired_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_alphanumericdevicepasswordrequired"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_maxinactivitytimedevicelock",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+              "value": 5
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "choiceSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+              "children": [],
+              "value": "device_vendor_msft_policy_config_devicelock_allowsimpledevicepassword_0"
+            },
+            "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_allowsimpledevicepassword"
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_devicepasswordhistory",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+              "value": 5
+            }
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "3f967bf7-d0a5-4456-9cef-993e3b2a0a82"
+        },
+        "value": "device_vendor_msft_policy_config_devicelock_devicepasswordenabled_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_devicelock_devicepasswordenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "3b69ae7a-d479-4c08-9df4-3d9af1faeddb"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "56ef3a1f-d7d1-4882-ba75-8885d194b7e6"
+        },
+        "value": "device_vendor_msft_policy_config_experience_allowmanualmdmunenrollment_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_experience_allowmanualmdmunenrollment",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "12bb9752-8b20-41e9-8738-737cae2de1d0"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "4d27004e-7582-4c16-a487-3ab74d506378"
+        },
+        "value": "device_vendor_msft_policy_config_applicationmanagement_allowalltrustedapps_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_applicationmanagement_allowalltrustedapps",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "f7ce33aa-1b74-4f65-8588-c342ff3c29d6"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "15a042c4-6e69-4946-80c1-45d2694dceca"
+        },
+        "value": "device_vendor_msft_policy_config_applicationmanagement_allowappstoreautoupdate_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_applicationmanagement_allowappstoreautoupdate",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "32f5f464-f5c8-4fed-8652-63deb5c91141"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5b91b308-3e05-4d76-9051-e74d3e27dc6f"
+        },
+        "value": "device_vendor_msft_policy_config_applicationmanagement_allowdeveloperunlock_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_applicationmanagement_allowdeveloperunlock",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "51e69efd-2c79-4d19-9222-ab34969e2a6b"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "43e66c54-3b2d-4923-b403-1c2835ad5930"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge_blockthirdpartycookies_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge_blockthirdpartycookies",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "185cd9dc-0db8-4ad3-885b-65cbfd4edbc0"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_extensioninstallblocklistdesc",
+            "simpleSettingCollectionValue": [
+              {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                "value": "*"
+              }
+            ]
+          }
+        ],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "303cb314-2c5e-4a3e-8b37-3f5bd0ae6687"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "31adf42b-4995-4c5e-b267-3c1fa0cdbe3d"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "cbc230f2-2354-423b-a734-044a8fb9a770"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~passwordmanager_passwordmanagerenabled_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~passwordmanager_passwordmanagerenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "b76b9622-3c4e-4e07-9436-b14d4a5b326f"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "7b6587a9-4826-4745-afa3-3429c9b0970c"
+        },
+        "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_smartscreenenabled_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_smartscreenenabled",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "89dde361-895d-4aee-a9ac-3497c7a596b0"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      "settingDefinitionId": "device_vendor_msft_policy_config_mixedreality_aadgroupmembershipcachevalidityindays",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "91dfa858-3c3a-4879-ade3-ae0083a619ab"
+      },
+      "simpleSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "d07326fc-0724-4dba-8c53-b2d1fe073e6d"
+        },
+        "value": 7
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "93f7b2a1-d0fd-4906-b249-8bb534872526"
+        },
+        "value": "device_vendor_msft_policy_config_settings_allowvpn_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_settings_allowvpn",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "5b42603d-a58a-4bd6-a8fa-de4c6ac744e2"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      "settingDefinitionId": "device_vendor_msft_policy_config_settings_pagevisibilitylist",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "15fe9ae2-fd93-4638-8fac-cc07b86d15f5"
+      },
+      "simpleSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "e395eafc-6bfa-49ca-8bc4-83204b076a54"
+        },
+        "value": "hide:network-proxy;network-vpn;developers"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "a08ae716-934e-40d0-9d17-855d3a7c70f0"
+        },
+        "value": "device_vendor_msft_policy_config_system_allowstoragecard_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_system_allowstoragecard",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "d1d4a135-abae-4b73-8c7d-0d7a178ed9fa"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "619c6835-9c6d-41f9-b996-b1c16aef6402"
+        },
+        "value": "vendor_msft_tenantlockdown_requirenetworkinoobe_true"
+      },
+      "settingDefinitionId": "vendor_msft_tenantlockdown_requirenetworkinoobe",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "803a6f0a-9652-4254-bf25-f9d1d1e89ac8"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+      "groupSettingCollectionValue": [
+        {
+          "children": [
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "eca52e73-1da1-46a1-b15c-4a60a30be52a"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_enablepinrecovery_true"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_enablepinrecovery"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "4234a982-c907-48a0-ba4e-08e214cf8299"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_excludesecuritydevices_tpm12_false"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_excludesecuritydevices_tpm12"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "ad3e4c1f-a7a7-46f5-a28b-edd45695168a"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_digits_1"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_digits"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_expiration",
+              "simpleSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "99803511-a7d4-4a4b-9c64-60749ea0598b"
+                },
+                "value": 0
+              }
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_history",
+              "simpleSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "31daa9ab-d4e2-4638-9249-336d4ceddba8"
+                },
+                "value": 5
+              }
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "c38ed726-c7b0-42dc-8b99-b3755d749db6"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_lowercaseletters_2"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_lowercaseletters"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_maximumpinlength",
+              "simpleSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "11367c95-5764-4330-818f-58dbeb320fae"
+                },
+                "value": 12
+              }
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_minimumpinlength",
+              "simpleSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "7bf75167-fe73-4965-bee1-cde0c8e60a4d"
+                },
+                "value": 6
+              }
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "691af600-1c73-4805-8a94-61c698b3df0a"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_specialcharacters_2"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_specialcharacters"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "50f2a526-0fbb-474d-8374-26a461f5e876"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_uppercaseletters_2"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_uppercaseletters"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "6a5b6f78-420d-43f7-a46b-b6c4ae92c8b8"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_requiresecuritydevice_true"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_requiresecuritydevice"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "ff5f62da-3dab-44dd-a5e8-e2b8b34205aa"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_usecertificateforonpremauth_false"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_usecertificateforonpremauth"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "e1661719-3d81-4f6a-9e20-7cef6826775a"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_usehellocertificatesassmartcardcertificates_false"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_usehellocertificatesassmartcardcertificates"
+            },
+            {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+              "choiceSettingValue": {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+                "children": [],
+                "settingValueTemplateReference": {
+                  "settingValueTemplateId": "b4943284-7d24-4c62-8067-5b29363142ba"
+                },
+                "value": "device_vendor_msft_passportforwork_{tenantid}_policies_usepassportforwork_true"
+              },
+              "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_usepassportforwork"
+            }
+          ]
+        }
+      ],
+      "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "5a4a4f3b-f20e-4578-a6a0-edfae1525d95"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "5b905234-4d47-4dca-bdc2-bacdbbd92a43"
+        },
+        "value": "device_vendor_msft_policy_config_update_allowupdateservice_1"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_update_allowupdateservice",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "a01c1062-3ab4-4c39-9571-c484987b175d"
+      }
+    }
+  },
+  {
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+    "settingInstance": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      "choiceSettingValue": {
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingValue",
+        "children": [],
+        "settingValueTemplateReference": {
+          "settingValueTemplateId": "b58bfd0a-0dc1-4480-b6ca-b501978b3c14"
+        },
+        "value": "device_vendor_msft_policy_config_update_managepreviewbuilds_0"
+      },
+      "settingDefinitionId": "device_vendor_msft_policy_config_update_managepreviewbuilds",
+      "settingInstanceTemplateReference": {
+        "settingInstanceTemplateId": "e61d4459-e17c-48d1-97c1-291391adc5a8"
+      }
+    }
+  }
+]

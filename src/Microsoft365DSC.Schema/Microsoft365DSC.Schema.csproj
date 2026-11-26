@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Microsoft365DSC.Schema</AssemblyName>
+    <RootNamespace>Microsoft365DSC.Schema</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <Description>The resource schema, DSC keyword cache and resource settings of a built Microsoft365DSC module.</Description>
+
+    <!-- Content only: there is no assembly, and a consumer that restores this needs no dependency
+         of ours to read a few JSON files. -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <Target Name="AssertSchemaArtifactsExist" BeforeTargets="GenerateNuspec">
+    <Error Condition="'$(M365DscModuleVersion)' == ''"
+           Text="The module version could not be read from Microsoft365DSC.psd1." />
+    <Error Condition="!Exists('$(M365DscModuleRoot)\SchemaDefinition.json') OR !Exists('$(M365DscModuleRoot)\DscSchemaCache.json') OR !Exists('$(M365DscModuleRoot)\ResourcePermissions.json')"
+           Text="SchemaDefinition.json, DscSchemaCache.json and ResourcePermissions.json are build outputs of the module. Run Utilities/Build-Microsoft365DSC.ps1 before packing." />
+  </Target>
+
+  <ItemGroup>
+    <None Include="$(M365DscModuleRoot)\SchemaDefinition.json" Pack="true" PackagePath="schema\$(M365DscModuleVersion)\" />
+    <None Include="$(M365DscModuleRoot)\DscSchemaCache.json" Pack="true" PackagePath="schema\$(M365DscModuleVersion)\" />
+    <None Include="$(M365DscModuleRoot)\ResourcePermissions.json" Pack="true" PackagePath="schema\$(M365DscModuleVersion)\" />
+    <None Include="build\Microsoft365DSC.Schema.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
+</Project>

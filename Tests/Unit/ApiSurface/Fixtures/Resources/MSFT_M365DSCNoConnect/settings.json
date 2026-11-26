@@ -1,0 +1,16 @@
+{
+  "resourceName": "M365DSCNoConnect",
+  "description": "Fixture for M365DSCNoConnect.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": []
+}

@@ -1,0 +1,33 @@
+{
+  "resourceName": "TestProfile",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "testaccess.testProfile",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaTestProfile",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Fixture for MSFT_TestProfile.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Test",
+      "cmdlets": [
+        "Get-MgBetaTestProfile"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+ "DisplayName": "IntuneDeviceConfigurationCustomPolicyWindows10_1",
+ "OmaSettings": [
+  {
+   "Description": "Block Duplicated Edge Shortcuts - Custom ADMX",
+   "DisplayName": "Block Duplicated Edge Shortcuts - “Custom ADMX”",
+   "OmaUri": "./Device/Vendor/MSFT/Policy/ConfigOperations/ADMXInstall/Windows/Policy/WindowsCustomizationsAdmx",
+   "Value": "1",
+   "odataType": "#microsoft.graph.omaSettingString",
+   "CIMInstance": "MSFT_MicrosoftGraphomaSetting"
+  },
+  {
+   "Description": "Disable Edge Desktop Shortcut Creation",
+   "DisplayName": "Disable Edge Desktop Shortcut Creation",
+   "OmaUri": "./Device/Vendor/MSFT/Policy/Config/Windows~Policy~C_Edge/DisableEdgeDesktopShortcutCreation",
+   "Value": "1",
+   "odataType": "#microsoft.graph.omaSettingString",
+   "CIMInstance": "MSFT_MicrosoftGraphomaSetting"
+  },
+  {
+   "DisplayName": "Store’s Config",
+   "IsEncrypted": "False",
+   "OmaUri": "./Device/Vendor/MSFT/Policy/Config/Citrix~Policy~ICAClient~Storefront/Storefronts",
+   "Value": "<enabled/>\r\n<data id=\"Storefronts_Part\" value=\"STORE1&#xF000;$($DomainShortName)-TEST;\r\nhttps://citrix.$($DomainShortName).com/Citrix/$($DomainShortName)-TEST/discovery;On;$($DomainShortName)\"/>\r\n<data id=\"DefaultStore\" value=\"$($DomainShortName)-TEST\"/>",
+   "odataType": "#microsoft.graph.omaSettingString",
+   "CIMInstance": "MSFT_MicrosoftGraphomaSetting"
+  }
+ ],
+ "Description": "IntuneDeviceConfigurationCustomPolicyWindows10_1",
+ "Id": "ea99430e-6cec-4ee8-855c-fb7a67f0df1e",
+ "Assignments": [
+  {
+   "dataType": "#microsoft.graph.exclusionGroupAssignmentTarget",
+   "deviceAndAppManagementAssignmentFilterType": "none",
+   "groupId": "053dc89a-be83-411a-bad3-909904b7239e",
+   "groupDisplayName": "DummyGroupExclude",
+   "CIMInstance": "MSFT_DeviceManagementConfigurationPolicyAssignments"
+  },
+  {
+   "dataType": "#microsoft.graph.groupAssignmentTarget",
+   "deviceAndAppManagementAssignmentFilterType": "none",
+   "groupId": "b0b8fd3f-af2a-453b-be57-80182d599f02",
+   "groupDisplayName": "DummyGroupInclude",
+   "CIMInstance": "MSFT_DeviceManagementConfigurationPolicyAssignments"
+  }
+ ],
+ "Ensure": "Present",
+ "ResourceName": "IntuneDeviceConfigurationCustomPolicyWindows10",
+ "ResourceInstanceName": "IntuneDeviceConfigurationCustomPolicyWindows10-IntuneDeviceConfigurationCustomPolicyWindows10_1",
+ "ApplicationId": "$IntuneApplicationId",
+ "TenantId": "$OrganizationName"
+}

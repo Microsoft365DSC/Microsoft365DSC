@@ -1,0 +1,34 @@
+{
+  "resourceName": "TestTeamsThing",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsTestThing",
+    "cmdletVerb": "Set",
+    "includeNavigationProperties": false,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Fixture for MSFT_TestTeamsThing.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "M365DSCApiSurfaceTestWorkload",
+      "cmdlets": [
+        "Get-CsTestThing",
+        "Set-CsTestThing"
+      ]
+    }
+  ]
+}

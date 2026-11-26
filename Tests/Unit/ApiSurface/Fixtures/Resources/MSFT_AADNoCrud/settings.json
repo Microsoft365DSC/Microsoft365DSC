@@ -1,0 +1,23 @@
+{
+  "resourceName": "AADNoCrud",
+  "description": "Fixture for AADNoCrud.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Authentication",
+      "cmdlets": [
+        "Invoke-MgGraphRequest"
+      ]
+    }
+  ]
+}

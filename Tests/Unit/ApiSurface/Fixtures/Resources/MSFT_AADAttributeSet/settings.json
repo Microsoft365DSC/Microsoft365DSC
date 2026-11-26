@@ -1,0 +1,25 @@
+{
+  "resourceName": "AADAttributeSet",
+  "description": "Fixture for AADAttributeSet.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+      "cmdlets": [
+        "Get-MgBetaDirectoryAttributeSet",
+        "New-MgBetaDirectoryAttributeSet",
+        "Update-MgBetaDirectoryAttributeSet"
+      ]
+    }
+  ]
+}

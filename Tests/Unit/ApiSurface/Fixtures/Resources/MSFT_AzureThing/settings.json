@@ -1,0 +1,16 @@
+{
+  "resourceName": "AzureThing",
+  "description": "Fixture for AzureThing.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": []
+}

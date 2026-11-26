@@ -1,0 +1,15 @@
+{
+  "resourceName": "AADNoCommands",
+  "description": "Fixture for AADNoCommands.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration"
+}

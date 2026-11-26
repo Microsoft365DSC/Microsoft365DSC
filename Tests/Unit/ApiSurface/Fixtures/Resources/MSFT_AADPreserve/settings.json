@@ -1,0 +1,39 @@
+{
+  "resourceName": "AADPreserve",
+  "description": "Fixture for AADPreserve.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "excludedProperties": [
+    {
+      "name": "createdDateTime",
+      "reason": "ReadOnly"
+    }
+  ],
+  "customKey": {
+    "nested": [
+      1,
+      2,
+      3
+    ],
+    "flag": true
+  },
+  "zeta": "last",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Identity.DirectoryManagement",
+      "cmdlets": [
+        "Get-MgBetaDirectoryAttributeSet",
+        "New-MgBetaDirectoryAttributeSet"
+      ]
+    }
+  ]
+}

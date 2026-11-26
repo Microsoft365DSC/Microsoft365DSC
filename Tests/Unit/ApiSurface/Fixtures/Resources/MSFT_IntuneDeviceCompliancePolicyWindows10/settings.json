@@ -1,0 +1,32 @@
+{
+  "resourceName": "IntuneDeviceCompliancePolicyWindows10",
+  "description": "Fixture for IntuneDeviceCompliancePolicyWindows10.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.DeviceManagement",
+      "cmdlets": [
+        "Get-MgBetaDeviceManagementDeviceCompliancePolicy",
+        "New-MgBetaDeviceManagementDeviceCompliancePolicy",
+        "Remove-MgBetaDeviceManagementDeviceCompliancePolicy",
+        "Update-MgBetaDeviceManagementDeviceCompliancePolicy"
+      ]
+    },
+    {
+      "module": "Microsoft.Graph.Groups",
+      "cmdlets": [
+        "Get-MgGroup"
+      ]
+    }
+  ]
+}

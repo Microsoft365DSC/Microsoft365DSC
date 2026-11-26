@@ -1,0 +1,95 @@
+{
+  "resourceName": "SCAdaptiveScope",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "AdaptiveScope",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "createOnlyProperties": [
+      "LocationType",
+      "UseKql"
+    ],
+    "textPayloadProperties": [],
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "This resource configures an adaptive scope in Purview, used to target retention policies and other Purview policies.",
+  "roles": {
+    "read": [
+      "Compliance Administrator"
+    ],
+    "update": [
+      "Compliance Administrator"
+    ]
+  },
+  "permissions": {
+    "graph": {
+      "delegated": {
+        "read": [
+          {
+            "name": "AdministrativeUnit.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "AdministrativeUnit.Read.All"
+          }
+        ]
+      },
+      "application": {
+        "read": [
+          {
+            "name": "AdministrativeUnit.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "AdministrativeUnit.Read.All"
+          }
+        ]
+      }
+    },
+    "Office 365 Exchange Online": {
+      "application": {
+        "read": [
+          {
+            "name": "Exchange.ManageAsApp"
+          }
+        ],
+        "update": [
+          {
+            "name": "Exchange.ManageAsApp"
+          }
+        ]
+      }
+    }
+  },
+  "requiredModules": [
+    "Microsoft.Graph.Identity.DirectoryManagement"
+  ],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-AdaptiveScope",
+        "New-AdaptiveScope",
+        "Remove-AdaptiveScope",
+        "Set-AdaptiveScope"
+      ]
+    },
+    {
+      "module": "Microsoft.Graph.Identity.DirectoryManagement",
+      "cmdlets": [
+        "Get-MgDirectoryAdministrativeUnit"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "Get-MgBetaTestOverridden": {
+    "Reason": "The beta endpoint answers GET and rejects POST.",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/testPolicies/retrieveThing",
+        "ApiVersion": "beta"
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "resourceName": "AADPolicyAmbiguous",
+  "description": "Fixture for AADPolicyAmbiguous.",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {},
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.Identity.SignIns",
+      "cmdlets": [
+        "Get-MgPolicyAlpha",
+        "Get-MgPolicyBeta"
+      ]
+    }
+  ]
+}

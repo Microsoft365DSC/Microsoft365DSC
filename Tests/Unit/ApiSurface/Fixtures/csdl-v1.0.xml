@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="microsoft.graph" Alias="graph" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="entity" Abstract="true">
+        <Key>
+          <PropertyRef Name="id" />
+        </Key>
+        <Property Name="id" Type="Edm.String" Nullable="false" />
+      </EntityType>
+      <EntityType Name="directoryObject" BaseType="graph.entity" />
+      <EntityType Name="group" BaseType="graph.directoryObject">
+        <Property Name="displayName" Type="Edm.String" />
+        <NavigationProperty Name="members" Type="Collection(graph.directoryObject)" />
+      </EntityType>
+      <EntityType Name="user" BaseType="graph.directoryObject">
+        <Property Name="displayName" Type="Edm.String" />
+      </EntityType>
+      <EntityContainer Name="GraphService">
+        <EntitySet Name="groups" EntityType="microsoft.graph.group" />
+        <EntitySet Name="users" EntityType="microsoft.graph.user" />
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

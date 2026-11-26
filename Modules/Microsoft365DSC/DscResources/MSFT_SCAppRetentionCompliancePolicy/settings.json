@@ -1,0 +1,60 @@
+{
+  "resourceName": "SCAppRetentionCompliancePolicy",
+  "generatedFrom": {
+    "workload": "SecurityComplianceCenter",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "AppRetentionCompliancePolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "createOnlyProperties": [
+      "AdaptiveScopeLocation"
+    ],
+    "textPayloadProperties": [],
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "This resource configures a Purview retention policy for apps, such as Teams channel messages, Viva Engage or Copilot interactions, targeting static locations or adaptive scopes.",
+  "roles": {
+    "read": [
+      "Compliance Administrator"
+    ],
+    "update": [
+      "Compliance Administrator"
+    ]
+  },
+  "permissions": {
+    "Office 365 Exchange Online": {
+      "application": {
+        "read": [
+          {
+            "name": "Exchange.ManageAsApp"
+          }
+        ],
+        "update": [
+          {
+            "name": "Exchange.ManageAsApp"
+          }
+        ]
+      }
+    }
+  },
+  "requiredModules": [],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "ExchangeOnlineManagement",
+      "cmdlets": [
+        "Get-AppRetentionCompliancePolicy",
+        "New-AppRetentionCompliancePolicy",
+        "Remove-AppRetentionCompliancePolicy",
+        "Set-AppRetentionCompliancePolicy"
+      ]
+    }
+  ]
+}

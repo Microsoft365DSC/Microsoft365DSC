@@ -1,0 +1,42 @@
+{
+  "Get-MgBetaDirectoryDeletedItemAsApplication": {
+    "Reason": "Find-MgGraphCommand reports /directory/deletedItems/application, but deleted applications are only reachable through the OData cast segment microsoft.graph.application.",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/directory/deletedItems/{directoryObject-id}/microsoft.graph.application",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/directory/deletedItems/microsoft.graph.application",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaDirectoryDeletedItemAsGroup": {
+    "Reason": "Find-MgGraphCommand reports /directory/deletedItems/group, but deleted groups are only reachable through the OData cast segment microsoft.graph.group.",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/directory/deletedItems/{directoryObject-id}/microsoft.graph.group",
+        "ApiVersion": "beta"
+      },
+      {
+        "Method": "GET",
+        "URI": "/directory/deletedItems/microsoft.graph.group",
+        "ApiVersion": "beta"
+      }
+    ]
+  },
+  "Get-MgBetaDeviceManagementConfigurationPolicyEnrollmentTimeDeviceMembershipTarget": {
+    "Reason": "The beta endpoint answers GET and rejects POST with 400, while the SDK metadata declares the action as POST.",
+    "Variants": [
+      {
+        "Method": "GET",
+        "URI": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}/retrieveEnrollmentTimeDeviceMembershipTarget",
+        "ApiVersion": "beta"
+      }
+    ]
+  }
+}

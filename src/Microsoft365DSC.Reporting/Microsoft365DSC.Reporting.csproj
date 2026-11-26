@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Microsoft365DSC.Reporting</AssemblyName>
+    <RootNamespace>Microsoft365DSC.Reporting</RootNamespace>
+    <Product>Microsoft365DSC Reporting</Product>
+    <Description>Converts parsed Microsoft365DSC configurations into reports, one converter per output format</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft365DSC.Utilities\Microsoft365DSC.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

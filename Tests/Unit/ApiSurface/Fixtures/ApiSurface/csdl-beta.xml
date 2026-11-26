@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="microsoft.graph" Alias="graph" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="entity" Abstract="true">
+        <Key>
+          <PropertyRef Name="id" />
+        </Key>
+        <Property Name="id" Type="Edm.String" Nullable="false" />
+      </EntityType>
+      <EntityType Name="testPolicy" BaseType="graph.entity">
+        <Property Name="displayName" Type="Edm.String" />
+        <Property Name="state" Type="graph.testPolicyState" />
+        <Property Name="tags" Type="Collection(Edm.String)" />
+        <Property Name="conditions" Type="graph.testConditionSet" />
+        <Property Name="createdDateTime" Type="Edm.DateTimeOffset" />
+        <Property Name="templateId" Type="Edm.String" />
+        <Property Name="signature" Type="Edm.String" />
+        <NavigationProperty Name="owners" Type="Collection(graph.testOwner)" />
+      </EntityType>
+      <EntityType Name="testOwner" BaseType="graph.entity">
+        <Property Name="ownerName" Type="Edm.String" />
+      </EntityType>
+      <EntityType Name="testCompliancePolicy" BaseType="graph.entity" Abstract="true">
+        <Property Name="displayName" Type="Edm.String" />
+      </EntityType>
+      <EntityType Name="testWindowsCompliancePolicy" BaseType="graph.testCompliancePolicy">
+        <Property Name="bitLockerEnabled" Type="Edm.Boolean" />
+      </EntityType>
+      <ComplexType Name="testConditionSet">
+        <Property Name="includeUsers" Type="Collection(Edm.String)" />
+        <Property Name="platforms" Type="graph.testPlatformCondition" />
+      </ComplexType>
+      <ComplexType Name="testPlatformCondition">
+        <Property Name="includePlatforms" Type="Collection(graph.testPlatform)" />
+      </ComplexType>
+      <ComplexType Name="testUnusedType">
+        <Property Name="neverReferenced" Type="Edm.String" />
+      </ComplexType>
+      <EnumType Name="testPolicyState">
+        <Member Name="enabled" Value="0" />
+        <Member Name="disabled" Value="1" />
+        <Member Name="reportOnly" Value="2" />
+      </EnumType>
+      <EnumType Name="testPlatform">
+        <Member Name="android" Value="0" />
+        <Member Name="ios" Value="1" />
+      </EnumType>
+      <Annotations Target="microsoft.graph.testPolicy/createdDateTime">
+        <Annotation Term="Org.OData.Core.V1.Computed" Bool="true" />
+      </Annotations>
+      <Annotations Target="microsoft.graph.testPolicy/templateId">
+        <Annotation Term="Org.OData.Core.V1.Immutable" Bool="true" />
+      </Annotations>
+      <Annotations Target="microsoft.graph.testPolicy/signature">
+        <Annotation Term="Org.OData.Core.V1.Permissions">
+          <EnumMember>Org.OData.Core.V1.Permission/Read</EnumMember>
+        </Annotation>
+      </Annotations>
+    </Schema>
+    <Schema Namespace="microsoft.graph.testaccess" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="testProfile" BaseType="graph.entity">
+        <Property Name="profileName" Type="Edm.String" />
+        <Property Name="scope" Type="graph.testaccess.testScope" />
+      </EntityType>
+      <ComplexType Name="testScope">
+        <Property Name="value" Type="Edm.String" />
+      </ComplexType>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

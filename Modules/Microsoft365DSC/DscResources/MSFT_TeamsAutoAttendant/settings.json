@@ -1,0 +1,63 @@
+{
+  "resourceName": "TeamsAutoAttendant",
+  "generatedFrom": {
+    "workload": "MicrosoftTeams",
+    "apiVersion": null,
+    "entityType": null,
+    "odataSubtype": null,
+    "cmdletNoun": "CsAutoAttendant",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": false,
+    "createOnlyProperties": [],
+    "textPayloadProperties": [],
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [
+    {
+      "name": "Force",
+      "reason": "NotConfigurable",
+      "note": ""
+    }
+  ],
+  "description": "This resource configures a Teams Auto Attendant, including its call flows, call handling associations and resource accounts.",
+  "roles": {
+    "read": [
+      "Teams Reader"
+    ],
+    "update": [
+      "Teams Administrator"
+    ]
+  },
+  "permissions": {},
+  "requiredModules": [
+    "MicrosoftTeams"
+  ],
+  "supportedEnvironments": [
+    "Global",
+    "USGov"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "MicrosoftTeams",
+      "cmdlets": [
+        "Get-CsAutoAttendant",
+        "Get-CsOnlineAudioFile",
+        "Get-CsOnlineSchedule",
+        "Get-CsOnlineUser",
+        "New-CsAutoAttendant",
+        "New-CsAutoAttendantCallableEntity",
+        "New-CsAutoAttendantCallFlow",
+        "New-CsAutoAttendantCallHandlingAssociation",
+        "New-CsAutoAttendantDialScope",
+        "New-CsAutoAttendantMenu",
+        "New-CsAutoAttendantMenuOption",
+        "New-CsAutoAttendantPrompt",
+        "New-CsOnlineApplicationInstanceAssociation",
+        "Remove-CsAutoAttendant",
+        "Remove-CsOnlineApplicationInstanceAssociation",
+        "Set-CsAutoAttendant"
+      ]
+    }
+  ]
+}

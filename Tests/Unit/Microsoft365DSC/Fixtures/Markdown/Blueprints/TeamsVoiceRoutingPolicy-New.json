@@ -1,0 +1,17 @@
+[
+  {
+    "CertificateThumbprint": "$TeamsCertThumbprint",
+    "TenantId": "$OrganizationName",
+    "ApplicationId": "$TeamsApplicationId",
+    "Identity": "TeamsVoiceRoutingPolicy_1",
+    "OnlinePstnUsages": [
+      "Local"
+    ],
+    "Ensure": "Present",
+    "ResourceInstanceName": "TeamsVoiceRoutingPolicy-TeamsVoiceRoutingPolicy_1",
+    "ResourceName": "TeamsVoiceRoutingPolicy",
+    "DependsOn": [
+      "[TeamsPSTNUsage]TeamsPSTNUsage-Local"
+    ]
+  }
+]

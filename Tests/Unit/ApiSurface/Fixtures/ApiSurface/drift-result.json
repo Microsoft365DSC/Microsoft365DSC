@@ -1,0 +1,158 @@
+{
+  "Backlog": 7,
+  "Summary": {
+    "compared": 1,
+    "skipped": 1,
+    "total": 10
+  },
+  "Coverage": [
+    {
+      "resource": "TestPolicy",
+      "compared": true,
+      "declared": 3,
+      "vendorTop": 10,
+      "backlog": 7,
+      "reason": null
+    },
+    {
+      "resource": "TestCatalog",
+      "compared": false,
+      "declared": 0,
+      "vendorTop": 0,
+      "backlog": 0,
+      "reason": "Entity type is not comparable"
+    }
+  ],
+  "Findings": [
+    {
+      "id": "RES-ENUM-STALE:TestPolicy:Mode",
+      "code": "RES-ENUM-STALE",
+      "severity": "warning",
+      "autoFixable": true,
+      "resource": "TestPolicy",
+      "workload": "MicrosoftGraph",
+      "property": "Mode",
+      "from": { "values": ["audit"] },
+      "to": { "added": ["enforce"] },
+      "evidence": { "source": "csdl:beta/testPolicy/mode" },
+      "firstSeen": "2026-08-20"
+    },
+    {
+      "id": "RES-ENUM-STALE:TestPolicy:State",
+      "code": "RES-ENUM-STALE",
+      "severity": "warning",
+      "autoFixable": true,
+      "resource": "TestPolicy",
+      "workload": "MicrosoftGraph",
+      "property": "State",
+      "from": { "values": ["enabled"] },
+      "to": { "added": ["disabled", "reportOnly"] },
+      "evidence": { "source": "csdl:beta/testPolicy/state" },
+      "firstSeen": "2026-08-20"
+    },
+    {
+      "id": "RES-PROP-MISSING:TestGroup:NewName",
+      "code": "RES-PROP-MISSING",
+      "severity": "warning",
+      "autoFixable": true,
+      "resource": "TestGroup",
+      "workload": "MicrosoftGraph",
+      "property": "NewName",
+      "from": null,
+      "to": { "vendorType": "Edm.String", "isArray": false, "clrType": "System.String", "nullable": false },
+      "evidence": { "source": "csdl:beta/testGroup/newName" },
+      "firstSeen": "2026-08-27"
+    },
+    {
+      "id": "RES-PROP-MISSING:TestPolicy:NewFlag",
+      "code": "RES-PROP-MISSING",
+      "severity": "warning",
+      "autoFixable": true,
+      "resource": "TestPolicy",
+      "workload": "MicrosoftGraph",
+      "property": "NewFlag",
+      "from": null,
+      "to": { "vendorType": "Edm.Boolean", "isArray": false, "clrType": "System.Nullable`1[System.Boolean]", "nullable": true },
+      "evidence": { "source": "csdl:beta/testPolicy/newFlag" },
+      "firstSeen": "2026-08-27"
+    },
+    {
+      "id": "RES-PROP-ORPHANED:TestPolicy:Invented",
+      "code": "RES-PROP-ORPHANED",
+      "severity": "breaking",
+      "autoFixable": false,
+      "resource": "TestPolicy",
+      "workload": "MicrosoftGraph",
+      "property": "Invented",
+      "from": { "typeConstraint": "String" },
+      "to": null,
+      "evidence": { "source": "dsc:TestPolicy/Invented" },
+      "firstSeen": "2026-08-10"
+    },
+    {
+      "id": "RES-PROP-READONLY:TestPolicy:CreatedDateTime",
+      "code": "RES-PROP-READONLY",
+      "severity": "info",
+      "autoFixable": false,
+      "resource": "TestPolicy",
+      "workload": "MicrosoftGraph",
+      "property": "CreatedDateTime",
+      "from": null,
+      "to": { "vendorType": "Edm.DateTimeOffset", "isArray": false },
+      "evidence": { "source": "csdl:beta/testPolicy/createdDateTime" },
+      "firstSeen": "2026-08-27"
+    },
+    {
+      "id": "RES-TYPE-MISMATCH:TestGroup:Priority",
+      "code": "RES-TYPE-MISMATCH",
+      "severity": "breaking",
+      "autoFixable": false,
+      "resource": "TestGroup",
+      "workload": "MicrosoftGraph",
+      "property": "Priority",
+      "from": { "typeConstraint": "UInt32" },
+      "to": { "vendorType": "Edm.Int64", "isArray": false },
+      "evidence": { "source": "csdl:beta/testGroup/priority" },
+      "firstSeen": "2026-07-01"
+    },
+    {
+      "id": "VND-ENUM-MEMBER-ADDED:beta:testPolicy:state",
+      "code": "VND-ENUM-MEMBER-ADDED",
+      "severity": "warning",
+      "autoFixable": true,
+      "resource": null,
+      "workload": "MicrosoftGraph",
+      "property": "state",
+      "from": null,
+      "to": { "added": ["reportOnly"] },
+      "evidence": { "source": "csdl:beta/testPolicy/state" },
+      "firstSeen": "2026-08-27"
+    },
+    {
+      "id": "VND-NEWER-VERSION:Az.Resources",
+      "code": "VND-NEWER-VERSION",
+      "severity": "info",
+      "autoFixable": false,
+      "resource": null,
+      "workload": "Support",
+      "property": null,
+      "from": { "version": "9.0.1" },
+      "to": { "version": "10.1.0", "jump": "Major" },
+      "evidence": { "source": "gallery:Az.Resources" },
+      "firstSeen": "2026-08-27"
+    },
+    {
+      "id": "VND-TYPE-PROP-ADDED:beta:testPolicy:extraField",
+      "code": "VND-TYPE-PROP-ADDED",
+      "severity": "info",
+      "autoFixable": false,
+      "resource": null,
+      "workload": "MicrosoftGraph",
+      "property": "extraField",
+      "from": null,
+      "to": { "vendorType": "Edm.String", "isArray": false },
+      "evidence": { "source": "csdl:beta/testPolicy/extraField" },
+      "firstSeen": "2026-08-27"
+    }
+  ]
+}

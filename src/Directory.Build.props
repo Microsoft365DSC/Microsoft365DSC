@@ -1,0 +1,24 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <M365DscModuleRoot>$(MSBuildThisFileDirectory)..\Modules\Microsoft365DSC</M365DscModuleRoot>
+    <M365DscModuleVersion Condition="Exists('$(M365DscModuleRoot)\Microsoft365DSC.psd1')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(M365DscModuleRoot)\Microsoft365DSC.psd1')), "ModuleVersion\s*=\s*'([^']+)'").Groups[1].Value)</M365DscModuleVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Authors>Microsoft365DSC Team</Authors>
+    <Company>Microsoft365DSC</Company>
+    <Copyright>Copyright © Microsoft365DSC</Copyright>
+    <Version Condition="'$(M365DscModuleVersion)' != ''">$(M365DscModuleVersion)</Version>
+    <Version Condition="'$(M365DscModuleVersion)' == ''">1.0.0</Version>
+    <IsPackable>false</IsPackable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Microsoft365DSC/Microsoft365DSC</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+</Project>

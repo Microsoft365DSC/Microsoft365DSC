@@ -1,0 +1,106 @@
+{
+  "runtimeTarget": {
+    "name": ".NETStandard,Version=v2.0/",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETStandard,Version=v2.0": {},
+    ".NETStandard,Version=v2.0/": {
+      "Microsoft365DSC.Converter/1.0.0": {
+        "dependencies": {
+          "Microsoft.Management.Infrastructure": "3.0.0",
+          "Microsoft365DSC.Utilities": "1.0.0",
+          "PowerShellStandard.Library": "5.1.1"
+        },
+        "runtime": {
+          "Microsoft365DSC.Converter.dll": {}
+        }
+      },
+      "Microsoft.Management.Infrastructure/3.0.0": {
+        "dependencies": {
+          "Microsoft.Management.Infrastructure.Runtime.Unix": "3.0.0",
+          "Microsoft.Management.Infrastructure.Runtime.Win": "3.0.0"
+        }
+      },
+      "Microsoft.Management.Infrastructure.Runtime.Unix/3.0.0": {},
+      "Microsoft.Management.Infrastructure.Runtime.Win/3.0.0": {},
+      "PowerShellStandard.Library/5.1.1": {
+        "runtime": {
+          "lib/netstandard2.0/System.Management.Automation.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "5.1.1.0"
+          }
+        }
+      },
+      "Microsoft365DSC.Cache/1.0.0": {
+        "dependencies": {
+          "PowerShellStandard.Library": "5.1.1"
+        },
+        "runtime": {
+          "Microsoft365DSC.Cache.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Microsoft365DSC.Utilities/1.0.0": {
+        "dependencies": {
+          "Microsoft365DSC.Cache": "1.0.0",
+          "PowerShellStandard.Library": "5.1.1"
+        },
+        "runtime": {
+          "Microsoft365DSC.Utilities.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Microsoft365DSC.Converter/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Management.Infrastructure/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cGZi0q5IujCTVYKo9h22Pw+UwfZDV82HXO8HTxMG2HqntPlT3Ls8jY6punLp4YzCypJNpfCAu2kae3TIyuAiJw==",
+      "path": "microsoft.management.infrastructure/3.0.0",
+      "hashPath": "microsoft.management.infrastructure.3.0.0.nupkg.sha512"
+    },
+    "Microsoft.Management.Infrastructure.Runtime.Unix/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QZE3uEDvZ0m7LabQvcmNOYHp7v1QPBVMpB/ild0WEE8zqUVAP5y9rRI5we37ImI1bQmW5pZ+3HNC70POPm0jBQ==",
+      "path": "microsoft.management.infrastructure.runtime.unix/3.0.0",
+      "hashPath": "microsoft.management.infrastructure.runtime.unix.3.0.0.nupkg.sha512"
+    },
+    "Microsoft.Management.Infrastructure.Runtime.Win/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uwMyWN33+iQ8Wm/n1yoPXgFoiYNd0HzJyoqSVhaQZyJfaQrJR3udgcIHjqa1qbc3lS6kvfuUMN4TrF4U4refCQ==",
+      "path": "microsoft.management.infrastructure.runtime.win/3.0.0",
+      "hashPath": "microsoft.management.infrastructure.runtime.win.3.0.0.nupkg.sha512"
+    },
+    "PowerShellStandard.Library/5.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-e31xJjG+Kjbv6YF3Yq6D4Dl3or8v7LrNF41k3CXrWozW6hR1zcOe5KYuZJaGSiAgLnwP8wcW+I3+IWEzMPZKXQ==",
+      "path": "powershellstandard.library/5.1.1",
+      "hashPath": "powershellstandard.library.5.1.1.nupkg.sha512"
+    },
+    "Microsoft365DSC.Cache/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft365DSC.Utilities/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

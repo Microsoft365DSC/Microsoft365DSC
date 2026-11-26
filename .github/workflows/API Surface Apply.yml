@@ -1,0 +1,198 @@
+name: API Surface Apply
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Tracking Issue to read the ticked findings from. Leave empty when finding_id is given.'
+        required: false
+        type: string
+      finding_id:
+        description: 'Comma separated finding ids to apply. Applied on top of the ticked ones.'
+        required: false
+        type: string
+
+concurrency:
+  group: api-surface-apply
+  cancel-in-progress: false
+
+env:
+  DRIFT_ISSUE_LABEL: api-drift
+
+jobs:
+  apply-drift:
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: read
+
+    # A dispatch already requires write access. A comment must carry the command and sit on an
+    # Issue with the label.
+    if: >-
+      github.repository == 'Microsoft365DSC/Microsoft365DSC' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.issue.pull_request == null &&
+          contains(github.event.comment.body, '/apply-drift') &&
+          contains(github.event.issue.labels.*.name, 'api-drift')
+        )
+      )
+
+    steps:
+      - name: Check Commenter Permission
+        if: github.event_name == 'issue_comment'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $level = (gh api "repos/$env:GITHUB_REPOSITORY/collaborators/$env:COMMENTER/permission" --jq '.permission')
+
+          if ($level -notin @('admin', 'write', 'maintain'))
+          {
+            throw "'$env:COMMENTER' has '$level' permission and cannot trigger an apply run."
+          }
+
+          "Commenter '$env:COMMENTER' has '$level' permission."
+
+      - name: Resolve The Request
+        id: request
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          COMMENT_ISSUE: ${{ github.event.issue.number }}
+          INPUT_ISSUE: ${{ inputs.issue_number }}
+          INPUT_FINDING: ${{ inputs.finding_id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $issue = $env:COMMENT_ISSUE
+          if ($env:EVENT_NAME -eq 'workflow_dispatch')
+          {
+            $issue = $env:INPUT_ISSUE
+          }
+
+          if ([System.String]::IsNullOrWhiteSpace($issue) -and [System.String]::IsNullOrWhiteSpace($env:INPUT_FINDING))
+          {
+            throw 'Pass an Issue number, a finding id, or both.'
+          }
+
+          "issue-number=$issue" | Add-Content -Path $env:GITHUB_OUTPUT
+          "finding-id=$env:INPUT_FINDING" | Add-Content -Path $env:GITHUB_OUTPUT
+
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          ref: Dev
+          fetch-depth: 0
+
+      - name: Install Modules
+        shell: pwsh
+        timeout-minutes: 45
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifests = @('./Modules/Microsoft365DSC/Dependencies/Manifest.psd1', './Modules/Microsoft365DSC/Dependencies/DevManifest.psd1')
+          $seen = [System.Collections.Generic.HashSet[System.String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+          foreach ($manifest in $manifests)
+          {
+            foreach ($dependency in (Import-PowerShellDataFile $manifest).Dependencies)
+            {
+              if (-not $seen.Add("$($dependency.ModuleName)/$($dependency.RequiredVersion)"))
+              {
+                continue
+              }
+
+              Install-PSResource -Name $dependency.ModuleName -Version $dependency.RequiredVersion -Scope AllUsers -TrustRepository
+            }
+          }
+
+          Install-PSResource -Name ReverseDSC -Scope AllUsers -TrustRepository
+          Install-PSResource -Name Pester -Scope AllUsers -TrustRepository -Version 6.2.0
+          [System.Environment]::SetEnvironmentVariable('M365DSCTelemetryEnabled', $false, [System.EnvironmentVariableTarget]::Machine);
+
+      - name: Download Drift Report
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # The weekly run and this request can be days apart. The last successful check holds the
+          # report the approved ids belong to.
+          $runs = gh run list --workflow 'API Surface Check.yml' --status success --limit 1 --json databaseId | ConvertFrom-Json
+          if ($runs.Count -eq 0)
+          {
+            throw 'No successful API Surface Check run to take a drift report from.'
+          }
+
+          gh run download $runs[0].databaseId --name api-drift --dir ./Utilities/ApiSurface
+
+      - name: Read Approved Findings
+        if: steps.request.outputs.issue-number != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue-number }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Read the body now rather than trusting the artifact. A maintainer may have ticked a box
+          # after the weekly run wrote it.
+          $body = gh issue view $env:ISSUE_NUMBER --json body --jq '.body'
+          [System.IO.File]::WriteAllText('issue-body.md', [System.String] $body, [System.Text.UTF8Encoding]::new($false))
+
+      - name: Build Class Modules
+        shell: pwsh
+        run: |
+          & ./Utilities/Build-Microsoft365DSC.ps1 -SkipSchemaCache
+
+      - name: Apply And Open Pull Request
+        shell: pwsh
+        timeout-minutes: 60
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FINDING_ID: ${{ steps.request.outputs.finding-id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $MaximumFunctionCount = 32767
+          Import-Module ./Utilities/ApiSurface/M365DSCApiSurface.psd1 -Force
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          $parameters = @{ Confirm = $false }
+          if (Test-Path -Path ./issue-body.md)
+          {
+            $parameters['FromIssue'] = './issue-body.md'
+          }
+
+          if (-not [System.String]::IsNullOrWhiteSpace($env:FINDING_ID))
+          {
+            $parameters['FindingId'] = @($env:FINDING_ID -split ',' |
+              ForEach-Object { $_.Trim() } |
+              Where-Object { -not [System.String]::IsNullOrEmpty($_) })
+          }
+
+          # -AllowNonAutomatic is never passed here. The manual categories are local only.
+          $result = Invoke-M365DSCApiSurfaceUpdate @parameters
+
+          "Branch: $($result.Branch)"
+          "Applied: $(@($result.Applied).Count)"
+          "Reverted: $(@($result.Reverted).Count)"
+          "Pull request: $($result.PullRequest)"
+
+      - name: Comment The Outcome
+        if: always() && steps.request.outputs.issue-number != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.request.outputs.issue-number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          OUTCOME: ${{ job.status }}
+        run: |
+          gh issue comment $env:ISSUE_NUMBER --body "Apply run finished with status ``$env:OUTCOME``. [Run log]($env:RUN_URL)"
