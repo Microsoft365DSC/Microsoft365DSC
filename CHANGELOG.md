@@ -2,6 +2,10 @@
 
 # UNRELEASED
 
+* EXOManagementRoleEntry
+  * Added a `Filter` property that applies a scriptblock to role entries after retrieval,
+    allowing built-in entries to be excluded from the export.
+    FIXES [#7673](https://github.com/Microsoft365DSC/Microsoft365DSC/issues/7673)
 * MISC
   * Added the resource source file and line to the stack traces of error log entries.
   * Added `Resolve-M365DSCSourceLocation` and `Set-M365DSCSourceBreakpoint` to map lines

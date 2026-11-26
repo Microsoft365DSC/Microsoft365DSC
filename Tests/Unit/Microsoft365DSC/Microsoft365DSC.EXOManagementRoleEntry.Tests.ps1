@@ -97,6 +97,69 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
+        Context -Name 'Export with Filter' -Fixture {
+            BeforeAll {
+                Mock -CommandName Get-ManagementRoleEntry -MockWith {
+                    return @(
+                        @{
+                            Identity   = 'Information Rights Management'
+                            Name       = 'Get-BookingMailbox'
+                            Type       = 'Cmdlet'
+                            Parameters = @('ANR', 'RecipientTypeDetails', 'ResultSize')
+                        }
+                        @{
+                            Identity   = 'Custom Role'
+                            Name       = 'Set-CustomMailbox'
+                            Type       = 'Script'
+                            Parameters = @('Identity', 'EmailAddresses')
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-M365DSCExportContentForResource -MockWith {
+                    return "Block:$($Results.Identity)"
+                }
+
+                $Global:CurrentModeIsExport = $true
+                $Global:PartialExportFileName = "$(New-Guid).partial.ps1"
+            }
+
+            It 'Should export all role entries when Filter is not specified' {
+                $testParams = @{
+                    Credential = $Credential
+                }
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOManagementRoleEntry' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Be "Block:Information Rights Management\Get-BookingMailboxBlock:Custom Role\Set-CustomMailbox"
+            }
+
+            It 'Should filter role entries by Type' {
+                $testParams = @{
+                    Credential = $Credential
+                    Filter     = '$_.Type -eq "Script"'
+                }
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOManagementRoleEntry' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Be 'Block:Custom Role\Set-CustomMailbox'
+            }
+
+            It 'Should filter role entries by Name' {
+                $testParams = @{
+                    Credential = $Credential
+                    Filter     = '$_.Name -like "Get-*"'
+                }
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOManagementRoleEntry' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Be 'Block:Information Rights Management\Get-BookingMailbox'
+            }
+
+            It 'Should filter role entries by Name and Type' {
+                $testParams = @{
+                    Credential = $Credential
+                    Filter     = '$_.Name -like "Set-*" -and $_.Type -eq "Script"'
+                }
+                $result = Invoke-M365DSCResourceMethod -ResourceName 'EXOManagementRoleEntry' -MethodName 'Export' -Parameters $testParams
+                $result | Should -Be 'Block:Custom Role\Set-CustomMailbox'
+            }
+        }
+
         Context -Name 'ReverseDSC Tests' -Fixture {
             BeforeAll {
                 $Global:CurrentModeIsExport = $true
