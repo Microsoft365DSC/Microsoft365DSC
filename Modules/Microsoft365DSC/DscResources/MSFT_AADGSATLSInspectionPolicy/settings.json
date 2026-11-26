@@ -1,0 +1,69 @@
+{
+  "resourceName": "AADGSATLSInspectionPolicy",
+  "generatedFrom": {
+    "workload": "MicrosoftGraph",
+    "apiVersion": "beta",
+    "entityType": "networkaccess.tlsInspectionPolicy",
+    "odataSubtype": null,
+    "cmdletNoun": "MgBetaNetworkAccessTlInspectionPolicy",
+    "cmdletVerb": "New",
+    "includeNavigationProperties": true,
+    "generatorVersion": "2.0.0"
+  },
+  "excludedProperties": [],
+  "description": "Configures TLS Inspection Policies in Global Secure Access (Entra).",
+  "roles": {
+    "read": [],
+    "update": []
+  },
+  "permissions": {
+    "graph": {
+      "delegated": {
+        "read": [
+          {
+            "name": "NetworkAccess.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "NetworkAccess.ReadWrite.All"
+          }
+        ]
+      },
+      "application": {
+        "read": [
+          {
+            "name": "NetworkAccess.Read.All"
+          }
+        ],
+        "update": [
+          {
+            "name": "NetworkAccess.ReadWrite.All"
+          }
+        ]
+      }
+    }
+  },
+  "requiredModules": [
+    "Microsoft.Graph.Beta.NetworkAccess"
+  ],
+  "supportedEnvironments": [
+    "Global"
+  ],
+  "mode": "Configuration",
+  "commands": [
+    {
+      "module": "Microsoft.Graph.Beta.NetworkAccess",
+      "cmdlets": [
+        "Get-MgBetaNetworkAccessTlInspectionPolicy",
+        "Get-MgBetaNetworkAccessTlInspectionPolicyRule",
+        "New-MgBetaNetworkAccessTlInspectionPolicy",
+        "New-MgBetaNetworkAccessTlInspectionPolicyRule",
+        "Remove-MgBetaNetworkAccessTlInspectionPolicy",
+        "Remove-MgBetaNetworkAccessTlInspectionPolicyRule",
+        "Update-MgBetaNetworkAccessTlInspectionPolicy",
+        "Update-MgBetaNetworkAccessTlInspectionPolicyRule"
+      ]
+    }
+  ]
+}

@@ -5,8 +5,7 @@ It is not meant to use as a production baseline.
 
 Configuration Example
 {
-    param
-    (
+    param(
         [Parameter()]
         [System.String]
         $ApplicationId,
@@ -19,15 +18,17 @@ Configuration Example
         [System.String]
         $CertificateThumbprint
     )
-
     Import-DscResource -ModuleName Microsoft365DSC
 
-    Node localhost
+    node localhost
     {
-        EXOActiveSyncDeviceAccessRule 'EXOActiveSyncDeviceAccessRule-Example'
+        EXOActiveSyncDeviceAccessRule 'ConfigureActiveSyncDeviceAccessRule'
         {
-            Identity              = "iOS 6.1 10B146 (DeviceOS)"
-            Ensure                = "Absent"
+            Identity             = "ContosoPhone(DeviceOS)"
+            Characteristic       = "DeviceModel" # Updated Property
+            QueryString          = "iOS 6.1 10B145"
+            AccessLevel          = "Allow"
+            Ensure               = "Present"
             ApplicationId         = $ApplicationId
             TenantId              = $TenantId
             CertificateThumbprint = $CertificateThumbprint

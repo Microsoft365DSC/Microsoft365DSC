@@ -13530,6 +13530,392 @@ function Get-MgBetaNetworkAccessSettingCrossTenantAccess
     return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/settings/crossTenantAccess" -ErrorAction $ErrorActionPreference
 }
 
+function Get-MgBetaNetworkAccessTlInspectionPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $TlsInspectionPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $NoPageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable
+    )
+
+    if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'TlsInspectionPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    $singleItemUri = if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and -not [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)" } else { $null }
+    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/tlsInspectionPolicies" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
+}
+
+function Get-MgBetaNetworkAccessTlInspectionPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $PolicyRuleId,
+
+        [Parameter()]
+        [System.String]
+        $TlsInspectionPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $NoPageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable
+    )
+
+    if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'TlsInspectionPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    $singleItemUri = if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and -not [System.String]::IsNullOrEmpty($PolicyRuleId)) { "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)/policyRules/$($PolicyRuleId)" } else { $null }
+    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)/policyRules" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
+}
+
+function Get-MgBetaNetworkAccessWebFilteringPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $WebFilteringPolicyId,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $NoPageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable
+    )
+
+    if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'WebFilteringPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    $singleItemUri = if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and -not [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)" } else { $null }
+    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/webFilteringPolicies" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
+}
+
+function Get-MgBetaNetworkAccessWebFilteringPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $WebFilteringPolicyId,
+
+        [Parameter()]
+        [System.String]
+        $PolicyRuleId,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $NoPageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable
+    )
+
+    if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { Write-Error -Message "Cannot bind argument to parameter 'WebFilteringPolicyId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $ErrorActionPreference; return }
+    $singleItemUri = if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and -not [System.String]::IsNullOrEmpty($PolicyRuleId)) { "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)/policyRules/$($PolicyRuleId)" } else { $null }
+    return Invoke-M365DSCGraphShimGetResource -BoundParameters $PSBoundParameters -CollectionUri "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)/policyRules" -SingleItemUri $singleItemUri -ErrorAction $ErrorActionPreference
+}
+
 function Get-MgBetaOnPremisePublishingProfileConnectorGroup
 {
     [CmdletBinding()]
@@ -29529,6 +29915,276 @@ function New-MgBetaNetworkAccessForwardingPolicyRule
     return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/forwardingPolicies/$($ForwardingPolicyId)/policyRules" -Method 'POST' -ExtraExcludeParams @('ForwardingPolicyId') -ErrorAction $ErrorActionPreference
 }
 
+function New-MgBetaNetworkAccessTlInspectionPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Description,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.DateTime]
+        $LastModifiedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Object]
+        $PolicyRules,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $Settings,
+
+        [Parameter()]
+        [System.String]
+        $Version,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/tlsInspectionPolicies" -Method 'POST' -ErrorAction $ErrorActionPreference
+}
+
+function New-MgBetaNetworkAccessTlInspectionPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $TlsInspectionPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'TlsInspectionPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)/policyRules" -Method 'POST' -ExtraExcludeParams @('TlsInspectionPolicyId') -ErrorAction $ErrorActionPreference
+}
+
+function New-MgBetaNetworkAccessWebFilteringPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Description,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Object]
+        $Settings,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/webFilteringPolicies" -Method 'POST' -ErrorAction $ErrorActionPreference
+}
+
+function New-MgBetaNetworkAccessWebFilteringPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $WebFilteringPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'WebFilteringPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)/policyRules" -Method 'POST' -ExtraExcludeParams @('WebFilteringPolicyId') -ErrorAction $ErrorActionPreference
+}
+
 function New-MgBetaOnPremisePublishingProfileConnectorGroup
 {
     [CmdletBinding()]
@@ -39066,6 +39722,244 @@ function Remove-MgBetaNetworkAccessForwardingPolicyRule
     if ($PSBoundParameters.ContainsKey('ForwardingPolicyId') -and [System.String]::IsNullOrEmpty($ForwardingPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'ForwardingPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
     if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $guardAction; return }
     Invoke-M365DSCGraphShimDeleteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/forwardingPolicies/$($ForwardingPolicyId)/policyRules/$($PolicyRuleId)" -ErrorAction $ErrorActionPreference
+}
+
+function Remove-MgBetaNetworkAccessTlInspectionPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $TlsInspectionPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String]
+        $IfMatch,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $PassThru,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'TlsInspectionPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    Invoke-M365DSCGraphShimDeleteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)" -ErrorAction $ErrorActionPreference
+}
+
+function Remove-MgBetaNetworkAccessTlInspectionPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $PolicyRuleId,
+
+        [Parameter()]
+        [System.String]
+        $TlsInspectionPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String]
+        $IfMatch,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $PassThru,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'TlsInspectionPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $guardAction; return }
+    Invoke-M365DSCGraphShimDeleteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)/policyRules/$($PolicyRuleId)" -ErrorAction $ErrorActionPreference
+}
+
+function Remove-MgBetaNetworkAccessWebFilteringPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $WebFilteringPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String]
+        $IfMatch,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $PassThru,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'WebFilteringPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    Invoke-M365DSCGraphShimDeleteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)" -ErrorAction $ErrorActionPreference
+}
+
+function Remove-MgBetaNetworkAccessWebFilteringPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $WebFilteringPolicyId,
+
+        [Parameter()]
+        [System.String]
+        $PolicyRuleId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.String]
+        $IfMatch,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $PassThru,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'WebFilteringPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $guardAction; return }
+    Invoke-M365DSCGraphShimDeleteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)/policyRules/$($PolicyRuleId)" -ErrorAction $ErrorActionPreference
 }
 
 function Remove-MgBetaOnPremisePublishingProfileConnectorGroup
@@ -51483,6 +52377,304 @@ function Update-MgBetaNetworkAccessSettingCrossTenantAccess
     return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/settings/crossTenantAccess" -Method 'PATCH' -ErrorAction $ErrorActionPreference
 }
 
+function Update-MgBetaNetworkAccessTlInspectionPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $TlsInspectionPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Description,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.DateTime]
+        $LastModifiedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Object]
+        $PolicyRules,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $Settings,
+
+        [Parameter()]
+        [System.String]
+        $Version,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'TlsInspectionPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)" -Method 'PATCH' -ExtraExcludeParams @('TlsInspectionPolicyId') -ErrorAction $ErrorActionPreference
+}
+
+function Update-MgBetaNetworkAccessTlInspectionPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $PolicyRuleId,
+
+        [Parameter()]
+        [System.String]
+        $TlsInspectionPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('TlsInspectionPolicyId') -and [System.String]::IsNullOrEmpty($TlsInspectionPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'TlsInspectionPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $guardAction; return }
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/tlsInspectionPolicies/$($TlsInspectionPolicyId)/policyRules/$($PolicyRuleId)" -Method 'PATCH' -ExtraExcludeParams @('TlsInspectionPolicyId', 'PolicyRuleId') -ErrorAction $ErrorActionPreference
+}
+
+function Update-MgBetaNetworkAccessWebFilteringPolicy
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $WebFilteringPolicyId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Description,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Object]
+        $Settings,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'WebFilteringPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)" -Method 'PATCH' -ExtraExcludeParams @('WebFilteringPolicyId') -ErrorAction $ErrorActionPreference
+}
+
+function Update-MgBetaNetworkAccessWebFilteringPolicyRule
+{
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [System.String]
+        $WebFilteringPolicyId,
+
+        [Parameter()]
+        [System.String]
+        $PolicyRuleId,
+
+        [Parameter()]
+        [System.Object]
+        $InputObject,
+
+        [Parameter()]
+        [System.Object]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.String]
+        $Name,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Break,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelineAppend,
+
+        [Parameter()]
+        [System.Object[]]
+        $HttpPipelinePrepend,
+
+        [Parameter()]
+        [System.Uri]
+        $Proxy,
+
+        [Parameter()]
+        [System.Management.Automation.PSCredential]
+        $ProxyCredential,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $ProxyUseDefaultCredentials
+    )
+
+    if ($PSBoundParameters.ContainsKey('WebFilteringPolicyId') -and [System.String]::IsNullOrEmpty($WebFilteringPolicyId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'WebFilteringPolicyId' because it is an empty string." -ErrorAction $guardAction; return }
+    if ($PSBoundParameters.ContainsKey('PolicyRuleId') -and [System.String]::IsNullOrEmpty($PolicyRuleId)) { $guardAction = if ($ErrorActionPreference -in 'SilentlyContinue', 'Ignore') { $ErrorActionPreference } else { 'Stop' }; Write-Error -Message "Cannot bind argument to parameter 'PolicyRuleId' because it is an empty string." -ErrorAction $guardAction; return }
+    return Invoke-M365DSCGraphShimWriteResource -BoundParameters $PSBoundParameters -Uri "/beta/networkAccess/webFilteringPolicies/$($WebFilteringPolicyId)/policyRules/$($PolicyRuleId)" -Method 'PATCH' -ExtraExcludeParams @('WebFilteringPolicyId', 'PolicyRuleId') -ErrorAction $ErrorActionPreference
+}
+
 function Update-MgBetaOnPremisePublishingProfileConnectorGroup
 {
     [CmdletBinding()]
@@ -56510,6 +57702,10 @@ Export-ModuleMember -Function @(
     'Get-MgBetaNetworkAccessForwardingProfilePolicy',
     'Get-MgBetaNetworkAccessSettingConditionalAccess',
     'Get-MgBetaNetworkAccessSettingCrossTenantAccess',
+    'Get-MgBetaNetworkAccessTlInspectionPolicy',
+    'Get-MgBetaNetworkAccessTlInspectionPolicyRule',
+    'Get-MgBetaNetworkAccessWebFilteringPolicy',
+    'Get-MgBetaNetworkAccessWebFilteringPolicyRule',
     'Get-MgBetaOnPremisePublishingProfileConnectorGroup',
     'Get-MgBetaOrganization',
     'Get-MgBetaOrganizationCertificateBasedAuthConfiguration',
@@ -56677,6 +57873,10 @@ Export-ModuleMember -Function @(
     'New-MgBetaNetworkAccessFilteringPolicyRule',
     'New-MgBetaNetworkAccessFilteringProfile',
     'New-MgBetaNetworkAccessForwardingPolicyRule',
+    'New-MgBetaNetworkAccessTlInspectionPolicy',
+    'New-MgBetaNetworkAccessTlInspectionPolicyRule',
+    'New-MgBetaNetworkAccessWebFilteringPolicy',
+    'New-MgBetaNetworkAccessWebFilteringPolicyRule',
     'New-MgBetaOnPremisePublishingProfileConnectorGroup',
     'New-MgBetaOrganizationCertificateBasedAuthConfiguration',
     'New-MgBetaPolicyActivityBasedTimeoutPolicy',
@@ -56800,6 +58000,10 @@ Export-ModuleMember -Function @(
     'Remove-MgBetaNetworkAccessFilteringPolicyRule',
     'Remove-MgBetaNetworkAccessFilteringProfile',
     'Remove-MgBetaNetworkAccessForwardingPolicyRule',
+    'Remove-MgBetaNetworkAccessTlInspectionPolicy',
+    'Remove-MgBetaNetworkAccessTlInspectionPolicyRule',
+    'Remove-MgBetaNetworkAccessWebFilteringPolicy',
+    'Remove-MgBetaNetworkAccessWebFilteringPolicyRule',
     'Remove-MgBetaOnPremisePublishingProfileConnectorGroup',
     'Remove-MgBetaOrganizationCertificateBasedAuthConfiguration',
     'Remove-MgBetaPolicyActivityBasedTimeoutPolicy',
@@ -56921,6 +58125,10 @@ Export-ModuleMember -Function @(
     'Update-MgBetaNetworkAccessForwardingProfilePolicy',
     'Update-MgBetaNetworkAccessSettingConditionalAccess',
     'Update-MgBetaNetworkAccessSettingCrossTenantAccess',
+    'Update-MgBetaNetworkAccessTlInspectionPolicy',
+    'Update-MgBetaNetworkAccessTlInspectionPolicyRule',
+    'Update-MgBetaNetworkAccessWebFilteringPolicy',
+    'Update-MgBetaNetworkAccessWebFilteringPolicyRule',
     'Update-MgBetaOnPremisePublishingProfileConnectorGroup',
     'Update-MgBetaOrganization',
     'Update-MgBetaOrganizationSettingItemInsight',
