@@ -10,7 +10,13 @@
     "includeNavigationProperties": false,
     "generatorVersion": "2.0.0"
   },
-  "excludedProperties": [],
+  "excludedProperties": [
+    {
+      "name": "EnableAgentWorkerSharingDisclaimer",
+      "reason": "Deferred",
+      "note": "Preview feature. The service ignores the value until it rolls out."
+    }
+  ],
   "description": "",
   "permissions": {
     "graph": {

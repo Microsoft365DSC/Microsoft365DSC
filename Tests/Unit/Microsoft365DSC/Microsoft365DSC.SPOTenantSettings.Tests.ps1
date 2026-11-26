@@ -54,26 +54,41 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'SPO Tenant settings are not configured' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    IsSingleInstance                              = 'Yes'
-                    Credential                                    = $Credential
-                    MinCompatibilityLevel                         = 16
-                    MaxCompatibilityLevel                         = 16
-                    SearchResolveExactEmailOrUPN                  = $false
-                    OfficeClientADALDisabled                      = $false
-                    LegacyAuthProtocolsEnabled                    = $true
-                    SignInAccelerationDomain                      = ''
-                    UsePersistentCookiesForExplorerView           = $false
-                    PublicCdnEnabled                              = $false
-                    PublicCdnAllowedFileTypes                     = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
-                    UseFindPeopleInPeoplePicker                   = $false
-                    NotificationsInSharePointEnabled              = $true
-                    OwnerAnonymousNotification                    = $true
-                    ApplyAppEnforcedRestrictionsToAdHocRecipients = $true
-                    FilePickerExternalImageSearchEnabled          = $true
-                    HideDefaultThemes                             = $false
-                    EnableSensitivityLabelForOneNote              = $true
-                    EnableSensitivityLabelForVideoFiles           = $true
-                    TenantDefaultTimeZone                         = "(UTC-05:00) Eastern Time (US and Canada)"
+                    IsSingleInstance                                  = 'Yes'
+                    Credential                                        = $Credential
+                    MinCompatibilityLevel                             = 16
+                    MaxCompatibilityLevel                             = 16
+                    SearchResolveExactEmailOrUPN                      = $false
+                    OfficeClientADALDisabled                          = $false
+                    LegacyAuthProtocolsEnabled                        = $true
+                    SignInAccelerationDomain                          = ''
+                    UsePersistentCookiesForExplorerView               = $false
+                    PublicCdnEnabled                                  = $false
+                    PublicCdnAllowedFileTypes                         = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
+                    UseFindPeopleInPeoplePicker                       = $false
+                    NotificationsInSharePointEnabled                  = $true
+                    OwnerAnonymousNotification                        = $true
+                    ApplyAppEnforcedRestrictionsToAdHocRecipients     = $true
+                    FilePickerExternalImageSearchEnabled              = $true
+                    HideDefaultThemes                                 = $false
+                    EnableSensitivityLabelForOneNote                  = $true
+                    EnableSensitivityLabelForVideoFiles               = $true
+                    TenantDefaultTimeZone                             = "(UTC-05:00) Eastern Time (US and Canada)"
+                    DisableSharePointStoreAccess                      = $true
+                    DisableSpfxTopBottomPlaceholdersInElevatedContent = $true
+                    DisableTeamsMeetingRecordingDeletedNotification   = $true
+                    FilePreviewAllowedDomainList                      = @('contoso.com', 'fabrikam.com')
+                    IsFilePreviewDomainRestrictionEnabled             = $true
+                    IsSharePointAddInsDisabled                        = $true
+                    MassDeleteNotificationDisabledForSPO              = $true
+                    SiteOwnersCanAccessMissingContent                 = $false
+                    StopAlerts                                        = $true
+                }
+
+                Mock -CommandName Invoke-PnPSPRestMethod -MockWith {
+                    return @{
+                        SharePointAddInsDisabled = $false
+                    }
                 }
 
                 Mock -CommandName Set-PnPTenant -MockWith {
@@ -97,22 +112,30 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-PnPTenant -MockWith {
                     return @{
-                        CompatibilityRange                            = '16,16'
-                        SearchResolveExactEmailOrUPN                  = $false
-                        OfficeClientADALDisabled                      = $false
-                        LegacyAuthProtocolsEnabled                    = $true
-                        SignInAccelerationDomain                      = ''
-                        UsePersistentCookiesForExplorerView           = $false
-                        PublicCdnEnabled                              = $false
-                        PublicCdnAllowedFileTypes                     = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
-                        UseFindPeopleInPeoplePicker                   = $false
-                        NotificationsInSharePointEnabled              = $true
-                        OwnerAnonymousNotification                    = $true
-                        ApplyAppEnforcedRestrictionsToAdHocRecipients = $true
-                        FilePickerExternalImageSearchEnabled          = $true
-                        HideDefaultThemes                             = $true
-                        EnableSensitivityLabelForOneNote              = $false
-                        EnableSensitivityLabelForVideoFiles           = $false
+                        CompatibilityRange                                = '16,16'
+                        SearchResolveExactEmailOrUPN                      = $false
+                        OfficeClientADALDisabled                          = $false
+                        LegacyAuthProtocolsEnabled                        = $true
+                        SignInAccelerationDomain                          = ''
+                        UsePersistentCookiesForExplorerView               = $false
+                        PublicCdnEnabled                                  = $false
+                        PublicCdnAllowedFileTypes                         = 'CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF'
+                        UseFindPeopleInPeoplePicker                       = $false
+                        NotificationsInSharePointEnabled                  = $true
+                        OwnerAnonymousNotification                        = $true
+                        ApplyAppEnforcedRestrictionsToAdHocRecipients     = $true
+                        FilePickerExternalImageSearchEnabled              = $true
+                        HideDefaultThemes                                 = $true
+                        EnableSensitivityLabelForOneNote                  = $false
+                        EnableSensitivityLabelForVideoFiles               = $false
+                        DisableSharePointStoreAccess                      = $false
+                        DisableSpfxTopBottomPlaceholdersInElevatedContent = $false
+                        DisableTeamsMeetingRecordingDeletedNotification   = $false
+                        FilePreviewAllowedDomainList                      = 'contoso.com'
+                        IsFilePreviewDomainRestrictionEnabled             = $false
+                        MassDeleteNotificationDisabledForSPO              = $false
+                        SiteOwnersCanAccessMissingContent                 = $true
+                        StopAlerts                                        = $false
                     }
                 }
 
@@ -129,6 +152,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Sets the tenant AccessControl settings in Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'SPOTenantSettings' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-PnPTenant -Times 1 -Exactly -ParameterFilter {
+                    $FilePreviewAllowedDomainList -eq 'contoso.com,fabrikam.com' -and
+                    $DisableSpfxTopBottomPlaceholdersInElevatedContent -eq $true -and
+                    $DisableTeamsMeetingRecordingDeletedNotification -eq $true -and
+                    $IsSharePointAddInsDisabled -eq $true -and
+                    $SiteOwnersCanAccessMissingContent -eq $false
+                }
             }
         }
 
@@ -243,6 +273,14 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         HideDefaultThemes                             = $false
                         EnableSensitivityLabelForOneNote              = $true
                         EnableSensitivityLabelForVideoFiles           = $true
+                        FilePreviewAllowedDomainList                  = 'contoso.com fabrikam.com'
+                        SiteOwnersCanAccessMissingContent             = $true
+                    }
+                }
+
+                Mock -CommandName Invoke-PnPSPRestMethod -MockWith {
+                    return @{
+                        SharePointAddInsDisabled = $true
                     }
                 }
 
@@ -256,6 +294,8 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should Reverse Engineer resource from the Export method' {
                 $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOTenantSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
+                $result | Should -Match 'FilePreviewAllowedDomainList\s+= @\("contoso\.com","fabrikam\.com"\)'
+                $result | Should -Match 'IsSharePointAddInsDisabled\s+= \$True'
             }
         }
     }#inmodulescope

@@ -68,6 +68,19 @@ class ODSettings : M365DSCResourceBase
     [System.Nullable[System.Boolean]] $DisplayNamesOfFileViewers
 
     [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables the mass delete detection feature for ODB. When MassDeleteNotificationDisabledForODB is set to true, tenant admins can perform mass deletion operations without triggering email notifications for ODB.')]
+    [System.Nullable[System.Boolean]] $MassDeleteNotificationDisabledForODB
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the default language that SharePoint Online uses when it creates new OneDrive sites for the organization. Provide a language tag, such as en-US, de-DE, or fr-FR. Use an empty string to clear the value.')]
+    [System.String] $DefaultLanguageForSiteCreation
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies how many days an unlicensed OneDrive account stays active before it is archived, from 93 to 3650. Requires pay-as-you-go active storage billing for unlicensed OneDrive accounts.')]
+    [ValidateRange(93, 3650)]
+    [System.Nullable[System.Int32]] $UnlicensedOneDriveAccountsActiveStoragePeriod
+
+    [DscProperty()]
     [System.ComponentModel.Description('Credentials of the account to authenticate with.')]
     [System.Management.Automation.PSCredential] $Credential
 
@@ -177,21 +190,24 @@ class ODSettings : M365DSCResourceBase
                 $ODBMembersCanShareValue = 'Unspecified'
             }
             return $this.AsResult(@{
-                IsSingleInstance                          = 'Yes'
-                BlockMacSync                              = $tenantRestrictions.BlockMacSync
-                DisableReportProblemDialog                = $tenantRestrictions.DisableReportProblemDialog
-                TenantRestrictionEnabled                  = $tenantRestrictions.TenantRestrictionEnabled
-                DomainGuids                               = $FixedAllowedDomainList
-                ExcludedFileExtensions                    = $FixedExcludedFileExtensions
-                GrooveBlockOption                         = $GrooveOption
-                DisableAddToOneDrive                      = $tenant.DisableAddToOneDrive
-                DisplayNamesOfFileViewers                 = $tenant.DisplayNamesOfFileViewers
-                OneDriveStorageQuota                      = $tenant.OneDriveStorageQuota
-                OrphanedPersonalSitesRetentionPeriod      = $tenant.OrphanedPersonalSitesRetentionPeriod
-                OneDriveForGuestsEnabled                  = $tenant.OneDriveForGuestsEnabled
-                ODBAccessRequests                         = $tenant.ODBAccessRequests
-                ODBMembersCanShare                        = $ODBMembersCanShareValue
-                NotificationsInOneDriveForBusinessEnabled = $tenant.NotificationsInOneDriveForBusinessEnabled
+                IsSingleInstance                              = 'Yes'
+                BlockMacSync                                  = $tenantRestrictions.BlockMacSync
+                DisableReportProblemDialog                    = $tenantRestrictions.DisableReportProblemDialog
+                TenantRestrictionEnabled                      = $tenantRestrictions.TenantRestrictionEnabled
+                DomainGuids                                   = $FixedAllowedDomainList
+                ExcludedFileExtensions                        = $FixedExcludedFileExtensions
+                GrooveBlockOption                             = $GrooveOption
+                DefaultLanguageForSiteCreation                = $tenant.DefaultLanguageForSiteCreation
+                DisableAddToOneDrive                          = $tenant.DisableAddToOneDrive
+                DisplayNamesOfFileViewers                     = $tenant.DisplayNamesOfFileViewers
+                MassDeleteNotificationDisabledForODB          = $tenant.MassDeleteNotificationDisabledForODB
+                OneDriveStorageQuota                          = $tenant.OneDriveStorageQuota
+                OrphanedPersonalSitesRetentionPeriod          = $tenant.OrphanedPersonalSitesRetentionPeriod
+                OneDriveForGuestsEnabled                      = $tenant.OneDriveForGuestsEnabled
+                ODBAccessRequests                             = $tenant.ODBAccessRequests
+                ODBMembersCanShare                            = $ODBMembersCanShareValue
+                NotificationsInOneDriveForBusinessEnabled     = $tenant.NotificationsInOneDriveForBusinessEnabled
+                UnlicensedOneDriveAccountsActiveStoragePeriod = $tenant.UnlicensedOneDriveAccountsActiveStoragePeriod
             })
         }
         catch
@@ -308,8 +324,34 @@ class ODSettings : M365DSCResourceBase
             $CurrentParameters.Remove('IsSingleInstance') | Out-Null
         }
 
+        $unlicensedStoragePeriod = $null
+        if ($CurrentParameters.ContainsKey('UnlicensedOneDriveAccountsActiveStoragePeriod'))
+        {
+            $unlicensedStoragePeriod = $CurrentParameters.UnlicensedOneDriveAccountsActiveStoragePeriod
+            $CurrentParameters.Remove('UnlicensedOneDriveAccountsActiveStoragePeriod') | Out-Null
+        }
+
         Write-Verbose -Message 'Configuring OneDrive settings.'
         Set-PnPTenant @CurrentParameters -Force
+
+        if ($null -ne $unlicensedStoragePeriod)
+        {
+            try
+            {
+                Set-PnPTenant -UnlicensedOneDriveAccountsActiveStoragePeriod $unlicensedStoragePeriod -Force -ErrorAction Stop
+            }
+            catch
+            {
+                if ($_.Exception.Message.Contains('pay-as-you-go active storage billing'))
+                {
+                    Write-Warning -Message "The tenant isn't enrolled in pay-as-you-go active storage billing. Unable to configure the UnlicensedOneDriveAccountsActiveStoragePeriod property."
+                }
+                else
+                {
+                    throw
+                }
+            }
+        }
 
         ## Configure Sync Client restrictions
         ## Set-SPOTenantSyncClientRestriction has different parameter sets and they cannot be combined see article:

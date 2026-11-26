@@ -49,27 +49,34 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'SPOSharing settings are not configured' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Credential                                 = $Credential
-                    IsSingleInstance                           = 'Yes'
-                    SharingCapability                          = 'ExternalUserSharingOnly'
-                    ShowEveryoneClaim                          = $false
-                    ShowAllUsersClaim                          = $false
-                    ShowEveryoneExceptExternalUsersClaim       = $true
-                    ProvisionSharedWithEveryoneFolder          = $false
-                    EnableGuestSignInAcceleration              = $false
-                    BccExternalSharingInvitations              = $false
-                    BccExternalSharingInvitationsList          = ''
-                    RequireAnonymousLinksExpireInDays          = 730
-                    SharingAllowedDomainList                   = @('contoso.com')
-                    SharingBlockedDomainList                   = @('contoso.com')
-                    SharingDomainRestrictionMode               = 'None'
-                    DefaultSharingLinkType                     = 'AnonymousAccess'
-                    PreventExternalUsersFromResharing          = $false
-                    ShowPeoplePickerSuggestionsForGuestUsers   = $false
-                    FileAnonymousLinkType                      = 'Edit'
-                    FolderAnonymousLinkType                    = 'Edit'
-                    NotifyOwnersWhenItemsReshared              = $true
-                    DefaultLinkPermission                      = 'View'
+                    Credential                                           = $Credential
+                    IsSingleInstance                                     = 'Yes'
+                    SharingCapability                                    = 'ExternalUserSharingOnly'
+                    ShowEveryoneClaim                                    = $false
+                    ShowAllUsersClaim                                    = $false
+                    ShowEveryoneExceptExternalUsersClaim                 = $true
+                    ProvisionSharedWithEveryoneFolder                    = $false
+                    EnableGuestSignInAcceleration                        = $false
+                    BccExternalSharingInvitations                        = $false
+                    BccExternalSharingInvitationsList                    = ''
+                    RequireAnonymousLinksExpireInDays                    = 730
+                    SharingAllowedDomainList                             = @('contoso.com')
+                    SharingBlockedDomainList                             = @('contoso.com')
+                    SharingDomainRestrictionMode                         = 'None'
+                    DefaultSharingLinkType                               = 'AnonymousAccess'
+                    PreventExternalUsersFromResharing                    = $false
+                    ShowPeoplePickerSuggestionsForGuestUsers             = $false
+                    FileAnonymousLinkType                                = 'Edit'
+                    FolderAnonymousLinkType                              = 'Edit'
+                    NotifyOwnersWhenItemsReshared                        = $true
+                    DefaultLinkPermission                                = 'View'
+                    BlockDownloadLinksFileType                           = 'ServerRenderedFilesOnly'
+                    CoreAnyoneSharingLinkMaxExpirationInDays             = 30
+                    CoreAnyoneSharingLinkRecommendedExpirationInDays     = 7
+                    OneDriveAnyoneSharingLinkMaxExpirationInDays         = 30
+                    OneDriveAnyoneSharingLinkRecommendedExpirationInDays = 7
+                    WhoCanShareAuthenticatedGuestAllowList               = @('56ae142c-f960-4436-a445-6b371fc8338b')
+                    WhoCanShareAnonymousAllowList                        = @('56ae142c-f960-4436-a445-6b371fc8338b')
                 }
 
                 Mock -CommandName Set-PnPTenant -MockWith {
@@ -99,36 +106,43 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
                 Mock -CommandName Get-PnPTenant -MockWith {
                     return @{
-                        SharingCapability                          = 'Disabled'
-                        CoreDefaultShareLinkRole                   = 'View'
-                        CoreDefaultShareLinkScope                  = 'Anyone'
-                        OneDriveDefaultShareLinkRole               = 'View'
-                        OneDriveDefaultShareLinkScope              = 'Anyone'
-                        OneDriveLoopSharingCapability              = 'Disabled'
-                        OneDriveLoopDefaultSharingLinkScope        = 'Anyone'
-                        OneDriveLoopDefaultSharingLinkRole         = 'View'
-                        CoreLoopSharingCapability                  = 'Disabled'
-                        CoreLoopDefaultSharingLinkScope            = 'Anyone'
-                        CoreLoopDefaultSharingLinkRole             = 'View'
-                        ShowEveryoneClaim                          = $false
-                        ShowAllUsersClaim                          = $false
-                        ShowEveryoneExceptExternalUsersClaim       = $true
-                        ProvisionSharedWithEveryoneFolder          = $false
-                        EnableGuestSignInAcceleration              = $false
-                        BccExternalSharingInvitations              = $false
-                        BccExternalSharingInvitationsList          = ''
-                        RequireAnonymousLinksExpireInDays          = 730
-                        SharingAllowedDomainList                   = ''
-                        SharingBlockedDomainList                   = ''
-                        SharingDomainRestrictionMode               = ''
-                        DefaultSharingLinkType                     = 'AnonymousAccess'
-                        PreventExternalUsersFromResharing          = $false
-                        ShowPeoplePickerSuggestionsForGuestUsers   = $false
-                        FileAnonymousLinkType                      = 'Edit'
-                        FolderAnonymousLinkType                    = 'Edit'
-                        NotifyOwnersWhenItemsReshared              = $true
-                        DefaultLinkPermission                      = 'View'
-                        RequireAcceptingAccountMatchInvitedAccount = $false
+                        SharingCapability                                    = 'Disabled'
+                        CoreDefaultShareLinkRole                             = 'View'
+                        CoreDefaultShareLinkScope                            = 'Anyone'
+                        OneDriveDefaultShareLinkRole                         = 'View'
+                        OneDriveDefaultShareLinkScope                        = 'Anyone'
+                        OneDriveLoopSharingCapability                        = 'Disabled'
+                        OneDriveLoopDefaultSharingLinkScope                  = 'Anyone'
+                        OneDriveLoopDefaultSharingLinkRole                   = 'View'
+                        CoreLoopSharingCapability                            = 'Disabled'
+                        CoreLoopDefaultSharingLinkScope                      = 'Anyone'
+                        CoreLoopDefaultSharingLinkRole                       = 'View'
+                        ShowEveryoneClaim                                    = $false
+                        ShowAllUsersClaim                                    = $false
+                        ShowEveryoneExceptExternalUsersClaim                 = $true
+                        ProvisionSharedWithEveryoneFolder                    = $false
+                        EnableGuestSignInAcceleration                        = $false
+                        BccExternalSharingInvitations                        = $false
+                        BccExternalSharingInvitationsList                    = ''
+                        RequireAnonymousLinksExpireInDays                    = 730
+                        SharingAllowedDomainList                             = ''
+                        SharingBlockedDomainList                             = ''
+                        SharingDomainRestrictionMode                         = ''
+                        DefaultSharingLinkType                               = 'AnonymousAccess'
+                        PreventExternalUsersFromResharing                    = $false
+                        ShowPeoplePickerSuggestionsForGuestUsers             = $false
+                        FileAnonymousLinkType                                = 'Edit'
+                        FolderAnonymousLinkType                              = 'Edit'
+                        NotifyOwnersWhenItemsReshared                        = $true
+                        DefaultLinkPermission                                = 'View'
+                        RequireAcceptingAccountMatchInvitedAccount           = $false
+                        BlockDownloadLinksFileType                           = 'WebPreviewableFiles'
+                        CoreAnyoneSharingLinkMaxExpirationInDays             = 0
+                        CoreAnyoneSharingLinkRecommendedExpirationInDays     = 0
+                        OneDriveAnyoneSharingLinkMaxExpirationInDays         = 0
+                        OneDriveAnyoneSharingLinkRecommendedExpirationInDays = 0
+                        WhoCanShareAuthenticatedGuestAllowList               = [System.Collections.Generic.List[System.Guid]]::new()
+                        WhoCanShareAnonymousAllowList                        = [System.Collections.Generic.List[System.Guid]]::new()
                     }
                 }
             }
@@ -139,6 +153,13 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Sets the tenant sharing settings in Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'SPOSharingSettings' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-PnPTenant -Times 1 -Exactly -ParameterFilter {
+                    $CoreAnyoneSharingLinkRecommendedExpirationInDays -eq 7 -and
+                    $OneDriveAnyoneSharingLinkRecommendedExpirationInDays -eq 7 -and
+                    $BlockDownloadLinksFileType -eq 'ServerRenderedFilesOnly' -and
+                    "$WhoCanShareAnonymousAllowList" -eq '56ae142c-f960-4436-a445-6b371fc8338b' -and
+                    "$WhoCanShareAuthenticatedGuestAllowList" -eq '56ae142c-f960-4436-a445-6b371fc8338b'
+                }
             }
         }
 
@@ -182,6 +203,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                         NotifyOwnersWhenItemsReshared              = $true
                         DefaultLinkPermission                      = 'View'
                         RequireAcceptingAccountMatchInvitedAccount = $false
+                        WhoCanShareAnonymousAllowList              = [System.Collections.Generic.List[System.Guid]]@('56ae142c-f960-4436-a445-6b371fc8338b')
                     }
                 }
             }
@@ -189,6 +211,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             It 'Should Reverse Engineer resource from the Export method' {
                 $result = Invoke-M365DSCResourceMethod -ResourceName 'SPOSharingSettings' -MethodName 'Export' -Parameters $testParams
                 $result | Should -Not -BeNullOrEmpty
+                $result | Should -Match 'WhoCanShareAnonymousAllowList\s+= @\("56ae142c-f960-4436-a445-6b371fc8338b"\)'
             }
         }
         Context -Name 'My Site Host lookup (perf fix)' -Fixture {

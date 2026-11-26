@@ -232,6 +232,11 @@
       "note": "Directory synchronization writes this value from the on-premises forest"
     },
     {
+      "name": "OnPremisesSyncBehavior",
+      "reason": "NotConfigurable",
+      "note": "Source of authority switch between on-premises and cloud, like OnPremisesSyncEnabled."
+    },
+    {
       "name": "OnPremisesSyncEnabled",
       "reason": "ReadOnly",
       "note": "The directory sets this flag for synchronized objects"
@@ -315,6 +320,11 @@
       "name": "ServiceProvisioningErrors",
       "reason": "ReadOnly",
       "note": "The directory records service provisioning failures"
+    },
+    {
+      "name": "Settings",
+      "reason": "Deferred",
+      "note": "Per-group directory setting. Candidate for its own resource."
     },
     {
       "name": "Sites",

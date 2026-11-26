@@ -26,21 +26,24 @@ Configuration Example
     {
         ODSettings 'ODSettings-Example'
         {
-            IsSingleInstance                          = "Yes"
-            OneDriveStorageQuota                      = "1024"
-            ExcludedFileExtensions                    = @("pst")
-            DomainGuids                               = "786548dd-877b-4760-a749-6b1efbc1190a"
-            GrooveBlockOption                         = "OptOut"
-            DisableReportProblemDialog                = $true
-            BlockMacSync                              = $true
-            OrphanedPersonalSitesRetentionPeriod      = "45"
-            OneDriveForGuestsEnabled                  = $false
-            ODBAccessRequests                         = "On"
-            ODBMembersCanShare                        = "On"
-            NotificationsInOneDriveForBusinessEnabled = $false
-            ApplicationId                             = $ApplicationId
-            TenantId                                  = $TenantId
-            CertificateThumbprint                     = $CertificateThumbprint
+            IsSingleInstance                              = "Yes"
+            OneDriveStorageQuota                          = "1024"
+            ExcludedFileExtensions                        = @("pst")
+            DomainGuids                                   = "786548dd-877b-4760-a749-6b1efbc1190a"
+            GrooveBlockOption                             = "OptOut"
+            DisableReportProblemDialog                    = $true
+            BlockMacSync                                  = $true
+            OrphanedPersonalSitesRetentionPeriod          = "45"
+            OneDriveForGuestsEnabled                      = $false
+            ODBAccessRequests                             = "On"
+            ODBMembersCanShare                            = "On"
+            NotificationsInOneDriveForBusinessEnabled     = $false
+            MassDeleteNotificationDisabledForODB          = $false
+            DefaultLanguageForSiteCreation                = "en-US"
+            UnlicensedOneDriveAccountsActiveStoragePeriod = 93
+            ApplicationId                                 = $ApplicationId
+            TenantId                                      = $TenantId
+            CertificateThumbprint                         = $CertificateThumbprint
         }
     }
 }

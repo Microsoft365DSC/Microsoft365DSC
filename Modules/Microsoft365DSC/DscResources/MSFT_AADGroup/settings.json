@@ -217,6 +217,11 @@
       "note": "Synced from the on premises directory"
     },
     {
+      "name": "OnPremisesSyncBehavior",
+      "reason": "NotConfigurable",
+      "note": "Source of authority switch between on-premises and cloud, like OnPremisesSyncEnabled."
+    },
+    {
       "name": "OnPremisesSyncEnabled",
       "reason": "ReadOnly",
       "note": "The service sets it for groups synced from on premises"
@@ -290,6 +295,11 @@
       "name": "ServiceProvisioningErrors",
       "reason": "ReadOnly",
       "note": "The service reports errors raised while provisioning the group into dependent services"
+    },
+    {
+      "name": "Settings",
+      "reason": "Deferred",
+      "note": "Per-group directory setting. Candidate for its own resource."
     },
     {
       "name": "Sites",
