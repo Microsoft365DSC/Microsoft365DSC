@@ -475,7 +475,7 @@ function Format-M365DSCPermissionList
 
 <#
 .DESCRIPTION
-    The New-DscClassResourceWikiPage cmdlet will review all of the MOF-based resources
+    The New-DscClassResourceWikiPage cmdlet will review all of the class-based resources
     described in SchemaDefinition.json in a specified module directory and will output
     the Markdown files to the specified directory. These help files include details on
     the property types for each resource, as well as a text description and examples

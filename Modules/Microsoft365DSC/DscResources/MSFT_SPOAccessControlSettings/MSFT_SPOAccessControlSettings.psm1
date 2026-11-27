@@ -53,6 +53,31 @@ class SPOAccessControlSettings : M365DSCResourceBase
     [System.Nullable[System.Boolean]] $RestrictResourceAccountAccess
 
     [DscProperty()]
+    [System.ComponentModel.Description('Specifies which files users can preview or download when ConditionalAccessPolicy is set to AllowLimitedAccess. The valid values are: OfficeOnlineFilesOnly - Allows users to preview only Office files in the browser. WebPreviewableFiles (default) - Allows users to preview Office files in the browser. OtherFiles - Allows users to download files that can''t be previewed, such as .zip and .exe.')]
+    [ValidateSet('OfficeOnlineFilesOnly', 'WebPreviewableFiles', 'OtherFiles')]
+    [System.String] $LimitedAccessFileType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Whether to block app access via authentication context.')]
+    [System.Nullable[System.Boolean]] $BlockAppAccessWithAuthenticationContext
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Whether app-only bypasses people-picker policies.')]
+    [System.Nullable[System.Boolean]] $AppOnlyBypassPeoplePickerPolicies
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Allows SharePoint administrators to delegate the management of Restricted access control policy on sites to site admins and owners. The valid values are: True - Allow site admins and owners to manage Restricted access control policy. False (default) - Do not allow site admins and owners to manage Restricted access control policy.')]
+    [System.Nullable[System.Boolean]] $DelegateRestrictedAccessControlManagement
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Allows SharePoint administrators to delegate the management of Restricted content discoverability policy on sites to site admins and owners. The valid values are: True - Allow site admins and owners to manage Restricted content discoverability policy. False (default) - Do not allow site admins and owners to manage Restricted content discoverability policy.')]
+    [System.Nullable[System.Boolean]] $DelegateRestrictedContentDiscoverabilityManagement
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Sets the link to organization help page in case of access denied due to restricted access control policy.')]
+    [System.String] $RestrictedAccessControlForOneDriveErrorHelpLink
+
+    [DscProperty()]
     [System.ComponentModel.Description('Credentials of the account to authenticate with.')]
     [System.Management.Automation.PSCredential] $Credential
 
@@ -121,20 +146,29 @@ class SPOAccessControlSettings : M365DSCResourceBase
                 $SPOAccessControlSettings = $this.ExportedInstance
             }
 
+            $response = Invoke-PnPSPRestMethod -Method Get `
+                -Url "$((Get-MSCloudLoginConnectionProfile -Workload PnP).AdminUrl)/_api/SPO.Tenant?`$select=DelegateRestrictedAccessControlConfiguration,DelegateRestrictedContentDiscoveryConfiguration"
+
             return $this.AsResult(@{
-                IsSingleInstance              = 'Yes'
-                ConditionalAccessPolicy       = $SPOAccessControlSettings.ConditionalAccessPolicy
-                DisplayStartASiteOption       = $SPOAccessControlSettings.DisplayStartASiteOption
-                StartASiteFormUrl             = $SPOAccessControlSettings.StartASiteFormUrl
-                IPAddressEnforcement          = $SPOAccessControlSettings.IPAddressEnforcement
-                IPAddressAllowList            = $SPOAccessControlSettings.IPAddressAllowList
-                IPAddressWACTokenLifetime     = $SPOAccessControlSettings.IPAddressWACTokenLifetime
-                DisallowInfectedFileDownload  = $SPOAccessControlSettings.DisallowInfectedFileDownload
-                ExternalServicesEnabled       = $SPOAccessControlSettings.ExternalServicesEnabled
-                EmailAttestationRequired      = $SPOAccessControlSettings.EmailAttestationRequired
-                EmailAttestationReAuthDays    = $SPOAccessControlSettings.EmailAttestationReAuthDays
-                RestrictResourceAccountAccess = $SPOAccessControlSettings.RestrictResourceAccountAccess
-                EnableRestrictedAccessControl = $SPOAccessControlSettings.EnableRestrictedAccessControl
+                IsSingleInstance                                   = 'Yes'
+                AppOnlyBypassPeoplePickerPolicies                  = $SPOAccessControlSettings.AppOnlyBypassPeoplePickerPolicies
+                BlockAppAccessWithAuthenticationContext            = $SPOAccessControlSettings.BlockAppAccessWithAuthenticationContext
+                ConditionalAccessPolicy                            = $SPOAccessControlSettings.ConditionalAccessPolicy
+                DelegateRestrictedAccessControlManagement          = $response.DelegateRestrictedAccessControlConfiguration
+                DelegateRestrictedContentDiscoverabilityManagement = $response.DelegateRestrictedContentDiscoveryConfiguration
+                DisplayStartASiteOption                            = $SPOAccessControlSettings.DisplayStartASiteOption
+                StartASiteFormUrl                                  = $SPOAccessControlSettings.StartASiteFormUrl
+                IPAddressEnforcement                               = $SPOAccessControlSettings.IPAddressEnforcement
+                IPAddressAllowList                                 = $SPOAccessControlSettings.IPAddressAllowList
+                IPAddressWACTokenLifetime                          = $SPOAccessControlSettings.IPAddressWACTokenLifetime
+                DisallowInfectedFileDownload                       = $SPOAccessControlSettings.DisallowInfectedFileDownload
+                ExternalServicesEnabled                            = $SPOAccessControlSettings.ExternalServicesEnabled
+                EmailAttestationRequired                           = $SPOAccessControlSettings.EmailAttestationRequired
+                EmailAttestationReAuthDays                         = $SPOAccessControlSettings.EmailAttestationReAuthDays
+                LimitedAccessFileType                              = $SPOAccessControlSettings.LimitedAccessFileType
+                RestrictedAccessControlForOneDriveErrorHelpLink    = $SPOAccessControlSettings.RestrictedAccessControlForOneDriveErrorHelpLink
+                RestrictResourceAccountAccess                      = $SPOAccessControlSettings.RestrictResourceAccountAccess
+                EnableRestrictedAccessControl                      = $SPOAccessControlSettings.EnableRestrictedAccessControl
             })
         }
         catch
@@ -171,6 +205,12 @@ class SPOAccessControlSettings : M365DSCResourceBase
             $CurrentParameters.Remove('IPAddressAllowList')
         }
 
+        if ($this.ConditionalAccessPolicy -ne 'AllowLimitedAccess')
+        {
+            Write-Verbose -Message 'The ConditionalAccessPolicy is not configured to AllowLimitedAccess. Therefore, the LimitedAccessFileType parameter can not be set and will be removed'
+            $CurrentParameters.Remove('LimitedAccessFileType') | Out-Null
+        }
+
         $EnableRestrictedAccessControlValue = $null
         if ($null -ne $this.EnableRestrictedAccessControl)
         {
@@ -178,7 +218,36 @@ class SPOAccessControlSettings : M365DSCResourceBase
             $CurrentParameters.Remove('EnableRestrictedAccessControl') | Out-Null
         }
 
+        $delegateParameters = @{}
+        foreach ($delegateParameter in @('DelegateRestrictedAccessControlManagement', 'DelegateRestrictedContentDiscoverabilityManagement'))
+        {
+            if ($CurrentParameters.ContainsKey($delegateParameter))
+            {
+                $delegateParameters.Add($delegateParameter, $CurrentParameters[$delegateParameter])
+                $CurrentParameters.Remove($delegateParameter) | Out-Null
+            }
+        }
+
         Set-PnPTenant @CurrentParameters -Force | Out-Null
+
+        if ($delegateParameters.Count -gt 0)
+        {
+            try
+            {
+                Set-PnPTenant @delegateParameters -Force -ErrorAction Stop | Out-Null
+            }
+            catch
+            {
+                if ($_.Exception.Message.Contains('SharePoint Advanced Management license'))
+                {
+                    Write-Warning -Message "The tenant doesn't have the SharePoint Advanced Management license required to delegate the restricted access control and restricted content discoverability management."
+                }
+                else
+                {
+                    throw
+                }
+            }
+        }
 
         try
         {
@@ -200,6 +269,15 @@ class SPOAccessControlSettings : M365DSCResourceBase
     [bool] Test()
     {
         return ([M365DSCResourceBase] $this).Test()
+    }
+
+    [System.Collections.Hashtable] GetCompareParameters()
+    {
+        return @{
+            CompareRules = @(
+                @{ Type = 'RemoveWhen'; Properties = @('LimitedAccessFileType'); When = @{ Property = 'ConditionalAccessPolicy'; NotEquals = 'AllowLimitedAccess' }; AlsoFromDesired = $true }
+            )
+        }
     }
 
     [string] Export()

@@ -32,8 +32,21 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 return 'Credentials'
             }
 
+            Mock -CommandName Get-MSCloudLoginConnectionProfile -MockWith {
+            }
+
+            Mock -CommandName Invoke-PnPSPRestMethod -MockWith {
+                return @{
+                    DelegateRestrictedAccessControlConfiguration    = $false
+                    DelegateRestrictedContentDiscoveryConfiguration = $true
+                }
+            }
+
             # Mock Write-M365DSCHost to hide output during the tests
             Mock -CommandName Write-M365DSCHost -MockWith {
+            }
+
+            Mock -CommandName Write-Warning -MockWith {
             }
             $Script:exportedInstances =$null
             $Script:ExportMode = $false
@@ -43,18 +56,25 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
         Context -Name 'PNP AccessControl settings are not configured' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Credential                    = $Credential
-                    IsSingleInstance              = 'Yes'
-                    EnableRestrictedAccessControl = $true
-                    DisplayStartASiteOption       = $false
-                    StartASiteFormUrl             = 'https://o365dsc1.sharepoint.com'
-                    IPAddressEnforcement          = $false
+                    Credential                                         = $Credential
+                    IsSingleInstance                                   = 'Yes'
+                    EnableRestrictedAccessControl                      = $true
+                    DisplayStartASiteOption                            = $false
+                    StartASiteFormUrl                                  = 'https://o365dsc1.sharepoint.com'
+                    IPAddressEnforcement                               = $false
                     #IPAddressAllowList            = "" #would generate an error while writing this resource
-                    IPAddressWACTokenLifetime     = 15
-                    DisallowInfectedFileDownload  = $false
-                    ExternalServicesEnabled       = $true
-                    EmailAttestationRequired      = $false
-                    EmailAttestationReAuthDays    = 30
+                    IPAddressWACTokenLifetime                          = 15
+                    DisallowInfectedFileDownload                       = $false
+                    ExternalServicesEnabled                            = $true
+                    EmailAttestationRequired                           = $false
+                    EmailAttestationReAuthDays                         = 30
+                    AppOnlyBypassPeoplePickerPolicies                  = $false
+                    BlockAppAccessWithAuthenticationContext            = $false
+                    ConditionalAccessPolicy                            = 'AllowLimitedAccess'
+                    DelegateRestrictedAccessControlManagement          = $true
+                    DelegateRestrictedContentDiscoverabilityManagement = $false
+                    LimitedAccessFileType                              = 'WebPreviewableFiles'
+                    RestrictedAccessControlForOneDriveErrorHelpLink    = 'https://contoso.com/help'
                 }
 
                 Mock -CommandName Set-PnPTenant -MockWith {
@@ -72,18 +92,27 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     }
                 }
 
+                Mock -CommandName Set-PnPTenant -ParameterFilter { $DelegateRestrictedAccessControlManagement -eq $true } -MockWith {
+                    throw 'You need a SharePoint Advanced Management license to perform this action.'
+                }
+
                 Mock -CommandName Get-PnPTenant -MockWith {
                     return @{
-                        DisplayStartASiteOption       = $true
-                        EnableRestrictedAccessControl = $true
-                        StartASiteFormUrl             = 'https://o365dsc1.sharepoint.com'
-                        IPAddressEnforcement          = $false
+                        DisplayStartASiteOption                         = $true
+                        EnableRestrictedAccessControl                   = $true
+                        StartASiteFormUrl                               = 'https://o365dsc1.sharepoint.com'
+                        IPAddressEnforcement                            = $false
                         #IPAddressAllowList            = "" #would generate an error while writing this resource
-                        IPAddressWACTokenLifetime     = 20
-                        DisallowInfectedFileDownload  = $false
-                        ExternalServicesEnabled       = $true
-                        EmailAttestationRequired      = $false
-                        EmailAttestationReAuthDays    = 29
+                        IPAddressWACTokenLifetime                       = 20
+                        DisallowInfectedFileDownload                    = $false
+                        ExternalServicesEnabled                         = $true
+                        EmailAttestationRequired                        = $false
+                        EmailAttestationReAuthDays                      = 29
+                        AppOnlyBypassPeoplePickerPolicies               = $false
+                        BlockAppAccessWithAuthenticationContext         = $false
+                        ConditionalAccessPolicy                         = 'AllowLimitedAccess'
+                        LimitedAccessFileType                           = 'OtherFiles'
+                        RestrictedAccessControlForOneDriveErrorHelpLink = 'None'
                     }
                 }
             }
@@ -94,26 +123,52 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Sets the tenant AccessControl settings in Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'SPOAccessControlSettings' -Property $testParams).Set()
+                Should -Invoke -CommandName Set-PnPTenant -Times 1 -Exactly -ParameterFilter {
+                    $LimitedAccessFileType -eq 'WebPreviewableFiles' -and
+                    $RestrictedAccessControlForOneDriveErrorHelpLink -eq 'https://contoso.com/help' -and
+                    -not $PSBoundParameters.ContainsKey('DelegateRestrictedAccessControlManagement')
+                }
+                Should -Invoke -CommandName Set-PnPTenant -Times 1 -Exactly -ParameterFilter {
+                    $DelegateRestrictedAccessControlManagement -eq $true -and
+                    -not $PSBoundParameters.ContainsKey('LimitedAccessFileType')
+                }
+                Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -ParameterFilter {
+                    $Message -like '*SharePoint Advanced Management license*'
+                }
             }
         }
 
         Context -Name 'PNP AccessControl settings are already in the desired state' -Fixture {
             BeforeAll {
                 $testParams = @{
-                    Credential                    = $Credential
-                    IsSingleInstance              = 'Yes'
-                    EnableRestrictedAccessControl = $true
+                    Credential                        = $Credential
+                    IsSingleInstance                  = 'Yes'
+                    EnableRestrictedAccessControl     = $true
+                    LimitedAccessFileType             = 'OfficeOnlineFilesOnly'
+                    AppOnlyBypassPeoplePickerPolicies = $true
                 }
 
                 Mock -CommandName Get-PnPTenant -MockWith {
                     return @{
-                        EnableRestrictedAccessControl = $true
+                        EnableRestrictedAccessControl                   = $true
+                        ConditionalAccessPolicy                         = 'AllowFullAccess'
+                        LimitedAccessFileType                           = 'WebPreviewableFiles'
+                        AppOnlyBypassPeoplePickerPolicies               = $true
+                        BlockAppAccessWithAuthenticationContext         = $true
+                        RestrictedAccessControlForOneDriveErrorHelpLink = 'https://contoso.com/help'
                     }
                 }
             }
 
             It 'Should return the EnableRestrictedAccessControl value from the Get method' {
-                ((New-M365DSCResourceInstance -ResourceName 'SPOAccessControlSettings' -Property $testParams).Get().ToHashtable()).EnableRestrictedAccessControl | Should -Be $true
+                $result = (New-M365DSCResourceInstance -ResourceName 'SPOAccessControlSettings' -Property $testParams).Get().ToHashtable()
+                $result.EnableRestrictedAccessControl | Should -Be $true
+                $result.AppOnlyBypassPeoplePickerPolicies | Should -Be $true
+                $result.DelegateRestrictedAccessControlManagement | Should -Be $false
+                $result.DelegateRestrictedContentDiscoverabilityManagement | Should -Be $true
+                $result.LimitedAccessFileType | Should -Be 'WebPreviewableFiles'
+                $result.BlockAppAccessWithAuthenticationContext | Should -Be $true
+                $result.RestrictedAccessControlForOneDriveErrorHelpLink | Should -Be 'https://contoso.com/help'
             }
 
             It 'Should return true from the Test method' {

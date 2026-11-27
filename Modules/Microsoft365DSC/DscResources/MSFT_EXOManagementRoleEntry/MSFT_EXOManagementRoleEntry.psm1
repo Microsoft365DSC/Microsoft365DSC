@@ -53,6 +53,9 @@ class EXOManagementRoleEntry : M365DSCResourceBase
     [System.ComponentModel.Description('Access token used for authentication.')]
     [System.String[]] $AccessTokens
 
+    # Export-only. Not part of the resource schema.
+    [System.String] $Filter
+
     [EXOManagementRoleEntry] Get()
     {
         if ($this.RequiresPowerShellCore())
@@ -200,7 +203,15 @@ class EXOManagementRoleEntry : M365DSCResourceBase
 
         try
         {
-            [array] $exportedInstances = Get-ManagementRoleEntry -Identity '*\*' -ResultSize 'Unlimited'
+            $roleEntries = Get-ManagementRoleEntry -Identity '*\*' -ResultSize 'Unlimited'
+
+            if (-not [System.String]::IsNullOrEmpty($this.Filter))
+            {
+                $filterScriptBlock = [ScriptBlock]::Create($this.Filter)
+                $roleEntries = $roleEntries | Where-Object -FilterScript $filterScriptBlock
+            }
+
+            [array] $exportedInstances = $roleEntries
             $dscContent = [System.Text.StringBuilder]::new()
             if ($exportedInstances.Length -eq 0)
             {

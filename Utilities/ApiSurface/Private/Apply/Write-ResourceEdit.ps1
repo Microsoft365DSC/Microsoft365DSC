@@ -3,7 +3,7 @@
     Splices a set of offset edits into a file and proves the result still parses.
 
 .DESCRIPTION
-    Follows Utilities/Convert-M365DSCResourceToClass.ps1. The file is written, re-parsed from disk
+    The file is written, re-parsed from disk
     and restored when the parse fails. Formatting varies across the 531 resources and nothing here
     matches on text.
 

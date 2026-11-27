@@ -74087,6 +74087,136 @@ function Get-MgDirectoryCustomSecurityAttributeDefinition
         $CountVariable
     )
 }
+function Get-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfiguration
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $CertificateBasedAuthPkiId,
+
+        [Parameter()]
+        [PSObject]
+        $InputObject,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable
+    )
+}
+
+function Get-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfigurationCertificateAuthority
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $CertificateAuthorityDetailId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateBasedAuthPkiId,
+
+        [Parameter()]
+        [PSObject]
+        $InputObject,
+
+        [Parameter()]
+        [System.String[]]
+        $ExpandProperty,
+
+        [Parameter()]
+        [System.String[]]
+        $Property,
+
+        [Parameter()]
+        [System.String]
+        $Filter,
+
+        [Parameter()]
+        [System.String]
+        $Search,
+
+        [Parameter()]
+        [System.Int32]
+        $Skip,
+
+        [Parameter()]
+        [System.String[]]
+        $Sort,
+
+        [Parameter()]
+        [System.Int32]
+        $Top,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Int32]
+        $PageSize,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $All,
+
+        [Parameter()]
+        [System.String]
+        $CountVariable
+    )
+}
+
 function Get-MgDirectoryRole
 {
     [CmdletBinding()]
@@ -74754,6 +74884,148 @@ function New-MgDirectoryAdministrativeUnitScopedRoleMember
         $ResponseHeadersVariable
     )
 }
+function New-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfiguration
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [PSObject]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [PSObject[]]
+        $CertificateAuthorities,
+
+        [Parameter()]
+        [System.DateTime]
+        $DeletedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $DisplayName,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.DateTime]
+        $LastModifiedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $Status,
+
+        [Parameter()]
+        [System.String]
+        $StatusDetails,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Confirm
+    )
+}
+
+function New-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfigurationCertificateAuthority
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $CertificateBasedAuthPkiId,
+
+        [Parameter()]
+        [PSObject]
+        $InputObject,
+
+        [Parameter()]
+        [PSObject]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $CertificateAuthorityType,
+
+        [Parameter()]
+        [System.String]
+        $CertificateInputFile,
+
+        [Parameter()]
+        [System.String]
+        $CertificateRevocationListUrl,
+
+        [Parameter()]
+        [System.DateTime]
+        $CreatedDateTime,
+
+        [Parameter()]
+        [System.DateTime]
+        $DeletedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $DeltaCertificateRevocationListUrl,
+
+        [Parameter()]
+        [System.String]
+        $DisplayName,
+
+        [Parameter()]
+        [System.DateTime]
+        $ExpirationDateTime,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $IsIssuerHintEnabled,
+
+        [Parameter()]
+        [System.String]
+        $Issuer,
+
+        [Parameter()]
+        [System.String]
+        $IssuerSubjectKeyIdentifier,
+
+        [Parameter()]
+        [System.String]
+        $Thumbprint,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Confirm
+    )
+}
+
 function New-MgDirectoryRole
 {
     [CmdletBinding()]
@@ -75010,6 +75282,72 @@ function Remove-MgDirectoryAdministrativeUnitScopedRoleMember
         $Proxy
     )
 }
+function Remove-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfiguration
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $CertificateBasedAuthPkiId,
+
+        [Parameter()]
+        [PSObject]
+        $InputObject,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $PassThru,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Confirm
+    )
+}
+
+function Remove-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfigurationCertificateAuthority
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $CertificateAuthorityDetailId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateBasedAuthPkiId,
+
+        [Parameter()]
+        [PSObject]
+        $InputObject,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $PassThru,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Confirm
+    )
+}
+
 function Update-MgDirectory
 {
     [CmdletBinding()]
@@ -75200,6 +75538,160 @@ function Update-MgDirectoryAdministrativeUnit
         $Extensions
     )
 }
+function Update-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfiguration
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $CertificateBasedAuthPkiId,
+
+        [Parameter()]
+        [PSObject]
+        $InputObject,
+
+        [Parameter()]
+        [PSObject]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [PSObject[]]
+        $CertificateAuthorities,
+
+        [Parameter()]
+        [System.DateTime]
+        $DeletedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $DisplayName,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.DateTime]
+        $LastModifiedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $Status,
+
+        [Parameter()]
+        [System.String]
+        $StatusDetails,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Confirm
+    )
+}
+
+function Update-MgDirectoryPublicKeyInfrastructureCertificateBasedAuthConfigurationCertificateAuthority
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $CertificateAuthorityDetailId,
+
+        [Parameter()]
+        [System.String]
+        $CertificateBasedAuthPkiId,
+
+        [Parameter()]
+        [PSObject]
+        $InputObject,
+
+        [Parameter()]
+        [PSObject]
+        $BodyParameter,
+
+        [Parameter()]
+        [System.String]
+        $ResponseHeadersVariable,
+
+        [Parameter()]
+        [System.Collections.Hashtable]
+        $AdditionalProperties,
+
+        [Parameter()]
+        [System.String]
+        $CertificateAuthorityType,
+
+        [Parameter()]
+        [System.String]
+        $CertificateInputFile,
+
+        [Parameter()]
+        [System.String]
+        $CertificateRevocationListUrl,
+
+        [Parameter()]
+        [System.DateTime]
+        $CreatedDateTime,
+
+        [Parameter()]
+        [System.DateTime]
+        $DeletedDateTime,
+
+        [Parameter()]
+        [System.String]
+        $DeltaCertificateRevocationListUrl,
+
+        [Parameter()]
+        [System.String]
+        $DisplayName,
+
+        [Parameter()]
+        [System.DateTime]
+        $ExpirationDateTime,
+
+        [Parameter()]
+        [System.String]
+        $Id,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $IsIssuerHintEnabled,
+
+        [Parameter()]
+        [System.String]
+        $Issuer,
+
+        [Parameter()]
+        [System.String]
+        $IssuerSubjectKeyIdentifier,
+
+        [Parameter()]
+        [System.String]
+        $Thumbprint,
+
+        [Parameter()]
+        [System.Collections.IDictionary]
+        $Headers,
+
+        [Parameter()]
+        [System.Management.Automation.SwitchParameter]
+        $Confirm
+    )
+}
+
 #endregion
 
 #region Microsoft.Graph.Identity.SignIns
@@ -91102,7 +91594,107 @@ function Set-PnPTenant
 
         [Parameter()]
         [System.Nullable`1[System.Boolean]]
-        $EnableSensitivityLabelForVideoFiles
+        $EnableSensitivityLabelForVideoFiles,
+
+        [Parameter()]
+        [System.Boolean]
+        $AppOnlyBypassPeoplePickerPolicies,
+
+        [Parameter()]
+        [System.Boolean]
+        $BlockAppAccessWithAuthenticationContext,
+
+        [Parameter()]
+        [System.String]
+        $BlockDownloadLinksFileType,
+
+        [Parameter()]
+        [System.Int32]
+        $CoreAnyoneSharingLinkMaxExpirationInDays,
+
+        [Parameter()]
+        [System.Int32]
+        $CoreAnyoneSharingLinkRecommendedExpirationInDays,
+
+        [Parameter()]
+        [System.String]
+        $DefaultLanguageForSiteCreation,
+
+        [Parameter()]
+        [System.Boolean]
+        $DelegateRestrictedAccessControlManagement,
+
+        [Parameter()]
+        [System.Boolean]
+        $DelegateRestrictedContentDiscoverabilityManagement,
+
+        [Parameter()]
+        [System.Boolean]
+        $DisableSharePointStoreAccess,
+
+        [Parameter()]
+        [System.Boolean]
+        $DisableSpfxTopBottomPlaceholdersInElevatedContent,
+
+        [Parameter()]
+        [System.Boolean]
+        $DisableTeamsMeetingRecordingDeletedNotification,
+
+        [Parameter()]
+        [System.String]
+        $FilePreviewAllowedDomainList,
+
+        [Parameter()]
+        [System.Boolean]
+        $IsFilePreviewDomainRestrictionEnabled,
+
+        [Parameter()]
+        [System.Boolean]
+        $IsSharePointAddInsDisabled,
+
+        [Parameter()]
+        [System.String]
+        $LimitedAccessFileType,
+
+        [Parameter()]
+        [System.Boolean]
+        $MassDeleteNotificationDisabledForODB,
+
+        [Parameter()]
+        [System.Boolean]
+        $MassDeleteNotificationDisabledForSPO,
+
+        [Parameter()]
+        [System.Int32]
+        $OneDriveAnyoneSharingLinkMaxExpirationInDays,
+
+        [Parameter()]
+        [System.Int32]
+        $OneDriveAnyoneSharingLinkRecommendedExpirationInDays,
+
+        [Parameter()]
+        [System.String]
+        $RestrictedAccessControlForOneDriveErrorHelpLink,
+
+        [Parameter()]
+        [System.Boolean]
+        $SiteOwnersCanAccessMissingContent,
+
+        [Parameter()]
+        [System.Boolean]
+        $StopAlerts,
+
+        [Parameter()]
+        [System.Int32]
+        $UnlicensedOneDriveAccountsActiveStoragePeriod,
+
+        [Parameter()]
+        [System.Guid[]]
+        $WhoCanShareAnonymousAllowList,
+
+        [Parameter()]
+        [System.Guid[]]
+        $WhoCanShareAuthenticatedGuestAllowList
     )
 }
 function Set-PnPTenantCdnEnabled

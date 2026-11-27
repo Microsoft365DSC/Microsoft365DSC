@@ -219,7 +219,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'Get-TargetResource returns new properties' -Fixture {
+        Context -Name 'Get method returns new properties' -Fixture {
             BeforeAll {
                 $testParams = @{
                     DisplayName        = 'Test Shared Mailbox'
@@ -266,7 +266,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'Get-TargetResource with Identity parameter' -Fixture {
+        Context -Name 'Get method with Identity parameter' -Fixture {
             BeforeAll {
                 $testParams = @{
                     DisplayName        = 'Test Shared Mailbox'
@@ -298,7 +298,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'Get-TargetResource email filtering without PrimarySMTPAddress param' -Fixture {
+        Context -Name 'Get method email filtering without PrimarySMTPAddress param' -Fixture {
             BeforeAll {
                 $testParams = @{
                     DisplayName = 'Test Shared Mailbox'
@@ -328,7 +328,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
         }
 
-        Context -Name 'Get-TargetResource email filtering with explicit PrimarySMTPAddress param' -Fixture {
+        Context -Name 'Get method email filtering with explicit PrimarySMTPAddress param' -Fixture {
             BeforeAll {
                 $testParams = @{
                     DisplayName        = 'Test Shared Mailbox'

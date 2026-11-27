@@ -40,6 +40,7 @@ Configuration Example
             PreferredAuthenticationProtocol       = "saml"; # Updated Property
             SigningCertificate                    = "<base64-encoded-signing-certificate>"
             SignOutUri                            = "https://adfs.contoso.com/adfs/ls/?wa=wsignout1.0";
+            SystemBrowserEnabledOn                = @("android", "ios");
             ApplicationId                         = $ApplicationId;
             TenantId                              = $TenantId;
             CertificateThumbprint                 = $CertificateThumbprint;

@@ -2533,9 +2533,7 @@ function Get-M365DSCConfigurationConflict
     Invokes a method on a class-based DSC resource in a PowerShell 7 session.
 
 .DESCRIPTION
-    Marshals by class name plus method name plus the bound-parameter hashtable. Its script-based
-    predecessor marshalled by file path plus function name, neither of which survives the move to
-    classes: there is no per-resource .psm1 any more, and methods are not commands.
+    Marshals by class name plus method name plus the bound-parameter hashtable.
 
 .PARAMETER ClassName
     Specifies the name of the resource class, e.g. 'AADGroup'.

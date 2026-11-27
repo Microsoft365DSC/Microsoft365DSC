@@ -129,6 +129,14 @@ Configuration Example
             KnowledgeAgentEnabled                                          = $false
             RequireAcceptingAccountMatchInvitedAccount                     = $true
             SpecialCharactersStateInFileFolderNames                        = "Allowed"
+            DisableSharePointStoreAccess                                   = $true
+            DisableSpfxTopBottomPlaceholdersInElevatedContent              = $false
+            DisableTeamsMeetingRecordingDeletedNotification                = $false
+            FilePreviewAllowedDomainList                                   = @("contoso.com", "fabrikam.com")
+            IsFilePreviewDomainRestrictionEnabled                          = $true
+            MassDeleteNotificationDisabledForSPO                           = $false
+            SiteOwnersCanAccessMissingContent                              = $true
+            StopAlerts                                                     = $true
             ApplicationId                                                  = $ApplicationId
             TenantId                                                       = $TenantId
             CertificateThumbprint                                          = $CertificateThumbprint

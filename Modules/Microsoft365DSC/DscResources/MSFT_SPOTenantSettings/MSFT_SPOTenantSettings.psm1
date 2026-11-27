@@ -458,6 +458,38 @@ class SPOTenantSettings : M365DSCResourceBase
     [System.String] $SpecialCharactersStateInFileFolderNames
 
     [DscProperty()]
+    [System.ComponentModel.Description('This feature allows the SharePoint Administrators to disable SharePoint Store access for all users in the tenant. Accepts a value of true (enabled) to hide the SharePoint app store or false (disabled) to show the SharePoint app store. By default this feature is set to false.')]
+    [System.Nullable[System.Boolean]] $DisableSharePointStoreAccess
+
+    [DscProperty()]
+    [System.ComponentModel.Description('This feature allows SharePoint Administrators to control where SPFx Top and Bottom placeholders are rendered in relation to elevated content. Accepts a value of true to render the Top and Bottom placeholders outside the elevated content area, or false to render them inside the elevated content area. By default, this feature is set to false.')]
+    [System.Nullable[System.Boolean]] $DisableSpfxTopBottomPlaceholdersInElevatedContent
+
+    [DscProperty()]
+    [System.ComponentModel.Description('This is an opt-in setting that enables or disables sending email notification when a Teams meeting recording file is deleted after expiration at the tenant level.')]
+    [System.Nullable[System.Boolean]] $DisableTeamsMeetingRecordingDeletedNotification
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies a list of domains that the file preview viewer is allowed to load content from when rendering previews (PDF, images, Office, documents, and other supported file types). The list is only enforced when IsFilePreviewDomainRestrictionEnabled is true.')]
+    [System.String[]] $FilePreviewAllowedDomainList
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables enforcement of the file preview domain allow list defined by FilePreviewAllowedDomainList. The default value is false, which means the restriction is disabled and the file preview viewer can load content from any domain.')]
+    [System.Nullable[System.Boolean]] $IsFilePreviewDomainRestrictionEnabled
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Enables or disables the mass delete detection feature for SPO. When MassDeleteNotificationDisabledForSPO is set to true, tenant admins can perform mass deletion operations without triggering email notifications for SPO.')]
+    [System.Nullable[System.Boolean]] $MassDeleteNotificationDisabledForSPO
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Whether site owners can access information about missing content on their site.')]
+    [System.Nullable[System.Boolean]] $SiteOwnersCanAccessMissingContent
+
+    [DscProperty()]
+    [System.ComponentModel.Description('This parameter allows turning off classic SharePoint Alerts. The valid values are: False - The classic SharePoint Alerts feature is not turned off. True - The classic SharePoint Alerts feature is turned off and no classic Alert emails are sent.')]
+    [System.Nullable[System.Boolean]] $StopAlerts
+
+    [DscProperty()]
     [System.ComponentModel.Description('Credentials of the account to authenticate with.')]
     [System.Management.Automation.PSCredential] $Credential
 
@@ -536,7 +568,8 @@ class SPOTenantSettings : M365DSCResourceBase
                 'DenySelectSecurityGroupsInSPSitesList',
                 'AllowSelectSecurityGroupsInSPSitesList',
                 'HideSyncButtonOnODB',
-                'MobileFriendlyUrlEnabledInTenant'
+                'MobileFriendlyUrlEnabledInTenant',
+                'SharePointAddInsDisabled'
             )
 
             $response = Invoke-PnPSPRestMethod -Method Get `
@@ -564,6 +597,12 @@ class SPOTenantSettings : M365DSCResourceBase
             if ($null -ne $response.AllowSelectSecurityGroupsInSPSitesList)
             {
                 $AllowSelectSecurityGroupsInSPSitesListValue = [System.String[]]$response.AllowSelectSecurityGroupsInSPSitesList
+            }
+
+            $FilePreviewAllowedDomainListValue = @()
+            if (-not [System.String]::IsNullOrEmpty($SPOTenantSettings.FilePreviewAllowedDomainList))
+            {
+                $FilePreviewAllowedDomainListValue = $SPOTenantSettings.FilePreviewAllowedDomainList.Split(' ')
             }
 
             $results = @{
@@ -605,7 +644,10 @@ class SPOTenantSettings : M365DSCResourceBase
                 DefaultOneDriveInformationBarrierMode                          = $SPOTenantSettings.DefaultOneDriveInformationBarrierMode
                 DisableCustomAppAuthentication                                 = $SPOTenantSettings.DisableCustomAppAuthentication
                 DisableDocumentLibraryDefaultLabeling                          = $SPOTenantSettings.DisableDocumentLibraryDefaultLabeling
+                DisableSharePointStoreAccess                                   = $SPOTenantSettings.DisableSharePointStoreAccess
                 DisableSpacesActivation                                        = $SPOTenantSettings.DisableSpacesActivation
+                DisableSpfxTopBottomPlaceholdersInElevatedContent              = $SPOTenantSettings.DisableSpfxTopBottomPlaceholdersInElevatedContent
+                DisableTeamsMeetingRecordingDeletedNotification                = $SPOTenantSettings.DisableTeamsMeetingRecordingDeletedNotification
                 DisableVivaConnectionsAnalytics                                = $SPOTenantSettings.DisableVivaConnectionsAnalytics
                 DisabledAdaptiveCardExtensionIds                               = Get-M365DSCArrayFromProperty -PropertyValue $SPOTenantSettings.DisabledAdaptiveCardExtensionIds -ElementType ([System.String])
                 DisabledModernListTemplateIds                                  = [System.String[]]$SPOTenantSettings.DisabledModernListTemplateIds
@@ -623,6 +665,7 @@ class SPOTenantSettings : M365DSCResourceBase
                 # TODO: Add GroupId lookup
                 ExcludedBlockDownloadGroupIds                                  = Get-M365DSCArrayFromProperty -PropertyValue $SPOTenantSettings.ExcludedBlockDownloadGroupIds -ElementType ([System.String])
                 FilePickerExternalImageSearchEnabled                           = $SPOTenantSettings.FilePickerExternalImageSearchEnabled
+                FilePreviewAllowedDomainList                                   = $FilePreviewAllowedDomainListValue
                 ExpireVersionsAfterDays                                        = $SPOTenantSettings.ExpireVersionsAfterDays
                 HideDefaultThemes                                              = $SPOTenantSettings.HideDefaultThemes
                 HideSyncButtonOnDocLib                                         = $SPOTenantSettings.HideSyncButtonOnDocLib
@@ -633,9 +676,10 @@ class SPOTenantSettings : M365DSCResourceBase
                 IsDataAccessInCardDesignerEnabled                              = $SPOTenantSettings.IsDataAccessInCardDesignerEnabled
                 IsEnableAppAuthPopUpEnabled                                    = $SPOTenantSettings.IsEnableAppAuthPopUpEnabled
                 EnableAutoExpirationVersionTrim                                = $SPOTenantSettings.EnableAutoExpirationVersionTrim
+                IsFilePreviewDomainRestrictionEnabled                          = $SPOTenantSettings.IsFilePreviewDomainRestrictionEnabled
                 IsFluidEnabled                                                 = $SPOTenantSettings.IsFluidEnabled
                 IsLoopEnabled                                                  = $SPOTenantSettings.IsLoopEnabled
-                IsSharePointAddInsDisabled                                     = $SPOTenantSettings.IsSharePointAddInsDisabled
+                IsSharePointAddInsDisabled                                     = $response.SharePointAddInsDisabled
                 IsWBFluidEnabled                                               = $SPOTenantSettings.IsWBFluidEnabled
                 KnowledgeAgentEnabled                                          = $SPOTenantSettings.KnowledgeAgentEnabled
                 KnowledgeAgentSelectedSitesList                                = Get-M365DSCArrayFromProperty -PropertyValue $SPOTenantSettings.KnowledgeAgentSelectedSitesList -ElementType ([System.String])
@@ -643,6 +687,7 @@ class SPOTenantSettings : M365DSCResourceBase
                 LegacyAuthProtocolsEnabled                                     = $SPOTenantSettings.LegacyAuthProtocolsEnabled
                 MajorVersionLimit                                              = $SPOTenantSettings.MajorVersionLimit
                 MassDeleteNotificationDisabled                                 = $SPOTenantSettings.MassDeleteNotificationDisabled
+                MassDeleteNotificationDisabledForSPO                           = $SPOTenantSettings.MassDeleteNotificationDisabledForSPO
                 MarkNewFilesSensitiveByDefault                                 = $SPOTenantSettings.MarkNewFilesSensitiveByDefault
                 MediaTranscription                                             = $SPOTenantSettings.MediaTranscriptionEnabled
                 MediaTranscriptionAutomaticFeatures                            = $SPOTenantSettings.MediaTranscriptionAutomaticFeatures
@@ -666,8 +711,10 @@ class SPOTenantSettings : M365DSCResourceBase
                 ShowPeoplePickerGroupSuggestionsForIB                          = $SPOTenantSettings.ShowPeoplePickerGroupSuggestionsForIB
                 SignInAccelerationDomain                                       = $SPOTenantSettings.SignInAccelerationDomain
                 SiteOwnerManageLegacyServicePrincipalEnabled                   = $SPOTenantSettings.SiteOwnerManageLegacyServicePrincipalEnabled
+                SiteOwnersCanAccessMissingContent                              = $SPOTenantSettings.SiteOwnersCanAccessMissingContent
                 SocialBarOnSitePagesDisabled                                   = $SPOTenantSettings.SocialBarOnSitePagesDisabled
                 SpecialCharactersStateInFileFolderNames                        = $SPOTenantSettings.SpecialCharactersStateInFileFolderNames
+                StopAlerts                                                     = $SPOTenantSettings.StopAlerts
                 StreamLaunchConfig                                             = $SPOTenantSettings.StreamLaunchConfig
                 TlsTokenBindingPolicyValue                                     = $SPOTenantSettings.TlsTokenBindingPolicyValue
                 UseFindPeopleInPeoplePicker                                    = $SPOTenantSettings.UseFindPeopleInPeoplePicker
@@ -762,6 +809,11 @@ class SPOTenantSettings : M365DSCResourceBase
         {
             Write-Verbose -Message 'The use of the public CDN is not enabled, for that the PublicCdnAllowedFileTypes parameter can not be configured and will be removed'
             $CurrentParameters.Remove('PublicCdnAllowedFileTypes') | Out-Null
+        }
+
+        if ($null -ne $CurrentParameters['FilePreviewAllowedDomainList'])
+        {
+            $CurrentParameters['FilePreviewAllowedDomainList'] = [System.String]::Join(',', $CurrentParameters['FilePreviewAllowedDomainList'])
         }
 
         if ($spoGraphParametersSplat.Keys.Count -gt 0)

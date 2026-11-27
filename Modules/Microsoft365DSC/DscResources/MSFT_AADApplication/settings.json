@@ -17,6 +17,11 @@
       "note": "The beta application CSDL omits it and only template instantiation uses it."
     },
     {
+      "name": "AppManagementPolicies",
+      "reason": "Deferred",
+      "note": "Policy assignment link. No resource writes it yet."
+    },
+    {
       "name": "Certification",
       "reason": "ReadOnly",
       "note": "The app compliance program stamps these values."
@@ -47,6 +52,11 @@
       "note": "The flattened web.homePageUrl property"
     },
     {
+      "name": "HomeRealmDiscoveryPolicies",
+      "reason": "Deferred",
+      "note": "Policy assignment link. No resource writes it yet."
+    },
+    {
       "name": "Id",
       "reason": "Accepted",
       "note": "ObjectId carries the vendor id and comparison skips both."
@@ -75,6 +85,11 @@
       "name": "Synchronization",
       "reason": "Accepted",
       "note": "Provisioning jobs, schemas and templates are a product area of their own."
+    },
+    {
+      "name": "TokenIssuancePolicies",
+      "reason": "Deferred",
+      "note": "Policy assignment link. No resource writes it yet."
     },
     {
       "name": "UniqueName",

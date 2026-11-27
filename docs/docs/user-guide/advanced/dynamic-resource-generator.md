@@ -11,7 +11,6 @@ Microsoft 365 is evolving at a rapid pace, with new features being released on a
 For a resource named `<Name>`, one command produces:
 
 - **Resource module** - `MSFT_<Name>\MSFT_<Name>.psm1`: a `[DscResource()]` class deriving from `M365DSCResourceBase`, with `Get()`, `Set()`, `Test()` and `Export()` methods, embedded CIM classes for complex types and per-resource helper functions.
-- **MOF schema** - `MSFT_<Name>\MSFT_<Name>.schema.mof`: generated from the same property model as the class, so the two cannot drift apart.
 - **settings.json** - including the `permissions` (scraped from Graph), `requiredModules` and `commands` sections. Only the `roles` section needs to be filled in manually.
 - **readme.md**
 - **Unit test** - `Microsoft365DSC.<Name>.Tests.ps1` in the current class-based test pattern: it asserts every scalar property value returned by `Get()`, and its drift context uses genuinely different values.

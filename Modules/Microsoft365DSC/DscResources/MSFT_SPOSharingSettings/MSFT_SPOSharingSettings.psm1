@@ -151,6 +151,39 @@ class SPOSharingSettings : M365DSCResourceBase
     [System.Nullable[System.Boolean]] $RestrictExternalSharingForAgents
 
     [DscProperty()]
+    [System.ComponentModel.Description('Specifies the maximum number of days before Anyone (anonymous) sharing links expire for all SharePoint sites (not including OneDrive sites). This is a tenant wide setting, and all geos will inherit the policy. The value can be from 1 to 730 days. To remove the expiration requirement, set the value to zero (0).')]
+    [ValidateRange(0, 730)]
+    [System.Nullable[System.Int32]] $CoreAnyoneSharingLinkMaxExpirationInDays
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the recommended number of days before Anyone (anonymous) sharing links expire for all SharePoint sites (not including OneDrive sites). This setting provides a suggested expiration period to users when they create sharing links. This is a tenant wide setting, and all geos will inherit the policy. The value can be from 1 to 730 days and must be less than or equal to the maximum expiration value set by `CoreAnyoneSharingLinkMaxExpirationInDays`. When set to 0, the default value will be `CoreAnyoneSharingLinkMaxExpirationInDays`.')]
+    [ValidateRange(0, 730)]
+    [System.Nullable[System.Int32]] $CoreAnyoneSharingLinkRecommendedExpirationInDays
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the maximum number of days before Anyone (anonymous) sharing links expire for all OneDrive sites. This is a tenant wide setting, and all geos will inherit the policy. The value can be from 1 to 730 days. To remove the expiration requirement, set the value to zero (0).')]
+    [ValidateRange(0, 730)]
+    [System.Nullable[System.Int32]] $OneDriveAnyoneSharingLinkMaxExpirationInDays
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the recommended number of days before Anyone (anonymous) sharing links expire for all OneDrive sites. This setting provides a suggested expiration period to users when they create sharing links. This is a tenant wide setting, and all geos will inherit the policy. The value can be from 1 to 730 days and must be less than or equal to the maximum expiration value set by `OneDriveAnyoneSharingLinkMaxExpirationInDays`. When set to 0, the default value will be `OneDriveAnyoneSharingLinkMaxExpirationInDays`.')]
+    [ValidateRange(0, 730)]
+    [System.Nullable[System.Int32]] $OneDriveAnyoneSharingLinkRecommendedExpirationInDays
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Specifies the file types that are affected by block download links. The valid values are: WebPreviewableFiles (all supported files), ServerRenderedFilesOnly (Office only).')]
+    [ValidateSet('WebPreviewableFiles', 'ServerRenderedFilesOnly')]
+    [System.String] $BlockDownloadLinksFileType
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Sets the list of security groups who are only allowed to share with authenticated guest users. Each security group is denoted by its GUID object ID. Note: This allow list only accepts security groups, and not Microsoft 365 Groups.')]
+    [System.String[]] $WhoCanShareAuthenticatedGuestAllowList
+
+    [DscProperty()]
+    [System.ComponentModel.Description('Sets the list of security groups who are allowed to share with anonymous (non-authenticated) users as well as authenticated guest users. Each security group is denoted by its GUID object ID in the Entra directory. Note: This allow list only accepts security groups, and not Microsoft 365 Groups.')]
+    [System.String[]] $WhoCanShareAnonymousAllowList
+
+    [DscProperty()]
     [System.ComponentModel.Description('Specifies all anonymous links that have been created (or will be created) will expire after the set number of days.')]
     [System.Nullable[System.Int32]] $RequireAnonymousLinksExpireInDays
 
@@ -346,6 +379,9 @@ class SPOSharingSettings : M365DSCResourceBase
                 IsSingleInstance                                           = 'Yes'
                 AllowGuestUserShareToUsersNotInSiteCollection              = $SPOSharingSettings.AllowGuestUserShareToUsersNotInSiteCollection
                 AllowSharingOutsideRestrictedAccessControlGroups           = $SPOSharingSettings.AllowSharingOutsideRestrictedAccessControlGroups
+                BlockDownloadLinksFileType                                 = $SPOSharingSettings.BlockDownloadLinksFileType
+                CoreAnyoneSharingLinkMaxExpirationInDays                   = $SPOSharingSettings.CoreAnyoneSharingLinkMaxExpirationInDays
+                CoreAnyoneSharingLinkRecommendedExpirationInDays           = $SPOSharingSettings.CoreAnyoneSharingLinkRecommendedExpirationInDays
                 CoreDefaultShareLinkRole                                   = $SPOSharingSettings.CoreDefaultShareLinkRole
                 CoreDefaultShareLinkScope                                  = $SPOSharingSettings.CoreDefaultShareLinkScope
                 CoreOrganizationSharingLinkMaxExpirationInDays             = $SPOSharingSettings.CoreOrganizationSharingLinkMaxExpirationInDays
@@ -363,6 +399,8 @@ class SPOSharingSettings : M365DSCResourceBase
                 ExternalUserExpirationRequired                             = $SPOSharingSettings.ExternalUserExpirationRequired
                 # TODO: Look up the principal id
                 GuestSharingGroupAllowListInTenantByPrincipalIdentity      = Get-M365DSCArrayFromProperty -PropertyValue $SPOSharingSettings.GuestSharingGroupAllowListInTenantByPrincipalIdentity -ElementType ([System.String])
+                OneDriveAnyoneSharingLinkMaxExpirationInDays               = $SPOSharingSettings.OneDriveAnyoneSharingLinkMaxExpirationInDays
+                OneDriveAnyoneSharingLinkRecommendedExpirationInDays       = $SPOSharingSettings.OneDriveAnyoneSharingLinkRecommendedExpirationInDays
                 OneDriveDefaultLinkToExistingAccess                        = $SPOSharingSettings.OneDriveDefaultLinkToExistingAccess
                 OneDriveDefaultShareLinkRole                               = $SPOSharingSettings.OneDriveDefaultShareLinkRole
                 OneDriveDefaultShareLinkScope                              = $SPOSharingSettings.OneDriveDefaultShareLinkScope
@@ -390,6 +428,8 @@ class SPOSharingSettings : M365DSCResourceBase
                 # TODO: Look up the principal id
                 WhoCanShareAllowListInTenant                               = Get-M365DSCArrayFromProperty -PropertyValue $SPOSharingSettings.WhoCanShareAllowListInTenant -ElementType ([System.String])
                 WhoCanShareAllowListInTenantByPrincipalIdentity            = Get-M365DSCArrayFromProperty -PropertyValue $SPOSharingSettings.WhoCanShareAllowListInTenantByPrincipalIdentity -ElementType ([System.String])
+                WhoCanShareAnonymousAllowList                              = Get-M365DSCArrayFromProperty -PropertyValue $SPOSharingSettings.WhoCanShareAnonymousAllowList -ElementType ([System.String])
+                WhoCanShareAuthenticatedGuestAllowList                     = Get-M365DSCArrayFromProperty -PropertyValue $SPOSharingSettings.WhoCanShareAuthenticatedGuestAllowList -ElementType ([System.String])
             }
 
             if (-not [System.String]::IsNullOrEmpty($mySiteSharingCapabilityValue))

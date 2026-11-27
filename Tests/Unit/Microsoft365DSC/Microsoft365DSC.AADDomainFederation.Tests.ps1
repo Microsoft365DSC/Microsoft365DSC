@@ -61,7 +61,7 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                     FederatedIdpMfaBehavior                 = "acceptIfMfaDoneByFederatedIdp"
                     PasswordResetUri                        = "https://adfs.contoso.com/adfs/portal/updatepassword/"
                     IsSignedAuthenticationRequestRequired   = $true
-                    SystemBrowserEnabledOn                  = "ios,android"
+                    SystemBrowserEnabledOn                  = "Ios, Android"
                 }
             }
 
@@ -187,7 +187,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
             }
 
             It 'Should return Values from the Get method' {
-                ((New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()).Ensure | Should -Be 'Present'
+                $result = (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Get().ToHashtable()
+                $result.Ensure | Should -Be 'Present'
+                $result.SystemBrowserEnabledOn | Should -Be @('Ios', 'Android')
             }
 
             It 'Should return false from the Test method' {
@@ -196,7 +198,9 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
 
             It 'Should call the Set method' {
                 (New-M365DSCResourceInstance -ResourceName 'AADDomainFederation' -Property $testParams).Set()
-                Should -Invoke -CommandName Update-MgBetaDomainFederationConfiguration -Exactly 1
+                Should -Invoke -CommandName Update-MgBetaDomainFederationConfiguration -Exactly 1 -ParameterFilter {
+                    $BodyParameter.SystemBrowserEnabledOn -eq 'android,ios,macos'
+                }
             }
         }
 

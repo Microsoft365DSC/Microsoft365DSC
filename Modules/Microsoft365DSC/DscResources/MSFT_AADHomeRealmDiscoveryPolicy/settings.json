@@ -13,8 +13,8 @@
   "excludedProperties": [
     {
       "name": "Definition",
-      "reason": "Deferred",
-      "note": "Modelled as a complex type. DomainHintPolicy is dropped on write."
+      "reason": "Accepted",
+      "note": "The JSON definition string is configured as a CIM instance on purpose."
     },
     {
       "name": "Description",
