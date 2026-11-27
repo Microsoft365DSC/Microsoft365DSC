@@ -588,9 +588,5 @@
   "Get-MgBetaTeamChannelTab": "Microsoft.Graph.Beta.Teams",
   "New-MgBetaTeamChannelTab": "Microsoft.Graph.Beta.Teams",
   "Remove-MgBetaTeamChannelTab": "Microsoft.Graph.Beta.Teams",
-  "Update-MgBetaTeamChannelTab": "Microsoft.Graph.Beta.Teams",
-  "Get-MgBetaDeviceManagementTemplateCategory": "Microsoft.Graph.Beta.DeviceManagement",
-  "Get-MgBetaDeviceManagementTemplateCategoryRecommendedSetting": "Microsoft.Graph.Beta.DeviceManagement",
-  "New-MgApplication": "Microsoft.Graph.Applications",
-  "Add-MgBetaApplicationPassword": "Microsoft.Graph.Beta.Applications"
+  "Update-MgBetaTeamChannelTab": "Microsoft.Graph.Beta.Teams"
 }

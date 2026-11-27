@@ -2,6 +2,12 @@
 
 # UNRELEASED
 
+* ADGSAPrivateAccessApplication
+  * Initial release
+* AADGSATLSInspectionPolicy
+  * Initial release
+* AADGSAWebContentFilteringPolicy
+  * Initial release
 * EXOManagementRoleEntry
   * Added a `Filter` property that applies a scriptblock to role entries after retrieval,
     allowing built-in entries to be excluded from the export.
